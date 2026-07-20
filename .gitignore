@@ -1,0 +1,22 @@
+
+node_modules/
+.claude/
+
+*.tsbuildinfo
+
+*.tsbuildinfo
+# local backups & temp
+*.bak-ts1490
+*.bak-wipe
+apps/web/.tsc-files.txt
+apps/web/tsconfig.tmp.json
+apps/web/.trash-*
+apps/web/.trash-*
+
+.vercel
+pnpm-lock.yaml
+
+.env*
+.vercel
+.next/
+.env.local

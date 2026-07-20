@@ -1,0 +1,70 @@
+[35mapp/(focus)/vocab/session/actions.ts[m[36m:[m[32m8[m[36m:[m[1;31mimport type { SessionWord, VocabExample, VocabCollocation } from "@/models/vocab[m/SessionWord";
+[35mapp/(focus)/vocab/session/actions.ts[m[36m:[m[32m9[m[36m:[m[1;31mimport type { WordFormRowLike } from "@/lib/vocab[m/drill/buildBlockDrillTasksV1";
+[35mapp/(focus)/vocab/session/page.tsx[m[36m:[m[32m11[m[36m:[m[1;31mimport PrescreenBoard from "@/components/vocab[m/PrescreenBoard";
+[35mapp/(focus)/vocab/session/page.tsx[m[36m:[m[32m12[m[36m:[m[1;31mimport PrescreenSpellingBoard from "@/components/vocab[m/prescreen/PrescreenSpellingBoard";
+[35mapp/(focus)/vocab/session/page.tsx[m[36m:[m[32m13[m[36m:[m[1;31mimport SummaryScreen from "@/components/vocab[m/summary/SummaryScreen";
+[35mapp/(focus)/vocab/session/page.tsx[m[36m:[m[32m15[m[36m:[m[1;31mimport LearningRunner from "@/components/vocab[m/learning/LearningRunner";
+[35mapp/(focus)/vocab/session/page.tsx[m[36m:[m[32m16[m[36m:[m[1;31mimport type { LearningWord } from "@/components/vocab[m/learning/learning.types";
+[35mapp/(focus)/vocab/session/page.tsx[m[36m:[m[32m18[m[36m:[m[1;31mimport SpeedChallengeRunner from "@/components/vocab[m/speed/SpeedChallengeRunner";
+[35mapp/(focus)/vocab/session/page.tsx[m[36m:[m[32m19[m[36m:[m[1;31mimport type { SpeedQuestion, SpeedAttemptResult } from "@/models/vocab[m/speed.types";
+[35mapp/(focus)/vocab/session/page.tsx[m[36m:[m[32m21[m[36m:[m[1;31mimport DrillRunner from "@/components/vocab[m/drill/DrillRunner";
+[35mapp/(focus)/vocab/session/page.tsx[m[36m:[m[32m22[m[36m:[m[1;31mimport type { DrillTask, DrillType } from "@/components/vocab[m/drill/drill.types";
+[35mapp/(focus)/vocab/session/page.tsx[m[36m:[m[32m35[m[36m:[m[1;31mimport type { PrescreenResult } from "@/models/vocab[m/session/prescreen";
+[35mapp/(focus)/vocab/session/page.tsx[m[36m:[m[32m36[m[36m:[m[1;31mimport type { SpellingResult } from "@/models/vocab[m/session/spelling";
+[35mapp/(focus)/vocab/session/page.tsx[m[36m:[m[32m37[m[36m:[m[1;31mimport type { SessionWord } from "@/models/vocab[m/SessionWord";
+[35mapp/(protected)/admin/vocab/Tracks/actions.ts[m[36m:[m[32m5[m[36m:[m[1;31mimport { createVocabSetFromRawAction } from "@/app/(protected)/admin/vocab[m/sets/new/actions";
+[35mapp/(protected)/admin/vocab/Tracks/actions.ts[m[36m:[m[32m1424[m[36m:[m * Admin: Sync [1;31mimported Day sets -> vocab[m_track_sets
+[35mapp/(protected)/admin/vocab/Tracks/actions.ts[m[36m:[m[32m1426[m[36m:[m * - [1;31mImport가 만든 vocab[m_sets (title/description 기반)에서 Day index를 파싱
+[35mapp/(protected)/admin/vocab/import/_client/WisewordCsvImporter.tsx[m[36m:[m[32m1[m[36m:[m// apps/web/app/(protected)/admin/[1;31mvocab/import/_client/WisewordCsvImport[mer.tsx
+[35mapp/(protected)/admin/vocab/import/_client/WisewordCsvImporter.tsx[m[36m:[m[32m25[m[36m:[mexport default function Wiseword[1;31mCsvImport[mer({
+[35mapp/(protected)/admin/vocab/import/page.tsx[m[36m:[m[32m1[m[36m:[m// apps/web/app/(protected)/admin/[1;31mvocab/import[m/page.tsx
+[35mapp/(protected)/admin/vocab/import/page.tsx[m[36m:[m[32m2[m[36m:[mimport Wiseword[1;31mCsvImporter from "./_client/WisewordCsvImport[mer";
+[35mapp/(protected)/admin/vocab/import/page.tsx[m[36m:[m[32m5[m[36m:[m  return <Wiseword[1;31mCsvImport[mer />;
+[35mapp/(protected)/admin/vocab/import/wiseword-actions.ts[m[36m:[m[32m1[m[36m:[m// apps/web/app/(protected)/admin/[1;31mvocab/import[m/wiseword-actions.ts
+[35mapp/(protected)/admin/vocab/words/import/actions.ts[m[36m:[m[32m1[m[36m:[m// apps/web/app/(protected)/admin/[1;31mvocab/words/import[m/actions.ts
+[35mapp/(protected)/admin/vocab/words/import/actions.ts[m[36m:[m[32m5[m[36m:[m[1;31mimport { parseRawToWordEntries } from "@/lib/vocab[m/parseRawWords";
+[35mapp/(protected)/admin/vocab/words/import/actions.ts[m[36m:[m[32m132[m[36m:[m    .from("[1;31mvocab_import[m_batches")
+[35mapp/(protected)/admin/vocab/words/import/actions.ts[m[36m:[m[32m151[m[36m:[m      .from("[1;31mvocab_import[m_batches")
+[35mapp/(protected)/admin/vocab/words/import/actions.ts[m[36m:[m[32m318[m[36m:[m    const { error: logErr } = await supabase.from("[1;31mvocab_import[m_batch_items").insert({
+[35mapp/(protected)/admin/vocab/words/import/actions.ts[m[36m:[m[32m326[m[36m:[m      throw new Error("[1;31mimport log 저장 실패 (vocab[m_import_batch_items)");
+[35mapp/(protected)/admin/vocab/words/import/actions.ts[m[36m:[m[32m345[m[36m:[m    .from("[1;31mvocab_import[m_batches")
+[35mapp/(protected)/admin/vocab/words/import/actions.ts[m[36m:[m[32m361[m[36m:[mexport async function [1;31mimportVocab[mWordsListAction(params: {
+[35mapp/(protected)/admin/vocab/words/import/actions.ts[m[36m:[m[32m440[m[36m:[m      return [1;31mimportVocab[mWordsListAction({
+[35mapp/(protected)/admin/vocab/words/import/actions.ts[m[36m:[m[32m451[m[36m:[m  return [1;31mimportVocab[mWordsListAction({
+[35mapp/(protected)/admin/vocab/words/import/page.tsx[m[36m:[m[32m1[m[36m:[m// apps/web/app/(protected)/admin/[1;31mvocab/words/import[m/page.tsx
+[35mapp/(protected)/admin/vocab/words/import/page.tsx[m[36m:[m[32m7[m[36m:[mexport default function Admin[1;31mVocabWordsImport[mPage() {
+[35mapp/(protected)/admin/vocab/words/import/page.tsx[m[36m:[m[32m23[m[36m:[m            console.log("[1;31mVOCAB IMPORT[m RESULT", result);
+[35mapp/(protected)/admin/vocab/words/new/actions.ts[m[36m:[m[32m6[m[36m:[m[1;31mimport type { WordCreatePayload, GradeBand } from "@/models/vocab[m/index";
+[35mapp/(protected)/admin/vocab/words/new/page.jsx[m[36m:[m[32m3[m[36m:[m[1;31mimport WordForm from "@/components/vocab[m/WordForm";
+[35mapp/(protected)/admin/vocab/words/page.tsx[m[36m:[m[32m45[m[36m:[m            href="/admin/[1;31mvocab/import[m"
+[35mapp/(protected)/speaking-2026/voca-drill/page.tsx[m[36m:[m[32m5[m[36m:[m[1;31mimport { demoVocabWords } from "@/models/vocab[m-demo";
+[35mapp/(protected)/speaking-2026/voca-drill/page.tsx[m[36m:[m[32m6[m[36m:[m[1;31mimport type { VocabWordCore } from "@/models/vocab[m";
+[35mapp/(protected)/vocab/drill/page.tsx[m[36m:[m[32m7[m[36m:[m[1;31mimport DrillRunner from "@/components/vocab[m/drill/DrillRunner";
+[35mapp/(protected)/vocab/drill/page.tsx[m[36m:[m[32m8[m[36m:[m[1;31mimport type { DrillTask, DrillType } from "@/components/vocab[m/drill/drill.types";
+[35mapp/(protected)/vocab/exam/page.tsx[m[36m:[m[32m5[m[36m:[m[1;31mimport { demoVocabWords } from "@/models/vocab[m-demo";
+[35mapp/(protected)/vocab/exam/page.tsx[m[36m:[m[32m6[m[36m:[m[1;31mimport type { VocabWordCore } from "@/models/vocab[m";
+[35mapp/(protected)/vocab/learn/page.tsx[m[36m:[m[32m3[m[36m:[m[1;31mimport LearningLayout3Col from "@/components/vocab[m/LearningLayout3Col";
+[35mapp/(protected)/vocab/learn/page.tsx[m[36m:[m[32m4[m[36m:[m[1;31mimport { demoVocabWords } from "@/models/vocab[m-demo";
+[35mapp/(protected)/vocab/learn/page.tsx[m[36m:[m[32m5[m[36m:[m[1;31mimport type { VocabWordCore } from "@/models/vocab[m";
+[35mapp/(protected)/vocab/pre-screen/page.tsx[m[36m:[m[32m7[m[36m:[m[1;31mimport PrescreenBoard from "@/components/vocab[m/PrescreenBoard";
+[35mapp/(protected)/vocab/pre-screen/page.tsx[m[36m:[m[32m9[m[36m:[m[1;31mimport { demoVocabWords } from "@/models/vocab[m-demo";
+[35mapp/(protected)/vocab/pre-screen/page.tsx[m[36m:[m[32m10[m[36m:[m[1;31mimport type { VocabWordCore } from "@/models/vocab[m";
+[35mapp/(protected)/vocab/pre-screen/page.tsx[m[36m:[m[32m11[m[36m:[m[1;31mimport type { PrescreenResult } from "@/models/vocab[m/session/prescreen";
+[35mapp/(protected)/vocab/pre-screen/page.tsx[m[36m:[m[32m12[m[36m:[m[1;31mimport type { VocabSessionState } from "@/models/vocab[m";
+[35mapp/(protected)/vocab/session/page.bak[m[36m:[m[32m11[m[36m:[m[1;31mimport PrescreenBoard from "@/components/vocab[m/PrescreenBoard";
+[35mapp/(protected)/vocab/session/page.bak[m[36m:[m[32m12[m[36m:[m[1;31mimport PrescreenSpellingBoard from "@/components/vocab[m/prescreen/PrescreenSpellingBoard";
+[35mapp/(protected)/vocab/session/page.bak[m[36m:[m[32m13[m[36m:[m[1;31mimport SummaryScreen from "@/components/vocab[m/summary/SummaryScreen";
+[35mapp/(protected)/vocab/session/page.bak[m[36m:[m[32m15[m[36m:[m[1;31mimport LearningRunner from "@/components/vocab[m/learning/LearningRunner";
+[35mapp/(protected)/vocab/session/page.bak[m[36m:[m[32m16[m[36m:[m[1;31mimport type { LearningWord } from "@/components/vocab[m/learning/learning.types";
+[35mapp/(protected)/vocab/session/page.bak[m[36m:[m[32m18[m[36m:[m[1;31mimport SpeedChallengeRunner from "@/components/vocab[m/speed/SpeedChallengeRunner";
+[35mapp/(protected)/vocab/session/page.bak[m[36m:[m[32m19[m[36m:[m[1;31mimport type { SpeedQuestion, SpeedAttemptResult } from "@/models/vocab[m/speed.types";
+[35mapp/(protected)/vocab/session/page.bak[m[36m:[m[32m21[m[36m:[m[1;31mimport DrillRunner from "@/components/vocab[m/drill/DrillRunner";
+[35mapp/(protected)/vocab/session/page.bak[m[36m:[m[32m22[m[36m:[m[1;31mimport type { DrillTask, DrillType } from "@/components/vocab[m/drill/drill.types";
+[35mapp/(protected)/vocab/session/page.bak[m[36m:[m[32m23[m[36m:[m[1;31mimport { buildBlockDrillTasksV1, type WordFormRowLike } from "@/lib/vocab[m/drill/buildBlockDrillTasksV1";
+[35mapp/(protected)/vocab/session/page.bak[m[36m:[m[32m33[m[36m:[m[1;31mimport type { PrescreenResult } from "@/models/vocab[m/session/prescreen";
+[35mapp/(protected)/vocab/session/page.bak[m[36m:[m[32m34[m[36m:[m[1;31mimport type { SpellingResult } from "@/models/vocab[m/session/spelling";
+[35mapp/(protected)/vocab/session/page.bak[m[36m:[m[32m35[m[36m:[m[1;31mimport type { SessionWord } from "@/models/vocab[m/SessionWord";
+[35mcomponents/vocab/MiniChallengeCard.tsx[m[36m:[m[32m4[m[36m:[m[1;31mimport type { VocabWordCore } from "@/models/vocab[m";
+[35mcomponents/vocab/WordForm.tsx[m[36m:[m[32m7[m[36m:[m[1;31mimport { createWordAction } from "@/app/(protected)/admin/vocab[m/words/new/actions";
+[35mcomponents/vocab/learning/LearningRunner.tsx[m[36m:[m[32m7[m[36m:[m[1;31mimport type { SpeedQuestion } from "@/models/vocab[m/speed.types";
+[35mcomponents/vocab/speed/SpeedChallengeRunner.tsx[m[36m:[m[32m4[m[36m:[m[1;31mimport type { SpeedAttemptResult, SpeedQuestion } from "@/models/vocab[m/speed.types";

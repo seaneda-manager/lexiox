@@ -1,0 +1,44 @@
+{
+  "root": true,
+  "extends": ["next/core-web-vitals"],
+  "settings": {
+    "next": { "rootDir": ["./"] },
+    "import/resolver": {
+      "typescript": {
+        "alwaysTryTypes": true,
+        "project": "./tsconfig.json"
+      }
+    }
+  },
+  "rules": {
+    "react-hooks/set-state-in-effect": "off",
+    "react-hooks/purity": "off",
+    "react-hooks/immutability": "off",
+    "react-hooks/preserve-manual-memoization": "off",
+    "react/no-unescaped-entities": "off",
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "group": [
+              "@/types/types-reading",
+              "@/lib/readingSchemas",
+              "apps/web/types/types-reading"
+            ],
+            "message": "Reading types must come from @/models/reading (SSOT). Update imports."
+          }
+        ]
+      }
+    ]
+  },
+  "ignorePatterns": ["node_modules/", ".next/", "dist/", "build/", "coverage/", "**/*.d.ts", "**/database.types.ts"],
+  "overrides": [
+    {
+      "files": ["components/vocab/**/*.tsx"],
+      "rules": {
+        "react-hooks/exhaustive-deps": "warn"
+      }
+    }
+  ]
+}

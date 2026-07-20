@@ -1,0 +1,12 @@
+{
+	"dependencies": {
+		"@plasmicapp/loader-nextjs": "^1.0.440",
+		"@supabase/ssr": "^0.7.0"
+	},
+	"devDependencies": {
+		"@types/node": "^20.19.23",
+		"supabase": "^2.48.3",
+		"tsx": "^4.20.6",
+		"typescript": "5.4.5"
+	}
+}

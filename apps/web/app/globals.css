@@ -1,0 +1,373 @@
+/* apps/web/app/globals.css */
+
+/* ── Pretendard (Korean + Latin) ──────────────────────────────── */
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  height: 100%;
+}
+
+/* ✅ focus-root가 떠 있을 때 브라우저 스크롤 자체를 잠금 (JS 없이) */
+html:has(.focus-root),
+body:has(.focus-root) {
+  overflow: hidden !important;
+}
+
+/* =========================================================
+   Global
+   ========================================================= */
+
+body {
+  font-family:
+    'Pretendard Variable', Pretendard,
+    -apple-system, BlinkMacSystemFont,
+    'Apple SD Gothic Neo', 'Noto Sans KR',
+    'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  overflow-x: hidden;
+  background-image: none !important;
+  background-color: #f2f4f1;
+  color: var(--text-primary, #1c1c1c);
+}
+
+/* =========================================================
+   Focus Mode (Stage)
+   ========================================================= */
+
+:root {
+  --focus-accent: #f5d054;
+
+  /* overlay 톤 */
+  --overlay-base: #f2f4f1;
+
+  /* stage sizing */
+  --lx-stage-vw: 0.985;
+  --lx-stage-vh: 0.965;
+
+  /* ✅ stage ratio SSOT: 5:3 */
+  --lx-stage-max-w: 1920px;
+  --lx-stage-max-h: 1152px; /* 1920 * 3/5 */
+
+  /* stage position */
+  --lx-stage-offset-y: 1.2vh;
+
+  /* gold safe inset */
+  --lx-gold-inset-x: clamp(18px, 4cqi, 72px);
+  --lx-gold-inset-y: clamp(18px, 4cqh, 72px);
+
+  /* ✅ PANEL SSOT (AREA = 2/3 of stage, same 5:3)
+     linear = sqrt(2/3) ≈ 0.8165
+  */
+  --lx-panel-to-stage: 0.8165;
+
+  --lx-panel-max-w: calc(var(--lx-stage-max-w) * var(--lx-panel-to-stage));
+  --lx-panel-max-h: calc(var(--lx-stage-max-h) * var(--lx-panel-to-stage));
+}
+
+/* focus root */
+.focus-root,
+.focus-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+
+  display: grid;
+  place-items: center;
+
+  padding: min(8px, 1.2vw);
+
+  background: var(--overlay-base) !important;
+
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
+
+  /* ✅ overscroll로 body가 튕기는 느낌 방지 */
+  overscroll-behavior: none;
+}
+
+.focus-outside {
+  display: none;
+}
+
+.focus-stage-wrap {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+}
+
+/* stage */
+.focus-stage {
+  container-type: size;
+  position: relative;
+
+  max-width: var(--lx-stage-max-w);
+  max-height: var(--lx-stage-max-h);
+
+  width: min(
+    calc(var(--lx-stage-vw) * 100vw),
+    calc(var(--lx-stage-vh) * 100vh * 5 / 3),
+    var(--lx-stage-max-w),
+    calc(var(--lx-stage-max-h) * 5 / 3)
+  );
+
+  aspect-ratio: 5 / 3;
+
+  border-radius: 28px;
+  overflow: hidden;
+
+  box-shadow:
+    0 0 0 2px rgba(245, 208, 84, 0.22),
+    0 18px 60px rgba(0, 0, 0, 0.25);
+
+  /* ✅ contain일 때 남는 영역이 티 안 나게 bg-base 톤으로 */
+  background-color: #0f3b33;
+
+  background-image: url("/lingox/ui/bg-base.png");
+  background-repeat: no-repeat;
+  background-position: center;
+
+  /* ✅ 안 잘리게 */
+  background-size: contain;
+
+  --lx-stage-fg: #f8fafc;
+  --lx-stage-fg-muted: rgba(248, 250, 252, 0.78);
+  --lx-surface-bg: rgba(255, 255, 255, 0.94);
+  --lx-surface-fg: #111827;
+
+  color: var(--lx-stage-fg);
+
+  transform: translateY(clamp(6px, var(--lx-stage-offset-y), 18px));
+  will-change: transform;
+
+  filter: none !important;
+}
+
+.focus-stage[data-tone="light"] {
+  --lx-stage-fg: #111827;
+  --lx-stage-fg-muted: rgba(17, 24, 39, 0.72);
+  --lx-surface-bg: rgba(255, 255, 255, 0.96);
+  --lx-surface-fg: #111827;
+  color: var(--lx-stage-fg);
+}
+
+/* ── LEXiOX Vocab 전용 테마 ─────────────────────────────────── */
+.focus-stage[data-theme="vocab"] {
+  background-color: #fafafa;
+  background-image: none;
+
+  /* 오렌지 테두리 + 부드러운 그림자 */
+  box-shadow:
+    0 0 0 3px #f97316,
+    0 0 0 7px rgba(249, 115, 22, 0.18),
+    0 20px 60px rgba(0, 0, 0, 0.10);
+
+  --lx-stage-fg: #111827;
+  --lx-stage-fg-muted: rgba(17, 24, 39, 0.6);
+  --lx-surface-bg: #ffffff;
+  --lx-surface-fg: #111827;
+  color: var(--lx-stage-fg);
+
+  /* 오렌지 상단 라인 */
+  border-top: 4px solid #f97316;
+}
+
+.focus-stage-inner {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  box-sizing: border-box;
+
+  /* ✅ stage가 스크롤 컨테이너가 되면 "카드가 움직여 보임" → 차단 */
+  overflow: hidden;
+
+  filter: none !important;
+}
+
+/* =========================================================
+   ✅ Panel scaffolding (SSOT)
+   - panel aspect = 5:3
+   - panel area = stage * 2/3 (linear 0.8165)
+   - centered, never crosses gold safe inset
+   ========================================================= */
+
+.lx-panel-wrap {
+  width: 100%;
+  height: 100%;
+
+  display: grid;
+  place-items: center;
+
+  padding: var(--lx-gold-inset-y) var(--lx-gold-inset-x);
+  box-sizing: border-box;
+}
+
+/* the actual device panel root */
+.lx-panel {
+  width: min(
+    calc(100% * var(--lx-panel-to-stage)),
+    var(--lx-panel-max-w)
+  );
+
+  aspect-ratio: 5 / 3;
+
+  max-height: min(
+    calc(100% * var(--lx-panel-to-stage)),
+    var(--lx-panel-max-h)
+  );
+
+  /* ✅ 이제 스크롤은 패널 안에서만 */
+  overflow: auto;
+}
+
+/* ✅ Chrome: stage 컨테이너 기준 + gold inset 안전 반영 */
+@supports (width: 1cqi) {
+  .lx-panel {
+    width: min(
+      calc(100cqi * var(--lx-panel-to-stage)),
+      calc((100cqh - (2 * var(--lx-gold-inset-y))) * 5 / 3),
+      100%,
+      var(--lx-panel-max-w)
+    );
+
+    max-height: min(
+      calc(100cqh * var(--lx-panel-to-stage)),
+      var(--lx-panel-max-h),
+      calc(100cqh - (2 * var(--lx-gold-inset-y)))
+    );
+  }
+}
+
+/* =========================================================
+   Feedback
+   ========================================================= */
+
+@keyframes correctPulse {
+  0% { box-shadow: 0 0 0 0 rgba(164, 240, 0, 0.55); }
+  100% { box-shadow: 0 0 0 24px rgba(164, 240, 0, 0); }
+}
+.correct { animation: correctPulse 400ms ease-out; }
+
+@keyframes wrongShake {
+  0%,100% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
+}
+.wrong { animation: wrongShake 300ms ease; }
+
+/* =========================================================
+   Buttons
+   ========================================================= */
+
+.lx-action-row {
+  width: min(520px, 92%);
+  margin: 0 auto;
+  display: flex;
+  gap: 16px;
+
+  position: sticky;
+  bottom: 16px;
+  z-index: 20;
+  padding-top: 10px;
+}
+
+.lx-btn {
+  flex: 1;
+  height: 56px;
+
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 16px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+
+  transition:
+    transform 150ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 150ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    background-color 150ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    color 150ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    border-color 150ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.lx-btn:active { transform: scale(0.96); }
+
+.lx-btn-primary {
+  background: #1f6f5f;
+  color: #ffffff;
+  border: 1px solid #1f6f5f;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+}
+
+.lx-btn-primary:hover {
+  transform: scale(1.04);
+  background: #258673;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.26);
+}
+
+.lx-btn-secondary {
+  background: #ffffff !important;
+  color: #1f6f5f !important;
+  border: 1px solid rgba(31, 111, 95, 0.65) !important;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.14);
+}
+
+.lx-btn-secondary:hover {
+  transform: scale(1.04);
+  background: #1f6f5f !important;
+  color: #ffffff !important;
+  border-color: #1f6f5f !important;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.22);
+}
+
+.lx-btn:hover {
+  outline: 2px solid rgba(164, 240, 0, 0.25);
+  outline-offset: 2px;
+}
+
+/* =========================================================
+   Scrollbar — subtle, blends into neutral background
+   ========================================================= */
+
+/* Webkit (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;        /* neutral-300 */
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;        /* neutral-400 */
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db transparent;
+}

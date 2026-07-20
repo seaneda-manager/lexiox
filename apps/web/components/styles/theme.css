@@ -1,0 +1,96 @@
+/* LingoX Design Tokens (drop-in) */
+:root {
+  color-scheme: light;
+
+  /* Brand */
+  --lx-primary: #2f6bff;
+  --lx-secondary: #2fd6c5;
+  --lx-accent: #ffc84a;
+  --lx-danger: #ff6b7a;
+
+  /* UI */
+  --lx-bg: #eaf5ff;
+  --lx-surface: #ffffff;
+  --lx-surface-2: rgba(255, 255, 255, 0.72);
+  --lx-border: rgba(47, 107, 255, 0.18);
+  --lx-ring: rgba(47, 107, 255, 0.35);
+
+  --lx-text: #1f2a44;
+  --lx-muted: rgba(31, 42, 68, 0.62);
+
+  /* States */
+  --lx-success: #2ed47a;
+  --lx-hint: #ffcc66;
+  --lx-focus: #7c5cff;
+  --lx-info: #2fd6c5;
+
+  /* Focus overlay */
+  --lx-overlay: rgba(10, 20, 40, 0.55);
+
+  /* Effects */
+  --lx-shadow: 0 10px 30px rgba(10, 20, 40, 0.08);
+  --lx-radius: 18px;
+}
+
+/* Optional base application (safe + handy) */
+html,
+body {
+  background: var(--lx-bg);
+  color: var(--lx-text);
+}
+
+.lx-surface {
+  background: var(--lx-surface);
+  border: 1px solid var(--lx-border);
+  border-radius: var(--lx-radius);
+  box-shadow: var(--lx-shadow);
+}
+
+/* Focus preset (시험모드: body에 class 붙이면 테마 전환) */
+body.lx-theme-focus {
+  --lx-bg: #eef2ff;
+  --lx-accent: #7c5cff;
+  --lx-border: rgba(124, 92, 255, 0.2);
+  --lx-ring: rgba(124, 92, 255, 0.4);
+  --lx-overlay: rgba(10, 20, 40, 0.6);
+}
+
+/* Reward preset */
+body.lx-theme-reward {
+  --lx-bg: #fff3e6;
+  --lx-accent: #ffcc66;
+  --lx-border: rgba(255, 204, 102, 0.28);
+  --lx-ring: rgba(255, 204, 102, 0.45);
+  --lx-overlay: rgba(10, 20, 40, 0.5);
+}
+
+/* Optional dark mode */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+
+    --lx-bg: #0b1220;
+    --lx-surface: #0f1a2d;
+    --lx-surface-2: rgba(15, 26, 45, 0.72);
+    --lx-border: rgba(47, 107, 255, 0.22);
+    --lx-ring: rgba(47, 107, 255, 0.42);
+
+    --lx-text: #e7eefc;
+    --lx-muted: rgba(231, 238, 252, 0.62);
+
+    --lx-overlay: rgba(0, 0, 0, 0.62);
+    --lx-shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
+  }
+
+  body.lx-theme-focus {
+    --lx-bg: #0d1026;
+    --lx-surface: #13183a;
+    --lx-border: rgba(124, 92, 255, 0.26);
+  }
+
+  body.lx-theme-reward {
+    --lx-bg: #1a120a;
+    --lx-surface: #23180f;
+    --lx-border: rgba(255, 204, 102, 0.22);
+  }
+}

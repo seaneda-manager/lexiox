@@ -1,0 +1,9 @@
+'use client';
+export default function PassagePane({title,content}:{title?:string; content?:string}){
+  return (
+    <article className="prose max-w-none p-4 h-full overflow-y-auto">
+      <h2>{title ?? 'Loading passage…'}</h2>
+      <div className="whitespace-pre-wrap leading-7">{content ?? ''}</div>
+    </article>
+  );
+}

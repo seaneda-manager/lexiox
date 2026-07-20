@@ -1,0 +1,39 @@
+body { font-family: Arial, sans-serif; margin:0; background:#f7f9fc; }
+    .view { display:none; padding:20px; }
+    .card { background:#fff; border:1px solid #e5e7eb; padding:16px; margin:10px 0; border-radius:10px; }
+    .btn { padding:8px 12px; margin:4px; cursor:pointer; border:1px solid #cbd5e1; border-radius:8px; background:#eef2ff; }
+    .btn.primary{ background:#4f46e5; color:#fff; border-color:#4f46e5; }
+    .muted{ color:#6b7280; }
+    .question-box{border:1px solid #d1d5db; padding:12px; border-radius:8px; margin-bottom:14px;}
+    .student-header-top { display:flex; justify-content:space-between; align-items:center; gap:8px; background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:8px 12px; margin-bottom:8px; }
+    textarea, input, select { width:100%; }
+    .split { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .pane { background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:12px; }
+    .passagePane { max-height:64vh; overflow:auto; line-height:1.6; }
+    .passagePane p { margin:0 0 12px; }
+    .passagePane .paraTag { display:inline-block; font-size:12px; color:#6b7280; margin-right:6px; }
+    .option-group { display:flex; gap:20px; align-items:center; }
+
+/* Shared utility */
+  #rsm .v,#lsm .v{display:none;padding:16px}
+  #rsm .c,#lsm .c{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:14px;margin:10px 0}
+  #rsm .b,#lsm .b{display:inline-flex;gap:6px;align-items:center;padding:8px 12px;border:1px solid #cbd5e1;border-radius:10px;background:#eef2ff;cursor:pointer}
+  #rsm .b.p,#lsm .b.p{background:#4f46e5;border-color:#4f46e5;color:#fff}
+  #rsm .r,#lsm .r{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  #rsm .h,#lsm .h{display:flex;align-items:center;gap:8px;justify-content:space-between;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:8px 12px;margin-bottom:10px}
+  #rsm .hc,#lsm .hc{flex:1;text-align:center;font-weight:700}
+  #rsm .list,#lsm .list{max-height:420px;overflow:auto;border:1px solid #e5e7eb;border-radius:12px}
+  #rsm .item,#lsm .item{display:grid;grid-template-columns:90px 1fr 140px;gap:8px;padding:8px;border-bottom:1px solid #e5e7eb;cursor:pointer}
+  #rsm .item:hover,#lsm .item:hover{background:#f8fafc}
+  #rsm .choice,#lsm .choice{padding:8px;border:1px solid #e5e7eb;border-radius:10px;margin:6px 0}
+  #rsm .pass,#lsm .pass{max-height:60vh;overflow:auto;border:1px solid #e5e7eb;border-radius:12px;padding:10px;line-height:1.6}
+  #rsm .ln,#lsm .ln{padding:3px;border-radius:6px}
+  #rsm .hl,#lsm .hl{background:#fef3c7}
+  #rsm .ok,#lsm .ok{color:#065f46}
+  #rsm .bad,#lsm .bad{color:#b91c1c}
+  #rsm table,#lsm table{width:100%;border-collapse:collapse}
+  #rsm th,#rsm td,#lsm th,#lsm td{border:1px solid #e5e7eb;padding:8px;vertical-align:top}
+  #rsm .sm,#lsm .sm{font-size:12px;color:#6b7280}
+  #rsm #RSM_mod,#lsm #LSM_mod{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:9999}
+  #lsm .notewrap{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  #lsm textarea{width:100%;min-height:140px}

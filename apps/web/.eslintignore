@@ -1,0 +1,6 @@
+lib/supabase/database.types.ts
+node_modules/
+.next/
+dist/
+build/
+coverage/

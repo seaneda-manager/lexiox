@@ -1,0 +1,12 @@
+{
+  "compilerOptions": { "checkJs": false },
+  "exclude": [
+    ".eslintrc.*",
+    "postcss.config.*",
+    "tailwind.config.*",
+    "next.config.*",
+    "node_modules",
+    ".next",
+    "dist"
+  ]
+}

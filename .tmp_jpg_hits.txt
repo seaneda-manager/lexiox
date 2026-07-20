@@ -1,0 +1,5 @@
+C:\dev\toefl-project-25-9-3\apps\web\app\(protected)\admin\listening\[setId]\page.tsx:199:             placeholder="/img/demo-conv.jpg"
+C:\dev\toefl-project-25-9-3\apps\web\app\(protected)\admin\listening\[setId]\page.tsx:283:             placeholder="/img/demo-lect.jpg"
+C:\dev\toefl-project-25-9-3\apps\web\app\api\listeningSet\route.ts:67:       imageUrl: '/images/conv-office-hours.jpg',
+C:\dev\toefl-project-25-9-3\apps\web\app\api\listeningSet\route.ts:74:       imageUrl: '/images/lecture-fossils.jpg',
+C:\dev\toefl-project-25-9-3\apps\web\components\vocab\PreScreenBoard.tsx:30:   const BG_SRC = "/lingox/ui/prescreen.jpg";

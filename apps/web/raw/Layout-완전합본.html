@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>TOEFL Program UI — 완전 합본 (원본 + Listening Study Mode)</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin:0; background:#f7f9fc; }
+    .view { display:none; padding:20px; }
+    .card { background:#fff; border:1px solid #e5e7eb; padding:16px; margin:10px 0; border-radius:10px; }
+    .btn { padding:8px 12px; margin:4px; cursor:pointer; border:1px solid #cbd5e1; border-radius:8px; background:#eef2ff; }
+    .btn.primary{ background:#4f46e5; color:#fff; border-color:#4f46e5; }
+    .muted{ color:#6b7280; }
+    .question-box{border:1px solid #d1d5db; padding:12px; border-radius:8px; margin-bottom:14px;}
+    .student-header-top { display:flex; justify-content:space-between; align-items:center; gap:8px; background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:8px 12px; margin-bottom:8px; }
+    textarea, input, select { width:100%; }
+    .split { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .pane { background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:12px; }
+    .passagePane { max-height:64vh; overflow:auto; line-height:1.6; }
+    .passagePane p { margin:0 0 12px; }
+    .passagePane .paraTag { display:inline-block; font-size:12px; color:#6b7280; margin-right:6px; }
+    .option-group { display:flex; gap:20px; align-items:center; }
+  </style>
+</head>
+<body>
+  <!-- HOME -->
+  <div id="homeView" class="view" style="display:block;">
+    <div class="card">
+      <h2>TOEFL Program — Home</h2>
+      <div>
+        <h3>TPO Set</h3>
+        <select id="tpoSelect" style="max-width:320px;"></select>
+      </div>
+      <div class="option-group">
+        <h3>Section</h3>
+        <label><input type="radio" name="section" value="reading" checked> Reading</label>
+        <label><input type="radio" name="section" value="listening"> Listening</label>
+        <label><input type="radio" name="section" value="speaking"> Speaking</label>
+        <label><input type="radio" name="section" value="writing"> Writing</label>
+      </div>
+      <div class="option-group">
+        <h3>Mode</h3>
+        <label><input type="radio" name="mode" value="test" checked> Test Mode</label>
+        <label><input type="radio" name="mode" value="study"> Study Mode</label>
+      </div>
+      <div style="margin-top:8px;">
+        <button class="btn primary" id="btnStart">Start</button>
+        <button class="btn" id="btnGoTeacher">Teacher Mode</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STUDENT (Reading) -->
+  <div id="studentReadingView" class="view">
+    <div class="student-header-top">
+      <div><strong id="pillTpoR">TPO</strong> · Reading</div>
+      <div>
+        <button class="btn" id="readingPrev">Back</button>
+        <button class="btn primary" id="readingNext">Next</button>
+        <button class="btn" id="btnReview">Review</button>
+        <button class="btn" id="homeBtnReading">Home</button>
+      </div>
+    </div>
+    <div class="split">
+      <div class="pane">
+        <div class="question-box">
+          <div id="readingQuestionText">(Reading question will appear here)</div>
+          <div id="readingChoices"></div>
+        </div>
+      </div>
+      <div class="pane passagePane" id="readingPassagePane">
+        <em class="muted">(Passage will appear here)</em>
+      </div>
+    </div>
+  </div>
+
+  <!-- REVIEW PAGE -->
+  <div id="reviewView" class="view">
+    <div class="student-header-top">
+      <div><strong id="pillTpoReview">TPO</strong> · Review</div>
+      <div>
+        <button class="btn" id="btnBackToReading">Back</button>
+        <button class="btn" id="homeBtnReview">Home</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Review Questions</h3>
+      <div id="reviewList"></div>
+    </div>
+  </div>
+
+  <!-- STUDENT (Listening: Test 모드만 원본 그대로) -->
+  <div id="studentListeningView" class="view">
+    <div class="student-header-top">
+      <div><strong id="pillTpoL">TPO</strong> · Listening</div>
+      <div>
+        <button class="btn" id="listeningPrev">Back</button>
+        <button class="btn primary" id="listeningNext">Next</button>
+        <button class="btn" id="homeBtnListening">Home</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="question-box">
+        <audio id="listeningAudio" controls></audio>
+        <div id="listeningQuestionText">(Listening question will appear here)</div>
+        <div id="listeningChoices"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STUDENT (Speaking) -->
+  <div id="studentSpeakingView" class="view">
+    <div class="student-header-top">
+      <div><strong id="pillTpoS">TPO</strong> · Speaking</div>
+      <div><button class="btn" id="homeBtnSpeaking">Home</button></div>
+    </div>
+    <div class="card">
+      <div class="question-box">
+        <div id="speakingQuestionText">(Speaking question will appear here)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STUDENT (Writing) -->
+  <div id="studentWritingView" class="view">
+    <div class="student-header-top">
+      <div><strong id="pillTpoW">TPO</strong> · Writing</div>
+      <div><button class="btn" id="homeBtnWriting">Home</button></div>
+    </div>
+    <div class="card">
+      <div class="question-box">
+        <div id="writingQuestionText">(Writing question will appear here)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TEACHER (Listening editor - JSON) -->
+  <div id="teacherListeningView" class="view">
+    <div class="student-header-top">
+      <div class="left"><strong>Teacher Mode — Listening Editor</strong></div>
+      <div class="right"><button class="btn" id="homeBtnTeacherListening">Home</button></div>
+    </div>
+    <div class="card">
+      <h3>Listening Editor (JSON)</h3>
+      <p class="muted" style="margin-top:-6px;">Array of questions. e.g. <code>[{ "number":1, "type":"basic|multi|replay", "prompt":"...", "choices":["A","B","C","D"], "correct":[1], "audio":"(optional url)" }]</code></p>
+      <textarea id="listeningEditor" placeholder='Example:\n[\n  {"number":1,"type":"basic","prompt":"What is the topic?","choices":["A","B","C","D"],"correct":[2]}\n]'></textarea>
+      <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn" id="btnListeningLoadToStudent">Load to Student<\/button>
+        <button class="btn" id="btnListeningLoadToStudy">Load to Study Mode<\/button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TEACHER (Reading editor - Form) -->
+  <div id="teacherReadingView" class="view">
+  <div class="student-header-top">
+    <div class="left"><strong>Teacher Mode — Reading Editor</strong></div>
+    <div class="right"><button class="btn" id="homeBtnTeacherReading">Home</button></div>
+  </div>
+
+  <div class="card">
+    <h3>1) Passage Input</h3>
+    <textarea id="r_passage" placeholder="Paste full passage here. Use blank lines between paragraphs."></textarea>
+    <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+      <button class="btn" id="r_btnSplit">Auto-split to Paragraphs</button>
+      <button class="btn" id="r_btnSentSplit">Auto-split to Sentences</button>
+    </div>
+    <div id="r_paraPreview" class="card" style="margin-top:10px;">
+      <em class="muted">Paragraph preview will appear here.</em>
+    </div>
+    <div id="r_sentPreview" class="card" style="margin-top:10px;">
+      <em class="muted">Sentence preview will appear here.</em>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>2) Question Editor</h3>
+    <div style="display:grid; grid-template-columns:repeat(2, minmax(260px,1fr)); gap:12px;">
+      <div>
+        <label>Question #</label>
+        <input id="rq_number" type="number" min="1" placeholder="e.g., 1"/>
+      </div>
+      <div>
+        <label>Type</label>
+        <select id="rq_type">
+          <option value="single">Single</option>
+          <option value="multi">Multi</option>
+          <option value="vocab">Vocab</option>
+          <option value="paraphrase">Paraphrase</option>
+          <option value="rhetorical">Rhetorical</option>
+          <option value="insertion">Insertion</option>
+          <option value="summary">Summary</option>
+        </select>
+      </div>
+      <div style="grid-column:1 / -1;">
+        <label>Prompt / Stem</label>
+        <textarea id="rq_prompt" style="min-height:80px;"></textarea>
+      </div>
+      <div style="grid-column:1 / -1;">
+        <label>Choices (one per line)</label>
+        <textarea id="rq_choices" style="min-height:100px;" placeholder="A
+B
+C
+D"></textarea>
+      </div>
+      <div>
+        <label>Correct Index(es) (0-based, comma-separated)</label>
+        <input id="rq_correct" type="text" placeholder="e.g., 1 or 1,3"/>
+      </div>
+      <div>
+        <label>Evidence Sentence Index(es) (0-based, comma-separated)</label>
+        <input id="rq_evidence" type="text" placeholder="e.g., 2 or 2,3"/>
+      </div>
+      <div style="grid-column:1 / -1;">
+        <label>Explanation</label>
+        <textarea id="rq_explanation" style="min-height:80px;" placeholder="Why is this correct?"></textarea>
+      </div>
+    </div>
+    <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+      <button class="btn primary" id="btnAddOrUpdateR">Add / Update Question</button>
+    </div>
+
+    <div class="card" style="margin-top:12px;">
+      <h4>Questions List</h4>
+      <div id="rqList" style="max-height:240px; overflow:auto; border:1px solid #e5e7eb; border-radius:8px;"></div>
+    </div>
+  </div>
+
+  <div class="card" style="display:flex; gap:8px; flex-wrap:wrap;">
+    <button class="btn" id="btnExportReadingToStudent">Load to Student (Test)</button>
+    <button class="btn" id="btnLoadReadingStudy">Load to Study Mode</button>
+    <button class="btn" id="btnExportReadingJSON">Export Reading Set (JSON)</button>
+    <button class="btn" id="btnImportReadingJSON">Import Reading Set (JSON)</button>
+    <input type="file" id="readingImportFile" accept="application/json" style="display:none;"/>
+  </div>
+</div>
+<script>(function(){const $=id=>document.getElementById(id);
+/* BOOTSTRAP: TPO select + Start/Teacher/Home routing */
+(function(){
+  const $=id=>document.getElementById(id);
+  function showViewBootstrap(id){ document.querySelectorAll('.view').forEach(v=>v.style.display='none'); const el=$(id); if(el) el.style.display='block'; }
+  function setPillsBootstrap(tpo){ ['pillTpoR','pillTpoL','pillTpoS','pillTpoW','pillTpoReview'].forEach(pid=>{ const p=$(pid); if(p) p.textContent=tpo; }); }
+  const sel=$('tpoSelect'); if(sel && !sel.options.length){ for(let i=1;i<=60;i++){ const o=document.createElement('option'); o.value='TPO '+i; o.textContent='TPO '+i; sel.appendChild(o);} sel.value='TPO 1'; }
+  const btnStart=document.getElementById('btnStart'); if(btnStart){ btnStart.onclick=function(e){ const section=document.querySelector('input[name="section"]:checked')?.value; const mode=document.querySelector('input[name="mode"]:checked')?.value; const tpo=sel? sel.value : 'TPO'; setPillsBootstrap(tpo); if(!(section==='reading' && mode==='study' && document.getElementById('rsm'))){ if(section==='reading') showViewBootstrap('studentReadingView'); else if(section==='listening') showViewBootstrap('studentListeningView'); else if(section==='speaking') showViewBootstrap('studentSpeakingView'); else if(section==='writing') showViewBootstrap('studentWritingView'); } }; }
+  const btnTeacher=document.getElementById('btnGoTeacher'); if(btnTeacher){ btnTeacher.onclick=function(){ const section=document.querySelector('input[name="section"]:checked')?.value; if(section==='reading') showViewBootstrap('teacherReadingView'); else if(section==='listening') showViewBootstrap('teacherListeningView'); else alert('Teacher editor는 현재 Reading/Listening만 제공됩니다.'); }; }
+  ['homeBtnReading','homeBtnListening','homeBtnSpeaking','homeBtnWriting','homeBtnTeacherListening','homeBtnTeacherReading','homeBtnReview'].forEach(id=>{ const el=document.getElementById(id); if(el) el.onclick=()=>showViewBootstrap('homeView'); });
+})();
+// --- renderRSentPrev
+})();
+</script>
+
+<!-- =======================
+Reading Study Mode Overlay (#rsm)
+Listening Study Mode Overlay (#lsm)
+— Study 모드에서만 Start를 가로채 허브로 진입
+======================= -->
+<style>
+  /* Shared utility */
+  #rsm .v,#lsm .v{display:none;padding:16px}
+  #rsm .c,#lsm .c{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:14px;margin:10px 0}
+  #rsm .b,#lsm .b{display:inline-flex;gap:6px;align-items:center;padding:8px 12px;border:1px solid #cbd5e1;border-radius:10px;background:#eef2ff;cursor:pointer}
+  #rsm .b.p,#lsm .b.p{background:#4f46e5;border-color:#4f46e5;color:#fff}
+  #rsm .r,#lsm .r{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  #rsm .h,#lsm .h{display:flex;align-items:center;gap:8px;justify-content:space-between;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:8px 12px;margin-bottom:10px}
+  #rsm .hc,#lsm .hc{flex:1;text-align:center;font-weight:700}
+  #rsm .list,#lsm .list{max-height:420px;overflow:auto;border:1px solid #e5e7eb;border-radius:12px}
+  #rsm .item,#lsm .item{display:grid;grid-template-columns:90px 1fr 140px;gap:8px;padding:8px;border-bottom:1px solid #e5e7eb;cursor:pointer}
+  #rsm .item:hover,#lsm .item:hover{background:#f8fafc}
+  #rsm .choice,#lsm .choice{padding:8px;border:1px solid #e5e7eb;border-radius:10px;margin:6px 0}
+  #rsm .pass,#lsm .pass{max-height:60vh;overflow:auto;border:1px solid #e5e7eb;border-radius:12px;padding:10px;line-height:1.6}
+  #rsm .ln,#lsm .ln{padding:3px;border-radius:6px}
+  #rsm .hl,#lsm .hl{background:#fef3c7}
+  #rsm .ok,#lsm .ok{color:#065f46}
+  #rsm .bad,#lsm .bad{color:#b91c1c}
+  #rsm table,#lsm table{width:100%;border-collapse:collapse}
+  #rsm th,#rsm td,#lsm th,#lsm td{border:1px solid #e5e7eb;padding:8px;vertical-align:top}
+  #rsm .sm,#lsm .sm{font-size:12px;color:#6b7280}
+  #rsm #RSM_mod,#lsm #LSM_mod{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:9999}
+  #lsm .notewrap{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  #lsm textarea{width:100%;min-height:140px}
+</style>
+<div id="rsm" style="display:none">
+  <div id="RSM_hub" class="v"><div class="h"><div class="r"><button class="b" id="RSM_HHome">Home</button></div><div class="hc">Reading — Study Mode</div><div></div></div>
+    <div class="r" style="gap:12px;flex-wrap:wrap"><div class="c" id="RSM_tileCorrect" style="cursor:pointer"><strong>Correct Answers</strong><div class="sm">맞은 문제 목록 (팝업)</div></div><div class="c" id="RSM_tileWrong" style="cursor:pointer"><strong>Wrong Answers</strong><div class="sm">오답 리스트 → Retry</div></div><div class="c" id="RSM_tileTrans" style="cursor:pointer"><strong>Translation Practice</strong><div class="sm">문장 번역 연습 (모델 번역 토글)</div></div></div></div>
+  <div id="RSM_correct" class="v"><div class="h"><div class="r"><button class="b" id="RSM_CBack">Back</button><button class="b" id="RSM_CHome">Home</button></div><div class="hc">Correct Answers</div><div></div></div><div class="c"><div class="item" style="font-weight:700;background:#f8fafc;cursor:default"><div>Question #</div><div>Question</div><div>Type</div></div><div id="RSM_CList" class="list"></div></div></div>
+  <div id="RSM_wrong" class="v"><div class="h"><div class="r"><button class="b" id="RSM_WBack">Back</button><button class="b" id="RSM_WHome">Home</button></div><div class="hc">Wrong Answers</div><div></div></div><div class="c"><div class="item" style="font-weight:700;background:#f8fafc;cursor:default"><div>Question #</div><div>Question</div><div>Type</div></div><div id="RSM_WList" class="list"></div></div></div>
+  <div id="RSM_retry" class="v"><div class="h"><div class="r"><button class="b" id="RSM_RBack">Back</button></div><div class="hc" id="RSM_RTitle">Retry</div><div class="r"><button class="b" id="RSM_RPassage">Passage</button><button class="b p" id="RSM_RNext">Next wrong</button></div></div><div class="c"><div id="RSM_RPrompt" class="r"></div><div id="RSM_RChoices" class="r"></div><div id="RSM_RFB" class="sm r"></div><div class="r"><button class="b" id="RSM_RSubmit">Submit</button></div></div></div>
+  <div id="RSM_trans" class="v"><div class="h"><div class="r"><button class="b" id="RSM_TBack">Back</button><button class="b" id="RSM_THome">Home</button></div><div class="hc">Translation Practice</div><div class="r sm"><label class="r"><input type="checkbox" id="RSM_showModel"> Show model translation</label></div></div><div class="c"><table><thead><tr><th style="width:56px;">#</th><th>English</th><th>Korean (student)</th><th class="RSM_mcol" style="display:none;">Korean (model)</th></tr></thead><tbody id="RSM_TBody"></tbody></table></div></div>
+  <div id="RSM_mod"><div class="c" style="max-width:900px;max-height:80vh;overflow:auto"><div class="r" style="justify-content:space-between"><div><strong>Passage</strong></div><button class="b" id="RSM_PClose">Close</button></div><div id="RSM_PBody" class="pass" style="margin-top:8px"></div></div></div>
+</div>
+
+<div id="lsm" style="display:none">
+  <div id="LSM_hub" class="v"><div class="h"><div class="r"><button class="b" id="LSM_HHome">Home</button></div><div class="hc">Listening — Study Mode</div><div></div></div>
+    <div class="r" style="gap:12px;flex-wrap:wrap">
+      <div class="c" id="LSM_tileNote" style="cursor:pointer"><strong>Note-taking Practice</strong><div class="sm">학생 입력 + 모델 노트 토글 + 스크립트 + 속도</div></div>
+      <div class="c" id="LSM_tileCorrect" style="cursor:pointer"><strong>Correct Answers</strong><div class="sm">맞은 문제 목록 (팝업)</div></div>
+      <div class="c" id="LSM_tileWrong" style="cursor:pointer"><strong>Wrong Answers</strong><div class="sm">오답 리스트 → Retry</div></div>
+    </div>
+  </div>
+  <div id="LSM_note" class="v"><div class="h"><div class="r"><button class="b" id="LSM_NBack">Back</button><button class="b" id="LSM_NHome">Home</button></div><div class="hc">Note-taking Practice</div><div class="r sm"><label class="r"><input type="checkbox" id="LSM_showModel"> Show model notes</label><span>Speed:</span><button class="b" id="LSM_sp05">0.5×</button><button class="b" id="LSM_sp08">0.8×</button><button class="b p" id="LSM_sp10">1×</button><button class="b" id="LSM_sp12">1.2×</button><button class="b" id="LSM_sp20">2×</button></div></div>
+    <div class="c notewrap">
+      <div>
+        <strong>Student Notes</strong>
+        <textarea id="LSM_studentNotes" placeholder="메모를 작성하세요…"></textarea>
+        <div class="sm">자동 저장됩니다.</div>
+      </div>
+      <div>
+        <strong>Script</strong>
+        <div id="LSM_script" class="pass"></div>
+        <div id="LSM_modelNotes" class="c" style="display:none; margin-top:8px;"><strong>Model Notes</strong><div id="LSM_modelBody" class="sm"></div></div>
+      </div>
+    </div>
+  </div>
+  <div id="LSM_correct" class="v"><div class="h"><div class="r"><button class="b" id="LSM_CBack">Back</button><button class="b" id="LSM_CHome">Home</button></div><div class="hc">Correct Answers</div><div></div></div><div class="c"><div class="item" style="font-weight:700;background:#f8fafc;cursor:default"><div>Question #</div><div>Question</div><div>Type</div></div><div id="LSM_CList" class="list"></div></div></div>
+  <div id="LSM_wrong" class="v"><div class="h"><div class="r"><button class="b" id="LSM_WBack">Back</button><button class="b" id="LSM_WHome">Home</button></div><div class="hc">Wrong Answers</div><div></div></div><div class="c"><div class="item" style="font-weight:700;background:#f8fafc;cursor:default"><div>Question #</div><div>Question</div><div>Type</div></div><div id="LSM_WList" class="list"></div></div></div>
+  <div id="LSM_retry" class="v"><div class="h"><div class="r"><button class="b" id="LSM_RBack">Back</button></div><div class="hc" id="LSM_RTitle">Retry</div><div class="r"><button class="b" id="LSM_REvidence">Play Evidence</button><button class="b p" id="LSM_RNext">Next wrong</button></div></div><div class="c"><div id="LSM_RPrompt" class="r"></div><div id="LSM_RChoices" class="r"></div><div id="LSM_RFB" class="sm r"></div><audio id="LSM_audio" controls style="width:100%; margin-top:8px;"></audio><div class="r"><button class="b" id="LSM_RSubmit">Submit</button></div></div></div>
+  <div id="LSM_mod"><div class="c" style="max-width:900px;max-height:80vh;overflow:auto"><div class="r" style="justify-content:space-between"><div><strong>Script</strong></div><button class="b" id="LSM_PClose">Close</button></div><div id="LSM_PBody" class="pass" style="margin-top:8px"></div></div></div>
+</div>
+
+<script>
+(function(){
+  const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+  // ===== Home prefs (TPO/Section/Mode) auto save/restore =====
+  function homeFillTPO(){ const sel=document.getElementById('tpoSelect'); if(sel && sel.options.length===0){ for(let i=1;i<=60;i++){ const o=document.createElement('option'); o.value='TPO '+i; o.textContent='TPO '+i; sel.appendChild(o);} sel.value='TPO 1'; } }
+  function homeLoad(){ try{ const p=JSON.parse(localStorage.getItem('home_prefs')||'{}'); if(p.tpo){ const sel=document.getElementById('tpoSelect'); if(sel){ homeFillTPO(); sel.value=p.tpo; } } if(p.section){ const r=document.querySelector(`input[name="section"][value="${p.section}"]`); if(r) r.checked=true; } if(p.mode){ const r=document.querySelector(`input[name="mode"][value="${p.mode}"]`); if(r) r.checked=true; } }catch(e){} }
+  function homeSave(){ try{ const sel=document.getElementById('tpoSelect'); const tpo=sel? sel.value: null; const section=document.querySelector('input[name="section"]:checked')?.value; const mode=document.querySelector('input[name="mode"]:checked')?.value; localStorage.setItem('home_prefs', JSON.stringify({tpo,section,mode})); }catch(e){} }
+  homeFillTPO(); homeLoad();
+  document.getElementById('tpoSelect')?.addEventListener('change',homeSave);
+  $$('input[name="section"]').forEach(el=>el.addEventListener('change',homeSave));
+  $$('input[name="mode"]').forEach(el=>el.addEventListener('change',homeSave));
+  // ===== Intercept Start in capture for Study modes =====
+  document.getElementById('btnStart')?.addEventListener('click',function(e){
+    const section=document.querySelector('input[name="section"]:checked')?.value;
+    const mode=document.querySelector('input[name="mode"]:checked')?.value;
+    const tpo=document.getElementById('tpoSelect')?.value||'TPO';
+    if(mode==='study' && section==='reading'){
+      e.preventDefault(); e.stopImmediatePropagation();
+      launchRSM(tpo);
+    }else if(mode==='study' && section==='listening'){
+      e.preventDefault(); e.stopImmediatePropagation();
+      launchLSM(tpo);
+    }
+  }, true);
+
+  // ======== READING STUDY MODE (RSM) ========
+  const RSM={App:{tpo:'TPO 1'},Set:null,Questions:[],wrongOrder:[],retryPtr:0,currentRetryQ:null}; window._RSMRef=RSM;
+  function rsmShow(id){ const root=$('#rsm'); if(!root) return; root.style.display='block'; $$('#rsm .v').forEach(v=>v.style.display='none'); $(id,root).style.display='block'; window.scrollTo({top:0,behavior:'smooth'}); }
+  function rsmP(q){ const H=new Set(q.evidence_sent_idx||[]); return (RSM.Set?.sentences||[]).map((s,i)=>`<div class="ln ${H.has(i)?'hl':''}">${i+1}. ${s}</div>`).join('')||'<div class="sm">(No passage)</div>'; }
+  function rsmOk(q,p){ const c=(q.correct||[]).slice().sort().join(','), x=(p||[]).slice().sort().join(','); return c===x && x!==''; }
+  function launchRSM(tpo){ RSM.App.tpo=tpo; const data=window.RSM_DATA||DemoR; RSM.Set=data; RSM.Questions=(data.questions||[]); rsmShow('#RSM_hub'); }
+  $('#RSM_HHome')?.addEventListener('click',()=>{ $('#rsm').style.display='none'; $('#homeView').style.display='block'; });
+  $('#RSM_tileCorrect')?.addEventListener('click',()=>rsmList(true));
+  $('#RSM_tileWrong')?.addEventListener('click',()=>rsmList(false));
+  $('#RSM_tileTrans')?.addEventListener('click',()=>rsmTrans());
+  function rsmList(isC){ const box=isC?$('#RSM_CList'):$('#RSM_WList'); const view=isC?'#RSM_correct':'#RSM_wrong'; if(!box) return; box.innerHTML=''; const arr=[...(RSM.Questions||[])].sort((a,b)=>a.number-b.number); const saved=rsmLoadAns(); const filt=arr.filter(q=> (rsmOk(q, saved[q.number])===isC)); filt.forEach(q=>{ const d=document.createElement('div'); d.className='item'; d.innerHTML=`<div>${q.number}</div><div>${q.prompt}</div><div>${(q.skill||[]).join(', ')||q.type||'-'}</div>`; d.addEventListener('click',()=>{ if(isC) rsmShowDetail(q); else rsmRetry(q,filt); }); box.appendChild(d); }); rsmShow(view); }
+  function rsmShowDetail(q){ const m=$('#RSM_mod'),b=$('#RSM_PBody'); b.innerHTML=`<div class='r'><strong>Question ${q.number}</strong></div><div>${q.prompt}</div><div class='sm'>Type: ${(q.skill||[]).join(', ')||q.type||'-'}</div><hr><div>${q.explanation||''}</div><hr>`+rsmP(q); m.style.display='flex'; }
+  function rsmRetry(q,list){ RSM.wrongOrder=list.map(x=>x.number); RSM.retryPtr=RSM.wrongOrder.indexOf(q.number); RSM.currentRetryQ=q; $('#RSM_RTitle').textContent=`Retry — Q${q.number}`; $('#RSM_RPrompt').textContent=q.prompt; const box=$('#RSM_RChoices'); box.innerHTML=''; const multi=(q.type==='multi')||((q.correct||[]).length>1); (q.choices||[]).forEach((c,i)=>{ const L=document.createElement('label'); L.className='r choice'; L.innerHTML=`<input type="${multi?'checkbox':'radio'}" name="rsm_r_${q.number}" value="${i}"> ${c}`; box.appendChild(L); }); $('#RSM_RFB').innerHTML=''; rsmShow('#RSM_retry'); }
+  $('#RSM_RBack')?.addEventListener('click',()=>rsmShow('#RSM_wrong'));
+  $('#RSM_RNext')?.addEventListener('click',()=>{ RSM.retryPtr=Math.min(RSM.wrongOrder.length-1,RSM.retryPtr+1); const n=(RSM.Questions||[]).find(x=>x.number===RSM.wrongOrder[RSM.retryPtr]); rsmRetry(n,(RSM.Questions||[]).filter(x=>RSM.wrongOrder.includes(x.number))); });
+  $('#RSM_RSubmit')?.addEventListener('click',()=>{ const q=RSM.currentRetryQ; const picks=$$('#RSM_RChoices input:checked').map(i=>parseInt(i.value,10)); const good=rsmOk(q,picks); const fb=$('#RSM_RFB'); const S=rsmLoadAns(); S[q.number]=picks; rsmSaveAns(S); if(good){ fb.innerHTML='<span class="ok">Correct ✔</span>'+(q.explanation?`<div class="sm">${q.explanation}</div>`:''); } else { fb.innerHTML='<span class="bad">Wrong ✖</span>'+(q.explanation?`<div class="sm">${q.explanation}</div>`:''); const m=$('#RSM_mod'),b=$('#RSM_PBody'); b.innerHTML=rsmP(q); m.style.display='flex'; } });
+  $('#RSM_RPassage')?.addEventListener('click',()=>{ const q=RSM.currentRetryQ; const m=$('#RSM_mod'),b=$('#RSM_PBody'); b.innerHTML=rsmP(q); m.style.display='flex'; });
+  $('#RSM_PClose')?.addEventListener('click',()=>$('#RSM_mod').style.display='none');
+  function rsmTrans(){ const tbody=$('#RSM_TBody'); if(!tbody) return; const saved=rsmLoadTrans(); tbody.innerHTML=''; (RSM.Set?.sentences||[]).forEach((s,i)=>{ const id=`rsm_tr_${i}`; const tr=document.createElement('tr'); tr.innerHTML=`<td>${i+1}</td><td>${s}</td><td><textarea id="${id}" rows="2" placeholder="번역을 작성하세요…">${saved[id]||''}</textarea></td><td class='RSM_mcol' style='display:none'>${(RSM.Set?.model_translation||[])[i]||''}</td>`; tbody.appendChild(tr); tr.querySelector('textarea').addEventListener('input',()=>{ const m=rsmLoadTrans(); m[id]=tr.querySelector('textarea').value; rsmSaveTrans(m); }); }); rsmShow('#RSM_trans'); }
+  $('#RSM_TBack')?.addEventListener('click',()=>rsmShow('#RSM_hub'));
+  $('#RSM_THome')?.addEventListener('click',()=>{ $('#rsm').style.display='none'; $('#homeView').style.display='block'; });
+  // Added: Correct/Wrong views Back & Home
+  $('#RSM_CBack')?.addEventListener('click',()=>rsmShow('#RSM_hub'));
+  $('#RSM_CHome')?.addEventListener('click',()=>{ $('#rsm').style.display='none'; $('#homeView').style.display='block'; });
+  $('#RSM_WBack')?.addEventListener('click',()=>rsmShow('#RSM_hub'));
+  $('#RSM_WHome')?.addEventListener('click',()=>{ $('#rsm').style.display='none'; $('#homeView').style.display='block'; });
+  // Added: Correct/Wrong views Back & Home
+  $('#RSM_CBack')?.addEventListener('click',()=>rsmShow('#RSM_hub'));
+  $('#RSM_CHome')?.addEventListener('click',()=>{ $('#rsm').style.display='none'; $('#homeView').style.display='block'; });
+  $('#RSM_WBack')?.addEventListener('click',()=>rsmShow('#RSM_hub'));
+  $('#RSM_WHome')?.addEventListener('click',()=>{ $('#rsm').style.display='none'; $('#homeView').style.display='block'; });
+  // Added: Correct/Wrong views Back & Home
+  $('#RSM_CBack')?.addEventListener('click',()=>rsmShow('#RSM_hub'));
+  $('#RSM_CHome')?.addEventListener('click',()=>{ $('#rsm').style.display='none'; $('#homeView').style.display='block'; });
+  $('#RSM_WBack')?.addEventListener('click',()=>rsmShow('#RSM_hub'));
+  $('#RSM_WHome')?.addEventListener('click',()=>{ $('#rsm').style.display='none'; $('#homeView').style.display='block'; });
+  // Added: Correct/Wrong views Back & Home
+  $('#RSM_CBack')?.addEventListener('click',()=>rsmShow('#RSM_hub'));
+  $('#RSM_CHome')?.addEventListener('click',()=>{ $('#rsm').style.display='none'; $('#homeView').style.display='block'; });
+  $('#RSM_WBack')?.addEventListener('click',()=>rsmShow('#RSM_hub'));
+  $('#RSM_WHome')?.addEventListener('click',()=>{ $('#rsm').style.display='none'; $('#homeView').style.display='block'; });
+  $('#RSM_showModel')?.addEventListener('change',e=>{$$('#rsm .RSM_mcol').forEach(td=>td.style.display=e.target.checked?'':'none')});
+  function rsmLoadAns(){ try{return JSON.parse(localStorage.getItem('reading_'+(RSM.Set?.set_id||'demo')))||{};}catch(e){return{}} }
+  function rsmSaveAns(m){ localStorage.setItem('reading_'+(RSM.Set?.set_id||'demo'),JSON.stringify(m||{})); }
+  function rsmLoadTrans(){ try{return JSON.parse(localStorage.getItem('reading_trans_'+(RSM.Set?.set_id||'demo')))||{};}catch(e){return{}} }
+  function rsmSaveTrans(m){ localStorage.setItem('reading_trans_'+(RSM.Set?.set_id||'demo'),JSON.stringify(m||{})); }
+  const DemoR={ set_id:'rd_demo', sentences:['Many students rely on library printers for their assignments.','Maintenance schedules sometimes disrupt availability.','The university offers access to a computer lab on the second floor.','A temporary pass can be issued at the front desk.'], model_translation:['많은 학생들이 과제 출력을 위해 도서관 프린터에 의존한다.','정기 점검 때문에 이용이 중단될 때가 있다.','학교는 2층 컴퓨터 실 사용을 제공한다.','안내 데스크에서 임시 출입증을 발급받을 수 있다.'], questions:[{number:1,type:'single',skill:['gist'],prompt:'What is the main point of the passage?',choices:['Library printers are always available','Maintenance can disrupt library printers','Students cannot print on campus'],correct:[1],explanation:'The passage states maintenance can disrupt availability.'},{number:2,type:'multi',skill:['detail'],prompt:'Which TWO alternatives are suggested for printing?',choices:['Use second-floor computer lab','Ask a friend to print','Get a temporary pass at the front desk','Buy a personal printer'],correct:[0,2],explanation:'The lab and a temporary pass are provided as solutions.',evidence_sent_idx:[2,3]}] };
+
+  // ======== LISTENING STUDY MODE (LSM) ========
+  const LSM={App:{tpo:'TPO 1'},Set:null,Questions:[],wrongOrder:[],retryPtr:0,currentRetryQ:null, rate:1}; window._LSMRef=LSM;
+  function lsmShow(id){ const root=$('#lsm'); if(!root) return; root.style.display='block'; $$('#lsm .v').forEach(v=>v.style.display='none'); $(id,root).style.display='block'; window.scrollTo({top:0,behavior:'smooth'}); }
+  function lsmP(q){ const H=new Set(q.evidence_sent_idx||[]); return (LSM.Set?.sentences||[]).map((s,i)=>`<div class="ln ${H.has(i)?'hl':''}">${i+1}. ${s}</div>`).join('')||'<div class="sm">(No script)</div>'; }
+  function lsmOk(q,p){ const c=(q.correct||[]).slice().sort().join(','), x=(p||[]).slice().sort().join(','); return c===x && x!==''; }
+  function launchLSM(tpo){ LSM.App.tpo=tpo; const data=window.LSM_DATA||DemoL; LSM.Set=data; LSM.Questions=(data.questions||[]); lsmBuildNote(); lsmShow('#LSM_hub'); }
+  // Hub
+  $('#LSM_HHome')?.addEventListener('click',()=>{ $('#lsm').style.display='none'; $('#homeView').style.display='block'; });
+  $('#LSM_tileNote')?.addEventListener('click',()=>{ lsmBuildNote(); lsmShow('#LSM_note'); });
+  $('#LSM_tileCorrect')?.addEventListener('click',()=>lsmList(true));
+  $('#LSM_tileWrong')?.addEventListener('click',()=>lsmList(false));
+  // Note-taking view
+  function lsmBuildNote(){ const sc=$('#LSM_script'); if(!sc) return; sc.innerHTML=(LSM.Set?.sentences||[]).map((s,i)=>`<div class='ln' data-idx='${i}'>${i+1}. ${s}</div>`).join(''); const mn=$('#LSM_modelBody'); if(mn) mn.innerHTML=(LSM.Set?.model_notes||[]).map((n,i)=>`<div class='sm'><strong>${i+1}.</strong> ${n}</div>`).join(''); const saved=localStorage.getItem('lsm_notes_'+(LSM.Set?.set_id||'demo'))||''; const ta=$('#LSM_studentNotes'); if(ta){ ta.value=saved; ta.oninput=()=>localStorage.setItem('lsm_notes_'+(LSM.Set?.set_id||'demo'),ta.value); }
+  }
+  $('#LSM_showModel')?.addEventListener('change',e=>{ $('#LSM_modelNotes').style.display=e.target.checked?'block':'none'; });
+  $('#LSM_NBack')?.addEventListener('click',()=>lsmShow('#LSM_hub'));
+  $('#LSM_NHome')?.addEventListener('click',()=>{ $('#lsm').style.display='none'; $('#homeView').style.display='block'; });
+  // Added: Correct/Wrong views Back & Home
+  $('#LSM_CBack')?.addEventListener('click',()=>lsmShow('#LSM_hub'));
+  $('#LSM_CHome')?.addEventListener('click',()=>{ $('#lsm').style.display='none'; $('#homeView').style.display='block'; });
+  $('#LSM_WBack')?.addEventListener('click',()=>lsmShow('#LSM_hub'));
+  $('#LSM_WHome')?.addEventListener('click',()=>{ $('#lsm').style.display='none'; $('#homeView').style.display='block'; });
+  // Added: Correct/Wrong views Back & Home
+  $('#LSM_CBack')?.addEventListener('click',()=>lsmShow('#LSM_hub'));
+  $('#LSM_CHome')?.addEventListener('click',()=>{ $('#lsm').style.display='none'; $('#homeView').style.display='block'; });
+  $('#LSM_WBack')?.addEventListener('click',()=>lsmShow('#LSM_hub'));
+  $('#LSM_WHome')?.addEventListener('click',()=>{ $('#lsm').style.display='none'; $('#homeView').style.display='block'; });
+  // Added: Correct/Wrong views Back & Home
+  $('#LSM_CBack')?.addEventListener('click',()=>lsmShow('#LSM_hub'));
+  $('#LSM_CHome')?.addEventListener('click',()=>{ $('#lsm').style.display='none'; $('#homeView').style.display='block'; });
+  $('#LSM_WBack')?.addEventListener('click',()=>lsmShow('#LSM_hub'));
+  $('#LSM_WHome')?.addEventListener('click',()=>{ $('#lsm').style.display='none'; $('#homeView').style.display='block'; });
+  // Added: Correct/Wrong views Back & Home
+  $('#LSM_CBack')?.addEventListener('click',()=>lsmShow('#LSM_hub'));
+  $('#LSM_CHome')?.addEventListener('click',()=>{ $('#lsm').style.display='none'; $('#homeView').style.display='block'; });
+  $('#LSM_WBack')?.addEventListener('click',()=>lsmShow('#LSM_hub'));
+  $('#LSM_WHome')?.addEventListener('click',()=>{ $('#lsm').style.display='none'; $('#homeView').style.display='block'; });
+  // Speed buttons simulate by toggling class; (오디오는 추후 연결)
+  function setRate(r){ LSM.rate=r; $$('#lsm .b').forEach(b=>b.classList.remove('p')); const map={0.5:'#LSM_sp05',0.8:'#LSM_sp08',1:'#LSM_sp10',1.2:'#LSM_sp12',2:'#LSM_sp20'}; $(map[r])?.classList.add('p'); }
+  $('#LSM_sp05')?.addEventListener('click',()=>setRate(0.5));
+  $('#LSM_sp08')?.addEventListener('click',()=>setRate(0.8));
+  $('#LSM_sp10')?.addEventListener('click',()=>setRate(1));
+  $('#LSM_sp12')?.addEventListener('click',()=>setRate(1.2));
+  $('#LSM_sp20')?.addEventListener('click',()=>setRate(2));
+  // Correct/Wrong list
+  function lsmList(isC){ const box=isC?$('#LSM_CList'):$('#LSM_WList'); const view=isC?'#LSM_correct':'#LSM_wrong'; if(!box) return; box.innerHTML=''; const arr=[...(LSM.Questions||[])].sort((a,b)=>a.number-b.number); const saved=lsmLoadAns(); const filt=arr.filter(q=> (lsmOk(q, saved[q.number])===isC)); filt.forEach(q=>{ const d=document.createElement('div'); d.className='item'; d.innerHTML=`<div>${q.number}</div><div>${q.prompt}</div><div>${q.type||'-'}</div>`; d.addEventListener('click',()=>{ if(isC) lsmDetail(q); else lsmRetry(q,filt); }); box.appendChild(d); }); lsmShow(view); }
+  function lsmDetail(q){ const m=$('#LSM_mod'),b=$('#LSM_PBody'); b.innerHTML=`<div class='r'><strong>Question ${q.number}</strong></div><div>${q.prompt}</div><hr>`+lsmP(q); m.style.display='flex'; }
+  function lsmRetry(q,list){ LSM.wrongOrder=list.map(x=>x.number); LSM.retryPtr=LSM.wrongOrder.indexOf(q.number); LSM.currentRetryQ=q; $('#LSM_RTitle').textContent=`Retry — Q${q.number}`; $('#LSM_RPrompt').textContent=q.prompt; const box=$('#LSM_RChoices'); box.innerHTML=''; const multi=(q.type==='multi')||((q.correct||[]).length>1); (q.choices||[]).forEach((c,i)=>{ const L=document.createElement('label'); L.className='r choice'; L.innerHTML=`<input type="${multi?'checkbox':'radio'}" name="lsm_r_${q.number}" value="${i}"> ${c}`; box.appendChild(L); }); $('#LSM_RFB').innerHTML=''; lsmShow('#LSM_retry'); }
+  $('#LSM_RBack')?.addEventListener('click',()=>lsmShow('#LSM_wrong')); $('#LSM_RNext')?.addEventListener('click',()=>{ LSM.retryPtr=Math.min(LSM.wrongOrder.length-1,LSM.retryPtr+1); const n=(LSM.Questions||[]).find(x=>x.number===LSM.wrongOrder[LSM.retryPtr]); lsmRetry(n,(LSM.Questions||[]).filter(x=>LSM.wrongOrder.includes(x.number))); });
+  $('#LSM_RSubmit')?.addEventListener('click',()=>{ const q=LSM.currentRetryQ; const picks=$$('#LSM_RChoices input:checked').map(i=>parseInt(i.value,10)); const good=lsmOk(q,picks); const fb=$('#LSM_RFB'); const S=lsmLoadAns(); S[q.number]=picks; lsmSaveAns(S); if(good){ fb.innerHTML='<span class="ok">Correct ✔</span>'+(q.explanation?`<div class="sm">${q.explanation}</div>`:''); } else { fb.innerHTML='<span class="bad">Wrong ✖</span>'+(q.explanation?`<div class="sm">${q.explanation}</div>`:''); const m=$('#LSM_mod'),b=$('#LSM_PBody'); b.innerHTML=lsmP(q); m.style.display='flex'; } });
+  $('#LSM_REvidence')?.addEventListener('click',()=>{ const q=LSM.currentRetryQ; const idx=(q?.evidence_sent_idx||[])[0]; if(idx!=null){ const target=$(`#LSM_script .ln:nth-child(${idx+1})`); target?.scrollIntoView({behavior:'smooth',block:'center'}); target?.classList.add('hl'); setTimeout(()=>target?.classList.remove('hl'),1200); } });
+  $('#LSM_PClose')?.addEventListener('click',()=>$('#LSM_mod').style.display='none');
+  function lsmLoadAns(){ try{return JSON.parse(localStorage.getItem('listening_'+(LSM.Set?.set_id||'demo')))||{};}catch(e){return{}} }
+  function lsmSaveAns(m){ localStorage.setItem('listening_'+(LSM.Set?.set_id||'demo'),JSON.stringify(m||{})); }
+  const DemoL={ set_id:'ls_demo', sentences:['So, today we\'re going to discuss migratory patterns.','A key factor is seasonal food availability.','Another factor is predation pressure, which varies by region.','Tracking data show unexpected detours in several species.'], model_notes:['Topic: migration patterns','Key: seasonal food availability','Factor: predation pressure by region','Data: detours in some species'], questions:[{number:1,type:'single',prompt:'What is the main topic of the talk?',choices:['Predation pressure','Migration patterns','Seasonal food'],correct:[1],explanation:'The lecture is about migratory patterns.'},{number:2,type:'multi',prompt:'Which TWO factors are mentioned as influencing migration?',choices:['Food availability','Weather forecasts','Predation pressure','Competition for mates'],correct:[0,2],evidence_sent_idx:[2]}] };
+})();
+</script>
+<script>
+// === Extra wiring: Teacher Listening load-to-study, Test→Study sync, Evidence audio playback ===
+(function(){
+  // Teacher Listening → Load to Study Mode (also here, for robustness)
+  const btnLStudy = document.getElementById('btnListeningLoadToStudy');
+  if(btnLStudy){ btnLStudy.addEventListener('click',()=>{
+    const ta=document.getElementById('listeningEditor');
+    try{ const raw=ta?.value || '[]'; const data=JSON.parse(raw);
+      const set = Array.isArray(data) ? { set_id:'ls_custom', sentences:[], model_notes:[], questions:data } : data;
+      window.LSM_DATA=set; alert('Loaded to Listening Study Mode. Go Home → Study+Listening → Start');
+    }catch(e){ alert('Invalid JSON for Listening set'); }
+  }); }
+
+  // Test → Study: public hook + Next-button fallb

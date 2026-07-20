@@ -1,0 +1,1 @@
+-- full all-in-one script provided earlier

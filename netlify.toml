@@ -1,0 +1,9 @@
+[build]
+  command = "rm -rf apps/web/.next && pnpm --filter web run build"
+  functions = ".netlify/functions"
+  publish = "apps/web/.next"
+  node_version = "24"
+
+[build.environment]
+  NODE_ENV = "production"
+  SKIP_BUILD_CACHE = "true"
