@@ -1,0 +1,7 @@
+{
+  "buildCommand": "npm install -g pnpm@latest && pnpm install && pnpm run build",
+  "installCommand": null,
+  "env": {
+    "NODE_ENV": "production"
+  }
+}
