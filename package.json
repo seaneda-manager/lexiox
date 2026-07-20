@@ -2,16 +2,7 @@
   "name": "repo-root",
   "packageManager": "npm@10",
   "private": true,
-  "dependencies": {
-    "@hookform/resolvers": "^5.2.2",
-    "@plasmicapp/loader-nextjs": "^1.0.440",
-    "@supabase/ssr": "^0.7.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "xlsx": "^0.18.5",
-    "zod": "^4.1.13",
-    "zustand": "^5.0.14"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@types/node": "^20.19.23",
     "@typescript-eslint/eslint-plugin": "^8.46.2",
