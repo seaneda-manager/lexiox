@@ -20,3 +20,6 @@ pnpm-lock.yaml
 .vercel
 .next/
 .env.local
+
+.vercel
+.env*
