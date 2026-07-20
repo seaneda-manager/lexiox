@@ -1,6 +1,6 @@
 import { getUserAndProfile } from '@/lib/getUserAndProfile';
 import { redirect } from 'next/navigation';
-import SpeakingWritingEditorClientV2 from '../../_components/SpeakingWritingEditorClientV2';
+import SpeakingWritingEditorClientV2 from '../_components/SpeakingWritingEditorClientV2';
 
 export default async function SpeakingWritingEditPage({
   params,
