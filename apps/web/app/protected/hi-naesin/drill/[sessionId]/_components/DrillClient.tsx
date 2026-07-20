@@ -497,10 +497,10 @@ function TranslationDrill({
           />
           <button
             type="submit"
-            disabled={isPending}
+            disabled={submitting}
             className="mt-3 w-full rounded-xl bg-neutral-900 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800 disabled:opacity-50"
           >
-            {isPending ? '제출 중...' : '제출'}
+            {submitting ? '제출 중...' : '제출'}
           </button>
         </form>
       ) : (
@@ -562,7 +562,7 @@ function FillBlankDrill({
           />
           <button
             type="submit"
-            disabled={isPending}
+            disabled={submitting}
             className="mt-3 w-full rounded-xl bg-neutral-900 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800 disabled:opacity-50"
           >
             {submitting ? '채점 중...' : '제출'}
@@ -635,10 +635,10 @@ function WritingDrill({
           />
           <button
             type="submit"
-            disabled={isPending}
+            disabled={submitting}
             className="mt-3 w-full rounded-xl bg-neutral-900 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800 disabled:opacity-50"
           >
-            {isPending ? '제출 중...' : '제출'}
+            {submitting ? '제출 중...' : '제출'}
           </button>
         </form>
       ) : (
@@ -698,7 +698,7 @@ function VocabDrill({
           />
           <button
             type="submit"
-            disabled={isPending}
+            disabled={submitting}
             className="mt-3 w-full rounded-xl bg-neutral-900 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800 disabled:opacity-50"
           >
             {submitting ? '채점 중...' : '제출'}
@@ -789,7 +789,7 @@ function GrammarChoiceDrill({
           </div>
           <button
             type="submit"
-            disabled={isPending}
+            disabled={submitting}
             className="mt-3 w-full rounded-xl bg-neutral-900 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800 disabled:opacity-50"
           >
             {submitting ? '채점 중...' : '제출'}
@@ -995,7 +995,7 @@ function TranslationChoiceDrill({
           </div>
           <button
             type="submit"
-            disabled={isPending}
+            disabled={submitting}
             className="mt-3 w-full rounded-xl bg-neutral-900 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800 disabled:opacity-50"
           >
             {submitting ? '채점 중...' : '제출'}
