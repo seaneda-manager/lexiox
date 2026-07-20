@@ -1298,6 +1298,8 @@ export default function VocabSessionPage() {
     const acc = total > 0 ? correct / total : 1;
     const wrong = (result?.wrongWordIds ?? []).filter(Boolean);
 
+    const academyStudentId = debugInfo?.academyStudentId ?? null;
+
     // ✅ 결과 저장 (know, spelling, speed)
     if (academyStudentId && sessionSetId) {
       try {
@@ -1308,7 +1310,7 @@ export default function VocabSessionPage() {
           stage: "speed",
           accuracy: acc,
           passed: acc >= 0.7,
-          assignmentId: info.assignmentId,
+          assignmentId: debugInfo?.assignmentId,
         });
       } catch (e) {
         console.warn("Failed to save speed attempt:", e);
@@ -1458,7 +1460,7 @@ export default function VocabSessionPage() {
                     wordIds: r.unknownWordIds || [],
                     stage: "know",
                     passed: undefined,
-                    assignmentId: info.assignmentId,
+                    assignmentId: debugInfo?.assignmentId,
                   }).catch((e) => console.warn("Failed to save prescreen attempt:", e));
                 } catch (e) {
                   console.warn("Failed to save prescreen attempt:", e);
@@ -1510,7 +1512,7 @@ export default function VocabSessionPage() {
                     wordIds: r.spellingFailedIds || [],
                     stage: "spelling",
                     passed: undefined,
-                    assignmentId: info.assignmentId,
+                    assignmentId: debugInfo?.assignmentId,
                   }).catch((e) => console.warn("Failed to save spelling attempt:", e));
                 } catch (e) {
                   console.warn("Failed to save spelling attempt:", e);

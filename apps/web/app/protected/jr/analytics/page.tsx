@@ -1,5 +1,5 @@
-import { getUser } from "@/lib/getUserAndProfile";
-import { getServiceSupabase } from "@/lib/supabaseServer";
+import { getUserAndProfile } from "@/lib/getUserAndProfile";
+import { getSupabaseServer } from "@/lib/supabaseServer";
 import { redirect } from "next/navigation";
 import JrAnalyticsClient from "./_components/JrAnalyticsClient";
 
