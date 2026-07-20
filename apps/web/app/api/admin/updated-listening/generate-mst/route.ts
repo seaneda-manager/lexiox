@@ -8,8 +8,8 @@ import { randomUUID } from "crypto";
 export const runtime = "nodejs";
 export const maxDuration = 300;
 
-const client = new Anthropic();
-const elevenlabs = new ElevenLabsClient();
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || 'placeholder' });
+const elevenlabs = new ElevenLabsClient({ apiKey: process.env.ELEVENLABS_API_KEY || 'placeholder' });
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || '',
   process.env.SUPABASE_SERVICE_ROLE_KEY || ''

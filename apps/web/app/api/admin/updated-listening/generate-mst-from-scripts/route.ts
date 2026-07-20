@@ -6,7 +6,7 @@ import { randomUUID } from "crypto";
 export const runtime = "nodejs";
 export const maxDuration = 180;
 
-const client = new Anthropic();
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || 'placeholder' });
 
 type Part = "module1" | "hard" | "easy";
 

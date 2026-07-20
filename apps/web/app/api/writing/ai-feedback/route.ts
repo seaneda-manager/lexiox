@@ -6,7 +6,7 @@ import type { WWritingTest2026 } from "@/models/writing";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const anthropic = new Anthropic();
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || 'placeholder' });
 
 export async function POST(req: NextRequest) {
   try {
