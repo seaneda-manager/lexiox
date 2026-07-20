@@ -1,6 +1,6 @@
 import { getUserAndProfile } from '@/lib/getUserAndProfile';
 import { redirect } from 'next/navigation';
-import ListeningEditorClientV2 from '../../_components/ListeningEditorClientV2';
+import ListeningEditorClientV2 from '../_components/ListeningEditorClientV2';
 
 export default async function ListeningEditPage({
   params,

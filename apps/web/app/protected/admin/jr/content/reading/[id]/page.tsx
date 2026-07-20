@@ -1,6 +1,6 @@
 import { getUserAndProfile } from '@/lib/getUserAndProfile';
 import { redirect } from 'next/navigation';
-import ReadingEditorClientV2 from '../../_components/ReadingEditorClientV2';
+import ReadingEditorClientV2 from '../_components/ReadingEditorClientV2';
 
 export default async function ReadingEditPage({
   params,

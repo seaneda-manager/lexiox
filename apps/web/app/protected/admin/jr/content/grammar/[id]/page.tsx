@@ -1,6 +1,6 @@
 import { getUserAndProfile } from '@/lib/getUserAndProfile';
 import { redirect } from 'next/navigation';
-import GrammarEditorClientV2 from '../../_components/GrammarEditorClientV2';
+import GrammarEditorClientV2 from '../_components/GrammarEditorClientV2';
 
 export default async function GrammarEditPage({
   params,
