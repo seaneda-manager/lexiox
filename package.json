@@ -5,17 +5,6 @@
   "workspaces": [
     "apps/*"
   ],
-  "pnpm": {
-    "overrides": {
-      "react": "^19.0.0",
-      "react-dom": "^19.0.0"
-    },
-    "ignoredBuiltDependencies": [
-      "esbuild",
-      "sharp",
-      "unrs-resolver"
-    ]
-  },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@plasmicapp/loader-nextjs": "^1.0.440",
