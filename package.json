@@ -2,9 +2,6 @@
   "name": "repo-root",
   "packageManager": "npm@10",
   "private": true,
-  "workspaces": [
-    "apps/*"
-  ],
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@plasmicapp/loader-nextjs": "^1.0.440",
