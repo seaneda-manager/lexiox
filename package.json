@@ -1,5 +1,6 @@
 {
   "name": "repo-root",
+  "packageManager": "npm@10",
   "private": true,
   "workspaces": [
     "apps/*"
