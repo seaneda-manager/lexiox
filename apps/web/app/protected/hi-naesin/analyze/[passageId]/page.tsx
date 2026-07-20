@@ -15,7 +15,6 @@ export default async function StudentPassageAnalyzePage({ params }: { params: Pa
       .from('hi_naesin_passages')
       .select('id, title, passage_text')
       .eq('id', passageId)
-      .eq('is_published', true)
       .single(),
     supabase
       .from('hi_naesin_passage_analysis')
