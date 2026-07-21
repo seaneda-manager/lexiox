@@ -25,6 +25,7 @@ import {
   generateDrillsFromSentencesAction,
   generateGrammarDrillsAction,
   generateThoughtUnitDrillsAction,
+  generateStructureDrillsAction,
 } from './sentence-actions';
 import {
   assignPassageAction,
@@ -353,6 +354,17 @@ export default async function HiNaesinPassageEditPage({
                   className="rounded-xl border border-sky-300 bg-sky-50 px-5 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-100"
                 >
                   4단계: AI 생각단위 배열 생성
+                </button>
+              </form>
+            )}
+
+            {sentences.length > 0 && (
+              <form action={generateStructureDrillsAction.bind(null, id)}>
+                <button
+                  type="submit"
+                  className="rounded-xl border border-indigo-300 bg-indigo-50 px-5 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100"
+                >
+                  5단계: AI 구조분석(지칭추론) 생성
                 </button>
               </form>
             )}
@@ -1021,6 +1033,29 @@ function DrillPreview({ drill }: { drill: { drill_type: string; order_index: num
         {p.explanation && (
           <p className="text-xs text-neutral-400">{String(p.explanation)}</p>
         )}
+      </div>
+    );
+  }
+
+  if (drill.drill_type === 'identify_categorize') {
+    const targets = Array.isArray(p.targets) ? (p.targets as Array<Record<string, unknown>>) : [];
+    const modeLabel = p.mode === 'reference' ? '지칭추론' : p.mode === 'modifier' ? '수식관계' : '청킹';
+    return (
+      <div className="flex-1 space-y-1.5 min-w-0">
+        <div className="flex items-center gap-2">
+          {idx}
+          <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-semibold text-indigo-700">
+            {modeLabel} · depth {String(p.depth ?? 1)}
+          </span>
+        </div>
+        <p className="text-sm font-medium text-neutral-800">{String(p.sentence ?? '')}</p>
+        {targets.map((t, i) => (
+          <div key={i} className="rounded-lg border border-neutral-200 px-2 py-1 text-xs text-neutral-600">
+            {t.anchor ? <span className="text-neutral-400">“{String(t.anchor)}” → </span> : null}
+            <span className="font-semibold text-emerald-700">{String(t.span ?? '')}</span>
+            {t.category ? <span className="ml-1 text-indigo-600">[{String(t.category)}]</span> : null}
+          </div>
+        ))}
       </div>
     );
   }

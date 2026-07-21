@@ -19,6 +19,7 @@ import {
   generateConnectiveQuestions,
 } from '@/lib/hi-naesin/grammar-generator';
 import { generateThoughtUnitDrills } from '@/lib/hi-naesin/thought-unit-generator';
+import { generateReferenceQuestions } from '@/lib/hi-naesin/structure-generator';
 
 type Ok<T extends object = object> = { ok: true } & T;
 type Fail = { ok: false; error: string };
@@ -448,6 +449,65 @@ export async function generateGrammarDrillsAction(
   redirect(
     `/admin/hi-naesin/passages/${passageId}/edit?tab=drill&ok=3step&g=${grammarCount}&d=${debugInfo}`,
   );
+}
+
+// ── 구조분석(identify→categorize) Drill 생성 — 1차: 지칭추론 ──────────
+
+export async function generateStructureDrillsAction(
+  passageId: string,
+): Promise<void> {
+  const supabase = await getServerSupabase();
+  const adminDb  = getServiceSupabase(); // RLS 우회 — admin 쓰기 전용
+
+  const { data: sentences, error: sErr } = await supabase
+    .from('hi_naesin_passage_sentences')
+    .select('sentence_en')
+    .eq('passage_id', passageId)
+    .order('order_index');
+
+  if (sErr || !sentences || sentences.length === 0) {
+    redirect(`/admin/hi-naesin/passages/${passageId}/edit?tab=sentences&err=no_sentences`);
+  }
+
+  // 기존 identify_categorize 삭제
+  await adminDb
+    .from('hi_naesin_drills')
+    .delete()
+    .eq('passage_id', passageId)
+    .eq('drill_type', 'identify_categorize');
+
+  const sentenceInputs = (sentences ?? [])
+    .filter((s) => s.sentence_en)
+    .map((s) => ({ sentenceEn: s.sentence_en as string }));
+
+  const rResult = await generateReferenceQuestions(sentenceInputs);
+
+  // redirect() 는 try/catch 밖에서 — 에러 먼저 수집
+  if ('error' in rResult) {
+    redirect(
+      `/admin/hi-naesin/passages/${passageId}/edit?tab=drill&err=${encodeURIComponent('AI 오류 (구조분석): ' + rResult.error)}`,
+    );
+  }
+
+  const rows = rResult.results.map(({ payload }, idx) => ({
+    passage_id:   passageId,
+    drill_type:   'identify_categorize',
+    order_index:  idx,
+    payload,
+    is_published: false,
+  }));
+
+  let count = 0;
+  if (rows.length > 0) {
+    const { error: iErr } = await adminDb.from('hi_naesin_drills').insert(rows);
+    if (iErr) {
+      redirect(`/admin/hi-naesin/passages/${passageId}/edit?tab=drill&err=structure_insert:${encodeURIComponent(iErr.message)}`);
+    }
+    count = rows.length;
+  }
+
+  revalidate(passageId);
+  redirect(`/admin/hi-naesin/passages/${passageId}/edit?tab=drill&ok=structure&s=${count}`);
 }
 
 // 지문 배열 변형문제 자동 생성 (4등분)
