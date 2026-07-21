@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 type Params = Promise<{ sessionId: string }>;
 type SearchParams = Promise<{ type?: string; step?: string }>;
 
-const TYPE_ORDER = ['vocab', 'translation', 'fill_blank', 'writing', 'grammar_choice'] as const;
+const TYPE_ORDER = ['vocab', 'identify_categorize', 'translation', 'fill_blank', 'writing', 'grammar_choice'] as const;
 
 type DrillRow = {
   id: string;

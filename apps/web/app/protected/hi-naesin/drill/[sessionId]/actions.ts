@@ -7,6 +7,36 @@ import { gradeTranslation, gradeWriting } from '@/lib/hi-naesin/translation-grad
 
 type Fail = { ok: false; error: string };
 
+// ── identify → categorize 룰 기반 채점 (AI 불필요) ──────────
+function normalizeSpan(s: string): string {
+  return (s ?? '')
+    .toLowerCase()
+    .replace(/[^a-z0-9가-힣]+/gi, ' ')
+    .trim()
+    .replace(/\s+/g, ' ');
+}
+
+function gradeIdentifyCategorize(
+  targetsJson: string,
+  depth: number,
+  responseChoice: string,
+): { isCorrect: boolean; scorePct: number } {
+  let targets: Array<{ span: string; category?: string }> = [];
+  let resp: { spans?: string[]; cats?: (string | null)[] } = {};
+  try { targets = JSON.parse(targetsJson) ?? []; } catch { /* noop */ }
+  try { resp = JSON.parse(responseChoice) ?? {}; } catch { /* noop */ }
+  if (!Array.isArray(targets) || targets.length === 0) return { isCorrect: false, scorePct: 0 };
+
+  let ok = 0;
+  targets.forEach((t, i) => {
+    const idOK = normalizeSpan(resp.spans?.[i] ?? '') === normalizeSpan(t.span);
+    const catOK = depth < 2 || !t.category || (resp.cats?.[i] ?? null) === t.category;
+    if (idOK && catOK) ok += 1;
+  });
+  const scorePct = Math.round((ok / targets.length) * 100);
+  return { isCorrect: ok === targets.length, scorePct };
+}
+
 // ── 드릴 답변 제출 ────────────────────────────────────────
 // type  = 현재 블록 타입 (translation | fill_blank | writing | grammar_choice)
 // step  = 블록 내 인덱스 (0-based)
@@ -52,6 +82,13 @@ export async function submitDrillAnswerAction(
         isCorrect = parts.some((p) => student === p.trim());
       }
     }
+
+  } else if (drillType === 'identify_categorize') {
+    const depth = parseInt((fd.get('ic_depth') as string) ?? '1', 10) || 1;
+    const targetsJson = (fd.get('ic_targets') as string) ?? '[]';
+    const g = gradeIdentifyCategorize(targetsJson, depth, responseChoice);
+    isCorrect = g.isCorrect;
+    scorePct  = g.scorePct;
   }
 
   // ── AI 채점이 필요한 타입 → 백그라운드에서 실행 ─────────────
@@ -220,6 +257,13 @@ export async function submitAnswerClientAction(
         isCorrect = parts.some((p) => student === p.trim());
       }
     }
+
+  } else if (drillType === 'identify_categorize') {
+    const depth = parseInt((fd.get('ic_depth') as string) ?? '1', 10) || 1;
+    const targetsJson = (fd.get('ic_targets') as string) ?? '[]';
+    const g = gradeIdentifyCategorize(targetsJson, depth, responseChoice);
+    isCorrect = g.isCorrect;
+    scorePct  = g.scorePct;
   }
 
   // AI 채점 타입 → 백그라운드 실행

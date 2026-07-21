@@ -33,7 +33,7 @@ type ResponseRow = {
 type TypeInfo = { total: number; done: number; firstUnanswered: number };
 
 const TYPE_ORDER = [
-  'vocab', 'translation_arrange', 'translation', 'translation_choice',
+  'vocab', 'identify_categorize', 'translation_arrange', 'translation', 'translation_choice',
   'fill_blank', 'writing_arrange', 'writing', 'grammar_choice',
 ] as const;
 
@@ -47,6 +47,7 @@ const DRILL_LABEL: Record<string, string> = {
   writing:             '작문',
   summary:              '요약',
   grammar_choice:       '문법',
+  identify_categorize:  '구조 분석',
 };
 
 const DRILL_INSTRUCTION: Record<string, string> = {
@@ -59,6 +60,7 @@ const DRILL_INSTRUCTION: Record<string, string> = {
   writing:             '주어진 우리말 문장을 영어로 작문하세요.',
   summary:              '지문 내용을 바탕으로 요약문의 빈칸을 채우세요.',
   grammar_choice:       '빈칸에 알맞은 답을 고르거나 연결어를 선택하세요.',
+  identify_categorize:  '문장에서 해당 구간을 선택하고, 필요하면 유형을 고르세요.',
 };
 
 // ─────────────────────────────────────────────────────────
@@ -233,6 +235,9 @@ export default function DrillClient({
   } else if (currentType === 'grammar_choice') {
     highlightText = (p as { sentenceTemplate?: string }).sentenceTemplate ?? null;
     highlightType = 'sentence';
+  } else if (currentType === 'identify_categorize') {
+    highlightText = (p as { sentence?: string }).sentence ?? null;
+    highlightType = 'sentence';
   }
 
   return (
@@ -379,6 +384,19 @@ export default function DrillClient({
             )}
             {currentType === 'grammar_choice' && (
               <GrammarChoiceDrill
+                key={drill.id}
+                drill={drill}
+                response={response}
+                isAnswered={isAnswered}
+                onSubmit={handleSubmit}
+                onNext={goNext}
+                step={currentStep}
+                typeTotal={typeTotal}
+                nextType={nextType}
+              />
+            )}
+            {currentType === 'identify_categorize' && (
+              <IdentifyCategorizeDrill
                 key={drill.id}
                 drill={drill}
                 response={response}
@@ -1024,6 +1042,209 @@ function TranslationChoiceDrill({
               : '다음 →'}
           </button>
         </>
+      )}
+    </>
+  );
+}
+
+// ─────────────────────────────────────────────────────────
+// identify → categorize (청킹 · 지칭추론 · 킬포 공용 엔진)
+// ─────────────────────────────────────────────────────────
+
+function parseChosenCats(r: ResponseRow | null): (string | null)[] | null {
+  if (!r?.response_choice) return null;
+  try { return JSON.parse(r.response_choice)?.cats ?? null; } catch { return null; }
+}
+
+type ICPayload = {
+  mode: 'reference' | 'modifier' | 'chunk';
+  sentence: string;
+  depth: number;
+  instruction?: string;
+  targets: Array<{
+    span: string;
+    anchor?: string;
+    category?: string;
+    options?: Array<{ key: string; label: string }>;
+    explanation?: string;
+  }>;
+};
+
+function IdentifyCategorizeDrill({
+  drill, response, isAnswered, onSubmit, onNext, step, typeTotal, nextType,
+}: {
+  drill: DrillRow;
+  response: ResponseRow | null;
+  isAnswered: boolean;
+  onSubmit: (e: React.FormEvent<HTMLFormElement>) => Promise<void>;
+  onNext: () => void;
+  step: number;
+  typeTotal: number;
+  nextType: string | null;
+}) {
+  const p = drill.payload as unknown as ICPayload;
+  const words   = useMemo(() => p.sentence.split(/\s+/), [p.sentence]);
+  const targets = p.targets ?? [];
+  const needCat = p.depth >= 2;
+
+  const [cur, setCur]       = useState(0);
+  const [ranges, setRanges] = useState<Array<[number, number] | null>>(() => targets.map(() => null));
+  const [draft, setDraft]   = useState<[number, number] | null>(null);
+  const [cats, setCats]     = useState<Array<string | null>>(() => targets.map(() => null));
+  const [submitting, setSubmitting] = useState(false);
+
+  const t         = targets[cur];
+  const catNeeded = needCat && !!t?.options?.length;
+  const spanLocked = ranges[cur] !== null;
+  const allDone = ranges.every((r) => r !== null)
+    && targets.every((tg, i) => !(needCat && tg.options?.length) || cats[i] !== null);
+
+  const spans = ranges.map((r) => (r ? words.slice(r[0], r[1] + 1).join(' ') : ''));
+
+  function clickWord(i: number) {
+    if (spanLocked) return;
+    setDraft((prev) => (prev == null ? [i, i] : [Math.min(prev[0], i), Math.max(prev[0], i)]));
+  }
+  function lockSpan() {
+    if (draft == null) return;
+    setRanges((prev) => prev.map((r, idx) => (idx === cur ? draft : r)));
+    setDraft(null);
+  }
+  function resetSpan() {
+    setDraft(null);
+    setCats((prev) => prev.map((c, idx) => (idx === cur ? null : c)));
+    setRanges((prev) => prev.map((r, idx) => (idx === cur ? null : r)));
+  }
+
+  const wordClass = (i: number) => {
+    for (const r of ranges) {
+      if (r && i >= r[0] && i <= r[1]) return 'bg-indigo-600 text-white';
+    }
+    if (draft && i >= draft[0] && i <= draft[1]) return 'bg-amber-200 text-amber-900';
+    return 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200';
+  };
+
+  if (isAnswered) {
+    const chosen = parseChosenCats(response);
+    return (
+      <>
+        <div className="rounded-xl bg-neutral-50 p-4 text-sm leading-relaxed text-neutral-800">{p.sentence}</div>
+        <div className="space-y-2">
+          {targets.map((tg, i) => {
+            const correctCat = tg.options?.find((o) => o.key === tg.category)?.label;
+            const myCat      = tg.options?.find((o) => o.key === (chosen?.[i] ?? null))?.label;
+            const catWrong   = !!tg.category && chosen != null && (chosen[i] ?? null) !== tg.category;
+            return (
+              <div key={i} className="space-y-1 rounded-xl border border-neutral-200 bg-white p-3 text-sm">
+                {tg.anchor && <p className="text-xs text-neutral-400">“{tg.anchor}”</p>}
+                <p className="text-neutral-800"><span className="text-xs text-neutral-400">정답 구간 · </span>{tg.span}</p>
+                {tg.category && (
+                  <p className="text-xs text-neutral-500">
+                    유형: <span className="font-medium text-neutral-700">{correctCat ?? tg.category}</span>
+                    {catWrong && <span className="text-red-500"> · 내 선택: {myCat ?? '—'}</span>}
+                  </p>
+                )}
+                {tg.explanation && <p className="text-xs leading-relaxed text-neutral-500">{tg.explanation}</p>}
+              </div>
+            );
+          })}
+        </div>
+        <ScoreBadge scorePct={response?.score_pct ?? null} isCorrect={response?.is_correct ?? null} />
+        <button
+          type="button"
+          onClick={onNext}
+          className="w-full rounded-xl bg-neutral-900 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800"
+        >
+          {step + 1 >= typeTotal
+            ? nextType ? `다음 블록: ${DRILL_LABEL[nextType]} →` : '결과 보기 →'
+            : '다음 →'}
+        </button>
+      </>
+    );
+  }
+
+  return (
+    <>
+      {p.instruction && <p className="text-sm text-neutral-500">{p.instruction}</p>}
+
+      <div className="rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-2.5 text-sm text-indigo-800">
+        {targets.length > 1 && <span className="mr-1 font-semibold">{cur + 1}/{targets.length}</span>}
+        {t?.anchor
+          ? <>“<span className="font-semibold">{t.anchor}</span>” {p.mode === 'reference' ? '이(가) 가리키는 대상을' : '이(가) 수식하는 대상을'} 문장에서 선택하세요</>
+          : '의미 덩어리를 순서대로 선택하세요'}
+      </div>
+
+      <div className="flex flex-wrap gap-1.5 rounded-xl border bg-white p-4">
+        {words.map((w, i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => clickWord(i)}
+            className={`rounded-md px-2 py-1 text-sm transition-colors ${wordClass(i)}`}
+          >
+            {w}
+          </button>
+        ))}
+      </div>
+
+      {!spanLocked ? (
+        <div className="flex gap-2">
+          {draft && (
+            <button type="button" onClick={() => setDraft(null)} className="rounded-xl border px-4 py-2.5 text-sm text-neutral-500 hover:bg-neutral-50">선택 취소</button>
+          )}
+          <button
+            type="button"
+            onClick={lockSpan}
+            disabled={!draft}
+            className="flex-1 rounded-xl bg-neutral-900 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800 disabled:opacity-40"
+          >
+            이 구간 확정
+          </button>
+        </div>
+      ) : catNeeded && cats[cur] == null ? (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold text-neutral-500">이 구간은 무엇인가요?</p>
+          <div className="grid grid-cols-2 gap-2">
+            {t.options!.map((o) => (
+              <button
+                key={o.key}
+                type="button"
+                onClick={() => setCats((prev) => prev.map((c, idx) => (idx === cur ? o.key : c)))}
+                className="rounded-xl border bg-white px-3 py-2.5 text-sm text-neutral-800 hover:border-neutral-400 hover:bg-neutral-50"
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
+          <button type="button" onClick={resetSpan} className="text-xs text-neutral-400 hover:text-neutral-600">구간 다시 선택</button>
+        </div>
+      ) : (
+        <div className="flex gap-2">
+          {cur + 1 < targets.length ? (
+            <button
+              type="button"
+              onClick={() => { setCur(cur + 1); setDraft(null); }}
+              className="flex-1 rounded-xl bg-neutral-900 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800"
+            >
+              다음 대상 →
+            </button>
+          ) : (
+            <form className="flex-1" onSubmit={async (e) => { setSubmitting(true); await onSubmit(e); setSubmitting(false); }}>
+              <input type="hidden" name="drill_type" value="identify_categorize" />
+              <input type="hidden" name="ic_depth"   value={String(p.depth)} />
+              <input type="hidden" name="ic_targets" value={JSON.stringify(targets.map((tg) => ({ span: tg.span, category: tg.category })))} />
+              <input type="hidden" name="response_choice" value={JSON.stringify({ spans, cats })} />
+              <button
+                type="submit"
+                disabled={submitting || !allDone}
+                className="w-full rounded-xl bg-neutral-900 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800 disabled:opacity-40"
+              >
+                {submitting ? '채점 중...' : '제출'}
+              </button>
+            </form>
+          )}
+          <button type="button" onClick={resetSpan} className="rounded-xl border px-4 py-2.5 text-sm text-neutral-500 hover:bg-neutral-50">다시</button>
+        </div>
       )}
     </>
   );
