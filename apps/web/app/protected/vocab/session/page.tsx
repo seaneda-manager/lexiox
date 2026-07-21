@@ -602,6 +602,9 @@ function collocationsToStrings(v: any): string[] {
  * PAGE
  * ======================================================= */
 export default function VocabSessionPage() {
+  // 🔍 DEBUG: 페이지 로드 확인
+  console.log("🚀 VocabSessionPage loaded!");
+
   const isDev = process.env.NODE_ENV !== "production";
   const supabase = useMemo(() => createBrowserClient(), []);
   const penguin = usePenguinMood();
