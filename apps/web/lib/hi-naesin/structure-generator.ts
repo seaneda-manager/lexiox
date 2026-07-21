@@ -45,6 +45,19 @@ function findAnchorIndex(sentence: string, anchor: string, referent: string): nu
   return after ?? cands[0];
 }
 
+/** "those who / one that / anyone who ..." 총칭 용법 — 대명사 바로 뒤 관계사면 참 */
+function isGenericPronoun(sentence: string, pronoun: string): boolean {
+  const esc = (pronoun ?? '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  if (!esc) return false;
+  return new RegExp(`\\b${esc}\\s+(who|whom|whose|that|which)\\b`, 'i').test(sentence);
+}
+
+/** referent 가 대명사 자신과 같은 단어인지 (순환 정답 방지) */
+function sameWord(a: string, b: string): boolean {
+  const n = (s: string) => (s ?? '').toLowerCase().replace(/[^a-z0-9]+/gi, '');
+  return n(a) === n(b);
+}
+
 export async function generateReferenceQuestions(
   sentences: Array<{ sentenceEn: string }>,
 ): Promise<StructOk | StructFail> {
@@ -83,8 +96,12 @@ DO NOT create a drill (set "skip": true) for these — they are NOT referent res
   (Here "it" points FORWARD to a that-clause/to-infinitive = 진주어, not a real antecedent.)
 - Impersonal "it" (weather/time/distance): "It is raining", "It is 3 o'clock", "It is 5 km".
 - Any case where the referent is a that-clause/to-infinitive rather than a real preceding noun/clause.
+- Generic / indefinite use with NO concrete antecedent in the text: "those who ...",
+  "one who ...", "anyone who ...", "people who ..." — here the pronoun means "people in
+  general" and the referent is NOT written anywhere. (Detect: pronoun directly followed by
+  a relative pronoun who/whom/whose/that/which.)
 Only keep GENUINE referential pronouns/demonstratives whose antecedent is a real
-noun phrase or a bounded preceding clause already present earlier in the sentence.
+noun phrase (DIFFERENT from the pronoun itself) already written earlier in THIS sentence.
 If unsure, set "skip": true.
 
 Output ONLY a valid JSON array — no markdown fences:
@@ -120,7 +137,9 @@ Output ONLY a valid JSON array — no markdown fences:
         it.sentenceIndex < capped.length &&
         it.sentence && it.referent && it.pronoun &&
         REFERENCE_KEYS.has(it.category) &&
-        containsSpan(it.sentence, it.referent),
+        containsSpan(it.sentence, it.referent) &&
+        !sameWord(it.referent, it.pronoun) &&
+        !isGenericPronoun(it.sentence, it.pronoun),
       )
       .map((it) => ({
         orderIndex: it.sentenceIndex,
