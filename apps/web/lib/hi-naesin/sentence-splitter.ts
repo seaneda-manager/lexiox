@@ -2,15 +2,48 @@
 // 영어/한국어 지문을 문장 단위로 분리
 
 const EN_ABBREVS = /\b(Mr|Mrs|Ms|Dr|Prof|Sr|Jr|vs|etc|e\.g|i\.e|Fig|vol|Vol|No|pp|ca|approx|dept|est|govt|max|min|avg|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\./g;
-const PLACEHOLDER = '\x00DOT\x00';
+
+// 종결부호(.!?)를 임시 치환하는 placeholder — 분리 후 복원
+const P_DOT  = '\x00DOT\x00';
+const P_BANG = '\x00BANG\x00';
+const P_Q    = '\x00Q\x00';
+
+function restorePunct(s: string): string {
+  return s
+    .replace(new RegExp(P_DOT, 'g'), '.')
+    .replace(new RegExp(P_BANG, 'g'), '!')
+    .replace(new RegExp(P_Q, 'g'), '?');
+}
+
+// 인용문("..." / “...”) 내부의 종결부호를 보호.
+// 단, 인용문을 끝내는 "마지막" 종결부호(닫는 따옴표 직전)는 실제 문장끝이므로 그대로 둔다.
+function protectQuoteInternals(text: string): string {
+  const protectInner = (inner: string): string => {
+    const hasTail = /[.!?]$/.test(inner);
+    const tail = hasTail ? inner.slice(-1) : '';
+    const body = hasTail ? inner.slice(0, -1) : inner;
+    const masked = body
+      .replace(/\./g, P_DOT)
+      .replace(/!/g, P_BANG)
+      .replace(/\?/g, P_Q);
+    return masked + tail;
+  };
+  return text
+    .replace(/"([^"]*)"/g, (_m, inner) => `"${protectInner(inner)}"`)
+    .replace(/“([^”]*)”/g, (_m, inner) => `“${protectInner(inner)}”`);
+}
 
 export function splitEnglish(text: string): string[] {
-  const safe = text.replace(EN_ABBREVS, (m) => m.slice(0, -1) + PLACEHOLDER);
+  let safe = text.replace(/\r\n/g, '\n');
+  // 1) 약어 보호 (Mr. Dr. e.g. 등)
+  safe = safe.replace(EN_ABBREVS, (m) => m.slice(0, -1) + P_DOT);
+  // 2) 인용문 내부 종결부호 보호
+  safe = protectQuoteInternals(safe);
 
   const sentences = safe
-    .replace(/\r\n/g, '\n')
-    .split(/(?<=[.!?])\s+(?=[A-Z"(])/)
-    .map((s) => s.replace(new RegExp(PLACEHOLDER, 'g'), '.').trim())
+    // 종결부호 + (선택적 닫는 따옴표/괄호) + 공백 + (선택적 여는 따옴표/괄호) + 대문자
+    .split(/(?<=[.!?]["'”’)\]]?)\s+(?=["'“‘(\[]?[A-Z])/)
+    .map((s) => restorePunct(s).trim())
     .filter((s) => s.length > 5);
 
   return sentences;
@@ -19,10 +52,13 @@ export function splitEnglish(text: string): string[] {
 export function splitKorean(text: string): string[] {
   if (!text.trim()) return [];
 
-  return text
-    .replace(/\r\n/g, '\n')
-    .split(/(?<=[다요죠네군]\.)\s+/)
-    .map((s) => s.trim())
+  const safe = protectQuoteInternals(text.replace(/\r\n/g, '\n'));
+
+  return safe
+    // 종결 어미(다/요/죠/네/군) + 마침표 + (선택적 닫는 따옴표/괄호) + 공백
+    // 단, 뒤에 인용조사(라고/하고/이라고 등)가 오면 인용동사 구문이므로 끊지 않음
+    .split(/(?<=[다요죠네군]\.["'”’)\]]?)\s+(?!(?:라고|라며|라면서|하고|하며|하면서|이라고|이라며|다고|라는))/)
+    .map((s) => restorePunct(s).trim())
     .filter((s) => s.length > 2);
 }
 
