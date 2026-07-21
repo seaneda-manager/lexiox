@@ -31,6 +31,20 @@ function containsSpan(sentence: string, span: string): boolean {
   return norm(sentence).includes(norm(span));
 }
 
+/** 물어보는 대명사(anchor)의 단어 위치. 같은 단어가 여러 번이면 referent 뒤 것을 우선. 못 찾으면 -1. */
+function findAnchorIndex(sentence: string, anchor: string, referent: string): number {
+  const words = sentence.split(/\s+/);
+  const norm  = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/gi, '');
+  const aWord = norm((anchor ?? '').split(/\s+/)[0] ?? '');
+  const rWord = norm((referent ?? '').split(/\s+/)[0] ?? '');
+  if (!aWord) return -1;
+  const refIdx = words.findIndex((w) => norm(w) === rWord);
+  const cands  = words.map((w, i) => (norm(w) === aWord ? i : -1)).filter((i) => i >= 0);
+  if (cands.length === 0) return -1;
+  const after = cands.find((i) => i > refIdx);
+  return after ?? cands[0];
+}
+
 export async function generateReferenceQuestions(
   sentences: Array<{ sentenceEn: string }>,
 ): Promise<StructOk | StructFail> {
@@ -62,7 +76,16 @@ CRITICAL rules:
     "clause"   = a whole preceding clause/sentence idea
     "abstract" = an abstract concept or situation
 - "explanation": 1 sentence in Korean explaining why.
-- If the sentence has no pronoun with an in-sentence referent, set "skip": true.
+
+DO NOT create a drill (set "skip": true) for these — they are NOT referent resolution:
+- Anticipatory / dummy "it" (가주어): "It is + adjective/noun + that-clause / to-infinitive"
+  e.g. "It is evident that ...", "It is important to ...", "It takes time to ...".
+  (Here "it" points FORWARD to a that-clause/to-infinitive = 진주어, not a real antecedent.)
+- Impersonal "it" (weather/time/distance): "It is raining", "It is 3 o'clock", "It is 5 km".
+- Any case where the referent is a that-clause/to-infinitive rather than a real preceding noun/clause.
+Only keep GENUINE referential pronouns/demonstratives whose antecedent is a real
+noun phrase or a bounded preceding clause already present earlier in the sentence.
+If unsure, set "skip": true.
 
 Output ONLY a valid JSON array — no markdown fences:
 [
@@ -109,6 +132,7 @@ Output ONLY a valid JSON array — no markdown fences:
             {
               span: it.referent,
               anchor: it.pronoun,
+              anchorIndex: findAnchorIndex(it.sentence, it.pronoun, it.referent),
               category: it.category,
               options: REFERENCE_OPTIONS,
               elementTag: `ref:${it.category}`,

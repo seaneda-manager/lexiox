@@ -1064,6 +1064,7 @@ type ICPayload = {
   targets: Array<{
     span: string;
     anchor?: string;
+    anchorIndex?: number;
     category?: string;
     options?: Array<{ key: string; label: string }>;
     explanation?: string;
@@ -1103,6 +1104,7 @@ function IdentifyCategorizeDrill({
 
   function clickWord(i: number) {
     if (spanLocked) return;
+    if (i === t?.anchorIndex) return; // 물어보는 대명사 자체는 선택 대상 아님
     setDraft((prev) => (prev == null ? [i, i] : [Math.min(prev[0], i), Math.max(prev[0], i)]));
   }
   function lockSpan() {
@@ -1117,6 +1119,7 @@ function IdentifyCategorizeDrill({
   }
 
   const wordClass = (i: number) => {
+    if (i === t?.anchorIndex) return 'bg-amber-50 text-amber-900 ring-1 ring-amber-400 underline decoration-dotted cursor-default';
     for (const r of ranges) {
       if (r && i >= r[0] && i <= r[1]) return 'bg-indigo-600 text-white';
     }

@@ -94,7 +94,8 @@ export type ICCategoryOption = {
 
 export type ICTarget = {
   span: string;                   // identify 정답 구간 (원문 부분 문자열)
-  anchor?: string;                // 지칭=referent(가리키는 대상) / 수식=피수식어
+  anchor?: string;                // 지칭=물어보는 대명사/지시어 / 수식=수식어(밑줄)
+  anchorIndex?: number;           // sentence.split(/\s+/) 기준 anchor 단어 위치 (표기용)
   category?: string;              // categorize 정답 key (depth>=2 일 때 사용)
   options?: ICCategoryOption[];   // categorize 보기
   elementTag?: string;            // 요소별 분석 태그 e.g. 'ref:whole-clause', 'mod:adj-clause'
