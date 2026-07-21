@@ -1,7 +1,6 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { after } from 'next/server';
 import { getServerSupabase } from '@/lib/supabase/server';
 import { gradeTranslation, gradeWriting } from '@/lib/hi-naesin/translation-grader';
 
@@ -91,38 +90,9 @@ export async function submitDrillAnswerAction(
     scorePct  = g.scorePct;
   }
 
-  // ── AI 채점이 필요한 타입 → 백그라운드에서 실행 ─────────────
-  // after()는 redirect 이후 응답이 나간 뒤에 실행되므로 체감 딜레이 없음
-  if (drillType === 'translation') {
-    const sentenceEn = (fd.get('sentence_en') as string)?.trim() ?? '';
-    const answerKo   = (fd.get('answer_ko') as string)?.trim() ?? '';
-    const captured   = { sessionId, drillId, sentenceEn, answerKo, responseText };
-    after(async () => {
-      const result = await gradeTranslation(captured.sentenceEn, captured.answerKo, captured.responseText);
-      if (!result) return;
-      const bg = await getServerSupabase();
-      await bg
-        .from('hi_naesin_drill_responses')
-        .update({ is_correct: result.isCorrect, score_pct: result.scorePct, feedback_text: result.feedbackText })
-        .eq('session_id', captured.sessionId)
-        .eq('drill_id', captured.drillId);
-    });
-
-  } else if (drillType === 'writing') {
-    const promptKo = (fd.get('prompt_ko') as string)?.trim() ?? '';
-    const answerEn = (fd.get('answer_en') as string)?.trim() ?? '';
-    const captured = { sessionId, drillId, promptKo, answerEn, responseText };
-    after(async () => {
-      const result = await gradeWriting(captured.promptKo, captured.answerEn, captured.responseText);
-      if (!result) return;
-      const bg = await getServerSupabase();
-      await bg
-        .from('hi_naesin_drill_responses')
-        .update({ is_correct: result.isCorrect, score_pct: result.scorePct, feedback_text: result.feedbackText })
-        .eq('session_id', captured.sessionId)
-        .eq('drill_id', captured.drillId);
-    });
-  }
+  // translation/writing(AI 채점 타입)은 여기서 채점하지 않고 is_correct=null 로 저장.
+  // 클라이언트가 제출 후 gradeAnswerClientAction 을 비동기로 호출해 백그라운드 채점한다.
+  // (Next 14.2 에는 after()가 없어 제출 경로에서 AI 호출 시 응답이 블로킹됨 → 분리)
 
   // ── 응답 저장 (채점 결과 없이 즉시 upsert) ─────────────────
   const { error } = await supabase
@@ -266,32 +236,8 @@ export async function submitAnswerClientAction(
     scorePct  = g.scorePct;
   }
 
-  // AI 채점 타입 → 백그라운드 실행
-  if (drillType === 'translation') {
-    const sentenceEn = (fd.get('sentence_en') as string)?.trim() ?? '';
-    const answerKo   = (fd.get('answer_ko') as string)?.trim() ?? '';
-    const captured   = { sessionId, drillId, sentenceEn, answerKo, responseText };
-    after(async () => {
-      const result = await gradeTranslation(captured.sentenceEn, captured.answerKo, captured.responseText);
-      if (!result) return;
-      const bg = await getServerSupabase();
-      await bg.from('hi_naesin_drill_responses')
-        .update({ is_correct: result.isCorrect, score_pct: result.scorePct, feedback_text: result.feedbackText })
-        .eq('session_id', captured.sessionId).eq('drill_id', captured.drillId);
-    });
-  } else if (drillType === 'writing') {
-    const promptKo = (fd.get('prompt_ko') as string)?.trim() ?? '';
-    const answerEn = (fd.get('answer_en') as string)?.trim() ?? '';
-    const captured = { sessionId, drillId, promptKo, answerEn, responseText };
-    after(async () => {
-      const result = await gradeWriting(captured.promptKo, captured.answerEn, captured.responseText);
-      if (!result) return;
-      const bg = await getServerSupabase();
-      await bg.from('hi_naesin_drill_responses')
-        .update({ is_correct: result.isCorrect, score_pct: result.scorePct, feedback_text: result.feedbackText })
-        .eq('session_id', captured.sessionId).eq('drill_id', captured.drillId);
-    });
-  }
+  // translation/writing 은 여기서 AI 채점하지 않는다(응답 블로킹 방지).
+  // 제출 후 클라이언트가 gradeAnswerClientAction 을 비동기로 호출해 백그라운드 채점.
 
   const row = {
     session_id:      sessionId,
@@ -346,4 +292,31 @@ export async function completeSessionClientAction(sessionId: string): Promise<vo
   await supabase.from('hi_naesin_sessions')
     .update({ status: 'submitted', submitted_at: new Date().toISOString() })
     .eq('id', sessionId);
+}
+
+// ── 해석/작문 AI 채점 (클라이언트가 제출 후 비동기 호출 → 제출 응답 블로킹 방지) ──
+// translation: fieldA=sentenceEn, fieldB=answerKo / writing: fieldA=koPrompt, fieldB=answerEn
+export async function gradeAnswerClientAction(
+  sessionId: string,
+  drillId: string,
+  drillType: 'translation' | 'writing',
+  fieldA: string,
+  fieldB: string,
+  studentText: string,
+): Promise<void> {
+  if (!studentText) return;
+  const result = drillType === 'translation'
+    ? await gradeTranslation(fieldA, fieldB, studentText)
+    : await gradeWriting(fieldA, fieldB, studentText);
+  if (!result) return;
+
+  const supabase = await getServerSupabase();
+  // 점수·피드백은 항상 기록
+  await supabase.from('hi_naesin_drill_responses')
+    .update({ score_pct: result.scorePct, feedback_text: result.feedbackText })
+    .eq('session_id', sessionId).eq('drill_id', drillId);
+  // is_correct 는 학생 self-check 을 덮지 않도록 아직 null 일 때만 반영
+  await supabase.from('hi_naesin_drill_responses')
+    .update({ is_correct: result.isCorrect })
+    .eq('session_id', sessionId).eq('drill_id', drillId).is('is_correct', null);
 }

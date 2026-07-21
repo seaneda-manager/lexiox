@@ -9,6 +9,7 @@ import {
   submitAnswerClientAction,
   selfCheckClientAction,
   completeSessionClientAction,
+  gradeAnswerClientAction,
   type ClientResponseRow,
 } from '../actions';
 
@@ -179,6 +180,15 @@ export default function DrillClient({
         return;
       }
       setResponses((prev) => new Map(prev).set(drill.id, result));
+
+      // 해석/작문: AI 채점을 기다리지 않고 백그라운드로 발사 (제출 즉시 진행)
+      if (drill.drill_type === 'translation') {
+        const p = drill.payload as { sentenceEn?: string; answerKo?: string };
+        void gradeAnswerClientAction(sessionId, drill.id, 'translation', p.sentenceEn ?? '', p.answerKo ?? '', result.response_text ?? '');
+      } else if (drill.drill_type === 'writing') {
+        const p = drill.payload as { koPrompt?: string; answerEn?: string };
+        void gradeAnswerClientAction(sessionId, drill.id, 'writing', p.koPrompt ?? '', p.answerEn ?? '', result.response_text ?? '');
+      }
     });
 
     // fill_blank / grammar_choice → 자동으로 다음으로 넘어가지 않음 (결과 표시)
