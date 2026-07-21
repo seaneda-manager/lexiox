@@ -37,6 +37,9 @@ export default function SpeedChallengeRunner({
   secondsPerQuestion = 6,
   minPassAccuracy = 0.7,
 }: Props) {
+  // 🔍 DEBUG: secondsPerQuestion 값 확인
+  console.log("🎯 SpeedChallengeRunner received secondsPerQuestion:", secondsPerQuestion);
+
   const qs = useMemo(() => (Array.isArray(questions) ? questions : []).filter(Boolean), [questions]);
   const total = qs.length;
 
