@@ -96,7 +96,7 @@ export async function loadVocabHubAction() {
     // 3) 학생의 모든 Vocab 할당 조회
     const { data: assignments } = await supabase
       .from("student_vocab_assignments")
-      .select("id, set_id, student_id, day_index, available_at, assigned_at, completed_at, canceled_at")
+      .select("id, set_id, student_id, day_index, available_at, assigned_at, completed_at, canceled_at, vocab_sets!inner(track_id)")
       .eq("student_id", studentId)
       .is("canceled_at", null)
       .order("available_at", { ascending: true });
@@ -209,10 +209,11 @@ export async function loadVocabHubAction() {
 
     (assignments as any[]).forEach((assignment) => {
       const setId = assignment.set_id;
-      const trackId = assignment.track_id; // track_id 사용
+      // vocab_sets 관계에서 track_id 가져오기
+      const trackId = assignment.vocab_sets?.track_id || setMetadata?.find((s: any) => s.id === setId)?.track_id;
 
       // 학생의 grade_band에 맞지 않는 track 제외
-      if (!allowedTrackIds.has(trackId)) {
+      if (!trackId || !allowedTrackIds.has(trackId)) {
         return; // 이 assignment는 스킵
       }
 
