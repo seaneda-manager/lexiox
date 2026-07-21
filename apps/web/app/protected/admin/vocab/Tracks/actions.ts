@@ -2,6 +2,7 @@
 "use server";
 
 import { getServerSupabase } from "@/lib/supabase/server";
+import { getServiceSupabase } from "@/lib/supabase/service";
 import { createVocabSetFromRawAction } from "../sets/new/actions";
 
 import {
@@ -821,6 +822,31 @@ export async function assignNextSetNowAction(params: {
   if (!trackId) throw new Error("trackId is required");
 
   const res = await ensureCockedQueueForPlan(supabase, {
+    studentId,
+    trackId,
+    mode: "manual",
+    queueSize: 1,
+  });
+  return { ok: true, ...res };
+}
+
+/* =========================================================
+ * 학생이 한 회차를 끝냈을 때 다음 회차 자동 할당 (오늘 바로 오픈)
+ * - 전체 코스가 plan 으로 배정돼 있으므로, 완료 즉시 다음 Day 를 연다
+ * - 학생 본인 동작이라 RLS 를 우회해야 하므로 service role 로 실행
+ * - mode:"manual" → available_at = 오늘, open cap 무시
+ * ======================================================= */
+export async function advanceVocabQueueAfterCompletionAction(params: {
+  studentId: string; // academy_students.id
+  trackId: string;
+}) {
+  const studentId = cleanStr(params.studentId);
+  const trackId = cleanStr(params.trackId);
+  if (!studentId || !trackId) return { ok: false, reason: "MISSING_PARAMS" };
+
+  const service = getServiceSupabase() as unknown as Supa;
+
+  const res = await ensureCockedQueueForPlan(service, {
     studentId,
     trackId,
     mode: "manual",

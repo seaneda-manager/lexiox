@@ -1017,6 +1017,8 @@ export async function completeVocabDayAction(input: {
 /**
  * 학습 결과 저장 (Know/DontKnow, Spelling, Speed)
  */
+import { advanceVocabQueueAfterCompletionAction } from "@/app/protected/admin/vocab/Tracks/actions";
+
 export type SaveVocabAttemptInput = {
   studentId: string;
   setId: string;
@@ -1085,6 +1087,27 @@ export async function saveVocabAttemptAction(
 
       if (assignmentError) {
         console.warn("saveVocabAttemptAction: assignment update failed", toErrMsg(assignmentError));
+      }
+
+      // 3. 다음 회차 자동 할당 (전체 코스가 배정돼 있으므로 완료 즉시 다음 Day 오픈)
+      try {
+        const { data: asg } = await client
+          .from("student_vocab_assignments")
+          .select("student_id, track_id")
+          .eq("id", input.assignmentId)
+          .maybeSingle();
+
+        const nextStudentId = cleanStr((asg as any)?.student_id);
+        const nextTrackId = cleanStr((asg as any)?.track_id);
+
+        if (nextStudentId && nextTrackId) {
+          await advanceVocabQueueAfterCompletionAction({
+            studentId: nextStudentId,
+            trackId: nextTrackId,
+          });
+        }
+      } catch (e: any) {
+        console.warn("saveVocabAttemptAction: advance queue failed", toErrMsg(e));
       }
     }
 
