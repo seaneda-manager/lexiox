@@ -1190,6 +1190,7 @@ async function ensureCockedQueueForPlan(
 
   return {
     assigned: assignedCount > 0,
+    reason: assignedCount > 0 ? null : "NO_AVAILABLE_DAYS",
     assignedCount,
     created,
     todayISO,
