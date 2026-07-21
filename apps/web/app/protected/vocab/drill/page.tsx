@@ -13,15 +13,14 @@ import type { DrillTask, DrillType } from "@/components/vocab/drill/drill.types"
 
 const CHUNK_SIZE = 4;
 
-/**
- * 러너가 현재 렌더할 수 있는 타입.
- * DEFINITION_PICK / LISTEN_SPELL_MEANING / MEANING_OPPOSITE 는 전용 UI 추가 후 열린다.
- */
+/** 러너가 렌더할 수 있는 타입 (6종 전부) */
 const RUNNER_READY_TYPES: DrillType[] = [
+  "LISTEN_SPELL_MEANING",
+  "DEFINITION_PICK",
   "SYNONYM",
-  "WORD_FORM_PICK",
-  "SENTENCE_BLANK",
+  "MEANING_OPPOSITE",
   "COLLOCATION",
+  "WORD_FORM_PICK",
 ];
 
 export default function VocabDrillPage() {

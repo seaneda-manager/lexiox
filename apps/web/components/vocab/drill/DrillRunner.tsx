@@ -6,6 +6,8 @@ import type { DrillTask } from "./drill.types";
 import SentenceBlankDrill from "./SentenceBlankDrill";
 import CollocationDrill from "./CollocationDrill";
 import WordFormPickDrill from "./WordFormPickDrill";
+import DefinitionPickDrill from "./DefinitionPickDrill";
+import ListenSpellMeaningDrill from "./ListenSpellMeaningDrill";
 import StageScaffold from "@/components/common/stage/StageScaffold";
 
 type Props = {
@@ -15,7 +17,14 @@ type Props = {
   mode?: "classic" | string;
 };
 
-const DRILL_TYPE_ORDER = ["SYNONYM", "WORD_FORM", "FILL_IN_THE_BLANKS", "COLLOCATION"] as const;
+const DRILL_TYPE_ORDER = [
+  "LISTEN_SPELL",
+  "DEFINITION_PICK",
+  "SYNONYM",
+  "WORD_FORM",
+  "FILL_IN_THE_BLANKS",
+  "COLLOCATION",
+] as const;
 type CanonDrillType = (typeof DRILL_TYPE_ORDER)[number];
 
 function canonType(x: unknown) {
@@ -31,7 +40,12 @@ function canonType(x: unknown) {
   if (raw === "SYNONYM") return "SYNONYM";
   if (raw === "COLLOCATION") return "COLLOCATION";
 
-  if (raw === "MEANING_OPPOSITE") return "REMOVED:MEANING_OPPOSITE";
+  // 반의어는 meaning MCQ 와 구조가 같고 seed.meta.relation 으로 구분된다
+  if (raw === "MEANING_OPPOSITE") return "SYNONYM";
+
+  if (raw === "DEFINITION_PICK") return "DEFINITION_PICK";
+  if (raw === "LISTEN_SPELL_MEANING" || raw === "LISTEN_SPELL") return "LISTEN_SPELL";
+
   if (raw === "LISTEN_ARRANGE") return "REMOVED:LISTEN_ARRANGE";
   if (raw === "SYLLABLE_ARRANGE") return "REMOVED:SYLLABLE_ARRANGE";
   if (raw === "LISTEN_ARRANGE_SENTENCE") return "REMOVED:LISTEN_ARRANGE_SENTENCE";
@@ -386,7 +400,11 @@ export default function DrillRunner({ userId: _userId, tasks, onFinish, mode = "
 
       >
         <div className="w-full h-full">
-          {dt === "SYNONYM" ? (
+          {dt === "LISTEN_SPELL" ? (
+            <ListenSpellMeaningDrill task={current} onDone={onDone} />
+          ) : dt === "DEFINITION_PICK" ? (
+            <DefinitionPickDrill task={current} onDone={onDone} />
+          ) : dt === "SYNONYM" ? (
             <InlineSynonymDrill task={current} onDone={onDone} />
           ) : dt === "WORD_FORM" ? (
             <WordFormPickDrill task={current} onDone={onDone} />
