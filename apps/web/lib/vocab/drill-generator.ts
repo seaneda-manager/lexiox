@@ -26,6 +26,54 @@ export type GenWord = {
   derivedTerms: string[];
 };
 
+/* ------------------------------------------------------------------
+ * SessionWord(로더 산출물) → GenWord 어댑터
+ * SessionWord 는 레거시 필드명이 병존하므로 방어적으로 흡수한다.
+ * ---------------------------------------------------------------- */
+
+function toArr(v: unknown): string[] {
+  if (Array.isArray(v)) return v.map((x) => String(x ?? "").trim()).filter(Boolean);
+  const s = String(v ?? "").trim();
+  return s ? [s] : [];
+}
+
+export function toGenWord(w: any): GenWord {
+  const meaningsKo = toArr(w?.meanings_ko).length ? toArr(w?.meanings_ko) : toArr(w?.meaning_ko);
+  const meaningsEn = toArr(w?.meanings_en_simple).length
+    ? toArr(w?.meanings_en_simple)
+    : toArr(w?.meaning_en_simple);
+
+  const collocations: string[] = Array.isArray(w?.collocations)
+    ? w.collocations
+        .map((c: any) =>
+          typeof c === "string"
+            ? c
+            : String(c?.phrase ?? [c?.base, c?.right].filter(Boolean).join(" ") ?? "").trim(),
+        )
+        .filter(Boolean)
+    : [];
+
+  const examples: string[] = [];
+  for (const e of Array.isArray(w?.examples) ? w.examples : []) {
+    const en = typeof e === "string" ? e : String(e?.en ?? "").trim();
+    if (en) examples.push(en);
+  }
+  examples.push(...toArr(w?.examples_easy), ...toArr(w?.examples_normal));
+
+  return {
+    id: String(w?.id ?? ""),
+    text: String(w?.text ?? "").trim(),
+    pos: w?.pos ?? null,
+    meaningsKo,
+    meaningsEnSimple: meaningsEn,
+    synonyms: toArr(w?.synonyms_en_simple).length ? toArr(w?.synonyms_en_simple) : toArr(w?.synonyms),
+    antonyms: toArr(w?.antonyms_terms).length ? toArr(w?.antonyms_terms) : toArr(w?.antonyms),
+    collocations: [...new Set(collocations)],
+    examples: [...new Set(examples)],
+    derivedTerms: toArr(w?.derived_terms),
+  };
+}
+
 export type GenerateOptions = {
   /** 청크당 단어 수 (기본 4 — Cowan 4±1) */
   chunkSize?: number;
