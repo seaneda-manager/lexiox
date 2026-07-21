@@ -95,10 +95,10 @@ export async function loadVocabHubAction() {
 
     const program = profileData?.program ?? null;
 
-    // 3) 학생의 모든 Vocab 할당 조회
+    // 3) 학생의 모든 Vocab 할당 조회 + vocab_sets 관계에서 track_id 포함
     const { data: assignments } = await supabase
       .from("student_vocab_assignments")
-      .select("id, set_id, student_id, day_index, available_at, assigned_at, completed_at, canceled_at")
+      .select("id, set_id, student_id, day_index, available_at, assigned_at, completed_at, canceled_at, vocab_sets(track_id)")
       .eq("student_id", studentId)
       .is("canceled_at", null)
       .order("available_at", { ascending: true });
