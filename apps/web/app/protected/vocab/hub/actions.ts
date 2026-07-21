@@ -128,26 +128,10 @@ export async function loadVocabHubAction() {
       trackGradeBandMap.set(t.id, t.grade_band ?? null);
     });
 
-    // 학생의 grade_band에 맞는 track만 필터링
-    // 중학생(K7_9): 중학 + 고등 track 모두 보여줌
-    // 고등학생(K10_12, POST_K12): 고등 track만 보여줌
+    // 모든 track 표시 (grade_band 필터링 임시 제거)
     const allowedTrackIds = new Set<string>();
-    for (const [trackId, trackGradeBand] of trackGradeBandMap.entries()) {
-      if (!trackGradeBand) {
-        // grade_band가 없으면 모두에게 표시
-        allowedTrackIds.add(trackId);
-      } else if (gradeBand === "K7_9") {
-        // 중학생: 모든 track 표시
-        allowedTrackIds.add(trackId);
-      } else if (gradeBand === "K10_12" || gradeBand === "POST_K12") {
-        // 고등학생: K10_12, POST_K12, 그리고 grade_band 없는 것만 표시
-        if (trackGradeBand === "K10_12" || trackGradeBand === "POST_K12" || !trackGradeBand) {
-          allowedTrackIds.add(trackId);
-        }
-      } else {
-        // grade_band가 없는 학생: 모두에게 표시
-        allowedTrackIds.add(trackId);
-      }
+    for (const trackId of trackGradeBandMap.keys()) {
+      allowedTrackIds.add(trackId);
     }
 
     // setId → track title 매핑 (필터링된 track만)
