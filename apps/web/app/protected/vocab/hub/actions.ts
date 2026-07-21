@@ -70,10 +70,10 @@ export async function loadVocabHubAction() {
     const userId = authUser.user.id;
     const todayISO = todayISO_KST();
 
-    // 1) 학생 정보 조회 (program 포함)
+    // 1) 학생 정보 조회 (program, grade_band 포함)
     const { data: studentData } = await supabase
       .from("academy_students")
-      .select("id, user_id, auth_user_id")
+      .select("id, user_id, auth_user_id, grade_band")
       .eq("auth_user_id", userId)
       .maybeSingle();
 
@@ -82,6 +82,7 @@ export async function loadVocabHubAction() {
     }
 
     const studentId = studentData.id;
+    const gradeBand = studentData.grade_band ?? null;
 
     // 2) 프로필에서 program 조회 (또는 다른 테이블)
     const { data: profileData } = await supabase
@@ -113,23 +114,49 @@ export async function loadVocabHubAction() {
       .select("id, title, track_id")
       .in("id", setIds);
 
-    // 4-2) track_id별로 vocab_tracks 정보 조회
+    // 4-2) track_id별로 vocab_tracks 정보 조회 (grade_band 포함)
     const trackIds = [...new Set((setMetadata ?? []).map((s: any) => s.track_id).filter(Boolean))];
     const { data: trackMetadata } = await supabase
       .from("vocab_tracks")
-      .select("id, title")
+      .select("id, title, grade_band")
       .in("id", trackIds);
 
     const trackNameMap = new Map<string, string>();
+    const trackGradeBandMap = new Map<string, string | null>();
     (trackMetadata ?? []).forEach((t: any) => {
       trackNameMap.set(t.id, t.title || `Track ${t.id.slice(0, 8)}`);
+      trackGradeBandMap.set(t.id, t.grade_band ?? null);
     });
 
-    // setId → track title 매핑
+    // 학생의 grade_band에 맞는 track만 필터링
+    // 중학생(K7_9): 중학 + 고등 track 모두 보여줌
+    // 고등학생(K10_12, POST_K12): 고등 track만 보여줌
+    const allowedTrackIds = new Set<string>();
+    for (const [trackId, trackGradeBand] of trackGradeBandMap.entries()) {
+      if (!trackGradeBand) {
+        // grade_band가 없으면 모두에게 표시
+        allowedTrackIds.add(trackId);
+      } else if (gradeBand === "K7_9") {
+        // 중학생: 모든 track 표시
+        allowedTrackIds.add(trackId);
+      } else if (gradeBand === "K10_12" || gradeBand === "POST_K12") {
+        // 고등학생: K10_12, POST_K12, 그리고 grade_band 없는 것만 표시
+        if (trackGradeBand === "K10_12" || trackGradeBand === "POST_K12" || !trackGradeBand) {
+          allowedTrackIds.add(trackId);
+        }
+      } else {
+        // grade_band가 없는 학생: 모두에게 표시
+        allowedTrackIds.add(trackId);
+      }
+    }
+
+    // setId → track title 매핑 (필터링된 track만)
     const setTrackMap = new Map<string, string>();
     (setMetadata ?? []).forEach((s: any) => {
-      const trackName = s.track_id ? trackNameMap.get(s.track_id) || `Track ${s.track_id.slice(0, 8)}` : `Set ${s.id.slice(0, 8)}`;
-      setTrackMap.set(s.id, trackName);
+      if (allowedTrackIds.has(s.track_id)) {
+        const trackName = s.track_id ? trackNameMap.get(s.track_id) || `Track ${s.track_id.slice(0, 8)}` : `Set ${s.id.slice(0, 8)}`;
+        setTrackMap.set(s.id, trackName);
+      }
     });
 
     const { data: vocabSets } = await supabase
@@ -183,6 +210,12 @@ export async function loadVocabHubAction() {
     (assignments as any[]).forEach((assignment) => {
       const setId = assignment.set_id;
       const trackId = assignment.track_id; // track_id 사용
+
+      // 학생의 grade_band에 맞지 않는 track 제외
+      if (!allowedTrackIds.has(trackId)) {
+        return; // 이 assignment는 스킵
+      }
+
       const dayIndex = assignment.day_index ?? 1;
       const isCompleted = !!assignment.completed_at;
       const isAvailable = assignment.available_at <= todayISO;

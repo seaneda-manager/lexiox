@@ -1,4 +1,4 @@
-/* apps/web/app/auth/signup/page.tsx */
+﻿/* apps/web/app/auth/signup/page.tsx */
 import { redirect } from 'next/navigation';
 import { signUp } from '@/actions/auth';
 import type { ActionState } from '@/actions/auth';
@@ -22,13 +22,11 @@ export default function SignUpPage({
   async function signupAction(formData: FormData) {
     'use server';
 
-    // role???덉쟾?섍쾶 蹂댁젙?댁꽌 ?꾨떖
     const role = normalizeRole(formData.get('role'));
     formData.set('role', role);
 
     const r = await signUp(formData);
 
-    // ????긽 ActionState濡?留ㅽ븨
     const mapped: ActionState = r.ok
       ? { ok: true, error: null }
       : { ok: false, error: r.error ?? 'Unknown error' };
@@ -36,15 +34,12 @@ export default function SignUpPage({
     const email = String(formData.get('email') ?? '');
 
     if (mapped.ok) {
-      // 媛???깃났 ??濡쒓렇???섏씠吏濡? ?대찓???꾨━??+ ?깃났 ?좎뒪?몄슜 荑쇰━
       redirect(`/auth/login?signup=success${email ? `&email=${encodeURIComponent(email)}` : ''}`);
     }
 
-    // ?ㅽ뙣 ???먮윭 硫붿떆吏瑜?荑쇰━濡??꾨떖
     redirect(`/auth/signup?error=${encodeURIComponent(mapped.error ?? 'Unknown error')}${email ? `&email=${encodeURIComponent(email)}` : ''}`);
   }
 
-  // 荑쇰━?먯꽌 湲곕낯媛??ㅻ쪟 ?쎄린
   const q = (k: string) => {
     const v = searchParams?.[k];
     return Array.isArray(v) ? v[0] : v ?? '';
@@ -85,7 +80,6 @@ export default function SignUpPage({
           />
         </div>
 
-        {/* ??븷 ?좏깮 (user_metadata.role 濡???λ맖) */}
         <fieldset>
           <legend className="block text-sm font-medium mb-2">Role</legend>
           <div className="flex items-center gap-5 text-sm">
@@ -111,7 +105,3 @@ export default function SignUpPage({
     </main>
   );
 }
-
-
-
-

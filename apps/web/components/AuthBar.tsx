@@ -20,15 +20,15 @@ export default function AuthBar() {
 
   async function logout() {
     await supabase.auth.signOut();
-    location.href = '/';
+    location.href = '/auth/login';
   }
 
   return (
     <div style={barStyle}>
       <div style={{display:'flex',gap:12,alignItems:'center'}}>
         <Link href="/" style={logoStyle}>TOEFL</Link>
-        <Link href="/teacher/reading">Teacher쨌Reading</Link>
-        <Link href="/teacher/listening">Teacher쨌Listening</Link>
+        <Link href="/teacher/reading">Teacher - Reading</Link>
+        <Link href="/teacher/listening">Teacher - Listening</Link>
         <Link href="/dev/sets">Sets</Link>
       </div>
       <div>

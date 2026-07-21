@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -11,11 +11,11 @@ export default function NavBarClient() {
   const pathname = usePathname();
 
   useEffect(() => {
-    // 珥덇린 ?몄뀡 濡쒕뱶
+    // Load initial session
     supabase.auth.getSession().then(({ data }) => {
       setEmail(data.session?.user?.email ?? null);
     });
-    // ?곹깭 蹂??援щ룆
+    // Subscribe to auth state changes
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       setEmail(session?.user?.email ?? null);
     });
@@ -24,7 +24,6 @@ export default function NavBarClient() {
 
   async function handleLogout() {
     await supabase.auth.signOut();
-    // ?꾩옱 ?섏씠吏媛 蹂댄샇 ?쇱슦?몃㈃ 濡쒓렇???섏씠吏濡? ?꾨땲硫?洹몃?濡??덈줈怨좎묠
     if (pathname?.startsWith('/reading') || pathname?.startsWith('/listening')) {
       router.push('/auth/login');
     } else {
@@ -35,7 +34,7 @@ export default function NavBarClient() {
   return (
     <header className="w-full border-b">
       <div className="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between">
-        <Link href="/" className="font-semibold">?㎛ TOEFL Program</Link>
+        <Link href="/" className="font-semibold">LEXiOX TOEFL</Link>
 
         {email ? (
           <div className="flex items-center gap-3">
@@ -67,8 +66,3 @@ export default function NavBarClient() {
     </header>
   );
 }
-
-
-
-
-

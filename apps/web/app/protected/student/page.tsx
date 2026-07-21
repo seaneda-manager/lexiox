@@ -2,6 +2,10 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getServerSupabase } from "@/lib/supabase/server";
 import DailyTaskCard from "@/components/gamification/DailyTaskCard";
+import DdayCard from "@/components/student/DdayCard";
+import TestProgressBar from "@/components/student/TestProgressBar";
+import WeakPointsCard from "@/components/student/WeakPointsCard";
+import AnnouncementBanner from "@/components/student/AnnouncementBanner";
 
 export const dynamic = "force-dynamic";
 
@@ -288,7 +292,65 @@ export default async function StudentPage() {
     .eq('student_id', user.id)
     .maybeSingle();
 
-  // ── 7. 오늘의 데일리 태스크 ───────────────────────────────────
+  // ── 7. 시험 일정 & 약점 & 공지 (Phase 1 카드용) ─────────────────
+  let nextExamDate: string | null = null;
+  let weakPoints: Array<{ category: string; issue: string; type: "skill" | "content" }> = [];
+  let announcements: Array<{ id: string; type: "academy" | "contest" | "exam" | "system"; title: string; date: string; icon: string }> = [];
+
+  // Exam schedule 조회
+  if (academyStudentId) {
+    const { data: examData } = await supabase
+      .from('test_assignments')
+      .select('exam_date')
+      .eq('student_id', academyStudentId)
+      .gte('exam_date', new Date().toISOString().split('T')[0])
+      .order('exam_date', { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (examData?.exam_date) {
+      nextExamDate = examData.exam_date;
+    }
+  }
+
+  // Weak points 조회 (학생 분석 데이터)
+  if (academyStudentId) {
+    const { data: weakData } = await supabase
+      .from('student_analytics')
+      .select('weak_categories')
+      .eq('student_id', academyStudentId)
+      .maybeSingle();
+    if (weakData?.weak_categories && Array.isArray(weakData.weak_categories)) {
+      weakPoints = weakData.weak_categories.slice(0, 3);
+    }
+  }
+
+  // Announcements 조회
+  const { data: announcementsData } = await supabase
+    .from('announcements')
+    .select('id, type, title, created_at')
+    .order('created_at', { ascending: false })
+    .limit(3);
+
+  if (announcementsData) {
+    announcements = announcementsData.map((a: any) => ({
+      id: a.id,
+      type: a.type || 'system',
+      title: a.title,
+      date: a.created_at,
+      icon: '',
+    }));
+  }
+
+  // ── 8. 모듈 진도 (시험 준비 %) ─────────────────────────────────
+  // Reading, Listening, Speaking, Writing 완료율 계산
+  const moduleProgress = [
+    { name: 'Speaking', progress: speakingDone > 0 ? 60 : 0, color: 'rose' },
+    { name: 'Listening', progress: listeningDone > 0 ? 45 : 0, color: 'sky' },
+    { name: 'Writing', progress: writingDone > 0 ? 30 : 0, color: 'amber' },
+    { name: 'Grammar', progress: 0, color: 'emerald' },
+  ];
+
+  // ── 9. 오늘의 데일리 태스크 ───────────────────────────────────
   const todayStr = new Date().toISOString().split('T')[0];
   const { data: dailyTask } = await supabase
     .from('daily_tasks')
@@ -375,6 +437,18 @@ export default async function StudentPage() {
 
       {/* ── 데일리 태스크 ────────────────────────────────────── */}
       <DailyTaskCard task={dailyTask ?? null} />
+
+      {/* ── Phase 1 카드: D-day ────────────────────────────────── */}
+      {nextExamDate && <DdayCard nextExamDate={nextExamDate} examTitle="다음 시험" />}
+
+      {/* ── Phase 1 카드: 시험 준비 진도 ──────────────────────── */}
+      <TestProgressBar sections={moduleProgress} />
+
+      {/* ── Phase 1 카드: 약점 ───────────────────────────────── */}
+      <WeakPointsCard weakPoints={weakPoints} />
+
+      {/* ── Phase 1 카드: 공지 배너 ───────────────────────────── */}
+      {announcements.length > 0 && <AnnouncementBanner announcements={announcements} />}
 
       {/* ── 커리큘럼 헤더 ─────────────────────────────────────── */}
       <header

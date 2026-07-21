@@ -160,9 +160,9 @@ export default function LearningShowroom({ word, index, total, onDoneWord, track
     return "n";
   };
 
-  // 뜻 정의
+  // 뜻 정의 — 뜻이 1개면 meaning2는 없음 (전체 뜻을 두 칸에 나누지 않음)
   const meaning1Expected = meaningsKo[0] ?? "";
-  const meaning2Expected = meaningsKo[1] ?? (meaningsKo[0] ?? "");
+  const meaning2Expected = meaningsKo[1] ?? "";
 
   // 품사 배열 파싱
   const posList = useMemo(() => {
@@ -288,7 +288,8 @@ export default function LearningShowroom({ word, index, total, onDoneWord, track
     }
   };
 
-  const nextEnabled = spellingOk && posOk && meaning1Ok && meaning2Ok;
+  // ✅ 뜻이 1개면 meaning1만 확인, 2개 이상이면 meaning2도 확인
+  const nextEnabled = spellingOk && posOk && meaning1Ok && (meaning2Expected ? meaning2Ok : true);
 
   const syn1 = synonyms[0] ?? "";
   const syn2 = synonyms[1] ?? synonyms[0] ?? "";
@@ -445,8 +446,8 @@ export default function LearningShowroom({ word, index, total, onDoneWord, track
                   {meaning1Ok && <div style={{ fontSize: "12px", color: colors.success, marginTop: "8px" }}>✅ {syn1 && `동의어: ${syn1}`}</div>}
                 </div>
 
-                {/* Meaning 2 */}
-                {meaning1Ok && (
+                {/* Meaning 2 — 뜻이 2개 이상일 때만 표시 */}
+                {meaning1Ok && meaning2Expected && (
                   <div className="rounded-xl p-5" style={cardStyle}>
                     <div style={labelStyle}>뜻 2 (Meaning)</div>
                     <div className="relative mt-3">
