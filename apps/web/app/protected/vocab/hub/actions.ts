@@ -96,7 +96,7 @@ export async function loadVocabHubAction() {
     // 3) 학생의 모든 Vocab 할당 조회
     const { data: assignments } = await supabase
       .from("student_vocab_assignments")
-      .select("id, set_id, student_id, day_index, available_at, assigned_at, completed_at, canceled_at, vocab_sets!inner(track_id)")
+      .select("id, set_id, student_id, day_index, available_at, assigned_at, completed_at, canceled_at")
       .eq("student_id", studentId)
       .is("canceled_at", null)
       .order("available_at", { ascending: true });
