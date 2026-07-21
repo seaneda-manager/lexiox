@@ -1281,14 +1281,14 @@ export default function VocabSessionPage() {
   }, [allWords, speedWrongIds]);
 
   async function finishDay() {
-    setCompleting(true);
-    try {
-      if (sessionSetId) await completeVocabDayAction({ setId: sessionSetId });
-    } catch {
-      /* 완료 기록 실패해도 학습은 끝났으니 진행 */
-    } finally {
-      setCompleting(false);
-      setStage("DONE");
+    // ✅ DONE 화면을 바로 보여주고, 완료 기록은 백그라운드에서 처리
+    setStage("DONE");
+
+    // 백그라운드에서 완료 기록 (기다리지 않음)
+    if (sessionSetId) {
+      completeVocabDayAction({ setId: sessionSetId }).catch((e) => {
+        console.warn("Background: Failed to complete day:", e);
+      });
     }
   }
 
@@ -1726,6 +1726,11 @@ export default function VocabSessionPage() {
         );
       }
 
+      const secondsPerQuestion = speedTry === 1 ? 16 : 11;
+
+      // 🔍 DEBUG
+      console.log("📍 session/page.tsx SPEED stage - speedTry:", speedTry, "secondsPerQuestion:", secondsPerQuestion);
+
       return (
         <CardWrap>
           {Debug}
@@ -1740,7 +1745,7 @@ export default function VocabSessionPage() {
             userId={userId}
             questions={speedQuestions}
             tryIndex={speedTry}
-            secondsPerQuestion={6}
+            secondsPerQuestion={secondsPerQuestion}
             minPassAccuracy={0.7}
             onFinish={handleSpeedFinish}
           />
@@ -1870,21 +1875,122 @@ export default function VocabSessionPage() {
     }
 
     if (stage === "DONE") {
+      // ✅ 오답 분석: Spelling 실패 + Speed 오답 단어들
+      const spellingFailedIds = new Set<string>((spellingResult?.spellingFailedIds ?? []).filter(Boolean));
+      const speedWrongIds_Set = new Set<string>((speedWrongIds ?? []).filter(Boolean));
+
+      const spellingFailedWords = Array.from(spellingFailedIds)
+        .map(id => allWords.find(w => w.id === id))
+        .filter(Boolean) as SessionWord[];
+
+      const speedWrongWords = Array.from(speedWrongIds_Set)
+        .map(id => allWords.find(w => w.id === id))
+        .filter(Boolean) as SessionWord[];
+
+      // ✅ 포인트 계산: Speed 정답률 기반
+      const totalSpeedQuestions = speedQuestions.length || 1;
+      const correctSpeedQuestions = totalSpeedQuestions - (speedWrongIds_Set.size || 0);
+      const speedAccuracy = totalSpeedQuestions > 0 ? Math.round((correctSpeedQuestions / totalSpeedQuestions) * 100) : 0;
+
+      let points = 0;
+      if (speedAccuracy >= 90) points = 100;
+      else if (speedAccuracy >= 80) points = 80;
+      else if (speedAccuracy >= 70) points = 60;
+      else if (speedAccuracy >= 60) points = 40;
+      else if (speedAccuracy >= 50) points = 20;
+
+      // ✅ 전체 정답률 (prescreen + spelling + speed)
+      const totalWords = allWords.length;
+      const knownWords = prescreenResult?.knownWordIds?.length ?? 0;
+      const spellingPassWords = (knownWords - spellingFailedIds.size);
+      const speedPassWords = correctSpeedQuestions;
+      const totalAttempts = knownWords + speedQuestions.length;
+      const totalCorrect = spellingPassWords + speedPassWords;
+      const overallAccuracy = totalAttempts > 0 ? Math.round((totalCorrect / totalAttempts) * 100) : 0;
+
       return (
         <CardWrap className="py-10">
           {Debug}
 
-          <div className="rounded-2xl border border-white/10 bg-white p-8 text-center text-black">
-            <h2 className="text-2xl font-bold">Done ✅</h2>
-            <div className="mt-2 text-sm text-slate-600">오늘 세션 완료!</div>
+          <div className="rounded-2xl border border-2 border-emerald-300 bg-gradient-to-br from-emerald-50 to-teal-50 p-8 text-black">
+            {/* 헤더 */}
+            <div className="text-center mb-8">
+              <h2 className="text-4xl font-bold">완료! ✅</h2>
+              <div className="mt-2 text-slate-600">오늘 세션 완료했어요!</div>
+            </div>
 
-            <div className="mt-6 space-y-2">
-              <button className="w-full rounded-xl bg-black py-3 text-white" onClick={() => window.location.reload()}>
-                Restart
+            {/* 점수 카드 */}
+            <div className="grid grid-cols-2 gap-4 mb-8">
+              <div className="rounded-xl bg-white p-4 text-center border border-emerald-200">
+                <div className="text-sm font-semibold text-slate-600">최종 점검 정확도</div>
+                <div className="text-3xl font-bold text-emerald-700 mt-2">{speedAccuracy}%</div>
+              </div>
+              <div className="rounded-xl bg-white p-4 text-center border border-emerald-200">
+                <div className="text-sm font-semibold text-slate-600">획득 포인트</div>
+                <div className="text-3xl font-bold text-amber-600 mt-2">{points}P</div>
+              </div>
+            </div>
+
+            {/* 오답 분석 */}
+            {(spellingFailedWords.length > 0 || speedWrongWords.length > 0) && (
+              <div className="space-y-4 mb-8">
+                <h3 className="font-bold text-lg text-slate-900">다시 확인할 단어들</h3>
+
+                {/* Spelling 실패 */}
+                {spellingFailedWords.length > 0 && (
+                  <div className="rounded-xl bg-red-50 p-4 border border-red-200">
+                    <div className="font-semibold text-red-900 mb-3">철자 오류 ({spellingFailedWords.length}개)</div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {spellingFailedWords.slice(0, 10).map(word => {
+                        const wf = (wordFormsById as any)?.[word.id];
+                        const pos = wf?.base_pos || "—";
+                        return (
+                          <div key={word.id} className="bg-white p-2 rounded border border-red-100 text-sm">
+                            <div className="font-bold text-slate-900">{word.text}</div>
+                            <div className="text-xs text-slate-600">
+                              [{pos}] {(word.meanings_ko?.[0] ?? "—").substring(0, 20)}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Speed 오답 */}
+                {speedWrongWords.length > 0 && (
+                  <div className="rounded-xl bg-amber-50 p-4 border border-amber-200">
+                    <div className="font-semibold text-amber-900 mb-3">뜻 오류 ({speedWrongWords.length}개)</div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {speedWrongWords.slice(0, 10).map(word => {
+                        const wf = (wordFormsById as any)?.[word.id];
+                        const pos = wf?.base_pos || "—";
+                        return (
+                          <div key={word.id} className="bg-white p-2 rounded border border-amber-100 text-sm">
+                            <div className="font-bold text-slate-900">{word.text}</div>
+                            <div className="text-xs text-slate-600">
+                              [{pos}] {(word.meanings_ko?.[0] ?? "—").substring(0, 20)}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 버튼 */}
+            <div className="space-y-2">
+              <button
+                className="w-full rounded-xl bg-emerald-600 py-3 text-white font-bold hover:bg-emerald-700 transition"
+                onClick={() => window.location.reload()}
+              >
+                다시 시작
               </button>
 
               <button
-                className="w-full rounded-xl border bg-white py-3 text-black"
+                className="w-full rounded-xl border border-emerald-600 bg-white py-3 text-emerald-700 font-bold hover:bg-emerald-50 transition"
                 onClick={() => {
                   try {
                     sessionStorage.removeItem(SPEED_DRILL_KEY);
@@ -1893,7 +1999,7 @@ export default function VocabSessionPage() {
                   window.location.href = "/home";
                 }}
               >
-                Exit (Home)
+                홈으로 돌아가기
               </button>
             </div>
           </div>
