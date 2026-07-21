@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createBrowserClient } from "@/lib/supabase/client";
 import { loadSessionWords } from "@/lib/vocab/session/loadSessionWords";
 import { generateDrillChunks, toGenWord, type GeneratedChunk } from "@/lib/vocab/drill-generator";
+import { saveDrillResultsAction, type DrillResultRow } from "./actions";
 
 import FocusModeWrapper from "@/components/common/FocusModeWrapper";
 import DrillRunner from "@/components/vocab/drill/DrillRunner";
@@ -31,6 +32,10 @@ export default function VocabDrillPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isDone, setIsDone] = useState(false);
   const finishedRef = useRef(false);
+  const setIdRef = useRef<string | null>(null);
+  /** 아직 저장하지 않은 문항 결과 */
+  const pendingRef = useRef<DrillResultRow[]>([]);
+  const [score, setScore] = useState({ correct: 0, total: 0 });
 
   useEffect(() => {
     let cancelled = false;
@@ -39,6 +44,7 @@ export default function VocabDrillPage() {
       try {
         const sp = new URLSearchParams(window.location.search);
         const setId = sp.get("setId");
+        setIdRef.current = setId;
 
         const supabase = createBrowserClient();
         const {
@@ -88,9 +94,29 @@ export default function VocabDrillPage() {
 
   const tasks: DrillTask[] = useMemo(() => currentChunk?.tasks ?? [], [currentChunk]);
 
+  function handleTaskResult(task: DrillTask, isCorrect: boolean) {
+    pendingRef.current.push({
+      wordId: String(task.wordId ?? ""),
+      drillType: String(task.drillType ?? ""),
+      isCorrect,
+      setId: setIdRef.current,
+    });
+    setScore((s) => ({ correct: s.correct + (isCorrect ? 1 : 0), total: s.total + 1 }));
+  }
+
+  /** 청크가 끝날 때마다 모아둔 결과를 저장 (중간 이탈해도 앞 청크는 남는다) */
+  function flushResults() {
+    const rows = pendingRef.current;
+    if (rows.length === 0) return;
+    pendingRef.current = [];
+    void saveDrillResultsAction(rows);
+  }
+
   function handleChunkFinish() {
     if (finishedRef.current) return;
     finishedRef.current = true;
+
+    flushResults();
 
     if (chunkIdx + 1 < totalChunks) {
       setChunkIdx((i) => i + 1);
@@ -144,8 +170,11 @@ export default function VocabDrillPage() {
     return (
       <Shell>
         <h2 className="text-2xl font-bold">드릴 완료 🎉</h2>
+        <p className="text-3xl font-black text-emerald-400">
+          {score.total > 0 ? Math.round((score.correct / score.total) * 100) : 0}%
+        </p>
         <p className="text-sm text-white/70">
-          {totalChunks}개 묶음 · 총 {chunks.reduce((n, c) => n + c.tasks.length, 0)}문항
+          {score.correct} / {score.total} 정답 · {totalChunks}개 묶음
         </p>
         <button
           className="w-full rounded-xl bg-white px-4 py-3 text-sm font-semibold text-black"
@@ -184,6 +213,7 @@ export default function VocabDrillPage() {
             tasks={tasks}
             mode="classic"
             onFinish={handleChunkFinish}
+            onTaskResult={handleTaskResult}
           />
         </div>
       </FocusModeWrapper>

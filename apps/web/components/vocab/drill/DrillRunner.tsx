@@ -15,6 +15,8 @@ type Props = {
   tasks: DrillTask[];
   onFinish: () => void;
   mode?: "classic" | string;
+  /** 문항 하나가 끝날 때마다 결과를 부모에게 알린다 (기록용) */
+  onTaskResult?: (task: DrillTask, isCorrect: boolean) => void;
 };
 
 const DRILL_TYPE_ORDER = [
@@ -300,7 +302,7 @@ function humanType(dt: string) {
   return dt;
 }
 
-export default function DrillRunner({ userId: _userId, tasks, onFinish, mode = "classic" }: Props) {
+export default function DrillRunner({ userId: _userId, tasks, onFinish, mode = "classic", onTaskResult }: Props) {
   const [index, setIndex] = useState(0);
   const finishedRef = useRef(false);
 
@@ -354,7 +356,14 @@ export default function DrillRunner({ userId: _userId, tasks, onFinish, mode = "
     });
   }
 
-  function onDone(_isCorrect: boolean) {
+  function onDone(isCorrect: boolean) {
+    if (current) {
+      try {
+        onTaskResult?.(current, isCorrect);
+      } catch {
+        /* 기록 실패가 진행을 막지 않도록 */
+      }
+    }
     goNext();
   }
 
