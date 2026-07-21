@@ -84,6 +84,8 @@ export async function loadVocabHubAction() {
     const studentId = studentData.id;
     const gradeBand = studentData.grade_band ?? null;
 
+    console.log("[loadVocabHub] studentId:", studentId, "gradeBand:", gradeBand);
+
     // 2) 프로필에서 program 조회 (또는 다른 테이블)
     const { data: profileData } = await supabase
       .from("profiles")
@@ -102,8 +104,11 @@ export async function loadVocabHubAction() {
       .order("available_at", { ascending: true });
 
     if (!assignments || assignments.length === 0) {
+      console.log("[loadVocabHub] No assignments found for studentId:", studentId);
       return { ok: true, courses: [], program };
     }
+
+    console.log("[loadVocabHub] Found assignments:", assignments.length);
 
     // 4) 세트별로 그룹화
     const setIds = [...new Set((assignments as any[]).map((a) => a.set_id))];
