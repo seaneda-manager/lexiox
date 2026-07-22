@@ -69,10 +69,10 @@ async function getTodayProgress(
     };
   }
 
-  // 마지막 완료한 day_number 찾기
+  // 마지막 완료한 set(chapter) 정보 조회
   const { data: lastCompleted, error: lastError } = await supabase
     .from("student_progress")
-    .select("chapter_id, chapters(day_number)")
+    .select("chapter_id")
     .eq("member_id", studentId)
     .eq("book_id", bookId)
     .order("completed_at", { ascending: false })
@@ -81,22 +81,32 @@ async function getTodayProgress(
 
   if (lastError) throw lastError;
 
-  const lastDayNumber = lastCompleted
-    ? (lastCompleted.chapters?.day_number ?? 0)
-    : 0;
+  let lastSetId = lastCompleted?.chapter_id;
+  let lastDayNumber = 0;
+
+  // 마지막 set의 order_index 조회
+  if (lastSetId) {
+    const { data: lastSet } = await supabase
+      .from("vocab_sets")
+      .select("order_index")
+      .eq("id", lastSetId)
+      .maybeSingle();
+    lastDayNumber = lastSet?.order_index ?? 0;
+  }
+
   const nextDayNumber = lastDayNumber + 1;
 
-  // 다음 Day 챕터 정보 조회
-  const { data: nextChapter, error: chapError } = await supabase
-    .from("chapters")
-    .select("chapter_id, day_number, book_id")
-    .eq("book_id", bookId)
-    .eq("day_number", nextDayNumber)
+  // 다음 Day set 조회 (order_index 기준)
+  const { data: nextSet, error: setError } = await supabase
+    .from("vocab_sets")
+    .select("id, order_index, track_id")
+    .eq("track_id", bookId)
+    .eq("order_index", nextDayNumber)
     .maybeSingle();
 
-  if (chapError) throw chapError;
+  if (setError) throw setError;
 
-  if (!nextChapter) {
+  if (!nextSet) {
     return {
       ok: true,
       blocked: true,
@@ -109,9 +119,9 @@ async function getTodayProgress(
     blocked: false,
     todayCount,
     nextChapter: {
-      chapterId: nextChapter.chapter_id,
-      dayNumber: nextChapter.day_number,
-      bookId: nextChapter.book_id,
+      chapterId: nextSet.id,
+      dayNumber: nextSet.order_index,
+      bookId: nextSet.track_id,
     },
   };
 }
