@@ -991,6 +991,24 @@ export async function completeVocabDayAction(input: {
 
     if (updErr) return { ...empty, error: "UPDATE_FAILED", note: toErrMsg(updErr) };
 
+    // 새 student_progress 테이블에도 기록 (동적 큐 시스템용)
+    // non-fatal이므로 실패해도 무시
+    try {
+      await client
+        .from("student_progress")
+        .insert([
+          {
+            member_id: academyStudentId,
+            book_id: cleanStr(row.track_id),
+            chapter_id: setId,
+            completed_at: nowISO,
+          },
+        ]);
+    } catch (e: any) {
+      console.warn("completeVocabDayAction: student_progress insert failed", toErrMsg(e));
+      /* non-fatal */
+    }
+
     // 다음 Day 오픈 (큐 정렬) — 실패해도 완료 자체는 성공 처리
     let nextOpened = 0;
     try {
