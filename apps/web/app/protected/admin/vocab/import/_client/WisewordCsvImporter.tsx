@@ -36,8 +36,9 @@ export default function WisewordCsvImporter({
   const [description, setDescription] = useState(initialDescription);
   const [trackId, setTrackId] = useState<string>(initialTracks?.[0]?.id ?? "");
   const [text, setText] = useState("");
-  const [busy, setBusy] = useState<"WORDS" | "SET" | null>(null);
+  const [busy, setBusy] = useState<"WORDS" | "SET" | "VALIDATE" | null>(null);
   const [result, setResult] = useState<ImportWisewordCsvActionResult | null>(null);
+  const [validationResult, setValidationResult] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function canImportWords() {
@@ -48,6 +49,58 @@ export default function WisewordCsvImporter({
 
   function canImportSet() {
     return canImportWords() && !!clean(slug);
+  }
+
+  // Parse CSV to extract words
+  function parseCsv(csvText: string): Array<{ word: string; meaning: string }> {
+    const lines = csvText.trim().split("\n");
+    if (lines.length === 0) return [];
+
+    const header = lines[0].split(",").map((h) => h.trim().toLowerCase());
+    const textIdx = header.indexOf("text");
+    const meaningIdx = header.indexOf("meanings_ko");
+
+    if (textIdx === -1 || meaningIdx === -1) return [];
+
+    const result: Array<{ word: string; meaning: string }> = [];
+    for (let i = 1; i < lines.length; i++) {
+      const parts = lines[i].split(",").map((p) => p.trim());
+      if (parts[textIdx] && parts[meaningIdx]) {
+        result.push({
+          word: parts[textIdx],
+          meaning: parts[meaningIdx],
+        });
+      }
+    }
+    return result;
+  }
+
+  // Validate meanings
+  async function doValidate() {
+    setValidationResult(null);
+    setBusy("VALIDATE");
+    try {
+      const words = mode === "CSV" ? parseCsv(text) : [];
+
+      if (words.length === 0) {
+        setValidationResult({
+          ok: false,
+          error: "No valid words found to validate",
+        });
+        return;
+      }
+
+      const response = await fetch("/api/vocab/validate-meanings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ words }),
+      });
+
+      const data = await response.json();
+      setValidationResult(data);
+    } finally {
+      setBusy(null);
+    }
   }
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -218,7 +271,16 @@ acquire,acquire,verb,획득하다,to get or obtain something,She acquired new sk
         </div>
 
         {/* Actions */}
-        <div className="mt-4 grid grid-cols-1 gap-2 md:grid-cols-2">
+        <div className="mt-4 grid grid-cols-1 gap-2 md:grid-cols-3">
+          {mode === "CSV" && (
+            <button
+              onClick={doValidate}
+              disabled={!canImportWords() || busy !== null}
+              className="rounded-xl border border-amber-300 bg-amber-50 py-2.5 text-sm font-semibold text-amber-900 hover:bg-amber-100 disabled:opacity-50"
+            >
+              {busy === "VALIDATE" ? "검증 중..." : "🔍 뜻 검증"}
+            </button>
+          )}
           <button
             onClick={doImportWordsOnly}
             disabled={!canImportWords() || busy !== null}
@@ -235,6 +297,61 @@ acquire,acquire,verb,획득하다,to get or obtain something,She acquired new sk
           </button>
         </div>
       </div>
+
+      {/* Validation Result */}
+      {validationResult ? (
+        <div className={`rounded-2xl border p-5 ${validationResult.ok && validationResult.issues.length === 0 ? "bg-emerald-50" : validationResult.ok ? "bg-amber-50" : "bg-rose-50"}`}>
+          <div className={`font-semibold ${validationResult.ok && validationResult.issues.length === 0 ? "text-emerald-900" : validationResult.ok ? "text-amber-900" : "text-rose-900"}`}>
+            {validationResult.ok
+              ? validationResult.issues.length === 0
+                ? "✅ 모든 뜻이 온전합니다"
+                : `⚠️ ${validationResult.issues.filter((i: any) => i.severity === "error").length}개 에러, ${validationResult.issues.filter((i: any) => i.severity === "warning").length}개 경고`
+              : "❌ 검증 실패"}
+          </div>
+          {validationResult.ok && validationResult.summary && (
+            <div className="mt-2 text-sm text-slate-700">
+              총 {validationResult.summary.total}개 중 {validationResult.summary.valid}개 정상 ·
+              {validationResult.summary.hasErrors && " ❌ 에러 있음 ·"}
+              {validationResult.summary.hasWarnings && " ⚠️ 경고 있음"}
+            </div>
+          )}
+          {validationResult.issues && validationResult.issues.length > 0 && (
+            <details className="mt-3">
+              <summary className="text-xs font-semibold text-slate-700 cursor-pointer hover:text-slate-900">
+                상세 내용 ({validationResult.issues.length})
+              </summary>
+              <div className="mt-2 space-y-2 max-h-64 overflow-auto">
+                {validationResult.issues.map((issue: any, idx: number) => (
+                  <div
+                    key={idx}
+                    className={`rounded-lg p-2 text-xs ${
+                      issue.severity === "error"
+                        ? "bg-rose-100 text-rose-900"
+                        : "bg-amber-100 text-amber-900"
+                    }`}
+                  >
+                    <div className="font-semibold">
+                      {issue.severity === "error" ? "❌" : "⚠️"} {issue.word}
+                    </div>
+                    <div className="text-slate-700 mt-1">"{issue.meaning}"</div>
+                    <div className="mt-1">
+                      {issue.issues.map((err: string, i: number) => (
+                        <div key={i}>• {err}</div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </details>
+          )}
+          <button
+            onClick={() => setValidationResult(null)}
+            className="mt-3 text-xs font-semibold text-slate-600 hover:text-slate-900"
+          >
+            닫기
+          </button>
+        </div>
+      ) : null}
 
       {result ? (
         <div className={`rounded-2xl border p-5 ${result.ok ? "bg-emerald-50" : "bg-rose-50"}`}>
