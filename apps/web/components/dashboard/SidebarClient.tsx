@@ -294,7 +294,7 @@ export default function SidebarClient({ role, program = null }: Props) {
     if (role === 'teacher') {
       return [
         { section: '콘텐츠',  href: '/home',  label: '홈', icon: Home },
-        { section: '콘텐츠',  href: '/vocab/hub', label: '단어 학습', icon: Library },
+        { section: '콘텐츠',  href: '/vocab/hub-new', label: '단어 학습', icon: Library },
         { section: '콘텐츠',  href: '/teacher/speaking-drills', label: '🎮 Speaking 훈련', icon: PlayCircle },
 
         { section: '학생 관리', href: '/teacher/home',     label: '선생님 홈', icon: Home },
