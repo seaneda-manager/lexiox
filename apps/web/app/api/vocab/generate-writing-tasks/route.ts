@@ -32,9 +32,10 @@ export async function POST(request: NextRequest) {
     const prompt = `Generate ${count} diverse English sentences with varied grammatical structures using the word "${word}" (meaning: ${meaning}).
 
 For EACH sentence, you MUST:
-1. NOT include the target word in the scrambled hints table
-2. Create hints from OTHER words in the sentence (avoid the target word)
+1. NOT include the target word in the hints
+2. Create hints from OTHER important words in the sentence (avoid the target word)
 3. Include diverse structures: simple, passive, conditional, complex, with long subjects, etc.
+4. INCLUDE GRAMMAR WORDS: articles (a, an, the), prepositions (in, on, at, by, with, before, after, etc.), modals (can, will, would, etc.)
 
 Return ONLY valid JSON array (no markdown, no extra text):
 [
@@ -50,10 +51,11 @@ Return ONLY valid JSON array (no markdown, no extra text):
 
 IMPORTANT RULES:
 - Hints must be 4 different words from the sentence (NOT the target word)
-- Hints should be meaningful/important words that help understand the sentence
+- Hints should include: KEY NOUNS/VERBS + IMPORTANT GRAMMAR WORDS (articles, prepositions, modals)
+- Example hints for "The scientist examined the data carefully before publishing.": ["The", "scientist", "data", "before"]
 - missingWord must be the target word "${word}"
 - korean must be natural, fluent Korean
-- Include varied structures: simple sentences, passive voice, relative clauses, conditionals, complex sentences, sentences with long subjects, etc.
+- Include varied structures: simple sentences, passive voice, relative clauses, conditionals, complex sentences, etc.
 - Each hint word should be in its base form (if possible)
 
 Generate now:`;
