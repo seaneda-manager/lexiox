@@ -32,31 +32,30 @@ export async function POST(request: NextRequest) {
     const prompt = `Generate ${count} diverse English sentences with varied grammatical structures using the word "${word}" (meaning: ${meaning}).
 
 For EACH sentence, you MUST:
-1. NOT include the target word in the hints
-2. Create hints from OTHER important words in the sentence (avoid the target word)
-3. Include diverse structures: simple, passive, conditional, complex, with long subjects, etc.
-4. INCLUDE GRAMMAR WORDS: articles (a, an, the), prepositions (in, on, at, by, with, before, after, etc.), modals (can, will, would, etc.)
+1. The target word "${word}" is the ONLY missing word - students must recall it
+2. ALL other important words go in the hints table (grammar + content)
+3. Include diverse structures: simple, passive, conditional, complex, etc.
 
 Return ONLY valid JSON array (no markdown, no extra text):
 [
   {
     "korean": "Korean interpretation of the sentence",
     "english": "Full English sentence with the target word",
-    "grammar": "Grammatical structure (e.g., '3형식', 'Passive voice', 'Conditional clause', 'Complex sentence with relative clause')",
-    "hints": ["word1", "word2", "word3", "word4"],
+    "grammar": "Grammatical structure (e.g., '3형식', 'Passive voice', 'Conditional clause')",
+    "hints": ["word1", "word2", "word3", "word4", "word5"],
     "missingWord": "the_target_word"
   },
   ...
 ]
 
-IMPORTANT RULES:
-- Hints must be 4 different words from the sentence (NOT the target word)
-- Hints should include: KEY NOUNS/VERBS + IMPORTANT GRAMMAR WORDS (articles, prepositions, modals)
-- Example hints for "The scientist examined the data carefully before publishing.": ["The", "scientist", "data", "before"]
-- missingWord must be the target word "${word}"
+CRITICAL RULES:
+- hints = ALL words in sentence EXCEPT the target word
+- Include everything: articles (the, a), prepositions (in, on, before, after), verbs, nouns, adjectives, adverbs
+- Example for "The scientist examined the data carefully before publishing.":
+  * missingWord: "examined"
+  * hints: ["The", "scientist", "the", "data", "carefully", "before", "publishing"] (everything except "examined")
 - korean must be natural, fluent Korean
-- Include varied structures: simple sentences, passive voice, relative clauses, conditionals, complex sentences, etc.
-- Each hint word should be in its base form (if possible)
+- Include varied structures
 
 Generate now:`;
 
