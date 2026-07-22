@@ -4,6 +4,7 @@
 import React, { useState, useMemo } from "react";
 import type { TrackSummary, StudentProgress } from "../actions";
 import { listStudentProgressForTrackAction } from "../actions";
+import { skipVocabDaysAction } from "../skip-day-action";
 
 type SortKey = "name" | "grade" | "completed" | "cursor" | "last";
 
@@ -33,6 +34,24 @@ export default function ProgressClient({ tracks }: { tracks: TrackSummary[] }) {
   const [sortAsc, setSortAsc] = useState(true);
   const [gradeFilter, setGradeFilter] = useState<string>("");
   const [nameFilter, setNameFilter] = useState<string>("");
+  const [skippingStudentId, setSkippingStudentId] = useState<string | null>(null);
+  const [skipDay, setSkipDay] = useState<number>(1);
+
+  async function handleSkipDay(studentId: string) {
+    if (!trackId) return;
+    try {
+      const result = await skipVocabDaysAction(studentId, trackId, skipDay);
+      if (result.ok) {
+        alert(result.message);
+        loadProgress();
+        setSkippingStudentId(null);
+      } else {
+        alert("오류: " + result.error);
+      }
+    } catch (e) {
+      alert("오류 발생");
+    }
+  }
 
   async function loadProgress() {
     if (!trackId) return;
@@ -184,6 +203,7 @@ export default function ProgressClient({ tracks }: { tracks: TrackSummary[] }) {
                     <SortTh k="cursor" label="현재 커서" />
                     <th className="py-2 pr-4 text-left text-xs font-bold text-slate-500">진도율</th>
                     <SortTh k="last" label="마지막 완료" />
+                    <th className="py-2 pr-4 text-left text-xs font-bold text-slate-500">Skip</th>
                     <th className="py-2 text-left text-xs font-bold text-slate-500">상태</th>
                   </tr>
                 </thead>
@@ -211,6 +231,40 @@ export default function ProgressClient({ tracks }: { tracks: TrackSummary[] }) {
                       </td>
                       <td className="py-2.5 pr-4 text-xs text-slate-500">
                         {r.lastCompletedDate ?? "—"}
+                      </td>
+                      <td className="py-2.5 pr-4">
+                        {skippingStudentId === r.studentId ? (
+                          <div className="flex gap-1">
+                            <select
+                              value={skipDay}
+                              onChange={(e) => setSkipDay(parseInt(e.target.value))}
+                              className="rounded px-2 py-1 text-xs border"
+                            >
+                              {Array.from({ length: r.totalDays }, (_, i) => i + 1).map((day) => (
+                                <option key={day} value={day}>Day {day}</option>
+                              ))}
+                            </select>
+                            <button
+                              onClick={() => handleSkipDay(r.studentId)}
+                              className="rounded px-2 py-1 text-xs bg-blue-500 text-white font-semibold"
+                            >
+                              저장
+                            </button>
+                            <button
+                              onClick={() => setSkippingStudentId(null)}
+                              className="rounded px-2 py-1 text-xs bg-slate-300"
+                            >
+                              취소
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => { setSkippingStudentId(r.studentId); setSkipDay(r.cursorDay); }}
+                            className="rounded px-2 py-1 text-xs bg-amber-50 text-amber-700 font-semibold hover:bg-amber-100"
+                          >
+                            ⏭️ Skip
+                          </button>
+                        )}
                       </td>
                       <td className="py-2.5">
                         {r.isPaused ? (
