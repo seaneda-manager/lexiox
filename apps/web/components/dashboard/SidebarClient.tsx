@@ -322,7 +322,7 @@ export default function SidebarClient({ role, program = null }: Props) {
         { section: '학습', href: '/updated-listening/study', label: 'Listening', skill: 'listening' as SkillColor },
         { section: '학습', href: '/grammar-2026',          label: 'Grammar', icon: BookText },
 
-        { section: '어휘', href: '/vocab/hub', label: '단어 학습', icon: Library },
+        { section: '어휘', href: '/vocab/hub-new', label: '단어 학습', icon: Library },
 
         { section: '숙제', href: '/student/exams',    label: '📋 예상문제', icon: CheckSquare },
         { section: '숙제', href: '/student/homework', label: '숙제 채점', icon: ClipboardCheck },
@@ -343,7 +343,7 @@ export default function SidebarClient({ role, program = null }: Props) {
         { section: '학습', href: '/updated-listening',      label: 'Listening', icon: Headphones },
         { section: '학습', href: '/speaking-2026',          label: 'Speaking',  icon: Mic },
         { section: '학습', href: '/updated-writing',        label: 'Writing',   icon: PenLine },
-        { section: '학습', href: '/vocab/hub',              label: '단어 학습', icon: Library },
+        { section: '학습', href: '/vocab/hub-new',              label: '단어 학습', icon: Library },
         { section: '학습', href: '/grammar-2026',           label: 'Lexiox Gram', icon: BookText },
         { section: '학습', href: '/speaking-2026/drills',   label: 'Speaking 훈련', icon: PlayCircle },
         { section: '학습', href: '/speaking-2026/shadowing', label: '쉐도잉 게임', icon: PlayCircle },
@@ -375,7 +375,7 @@ export default function SidebarClient({ role, program = null }: Props) {
       { section: 'Updated TOEFL' as NavSection, href: '/updated-listening',      label: 'Listening', icon: Headphones },
       { section: 'Updated TOEFL' as NavSection, href: '/speaking-2026',          label: 'Speaking',  icon: Mic },
       { section: 'Updated TOEFL' as NavSection, href: '/updated-writing',        label: 'Writing',   icon: PenLine },
-      { section: 'Updated TOEFL' as NavSection, href: '/vocab/hub',              label: '단어 학습', icon: Library },
+      { section: 'Updated TOEFL' as NavSection, href: '/vocab/hub-new',              label: '단어 학습', icon: Library },
       { section: 'Updated TOEFL' as NavSection, href: '/grammar-2026',           label: 'Lexiox Gram', icon: BookText },
       { section: 'Updated TOEFL' as NavSection, href: '/speaking-2026/drills',   label: 'Speaking 훈련', icon: PlayCircle },
       { section: 'Updated TOEFL' as NavSection, href: '/speaking-2026/shadowing', label: '쉐도잉 게임', icon: PlayCircle },
