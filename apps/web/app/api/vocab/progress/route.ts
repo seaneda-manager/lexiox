@@ -39,6 +39,7 @@ async function createAuthedServerClient() {
  * - 오늘 완료한 Day 개수 체크
  * - 최대 2개 제한
  * - 다음 학습할 Day 반환
+ * - Skip 설정 (cursor_day_index) 우선 적용
  */
 async function getTodayProgress(
   supabase: any,
@@ -69,32 +70,46 @@ async function getTodayProgress(
     };
   }
 
-  // 마지막 완료한 set(chapter) 정보 조회
-  const { data: lastCompleted, error: lastError } = await supabase
-    .from("student_progress")
-    .select("chapter_id")
-    .eq("member_id", studentId)
-    .eq("book_id", bookId)
-    .order("completed_at", { ascending: false })
-    .limit(1)
+  // 1. Skip 설정 확인 (cursor_day_index)
+  const { data: plan, error: planError } = await supabase
+    .from("student_vocab_plans")
+    .select("cursor_day_index")
+    .eq("student_id", studentId)
+    .eq("track_id", bookId)
     .maybeSingle();
 
-  if (lastError) throw lastError;
+  if (planError) throw planError;
 
-  let lastSetId = lastCompleted?.chapter_id;
-  let lastDayNumber = 0;
+  let nextDayNumber = plan?.cursor_day_index ?? 0;
 
-  // 마지막 set의 order_index 조회
-  if (lastSetId) {
-    const { data: lastSet } = await supabase
-      .from("vocab_sets")
-      .select("order_index")
-      .eq("id", lastSetId)
+  // 2. Skip 설정이 없으면 마지막 완료한 Day 기반 계산
+  if (nextDayNumber === 0) {
+    const { data: lastCompleted, error: lastError } = await supabase
+      .from("student_progress")
+      .select("chapter_id")
+      .eq("member_id", studentId)
+      .eq("book_id", bookId)
+      .order("completed_at", { ascending: false })
+      .limit(1)
       .maybeSingle();
-    lastDayNumber = lastSet?.order_index ?? 0;
-  }
 
-  const nextDayNumber = lastDayNumber + 1;
+    if (lastError) throw lastError;
+
+    let lastSetId = lastCompleted?.chapter_id;
+    let lastDayNumber = 0;
+
+    // 마지막 set의 order_index 조회
+    if (lastSetId) {
+      const { data: lastSet } = await supabase
+        .from("vocab_sets")
+        .select("order_index")
+        .eq("id", lastSetId)
+        .maybeSingle();
+      lastDayNumber = lastSet?.order_index ?? 0;
+    }
+
+    nextDayNumber = lastDayNumber + 1;
+  }
 
   // 다음 Day set 조회 (order_index 기준)
   const { data: nextSet, error: setError } = await supabase
