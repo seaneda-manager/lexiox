@@ -153,22 +153,51 @@ export default function ValidateAllClient({ initialTracks = [] }: Props) {
     };
   }, [words]);
 
-  // 필터링된 이슈
-  const filteredIssues = useMemo(() => {
-    return validationResults.issues.filter((issue) => {
+  // 모든 단어를 문제 여부와 함께 정렬
+  const allWordsWithStatus = useMemo(() => {
+    const issueMap = new Map(
+      validationResults.issues.map((issue) => [issue.id, issue])
+    );
+
+    return words
+      .map((word) => ({
+        word,
+        issue: issueMap.get(word.id) || null,
+      }))
+      .sort((a, b) => {
+        // 1. 에러 우선
+        if (a.issue?.severity === "error" && b.issue?.severity !== "error")
+          return -1;
+        if (a.issue?.severity !== "error" && b.issue?.severity === "error")
+          return 1;
+
+        // 2. 경고 우선
+        if (a.issue?.severity === "warning" && b.issue?.severity !== "warning")
+          return -1;
+        if (a.issue?.severity !== "warning" && b.issue?.severity === "warning")
+          return 1;
+
+        // 3. 알파벳 정렬
+        return a.word.text.localeCompare(b.word.text);
+      });
+  }, [words, validationResults.issues]);
+
+  // 필터링된 단어
+  const filteredWords = useMemo(() => {
+    return allWordsWithStatus.filter((item) => {
       const matchesFilter =
         filterType === "all" ||
-        (filterType === "errors" && issue.severity === "error") ||
-        (filterType === "warnings" && issue.severity === "warning");
+        (filterType === "errors" && item.issue?.severity === "error") ||
+        (filterType === "warnings" && item.issue?.severity === "warning");
 
       const matchesSearch =
         searchTerm === "" ||
-        issue.word.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        issue.meaning.toLowerCase().includes(searchTerm.toLowerCase());
+        item.word.text.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.word.meanings_ko?.toString().toLowerCase().includes(searchTerm.toLowerCase());
 
       return matchesFilter && matchesSearch;
     });
-  }, [validationResults.issues, filterType, searchTerm]);
+  }, [allWordsWithStatus, filterType, searchTerm]);
 
   const selectedTrack = initialTracks.find((t) => t.id === selectedTrackId);
   const selectedSet = sets.find((s) => s.id === selectedSetId);
@@ -284,34 +313,47 @@ export default function ValidateAllClient({ initialTracks = [] }: Props) {
             />
           </div>
 
-          {/* Issues List */}
-          {filteredIssues.length > 0 && (
-            <div className="mt-4 space-y-2 max-h-[600px] overflow-auto">
-              {filteredIssues.map((issue) => (
+          {/* Word List */}
+          {filteredWords.length > 0 && (
+            <div className="mt-4 space-y-1 max-h-[600px] overflow-auto">
+              {filteredWords.map((item) => (
                 <Link
-                  key={issue.id}
-                  href={`/admin/vocab/words/${issue.id}/edit`}
-                  className={`block rounded-lg p-3 transition-colors ${
-                    issue.severity === "error"
+                  key={item.word.id}
+                  href={`/admin/vocab/words/${item.word.id}/edit`}
+                  className={`flex items-start gap-3 rounded-lg p-3 transition-colors ${
+                    item.issue?.severity === "error"
                       ? "bg-rose-100 text-rose-900 hover:bg-rose-200"
-                      : "bg-amber-100 text-amber-900 hover:bg-amber-200"
+                      : item.issue?.severity === "warning"
+                        ? "bg-amber-100 text-amber-900 hover:bg-amber-200"
+                        : "bg-slate-50 text-slate-700 hover:bg-slate-100"
                   }`}
                 >
-                  <div className="font-semibold">
-                    {issue.severity === "error" ? "❌" : "⚠️"} {issue.word}
+                  <div className="flex-shrink-0 w-6 text-center font-bold pt-0.5">
+                    {item.issue?.severity === "error"
+                      ? "❌"
+                      : item.issue?.severity === "warning"
+                        ? "⚠️"
+                        : "✅"}
                   </div>
-                  <div className="text-sm mt-1 opacity-90">"{issue.meaning}"</div>
-                  <div className="text-xs mt-2">
-                    {issue.issues.map((err, i) => (
-                      <div key={i}>• {err}</div>
-                    ))}
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold">{item.word.text}</div>
+                    <div className="text-sm mt-1 opacity-90">
+                      "{item.word.meanings_ko?.toString() || "(뜻 없음)"}"
+                    </div>
+                    {item.issue && (
+                      <div className="text-xs mt-2 opacity-75">
+                        {item.issue.issues.map((err, i) => (
+                          <div key={i}>• {err}</div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </Link>
               ))}
             </div>
           )}
 
-          {filteredIssues.length === 0 && validationResults.issues.length > 0 && (
+          {filteredWords.length === 0 && words.length > 0 && (
             <div className="mt-4 p-4 rounded-lg bg-white text-center text-sm text-slate-700">
               검색 또는 필터 결과가 없습니다
             </div>
