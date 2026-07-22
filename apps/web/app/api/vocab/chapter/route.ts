@@ -1,29 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { createClient } from "@supabase/supabase-js";
 
-async function createAuthedServerClient() {
-  const cookieStore = await cookies();
+function createServiceRoleClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
 
-  if (!url || !anon) {
+  if (!url || !serviceKey) {
     throw new Error("Supabase env missing");
   }
 
-  return createServerClient(url, anon, {
-    cookies: {
-      get(name) {
-        return cookieStore.get(name)?.value;
-      },
-      set(name, value, options) {
-        cookieStore.set({ name, value, ...options });
-      },
-      remove(name, options) {
-        cookieStore.set({ name, value: "", ...options, maxAge: 0 });
-      },
-    },
-  });
+  return createClient(url, serviceKey);
 }
 
 /**
@@ -42,23 +28,39 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const supabase = await createAuthedServerClient();
+    const supabase = createServiceRoleClient();
 
-    // vocab_sets에서 해당 set의 모든 items(단어들) 조회
+    // Step 1: Get word IDs from vocab_set_items
     const { data: vocabItems, error: itemsError } = await supabase
       .from("vocab_set_items")
-      .select("word_id, words(id, base_word, meaning_en, base_pos, example_sentence)")
-      .eq("set_id", chapterId)
-      .order("order_index", { ascending: true });
+      .select("word_id")
+      .eq("set_id", chapterId);
 
     if (itemsError) throw itemsError;
 
-    const words = (vocabItems ?? []).map((item: any) => ({
-      id: item.word_id,
-      word: item.words?.base_word ?? "",
-      meaning: item.words?.meaning_en ?? "",
-      pos: item.words?.base_pos ?? undefined,
-      example: item.words?.example_sentence ?? undefined,
+    const wordIds = (vocabItems ?? []).map((item: any) => item.word_id).filter(Boolean);
+
+    if (wordIds.length === 0) {
+      return NextResponse.json({
+        ok: true,
+        words: [],
+      });
+    }
+
+    // Step 2: Get words from words table
+    const { data: wordData, error: wordError } = await supabase
+      .from("words")
+      .select("id, text, lemma")
+      .in("id", wordIds);
+
+    if (wordError) throw wordError;
+
+    const words = (wordData ?? []).map((w: any) => ({
+      id: w.id,
+      word: w.text ?? w.lemma ?? "",
+      meaning: "",
+      pos: undefined,
+      example: undefined,
     }));
 
     return NextResponse.json({

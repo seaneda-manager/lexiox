@@ -134,22 +134,39 @@ async function getReviewChapters(
   studentId: string,
   bookId: string
 ) {
-  const { data: completedChapters, error } = await supabase
+  // Get distinct chapter_ids from progress
+  const { data: progressData, error: progError } = await supabase
     .from("student_progress")
-    .select("DISTINCT chapter_id, chapters(day_number, chapter_id, book_id)")
+    .select("chapter_id")
     .eq("member_id", studentId)
     .eq("book_id", bookId)
-    .order("chapters(day_number)", { ascending: true });
+    .order("chapter_id", { ascending: true });
 
-  if (error) throw error;
+  if (progError) throw progError;
 
-  const chapters = (completedChapters ?? [])
-    .map((row: any) => ({
-      chapterId: row.chapters?.chapter_id,
-      dayNumber: row.chapters?.day_number,
-      bookId: row.chapters?.book_id,
-    }))
-    .filter((ch: any) => ch.chapterId && ch.dayNumber);
+  const chapterIds = [...new Set((progressData ?? []).map((r: any) => r.chapter_id))];
+
+  if (!chapterIds.length) {
+    return {
+      ok: true,
+      chapters: [],
+    };
+  }
+
+  // Get vocab_sets info for these chapters
+  const { data: setData, error: setError } = await supabase
+    .from("vocab_sets")
+    .select("id, order_index, track_id")
+    .in("id", chapterIds)
+    .order("order_index", { ascending: true });
+
+  if (setError) throw setError;
+
+  const chapters = (setData ?? []).map((row: any) => ({
+    chapterId: row.id,
+    dayNumber: row.order_index,
+    bookId: row.track_id,
+  }));
 
   return {
     ok: true,
