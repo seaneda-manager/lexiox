@@ -32,18 +32,40 @@ export default function ValidateAllClient({ initialWords = [] }: Props) {
   const [searchTerm, setSearchTerm] = useState("");
 
   async function handleValidateAll() {
+    console.log("[ValidateAll] Starting validation...");
+    console.log("[ValidateAll] initialWords count:", initialWords.length);
+
     setValidationState(null);
     setValidating(true);
     try {
       // Filter out words without meanings
       const wordsToValidate = initialWords
-        .filter((w) => w.meanings_ko && w.meanings_ko.trim())
-        .map((w) => ({
-          word: w.text,
-          meaning: w.meanings_ko ?? "",
-        }));
+        .filter((w) => {
+          if (!w.meanings_ko) return false;
+          // Handle string, array, or other types
+          const meaning = typeof w.meanings_ko === 'string'
+            ? w.meanings_ko
+            : Array.isArray(w.meanings_ko)
+              ? w.meanings_ko.join(', ')
+              : String(w.meanings_ko);
+          return meaning.trim().length > 0;
+        })
+        .map((w) => {
+          const meaning = typeof w.meanings_ko === 'string'
+            ? w.meanings_ko
+            : Array.isArray(w.meanings_ko)
+              ? w.meanings_ko.join(', ')
+              : String(w.meanings_ko);
+          return {
+            word: w.text,
+            meaning: meaning.trim(),
+          };
+        });
+
+      console.log("[ValidateAll] wordsToValidate count:", wordsToValidate.length);
 
       if (wordsToValidate.length === 0) {
+        console.log("[ValidateAll] No words to validate!");
         setValidationState({
           total: 0,
           valid: 0,
