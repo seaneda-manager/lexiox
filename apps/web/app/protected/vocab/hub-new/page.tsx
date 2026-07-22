@@ -138,7 +138,7 @@ export default function VocabHubNewPage() {
                 : "text-gray-600 hover:text-gray-900"
             }`}
           >
-            복습 ({reviewData?.chapters.length ?? 0})
+            복습 ({reviewData?.chapters?.length ?? 0})
           </button>
         </div>
 

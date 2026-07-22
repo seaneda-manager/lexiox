@@ -208,6 +208,7 @@ async function assignOneCourse(params: {
       startDateISO: cleanStr(params.startDateISO),
       weekdays: params.weekdays,
       startDayIndex: 1,
+      cursorDayIndex: 1, // Always reset to day 1 on assignment
       setsPerDay: params.setsPerDay,
     } as any);
 
