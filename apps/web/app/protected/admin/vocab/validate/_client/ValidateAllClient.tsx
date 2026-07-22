@@ -2,7 +2,8 @@
 
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
-import type { WordWithMeaning } from "../actions";
+import type { WordWithMeaning, VocabTrack, VocabSet } from "../actions";
+import { fetchVocabSetsByTrack, fetchWordsForVocabSet } from "../actions";
 
 type ValidationIssue = {
   id: string;
@@ -15,15 +16,12 @@ type ValidationIssue = {
 type FilterType = "all" | "errors" | "warnings";
 
 type Props = {
-  initialWords: WordWithMeaning[];
+  initialTracks: VocabTrack[];
 };
 
 // 모지파케(깨진 한글) 감지 함수
 function hasMojibake(text: string): boolean {
-  // 유효하지 않은 한글 범위를 감지
-  const koreanRegex = /[가-힣]/g; // 완성된 한글
-  const brokenRegex = /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![uD800-\uDBFF])[\uDC00-\uDFFF]/g; // 깨진 유니코드
-
+  const brokenRegex = /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![uD800-\uDBFF])[\uDC00-\uDFFF]/g;
   return brokenRegex.test(text);
 }
 
@@ -90,13 +88,56 @@ function validateWord(word: WordWithMeaning): ValidationIssue | null {
   };
 }
 
-export default function ValidateAllClient({ initialWords = [] }: Props) {
+export default function ValidateAllClient({ initialTracks = [] }: Props) {
+  const [selectedTrackId, setSelectedTrackId] = useState<string>("");
+  const [selectedSetId, setSelectedSetId] = useState<string>("");
+  const [sets, setSets] = useState<VocabSet[]>([]);
+  const [words, setWords] = useState<WordWithMeaning[]>([]);
+  const [loading, setLoading] = useState(false);
   const [filterType, setFilterType] = useState<FilterType>("all");
   const [searchTerm, setSearchTerm] = useState("");
 
+  // Track 선택 시 Sets 로드
+  const handleTrackChange = async (trackId: string) => {
+    setSelectedTrackId(trackId);
+    setSelectedSetId("");
+    setWords([]);
+    setSets([]);
+    setLoading(true);
+
+    if (!trackId) {
+      setLoading(false);
+      return;
+    }
+
+    const result = await fetchVocabSetsByTrack(trackId);
+    if (result.ok) {
+      setSets(result.sets);
+    }
+    setLoading(false);
+  };
+
+  // Set 선택 시 Words 로드
+  const handleSetChange = async (setId: string) => {
+    setSelectedSetId(setId);
+    setWords([]);
+    setLoading(true);
+
+    if (!setId) {
+      setLoading(false);
+      return;
+    }
+
+    const result = await fetchWordsForVocabSet(setId);
+    if (result.ok) {
+      setWords(result.words);
+    }
+    setLoading(false);
+  };
+
   // 로컬 검증 수행
   const validationResults = useMemo(() => {
-    const issues = initialWords
+    const issues = words
       .map((word) => validateWord(word))
       .filter((issue) => issue !== null) as ValidationIssue[];
 
@@ -104,13 +145,13 @@ export default function ValidateAllClient({ initialWords = [] }: Props) {
     const warnings = issues.filter((i) => i.severity === "warning");
 
     return {
-      total: initialWords.length,
-      valid: initialWords.length - issues.length,
+      total: words.length,
+      valid: words.length - issues.length,
       issues,
       errors,
       warnings,
     };
-  }, [initialWords]);
+  }, [words]);
 
   // 필터링된 이슈
   const filteredIssues = useMemo(() => {
@@ -129,37 +170,79 @@ export default function ValidateAllClient({ initialWords = [] }: Props) {
     });
   }, [validationResults.issues, filterType, searchTerm]);
 
+  const selectedTrack = initialTracks.find((t) => t.id === selectedTrackId);
+  const selectedSet = sets.find((s) => s.id === selectedSetId);
+
   return (
     <div className="mx-auto w-full max-w-6xl p-6 space-y-4">
       <div className="rounded-2xl border bg-white p-5">
-        <div className="text-xl font-extrabold text-slate-900">단어 전체 검증</div>
+        <div className="text-xl font-extrabold text-slate-900">단어 검증 (코스별 단원별)</div>
         <div className="mt-1 text-sm text-slate-600">
-          DB의 모든 단어를 로컬 검증 (모지파케, 형식 오류 등)
+          코스를 선택한 후 단원(Day)을 선택하여 단어를 검증합니다
+        </div>
+
+        {/* Dropdowns */}
+        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+          {/* Track Selection */}
+          <div>
+            <label className="text-xs font-semibold text-slate-600">📚 코스 선택</label>
+            <select
+              value={selectedTrackId}
+              onChange={(e) => handleTrackChange(e.target.value)}
+              className="mt-1 w-full rounded-lg border px-4 py-2 text-sm"
+            >
+              <option value="">-- 코스 선택 --</option>
+              {initialTracks.map((track) => (
+                <option key={track.id} value={track.id}>
+                  {track.title}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Set Selection */}
+          <div>
+            <label className="text-xs font-semibold text-slate-600">📖 단원(Day) 선택</label>
+            <select
+              value={selectedSetId}
+              onChange={(e) => handleSetChange(e.target.value)}
+              disabled={!selectedTrackId || loading || sets.length === 0}
+              className="mt-1 w-full rounded-lg border px-4 py-2 text-sm disabled:opacity-50"
+            >
+              <option value="">-- 단원 선택 --</option>
+              {sets.map((set) => (
+                <option key={set.id} value={set.id}>
+                  Day {String(set.order_index).padStart(2, "0")}: {set.title}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {/* Summary */}
-        <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-1 text-sm text-slate-700 md:grid-cols-4">
-          <div>
-            총 단어: <strong>{validationResults.total}</strong>
-          </div>
-          <div>
-            정상: <strong className="text-emerald-700">{validationResults.valid}</strong>
-          </div>
-          {validationResults.errors.length > 0 && (
-            <div className="text-rose-700">
-              에러: <strong>{validationResults.errors.length}</strong>
+        {selectedSet && (
+          <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-1 text-sm text-slate-700 md:grid-cols-4">
+            <div>
+              선택됨: <strong>{selectedSet.title}</strong>
             </div>
-          )}
-          {validationResults.warnings.length > 0 && (
-            <div className="text-amber-700">
-              경고: <strong>{validationResults.warnings.length}</strong>
+            <div>
+              총 단어: <strong>{validationResults.total}</strong>
             </div>
-          )}
-        </div>
+            <div>
+              정상: <strong className="text-emerald-700">{validationResults.valid}</strong>
+            </div>
+            {validationResults.errors.length > 0 && (
+              <div className="text-rose-700">
+                에러: <strong>{validationResults.errors.length}</strong>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Results */}
-      {validationResults.issues.length > 0 ? (
+      {selectedSet ? (
+        validationResults.issues.length > 0 ? (
         <div className="rounded-2xl border bg-amber-50 p-5">
           <div className="font-semibold text-amber-900">
             ⚠️ {validationResults.issues.length}개 문제 발견
@@ -235,10 +318,15 @@ export default function ValidateAllClient({ initialWords = [] }: Props) {
           )}
         </div>
       ) : (
-        <div className="rounded-2xl border bg-emerald-50 p-5">
-          <div className="font-semibold text-emerald-900">
-            ✅ 모든 단어가 정상입니다!
+          <div className="rounded-2xl border bg-emerald-50 p-5">
+            <div className="font-semibold text-emerald-900">
+              ✅ 모든 단어가 정상입니다!
+            </div>
           </div>
+        )
+      ) : (
+        <div className="rounded-2xl border bg-slate-50 p-5 text-center text-slate-600">
+          코스와 단원을 선택하면 단어들이 나타납니다
         </div>
       )}
     </div>

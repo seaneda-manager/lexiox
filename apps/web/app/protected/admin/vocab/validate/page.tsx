@@ -1,10 +1,12 @@
 import ValidateAllClient from "./_client/ValidateAllClient";
-import { fetchAllWordsForValidation } from "./actions";
+import { fetchAllVocabTracks } from "./actions";
 
 export default async function Page() {
-  const result = await fetchAllWordsForValidation();
+  const tracksResult = await fetchAllVocabTracks();
 
   return (
-    <ValidateAllClient initialWords={result.ok ? result.words : []} />
+    <ValidateAllClient
+      initialTracks={tracksResult.ok ? tracksResult.tracks : []}
+    />
   );
 }
