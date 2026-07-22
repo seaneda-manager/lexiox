@@ -306,7 +306,7 @@ export default function SidebarClient({ role, program = null }: Props) {
       ];
     }
 
-    // ── Student: LEXiOX (중학) ────────────────────────────────
+    // ── Student: LEXiOX ───────────────────────────────────────
     if (program === 'lexiox') {
       return [
         { section: '내 현황', href: '/student/home', label: '홈', icon: Home },
@@ -323,7 +323,7 @@ export default function SidebarClient({ role, program = null }: Props) {
         { section: '학습', href: '/updated-listening/study', label: 'Listening', skill: 'listening' as SkillColor },
         { section: '학습', href: '/grammar-2026',          label: 'Grammar', icon: BookText },
 
-        { section: '어휘', href: '/vocab/hub', label: '단어 학습', icon: Library },
+        { section: '어휘', href: '/vocab/hub-new', label: '단어 학습', icon: Library },
 
         { section: '숙제', href: '/student/exams',    label: '📋 예상문제', icon: CheckSquare },
         { section: '숙제', href: '/student/homework', label: '숙제 채점', icon: ClipboardCheck },
