@@ -24,15 +24,15 @@ export async function skipVocabDaysAction(
   try {
     const supabase = createServiceRoleClient();
 
-    // Update student_progress to start from specified day
+    // Update student_vocab_plans to start from specified day
     const { error } = await supabase
-      .from("student_progress")
+      .from("student_vocab_plans")
       .update({
         cursor_day_index: startDayIndex,
         updated_at: new Date().toISOString(),
       })
       .eq("student_id", studentId)
-      .eq("vocab_track_id", trackId);
+      .eq("track_id", trackId);
 
     if (error) throw error;
 
