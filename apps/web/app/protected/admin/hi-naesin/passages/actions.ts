@@ -22,9 +22,9 @@ function numOrNull(fd: FormData, key: string): number | null {
 }
 
 export async function createHiNaesinPassageAction(
-  _prev: { error?: string } | null,
+  _prev: { error?: string; id?: string } | null,
   fd: FormData,
-): Promise<{ error?: string }> {
+): Promise<{ error?: string; id?: string }> {
   const supabase = await getServerSupabase();
 
   const {
@@ -78,7 +78,7 @@ export async function createHiNaesinPassageAction(
   if (error) return { error: `저장 실패: ${error.message}` };
 
   revalidatePath('/admin/hi-naesin/passages');
-  redirect(`/admin/hi-naesin/passages/${data.id}/edit`);
+  return { id: data.id };
 }
 
 export async function bulkUpdatePassageMetaAction(

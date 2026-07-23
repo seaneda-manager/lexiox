@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useFormStatus } from 'react-dom';
 import Link from 'next/link';
 import { createHiNaesinPassageAction } from '../actions';
@@ -16,7 +17,17 @@ export default function HiNaesinPassageNewPage() {
 }
 
 function FormContent({ sourceType, setSourceType }: { sourceType: SourceType; setSourceType: (v: SourceType) => void }) {
+  const router = useRouter();
   const { pending } = useFormStatus();
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    const result = await createHiNaesinPassageAction(null, fd);
+    if (result.id) {
+      router.push(`/admin/hi-naesin/passages/${result.id}/edit`);
+    }
+  }
 
   return (
     <main className="mx-auto max-w-2xl space-y-6 px-6 py-8">
@@ -35,7 +46,7 @@ function FormContent({ sourceType, setSourceType }: { sourceType: SourceType; se
         </Link>
       </header>
 
-      <form action={createHiNaesinPassageAction} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-5">
 
         {/* ── 출처 + 학년 ── */}
         <section className="rounded-2xl border bg-white p-5 space-y-4">
