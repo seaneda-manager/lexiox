@@ -68,7 +68,7 @@ export default function VocabHubNewPage() {
 
   const [todayData, setTodayData] = useState<ProgressData | null>(null);
   const [reviewData, setReviewData] = useState<ReviewData | null>(null);
-  const [activeTab, setActiveTab] = useState<"today" | "review">("today");
+  const [activeTab, setActiveTab] = useState<"today" | "review" | "games">("today");
 
   // 오늘의 문장 상태
   const [sentenceIdx, setSentenceIdx] = useState(0);
@@ -297,6 +297,16 @@ export default function VocabHubNewPage() {
             }`}
           >
             복습 ({reviewData?.chapters?.length ?? 0})
+          </button>
+          <button
+            onClick={() => setActiveTab("games")}
+            className={`px-4 py-2 font-medium ${
+              activeTab === "games"
+                ? "text-blue-600 border-b-2 border-blue-600"
+                : "text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            🎮 게임
           </button>
         </div>
 
@@ -556,6 +566,82 @@ export default function VocabHubNewPage() {
                 </p>
               </div>
             )}
+          </div>
+        )}
+
+        {/* 게임 탭 */}
+        {activeTab === "games" && (
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">단어 게임으로 재미있게 학습하세요! 🎮</h2>
+              <p className="text-gray-600">학습한 단어를 게임으로 복습하고 보상을 얻으세요.</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* 동의어 게임 */}
+              <button
+                onClick={() => router.push("/vocab/synonym-game")}
+                className="group relative overflow-hidden rounded-lg bg-gradient-to-br from-purple-50 to-purple-100 border-2 border-purple-200 hover:border-purple-400 p-6 text-left transition-all hover:shadow-lg"
+              >
+                <div className="absolute top-2 right-2 text-4xl">🧠</div>
+                <h3 className="text-xl font-bold text-purple-900 mb-2">동의어 게임</h3>
+                <p className="text-sm text-purple-700 mb-4">
+                  단어의 동의어를 찾아 15개 문제를 푸세요. 정확한 선택이 스트릭을 높여줍니다!
+                </p>
+                <div className="inline-block bg-purple-600 group-hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-semibold text-sm transition">
+                  게임 시작 →
+                </div>
+              </button>
+
+              {/* Speed Challenge */}
+              <button
+                onClick={() => router.push("/vocab/speed-challenge")}
+                className="group relative overflow-hidden rounded-lg bg-gradient-to-br from-orange-50 to-orange-100 border-2 border-orange-200 hover:border-orange-400 p-6 text-left transition-all hover:shadow-lg"
+              >
+                <div className="absolute top-2 right-2 text-4xl">⚡</div>
+                <h3 className="text-xl font-bold text-orange-900 mb-2">스피드 챌린지</h3>
+                <p className="text-sm text-orange-700 mb-4">
+                  제한 시간 안에 단어의 뜻을 맞추세요. 빠를수록 더 많은 포인트를 얻어요!
+                </p>
+                <div className="inline-block bg-orange-600 group-hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-semibold text-sm transition">
+                  게임 시작 →
+                </div>
+              </button>
+
+              {/* Asteroid Game */}
+              <button
+                onClick={() => router.push("/vocab/asteroid-game")}
+                className="group relative overflow-hidden rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 hover:border-blue-400 p-6 text-left transition-all hover:shadow-lg"
+              >
+                <div className="absolute top-2 right-2 text-4xl">🚀</div>
+                <h3 className="text-xl font-bold text-blue-900 mb-2">Asteroid Game</h3>
+                <p className="text-sm text-blue-700 mb-4">
+                  떨어지는 운석을 피하고 단어를 맞춰보세요. 신나는 액션 게임!
+                </p>
+                <div className="inline-block bg-blue-600 group-hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold text-sm transition">
+                  게임 시작 →
+                </div>
+              </button>
+
+              {/* 보너스 게임 (Comming Soon) */}
+              <div className="relative overflow-hidden rounded-lg bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-dashed border-gray-300 p-6 text-left opacity-60">
+                <div className="absolute top-2 right-2 text-4xl">🎯</div>
+                <h3 className="text-xl font-bold text-gray-700 mb-2">더 많은 게임들...</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  새로운 게임이 곧 추가될 예정입니다.
+                </p>
+                <div className="inline-block bg-gray-400 text-white px-4 py-2 rounded-lg font-semibold text-sm">
+                  준비 중...
+                </div>
+              </div>
+            </div>
+
+            {/* 게임 정보 */}
+            <div className="mt-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <p className="text-sm text-blue-900">
+                <span className="font-bold">💡 팁:</span> 게임을 매일 플레이하면 보상을 받을 수 있습니다. 친구와 함께 경쟁해보세요!
+              </p>
+            </div>
           </div>
         )}
       </div>
