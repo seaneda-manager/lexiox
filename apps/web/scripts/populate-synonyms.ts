@@ -84,8 +84,7 @@ async function main() {
     // 1. 모든 단어 조회
     const { data: words, error: wordsError } = await supabase
       .from("words")
-      .select("id, text")
-      .limit(500);
+      .select("id, text");
 
     if (wordsError) {
       console.error("❌ Failed to fetch words:", wordsError);
