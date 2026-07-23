@@ -80,7 +80,7 @@ export default async function HiNaesinPassageListPage({
             href="/admin/hi-naesin/passages/new"
             className="rounded-xl bg-neutral-900 px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-800"
           >
-            + 지문 추가
+            새 지문 추가
           </Link>
         </div>
       </header>
