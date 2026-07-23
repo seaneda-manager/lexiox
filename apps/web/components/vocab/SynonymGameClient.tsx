@@ -36,6 +36,8 @@ export default function SynonymGameClient({ words }: Props) {
   const [gameOver, setGameOver] = useState(false);
   const [results, setResults] = useState<any[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [questionCount, setQuestionCount] = useState(0);
+  const QUESTIONS_PER_ROUND = 15;
 
   // 게임 시작 (동의어 로드)
   useEffect(() => {
@@ -47,10 +49,14 @@ export default function SynonymGameClient({ words }: Props) {
     console.log("🎮 Synonym game loading started with", words.length, "words");
 
     try {
-      // 각 단어의 동의어를 API로 로드 (DB 기반)
-      console.log("📡 Fetching synonyms for all words...");
+      // 1,000개 중 15개 무작위 선택
+      const selectedWords = words.sort(() => Math.random() - 0.5).slice(0, QUESTIONS_PER_ROUND);
+      console.log(`🎯 Selected ${selectedWords.length} random words for this round`);
+
+      // 선택된 15개 단어의 동의어를 API로 로드
+      console.log("📡 Fetching synonyms for selected words...");
       const updatedWords = await Promise.all(
-        words.map(async (word) => {
+        selectedWords.map(async (word) => {
           try {
             const res = await fetch(
               `/api/vocab/synonym-game/get-synonyms?wordId=${encodeURIComponent(word.id)}&limit=10`
@@ -81,7 +87,6 @@ export default function SynonymGameClient({ words }: Props) {
       setGameWords(wordsWithSynonyms);
 
       // 정답 단어와 오답 후보용 모든 단어 생성
-      // Datamuse API 동의어들은 synonyms를 가지고 있지 않으므로, 품사 정보만 있는 상태
       const allWordsForGame = [
         ...wordsWithSynonyms,
         ...wordsWithSynonyms.flatMap(w => w.synonyms || []),
@@ -89,9 +94,8 @@ export default function SynonymGameClient({ words }: Props) {
 
       console.log(`🎯 Total words for game: ${allWordsForGame.length}`);
 
-      // wordsWithSynonyms만 사용 (정답 선택용)
-      // allWordsForGame는 오답 후보 찾기용
       setAllWordsForAnswers(allWordsForGame);
+      setQuestionCount(0);
       loadNextQuestion(wordsWithSynonyms, allWordsForGame);
     } catch (error) {
       console.error("💥 Error loading synonyms:", error);
@@ -104,10 +108,17 @@ export default function SynonymGameClient({ words }: Props) {
     wordsForSelection: typeof words = gameWords,
     allWordsForAnswers: typeof words = gameWords
   ) => {
-    console.log("🔄 loadNextQuestion called with", wordsForSelection.length, "selection words, gameOver=", gameOver);
+    console.log("🔄 loadNextQuestion called with", wordsForSelection.length, "selection words, questionCount=", questionCount);
 
-    if (gameOver || wordsForSelection.length === 0) {
-      console.log("⏸️ Returning early: gameOver=", gameOver, "wordsLength=", wordsForSelection.length);
+    if (wordsForSelection.length === 0) {
+      console.log("⏸️ No words available");
+      return;
+    }
+
+    // 15개를 모두 풀었으면 게임 종료
+    if (questionCount >= QUESTIONS_PER_ROUND) {
+      console.log(`✅ Game completed! ${questionCount}/${QUESTIONS_PER_ROUND} questions answered`);
+      setGameOver(true);
       return;
     }
 
@@ -143,6 +154,7 @@ export default function SynonymGameClient({ words }: Props) {
     const isAnswerCorrect = optionId === question.correctAnswer.id;
     setIsCorrect(isAnswerCorrect);
     setShowResult(true);
+    setQuestionCount(prev => prev + 1);
 
     // 통계 업데이트
     const points = calculatePoints(isAnswerCorrect, question.difficulty, stats.streak);
@@ -212,7 +224,8 @@ export default function SynonymGameClient({ words }: Props) {
                 setStats(INITIAL_STATS);
                 setResults([]);
                 setGameOver(false);
-                loadNextQuestion(gameWords, allWordsForAnswers);
+                setQuestionCount(0);
+                loadSynonymsAndStart();
               }}
               className="flex-1 bg-purple-600 text-white py-2 rounded-lg font-semibold hover:bg-purple-700"
               disabled={isSaving}
@@ -233,8 +246,8 @@ export default function SynonymGameClient({ words }: Props) {
         <div className="flex items-center justify-between bg-white rounded-xl shadow p-4">
           <div className="flex gap-6">
             <div className="text-center">
-              <div className="text-xs text-gray-600">레벨</div>
-              <div className="text-2xl font-bold text-purple-600">{stats.level}</div>
+              <div className="text-xs text-gray-600">진행도</div>
+              <div className="text-2xl font-bold text-purple-600">{questionCount}/{QUESTIONS_PER_ROUND}</div>
             </div>
             <div className="text-center">
               <div className="text-xs text-gray-600">포인트</div>
