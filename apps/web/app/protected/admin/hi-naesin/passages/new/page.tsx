@@ -35,12 +35,6 @@ function FormContent({ sourceType, setSourceType }: { sourceType: SourceType; se
         </Link>
       </header>
 
-      {state?.error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          ⚠️ {state.error}
-        </div>
-      )}
-
       <form action={createHiNaesinPassageAction} className="space-y-5">
 
         {/* ── 출처 + 학년 ── */}
