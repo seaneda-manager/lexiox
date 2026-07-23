@@ -1,29 +1,22 @@
 'use client';
 
 import { useState } from 'react';
+import { useFormStatus } from 'react-dom';
 import Link from 'next/link';
 import { createHiNaesinPassageAction } from '../actions';
 
 type SourceType = 'mock_exam' | 'textbook' | 'external_book' | '';
 
-type State = { error?: string } | null;
-
 export default function HiNaesinPassageNewPage() {
   const [sourceType, setSourceType] = useState<SourceType>('');
-  const [state, setState] = useState<State>(null);
-  const [isPending, setIsPending] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setIsPending(true);
-    try {
-      const fd = new FormData(e.currentTarget);
-      const result = await createHiNaesinPassageAction(fd);
-      setState(result);
-    } finally {
-      setIsPending(false);
-    }
-  }
+  return (
+    <FormContent sourceType={sourceType} setSourceType={setSourceType} />
+  );
+}
+
+function FormContent({ sourceType, setSourceType }: { sourceType: SourceType; setSourceType: (v: SourceType) => void }) {
+  const { pending } = useFormStatus();
 
   return (
     <main className="mx-auto max-w-2xl space-y-6 px-6 py-8">
@@ -48,7 +41,7 @@ export default function HiNaesinPassageNewPage() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form action={createHiNaesinPassageAction} className="space-y-5">
 
         {/* ── 출처 + 학년 ── */}
         <section className="rounded-2xl border bg-white p-5 space-y-4">
@@ -154,10 +147,10 @@ export default function HiNaesinPassageNewPage() {
           </Link>
           <button
             type="submit"
-            disabled={!sourceType}
+            disabled={!sourceType || pending}
             className="rounded-xl bg-neutral-900 px-6 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            {isPending ? '저장 중...' : '저장 후 드릴 편집'}
+            {pending ? '저장 중...' : '저장 후 드릴 편집'}
           </button>
         </div>
       </form>
