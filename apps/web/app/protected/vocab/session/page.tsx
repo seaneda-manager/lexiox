@@ -13,6 +13,7 @@ import PrescreenSpellingBoard from "@/components/vocab/prescreen/PrescreenSpelli
 import SummaryScreen from "@/components/vocab/summary/SummaryScreen";
 
 import LearningRunner from "@/components/vocab/learning/LearningRunner";
+import VocabSessionLearningStage from "@/components/vocab/learning/VocabSessionLearningStage";
 import type { LearningWord } from "@/components/vocab/learning/learning.types";
 
 import AsteroidGame from "@/components/vocab/game/AsteroidGame";
@@ -1696,7 +1697,7 @@ export default function VocabSessionPage() {
       return (
         <CardWrap>
           {Debug}
-          <LearningRunner
+          <VocabSessionLearningStage
             words={learningPayload}
             onFinish={() => setStage("SPEED")}
             trackTitle={trackTitle}
