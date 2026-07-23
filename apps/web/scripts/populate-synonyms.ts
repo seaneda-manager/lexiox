@@ -1,15 +1,31 @@
 #!/usr/bin/env node
 
 /**
- * publicapi.dev에서 동의어를 fetch해서 word_synonyms 테이블에 저장
+ * API Ninjas Thesaurus에서 동의어를 fetch해서 word_synonyms 테이블에 저장
  *
  * Usage:
- * node -r dotenv/config scripts/populate-synonyms.ts
- * 또는 환경변수 설정 후:
  * npx ts-node scripts/populate-synonyms.ts
  */
 
+import fs from "fs";
+import path from "path";
 import { createClient } from "@supabase/supabase-js";
+
+// .env.local 파일 로드
+function loadEnv() {
+  const envPath = path.join(process.cwd(), ".env.local");
+  if (fs.existsSync(envPath)) {
+    const envContent = fs.readFileSync(envPath, "utf-8");
+    envContent.split("\n").forEach(line => {
+      const [key, value] = line.split("=");
+      if (key && value) {
+        process.env[key.trim()] = value.trim().replace(/^["']|["']$/g, "");
+      }
+    });
+  }
+}
+
+loadEnv();
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || "",
