@@ -19,11 +19,24 @@ export default async function SynonymGamePage() {
     process.env.SUPABASE_SERVICE_ROLE_KEY || ""
   );
 
-  // 전체 단어 DB에서 랜덤하게 선택 (할당 상관없이)
+  // 전체 단어 DB에서 로드
   const { data: words, error: wordsError } = await supabase
     .from("words")
-    .select(`id, text, difficulty`)
-    .limit(100); // 충분한 단어 수 로드
+    .select(`
+      id,
+      text,
+      pos,
+      difficulty,
+      is_function_word,
+      meanings_ko,
+      meanings_en_simple,
+      examples_easy,
+      examples_normal,
+      created_at,
+      updated_at
+    `)
+    .order("created_at", { ascending: false })
+    .limit(1000); // 1,000개 로드
 
   if (wordsError) {
     console.error("DB Error:", wordsError);
@@ -37,38 +50,42 @@ export default async function SynonymGamePage() {
     );
   }
 
-  if (!words || words.length < 4) {
+  if (!words || words.length < 15) {
     console.error("Not enough words:", words?.length ?? 0);
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50">
         <div className="text-center">
           <p className="text-gray-600">게임을 시작할 수 있는 단어가 부족합니다.</p>
-          <p className="text-sm text-gray-500 mt-2">(로드된: {words?.length ?? 0}개, 최소 4개 필요)</p>
+          <p className="text-sm text-gray-500 mt-2">(로드된: {words?.length ?? 0}개, 최소 15개 필요)</p>
         </div>
       </div>
     );
   }
 
-  // VocabWord 타입으로 변환
-  interface VocabWord {
+  // 간단한 타입으로 변환 (클라이언트에서 동의어 로드)
+  interface SimpleWord {
     id: string;
     text: string;
     pos: string | null;
     difficulty: number | null;
-    synonyms?: VocabWord[]; // 클라이언트에서 로드됨
+    is_function_word?: boolean;
+    meanings_ko?: string[];
+    synonyms?: SimpleWord[];
   }
 
-  const vocabWords: VocabWord[] = words.map((w: any) => ({
+  const vocabWords: SimpleWord[] = words.map((w: any) => ({
     id: w.id,
     text: w.text,
-    pos: null, // Datamuse API에서 로드 가능
+    pos: w.pos,
     difficulty: w.difficulty ?? 5,
-    synonyms: [], // 초기값 (클라이언트에서 API로 로드)
+    is_function_word: w.is_function_word,
+    meanings_ko: w.meanings_ko,
+    synonyms: [],
   }));
 
   return (
     <SynonymGameClient
-      words={vocabWords as any}
+      words={vocabWords}
     />
   );
 }

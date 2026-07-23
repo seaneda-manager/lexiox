@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { Zap, Check, X, RotateCcw, TrendingUp } from "lucide-react";
-import type { VocabWordCore } from "@/models/vocab";
 import {
   generateSynonymQuestion,
   calculatePoints,
@@ -11,8 +10,16 @@ import {
   type SynonymGameStats,
 } from "@/lib/vocab/synonym-game";
 
+interface SimpleWord {
+  id: string;
+  text: string;
+  pos: string | null;
+  difficulty: number | null;
+  synonyms?: SimpleWord[];
+}
+
 interface Props {
-  words: VocabWordCore[];
+  words: SimpleWord[];
 }
 
 const INITIAL_STATS: SynonymGameStats = {

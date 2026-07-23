@@ -1,0 +1,118 @@
+﻿node.exe : (node:10844) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/dev/toefl-project-25-9-3/apps
+/web/scripts/check-synonyms.ts is not specified and it doesn't parse as CommonJS.
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:10844) [M...se as CommonJS.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\dev\toefl-project-25-9-3\apps\web\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+🔍 Checking synonyms accuracy...
+
+📊 Total synonyms to check: 100
+
+Word 1                  | Word 2                  | 동의어?
+
+----------------------------------------------------------------------
+progress                | advance                 |
+progress                | flow                    |
+progress                | passage                 |
+progress                | advancement             |
+progress                | process                 |
+produce                 | generate                |
+produce                 | create                  |
+produce                 | induce                  |
+produce                 | cause                   |
+produce                 | yield                   |
+produce                 | spawn                   |
+produce                 | prompt                  |
+protect                 | secure                  |
+protect                 | prevent                 |
+protect                 | guard                   |
+protect                 | defend                  |
+protect                 | fence                   |
+protect                 | shield                  |
+profile                 | outline                 |
+profile                 | geometry                |
+profile                 | form                    |
+profile                 | frame                   |
+profile                 | contour                 |
+profile                 | silhouette              |
+profile                 | configuration           |
+profile                 | fashion                 |
+purchase                | grab                    |
+purchase                | grasp                   |
+purchase                | grip                    |
+purchase                | hold                    |
+predict                 | foresee                 |
+predict                 | anticipate              |
+predict                 | warn                    |
+predict                 | forecast                |
+predict                 | announce                |
+predict                 | foretell                |
+precaution              | guard                   |
+precaution              | screen                  |
+precaution              | caution                 |
+precaution              | protection              |
+precaution              | preventive              |
+precaution              | shield                  |
+premature               | sudden                  |
+premature               | unexpected              |
+premature               | abrupt                  |
+preview                 | trial                   |
+preview                 | exercise                |
+preview                 | drill                   |
+preview                 | practice                |
+income                  | revenue                 |
+income                  | profit                  |
+income                  | yield                   |
+income                  | return                  |
+income                  | earnings                |
+infection               | attack                  |
+infection               | disease                 |
+infection               | germ                    |
+infection               | epidemic                |
+infection               | plague                  |
+insight                 | intellect               |
+insight                 | wisdom                  |
+insight                 | intelligence            |
+insight                 | perception              |
+insight                 | sensitivity             |
+inherent                | innate                  |
+inherent                | essential               |
+inherent                | inner                   |
+inherent                | hereditary              |
+inherent                | natural                 |
+inherent                | integral                |
+inherent                | indigenous              |
+inherent                | intrinsic               |
+illustrate              | demonstrate             |
+illustrate              | explain                 |
+illustrate              | instance                |
+illustrate              | mention                 |
+illustrate              | cite                    |
+illustrate              | clarify                 |
+illustrate              | analyze                 |
+illustrate              | exemplify               |
+illustrate              | elucidate               |
+illustrate              | specify                 |
+outline                 | trace                   |
+outline                 | define                  |
+outline                 | surround                |
+outline                 | silhouette              |
+outline                 | trim                    |
+outline                 | delineate               |
+outbreak                | increase                |
+outbreak                | surge                   |
+outbreak                | burst                   |
+outbreak                | eruption                |
+outbreak                | outburst                |
+utter                   | absolute                |
+utter                   | complete                |
+utter                   | definite                |
+utter                   | pure                    |
+utter                   | simple                  |
+utter                   | sheer                   |
+recall                  | reproduce               |
