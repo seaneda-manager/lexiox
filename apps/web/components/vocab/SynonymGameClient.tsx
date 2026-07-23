@@ -71,20 +71,19 @@ export default function SynonymGameClient({ words }: Props) {
 
       console.log("✅ Synonym fetch completed");
 
-      // 동의어가 있는 단어만 필터링 (최소 4개 필요)
+      // 동의어가 있는 단어만 필터링 (최소 2개 이상 필요)
       let wordsWithSynonyms = updatedWords.filter(
-        (w) => (w.synonyms?.length ?? 0) > 0
+        (w) => (w.synonyms?.length ?? 0) >= 2
       );
 
       console.log(`📊 Words with synonyms: ${wordsWithSynonyms.length} / ${updatedWords.length}`);
 
-      // 임시: 동의어가 없으면 모든 단어 사용 (테스트용)
+      // 동의어가 충분하지 않으면 게임 불가
       if (wordsWithSynonyms.length < 4) {
-        console.warn("⚠️  Fallback: using all words as synonyms");
-        wordsWithSynonyms = updatedWords.map(w => ({
-          ...w,
-          synonyms: updatedWords.filter(other => other.id !== w.id).slice(0, 3)
-        }));
+        console.error("❌ Not enough words with real synonyms");
+        setGameOver(true);
+        setLoading(false);
+        return;
       }
 
       setGameWords(wordsWithSynonyms);
