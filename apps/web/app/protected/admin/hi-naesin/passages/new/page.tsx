@@ -19,13 +19,21 @@ export default function HiNaesinPassageNewPage() {
 function FormContent({ sourceType, setSourceType }: { sourceType: SourceType; setSourceType: (v: SourceType) => void }) {
   const router = useRouter();
   const { pending } = useFormStatus();
+  const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const fd = new FormData(e.currentTarget);
-    const result = await createHiNaesinPassageAction(null, fd);
-    if (result.id) {
-      router.push(`/admin/hi-naesin/passages/${result.id}/edit`);
+    setError(null);
+    try {
+      const fd = new FormData(e.currentTarget);
+      const result = await createHiNaesinPassageAction(null, fd);
+      if (result.error) {
+        setError(result.error);
+      } else if (result.id) {
+        router.push(`/admin/hi-naesin/passages/${result.id}/edit`);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '저장 중 오류 발생');
     }
   }
 
@@ -45,6 +53,12 @@ function FormContent({ sourceType, setSourceType }: { sourceType: SourceType; se
           목록으로
         </Link>
       </header>
+
+      {error && (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          ⚠️ {error}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-5">
 
