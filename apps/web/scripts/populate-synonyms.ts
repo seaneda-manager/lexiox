@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 
 /**
- * Datamuse API에서 동의어를 fetch해서 word_synonyms 테이블에 저장
+ * publicapi.dev에서 동의어를 fetch해서 word_synonyms 테이블에 저장
  *
  * Usage:
+ * node -r dotenv/config scripts/populate-synonyms.ts
+ * 또는 환경변수 설정 후:
  * npx ts-node scripts/populate-synonyms.ts
  */
 
@@ -25,18 +27,29 @@ async function sleep(ms: number) {
 
 async function fetchSynonymsFromAPI(word: string): Promise<string[]> {
   try {
+    const apiKey = process.env.API_NINJAS_KEY;
+    if (!apiKey) {
+      console.error("❌ API_NINJAS_KEY not set in environment");
+      return [];
+    }
+
     const response = await fetch(
-      `https://publicapi.dev/api/synonyms?term=${encodeURIComponent(word)}`
+      `https://api.api-ninjas.com/v1/thesaurus?word=${encodeURIComponent(word)}`,
+      {
+        headers: {
+          "X-Api-Key": apiKey,
+        },
+      }
     );
 
     if (!response.ok) {
-      console.error(`❌ Synonyms API error for "${word}":`, response.status);
+      console.error(`❌ API Ninjas error for "${word}":`, response.status);
       return [];
     }
 
     const data = await response.json();
 
-    // API response format: { synonyms: ["word1", "word2", ...] }
+    // API Ninjas response format: { word: "...", synonyms: ["word1", "word2", ...], ... }
     if (data.synonyms && Array.isArray(data.synonyms)) {
       return data.synonyms.slice(0, 10);
     }
