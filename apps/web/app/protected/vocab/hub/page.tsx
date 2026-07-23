@@ -189,6 +189,31 @@ export default function VocabHubPage() {
           </section>
         )}
 
+        {/* 게임 모드 */}
+        {courses.length > 0 && (
+          <section className="mb-12">
+            <div className="rounded-2xl border-2 border-indigo-200 bg-gradient-to-br from-indigo-50 to-indigo-100 p-6 mb-6">
+              <h2 className="text-2xl font-bold text-slate-900">🎮 게임 모드</h2>
+              <p className="mt-1 text-slate-600">게임으로 즐겁게 단어를 학습하세요</p>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <Link
+                href="/vocab/synonym-game"
+                className="rounded-xl border-2 border-purple-300 bg-gradient-to-br from-purple-50 to-purple-100 p-6 hover:shadow-lg transition-all hover:border-purple-400"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900">동의어 게임</h3>
+                    <p className="text-sm text-slate-600 mt-1">같은 의미의 단어를 찾으세요</p>
+                  </div>
+                  <ChevronRight className="w-6 h-6 text-purple-600" />
+                </div>
+              </Link>
+            </div>
+          </section>
+        )}
+
         {/* 할당된 단어집 */}
         {courses.length > 0 && (
           <section className="mb-12">

@@ -15,6 +15,8 @@ type ValidationIssue = {
 
 type FilterType = "all" | "errors" | "warnings";
 
+type EditingWordId = string | null;
+
 type Props = {
   initialTracks: VocabTrack[];
 };

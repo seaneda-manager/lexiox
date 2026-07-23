@@ -18,7 +18,7 @@ export default async function WritingReviewDetailPage({ params }: PageProps) {
 
   const { data: session, error } = await supabase
     .from("writing_2026_sessions")
-    .select("id, test_id, raw_answers, created_at, meta")
+    .select("*")
     .eq("id", sessionId)
     .eq("user_id", user.id)
     .maybeSingle();
@@ -32,6 +32,22 @@ export default async function WritingReviewDetailPage({ params }: PageProps) {
     .maybeSingle();
 
   const test = testRow?.payload as WWritingTest2026 | null;
+
+  // Revision인 경우 parent session 조회
+  let parentSession = null;
+  const parentSessionId = (session as any)?.parent_session_id;
+  if (parentSessionId) {
+    const { data: parent } = await supabase
+      .from("writing_2026_sessions")
+      .select("raw_answers, created_at")
+      .eq("id", parentSessionId)
+      .eq("user_id", user.id)
+      .maybeSingle();
+    parentSession = parent;
+  }
+
+  const sessionMeta = (session as any)?.meta || {};
+  const isRevision = !!parentSessionId;
 
   return (
     <main className="mx-auto max-w-3xl space-y-6 px-4 py-6">
@@ -47,23 +63,26 @@ export default async function WritingReviewDetailPage({ params }: PageProps) {
         <div className="rounded-xl border border-teal-100 bg-white p-4 shadow-sm">
           <div className="inline-flex items-center gap-1 rounded-full bg-teal-50 px-2 py-0.5 text-[11px] font-medium text-teal-700">
             <PenLine className="h-3 w-3" />
-            Writing · Review
+            Writing · {isRevision ? "Revision" : "Review"}
           </div>
           <h1 className="mt-1 text-lg font-bold text-gray-900">
             {testRow?.label ?? "Writing Test"}
+            {isRevision && <span className="text-sm font-normal text-amber-600"> (재작성)</span>}
           </h1>
           <p className="mt-0.5 font-mono text-[10px] text-gray-400">Session ID: {session.id}</p>
           <p className="mt-0.5 text-[11px] text-gray-500">
-            {session.created_at ? new Date(session.created_at).toLocaleString("ko-KR") : "-"}
+            {(session as any).created_at ? new Date((session as any).created_at).toLocaleString("ko-KR") : "-"}
           </p>
         </div>
       </header>
 
       <WritingReviewBody
         sessionId={session.id}
-        rawAnswers={session.raw_answers as Record<string, string>}
+        rawAnswers={(session as any).raw_answers as Record<string, string>}
         test={test}
-        initialFeedback={(session.meta as { ai_feedback?: string } | null)?.ai_feedback ?? null}
+        initialFeedback={sessionMeta.ai_feedback ?? null}
+        parentAnswers={parentSession?.raw_answers as Record<string, string> | undefined}
+        isRevision={isRevision}
       />
     </main>
   );

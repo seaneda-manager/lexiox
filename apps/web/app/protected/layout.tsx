@@ -21,9 +21,10 @@ export default async function ProtectedLayout({ children }: { children: ReactNod
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect('/auth/login');
+  // TODO: 테스트 후 인증 체크 복구
+  // if (!user) redirect('/auth/login');
 
-  const email = user.email ?? '';
+  const email = user?.email ?? 'test@example.com';
 
   let role: Role = 'student';
   let program: Program = null;

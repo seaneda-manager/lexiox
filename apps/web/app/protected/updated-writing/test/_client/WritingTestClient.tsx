@@ -1,11 +1,13 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import WritingRunnerETS from "@/components/writing/WritingRunnerETS";
 import type { WWritingTest2026 } from "@/models/writing";
 
 export default function WritingTestClient({ test, testId }: { test: WWritingTest2026; testId: string }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const revisionSessionId = searchParams.get("revision");
 
   async function handleFinish(answers: {
     task1Scores: { questionId: string; correct: boolean; userSequence: string[] }[];
@@ -18,6 +20,7 @@ export default function WritingTestClient({ test, testId }: { test: WWritingTest
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           testId,
+          sessionId: revisionSessionId, // revision인 경우 기존 session ID 사용
           answers: {
             task_1_score_raw: answers.task1Scores.filter((s) => s.correct).length,
             task_2_submission: answers.task2Text,

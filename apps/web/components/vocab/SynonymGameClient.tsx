@@ -47,13 +47,13 @@ export default function SynonymGameClient({ words }: Props) {
     console.log("🎮 Synonym game loading started with", words.length, "words");
 
     try {
-      // 각 단어의 동의어를 API로 로드
+      // 각 단어의 동의어를 API로 로드 (DB 기반)
       console.log("📡 Fetching synonyms for all words...");
       const updatedWords = await Promise.all(
         words.map(async (word) => {
           try {
             const res = await fetch(
-              `/api/vocab/synonym-game/get-synonyms?word=${encodeURIComponent(word.text)}&limit=10`
+              `/api/vocab/synonym-game/get-synonyms?wordId=${encodeURIComponent(word.id)}&limit=10`
             );
             if (res.ok) {
               const data = await res.json();

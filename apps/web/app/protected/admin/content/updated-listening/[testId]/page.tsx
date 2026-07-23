@@ -11,6 +11,7 @@ type Track = {
   transcript: string;
   audioUrl?: string;
   audioSeconds?: number;
+  segments?: Array<{ speaker: string; text: string; audioUrl: string }>;
 };
 
 type Test = {
@@ -58,7 +59,7 @@ export default function ListeningTestEditPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           testId,
-          tracks: [{ trackId, transcript: track.transcript }],
+          tracks: [{ trackId, transcript: track.transcript, taskKind: track.taskKind }],
           difficulty: diff
         })
       });
@@ -66,12 +67,17 @@ export default function ListeningTestEditPage() {
       const data = await res.json();
       if (!data.ok) throw new Error(data.error);
 
+      const result = data.results[trackId];
       setTest(prev => {
         if (!prev) return prev;
         return {
           ...prev,
           tracks: prev.tracks.map(t =>
-            t.id === trackId ? { ...t, audioUrl: data.results[trackId] } : t
+            t.id === trackId ? {
+              ...t,
+              audioUrl: result.audioUrl,
+              segments: result.segments
+            } : t
           )
         };
       });
@@ -199,11 +205,36 @@ export default function ListeningTestEditPage() {
                     <source src={track.audioUrl} type="audio/mpeg" />
                   </audio>
                 )}
+                {track.segments && track.segments.length > 0 && (
+                  <span className="text-xs text-gray-500 px-2 py-1 bg-blue-50 rounded">
+                    {track.segments.length} segments
+                  </span>
+                )}
               </div>
             </div>
             <div className="rounded-lg bg-gray-50 p-3">
               <p className="whitespace-pre-wrap text-sm text-gray-700">{track.transcript}</p>
             </div>
+
+            {track.segments && track.segments.length > 0 && (
+              <div className="mt-4 space-y-2">
+                <h3 className="text-sm font-semibold text-gray-900">음성 세그먼트 ({track.segments.length})</h3>
+                <div className="space-y-2">
+                  {track.segments.map((seg, idx) => (
+                    <div key={idx} className="rounded-lg border border-gray-200 bg-white p-3">
+                      <div className="mb-2 flex items-center justify-between">
+                        <span className="text-xs font-semibold text-blue-600">{seg.speaker}</span>
+                        <span className="text-xs text-gray-500">Seg {idx}</span>
+                      </div>
+                      <p className="mb-2 text-xs text-gray-700">{seg.text}</p>
+                      <audio controls className="h-6 max-w-full">
+                        <source src={seg.audioUrl} type="audio/mpeg" />
+                      </audio>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>

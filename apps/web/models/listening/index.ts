@@ -136,6 +136,7 @@ export interface ScriptSegment {
   startTime: number;             // 발화 시작 시간 (초)
   endTime: number;               // 발화 종료 시간 (초)
   words: AudioWord[];            // 단어 레벨 타임스탬프
+  audioUrl?: string;             // Dialogue에서 화자별 음성 URL (옵션)
 }
 
 /** 트랩 선택지 메타데이터 (오답 선택지가 왜 트랩인지) */
