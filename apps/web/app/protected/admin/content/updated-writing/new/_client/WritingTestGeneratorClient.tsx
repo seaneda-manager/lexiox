@@ -21,6 +21,48 @@ export default function WritingTestGeneratorClient() {
   const [test, setTest] = useState<WWritingTest2026 | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
 
+  // ── 추천 주제 상태 ──────────────────────────────────────────────
+  const [loadingTopics, setLoadingTopics] = useState(false);
+  const [topicSuggestions, setTopicSuggestions] = useState<{
+    buildSentenceTopic: string;
+    emailSuggestions: string[];
+    academicSuggestions: string[];
+  } | null>(null);
+
+  // 페이지 로드 시 추천 주제 가져오기
+  React.useEffect(() => {
+    const fetchSuggestions = async () => {
+      try {
+        setLoadingTopics(true);
+        const [bsRes, emRes, acRes] = await Promise.all([
+          fetch("/api/admin/speaking/topic-suggestions?taskType=listen_repeat"),
+          fetch("/api/admin/speaking/topic-suggestions?taskType=writing"),
+          fetch("/api/admin/speaking/topic-suggestions?taskType=writing"),
+        ]);
+        const bsData = await bsRes.json();
+        const emData = await emRes.json();
+        const acData = await acRes.json();
+
+        if (bsData.ok && emData.ok && acData.ok) {
+          setTopicSuggestions({
+            buildSentenceTopic: bsData.topic,
+            emailSuggestions: emData.suggestions,
+            academicSuggestions: acData.suggestions,
+          });
+          setBuildSentenceTopic(bsData.topic);
+          setEmailTopic(emData.recommended);
+          setAcademicTopic(acData.recommended);
+        }
+      } catch (e) {
+        console.error("Failed to fetch topic suggestions:", e);
+      } finally {
+        setLoadingTopics(false);
+      }
+    };
+
+    fetchSuggestions();
+  }, []);
+
   const allFilled = buildSentenceTopic.trim() && emailTopic.trim() && academicTopic.trim();
 
   const handleGenerate = useCallback(async () => {
@@ -122,47 +164,87 @@ export default function WritingTestGeneratorClient() {
       <section className="rounded-xl border bg-white p-4 shadow-sm space-y-4">
         <h2 className="text-sm font-semibold">토픽 입력</h2>
 
-        <label className="block space-y-1.5">
+        {/* Task 1 - 자동 선택 */}
+        <div className="space-y-1.5">
           <div className="flex items-center gap-2">
             <span className="rounded-full bg-sky-100 px-2.5 py-0.5 text-[11px] font-semibold text-sky-700">Task 1</span>
-            <span className="text-xs font-medium text-slate-700">Build a Sentence — 상황/맥락</span>
+            <span className="text-xs font-medium text-slate-700">Build a Sentence — 상황/맥락 (자동 선택)</span>
           </div>
-          <input
-            className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400 disabled:bg-gray-50"
-            placeholder="예: campus recycling program, student health center procedures, library renovation"
-            value={buildSentenceTopic}
-            onChange={(e) => setBuildSentenceTopic(e.target.value)}
-            disabled={phase === "generating"}
-          />
-        </label>
+          <div className="rounded-lg border bg-sky-50 px-3 py-2 text-sm text-slate-700 font-medium">
+            {loadingTopics ? "주제 선택 중…" : buildSentenceTopic || "주제 준비 중…"}
+          </div>
+          <p className="text-[11px] text-slate-500">매번 다른 주제로 자동 생성됩니다.</p>
+        </div>
 
+        {/* Task 2 - 추천값 제시 */}
         <label className="block space-y-1.5">
           <div className="flex items-center gap-2">
             <span className="rounded-full bg-teal-100 px-2.5 py-0.5 text-[11px] font-semibold text-teal-700">Task 2</span>
-            <span className="text-xs font-medium text-slate-700">Write an Email — 상황/주제</span>
+            <span className="text-xs font-medium text-slate-700">Write an Email — 상황/주제 (선택 또는 수정)</span>
           </div>
           <input
             className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 disabled:bg-gray-50"
-            placeholder="예: summer research assistant position, internship inquiry, course withdrawal request"
+            placeholder="주제를 선택하거나 입력하세요"
             value={emailTopic}
             onChange={(e) => setEmailTopic(e.target.value)}
             disabled={phase === "generating"}
+            list="email-topics"
           />
+          <datalist id="email-topics">
+            {topicSuggestions?.emailSuggestions.map((topic, idx) => (
+              <option key={idx} value={topic} />
+            ))}
+          </datalist>
+          {topicSuggestions && topicSuggestions.emailSuggestions.length > 0 && (
+            <div className="flex gap-2 flex-wrap">
+              {topicSuggestions.emailSuggestions.map((topic, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setEmailTopic(topic)}
+                  className="text-[11px] rounded-lg bg-teal-100 px-2 py-1 text-teal-700 hover:bg-teal-200 font-medium"
+                >
+                  {topic}
+                </button>
+              ))}
+            </div>
+          )}
         </label>
 
+        {/* Task 3 - 추천값 제시 */}
         <label className="block space-y-1.5">
           <div className="flex items-center gap-2">
             <span className="rounded-full bg-violet-100 px-2.5 py-0.5 text-[11px] font-semibold text-violet-700">Task 3</span>
-            <span className="text-xs font-medium text-slate-700">Academic Discussion — 토론 주제</span>
+            <span className="text-xs font-medium text-slate-700">Academic Discussion — 토론 주제 (선택 또는 수정)</span>
           </div>
           <input
             className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 disabled:bg-gray-50"
-            placeholder="예: space exploration vs public transportation, remote work benefits, social media regulation"
+            placeholder="주제를 선택하거나 입력하세요"
             value={academicTopic}
             onChange={(e) => setAcademicTopic(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
             disabled={phase === "generating"}
+            list="academic-topics"
           />
+          <datalist id="academic-topics">
+            {topicSuggestions?.academicSuggestions.map((topic, idx) => (
+              <option key={idx} value={topic} />
+            ))}
+          </datalist>
+          {topicSuggestions && topicSuggestions.academicSuggestions.length > 0 && (
+            <div className="flex gap-2 flex-wrap">
+              {topicSuggestions.academicSuggestions.map((topic, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setAcademicTopic(topic)}
+                  className="text-[11px] rounded-lg bg-violet-100 px-2 py-1 text-violet-700 hover:bg-violet-200 font-medium"
+                >
+                  {topic}
+                </button>
+              ))}
+            </div>
+          )}
         </label>
 
         <button

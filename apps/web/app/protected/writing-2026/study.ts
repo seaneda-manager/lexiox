@@ -2,10 +2,56 @@
 
 import type {
   WWritingTest2026,
+  WBuildSentenceItem,
   WMicroWritingItem,
   WEmailWritingItem,
   WAcademicWritingItem,
 } from "@/models/writing";
+
+// Build a Sentence (9개 문항 세트)
+const buildSentenceItem: WBuildSentenceItem = {
+  id: "build-1",
+  taskKind: "build_a_sentence",
+  instruction: "Arrange the word tokens to complete the sentence correctly.",
+  questions: [
+    {
+      id: "bs-1",
+      contextLeadIn: "I just missed",
+      contextLeadOut: "the next bus.",
+      shuffledChunks: ["the next one", "can", "when", "tell me", "you", "arrive"],
+      correctSequence: ["can", "you", "tell", "me", "when", "the next one", "arrives"],
+    },
+    {
+      id: "bs-2",
+      contextLeadIn: "I still don't understand",
+      contextLeadOut: ".",
+      shuffledChunks: ["the requirements", "clearly", "explains", "the email", "the professor", "sent"],
+      correctSequence: ["the email", "that", "the professor", "sent", "explains", "everything"],
+    },
+    {
+      id: "bs-3",
+      contextLeadIn: "Have you",
+      contextLeadOut: "that new coffee shop downtown?",
+      shuffledChunks: ["ever", "went", "tried", "to", "visiting"],
+      correctSequence: ["ever", "tried", "that", "new", "coffee", "shop", "downtown"],
+    },
+    {
+      id: "bs-4",
+      contextLeadIn: "The library will be",
+      contextLeadOut: "during the summer break.",
+      shuffledChunks: ["closed", "for", "renovations", "all", "the", "be"],
+      correctSequence: ["closed", "for", "renovations", "during", "the", "summer", "break"],
+    },
+    {
+      id: "bs-5",
+      contextLeadIn: "Most students prefer",
+      contextLeadOut: "classes.",
+      shuffledChunks: ["taking", "online", "both", "in-person", "over"],
+      correctSequence: ["taking", "in-person", "classes", "over", "online"],
+    },
+  ],
+  timeLimitSeconds: 300, // 5분
+};
 
 // Micro Writing (짧은 3문항 세트)
 const microItem: WMicroWritingItem = {
@@ -83,5 +129,5 @@ export const demoWritingTest2026: WWritingTest2026 = {
     examEra: "ibt_2026",
     source: "demo",
   },
-  items: [microItem, emailItem, academicItem],
+  items: [buildSentenceItem, microItem, emailItem, academicItem],
 };

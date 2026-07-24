@@ -175,6 +175,43 @@ export default function SpeakingTestGeneratorClient() {
   const [createdGifUrl, setCreatedGifUrl] = useState<string | null>(null);
   const [gifCreateError, setGifCreateError] = useState<string | null>(null);
 
+  // ── 추천 주제 상태 ──────────────────────────────────────────────
+  const [loadingTopics, setLoadingTopics] = useState(false);
+  const [topicSuggestions, setTopicSuggestions] = useState<{
+    listenRepeatTopic: string;
+    interviewSuggestions: string[];
+  } | null>(null);
+
+  // 페이지 로드 시 추천 주제 가져오기
+  React.useEffect(() => {
+    const fetchSuggestions = async () => {
+      try {
+        setLoadingTopics(true);
+        const [lrRes, ivRes] = await Promise.all([
+          fetch("/api/admin/speaking/topic-suggestions?taskType=listen_repeat"),
+          fetch("/api/admin/speaking/topic-suggestions?taskType=interview"),
+        ]);
+        const lrData = await lrRes.json();
+        const ivData = await ivRes.json();
+
+        if (lrData.ok && ivData.ok) {
+          setTopicSuggestions({
+            listenRepeatTopic: lrData.topic,
+            interviewSuggestions: ivData.suggestions,
+          });
+          setListenRepeatTopic(lrData.topic);
+          setInterviewTopic(ivData.recommended);
+        }
+      } catch (e) {
+        console.error("Failed to fetch topic suggestions:", e);
+      } finally {
+        setLoadingTopics(false);
+      }
+    };
+
+    fetchSuggestions();
+  }, []);
+
   const handleGenerate = useCallback(async () => {
     if (!listenRepeatTopic.trim() || !interviewTopic.trim()) return;
     setError(null);
@@ -209,6 +246,7 @@ export default function SpeakingTestGeneratorClient() {
           ...s,
           audioUrl: sentenceAudioUrls[s.id] || s.audioUrl || "",
         }));
+        console.log('📝 Listen & Repeat sentences with audio:', listenRepeat.sentences.map(s => ({ id: s.id, hasAudio: !!sentenceAudioUrls[s.id] })));
       }
 
       const interviewIdx = testToSave.tasks.findIndex((t) => t.type === "interview");
@@ -218,7 +256,10 @@ export default function SpeakingTestGeneratorClient() {
           ...q,
           audioUrl: questionAudioUrls[q.id] || q.audioUrl || "",
         }));
+        console.log('📝 Interview questions with audio:', interview.questions.map(q => ({ id: q.id, hasAudio: !!questionAudioUrls[q.id] })));
       }
+
+      console.log('💾 Sending test to save:', { testId: test.id, sentenceAudioUrlsCount: Object.keys(sentenceAudioUrls).length });
 
       const res = await fetch("/api/admin/updated-speaking/save", {
         method: "POST",
@@ -226,6 +267,7 @@ export default function SpeakingTestGeneratorClient() {
         body: JSON.stringify({ test: testToSave }),
       });
       const data = await res.json();
+      console.log('✅ Save response:', data);
       if (!data.ok) throw new Error(data.error ?? "Save failed");
       setSavedId(test.id);
       setPhase("saved");
@@ -233,6 +275,7 @@ export default function SpeakingTestGeneratorClient() {
         router.push(`/admin/content/updated-speaking/${test.id}/edit`);
       }, 500);
     } catch (e: any) {
+      console.error('❌ Save error:', e);
       setError(e.message);
       setPhase("edit");
     }
@@ -342,13 +385,25 @@ export default function SpeakingTestGeneratorClient() {
     if (!text.trim()) return;
     setGeneratingIds((prev) => new Set([...prev, id]));
     try {
+      console.log(`🎵 Generating ${type} audio for ${id}...`);
       const result = await generateAudio(text);
       if (result) {
+        console.log(`✅ Generated ${type} audio:`, { id, url: result.url });
         if (type === "sentence") {
-          setSentenceAudioUrls((prev) => ({ ...prev, [id]: result.url }));
+          setSentenceAudioUrls((prev) => {
+            const updated = { ...prev, [id]: result.url };
+            console.log(`📦 sentenceAudioUrls updated:`, Object.keys(updated).length, "items");
+            return updated;
+          });
         } else {
-          setQuestionAudioUrls((prev) => ({ ...prev, [id]: result.url }));
+          setQuestionAudioUrls((prev) => {
+            const updated = { ...prev, [id]: result.url };
+            console.log(`📦 questionAudioUrls updated:`, Object.keys(updated).length, "items");
+            return updated;
+          });
         }
+      } else {
+        console.error(`❌ Failed to generate ${type} audio for ${id}`);
       }
     } finally {
       setGeneratingIds((prev) => {
@@ -403,35 +458,52 @@ export default function SpeakingTestGeneratorClient() {
         <h2 className="text-sm font-semibold">토픽 입력</h2>
 
         <div className="space-y-3">
-          {/* Task 1 토픽 */}
-          <label className="block space-y-1.5">
+          {/* Task 1 토픽 - 자동 선택 */}
+          <div className="space-y-1.5">
             <div className="flex items-center gap-2">
               <span className="rounded-full bg-sky-100 px-2.5 py-0.5 text-[11px] font-semibold text-sky-700">Task 1</span>
-              <span className="text-xs font-medium text-slate-700">듣고 따라말하기 — 상황 (Situation)</span>
+              <span className="text-xs font-medium text-slate-700">듣고 따라말하기 — 상황 (자동 선택)</span>
             </div>
-            <input
-              className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400 disabled:bg-gray-50"
-              placeholder="예: laundry room, ski resort, campus bookstore, chemistry lab safety"
-              value={listenRepeatTopic}
-              onChange={(e) => setListenRepeatTopic(e.target.value)}
-              disabled={phase === "generating"}
-            />
-          </label>
+            <div className="rounded-lg border bg-sky-50 px-3 py-2 text-sm text-slate-700 font-medium">
+              {loadingTopics ? "주제 선택 중…" : listenRepeatTopic || "주제 준비 중…"}
+            </div>
+            <p className="text-[11px] text-slate-500">매번 다른 주제로 자동 생성됩니다.</p>
+          </div>
 
-          {/* Task 2 토픽 */}
+          {/* Task 2 토픽 - 추천값 제시 */}
           <label className="block space-y-1.5">
             <div className="flex items-center gap-2">
               <span className="rounded-full bg-violet-100 px-2.5 py-0.5 text-[11px] font-semibold text-violet-700">Task 2</span>
-              <span className="text-xs font-medium text-slate-700">인터뷰 — 주제 (Topic)</span>
+              <span className="text-xs font-medium text-slate-700">인터뷰 — 주제 (선택 또는 수정)</span>
             </div>
             <input
               className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 disabled:bg-gray-50"
-              placeholder="예: festivals, technology habits, environmental choices, campus life"
+              placeholder="주제를 선택하거나 입력하세요"
               value={interviewTopic}
               onChange={(e) => setInterviewTopic(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
               disabled={phase === "generating"}
+              list="interview-topics"
             />
+            <datalist id="interview-topics">
+              {topicSuggestions?.interviewSuggestions.map((topic, idx) => (
+                <option key={idx} value={topic} />
+              ))}
+            </datalist>
+            {topicSuggestions && topicSuggestions.interviewSuggestions.length > 0 && (
+              <div className="flex gap-2 flex-wrap">
+                {topicSuggestions.interviewSuggestions.map((topic, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setInterviewTopic(topic)}
+                    className="text-[11px] rounded-lg bg-violet-100 px-2 py-1 text-violet-700 hover:bg-violet-200 font-medium"
+                  >
+                    {topic}
+                  </button>
+                ))}
+              </div>
+            )}
           </label>
         </div>
 

@@ -17,11 +17,11 @@ function sp(params: Record<string, string | string[] | undefined>, key: string):
 async function assignAction(formData: FormData) {
   "use server";
   const studentIds = formData.getAll("student_ids") as string[];
-  const speakingTestId = formData.get("speaking_test_id") as string | null;
+  const speakingRoundId = formData.get("speaking_round_id") as string | null;
   const dueDate = formData.get("due_date") as string | null;
 
-  if (!speakingTestId || studentIds.length === 0) {
-    redirect("/admin/content/updated-speaking/assign?error=" + encodeURIComponent("시험과 학생을 선택해주세요."));
+  if (!speakingRoundId || studentIds.length === 0) {
+    redirect("/admin/content/updated-speaking/assign?error=" + encodeURIComponent("회차와 학생을 선택해주세요."));
   }
 
   const supabase = await getServerSupabase();
@@ -32,7 +32,7 @@ async function assignAction(formData: FormData) {
     student_id: sid,
     assigned_by: user?.id ?? null,
     sections: ["speaking"],
-    speaking_test_id: speakingTestId,
+    speaking_round_id: speakingRoundId,
     due_date: dueDate || null,
     status: "pending",
   }));
@@ -54,11 +54,17 @@ export default async function AssignSpeakingPage({ searchParams }: { searchParam
 
   const supabase = await getServerSupabase();
 
-  const [{ data: tests }, { data: students }] = await Promise.all([
+  const [{ data: rounds }, { data: students }] = await Promise.all([
     supabase
-      .from("speaking_tests")
-      .select("id, label, is_locked")
-      .order("updated_at", { ascending: false }),
+      .from("speaking_rounds")
+      .select(`
+        id,
+        round_number,
+        is_active,
+        speaking_tests (id, label, payload)
+      `)
+      .eq("is_active", true)
+      .order("round_number"),
     supabase
       .from("profiles")
       .select("id, name, email")
@@ -88,19 +94,34 @@ export default async function AssignSpeakingPage({ searchParams }: { searchParam
 
       <form action={assignAction} className="space-y-6">
 
-        {/* 시험 선택 */}
+        {/* 회차 선택 */}
         <section className="space-y-3 rounded-xl border bg-white p-5 shadow-sm">
-          <h2 className="text-sm font-semibold text-slate-800">시험 선택</h2>
+          <h2 className="text-sm font-semibold text-slate-800">시험 회차 선택</h2>
           <div className="space-y-2">
-            {(tests ?? []).map((t) => (
-              <label key={t.id} className="flex cursor-pointer items-center gap-3 rounded-lg border p-3 hover:bg-orange-50/50 has-[:checked]:border-orange-400 has-[:checked]:bg-orange-50">
-                <input type="radio" name="speaking_test_id" value={t.id} required className="accent-orange-500" />
-                <span className="flex-1 text-sm font-medium text-slate-800">{t.label}</span>
-                {t.is_locked && <span className="text-[10px] text-slate-400">🔒</span>}
-              </label>
-            ))}
-            {(tests ?? []).length === 0 && (
-              <p className="text-xs text-slate-400">시험이 없습니다. <Link href="/admin/content/updated-speaking/new" className="text-orange-500 underline">새로 만들기</Link></p>
+            {(rounds ?? []).map((r: any) => {
+              const test = r.speaking_tests;
+              const payload = test?.payload as any;
+              const listenRepeatTask = payload?.tasks?.find((t: any) => t.type === "listen_repeat");
+              const interviewTask = payload?.tasks?.find((t: any) => t.type === "interview");
+              const situation = listenRepeatTask?.situation || "상황 미정";
+              const interviewTopic = interviewTask?.questions?.[0]?.topic || "주제 미정";
+
+              return (
+                <label key={r.id} className="flex cursor-pointer items-center gap-3 rounded-lg border p-3 hover:bg-orange-50/50 has-[:checked]:border-orange-400 has-[:checked]:bg-orange-50">
+                  <input type="radio" name="speaking_round_id" value={r.id} required className="accent-orange-500" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-slate-800">Round {r.round_number}</p>
+                    <p className="text-xs text-slate-600 mt-1">
+                      <span className="inline-block">📋 {situation}</span>
+                      <span className="mx-2 text-slate-400">/</span>
+                      <span className="inline-block">💬 {interviewTopic}</span>
+                    </p>
+                  </div>
+                </label>
+              );
+            })}
+            {(rounds ?? []).length === 0 && (
+              <p className="text-xs text-slate-400">활성화된 회차가 없습니다.</p>
             )}
           </div>
         </section>

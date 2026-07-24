@@ -2,8 +2,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Task1WordPuzzle from "./Task1WordPuzzle";
 import type {
   WWritingTest2026,
+  WBuildSentenceItem,
+  WBuildSentenceQuestion,
   WMicroWritingItem,
   WEmailWritingItem,
   WAcademicWritingItem,
@@ -18,7 +21,7 @@ type Props = {
 };
 
 // 각 Task 하나를 탭처럼 다루기 위해 내부용 타입
-type WritingItem = WMicroWritingItem | WEmailWritingItem | WAcademicWritingItem;
+type WritingItem = WBuildSentenceItem | WMicroWritingItem | WEmailWritingItem | WAcademicWritingItem;
 
 export default function WritingRunner2026({ test, onFinish }: Props) {
   const items = useMemo(() => test.items as WritingItem[], [test.items]);
@@ -129,6 +132,14 @@ export default function WritingRunner2026({ test, onFinish }: Props) {
 
       {/* 현재 Task 렌더링 */}
       <main className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+        {currentItem.taskKind === "build_a_sentence" && (
+          <BuildASentenceView
+            item={currentItem as WBuildSentenceItem}
+            answers={answers}
+            onChange={handleChangeAnswer}
+          />
+        )}
+
         {currentItem.taskKind === "micro_writing" && (
           <MicroWritingView
             item={currentItem as WMicroWritingItem}
@@ -385,11 +396,67 @@ function AcademicDiscussionView({
 }
 
 /* ------------------------------------
+ *  Build a Sentence View
+ * ----------------------------------*/
+
+function BuildASentenceView({
+  item,
+  answers,
+  onChange,
+}: {
+  item: WBuildSentenceItem;
+  answers: Record<string, string>;
+  onChange: AnswerChangeHandler;
+}) {
+  return (
+    <div className="flex flex-col gap-4 text-sm">
+      <div className="rounded-lg bg-indigo-50/70 p-3 text-xs text-indigo-900">
+        <p className="font-semibold">🎯 Build a Sentence</p>
+        <p className="mt-1">
+          Arrange the word tokens to complete the sentence. You have ~35 seconds per question.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-4">
+        {item.questions.map((q, idx) => {
+          const key = `${item.id}::q${idx}`;
+          const value = answers[key] ?? "";
+
+          // 단어들을 셔플해서 제시할 배열 만들기
+          const wordTokens = q.shuffledChunks;
+
+          return (
+            <div key={q.id} className="rounded-lg border border-indigo-100 bg-indigo-50/30 p-4">
+              <div className="mb-2 text-xs font-semibold text-indigo-700">
+                Question {idx + 1} of {item.questions.length}
+              </div>
+
+              <Task1WordPuzzle
+                prompt={q.contextLeadIn}
+                correctAnswer={q.correctSequence.join(" ")}
+                wordTokens={wordTokens}
+                onAnswerChange={(userAnswer) => onChange(key, userAnswer)}
+                onCorrect={(isCorrect) => {
+                  console.log(`Q${idx + 1}: ${isCorrect ? "✅" : "❌"}`);
+                }}
+                timeLimit={35}
+              />
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------
  *  Helper
  * ----------------------------------*/
 
 function labelForItemKind(kind: WritingItem["taskKind"]): string {
   switch (kind) {
+    case "build_a_sentence":
+      return "Build";
     case "micro_writing":
       return "Micro";
     case "email":

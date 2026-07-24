@@ -4,7 +4,7 @@ import { getServiceSupabase } from "@/lib/supabase/service";
 
 export async function POST(req: Request) {
   try {
-    const { assignmentId } = await req.json();
+    const { assignmentId, recordings } = await req.json();
     if (!assignmentId) return NextResponse.json({ ok: false, error: "assignmentId required" }, { status: 400 });
 
     const supabase = await getServerSupabase();
@@ -12,9 +12,23 @@ export async function POST(req: Request) {
     if (!user) return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
 
     const service = getServiceSupabase();
+
+    // recordings 데이터 포함해서 업데이트
+    const updateData: any = {
+      status: "completed",
+      completed_at: new Date().toISOString(),
+    };
+
+    if (recordings) {
+      updateData.results_payload = {
+        listenRepeat: recordings.listenRepeat || [],
+        interview: recordings.interview || [],
+      };
+    }
+
     const { error } = await service
       .from("test_assignments")
-      .update({ status: "completed", completed_at: new Date().toISOString() })
+      .update(updateData)
       .eq("id", assignmentId)
       .eq("student_id", user.id);
 

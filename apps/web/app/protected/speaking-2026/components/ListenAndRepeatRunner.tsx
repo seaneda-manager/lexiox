@@ -183,6 +183,7 @@ export default function ListenAndRepeatRunner({
             if (!audioCtxRef.current) audioCtxRef.current = new AudioContext();
             playBeep(audioCtxRef.current, 440, 0.2); // 종료 beep
             setPhase("done");
+            setNextDisabled(false); // 버튼 활성화
             return 0;
           }
           return prev - 1;
@@ -268,11 +269,17 @@ export default function ListenAndRepeatRunner({
   }, [index, mode]);
 
   const handleNext = () => {
-    if (nextDisabled) return;
+    console.log('🔘 handleNext called:', { index, totalItems: items.length, nextDisabled, recordingsCount: recordings.length });
+    if (nextDisabled) {
+      console.log('⚠️ nextDisabled, returning');
+      return;
+    }
     stopRecording();
     if (index < items.length - 1) {
+      console.log('➡️ Moving to next item:', index + 1);
       setIndex((i) => i + 1);
     } else {
+      console.log('✅ Calling onComplete with', recordings.length, 'recordings');
       onComplete?.(recordings);
     }
   };
@@ -297,6 +304,8 @@ export default function ListenAndRepeatRunner({
     : "#333333";
 
   const progressPct = totalQuestions > 0 ? (questionNumber / totalQuestions) * 100 : 0;
+
+  console.log('🎮 ListenAndRepeatRunner state:', { index, phase, nextDisabled, totalItems: items.length });
 
   return (
     <div className="flex flex-col" style={{ minHeight: "100vh", backgroundColor: "#F4F6F9", fontFamily: "Arial, Helvetica, sans-serif" }}>

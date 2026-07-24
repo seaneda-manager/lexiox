@@ -27,11 +27,11 @@ type Props = {
 
 const MODE_CONFIG = {
   test: {
-    prepareSeconds: 0,
+    prepareSeconds: 15,
     responseSeconds: 45,
     headerBg: "#1A2B4C",
     headerText: "TOEFL 2026 - Speaking - Task 2: Take an Interview",
-    description: "Answer the 4 interview questions. No preparation time. 45 seconds per question.",
+    description: "Answer the 4 interview questions. 15 seconds preparation. 45 seconds per question.",
   },
   study: {
     prepareSeconds: 15,

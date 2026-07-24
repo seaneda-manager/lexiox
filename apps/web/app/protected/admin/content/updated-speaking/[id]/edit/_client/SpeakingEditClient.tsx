@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
+import { useGenerateSpeech } from "@/lib/elevenlabs/use-generate-speech";
 import type {
   SpeakingTest2026,
   SpeakingTaskListenRepeat2026,
@@ -149,9 +150,13 @@ function RegionSelector({
 
 // ── 메인 컴포넌트 ──────────────────────────────────────────────────
 export default function SpeakingEditClient({ test: initial, isLocked }: Props) {
+  const { generateAudio, loading: audioLoading } = useGenerateSpeech();
   const [test, setTest] = useState<SpeakingTest2026>(initial);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [sentenceAudioUrls, setSentenceAudioUrls] = useState<Record<string, string>>({});
+  const [questionAudioUrls, setQuestionAudioUrls] = useState<Record<string, string>>({});
+  const [generatingIds, setGeneratingIds] = useState<Set<string>>(new Set());
 
   const listenRepeat = test.tasks.find((t) => t.type === "listen_repeat") as SpeakingTaskListenRepeat2026 | undefined;
   const interview = test.tasks.find((t) => t.type === "interview") as SpeakingTaskInterview2026 | undefined;
@@ -173,6 +178,40 @@ export default function SpeakingEditClient({ test: initial, isLocked }: Props) {
       next.tasks[idx] = updater(next.tasks[idx] as SpeakingTaskInterview2026);
       return next;
     });
+
+  // ── Audio 생성 ────────────────────────────────────────────────
+  const handleGenerateAudio = async (id: string, text: string, type: "sentence" | "question") => {
+    if (!text.trim()) return;
+    setGeneratingIds((prev) => new Set([...prev, id]));
+    try {
+      console.log(`🎵 Generating ${type} audio for ${id}...`);
+      const result = await generateAudio(text);
+      if (result) {
+        console.log(`✅ Generated ${type} audio:`, { id, url: result.url });
+        if (type === "sentence") {
+          setSentenceAudioUrls((prev) => {
+            const updated = { ...prev, [id]: result.url };
+            console.log(`📦 sentenceAudioUrls updated:`, Object.keys(updated).length, "items");
+            return updated;
+          });
+        } else {
+          setQuestionAudioUrls((prev) => {
+            const updated = { ...prev, [id]: result.url };
+            console.log(`📦 questionAudioUrls updated:`, Object.keys(updated).length, "items");
+            return updated;
+          });
+        }
+      } else {
+        console.error(`❌ Failed to generate ${type} audio for ${id}`);
+      }
+    } finally {
+      setGeneratingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
+  };
 
   // ── AI 이미지 생성 ────────────────────────────────────────────
   const [genState, setGenState] = useState<GenState>("idle");
@@ -297,19 +336,45 @@ export default function SpeakingEditClient({ test: initial, isLocked }: Props) {
     setSaveState("saving");
     setSaveError(null);
     try {
+      // audioUrl을 test 객체에 병합
+      const testToSave = structuredClone(test);
+      const listenRepeatIdx = testToSave.tasks.findIndex((t) => t.type === "listen_repeat");
+      if (listenRepeatIdx !== -1) {
+        const listenRepeat = testToSave.tasks[listenRepeatIdx] as SpeakingTaskListenRepeat2026;
+        listenRepeat.sentences = listenRepeat.sentences.map((s) => ({
+          ...s,
+          audioUrl: sentenceAudioUrls[s.id] || s.audioUrl || "",
+        }));
+        console.log('📝 Listen & Repeat sentences with audio:', listenRepeat.sentences.map(s => ({ id: s.id, hasAudio: !!sentenceAudioUrls[s.id], audioUrl: s.audioUrl })));
+      }
+
+      const interviewIdx = testToSave.tasks.findIndex((t) => t.type === "interview");
+      if (interviewIdx !== -1) {
+        const interview = testToSave.tasks[interviewIdx] as SpeakingTaskInterview2026;
+        interview.questions = interview.questions.map((q) => ({
+          ...q,
+          audioUrl: questionAudioUrls[q.id] || q.audioUrl || "",
+        }));
+        console.log('📝 Interview questions with audio:', interview.questions.map(q => ({ id: q.id, hasAudio: !!questionAudioUrls[q.id], audioUrl: q.audioUrl })));
+      }
+
+      console.log('💾 Saving test:', { testId: test.id, sentenceAudioUrlsCount: Object.keys(sentenceAudioUrls).length });
+
       const res = await fetch("/api/admin/updated-speaking/save", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ test }),
+        body: JSON.stringify({ test: testToSave }),
       });
       const data = await res.json();
+      console.log('✅ Save response:', data);
       if (!data.ok) throw new Error(data.error ?? "Save failed");
       setSaveState("saved");
     } catch (e: any) {
+      console.error('❌ Save error:', e);
       setSaveError(e.message);
       setSaveState("error");
     }
-  }, [test]);
+  }, [test, sentenceAudioUrls, questionAudioUrls]);
 
   if (isLocked) {
     return (
@@ -401,11 +466,32 @@ export default function SpeakingEditClient({ test: initial, isLocked }: Props) {
               <div className="space-y-6">
                 {listenRepeat.sentences.map((s, i) => (
                   <div key={s.id} className="space-y-2 rounded-lg border border-slate-100 bg-slate-50 p-3">
-                    <p className="text-xs font-semibold text-slate-700">
-                      문장 {i + 1}
-                      {s.region && <span className="ml-2 text-[10px] font-normal text-emerald-600">✓ 영역 지정됨</span>}
-                    </p>
-                    <p className="text-xs text-slate-600 leading-relaxed">{s.text}</p>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1">
+                        <p className="text-xs font-semibold text-slate-700">
+                          문장 {i + 1}
+                          {s.region && <span className="ml-2 text-[10px] font-normal text-emerald-600">✓ 영역 지정됨</span>}
+                          {s.audioUrl && <span className="ml-2 text-[10px] font-normal text-sky-600">🎵 음성 있음</span>}
+                        </p>
+                        <p className="text-xs text-slate-600 leading-relaxed">{s.text}</p>
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <button
+                          onClick={() => handleGenerateAudio(s.id, s.text, "sentence")}
+                          disabled={generatingIds.has(s.id) || audioLoading}
+                          className="text-xs px-2 py-1 bg-sky-500 text-white rounded hover:bg-sky-600 disabled:bg-gray-400 shrink-0"
+                        >
+                          {generatingIds.has(s.id) ? "중..." : "🎤"}
+                        </button>
+                        {(sentenceAudioUrls[s.id] || s.audioUrl) && (
+                          <audio
+                            controls
+                            src={sentenceAudioUrls[s.id] || s.audioUrl}
+                            className="w-32 h-6 text-[10px]"
+                          />
+                        )}
+                      </div>
+                    </div>
                     <RegionSelector
                       imageUrl={listenRepeat.imageUrl!}
                       region={s.region}
@@ -429,6 +515,42 @@ export default function SpeakingEditClient({ test: initial, isLocked }: Props) {
                         영역 삭제
                       </button>
                     )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 음성 생성 (이미지 없을 때) */}
+          {!listenRepeat.imageUrl && (
+            <div className="space-y-4">
+              <p className="text-xs font-semibold text-slate-600">문장 음성 생성</p>
+              <div className="space-y-3">
+                {listenRepeat.sentences.map((s, i) => (
+                  <div key={s.id} className="flex items-start gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-slate-700 mb-1">
+                        문장 {i + 1}
+                        {s.audioUrl && <span className="ml-2 text-[10px] font-normal text-sky-600">🎵 음성 있음</span>}
+                      </p>
+                      <p className="text-xs text-slate-600 leading-relaxed mb-2 break-words">{s.text}</p>
+                    </div>
+                    <div className="flex flex-col gap-1.5 shrink-0">
+                      <button
+                        onClick={() => handleGenerateAudio(s.id, s.text, "sentence")}
+                        disabled={generatingIds.has(s.id) || audioLoading}
+                        className="text-xs px-2 py-1 bg-sky-500 text-white rounded hover:bg-sky-600 disabled:bg-gray-400 whitespace-nowrap"
+                      >
+                        {generatingIds.has(s.id) ? "중..." : "🎤"}
+                      </button>
+                      {(sentenceAudioUrls[s.id] || s.audioUrl) && (
+                        <audio
+                          controls
+                          src={sentenceAudioUrls[s.id] || s.audioUrl}
+                          className="w-32 h-6"
+                        />
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
