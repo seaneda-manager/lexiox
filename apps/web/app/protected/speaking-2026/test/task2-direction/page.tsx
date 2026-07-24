@@ -28,7 +28,11 @@ export default function Task2DirectionPage() {
 
   const handleAudioEnd = () => {
     // 오디오 종료 → 즉시 task2-runner로 이동
-    router.push('/speaking-2026/test/task2-runner');
+    const testId = new URLSearchParams(window.location.search).get('testId');
+    const url = testId
+      ? `/speaking-2026/test/task2-runner?testId=${testId}`
+      : '/speaking-2026/test/task2-runner';
+    router.push(url);
   };
 
   return (

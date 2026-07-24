@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useSpeakingSession } from '../../_hooks/useSpeakingSession';
 
 /**
@@ -9,14 +9,31 @@ import { useSpeakingSession } from '../../_hooks/useSpeakingSession';
  * - 전체 11개 아이템 안내
  * - Task 1 (7개) + Task 2 (4개)
  * - Forward-Only 정책 안내
+ *
+ * Query params:
+ * - testId: 사용할 test의 ID (Admin이 생성한 Task)
  */
 export default function DirectionsPage() {
   const router = useRouter();
-  const { setState } = useSpeakingSession();
+  const searchParams = useSearchParams();
+  const { setState, state } = useSpeakingSession();
+  const [testId, setTestId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const id = searchParams.get('testId');
+    setTestId(id);
+    if (id) {
+      // testId를 global state에 저장
+      setState('T1_CONTEXT_LOAD');
+    }
+  }, [searchParams, setState]);
 
   const handleStart = () => {
     setState('TASK1_DIRECTION_START');
-    router.push('/speaking-2026/test/task1-direction');
+    const url = testId
+      ? `/speaking-2026/test/task1-direction?testId=${testId}`
+      : '/speaking-2026/test/task1-direction';
+    router.push(url);
   };
 
   return (

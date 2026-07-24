@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useSpeakingTestRunner } from '../../_hooks/useSpeakingTestRunner';
 import { AudioTimingController } from '../../_components/AudioTimingController';
+import type { SpeakingTest2026, SpeakingTaskListenRepeat2026 } from '@/models/speaking-2026';
 
 /**
  * Task 1 Runner: Listen & Repeat (7 items)
@@ -17,30 +19,55 @@ import { AudioTimingController } from '../../_components/AudioTimingController';
  */
 export default function Task1RunnerPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const supabase = createClientComponentClient();
   const { state, startRecording, stopRecording, moveToNextItem, startAudioLevelMonitoring } =
     useSpeakingTestRunner();
 
+  const [test, setTest] = useState<SpeakingTest2026 | null>(null);
   const [currentAudioUrl, setCurrentAudioUrl] = useState<string>('');
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [recordingTimeLeft, setRecordingTimeLeft] = useState(10);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [isRecordingActive, setIsRecordingActive] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const currentItemNum = state.currentItemNumber;
   const isTask1Item = currentItemNum >= 1 && currentItemNum <= 7;
 
-  // Task 1 아이템 데이터 (예시)
-  const task1Items = [
-    { id: 1, audioUrl: '/audio/speaking/task1/item1.mp3' },
-    { id: 2, audioUrl: '/audio/speaking/task1/item2.mp3' },
-    { id: 3, audioUrl: '/audio/speaking/task1/item3.mp3' },
-    { id: 4, audioUrl: '/audio/speaking/task1/item4.mp3' },
-    { id: 5, audioUrl: '/audio/speaking/task1/item5.mp3' },
-    { id: 6, audioUrl: '/audio/speaking/task1/item6.mp3' },
-    { id: 7, audioUrl: '/audio/speaking/task1/item7.mp3' },
-  ];
+  // 테스트 정보 조회
+  useEffect(() => {
+    const testId = searchParams.get('testId');
+    if (!testId) {
+      setLoading(false);
+      return;
+    }
 
-  const currentItem = task1Items[currentItemNum - 1];
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from('speaking_tests_2026')
+          .select('*')
+          .eq('id', testId)
+          .single();
+
+        if (error) throw error;
+        setTest(data as SpeakingTest2026);
+      } catch (err) {
+        console.error('Failed to load test:', err);
+        alert('테스트를 불러올 수 없습니다.');
+        router.back();
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [searchParams, supabase, router]);
+
+  // Task 1 정보
+  const listenRepeatTask = test?.tasks.find(
+    (t) => t.type === 'listen_repeat'
+  ) as SpeakingTaskListenRepeat2026 | undefined;
+  const currentSentence = listenRepeatTask?.sentences[currentItemNum - 1];
 
   // 마이크 스트림 시작
   useEffect(() => {
@@ -57,12 +84,12 @@ export default function Task1RunnerPage() {
 
   // 아이템 시작 시 오디오 재생
   useEffect(() => {
-    if (isTask1Item && currentItem) {
-      setCurrentAudioUrl(currentItem.audioUrl);
-      setRecordingTimeLeft(10); // Task 1은 10초 고정
+    if (isTask1Item && currentSentence) {
+      setCurrentAudioUrl(currentSentence.audioUrl || '');
+      setRecordingTimeLeft(currentSentence.speakingSeconds || 10);
       setIsPlayingAudio(true);
     }
-  }, [isTask1Item, currentItem, currentItemNum]);
+  }, [isTask1Item, currentSentence, currentItemNum]);
 
   // 오디오 재생 끝남 (AudioTimingController에서 호출)
   const handleAudioEnd = () => {
@@ -110,6 +137,16 @@ export default function Task1RunnerPage() {
       }, 500);
     }
   }, [recordingTimeLeft, isRecordingActive, stopRecording, moveToNextItem, currentItemNum, router]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center">
+        <div className="animate-pulse text-center">
+          <p>테스트를 불러오는 중...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!isTask1Item) {
     return <div>Loading Task 1...</div>;

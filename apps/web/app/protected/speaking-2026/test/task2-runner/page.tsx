@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useSpeakingTestRunner } from '../../_hooks/useSpeakingTestRunner';
 import { AudioTimingController } from '../../_components/AudioTimingController';
+import type { SpeakingTest2026, SpeakingTaskInterview2026 } from '@/models/speaking-2026';
 
 /**
  * Task 2 Runner: Take an Interview (4 items)
@@ -18,27 +20,55 @@ import { AudioTimingController } from '../../_components/AudioTimingController';
  */
 export default function Task2RunnerPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const supabase = createClientComponentClient();
   const { state, startRecording, stopRecording, moveToNextItem, startAudioLevelMonitoring } =
     useSpeakingTestRunner();
 
+  const [test, setTest] = useState<SpeakingTest2026 | null>(null);
   const [currentAudioUrl, setCurrentAudioUrl] = useState<string>('');
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [recordingTimeLeft, setRecordingTimeLeft] = useState(45);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [isRecordingActive, setIsRecordingActive] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const currentItemNum = state.currentItemNumber;
   const isTask2Item = currentItemNum >= 8 && currentItemNum <= 11;
 
-  // Task 2 아이템 데이터 (예시)
-  const task2Items = [
-    { id: 8, questionNumber: 1, audioUrl: '/audio/speaking/task2/q1.mp3' },
-    { id: 9, questionNumber: 2, audioUrl: '/audio/speaking/task2/q2.mp3' },
-    { id: 10, questionNumber: 3, audioUrl: '/audio/speaking/task2/q3.mp3' },
-    { id: 11, questionNumber: 4, audioUrl: '/audio/speaking/task2/q4.mp3' },
-  ];
+  // 테스트 정보 조회
+  useEffect(() => {
+    const testId = searchParams.get('testId');
+    if (!testId) {
+      setLoading(false);
+      return;
+    }
 
-  const currentItem = task2Items[currentItemNum - 8];
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from('speaking_tests_2026')
+          .select('*')
+          .eq('id', testId)
+          .single();
+
+        if (error) throw error;
+        setTest(data as SpeakingTest2026);
+      } catch (err) {
+        console.error('Failed to load test:', err);
+        alert('테스트를 불러올 수 없습니다.');
+        router.back();
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [searchParams, supabase, router]);
+
+  // Task 2 정보
+  const interviewTask = test?.tasks.find(
+    (t) => t.type === 'interview'
+  ) as SpeakingTaskInterview2026 | undefined;
+  const currentQuestion = interviewTask?.questions[currentItemNum - 8];
 
   // 마이크 스트림 시작
   useEffect(() => {
@@ -55,12 +85,12 @@ export default function Task2RunnerPage() {
 
   // 아이템 시작 시 오디오 재생
   useEffect(() => {
-    if (isTask2Item && currentItem) {
-      setCurrentAudioUrl(currentItem.audioUrl);
-      setRecordingTimeLeft(45); // Task 2는 45초 고정
+    if (isTask2Item && currentQuestion) {
+      setCurrentAudioUrl(currentQuestion.audioUrl || '');
+      setRecordingTimeLeft(currentQuestion.speakingSeconds || 45);
       setIsPlayingAudio(true);
     }
-  }, [isTask2Item, currentItem, currentItemNum]);
+  }, [isTask2Item, currentQuestion, currentItemNum]);
 
   // 오디오 재생 끝남
   const handleAudioEnd = () => {
@@ -117,6 +147,16 @@ export default function Task2RunnerPage() {
       moveToNextItem();
     }, 500);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center">
+        <div className="animate-pulse text-center">
+          <p>테스트를 불러오는 중...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!isTask2Item) {
     return <div>Loading Task 2...</div>;
