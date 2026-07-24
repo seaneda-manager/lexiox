@@ -242,7 +242,7 @@ export default function SummaryScreen(props: AnyProps) {
   const hint = `Not Yet: ${unknownCount} • Spell failed: ${spellFailedCount} • Know: ${knowCount}`;
 
   return (
-    <div className="lx-panel-wrap">
+    <div className="lx-panel-wrap" style={{ maxWidth: "1000px", margin: "0 auto", padding: "20px" }}>
       <StageIntroScreen
         badge={`Summary  (Keyboard supported)`}
         title="Summary"

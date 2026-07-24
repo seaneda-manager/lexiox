@@ -127,9 +127,9 @@ export default function PrescreenSpellingBoard({
         key={animKey}
         style={{ animation: "lx-card-in 220ms cubic-bezier(0.22,1,0.36,1) both" }}
       >
-        <div className="w-full max-w-sm flex flex-col gap-6">
+        <div className="w-full flex flex-col gap-6 items-center px-6" style={{ maxWidth: "804px", margin: "0 auto" }}>
         {/* 헤더 */}
-        <div className="space-y-3">
+        <div className="space-y-3 w-full">
           <div className="flex items-center gap-2">
             <span className="text-sm font-extrabold tracking-widest text-[#0F766E] uppercase">
               LEXiOX
@@ -143,14 +143,20 @@ export default function PrescreenSpellingBoard({
         {/* 카드 */}
         <div
           className={[
-            "rounded-3xl bg-white shadow-[0_4px_32px_rgba(0,0,0,0.08)] border border-slate-100 px-8 py-8 space-y-5",
+            "rounded-3xl bg-white shadow-[0_4px_32px_rgba(0,0,0,0.08)] border border-slate-100 px-8 py-8 space-y-5 w-full",
+            "flex flex-col justify-center",
             shake ? "lx-shake" : "",
           ].join(" ")}
+          style={{
+            aspectRatio: "4 / 3",
+            minHeight: "400px",
+            boxSizing: "border-box",
+          }}
         >
           {/* 뜻 힌트 */}
           <div className="text-center space-y-1">
             <p className="text-sm font-semibold text-slate-400 uppercase tracking-wider">뜻</p>
-            <p className="text-2xl font-bold text-slate-700">
+            <p className="font-bold text-slate-700" style={{ fontSize: "clamp(24px, 5cqi, 48px)" }}>
               {meaning.length ? meaning.join(" / ") : "뜻 없음"}
             </p>
           </div>
@@ -165,7 +171,8 @@ export default function PrescreenSpellingBoard({
               value={value}
               onChange={(e) => setValue(e.target.value)}
               placeholder="철자 입력..."
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-5 text-2xl font-bold text-slate-900 text-center outline-none focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20 transition-all"
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-5 font-bold text-slate-900 text-center outline-none focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20 transition-all"
+              style={{ fontSize: "clamp(24px, 5cqi, 48px)" }}
               autoCapitalize="none"
               autoCorrect="off"
               spellCheck={false}
@@ -180,7 +187,7 @@ export default function PrescreenSpellingBoard({
         </div>
 
         {/* 버튼 */}
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 w-full">
           <button
             type="button"
             onClick={submit}

@@ -79,6 +79,7 @@ export default function StageIntroScreen({
   return (
     <div className="lx-panel rounded-[28px] shadow-sm" style={panelStyle ?? { border: "1px solid #e2e8f0", background: "rgba(255,255,255,0.95)", color: "#0f172a" }}>
       <div className="lx-panel-content">
+        {/* 스크롤 영역 (헤더 + 바디만) */}
         <div className="lx-panel-scroll">
           <div className="lx-panel-header p-8 pb-4">
             <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-extrabold" style={badgePillStyle ?? { border: "1px solid #e2e8f0", background: "white", color: "#0f172a" }}>
@@ -105,10 +106,12 @@ export default function StageIntroScreen({
 
           {/* body */}
           {children ? <div className="px-8 pb-6">{children}</div> : null}
+        </div>
 
-          {/* actions */}
+        {/* 고정 버튼 영역 (항상 하단에 보임) */}
+        <div className="border-t" style={{ borderColor: dark ? "rgba(93,202,165,0.15)" : "#e2e8f0" }}>
           {showTwo ? (
-            <div className="px-8 pb-8">
+            <div className="px-8 py-6">
               <div className="flex gap-4">
                 {dark ? (
                   <>
@@ -132,7 +135,7 @@ export default function StageIntroScreen({
               </div>
             </div>
           ) : showOne ? (
-            <div className="px-8 pb-8">
+            <div className="px-8 py-6">
               <button
                 type="button"
                 className="lx-btn w-full"
