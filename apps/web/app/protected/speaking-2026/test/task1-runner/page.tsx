@@ -18,9 +18,13 @@ import type { SpeakingTest2026, SpeakingTaskListenRepeat2026 } from '@/models/sp
  * 5. 시간 종료 → 자동으로 다음 문항
  */
 export default function Task1RunnerPage() {
+  console.log('🚀 Task1RunnerPage 렌더링 시작');
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClientComponentClient();
+
+  console.log('🔍 useSearchParams:', searchParams);
   const { state, startRecording, stopRecording, moveToNextItem, startAudioLevelMonitoring } =
     useSpeakingTestRunner();
 
