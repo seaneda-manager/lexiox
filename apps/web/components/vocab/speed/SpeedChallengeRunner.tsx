@@ -234,11 +234,11 @@ export default function SpeedChallengeRunner({
         align="center"
       >
         <div className="w-full space-y-4">
-          <div className="rounded-2xl border border-black/5 bg-white/70 px-5 py-5 text-left">
+          <div className="rounded-2xl border border-black/5 bg-white/70 px-6 py-8 text-left min-h-40 flex flex-col justify-center overflow-hidden">
             <div className="text-neutral-500 font-semibold" style={{ fontSize: "clamp(12px, 1.35cqi, 13px)" }}>
               Prompt
             </div>
-            <div className="mt-2 text-neutral-900 font-extrabold" style={{ fontSize: "clamp(18px, 2.4cqi, 30px)" }}>
+            <div className="mt-3 text-neutral-900 font-extrabold whitespace-nowrap overflow-x-auto scrollbar-hide" style={{ fontSize: "clamp(16px, 2.2cqi, 28px)" }}>
               {q?.prompt ?? ""}
             </div>
           </div>

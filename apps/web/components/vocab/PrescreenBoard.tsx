@@ -119,12 +119,24 @@ export default function PrescreenBoard({
 
         {/* 단어 카드 */}
         <div
-          className="rounded-3xl px-8 py-10 text-center space-y-4"
-          style={{ background: "#22503f", border: "0.5px solid #2d6652", boxShadow: "0 4px 32px rgba(0,0,0,0.25)" }}
+          className="rounded-3xl text-center space-y-4 flex flex-col justify-center items-center"
+          style={{
+            background: "#22503f",
+            border: "0.5px solid #2d6652",
+            boxShadow: "0 4px 32px rgba(0,0,0,0.25)",
+            width: "90%",
+            maxWidth: "640px",
+            minWidth: "320px",
+            aspectRatio: "4 / 3",
+            minHeight: "400px",
+            padding: "32px",
+            boxSizing: "border-box",
+            margin: "0 auto"
+          }}
         >
           <p
             className="font-extrabold tracking-tight leading-tight break-words"
-            style={{ fontSize: "clamp(36px,6cqi,72px)", color: "#E1F5EE" }}
+            style={{ fontSize: "clamp(24px, 5cqi, 48px)", color: "#E1F5EE" }}
           >
             {cur?.text ?? ""}
           </p>
