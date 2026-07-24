@@ -224,8 +224,40 @@ body {
     var(--lx-panel-max-h)
   );
 
-  /* ✅ 이제 스크롤은 패널 안에서만 */
-  overflow: auto;
+  /* ✅ flex column으로 설정하여 버튼 영역을 고정 */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.lx-panel-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.lx-panel-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.lx-panel-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.lx-panel-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.lx-panel-scroll::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+.lx-panel-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
 }
 
 /* ✅ Chrome: stage 컨테이너 기준 + gold inset 안전 반영 */
