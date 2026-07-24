@@ -85,25 +85,25 @@ export default function SummaryScreen(props: AnyProps) {
     setCanSkip(cheatKeyPressed || isReview);
   }, [cheatKeyPressed, isReview]);
 
-  // Cheat 키 감지: z + l
+  // Cheat 키 감지: 6-6-5-3 순서
   useEffect(() => {
-    let zPressed = false;
+    const keySequence: string[] = [];
+    const targetSequence = ["6", "6", "5", "3"];
+
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() === "z") zPressed = true;
-      if (e.key.toLowerCase() === "l" && zPressed) {
+      if (!["6", "5", "3"].includes(e.key)) return;
+
+      keySequence.push(e.key);
+      if (keySequence.length > 4) keySequence.shift();
+
+      if (JSON.stringify(keySequence) === JSON.stringify(targetSequence)) {
         setCheatKeyPressed(true);
+        keySequence.length = 0;
       }
-    };
-    const onKeyUp = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() === "z") zPressed = false;
     };
 
     window.addEventListener("keydown", onKeyDown);
-    window.addEventListener("keyup", onKeyUp);
-    return () => {
-      window.removeEventListener("keydown", onKeyDown);
-      window.removeEventListener("keyup", onKeyUp);
-    };
+    return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
   const onNext =
