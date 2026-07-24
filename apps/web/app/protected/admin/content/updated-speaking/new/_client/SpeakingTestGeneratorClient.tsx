@@ -200,10 +200,30 @@ export default function SpeakingTestGeneratorClient() {
     setError(null);
     setPhase("saving");
     try {
+      // audioUrl을 test 객체에 병합
+      const testToSave = structuredClone(test);
+      const listenRepeatIdx = testToSave.tasks.findIndex((t) => t.type === "listen_repeat");
+      if (listenRepeatIdx !== -1) {
+        const listenRepeat = testToSave.tasks[listenRepeatIdx] as SpeakingTaskListenRepeat2026;
+        listenRepeat.sentences = listenRepeat.sentences.map((s) => ({
+          ...s,
+          audioUrl: sentenceAudioUrls[s.id] || s.audioUrl || "",
+        }));
+      }
+
+      const interviewIdx = testToSave.tasks.findIndex((t) => t.type === "interview");
+      if (interviewIdx !== -1) {
+        const interview = testToSave.tasks[interviewIdx] as SpeakingTaskInterview2026;
+        interview.questions = interview.questions.map((q) => ({
+          ...q,
+          audioUrl: questionAudioUrls[q.id] || q.audioUrl || "",
+        }));
+      }
+
       const res = await fetch("/api/admin/updated-speaking/save", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ test }),
+        body: JSON.stringify({ test: testToSave }),
       });
       const data = await res.json();
       if (!data.ok) throw new Error(data.error ?? "Save failed");
@@ -216,7 +236,7 @@ export default function SpeakingTestGeneratorClient() {
       setError(e.message);
       setPhase("edit");
     }
-  }, [test, router]);
+  }, [test, sentenceAudioUrls, questionAudioUrls, router]);
 
   // ── AI 이미지 생성 ────────────────────────────────────────────
   const defaultPrompt = test?.tasks.find(t => t.type === "listen_repeat")
