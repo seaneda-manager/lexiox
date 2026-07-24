@@ -85,6 +85,12 @@ export default function Task1RunnerPage() {
   // 아이템 시작 시 오디오 재생
   useEffect(() => {
     if (isTask1Item && currentSentence) {
+      console.log('Task 1 Item:', {
+        itemNum: currentItemNum,
+        sentence: currentSentence.text,
+        audioUrl: currentSentence.audioUrl,
+        speakingSeconds: currentSentence.speakingSeconds,
+      });
       setCurrentAudioUrl(currentSentence.audioUrl || '');
       setRecordingTimeLeft(currentSentence.speakingSeconds || 10);
       setIsPlayingAudio(true);
