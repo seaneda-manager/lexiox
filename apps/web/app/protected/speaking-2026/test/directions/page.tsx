@@ -15,8 +15,8 @@ export default function DirectionsPage() {
   const { setState } = useSpeakingSession();
 
   const handleStart = () => {
-    setState('T_AUDIO_CHECK');
-    router.push('/speaking-2026/test/audio-check');
+    setState('TASK1_DIRECTION_START');
+    router.push('/speaking-2026/test/task1-direction');
   };
 
   return (
