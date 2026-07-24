@@ -68,6 +68,19 @@ export function AudioTimingController({
     }
   };
 
+  // 오디오 재생 에러
+  const handleAudioError = (e: React.SyntheticEvent<HTMLAudioElement>) => {
+    const audio = e.currentTarget;
+    console.error('Audio playback error:', {
+      error: audio.error?.message,
+      src: audio.src,
+      networkState: audio.networkState,
+      readyState: audio.readyState,
+    });
+    // 오디오 재생 실패 시 바로 비프음 진행
+    handleAudioEnded();
+  };
+
   // 비프음이 끝나면 → 즉시 녹음 시작 (준비 시간 없음!)
   const handleBeepEnded = () => {
     setIsInBeepPhase(false);
@@ -81,6 +94,7 @@ export function AudioTimingController({
         ref={audioElementRef}
         src={audioUrl}
         onEnded={handleAudioEnded}
+        onError={handleAudioError}
         style={{ display: 'none' }}
       />
 
