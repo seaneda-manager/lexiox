@@ -20,7 +20,7 @@ interface SpeakingResult {
   feedback?: string;
 }
 
-export default function ResultDetailPage() {
+export default function TestResultDetailPage() {
   const params = useParams();
   const router = useRouter();
   const supabase = createClientComponentClient();
@@ -35,7 +35,7 @@ export default function ResultDetailPage() {
         const { data, error: err } = await supabase
           .from('speaking_test_responses')
           .select('*')
-          .eq('id', params.resultId)
+          .eq('id', params.id)
           .single();
 
         if (err) throw err;
@@ -48,7 +48,7 @@ export default function ResultDetailPage() {
     };
 
     fetchResult();
-  }, [params.resultId, supabase]);
+  }, [params.id, supabase]);
 
   if (loading) {
     return (
@@ -193,7 +193,7 @@ export default function ResultDetailPage() {
       )}
 
       {/* 상태 대기 메시지 */}
-      {result.status === 'submitted' || result.status === 'scoring' && !overallScore && (
+      {(result.status === 'submitted' || result.status === 'scoring') && !overallScore && (
         <section className="rounded-lg border border-amber-200 bg-amber-50 p-6 text-center">
           <p className="text-amber-900">
             ⏳ 채점이 진행 중입니다. 잠시 후 새로고침하면 결과를 확인할 수 있습니다.

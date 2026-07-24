@@ -39,9 +39,9 @@ export default function EndPage() {
         setUploadProgress(100);
         setIsUploading(false);
 
-        // 3초 후 results 페이지로 이동
+        // 3초 후 test results 페이지로 이동
         setTimeout(() => {
-          router.push('/speaking-2026/results/' + result.resultId);
+          router.push('/speaking-2026/test-results/' + result.resultId);
         }, 3000);
       } catch (err) {
         setUploadError(err instanceof Error ? err.message : 'Upload failed');
