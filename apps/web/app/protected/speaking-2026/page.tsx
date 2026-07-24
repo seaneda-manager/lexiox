@@ -26,7 +26,17 @@ export default function Speaking2026Home() {
         nextAction={{ label: 'Study Mode 시작', href: '/speaking-2026/study' }}
       />
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-3">
+        <Link
+          href="/speaking-2026/assignments"
+          className="block rounded-lg border bg-white px-4 py-6 text-left shadow-sm transition hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400/50"
+        >
+          <div className="text-sm font-semibold">📋 Assignments</div>
+          <div className="mt-1 text-xs text-neutral-500">
+            선생님이 배정한 시험을 확인하고 응시합니다.
+          </div>
+        </Link>
+
         <Link
           href="/speaking-2026/study"
           className="block rounded-lg border bg-white px-4 py-6 text-left shadow-sm transition hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400/50"
