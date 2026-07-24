@@ -194,6 +194,7 @@ export default function ListenAndRepeatRunner({
   }, [current, speakingSeconds, stopRecording]);
 
   const playAudio = useCallback(() => {
+    console.log('🎵 playAudio called:', { audioUrl: current?.audioUrl, mode });
     setPhase("listening");
     setNextDisabled(true);
     setShowPlayButton(false);
@@ -201,7 +202,9 @@ export default function ListenAndRepeatRunner({
     if (current?.audioUrl) {
       if (!audioRef.current) audioRef.current = new Audio();
       audioRef.current.src = current.audioUrl;
+      console.log('📻 Audio src set to:', current.audioUrl);
       audioRef.current.onended = () => {
+        console.log('✅ Audio ended');
         // Test 모드: 준비 시간 없음 (음성 종료 → 즉시 녹음)
         if (mode === "test") {
           void startRecording();
@@ -226,7 +229,8 @@ export default function ListenAndRepeatRunner({
           setTimeout(() => void startRecording(), 300);
         }
       };
-      audioRef.current.play().catch(() => {
+      audioRef.current.play().catch((err) => {
+        console.error('❌ Audio play failed:', err);
         if (mode === "test") {
           void startRecording();
         } else {
@@ -237,6 +241,7 @@ export default function ListenAndRepeatRunner({
         }
       });
     } else {
+      console.warn('⚠️ No audioUrl found');
       // 오디오 없으면 2초 후 녹음 시작 (개발용)
       setTimeout(() => {
         if (mode === "test") {
