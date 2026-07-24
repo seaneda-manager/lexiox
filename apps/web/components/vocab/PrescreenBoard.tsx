@@ -104,9 +104,9 @@ export default function PrescreenBoard({
         key={animKey}
         style={{ animation: "lx-card-in 220ms cubic-bezier(0.22,1,0.36,1) both" }}
       >
-        <div className="w-full max-w-sm flex flex-col gap-6">
+        <div className="w-full flex flex-col gap-6 items-center">
         {/* 헤더 */}
-        <div className="space-y-3">
+        <div className="space-y-3 w-full" style={{ maxWidth: "640px" }}>
           <div className="flex items-center gap-2">
             <span className="text-sm font-extrabold tracking-widest uppercase" style={{ color: "#5DCAA5" }}>
               LEXiOX
@@ -130,8 +130,7 @@ export default function PrescreenBoard({
             aspectRatio: "4 / 3",
             minHeight: "400px",
             padding: "32px",
-            boxSizing: "border-box",
-            margin: "0 auto"
+            boxSizing: "border-box"
           }}
         >
           <p
