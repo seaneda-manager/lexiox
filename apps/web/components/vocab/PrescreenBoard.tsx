@@ -104,9 +104,9 @@ export default function PrescreenBoard({
         key={animKey}
         style={{ animation: "lx-card-in 220ms cubic-bezier(0.22,1,0.36,1) both" }}
       >
-        <div className="w-full flex flex-col gap-6 items-center">
+        <div className="w-full flex flex-col gap-6 items-center px-6" style={{ maxWidth: "804px", margin: "0 auto" }}>
         {/* 헤더 */}
-        <div className="space-y-3 w-full" style={{ maxWidth: "640px" }}>
+        <div className="space-y-3 w-full">
           <div className="flex items-center gap-2">
             <span className="text-sm font-extrabold tracking-widest uppercase" style={{ color: "#5DCAA5" }}>
               LEXiOX
@@ -119,14 +119,11 @@ export default function PrescreenBoard({
 
         {/* 단어 카드 */}
         <div
-          className="rounded-3xl text-center space-y-4 flex flex-col justify-center items-center"
+          className="rounded-3xl text-center space-y-4 flex flex-col justify-center items-center w-full"
           style={{
             background: "#22503f",
             border: "0.5px solid #2d6652",
             boxShadow: "0 4px 32px rgba(0,0,0,0.25)",
-            width: "90%",
-            maxWidth: "640px",
-            minWidth: "320px",
             aspectRatio: "4 / 3",
             minHeight: "400px",
             padding: "32px",
@@ -148,7 +145,7 @@ export default function PrescreenBoard({
         </div>
 
         {/* 버튼 */}
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 w-full">
           <button
             type="button"
             onClick={() => commit(true)}
