@@ -78,6 +78,15 @@ export default function Task1RunnerPage() {
     }
   };
 
+  // 테스트 오디오 재생 (파일이 없을 때)
+  const handleTestAudio = () => {
+    setIsPlayingAudio(true);
+    setTimeout(() => {
+      setIsPlayingAudio(false);
+      handleBeepEnd();
+    }, 3000); // 3초 후 녹음 시작
+  };
+
   // 녹음 타이머
   useEffect(() => {
     if (!isRecordingActive) return;
@@ -138,6 +147,17 @@ export default function Task1RunnerPage() {
               <div className="text-6xl">🎙️</div>
               <p className="text-lg font-semibold text-gray-900">Listening...</p>
               <p className="text-sm text-gray-600">문장을 잘 들어주세요. 곧 따라 말하기가 시작됩니다.</p>
+            </div>
+          ) : !isRecordingActive && currentAudioUrl && !currentAudioUrl.includes('/audio/') ? (
+            <div className="space-y-4">
+              <p className="text-sm text-amber-600">⚠️ 오디오 파일을 찾을 수 없습니다.</p>
+              <button
+                onClick={handleTestAudio}
+                className="rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 font-semibold transition"
+              >
+                🎵 테스트 오디오 재생
+              </button>
+              <p className="text-xs text-gray-500">테스트 오디오로 녹음을 시작합니다 (3초)</p>
             </div>
           ) : isRecordingActive ? (
             <div className="space-y-4">
