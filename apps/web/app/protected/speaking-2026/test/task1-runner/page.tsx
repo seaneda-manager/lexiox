@@ -38,6 +38,7 @@ export default function Task1RunnerPage() {
   // 테스트 정보 조회
   useEffect(() => {
     const testId = searchParams.get('testId');
+    console.log('Task1Runner - testId:', testId);
     if (!testId) {
       setLoading(false);
       return;
@@ -52,6 +53,7 @@ export default function Task1RunnerPage() {
           .single();
 
         if (error) throw error;
+        console.log('Task1Runner - test data loaded:', data);
         setTest(data as SpeakingTest2026);
       } catch (err) {
         console.error('Failed to load test:', err);
