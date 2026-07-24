@@ -10,6 +10,8 @@ type Props = {
 
   primaryLabel?: string;
   secondaryLabel?: string;
+  primaryDisabled?: boolean;
+  secondaryDisabled?: boolean;
   onPrimary?: () => void;
   onSecondary?: () => void;
 
@@ -37,6 +39,8 @@ export default function StageIntroScreen({
   hint,
   primaryLabel,
   secondaryLabel,
+  primaryDisabled = false,
+  secondaryDisabled = false,
   onPrimary,
   onSecondary,
   doneLabel,
@@ -108,19 +112,19 @@ export default function StageIntroScreen({
               <div className="flex gap-4">
                 {dark ? (
                   <>
-                    <button type="button" className="lx-btn" style={{ background: "#5DCAA5", color: "#04342C", fontWeight: 800 }} onClick={onPrimary}>
+                    <button type="button" disabled={primaryDisabled} className="lx-btn disabled:opacity-50" style={{ background: "#5DCAA5", color: "#04342C", fontWeight: 800 }} onClick={onPrimary}>
                       {primaryLabel} <span className="ml-2 opacity-80">(1)</span>
                     </button>
-                    <button type="button" className="lx-btn" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", color: "#9FE1CB", fontWeight: 800 }} onClick={onSecondary}>
+                    <button type="button" disabled={secondaryDisabled} className="lx-btn disabled:opacity-50" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", color: "#9FE1CB", fontWeight: 800 }} onClick={onSecondary}>
                       {secondaryLabel} <span className="ml-2 opacity-70">(2)</span>
                     </button>
                   </>
                 ) : (
                   <>
-                    <button type="button" className="lx-btn lx-btn-primary" onClick={onPrimary}>
+                    <button type="button" disabled={primaryDisabled} className="lx-btn lx-btn-primary disabled:opacity-50" onClick={onPrimary}>
                       {primaryLabel} <span className="ml-2 opacity-80">(1)</span>
                     </button>
-                    <button type="button" className="lx-btn lx-btn-secondary" onClick={onSecondary}>
+                    <button type="button" disabled={secondaryDisabled} className="lx-btn lx-btn-secondary disabled:opacity-50" onClick={onSecondary}>
                       {secondaryLabel} <span className="ml-2 opacity-70">(2)</span>
                     </button>
                   </>

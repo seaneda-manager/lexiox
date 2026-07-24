@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import StageIntroScreen from "@/components/common/StageIntroScreen";
 
 type AnyProps = Record<string, any>;
@@ -72,6 +72,40 @@ function gridClassForCount(count: number) {
 }
 
 export default function SummaryScreen(props: AnyProps) {
+  const [canSkip, setCanSkip] = useState(false);
+  const [showSkipConfirm, setShowSkipConfirm] = useState(false);
+  const [cheatKeyPressed, setCheatKeyPressed] = useState(false);
+
+  const isTeacher = props?.isTeacher === true;
+  const previousAccuracy = props?.previousAccuracy ?? 0; // 0-100%
+  const isReview = previousAccuracy >= 80; // 복습: 이전에 80% 이상 통과
+
+  // Skip 가능 조건: (Cheat 키 입력) OR (복습이고 학생)
+  useEffect(() => {
+    setCanSkip(cheatKeyPressed || isReview);
+  }, [cheatKeyPressed, isReview]);
+
+  // Cheat 키 감지: z + l
+  useEffect(() => {
+    let zPressed = false;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() === "z") zPressed = true;
+      if (e.key.toLowerCase() === "l" && zPressed) {
+        setCheatKeyPressed(true);
+      }
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() === "z") zPressed = false;
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+    };
+  }, []);
+
   const onNext =
     typeof props?.onNext === "function"
       ? props.onNext
@@ -195,6 +229,16 @@ export default function SummaryScreen(props: AnyProps) {
     (onNext as any)(payload); // ✅ 여기선 try/catch로 삼키지 말자 (문제 있으면 바로 드러나게)
   }
 
+  function handleSkipClick() {
+    if (!canSkip) return;
+    setShowSkipConfirm(true);
+  }
+
+  function confirmSkip() {
+    setShowSkipConfirm(false);
+    fireNext(nextPayloadSkip);
+  }
+
   const hint = `Not Yet: ${unknownCount} • Spell failed: ${spellFailedCount} • Know: ${knowCount}`;
 
   return (
@@ -209,12 +253,18 @@ export default function SummaryScreen(props: AnyProps) {
             <div className="mt-1 text-sm font-semibold text-slate-600">
               Continue = go to Learning with (Not Yet + Spell failed).
             </div>
+            {!isTeacher && !isReview && (
+              <div className="mt-2 text-xs text-slate-500">
+                💡 Skip Learning is available after completing with 80%+ accuracy.
+              </div>
+            )}
           </div>
         }
         primaryLabel="Continue"
         secondaryLabel="Skip Learning"
+        secondaryDisabled={!canSkip}
         onPrimary={() => fireNext(nextPayloadStudy)}
-        onSecondary={() => fireNext(nextPayloadSkip)}
+        onSecondary={handleSkipClick}
         theme="dark"
       >
         {learnList.length === 0 ? (
@@ -324,6 +374,35 @@ export default function SummaryScreen(props: AnyProps) {
           </div>
         </div>
       ) : null}
+
+      {/* Skip Confirmation Modal */}
+      {showSkipConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="rounded-2xl bg-white p-8 max-w-sm space-y-6 shadow-2xl">
+            <div className="space-y-2">
+              <h2 className="text-xl font-bold text-slate-900">넘어가겠습니까?</h2>
+              <p className="text-sm text-slate-600">
+                Learning 단계를 건너뛰고 다음 단계로 진행합니다.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowSkipConfirm(false)}
+                className="flex-1 rounded-lg border border-slate-300 py-2 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                취소
+              </button>
+              <button
+                onClick={confirmSkip}
+                className="flex-1 rounded-lg bg-orange-500 py-2 px-4 text-sm font-semibold text-white hover:bg-orange-600"
+              >
+                확인
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
