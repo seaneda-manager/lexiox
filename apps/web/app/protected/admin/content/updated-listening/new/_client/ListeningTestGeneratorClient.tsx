@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import type { LListeningTest2026Linear, LListeningTrack2026, LQuestion2026 } from "@/models/listening";
 
-type Phase = "input" | "generating" | "edit" | "saving" | "locked";
+type Phase = "input" | "generating" | "edit" | "saving";
 
 const KIND_LABEL: Record<string, string> = {
   conversation: "Conversation",
