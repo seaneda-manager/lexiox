@@ -532,11 +532,18 @@ function BuildASentenceView({
   const handleCorrect = (isCorrect: boolean) => {
     console.log(`Q${currentQuestionIdx + 1}: ${isCorrect ? "✅" : "❌"}`);
 
-    // Study 모드에서 정답이 맞으면 다음 문제로 자동 진행
+    // Study 모드: 정답이 맞으면 다음 문제로 자동 진행
     if (mode === "study" && isCorrect && currentQuestionIdx < item.questions.length - 1) {
       setTimeout(() => {
         setCurrentQuestionIdx((prev) => prev + 1);
-      }, 500); // 약간의 딜레이 후 다음 문제로
+      }, 500);
+    }
+
+    // Test 모드: 정답 여부 상관없이 자동으로 다음 문제로 진행
+    if (mode === "test" && currentQuestionIdx < item.questions.length - 1) {
+      setTimeout(() => {
+        setCurrentQuestionIdx((prev) => prev + 1);
+      }, 300);
     }
   };
 
@@ -588,6 +595,15 @@ function BuildASentenceView({
             >
               Next →
             </button>
+          </div>
+        )}
+
+        {/* Test 모드: 자동 진행 (버튼 없음) */}
+        {mode === "test" && item.questions.length > 1 && (
+          <div className="mt-4 text-center">
+            <span className="text-xs text-gray-500">
+              Question {currentQuestionIdx + 1} of {item.questions.length}
+            </span>
           </div>
         )}
       </div>

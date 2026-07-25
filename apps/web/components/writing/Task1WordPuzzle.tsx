@@ -90,6 +90,28 @@ export default function Task1WordPuzzle({
     onAnswerChange(userAnswer, selectedTokens);
   }, [userAnswer, selectedTokens]);
 
+  // 8️⃣ Test 모드: 답변이 완성되면 자동으로 검증 및 진행
+  useEffect(() => {
+    if (mode !== 'test' || isAnswered) return;
+
+    // 답변이 완성됨 (선택한 단어 개수 = 필요한 단어 개수)
+    if (selectedTokens.length === wordTokens.length) {
+      const normalize = (str: string) =>
+        str.trim()
+          .replace(/\s+/g, ' ')
+          .replace(/[.,!?;:—-]+$/g, '');
+
+      const userNorm = normalize(userAnswer);
+      const correctNorm = normalize(correctAnswer);
+      const isCorrect = userNorm === correctNorm;
+
+      // 자동으로 검증 (정답 표시 없이 다음으로 진행)
+      setFeedback(isCorrect ? 'correct' : 'incorrect');
+      setIsAnswered(true);
+      onCorrect(isCorrect);
+    }
+  }, [mode, selectedTokens, wordTokens.length, userAnswer, correctAnswer, isAnswered]);
+
   return (
     <div className="space-y-4 rounded-lg border border-indigo-200 bg-indigo-50 p-6">
       {/* 프롬프트 섹션 */}
