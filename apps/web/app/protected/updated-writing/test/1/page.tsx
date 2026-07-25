@@ -137,6 +137,7 @@ export default function WritingTestPage() {
     if (currentTask === 'TASK_1') {
       return (
         <Task1WordPuzzle
+          key={currentQuestion}
           prompt={data.prompt}
           correctAnswer={data.correctAnswer}
           wordTokens={data.wordTokens}
