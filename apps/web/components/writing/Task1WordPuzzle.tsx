@@ -48,10 +48,12 @@ export default function Task1WordPuzzle({
   // 3️⃣ 클릭 시 토큰 추가
   const handleTokenClick = useCallback((token: string) => {
     if (isAnswered) return;
-    if (selectedTokens.includes(token)) return; // 이미 선택된 단어는 다시 클릭 불가
+    const usedCount = selectedTokens.filter(t => t === token).length;
+    const availableCount = wordTokens.filter(t => t === token).length;
+    if (usedCount >= availableCount) return; // 모두 사용했으면 클릭 불가
 
     setSelectedTokens((prev) => [...prev, token]);
-  }, [isAnswered, selectedTokens]);
+  }, [isAnswered, selectedTokens, wordTokens]);
 
   // 4️⃣ 배치된 토큰 클릭 시 제거 (Undo)
   const handleRemoveToken = useCallback((index: number) => {
