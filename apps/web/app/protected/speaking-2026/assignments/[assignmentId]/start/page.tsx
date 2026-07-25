@@ -89,7 +89,7 @@ export default async function StartAssignmentPage({ params }: { params: Params }
     <SpeakingAssignmentRunner
       assignmentId={assignmentId}
       test={test}
-      testLabel={testRow.label}
+      testLabel={testLabel}
     />
   );
 }
