@@ -18,6 +18,7 @@ interface Task1WordPuzzleProps {
   wordTokens: string[]; // 단어 조각 배열 (예: ["He", "decided", "to", "postpone", "the", "test", ...])
   onAnswerChange: (userAnswer: string, tokens: string[]) => void;
   onCorrect: (isCorrect: boolean) => void;
+  mode?: "study" | "test"; // study = Check Answer 버튼 표시, test = 숨김
   timeLimit?: number; // 초 단위
 }
 
@@ -27,6 +28,7 @@ export default function Task1WordPuzzle({
   wordTokens,
   onAnswerChange,
   onCorrect,
+  mode = "study",
   timeLimit = 45,
 }: Task1WordPuzzleProps) {
   const [scrambledTokens, setScrambledTokens] = useState<string[]>([]);
@@ -61,9 +63,13 @@ export default function Task1WordPuzzle({
     setSelectedTokens((prev) => prev.filter((_, i) => i !== index));
   }, [isAnswered]);
 
-  // 5️⃣ 정답 검증
+  // 5️⃣ 정답 검증 (공백 정규화)
   const validateAnswer = useCallback(() => {
-    const isCorrect = userAnswer.trim() === correctAnswer.trim();
+    // 공백을 정규화하고 비교 (여러 공백을 하나로)
+    const normalize = (str: string) => str.trim().replace(/\s+/g, ' ');
+    const userNorm = normalize(userAnswer);
+    const correctNorm = normalize(correctAnswer);
+    const isCorrect = userNorm === correctNorm;
     setFeedback(isCorrect ? 'correct' : 'incorrect');
     setIsAnswered(true);
     onCorrect(isCorrect);
@@ -147,60 +153,62 @@ export default function Task1WordPuzzle({
         </div>
       </div>
 
-      {/* 피드백 및 버튼 */}
-      <div className="flex items-center justify-between gap-3 pt-2">
-        <div className="flex-1 space-y-1">
-          {feedback && (
-            <div className={`text-sm font-semibold ${
-              feedback === 'correct' ? 'text-emerald-600' : 'text-rose-600'
-            }`}>
-              {feedback === 'correct' ? '✓ Correct!' : '✗ Incorrect. Try again.'}
-            </div>
-          )}
-          {!isAnswered && userAnswer && (
-            <p className="text-xs text-gray-600">
-              Your answer: <span className="font-mono">{userAnswer}</span>
-            </p>
-          )}
-        </div>
+      {/* 피드백 및 버튼 - Study 모드만 표시 */}
+      {mode === 'study' && (
+        <div className="flex items-center justify-between gap-3 pt-2">
+          <div className="flex-1 space-y-1">
+            {feedback && (
+              <div className={`text-sm font-semibold ${
+                feedback === 'correct' ? 'text-emerald-600' : 'text-rose-600'
+              }`}>
+                {feedback === 'correct' ? '✓ Correct!' : '✗ Incorrect. Try again.'}
+              </div>
+            )}
+            {!isAnswered && userAnswer && (
+              <p className="text-xs text-gray-600">
+                Your answer: <span className="font-mono">{userAnswer}</span>
+              </p>
+            )}
+          </div>
 
-        <div className="flex gap-2">
-          {!isAnswered && (
-            <>
+          <div className="flex gap-2">
+            {!isAnswered && (
+              <>
+                <button
+                  onClick={handleClear}
+                  disabled={selectedTokens.length === 0}
+                  className="px-3 py-1.5 rounded-lg text-sm font-medium border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Clear
+                </button>
+                <button
+                  onClick={validateAnswer}
+                  disabled={selectedTokens.length === 0}
+                  className="px-4 py-1.5 rounded-lg text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Check Answer
+                </button>
+              </>
+            )}
+            {isAnswered && feedback === 'incorrect' && (
               <button
-                onClick={handleClear}
-                disabled={selectedTokens.length === 0}
-                className="px-3 py-1.5 rounded-lg text-sm font-medium border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => {
+                  setFeedback(null);
+                  setIsAnswered(false);
+                  setScrambledTokens([...wordTokens].sort(() => Math.random() - 0.5));
+                  setSelectedTokens([]);
+                }}
+                className="px-4 py-1.5 rounded-lg text-sm font-medium bg-amber-600 text-white hover:bg-amber-700"
               >
-                Clear
+                Try Again
               </button>
-              <button
-                onClick={validateAnswer}
-                disabled={selectedTokens.length === 0}
-                className="px-4 py-1.5 rounded-lg text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Check Answer
-              </button>
-            </>
-          )}
-          {isAnswered && feedback === 'incorrect' && (
-            <button
-              onClick={() => {
-                setFeedback(null);
-                setIsAnswered(false);
-                setScrambledTokens([...wordTokens].sort(() => Math.random() - 0.5));
-                setSelectedTokens([]);
-              }}
-              className="px-4 py-1.5 rounded-lg text-sm font-medium bg-amber-600 text-white hover:bg-amber-700"
-            >
-              Try Again
-            </button>
-          )}
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* 정답 표시 (피드백 후) */}
-      {feedback === 'incorrect' && (
+      {/* 정답 표시 (Study 모드, 피드백 후만) */}
+      {mode === 'study' && feedback === 'incorrect' && (
         <div className="rounded-lg bg-rose-50 border border-rose-200 p-3 space-y-1">
           <p className="text-xs font-semibold text-rose-700">Correct Answer:</p>
           <p className="text-sm font-mono text-rose-900">{correctAnswer}</p>

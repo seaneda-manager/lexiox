@@ -1,7 +1,7 @@
 // apps/web/components/writing/WritingRunner2026.tsx
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Task1WordPuzzle from "./Task1WordPuzzle";
 import type {
   WWritingTest2026,
@@ -14,6 +14,7 @@ import type {
 
 type Props = {
   test: WWritingTest2026;
+  mode?: "study" | "test"; // study = 자유로운 탐색, test = one-way with timer
   onFinish?: (result: {
     testId: string;
     answers: Record<string, string>;
@@ -23,7 +24,7 @@ type Props = {
 // 각 Task 하나를 탭처럼 다루기 위해 내부용 타입
 type WritingItem = WBuildSentenceItem | WMicroWritingItem | WEmailWritingItem | WAcademicWritingItem;
 
-export default function WritingRunner2026({ test, onFinish }: Props) {
+export default function WritingRunner2026({ test, mode = "study", onFinish }: Props) {
   const items = useMemo(() => test.items as WritingItem[], [test.items]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -33,7 +34,28 @@ export default function WritingRunner2026({ test, onFinish }: Props) {
     "idle" | "saving" | "saved" | "error"
   >("idle");
 
+  // Test 모드: 타이머
+  const [timeLeft, setTimeLeft] = useState(23 * 60); // 23분 총 시간
+
   const currentItem = items[currentIndex];
+
+  // Test 모드 타이머
+  useEffect(() => {
+    if (mode !== "test") return;
+
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        const newTime = Math.max(0, prev - 1);
+        // 시간 종료 시 자동 제출
+        if (newTime === 0) {
+          handleFinish();
+        }
+        return newTime;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [mode]);
 
   const handleChangeAnswer = (key: string, value: string) => {
     setAnswers((prev) => ({
@@ -53,6 +75,7 @@ export default function WritingRunner2026({ test, onFinish }: Props) {
   };
 
   const handlePrev = () => {
+    if (mode === "test") return; // Test 모드에서는 이전으로 갈 수 없음
     if (currentIndex > 0) {
       setCurrentIndex((i) => i - 1);
     }
@@ -103,30 +126,44 @@ export default function WritingRunner2026({ test, onFinish }: Props) {
             {test.meta.label ?? test.meta.id}
           </h1>
           <p className="mt-1 text-xs text-gray-500">
-            Practice the three new TOEFL iBT 2026 Writing tasks: Micro Writing,
-            Email, and Academic Discussion.
+            {mode === "test"
+              ? "Complete all tasks within the time limit. You cannot go back to previous tasks."
+              : "Practice the three new TOEFL iBT 2026 Writing tasks: Micro Writing, Email, and Academic Discussion."}
           </p>
         </div>
-        {/* 간단한 탭 인디케이터 */}
-        <div className="flex gap-1 text-[11px]">
-          {items.map((item, idx) => {
-            const active = idx === currentIndex;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setCurrentIndex(idx)}
-                className={
-                  "rounded-full border px-2 py-0.5 transition " +
-                  (active
-                    ? "border-sky-500 bg-sky-600 text-white"
-                    : "border-gray-200 bg-white text-gray-600 hover:border-sky-300")
-                }
-              >
-                {labelForItemKind(item.taskKind)}
-              </button>
-            );
-          })}
+        <div className="flex items-center gap-4">
+          {/* Test 모드: 타이머 */}
+          {mode === "test" && (
+            <div className="text-right">
+              <div className="text-xs text-gray-500">Time Remaining</div>
+              <div className={`text-lg font-mono font-bold ${timeLeft < 60 ? "text-red-600" : "text-gray-900"}`}>
+                {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, "0")}
+              </div>
+            </div>
+          )}
+          {/* Study 모드: 탭 네비게이터 */}
+          {mode === "study" && (
+            <div className="flex gap-1 text-[11px]">
+              {items.map((item, idx) => {
+                const active = idx === currentIndex;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setCurrentIndex(idx)}
+                    className={
+                      "rounded-full border px-2 py-0.5 transition " +
+                      (active
+                        ? "border-sky-500 bg-sky-600 text-white"
+                        : "border-gray-200 bg-white text-gray-600 hover:border-sky-300")
+                    }
+                  >
+                    {labelForItemKind(item.taskKind)}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       </header>
 
@@ -137,6 +174,7 @@ export default function WritingRunner2026({ test, onFinish }: Props) {
             item={currentItem as WBuildSentenceItem}
             answers={answers}
             onChange={handleChangeAnswer}
+            mode={mode}
           />
         )}
 
@@ -403,10 +441,12 @@ function BuildASentenceView({
   item,
   answers,
   onChange,
+  mode = "study",
 }: {
   item: WBuildSentenceItem;
   answers: Record<string, string>;
   onChange: AnswerChangeHandler;
+  mode?: "study" | "test";
 }) {
   return (
     <div className="flex flex-col gap-4 text-sm">
@@ -439,6 +479,7 @@ function BuildASentenceView({
                 onCorrect={(isCorrect) => {
                   console.log(`Q${idx + 1}: ${isCorrect ? "✅" : "❌"}`);
                 }}
+                mode={mode}
                 timeLimit={35}
               />
             </div>
