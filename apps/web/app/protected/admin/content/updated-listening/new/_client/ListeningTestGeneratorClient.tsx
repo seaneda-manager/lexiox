@@ -345,8 +345,7 @@ export default function ListeningTestGeneratorClient() {
           </section>
 
           {/* Tracks - Hard */}
-          {test.hard && (
-          <div className="rounded-xl border bg-amber-50 p-4 shadow-sm">
+          {test.hard && (<div className="rounded-xl border bg-amber-50 p-4 shadow-sm">
             <h3 className="text-sm font-bold text-amber-900 mb-4">🔴 Hard Module</h3>
             {test.hard?.tracks?.map((track: LListeningTrack2026, ti) => (
             <section key={track.id} className="rounded-xl border bg-white p-4 shadow-sm space-y-4">
@@ -442,13 +441,10 @@ export default function ListeningTestGeneratorClient() {
               </div>
             </section>
             ))}
-          </div>
-
-          )}
+          </div>)}
 
           {/* Tracks - Easy */}
-          {test.easy && (
-          <div className="rounded-xl border bg-blue-50 p-4 shadow-sm">
+          {test.easy && (<div className="rounded-xl border bg-blue-50 p-4 shadow-sm">
             <h3 className="text-sm font-bold text-blue-900 mb-4">🟢 Easy Module</h3>
             {test.easy?.tracks?.map((track: LListeningTrack2026, ti) => (
             <section key={track.id} className="rounded-xl border bg-white p-4 shadow-sm space-y-4">
@@ -544,8 +540,7 @@ export default function ListeningTestGeneratorClient() {
               </div>
             </section>
             ))}
-          </div>
-          )}
+          </div>)}
 
           {/* Actions */}
           <div className="flex items-center justify-between rounded-xl border bg-white p-4 shadow-sm">
