@@ -63,10 +63,14 @@ export default function Task1WordPuzzle({
     setSelectedTokens((prev) => prev.filter((_, i) => i !== index));
   }, [isAnswered]);
 
-  // 5️⃣ 정답 검증 (공백 정규화)
+  // 5️⃣ 정답 검증 (공백 + 구두점 정규화)
   const validateAnswer = useCallback(() => {
-    // 공백을 정규화하고 비교 (여러 공백을 하나로)
-    const normalize = (str: string) => str.trim().replace(/\s+/g, ' ');
+    // 공백을 정규화하고 구두점 제거 후 비교
+    const normalize = (str: string) =>
+      str.trim()
+        .replace(/\s+/g, ' ')
+        .replace(/[.,!?;:—-]+$/g, ''); // 끝의 구두점 제거
+
     const userNorm = normalize(userAnswer);
     const correctNorm = normalize(correctAnswer);
     const isCorrect = userNorm === correctNorm;
