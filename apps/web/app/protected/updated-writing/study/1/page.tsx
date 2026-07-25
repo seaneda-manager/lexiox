@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState } from 'react';
 import Task1WordPuzzle from '@/components/writing/Task1WordPuzzle';
 import SecureWritingEditor from '@/components/writing/SecureWritingEditor';
-import { useWritingScore } from '@/hooks/useWritingScore';
 
 type WritingTask = 'TASK_1' | 'TASK_2' | 'TASK_3';
 
@@ -14,7 +13,6 @@ export default function WritingStudyPage() {
     TASK_2: { content: '', completed: false },
     TASK_3: { content: '', completed: false },
   });
-  const { score, loading, error, scoreEssay } = useWritingScore();
 
   const DEMO_DATA = {
     TASK_1: {
@@ -32,14 +30,7 @@ export default function WritingStudyPage() {
     },
   };
 
-  const handleSubmitTask = async () => {
-    const data = DEMO_DATA[currentTask];
-    if ('correctAnswer' in data) {
-      await scoreEssay(currentTask, tasks[currentTask].content, data.prompt, data.correctAnswer);
-    } else {
-      await scoreEssay(currentTask, tasks[currentTask].content, data.prompt);
-    }
-  };
+  // Study 모드에서는 점수를 매기지 않음 (정답 확인만)
 
   const renderTaskContent = () => {
     const data = DEMO_DATA[currentTask];
@@ -90,34 +81,14 @@ export default function WritingStudyPage() {
         {renderTaskContent()}
       </div>
 
-      {score && (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-6 space-y-3">
-          <div className="text-lg font-semibold">Score: {score.score}/100</div>
-          <p className="text-sm">{score.feedback}</p>
-        </div>
-      )}
-
-      {error && <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">Error: {error}</div>}
-      {loading && <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-700">Scoring...</div>}
-
       <div className="flex justify-between gap-3">
         <button onClick={() => history.back()} className="px-4 py-2 rounded-lg border text-sm font-medium hover:bg-gray-50">Back</button>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setCurrentTask(currentTask === 'TASK_1' ? 'TASK_2' : currentTask === 'TASK_2' ? 'TASK_3' : 'TASK_1')}
-            disabled={!score}
-            className="px-6 py-2 rounded-lg border text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {currentTask === 'TASK_3' ? 'Done' : 'Next Task'}
-          </button>
-          <button
-            onClick={handleSubmitTask}
-            disabled={loading}
-            className="px-6 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
-          >
-            {loading ? 'Scoring...' : score ? 'Re-Score' : 'Check Answer'}
-          </button>
-        </div>
+        <button
+          onClick={() => setCurrentTask(currentTask === 'TASK_1' ? 'TASK_2' : currentTask === 'TASK_2' ? 'TASK_3' : 'TASK_1')}
+          className="px-6 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700"
+        >
+          {currentTask === 'TASK_3' ? 'Done' : 'Next Task'}
+        </button>
       </div>
     </div>
   );
