@@ -28,7 +28,55 @@ export default function ListeningTestGeneratorClient() {
   const [test, setTest] = useState<LListeningTest2026Linear | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
 
+  // 주제 추천 상태
+  const [conversationSuggestions, setConversationSuggestions] = useState<string[]>([]);
+  const [lectureSuggestions, setLectureSuggestions] = useState<string[]>([]);
+  const [campusSuggestions, setCampusSuggestions] = useState<string[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState<Record<string, boolean>>({});
+
   const canGenerate = conversationTopic.trim() && lectureTopic.trim() && campusTopic.trim();
+
+  const handleSuggestTopics = useCallback(
+    async (kind: 'conversation' | 'lecture' | 'campus') => {
+      setLoadingSuggestions(prev => ({ ...prev, [kind]: true }));
+      setError(null);
+      try {
+        const res = await fetch('/api/admin/updated-listening/suggest-topics', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ kind }),
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error ?? 'Failed to suggest topics');
+
+        if (kind === 'conversation') {
+          setConversationSuggestions(data.suggestions);
+        } else if (kind === 'lecture') {
+          setLectureSuggestions(data.suggestions);
+        } else if (kind === 'campus') {
+          setCampusSuggestions(data.suggestions);
+        }
+      } catch (e: any) {
+        setError(`주제 추천 실패: ${e.message}`);
+      } finally {
+        setLoadingSuggestions(prev => ({ ...prev, [kind]: false }));
+      }
+    },
+    []
+  );
+
+  const handleSelectSuggestion = (kind: 'conversation' | 'lecture' | 'campus', topic: string) => {
+    if (kind === 'conversation') {
+      setConversationTopic(topic);
+      setConversationSuggestions([]);
+    } else if (kind === 'lecture') {
+      setLectureTopic(topic);
+      setLectureSuggestions([]);
+    } else if (kind === 'campus') {
+      setCampusTopic(topic);
+      setCampusSuggestions([]);
+    }
+  };
 
   const handleGenerate = useCallback(async () => {
     if (!canGenerate) return;
@@ -203,9 +251,19 @@ export default function ListeningTestGeneratorClient() {
       {/* Topic Inputs */}
       <section className="rounded-xl border bg-white p-4 shadow-sm space-y-3">
         <h2 className="text-sm font-semibold">토픽 입력 (3가지)</h2>
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-sky-700">💬 Conversation</label>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          {/* Conversation Topic */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-sky-700">💬 Conversation</label>
+              <button
+                onClick={() => handleSuggestTopics('conversation')}
+                disabled={loadingSuggestions['conversation'] || phase === 'generating'}
+                className="text-[10px] px-2 py-1 rounded border border-sky-300 text-sky-600 hover:bg-sky-50 disabled:opacity-50"
+              >
+                {loadingSuggestions['conversation'] ? '추천 중…' : '💡 추천'}
+              </button>
+            </div>
             <input
               className="w-full rounded-lg border border-sky-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400 disabled:bg-gray-50"
               placeholder="예: Campus library hours"
@@ -213,9 +271,33 @@ export default function ListeningTestGeneratorClient() {
               onChange={(e) => setConversationTopic(e.target.value)}
               disabled={phase === "generating"}
             />
+            {conversationSuggestions.length > 0 && (
+              <div className="flex flex-wrap gap-2 pt-1">
+                {conversationSuggestions.map((topic, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handleSelectSuggestion('conversation', topic)}
+                    className="text-[11px] px-2.5 py-1 rounded-full border border-sky-300 bg-sky-50 text-sky-700 hover:bg-sky-100 transition cursor-pointer"
+                  >
+                    {topic}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-indigo-700">🎓 Academic Lecture</label>
+
+          {/* Lecture Topic */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-indigo-700">🎓 Academic Lecture</label>
+              <button
+                onClick={() => handleSuggestTopics('lecture')}
+                disabled={loadingSuggestions['lecture'] || phase === 'generating'}
+                className="text-[10px] px-2 py-1 rounded border border-indigo-300 text-indigo-600 hover:bg-indigo-50 disabled:opacity-50"
+              >
+                {loadingSuggestions['lecture'] ? '추천 중…' : '💡 추천'}
+              </button>
+            </div>
             <input
               className="w-full rounded-lg border border-indigo-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 disabled:bg-gray-50"
               placeholder="예: Marine biology / Photosynthesis"
@@ -223,9 +305,33 @@ export default function ListeningTestGeneratorClient() {
               onChange={(e) => setLectureTopic(e.target.value)}
               disabled={phase === "generating"}
             />
+            {lectureSuggestions.length > 0 && (
+              <div className="flex flex-wrap gap-2 pt-1">
+                {lectureSuggestions.map((topic, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handleSelectSuggestion('lecture', topic)}
+                    className="text-[11px] px-2.5 py-1 rounded-full border border-indigo-300 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition cursor-pointer"
+                  >
+                    {topic}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-teal-700">📢 Campus Audio Log</label>
+
+          {/* Campus Topic */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-teal-700">📢 Campus Audio Log</label>
+              <button
+                onClick={() => handleSuggestTopics('campus')}
+                disabled={loadingSuggestions['campus'] || phase === 'generating'}
+                className="text-[10px] px-2 py-1 rounded border border-teal-300 text-teal-600 hover:bg-teal-50 disabled:opacity-50"
+              >
+                {loadingSuggestions['campus'] ? '추천 중…' : '💡 추천'}
+              </button>
+            </div>
             <input
               className="w-full rounded-lg border border-teal-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 disabled:bg-gray-50"
               placeholder="예: Career fair announcement"
@@ -233,6 +339,19 @@ export default function ListeningTestGeneratorClient() {
               onChange={(e) => setCampusTopic(e.target.value)}
               disabled={phase === "generating"}
             />
+            {campusSuggestions.length > 0 && (
+              <div className="flex flex-wrap gap-2 pt-1">
+                {campusSuggestions.map((topic, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handleSelectSuggestion('campus', topic)}
+                    className="text-[11px] px-2.5 py-1 rounded-full border border-teal-300 bg-teal-50 text-teal-700 hover:bg-teal-100 transition cursor-pointer"
+                  >
+                    {topic}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
         <div className="flex justify-end">
