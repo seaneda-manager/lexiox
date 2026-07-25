@@ -3,6 +3,7 @@
 
 import { useMemo, useState, useEffect } from "react";
 import Task1WordPuzzle from "./Task1WordPuzzle";
+import WritingTestDirections from "./WritingTestDirections";
 import type {
   WWritingTest2026,
   WBuildSentenceItem,
@@ -34,14 +35,15 @@ export default function WritingRunner2026({ test, mode = "study", onFinish }: Pr
     "idle" | "saving" | "saved" | "error"
   >("idle");
 
-  // Test 모드: 타이머
+  // Test 모드: 타이머 및 상태
   const [timeLeft, setTimeLeft] = useState(23 * 60); // 23분 총 시간
+  const [testStarted, setTestStarted] = useState(mode === 'study'); // Study 모드는 자동 시작, Test 모드는 지시사항 후 시작
 
   const currentItem = items[currentIndex];
 
-  // Test 모드 타이머
+  // Test 모드 타이머 (시험 시작 후에만)
   useEffect(() => {
-    if (mode !== "test") return;
+    if (mode !== "test" || !testStarted) return;
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
@@ -55,7 +57,7 @@ export default function WritingRunner2026({ test, mode = "study", onFinish }: Pr
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [mode]);
+  }, [mode, testStarted]);
 
   // Test 모드: 페이지 이탈 방지
   useEffect(() => {
@@ -137,6 +139,24 @@ export default function WritingRunner2026({ test, mode = "study", onFinish }: Pr
       setSaveStatus("error");
     }
   };
+
+  // Test 모드 시작 핸들러
+  const handleStartTest = () => {
+    setTestStarted(true);
+  };
+
+  // Test 모드이고 시작하지 않았으면 지시사항 표시
+  if (mode === 'test' && !testStarted) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <WritingTestDirections
+          test={test}
+          mode={mode}
+          onStart={handleStartTest}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4">
