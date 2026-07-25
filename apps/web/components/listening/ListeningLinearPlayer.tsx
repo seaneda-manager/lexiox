@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import type { LListeningTest2026 } from "@/models/listening";
+import type { LListeningTest2026, LListeningTest2026Linear } from "@/models/listening";
 
 type Props = {
-  test: LListeningTest2026;
+  test: LListeningTest2026 | LListeningTest2026Linear;
 };
 
 type Phase = "listening" | "review";
@@ -13,7 +13,12 @@ export default function ListeningLinearPlayer({ test }: Props) {
   const [currentTrackIdx, setCurrentTrackIdx] = useState(0);
   const [phase, setPhase] = useState<Phase>("listening");
 
-  const tracks = test.tracks ?? [];
+  // LListeningTest2026Linear는 hard/easy 구조, LListeningTest2026는 tracks 배열
+  const tracks =
+    'tracks' in test ? (test.tracks ?? []) :
+    'hard' in test ? [...(test.hard?.tracks ?? []), ...(test.easy?.tracks ?? [])] :
+    [];
+
   if (tracks.length === 0) {
     return <div className="p-6 text-center text-gray-600">트랙이 없습니다.</div>;
   }
