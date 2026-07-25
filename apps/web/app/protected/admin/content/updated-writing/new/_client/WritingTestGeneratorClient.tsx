@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type {
   WWritingTest2026,
@@ -30,7 +30,7 @@ export default function WritingTestGeneratorClient() {
   } | null>(null);
 
   // 페이지 로드 시 추천 주제 가져오기
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchSuggestions = async () => {
       try {
         setLoadingTopics(true);
