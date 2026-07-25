@@ -47,7 +47,7 @@ export default function WritingStudyPage() {
       return (
         <Task1WordPuzzle
           prompt={data.prompt}
-          correctAnswer={data.correctAnswer}
+          correctAnswer={data.correctAnswer.replace(/[.,!?;:—-]+$/g, "")}
           wordTokens={data.wordTokens}
           onAnswerChange={(answer) => setTasks({...tasks, TASK_1: {...tasks.TASK_1, content: answer}})}
           onCorrect={(isCorrect) => isCorrect && setTasks({...tasks, TASK_1: {...tasks.TASK_1, completed: true}})}
