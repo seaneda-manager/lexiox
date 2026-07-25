@@ -57,6 +57,30 @@ export default function WritingRunner2026({ test, mode = "study", onFinish }: Pr
     return () => clearInterval(timer);
   }, [mode]);
 
+  // Test 모드: 페이지 이탈 방지
+  useEffect(() => {
+    if (mode !== "test") return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+      return "";
+    };
+
+    const handleUnload = () => {
+      // Test 모드 데이터 완전 삭제 (자동 복구 불가)
+      clearLocalStorage();
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener("unload", handleUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("unload", handleUnload);
+    };
+  }, [mode]);
+
   const handleChangeAnswer = (key: string, value: string) => {
     setAnswers((prev) => ({
       ...prev,
