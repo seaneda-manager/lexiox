@@ -548,7 +548,7 @@ function BuildASentenceView({
 
               <Task1WordPuzzle
                 prompt={q.contextLeadIn}
-                correctAnswer={q.correctSequence.join(" ")}
+                correctAnswer={q.correctSequence.join(" ").replace(/[.,!?;:—-]+$/g, "")}
                 wordTokens={wordTokens}
                 onAnswerChange={(userAnswer) => onChange(key, userAnswer)}
                 onCorrect={(isCorrect) => {
