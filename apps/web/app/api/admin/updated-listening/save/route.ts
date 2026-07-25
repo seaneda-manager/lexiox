@@ -16,17 +16,12 @@ export async function POST(req: Request) {
       .eq('id', test.meta.id)
       .maybeSingle();
 
-    const row: any = {
+    const row = {
       id: test.meta.id,
       label: test.meta.label,
       exam_era: test.meta.examEra ?? 'ibt_2026',
       payload: test,
     };
-
-    // 주제가 저장된 경우 추가 필드에도 저장 (선택사항)
-    if (test.meta.conversationTopic) row.conversation_topic = test.meta.conversationTopic;
-    if (test.meta.lectureTopic) row.lecture_topic = test.meta.lectureTopic;
-    if (test.meta.campusTopic) row.campus_topic = test.meta.campusTopic;
 
     const { error } = existing
       ? await sb.from('listening_tests_2026').update(row).eq('id', test.meta.id)
