@@ -97,7 +97,7 @@ export default function ListeningLinearPlayer({ test }: Props) {
                   : "bg-blue-50"
               }`}>
                 <p className="text-sm font-medium text-gray-900">
-                  {idx + 1}. {q.text}
+                  {idx + 1}. {(q as any).text || (q as any).stem}
                 </p>
                 <div className="mt-2 space-y-2">
                   {q.choices.map((choice) => {
