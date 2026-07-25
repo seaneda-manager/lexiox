@@ -122,7 +122,9 @@ export default function Task1WordPuzzle({
         <p className="text-xs font-semibold text-gray-600">Word Tokens:</p>
         <div className="flex flex-wrap gap-2 rounded-lg border border-indigo-200 bg-white p-4 min-h-12">
           {scrambledTokens.map((token, idx) => {
-            const isSelected = selectedTokens.includes(token);
+            const usedCount = selectedTokens.filter(t => t === token).length;
+            const availableCount = wordTokens.filter(t => t === token).length;
+            const isSelected = usedCount >= availableCount;
             return (
               <button
                 key={`token-${idx}-${token}`}
