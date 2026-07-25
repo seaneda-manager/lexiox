@@ -345,9 +345,10 @@ export default function ListeningTestGeneratorClient() {
           </section>
 
           {/* Tracks - Hard */}
+          {test.hard && (
           <div className="rounded-xl border bg-amber-50 p-4 shadow-sm">
             <h3 className="text-sm font-bold text-amber-900 mb-4">🔴 Hard Module</h3>
-            {test.hard.tracks.map((track: LListeningTrack2026, ti) => (
+            {test.hard?.tracks?.map((track: LListeningTrack2026, ti) => (
             <section key={track.id} className="rounded-xl border bg-white p-4 shadow-sm space-y-4">
               <div className="flex items-center gap-2">
                 <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${KIND_COLOR[track.taskKind] ?? "bg-gray-100 text-gray-600"}`}>
@@ -442,11 +443,14 @@ export default function ListeningTestGeneratorClient() {
             </section>
             ))}
           </div>
+
+          )}
 
           {/* Tracks - Easy */}
+          {test.easy && (
           <div className="rounded-xl border bg-blue-50 p-4 shadow-sm">
             <h3 className="text-sm font-bold text-blue-900 mb-4">🟢 Easy Module</h3>
-            {test.easy.tracks.map((track: LListeningTrack2026, ti) => (
+            {test.easy?.tracks?.map((track: LListeningTrack2026, ti) => (
             <section key={track.id} className="rounded-xl border bg-white p-4 shadow-sm space-y-4">
               <div className="flex items-center gap-2">
                 <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${KIND_COLOR[track.taskKind] ?? "bg-gray-100 text-gray-600"}`}>
@@ -541,6 +545,7 @@ export default function ListeningTestGeneratorClient() {
             </section>
             ))}
           </div>
+          )}
 
           {/* Actions */}
           <div className="flex items-center justify-between rounded-xl border bg-white p-4 shadow-sm">

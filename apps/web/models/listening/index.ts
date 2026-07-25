@@ -113,8 +113,9 @@ export interface LListeningTrack2026 {
 /** Updated TOEFL Listening 선형 시험 */
 export interface LListeningTest2026Linear {
   meta: LListeningTestMeta;
-  hard: { tracks: LListeningTrack2026[] };
-  easy: { tracks: LListeningTrack2026[] };
+  hard?: { tracks: LListeningTrack2026[] };
+  easy?: { tracks: LListeningTrack2026[] };
+  tracks?: LListeningTrack2026[]; // 레거시 호환성
 }
 
 /* ------------------------------------
