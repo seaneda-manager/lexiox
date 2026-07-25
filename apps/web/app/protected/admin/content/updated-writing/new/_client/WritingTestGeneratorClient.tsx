@@ -148,7 +148,7 @@ export default function WritingTestGeneratorClient() {
         <div className="text-4xl">🔒</div>
         <p className="text-sm font-semibold text-gray-800">시험이 Lock되었습니다.</p>
         <div className="flex justify-center gap-3">
-          <button onClick={() => router.push("/admin/content/updated-writing")}
+          <button onClick={() => window.location.href = "/admin/content/updated-writing"}
             className="rounded-lg border px-4 py-2 text-xs hover:bg-gray-50">목록으로</button>
           <button onClick={() => { setPhase("input"); setTest(null); setSavedId(null); }}
             className="rounded-lg border border-teal-500 bg-teal-600 px-4 py-2 text-xs text-white hover:bg-teal-700">새 시험 만들기</button>
