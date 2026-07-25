@@ -72,6 +72,8 @@ export async function GET(request: NextRequest) {
       .select("track_id, is_active")
       .eq("student_id", studentId)
       .eq("is_active", true)
+      .order("created_at", { ascending: false })
+      .limit(1)
       .maybeSingle();
 
     if (plansError) throw plansError;
