@@ -169,32 +169,6 @@ export default function ListeningTestGeneratorClient() {
     }
   }, [test]);
 
-  const handleLock = useCallback(async () => {
-    const id = savedId ?? test?.meta.id;
-    if (!id) { setError("먼저 저장하세요."); return; }
-    if (!confirm("Lock하면 이후 수정이 불가합니다. 진행할까요?")) return;
-    setError(null);
-    setPhase("saving");
-    try {
-      await fetch("/api/admin/updated-listening/save", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ test }),
-      });
-      const res = await fetch("/api/admin/updated-listening/lock", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
-      });
-      const data = await res.json();
-      if (!data.ok) throw new Error(data.error ?? "Lock failed");
-      setPhase("locked");
-    } catch (e: any) {
-      setError(e.message);
-      setPhase("edit");
-    }
-  }, [savedId, test]);
-
   const handleGenerateScript = useCallback(
     async (trackIndex: number, isHard: boolean) => {
       if (!test) return;
@@ -232,19 +206,6 @@ export default function ListeningTestGeneratorClient() {
     },
     [test]
   );
-
-  if (phase === "locked") {
-    return (
-      <div className="space-y-4 text-center py-12">
-        <div className="text-4xl">🔒</div>
-        <p className="text-sm font-semibold text-gray-800">시험이 Lock되었습니다.</p>
-        <div className="flex justify-center gap-3">
-          <button onClick={() => router.push("/admin/content/updated-listening")} className="rounded-lg border px-4 py-2 text-xs hover:bg-gray-50">목록으로</button>
-          <button onClick={() => { setPhase("input"); setTest(null); setSavedId(null); }} className="rounded-lg border border-violet-500 bg-violet-600 px-4 py-2 text-xs text-white hover:bg-violet-700">새 시험 만들기</button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -588,10 +549,7 @@ export default function ListeningTestGeneratorClient() {
             </div>
             <div className="flex gap-2">
               <button onClick={handleSave} disabled={phase === "saving"} className="rounded-lg border px-4 py-2 text-xs font-medium hover:bg-gray-50 disabled:opacity-50">
-                {phase === "saving" ? "저장 중…" : "임시 저장"}
-              </button>
-              <button onClick={handleLock} disabled={phase === "saving"} className="rounded-lg border border-gray-800 bg-gray-900 px-4 py-2 text-xs font-medium text-white hover:bg-gray-800 disabled:opacity-50">
-                🔒 Lock & 완료
+                {phase === "saving" ? "저장 중…" : "저장"}
               </button>
             </div>
           </div>

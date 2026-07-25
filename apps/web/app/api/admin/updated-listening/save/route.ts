@@ -12,13 +12,9 @@ export async function POST(req: Request) {
 
     const { data: existing } = await sb
       .from('listening_tests_2026')
-      .select('id, is_locked')
+      .select('id')
       .eq('id', test.meta.id)
       .maybeSingle();
-
-    if (existing?.is_locked) {
-      return NextResponse.json({ ok: false, error: '이 시험은 Lock되어 수정할 수 없습니다.' }, { status: 403 });
-    }
 
     const row: any = {
       id: test.meta.id,
