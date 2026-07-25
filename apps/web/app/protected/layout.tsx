@@ -31,11 +31,13 @@ export default async function ProtectedLayout({ children }: { children: ReactNod
   let avatarUrl: string | null = null;
   let fullName: string | null = null;
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role, program, full_name, avatar_url')
-    .eq('id', user.id)
-    .maybeSingle();
+  const { data: profile } = user
+    ? await supabase
+        .from('profiles')
+        .select('role, program, full_name, avatar_url')
+        .eq('id', user.id)
+        .maybeSingle()
+    : { data: null };
 
   if (profile?.role === 'admin' || profile?.role === 'teacher' || profile?.role === 'student') {
     role = profile.role;
