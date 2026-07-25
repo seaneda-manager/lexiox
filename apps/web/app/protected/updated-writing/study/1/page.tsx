@@ -18,7 +18,7 @@ export default function WritingStudyPage() {
     TASK_1: {
       prompt: 'Did you hear that the chemistry professor cancelled the exam?',
       correctAnswer: 'He decided to postpone the test due to unforeseen circumstances.',
-      wordTokens: ['He', 'decided', 'to', 'postpone', 'the', 'test', 'due', 'to', 'unforeseen', 'circumstances'],
+      wordTokens: ['He', 'decided', 'to', 'postpone', 'the', 'test', 'due', 'to', 'unforeseen', 'circumstances.'],
     },
     TASK_2: {
       prompt: 'Reading: Professor Anderson postponed the midterm from next Wednesday to the following week due to exam hall construction. Listening: A student expresses relief. Task: Summarize (150+ words) why the exam was postponed and how the student feels.',
