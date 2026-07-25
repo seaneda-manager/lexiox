@@ -2,7 +2,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getServerSupabase } from "@/lib/supabase/server";
-import type { LListeningTest2026 } from "@/models/listening";
+import type { LListeningTest2026Linear } from "@/models/listening";
 import { Eye } from "lucide-react";
 import ListeningLinearPlayer from "@/components/listening/ListeningLinearPlayer";
 
@@ -29,16 +29,15 @@ export default async function Listening2026PreviewPage({ params }: PageProps) {
     notFound();
   }
 
-  const rawPayload = data.payload as LListeningTest2026 | null;
-  if (!rawPayload || !Array.isArray(rawPayload.tracks)) notFound();
+  const rawPayload = data.payload as LListeningTest2026Linear | null;
+  if (!rawPayload || !rawPayload.meta) notFound();
 
-  const test: LListeningTest2026 = {
+  const test: LListeningTest2026Linear = {
     ...rawPayload,
     meta: {
-      ...(rawPayload.meta ?? {}),
+      ...rawPayload.meta,
       id: data.id,
       label: data.label,
-      examEra: (rawPayload.meta?.examEra ?? "ibt_2026") as LListeningTest2026["meta"]["examEra"],
     },
   };
 
