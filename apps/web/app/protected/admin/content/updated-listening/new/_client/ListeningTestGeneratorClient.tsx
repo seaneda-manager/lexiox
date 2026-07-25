@@ -454,7 +454,7 @@ export default function ListeningTestGeneratorClient() {
                       />
                       <div className="space-y-1">
                         {q.choices.map((c, ci) => {
-                          const isCorrect = q.correctIndices.includes(ci);
+                          const isCorrect = (q.correctIndices ?? []).includes(ci);
                           return (
                             <label key={c.id} className={`flex items-start gap-2 rounded border px-2 py-1 text-xs cursor-pointer transition ${isCorrect ? "border-violet-400 bg-violet-50" : "border-gray-200 bg-white hover:border-gray-300"}`}>
                               <input
@@ -553,7 +553,7 @@ export default function ListeningTestGeneratorClient() {
                       />
                       <div className="space-y-1">
                         {q.choices.map((c, ci) => {
-                          const isCorrect = q.correctIndices.includes(ci);
+                          const isCorrect = (q.correctIndices ?? []).includes(ci);
                           return (
                             <label key={c.id} className={`flex items-start gap-2 rounded border px-2 py-1 text-xs cursor-pointer transition ${isCorrect ? "border-violet-400 bg-violet-50" : "border-gray-200 bg-white hover:border-gray-300"}`}>
                               <input
