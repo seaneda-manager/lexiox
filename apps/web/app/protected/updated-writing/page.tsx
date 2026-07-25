@@ -41,7 +41,7 @@ export default function WritingHubPage() {
           { icon: '✍️', title: 'Test Mode', desc: '실전과 동일한 환경에서 모의고사를 응시합니다.' },
           { icon: '📊', title: 'Review Mode', desc: 'AI 첨삭으로 피드백을 받고 개선점을 학습합니다.' },
         ]}
-        nextAction={{ label: 'Test 시작', href: '/updated-writing/test' }}
+        nextAction={{ label: 'Test 시작', href: '/updated-writing/test/1' }}
       />
 
       <div className="grid gap-4 md:grid-cols-3">

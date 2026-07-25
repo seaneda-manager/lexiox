@@ -9,6 +9,7 @@ type WritingTask = 'TASK_1' | 'TASK_2' | 'TASK_3';
 
 export default function WritingTestPage() {
   const [currentTask, setCurrentTask] = useState<WritingTask>('TASK_1');
+  const [currentQuestion, setCurrentQuestion] = useState(0);
 
   // Fullscreen on mount (optional - won't break if not available)
   useEffect(() => {
@@ -47,12 +48,61 @@ export default function WritingTestPage() {
     TASK_3: { content: '', completed: false },
   });
 
-  const DEMO_DATA = {
-    TASK_1: {
+  const TASK_1_QUESTIONS = [
+    {
       prompt: 'Did you hear that the chemistry professor cancelled the exam?',
       correctAnswer: 'He decided to postpone the test due to unforeseen circumstances.',
       wordTokens: ['He', 'decided', 'to', 'postpone', 'the', 'test', 'due', 'to', 'unforeseen', 'circumstances.'],
     },
+    {
+      prompt: 'The library is closing early today because of the staff meeting.',
+      correctAnswer: 'We need to finish our research before five o\'clock.',
+      wordTokens: ['We', 'need', 'to', 'finish', 'our', 'research', 'before', 'five', 'o\'clock.'],
+    },
+    {
+      prompt: 'The company announced layoffs due to economic downturns.',
+      correctAnswer: 'Many employees are worried about their job security.',
+      wordTokens: ['Many', 'employees', 'are', 'worried', 'about', 'their', 'job', 'security.'],
+    },
+    {
+      prompt: 'Climate change is affecting global agriculture.',
+      correctAnswer: 'Farmers must adapt to changing weather patterns.',
+      wordTokens: ['Farmers', 'must', 'adapt', 'to', 'changing', 'weather', 'patterns.'],
+    },
+    {
+      prompt: 'The new smartphone has revolutionary camera technology.',
+      correctAnswer: 'Photographers are excited about the improved features.',
+      wordTokens: ['Photographers', 'are', 'excited', 'about', 'the', 'improved', 'features.'],
+    },
+    {
+      prompt: 'Remote work has become increasingly popular.',
+      correctAnswer: 'Companies are investing in digital collaboration tools.',
+      wordTokens: ['Companies', 'are', 'investing', 'in', 'digital', 'collaboration', 'tools.'],
+    },
+    {
+      prompt: 'The university is expanding its science facilities.',
+      correctAnswer: 'Students will benefit from state-of-the-art laboratories.',
+      wordTokens: ['Students', 'will', 'benefit', 'from', 'state-of-the-art', 'laboratories.'],
+    },
+    {
+      prompt: 'Electric vehicles are becoming more affordable.',
+      correctAnswer: 'Consumers are gradually shifting away from gasoline cars.',
+      wordTokens: ['Consumers', 'are', 'gradually', 'shifting', 'away', 'from', 'gasoline', 'cars.'],
+    },
+    {
+      prompt: 'The conference was postponed due to technical issues.',
+      correctAnswer: 'Attendees will receive updated information about the new date.',
+      wordTokens: ['Attendees', 'will', 'receive', 'updated', 'information', 'about', 'the', 'new', 'date.'],
+    },
+    {
+      prompt: 'The restaurant opened a second location downtown.',
+      correctAnswer: 'The menu features authentic dishes from various cuisines.',
+      wordTokens: ['The', 'menu', 'features', 'authentic', 'dishes', 'from', 'various', 'cuisines.'],
+    },
+  ];
+
+  const DEMO_DATA = {
+    TASK_1: TASK_1_QUESTIONS[currentQuestion],
     TASK_2: {
       prompt: 'Reading: Professor Anderson postponed the midterm from next Wednesday to the following week due to exam hall construction. Listening: A student expresses relief. Task: Summarize (150+ words) why the exam was postponed and how the student feels.',
       minWords: 150,
@@ -66,7 +116,14 @@ export default function WritingTestPage() {
   const handleSubmitTask = () => {
     // Test 모드: 다음 문제로 진행 (점수 매기지 않음)
     if (currentTask === 'TASK_1') {
-      setCurrentTask('TASK_2');
+      // Task 1 내에서 다음 문제로 진행
+      if (currentQuestion < TASK_1_QUESTIONS.length - 1) {
+        setCurrentQuestion((prev) => prev + 1);
+      } else {
+        // Task 1 완료, Task 2로 이동
+        setCurrentTask('TASK_2');
+        setCurrentQuestion(0);
+      }
     } else if (currentTask === 'TASK_2') {
       setCurrentTask('TASK_3');
     } else {
@@ -112,7 +169,7 @@ export default function WritingTestPage() {
       <div>
         <h1 className="text-2xl font-bold">Writing Test 2026</h1>
         <p className="text-sm text-gray-600">
-          {currentTask === 'TASK_1' && 'Task 1: Build a Sentence (45s)'}
+          {currentTask === 'TASK_1' && `Task 1: Build a Sentence (45s) — Question ${currentQuestion + 1}/10`}
           {currentTask === 'TASK_2' && 'Task 2: Integrated Writing (7min)'}
           {currentTask === 'TASK_3' && 'Task 3: Academic Discussion (10min)'}
         </p>

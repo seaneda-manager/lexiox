@@ -83,7 +83,15 @@ export default function WritingTimer({
     };
   }, [isActive, onTimeUpdate, onTimeout]);
 
-  // 2️⃣ 타이머 제어
+  // 2️⃣ taskId 변경 시 타이머 리셋
+  useEffect(() => {
+    setTimeRemaining(totalSeconds);
+    setIsActive(autoStart);
+    timeoutFiredRef.current = false;
+    lastTimeRef.current = Date.now();
+  }, [taskId, totalSeconds, autoStart]);
+
+  // 3️⃣ 타이머 제어
   const handlePause = useCallback(() => setIsActive(false), []);
   const handleResume = useCallback(() => setIsActive(true), []);
   const handleReset = useCallback(() => {
