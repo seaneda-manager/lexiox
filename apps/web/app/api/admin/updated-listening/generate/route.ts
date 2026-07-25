@@ -3,6 +3,11 @@ import Anthropic from '@anthropic-ai/sdk';
 import { ElevenLabsClient } from 'elevenlabs';
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
+import {
+  parseDialogueTranscript,
+  assignVoicesToSpeakers,
+  isDialogue,
+} from '@/lib/elevenlabs/dialogue-utils';
 
 export const runtime = 'nodejs';
 export const maxDuration = 240;
@@ -43,6 +48,80 @@ function getRandomVoiceId(): string {
   }
 }
 
+function getVoicePool(): string[] {
+  const defaultPool = [
+    'GZ4PpFJV8ikEGUtBrjK7', // Laura (US 여)
+    'uIZsnBL0YK1S5j69bAih', // Samantha (US 여)
+    'ynUcJpglne1SRSNHFg1k', // Bill (US 남)
+    'Gubgw9l4dtIoQA9YZHgx', // Brian (US 남)
+    'Ix8C14HEHgIQkJswik2o', // Peter (UK 남)
+    '6fZce9LFNG3iEITDfqZZ', // Charlotte (UK 여)
+    'roYauZ4bOLAKvVZTPLre', // Lena (Canada 여)
+    'SHJeg1jtED7EW6Zr6rHc', // Alex (Canada 남)
+  ];
+  try {
+    if (process.env.SPEAKING_VOICE_POOL) {
+      return JSON.parse(process.env.SPEAKING_VOICE_POOL);
+    }
+  } catch (err) {
+    console.warn('Failed to parse SPEAKING_VOICE_POOL');
+  }
+  return defaultPool;
+}
+
+async function generateSingleVoiceAudio(text: string, voiceId: string): Promise<Buffer> {
+  const audio = await elevenlabs.generate({
+    voice: voiceId,
+    text: text,
+    model_id: 'eleven_turbo_v2_5',
+  });
+
+  let audioBuffer: Buffer;
+  if (Buffer.isBuffer(audio)) {
+    audioBuffer = audio;
+  } else if (audio instanceof ArrayBuffer) {
+    audioBuffer = Buffer.from(audio);
+  } else {
+    const chunks: Buffer[] = [];
+    for await (const chunk of audio) {
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    }
+    audioBuffer = Buffer.concat(chunks);
+  }
+  return audioBuffer;
+}
+
+async function generateDialogueAudio(transcript: string): Promise<Buffer> {
+  const segments = parseDialogueTranscript(transcript);
+  if (segments.length === 0) {
+    console.warn('[Dialogue] No dialogue segments found, falling back to single voice');
+    const voiceId = getRandomVoiceId();
+    return generateSingleVoiceAudio(transcript, voiceId);
+  }
+
+  const voicePool = getVoicePool();
+  const voiceMap = assignVoicesToSpeakers(segments, voicePool);
+
+  console.log(`[Dialogue] Generating dialogue with ${segments.length} segments`);
+  console.log(`[Dialogue] Voice map:`, voiceMap);
+
+  const audioBuffers: Buffer[] = [];
+
+  for (const segment of segments) {
+    const voiceId = voiceMap[segment.speaker];
+    console.log(`[Dialogue] Segment "${segment.speaker}": ${segment.text.substring(0, 50)}...`);
+
+    const audioBuffer = await generateSingleVoiceAudio(segment.text, voiceId);
+    audioBuffers.push(audioBuffer);
+
+    // Rate limit 대비 대기
+    await new Promise((r) => setTimeout(r, 300));
+  }
+
+  // 모든 segment audio 병합
+  return Buffer.concat(audioBuffers);
+}
+
 async function generateModule(part: 'hard' | 'easy', conversationTopic: string, lectureTopic: string, campusTopic: string) {
   const prompt = part === 'hard'
     ? `You are an expert Updated TOEFL iBT Listening (Module 2 Hard) content creator.
@@ -60,6 +139,11 @@ Track 2 — Conversation (topic: "${conversationTopic}"):
 - Two speakers (student + professor/staff), 60-90 seconds, ~140-180 words
 - Exactly 2 questions
 - audioSeconds: 75, testingSeconds: 30
+- **IMPORTANT**: Format transcript as:
+  Speaker A: "Student's line"
+  Speaker B: "Professor's line"
+  Speaker A: "Student's next line"
+  (Use "Speaker A" and "Speaker B", separate lines with newline)
 
 Track 3 — Academic Talk #1 (topic: "${lectureTopic}"):
 - taskKind: "academic_talk"
@@ -223,24 +307,16 @@ export async function POST(req: Request) {
 
     for (const track of hardTracks) {
       try {
-        const voiceId = getRandomVoiceId();
-        const audio = await elevenlabs.generate({
-          voice: voiceId,
-          text: track.transcript,
-          model_id: 'eleven_turbo_v2_5',
-        });
-
         let audioBuffer: Buffer;
-        if (Buffer.isBuffer(audio)) {
-          audioBuffer = audio;
-        } else if (audio instanceof ArrayBuffer) {
-          audioBuffer = Buffer.from(audio);
+
+        // conversation인 경우 화자별 다른 음성 사용
+        if (track.taskKind === 'conversation' && isDialogue(track.transcript)) {
+          console.log(`[Audio] Generating dialogue audio for ${track.id}`);
+          audioBuffer = await generateDialogueAudio(track.transcript);
         } else {
-          const chunks: Buffer[] = [];
-          for await (const chunk of audio) {
-            chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
-          }
-          audioBuffer = Buffer.concat(chunks);
+          console.log(`[Audio] Generating single-voice audio for ${track.id}`);
+          const voiceId = getRandomVoiceId();
+          audioBuffer = await generateSingleVoiceAudio(track.transcript, voiceId);
         }
 
         const fileName = `listening/${testId}/${track.id}-hard.mp3`;
@@ -270,24 +346,16 @@ export async function POST(req: Request) {
 
     for (const track of easyTracks) {
       try {
-        const voiceId = getRandomVoiceId();
-        const audio = await elevenlabs.generate({
-          voice: voiceId,
-          text: track.transcript,
-          model_id: 'eleven_turbo_v2_5',
-        });
-
         let audioBuffer: Buffer;
-        if (Buffer.isBuffer(audio)) {
-          audioBuffer = audio;
-        } else if (audio instanceof ArrayBuffer) {
-          audioBuffer = Buffer.from(audio);
+
+        // conversation인 경우 화자별 다른 음성 사용
+        if (track.taskKind === 'conversation' && isDialogue(track.transcript)) {
+          console.log(`[Audio] Generating dialogue audio for ${track.id}`);
+          audioBuffer = await generateDialogueAudio(track.transcript);
         } else {
-          const chunks: Buffer[] = [];
-          for await (const chunk of audio) {
-            chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
-          }
-          audioBuffer = Buffer.concat(chunks);
+          console.log(`[Audio] Generating single-voice audio for ${track.id}`);
+          const voiceId = getRandomVoiceId();
+          audioBuffer = await generateSingleVoiceAudio(track.transcript, voiceId);
         }
 
         const fileName = `listening/${testId}/${track.id}-easy.mp3`;
