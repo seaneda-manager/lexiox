@@ -101,7 +101,8 @@ export default function ListeningLinearPlayer({ test }: Props) {
                 </p>
                 <div className="mt-2 space-y-2">
                   {q.choices.map((choice) => {
-                    const isCorrect = (q as any).correctIndices?.includes(q.choices.indexOf(choice));
+                    const correctIndices = (q as any).correctIndices ?? [];
+                    const isCorrect = correctIndices.includes(q.choices.indexOf(choice));
                     return (
                       <label
                         key={choice.id}
