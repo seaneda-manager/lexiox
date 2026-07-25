@@ -84,6 +84,7 @@ export default function WritingTestPage() {
           wordTokens={data.wordTokens}
           onAnswerChange={(answer) => setTasks({...tasks, TASK_1: {...tasks.TASK_1, content: answer}})}
           onCorrect={(isCorrect) => isCorrect && setTasks({...tasks, TASK_1: {...tasks.TASK_1, completed: true}})}
+          mode="test"
         />
       );
     }
