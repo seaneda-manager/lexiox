@@ -13,6 +13,27 @@ interface VocabSessionLearningStageProps {
   totalDays?: number | null;
 }
 
+// 음성 재생 함수
+const playAudio = async (text: string) => {
+  try {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-US';
+    window.speechSynthesis.speak(utterance);
+  } catch (err) {
+    console.error('Speech synthesis error:', err);
+  }
+};
+
+const playKoreanAudio = async (text: string) => {
+  try {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'ko-KR';
+    window.speechSynthesis.speak(utterance);
+  } catch (err) {
+    console.error('Speech synthesis error:', err);
+  }
+};
+
 export default function VocabSessionLearningStage({
   words,
   onFinish,
@@ -23,6 +44,10 @@ export default function VocabSessionLearningStage({
   const [currentWordIdx, setCurrentWordIdx] = useState(0);
   const [currentTab, setCurrentTab] = useState<TabType>('spelling');
   const [spellingInput, setSpellingInput] = useState('');
+  const [spellingDone, setSpellingDone] = useState(false);
+  const [meaningDone, setMeaningDone] = useState(false);
+  const [exampleDone, setExampleDone] = useState(false);
+  const [meaningInput, setMeaningInput] = useState('');
 
   const currentWord = useMemo(() => {
     return words[currentWordIdx];
@@ -30,11 +55,18 @@ export default function VocabSessionLearningStage({
 
   const progress = `${currentWordIdx + 1}/${words.length}`;
 
+  const canProceedToNextWord = spellingDone && meaningDone && exampleDone;
+
   const handleNextWord = () => {
+    if (!canProceedToNextWord) return;
     if (currentWordIdx + 1 < words.length) {
       setCurrentWordIdx(currentWordIdx + 1);
       setCurrentTab('spelling');
       setSpellingInput('');
+      setMeaningInput('');
+      setSpellingDone(false);
+      setMeaningDone(false);
+      setExampleDone(false);
     } else {
       onFinish();
     }
@@ -82,7 +114,7 @@ export default function VocabSessionLearningStage({
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-300'
             }`}
           >
-            1️⃣ Spelling
+            1️⃣ Spelling {spellingDone ? '✅' : ''}
           </button>
           <button
             onClick={() => setCurrentTab('meaning')}
@@ -92,7 +124,7 @@ export default function VocabSessionLearningStage({
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-300'
             }`}
           >
-            2️⃣ Meaning
+            2️⃣ Meaning {meaningDone ? '✅' : ''}
           </button>
           <button
             onClick={() => setCurrentTab('quiz')}
@@ -102,22 +134,42 @@ export default function VocabSessionLearningStage({
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-300'
             }`}
           >
-            3️⃣ Quiz
+            3️⃣ Quiz {exampleDone ? '✅' : ''}
           </button>
         </div>
 
         {/* 탭 컨텐츠 */}
         <div className="bg-white rounded-2xl border-4 border-teal-300 p-8 flex-shrink-0">
           {currentTab === 'spelling' && (
-            <SpellingTabContent word={currentWord} input={spellingInput} setInput={setSpellingInput} onNext={() => setCurrentTab('meaning')} />
+            <SpellingTabContent
+              word={currentWord}
+              input={spellingInput}
+              setInput={setSpellingInput}
+              isDone={spellingDone}
+              setIsDone={setSpellingDone}
+              onNext={() => setCurrentTab('meaning')}
+            />
           )}
 
           {currentTab === 'meaning' && (
-            <MeaningTabContent word={currentWord} onNext={() => setCurrentTab('quiz')} />
+            <MeaningTabContent
+              word={currentWord}
+              input={meaningInput}
+              setInput={setMeaningInput}
+              isDone={meaningDone}
+              setIsDone={setMeaningDone}
+              onNext={() => setCurrentTab('quiz')}
+            />
           )}
 
           {currentTab === 'quiz' && (
-            <QuizTabContent word={currentWord} onNext={handleNextWord} />
+            <QuizTabContent
+              word={currentWord}
+              isDone={exampleDone}
+              setIsDone={setExampleDone}
+              onNext={handleNextWord}
+              canProceed={canProceedToNextWord}
+            />
           )}
         </div>
       </div>
@@ -171,23 +223,48 @@ function SpellingTabContent({
   word,
   input,
   setInput,
+  isDone,
+  setIsDone,
   onNext,
 }: {
   word: LearningWord;
   input: string;
   setInput: (val: string) => void;
+  isDone: boolean;
+  setIsDone: (val: boolean) => void;
   onNext: () => void;
 }) {
+  const handlePlayPronunciation = () => {
+    playAudio(word.text);
+  };
+
   return (
     <div className="space-y-6">
-      <div className="text-xs font-bold text-gray-600 pb-6 border-b-2 border-gray-300">
-        STEP 1: 철자 입력
+      <div className="flex justify-between items-center pb-6 border-b-2 border-gray-300">
+        <div className="text-xs font-bold text-gray-600">STEP 1: 철자 입력</div>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={isDone}
+            onChange={(e) => setIsDone(e.target.checked)}
+            className="w-5 h-5"
+          />
+          <span className="text-sm font-bold text-gray-600">완료</span>
+        </label>
       </div>
 
       <div className="space-y-6">
-        {/* 주어진 철자 */}
+        {/* 주어진 철자 + 발음 */}
         <div>
-          <div className="text-center text-xs font-bold text-gray-500 mb-2">주어진 철자</div>
+          <div className="flex justify-between items-center mb-2">
+            <div className="text-xs font-bold text-gray-500">주어진 철자</div>
+            <button
+              onClick={handlePlayPronunciation}
+              className="text-sm bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1 rounded-lg font-bold"
+            >
+              🔊 발음 듣기
+            </button>
+          </div>
           <div className="text-center text-3xl font-light tracking-widest text-gray-300 bg-gray-100 rounded-lg p-4 mb-4">
             {word.text}
           </div>
@@ -220,10 +297,10 @@ function SpellingTabContent({
               Check
             </button>
             <button
-              onClick={onNext}
+              onClick={handlePlayPronunciation}
               className="flex-1 border-2 border-gray-300 rounded-lg p-2.5 font-bold cursor-pointer hover:bg-gray-100 bg-white text-sm"
             >
-              🔊 Hear
+              🔊 다시 듣기
             </button>
           </div>
         </div>
@@ -238,17 +315,41 @@ function SpellingTabContent({
 
 function MeaningTabContent({
   word,
+  input,
+  setInput,
+  isDone,
+  setIsDone,
   onNext,
 }: {
   word: LearningWord;
+  input: string;
+  setInput: (val: string) => void;
+  isDone: boolean;
+  setIsDone: (val: boolean) => void;
   onNext: () => void;
 }) {
   const meanings = word.meanings_ko || [];
+  const koreanMeaning = meanings[0] || '';
+
+  const handlePlayKoreanMeaning = () => {
+    if (koreanMeaning) {
+      playKoreanAudio(koreanMeaning);
+    }
+  };
 
   return (
     <div className="space-y-6">
-      <div className="text-xs font-bold text-gray-600 pb-6 border-b-2 border-gray-300">
-        STEP 2: 뜻 학습
+      <div className="flex justify-between items-center pb-6 border-b-2 border-gray-300">
+        <div className="text-xs font-bold text-gray-600">STEP 2: 뜻 학습</div>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={isDone}
+            onChange={(e) => setIsDone(e.target.checked)}
+            className="w-5 h-5"
+          />
+          <span className="text-sm font-bold text-gray-600">완료</span>
+        </label>
       </div>
 
       {/* 단어 표시 */}
@@ -274,6 +375,29 @@ function MeaningTabContent({
         </div>
       )}
 
+      {/* 한글 뜻 입력 */}
+      <div className="bg-purple-50 border-2 border-purple-300 rounded-lg p-5">
+        <div className="flex justify-between items-center mb-3">
+          <div className="text-xs font-bold text-gray-600">한글 뜻 받아 쓰기</div>
+          <button
+            onClick={handlePlayKoreanMeaning}
+            className="text-sm bg-purple-200 hover:bg-purple-300 text-purple-700 px-3 py-1 rounded-lg font-bold"
+          >
+            🔊 듣기
+          </button>
+        </div>
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="한글 뜻을 입력하세요..."
+          className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-center text-lg focus:outline-none focus:border-purple-500"
+        />
+        <div className="text-xs text-gray-500 mt-2 text-center">
+          정답: <span className="font-bold">{koreanMeaning}</span>
+        </div>
+      </div>
+
       {/* Related Words */}
       <div className="bg-gray-100 p-4 rounded-lg">
         <div className="text-xs font-bold text-gray-600 mb-3">RELATED WORDS</div>
@@ -288,22 +412,6 @@ function MeaningTabContent({
             recognize
           </span>
         </div>
-      </div>
-
-      {/* Definition */}
-      <div className="bg-blue-100 border-l-4 border-blue-500 p-4 rounded">
-        <div className="text-xs font-bold text-blue-900 mb-2">ENGLISH DEFINITION</div>
-        <div className="text-sm text-blue-900 italic">
-          "To recognize the value or quality of someone or something; to feel grateful for or to rise in
-          value over time."
-        </div>
-      </div>
-
-      {/* Report Broken */}
-      <div className="bg-red-300 border-2 border-red-400 rounded-lg p-3 text-center">
-        <button className="border-0 bg-red-600 text-white px-4 py-2 rounded-lg font-bold text-xs cursor-pointer hover:bg-red-700">
-          ⚠️ Report Broken Content
-        </button>
       </div>
 
       <button
@@ -322,25 +430,49 @@ function MeaningTabContent({
 
 function QuizTabContent({
   word,
+  isDone,
+  setIsDone,
   onNext,
+  canProceed,
 }: {
   word: LearningWord;
+  isDone: boolean;
+  setIsDone: (val: boolean) => void;
   onNext: () => void;
+  canProceed: boolean;
 }) {
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
 
-  const choices = [
-    `${word.meanings_ko?.[0] || '—'}, 고마워하다`,
+  // 오답 선택지 다양화
+  const incorrectChoices = [
     '결정하다, 판단하다',
     '거부하다, 반대하다',
     '무시하다, 간과하다',
+    '예상하다, 기대하다',
+    '제안하다, 제시하다',
+    '받아들이다, 수용하다',
   ];
+
+  // 정답 + 랜덤 오답 3개
+  const correctChoice = `${word.meanings_ko?.[0] || '—'}, 고마워하다`;
+  const shuffledIncorrect = incorrectChoices.sort(() => Math.random() - 0.5).slice(0, 3);
+  const allChoices = [correctChoice, ...shuffledIncorrect].sort(() => Math.random() - 0.5);
+  const correctIdx = allChoices.indexOf(correctChoice);
 
   return (
     <div className="space-y-6">
-      <div className="text-xs font-bold text-gray-600 pb-6 border-b-2 border-gray-300">
-        STEP 3: 이해도 확인
+      <div className="flex justify-between items-center pb-6 border-b-2 border-gray-300">
+        <div className="text-xs font-bold text-gray-600">STEP 3: 이해도 확인</div>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={isDone}
+            onChange={(e) => setIsDone(e.target.checked)}
+            className="w-5 h-5"
+          />
+          <span className="text-sm font-bold text-gray-600">완료</span>
+        </label>
       </div>
 
       <div className="bg-teal-50 border-2 border-teal-300 rounded-lg p-4 text-center text-teal-600 font-bold">
@@ -379,12 +511,12 @@ function QuizTabContent({
         다음 중 "{word.text}"의 뜻으로 가장 적절한 것은?
       </div>
 
-      {/* 선택지 */}
+      {/* 선택지 (랜덤화됨) */}
       <div className="space-y-2.5">
-        {choices.map((choice, idx) => {
+        {allChoices.map((choice, idx) => {
           let btnClass = 'border-2 border-gray-300 bg-white text-gray-900';
           if (showResult) {
-            if (idx === 0) btnClass = 'border-2 border-green-400 bg-green-200 text-green-900';
+            if (idx === correctIdx) btnClass = 'border-2 border-green-400 bg-green-200 text-green-900';
             else if (selectedIdx === idx) btnClass = 'border-2 border-red-400 bg-red-200 text-red-900';
           }
           return (
@@ -410,9 +542,14 @@ function QuizTabContent({
       {showResult && (
         <button
           onClick={onNext}
-          className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition cursor-pointer"
+          disabled={!canProceed}
+          className={`w-full py-3 rounded-lg font-bold transition cursor-pointer ${
+            canProceed
+              ? 'bg-blue-600 text-white hover:bg-blue-700'
+              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+          }`}
         >
-          다음 단어로
+          {canProceed ? '다음 단어로' : '모든 단계 완료 후 진행 가능'}
         </button>
       )}
     </div>
