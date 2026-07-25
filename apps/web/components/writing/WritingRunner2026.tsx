@@ -39,6 +39,18 @@ export default function WritingRunner2026({ test, mode = "study", onFinish }: Pr
   const [timeLeft, setTimeLeft] = useState(23 * 60); // 23분 총 시간
   const [testStarted, setTestStarted] = useState(mode === 'study'); // Study 모드는 자동 시작, Test 모드는 지시사항 후 시작
 
+  // Task별 제한 시간
+  const TASK_TIMES = {
+    0: 6 * 60, // Build a Sentence: 6분
+    1: 7 * 60, // Email: 7분
+    2: 10 * 60, // Academic: 10분
+  };
+
+  // 현재 Task의 남은 시간 (각 Task 시작 시 해당 시간만큼)
+  const currentTaskMaxTime = TASK_TIMES[currentIndex as keyof typeof TASK_TIMES] || 0;
+  const taskTimeElapsed = Math.max(0, currentTaskMaxTime - (timeLeft - (23 * 60 - currentTaskMaxTime)));
+  const taskTimeLeft = Math.max(0, currentTaskMaxTime - taskTimeElapsed);
+
   const currentItem = items[currentIndex];
 
   // Test 모드 타이머 (시험 시작 후에만)
@@ -48,7 +60,17 @@ export default function WritingRunner2026({ test, mode = "study", onFinish }: Pr
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         const newTime = Math.max(0, prev - 1);
-        // 시간 종료 시 자동 제출
+
+        // 현재 Task 시간 종료 시 다음 Task로 자동 진행
+        const maxTime = TASK_TIMES[currentIndex as keyof typeof TASK_TIMES] || 0;
+        const elapsedForCurrentTask = Math.max(0, maxTime - (newTime - (23 * 60 - maxTime)));
+
+        if (elapsedForCurrentTask >= maxTime && currentIndex < items.length - 1) {
+          // Task 시간 종료, 다음 Task로
+          setCurrentIndex(currentIndex + 1);
+        }
+
+        // 전체 시간 종료 시 자동 제출
         if (newTime === 0) {
           handleFinish();
         }
@@ -57,7 +79,7 @@ export default function WritingRunner2026({ test, mode = "study", onFinish }: Pr
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [mode, testStarted]);
+  }, [mode, testStarted, currentIndex]);
 
   // Test 모드: 페이지 이탈 방지
   useEffect(() => {
@@ -177,11 +199,20 @@ export default function WritingRunner2026({ test, mode = "study", onFinish }: Pr
         </div>
         <div className="flex items-center gap-4">
           {/* Test 모드: 타이머 */}
-          {mode === "test" && (
-            <div className="text-right">
-              <div className="text-xs text-gray-500">Time Remaining</div>
-              <div className={`text-lg font-mono font-bold ${timeLeft < 60 ? "text-red-600" : "text-gray-900"}`}>
-                {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, "0")}
+          {mode === "test" && testStarted && (
+            <div className="flex gap-4">
+              <div className="text-right">
+                <div className="text-xs text-gray-500">Task Time</div>
+                <div className={`text-lg font-mono font-bold ${taskTimeLeft < 60 ? "text-red-600" : "text-gray-900"}`}>
+                  {Math.floor(taskTimeLeft / 60)}:{String(taskTimeLeft % 60).padStart(2, "0")}
+                </div>
+              </div>
+              <div className="w-px bg-gray-300"></div>
+              <div className="text-right">
+                <div className="text-xs text-gray-500">Total Time</div>
+                <div className={`text-lg font-mono font-bold ${timeLeft < 60 ? "text-red-600" : "text-gray-900"}`}>
+                  {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, "0")}
+                </div>
               </div>
             </div>
           )}
