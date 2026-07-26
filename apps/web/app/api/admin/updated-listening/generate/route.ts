@@ -652,8 +652,9 @@ export async function POST(req: Request) {
         try {
           let audioBuffer: Buffer;
 
-          // conversation인 경우 화자별 다른 음성 사용
-          if (track.taskKind === 'conversation' && isDialogue(track.transcript)) {
+          // taskKind와 무관하게 실제로 화자가 2명 이상 구분되면 화자별 다른 음성 사용
+          // (announcement/academic_talk도 종종 대화체로 나올 수 있음)
+          if (isDialogue(track.transcript)) {
             console.log(`[Audio] Generating dialogue audio for ${track.id}`);
             audioBuffer = await generateDialogueAudio(track.transcript);
           } else {
