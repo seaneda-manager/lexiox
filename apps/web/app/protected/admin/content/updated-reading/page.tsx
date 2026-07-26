@@ -1,6 +1,7 @@
 // apps/web/app/(protected)/admin/content/updated-reading/page.tsx
 import Link from "next/link";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { getAssignedTestIds } from "@/lib/supabase/assignment-guard";
 import { BookOpenCheck, PlusCircle, RefreshCcw } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +12,6 @@ type ReadingTestRow = {
   label: string;
   exam_era: string | null;
   updated_at: string | null;
-  is_locked: boolean | null;
 };
 
 function formatUpdatedAt(iso: string | null) {
@@ -31,14 +31,20 @@ function formatUpdatedAt(iso: string | null) {
 export default async function Reading2026AdminListPage() {
   let tests: ReadingTestRow[] = [];
   let loadError: string | null = null;
+  let assignedIds: Set<string> = new Set();
 
   try {
     const supabase = await getServerSupabase();
 
-    const { data, error } = await supabase
-      .from("reading_tests_2026")
-      .select("id,label,exam_era,updated_at,is_locked")
-      .order("updated_at", { ascending: false, nullsFirst: false });
+    const [{ data, error }, assigned] = await Promise.all([
+      supabase
+        .from("reading_tests_2026")
+        .select("id,label,exam_era,updated_at")
+        .order("updated_at", { ascending: false, nullsFirst: false }),
+      getAssignedTestIds("reading"),
+    ]);
+
+    assignedIds = assigned;
 
     if (error) {
       loadError = error.message ?? "Unknown Supabase error";
@@ -194,8 +200,8 @@ export default async function Reading2026AdminListPage() {
                   {/* Label */}
                   <div className="mt-1 md:mt-0 flex items-center gap-2">
                     <div className="font-semibold text-gray-900">{t.label}</div>
-                    {t.is_locked && (
-                      <span className="rounded-full bg-gray-900 px-2 py-0.5 text-[10px] font-medium text-white">🔒 Locked</span>
+                    {assignedIds.has(t.id) && (
+                      <span className="rounded-full bg-gray-900 px-2 py-0.5 text-[10px] font-medium text-white">📌 배정됨</span>
                     )}
                   </div>
 

@@ -1,6 +1,7 @@
 // apps/web/app/api/admin/updated-reading/save/route.ts
 import { NextResponse } from "next/server";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { isTestAssigned } from "@/lib/supabase/assignment-guard";
 import type { RReadingTest2026 } from "@/models/reading";
 
 type SaveBody = {
@@ -33,14 +34,9 @@ export async function POST(req: Request) {
     let error = null;
 
     if (exists.data) {
-      // Lock 체크
-      const { data: lockRow } = await supabase
-        .from("reading_tests_2026")
-        .select("is_locked")
-        .eq("id", test.meta.id)
-        .single();
-      if ((lockRow as any)?.is_locked) {
-        return NextResponse.json({ ok: false, error: "이 시험은 Lock되어 수정할 수 없습니다." }, { status: 403 });
+      // 이미 배정된 시험은 수정 불가 (수동 Lock 대신 배정 여부로 자동 판단)
+      if (await isTestAssigned("reading", test.meta.id)) {
+        return NextResponse.json({ ok: false, error: "이미 학생에게 배정된 시험은 수정할 수 없습니다." }, { status: 403 });
       }
 
       // UPDATE

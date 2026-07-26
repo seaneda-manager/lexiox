@@ -19,7 +19,6 @@ export default async function Reading2026TestPage() {
   const { data: testRow } = await supabase
     .from('reading_tests_2026')
     .select('id, label, payload')
-    .eq('is_locked', true)
     .order('updated_at', { ascending: false })
     .limit(1)
     .maybeSingle();
