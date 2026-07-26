@@ -26,13 +26,21 @@ async function assignAction(formData: FormData) {
 
   const supabase = await getServerSupabase();
   const { data: { user } } = await supabase.auth.getUser();
-
   const service = getServiceSupabase();
+
+  // speaking_round에서 speaking_test_id 조회
+  const { data: round } = await service
+    .from("speaking_rounds")
+    .select("speaking_test_id")
+    .eq("id", speakingRoundId)
+    .single();
+
   const rows = studentIds.map((sid) => ({
     student_id: sid,
     assigned_by: user?.id ?? null,
     sections: ["speaking"],
     speaking_round_id: speakingRoundId,
+    speaking_test_id: round?.speaking_test_id || null,
     due_date: dueDate || null,
     status: "pending",
   }));
