@@ -1,127 +1,15 @@
 import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
-import { ElevenLabsClient } from 'elevenlabs';
-import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
-import {
-  parseDialogueTranscript,
-  assignVoicesToSpeakers,
-  isDialogue,
-  stripSpeakerLabels,
-} from '@/lib/elevenlabs/dialogue-utils';
+
+// 오디오는 이 라우트에서 생성하지 않는다 (스크립트/문제만 생성).
+// 실제 TTS 생성은 admin이 edit 페이지에서 트랙별로 트리거하는
+// /api/admin/updated-listening/generate-audio 엔드포인트 한 곳에서만 처리한다.
 
 export const runtime = 'nodejs';
-export const maxDuration = 300;
+export const maxDuration = 120;
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || 'placeholder' });
-const elevenlabs = new ElevenLabsClient({
-  apiKey: process.env.ELEVENLABS_API_KEY || 'placeholder',
-});
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-);
-
-function getRandomVoiceId(): string {
-  try {
-    const voicePool = JSON.parse(process.env.VOICE_POOL || '{}') as Record<string, string[]>;
-    const random = Math.random() * 100;
-
-    let selectedCountry: string;
-    if (random < 60) {
-      selectedCountry = 'us';
-    } else if (random < 80) {
-      selectedCountry = 'au';
-    } else {
-      selectedCountry = 'uk';
-    }
-
-    const voices = voicePool[selectedCountry] || [];
-    if (voices.length === 0) {
-      console.warn(`No voices found for country: ${selectedCountry}`);
-      return '21m00Tcm4TlvDq8ikWAM'; // Default ElevenLabs voice
-    }
-
-    return voices[Math.floor(Math.random() * voices.length)];
-  } catch (err) {
-    console.error('Error parsing VOICE_POOL:', err);
-    return '21m00Tcm4TlvDq8ikWAM'; // Default ElevenLabs voice
-  }
-}
-
-function getVoicePool(): string[] {
-  const defaultPool = [
-    'GZ4PpFJV8ikEGUtBrjK7', // Laura (US 여)
-    'uIZsnBL0YK1S5j69bAih', // Samantha (US 여)
-    'ynUcJpglne1SRSNHFg1k', // Bill (US 남)
-    'Gubgw9l4dtIoQA9YZHgx', // Brian (US 남)
-    'Ix8C14HEHgIQkJswik2o', // Peter (UK 남)
-    '6fZce9LFNG3iEITDfqZZ', // Charlotte (UK 여)
-    'roYauZ4bOLAKvVZTPLre', // Lena (Canada 여)
-    'SHJeg1jtED7EW6Zr6rHc', // Alex (Canada 남)
-  ];
-  try {
-    if (process.env.SPEAKING_VOICE_POOL) {
-      return JSON.parse(process.env.SPEAKING_VOICE_POOL);
-    }
-  } catch (err) {
-    console.warn('Failed to parse SPEAKING_VOICE_POOL');
-  }
-  return defaultPool;
-}
-
-async function generateSingleVoiceAudio(text: string, voiceId: string): Promise<Buffer> {
-  const audio = await elevenlabs.generate({
-    voice: voiceId,
-    text: text,
-    model_id: 'eleven_turbo_v2_5',
-  });
-
-  let audioBuffer: Buffer;
-  if (Buffer.isBuffer(audio)) {
-    audioBuffer = audio;
-  } else if (audio instanceof ArrayBuffer) {
-    audioBuffer = Buffer.from(audio);
-  } else {
-    const chunks: Buffer[] = [];
-    for await (const chunk of audio) {
-      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
-    }
-    audioBuffer = Buffer.concat(chunks);
-  }
-  return audioBuffer;
-}
-
-async function generateDialogueAudio(transcript: string): Promise<Buffer> {
-  const segments = parseDialogueTranscript(transcript);
-  if (segments.length === 0) {
-    console.warn('[Dialogue] No dialogue segments found, falling back to single voice');
-    const voiceId = getRandomVoiceId();
-    return generateSingleVoiceAudio(stripSpeakerLabels(transcript), voiceId);
-  }
-
-  const voicePool = getVoicePool();
-  const voiceMap = assignVoicesToSpeakers(segments, voicePool);
-
-  console.log(`[Dialogue] Generating dialogue with ${segments.length} segments`);
-  console.log(`[Dialogue] Voice map:`, voiceMap);
-
-  const audioBuffers: Buffer[] = [];
-
-  for (const segment of segments) {
-    const voiceId = voiceMap[segment.speaker];
-    console.log(`[Dialogue] Segment "${segment.speaker}": ${segment.text.substring(0, 50)}...`);
-
-    const audioBuffer = await generateSingleVoiceAudio(segment.text, voiceId);
-    audioBuffers.push(audioBuffer);
-
-    // Rate limit 대비 대기
-    await new Promise((r) => setTimeout(r, 300));
-  }
-
-  // 모든 segment audio 병합
-  return Buffer.concat(audioBuffers);
-}
 
 const CHOOSE_RESPONSE_INSTRUCTIONS = (count: string, difficultyNote: string) => `## TASK 1: Listen and Choose a Response
 Create ${count} individual single-utterance QUESTIONS, grouped under ONE track (id "t1").
@@ -633,65 +521,20 @@ export async function POST(req: Request) {
 
     const testId = randomUUID();
 
-    // Helper function to process tracks with audio
-    const processTracksWithAudio = async (items: any[], prefix: string) => {
-      const tracks = items.map((item, i) => ({
+    // 오디오는 여기서 생성하지 않는다. 스크립트/문제만 만들고, admin이 edit 페이지에서
+    // 내용을 검토한 뒤 트랙별로 "🎧 음성생성" 버튼을 눌러 개별 생성하도록 한다.
+    // (모든 오디오 관련 로직은 generate-audio 엔드포인트 한 곳에만 있도록 유지)
+    const buildTracks = (items: any[], prefix: string) =>
+      items.map((item, i) => ({
         id: `${prefix}-${i}`,
         ...item,
         audioUrl: '',
         illustrationUrl: '',
       }));
 
-      for (const track of tracks) {
-        // choose_response: 트랙 레벨 transcript가 없음 (질문마다 개별 음성 필요 → edit 페이지에서 수동 생성)
-        if (!track.transcript || !track.transcript.trim()) {
-          console.log(`[Audio] Skipping track-level audio for ${track.id} (no track-level transcript, e.g. choose_response)`);
-          continue;
-        }
-
-        try {
-          let audioBuffer: Buffer;
-
-          // taskKind와 무관하게 실제로 화자가 2명 이상 구분되면 화자별 다른 음성 사용
-          // (announcement/academic_talk도 종종 대화체로 나올 수 있음)
-          if (isDialogue(track.transcript)) {
-            console.log(`[Audio] Generating dialogue audio for ${track.id}`);
-            audioBuffer = await generateDialogueAudio(track.transcript);
-          } else {
-            // 단일 화자 트랙(academic_talk, announcement 등)도 AI가 "Professor:"/"Staff:" 같은
-            // 화자 레이블을 습관적으로 붙이는 경우가 있어 TTS 전송 전 항상 제거한다.
-            console.log(`[Audio] Generating single-voice audio for ${track.id}`);
-            const voiceId = getRandomVoiceId();
-            const cleanText = stripSpeakerLabels(track.transcript);
-            audioBuffer = await generateSingleVoiceAudio(cleanText, voiceId);
-          }
-
-          const fileName = `listening/${testId}/${track.id}.mp3`;
-          const { error } = await supabase.storage.from('content').upload(fileName, audioBuffer, {
-            contentType: 'audio/mpeg',
-            upsert: true,
-          });
-
-          if (error) throw error;
-
-          const { data } = supabase.storage.from('content').getPublicUrl(fileName);
-          track.audioUrl = data.publicUrl;
-        } catch (err) {
-          console.error(`[Audio] Generation failed for ${track.id}:`, err);
-          throw new Error(`Audio generation failed for ${track.id}: ${(err as any)?.message}`);
-        }
-      }
-
-      return tracks;
-    };
-
-    // 3개 모듈의 오디오 생성을 병렬로 처리 (각 모듈 내부는 순차적)
-    console.log('[Audio] Generating audio for Module 1 / Hard / Easy in parallel...');
-    const [module1Tracks, hardTracks, easyTracks] = await Promise.all([
-      processTracksWithAudio(module1Items, 'm1'),
-      processTracksWithAudio(hardItems, 'm2h'),
-      processTracksWithAudio(easyItems, 'm2e'),
-    ]);
+    const module1Tracks = buildTracks(module1Items, 'm1');
+    const hardTracks = buildTracks(hardItems, 'm2h');
+    const easyTracks = buildTracks(easyItems, 'm2e');
 
     const payload = {
       meta: {

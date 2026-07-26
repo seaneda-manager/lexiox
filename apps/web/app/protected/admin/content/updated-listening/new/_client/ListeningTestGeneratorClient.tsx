@@ -362,7 +362,8 @@ export default function ListeningTestGeneratorClient() {
         </div>
         {phase === "generating" && (
           <p className="text-xs text-gray-500 animate-pulse">
-            Claude가 Module 1과 Module 2 (Hard/Easy)를 생성 중입니다 (약 60–90초)…
+            Claude가 Module 1과 Module 2 (Hard/Easy) 스크립트·문제를 생성 중입니다 (약 20–40초)…
+            음성은 생성되지 않으니, 저장 후 수정 페이지에서 트랙별로 음성생성 버튼을 눌러주세요.
           </p>
         )}
         {error && <p className="text-xs text-rose-600">{error}</p>}
@@ -432,8 +433,9 @@ export default function ListeningTestGeneratorClient() {
           </div>
 
           <p className="text-xs text-gray-500">
-            자세한 편집(스크립트, 문제, 음성 재생성)은 저장 후{" "}
-            <span className="font-semibold text-violet-600">수정 페이지</span>에서 할 수 있습니다.
+            ⚠️ 아직 음성이 생성되지 않았습니다. 저장 후{" "}
+            <span className="font-semibold text-violet-600">수정 페이지</span>에서 스크립트를 검토하고
+            트랙별로 🎧 음성생성 버튼을 눌러주세요.
           </p>
 
           {/* Actions */}
