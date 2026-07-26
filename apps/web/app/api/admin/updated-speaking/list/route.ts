@@ -15,9 +15,6 @@ export async function GET() {
       getAssignedTestIds('speaking'),
     ]);
 
-    console.log('📋 List API Debug:', { totalRows: data?.length, error: error?.message });
-    if (data) data.forEach((t, i) => console.log(`  [${i}]`, t.id, t.label.substring(0, 40)));
-
     if (error) throw error;
     const tests = (data ?? []).map((t) => ({ ...t, assigned: assignedIds.has(t.id) }));
     return NextResponse.json({ ok: true, tests }, {

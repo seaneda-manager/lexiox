@@ -24,15 +24,17 @@ export default async function StartAssignmentPage({ params }: { params: Params }
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  // Load assignment
-  const { data: assignment } = await supabase
+  // Load assignment (use service role to bypass RLS for reading)
+  const service = getServiceSupabase();
+  const { data: assignment, error: assignmentError } = await service
     .from("test_assignments")
-    .select("id, status, sections, speaking_test_id, results_payload")
+    .select("id, status, sections, speaking_test_id, results_payload, student_id")
     .eq("id", assignmentId)
-    .eq("student_id", user.id)
     .maybeSingle();
 
+  if (assignmentError) throw new Error(`assignment 조회 실패: ${assignmentError.message}`);
   if (!assignment) notFound();
+  if (assignment.student_id !== user.id) notFound();
 
   // If completed, show results page
   if (assignment.status === "completed") {
@@ -47,11 +49,13 @@ export default async function StartAssignmentPage({ params }: { params: Params }
   // Load speaking test
   if (!assignment.speaking_test_id) notFound();
 
-  const { data: testRow } = await supabase
+  const { data: testRow } = await service
     .from("speaking_tests")
     .select("id, label, payload")
     .eq("id", assignment.speaking_test_id)
     .maybeSingle();
+
+  console.log('🎯 testRow:', { found: !!testRow, hasPayload: !!testRow?.payload });
 
   if (!testRow) notFound();
 
