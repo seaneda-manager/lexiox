@@ -619,6 +619,18 @@ export async function POST(req: Request) {
       }),
     ]);
 
+    console.log(`[Generate] Items received — module1: ${module1Items.length}, hard: ${hardItems.length}, easy: ${easyItems.length}`);
+
+    if (!module1Items || module1Items.length === 0) {
+      throw new Error('Module 1 generation returned no items (Claude response may have been malformed or truncated)');
+    }
+    if (!hardItems || hardItems.length === 0) {
+      throw new Error('Module 2 Hard generation returned no items');
+    }
+    if (!easyItems || easyItems.length === 0) {
+      throw new Error('Module 2 Easy generation returned no items');
+    }
+
     const testId = randomUUID();
 
     // Helper function to process tracks with audio
