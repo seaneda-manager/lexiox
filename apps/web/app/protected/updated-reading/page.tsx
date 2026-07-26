@@ -21,21 +21,25 @@ export default function Reading2026Home() {
           '실전과 같은 속도(지문당 20분)로 풀며 시간 압박 없이 답을 고를 수 있다',
         ]}
         steps={[
-          { icon: '📚', title: 'Study Mode', desc: 'Assisted 방식으로 지문을 풀고 오답 리뷰 → Daily Task까지 이어지는 학습 사이클입니다. 처음에는 여기서 시작하세요.' },
-          { icon: '🎯', title: 'Test Mode', desc: '시간 제한이 있는 실전 모의고사입니다. Study를 충분히 반복한 뒤 점검용으로 활용하세요.' },
+          { icon: '📚', title: 'Study Mode', desc: '시간 제한 없이 지문을 풀고 바로 해설을 확인합니다. 처음에는 여기서 시작하세요.' },
+          { icon: '📋', title: 'Assignments', desc: '선생님이 배정한 시험입니다. 마감일이 있고, 제출하면 선생님에게 결과가 전달됩니다.' },
+          { icon: '🎯', title: 'Test Mode', desc: '시간 제한이 있는 실전 모의고사입니다. 되돌아갈 수 없고 Module 1 성적에 따라 Module 2 난이도가 갈립니다.' },
+          { icon: '🔍', title: 'Review', desc: '지금까지 푼 시험을 다시 열어 문항별 해설과 오답 이유를 확인합니다. 틀린 유형을 모아 보는 곳입니다.' },
         ]}
         nextAction={{ label: 'Assignments 보기', href: '/updated-reading/assignments' }}
       />
 
-      <div className="grid gap-4 md:grid-cols-3">
+      {/* 네 모드의 차이가 카드에서 바로 읽히도록 제약 조건을 함께 적는다 */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Link
           href="/updated-reading/study"
           className="block rounded-lg border bg-white px-4 py-6 text-left shadow-sm transition hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400/50"
         >
-          <div className="text-sm font-semibold">Study Mode</div>
+          <div className="text-sm font-semibold">📚 Study Mode</div>
           <div className="mt-1 text-xs text-neutral-500">
-            Assisted 모드로 지문을 풀고, Review & Daily Task까지 이어지는 학습 사이클을 시작합니다.
+            시간 제한 없이 풀고 바로 해설을 봅니다. 되돌아가기와 다시 풀기가 자유롭습니다.
           </div>
+          <div className="mt-2 text-[11px] font-medium text-emerald-700">제한 없음 · 성적 미반영</div>
         </Link>
 
         <Link
@@ -44,18 +48,31 @@ export default function Reading2026Home() {
         >
           <div className="text-sm font-semibold">📋 Assignments</div>
           <div className="mt-1 text-xs text-neutral-500">
-            선생님이 배정한 시험을 확인하고 응시합니다.
+            선생님이 배정한 시험입니다. 제출하면 선생님에게 결과가 전달됩니다.
           </div>
+          <div className="mt-2 text-[11px] font-medium text-amber-700">마감일 있음 · 성적 반영</div>
         </Link>
 
         <Link
           href="/updated-reading/test"
           className="block rounded-lg border bg-white px-4 py-6 text-left shadow-sm transition hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400/50"
         >
-          <div className="text-sm font-semibold">Test Mode</div>
+          <div className="text-sm font-semibold">🎯 Test Mode</div>
           <div className="mt-1 text-xs text-neutral-500">
-            가장 최근 공개된 시험으로 실전 모의고사를 볼 수 있습니다.
+            가장 최근 시험으로 실전과 같은 조건에서 응시합니다. Module 1 결과로 Module 2 난이도가 갈립니다.
           </div>
+          <div className="mt-2 text-[11px] font-medium text-rose-700">시간 제한 · 되돌아가기 불가</div>
+        </Link>
+
+        <Link
+          href="/updated-reading/review"
+          className="block rounded-lg border bg-white px-4 py-6 text-left shadow-sm transition hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400/50"
+        >
+          <div className="text-sm font-semibold">🔍 Review</div>
+          <div className="mt-1 text-xs text-neutral-500">
+            지금까지 푼 시험을 다시 열어 문항별 해설과 오답 이유를 확인합니다.
+          </div>
+          <div className="mt-2 text-[11px] font-medium text-sky-700">해설 · 오답 분석</div>
         </Link>
       </div>
 

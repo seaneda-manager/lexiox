@@ -44,7 +44,9 @@ export async function POST(req: Request) {
         total_questions: body.answers.length,
         is_adaptive: body.isAdaptive ?? false,
         stage2_difficulty: body.stage2Difficulty ?? null,
-        raw_result: body.answers,
+        // 컬럼명은 answers다. raw_result로 쓰고 있어서 삽입이 매번 실패했고,
+        // 그래서 reading_results_2026이 계속 비어 있었다.
+        answers: body.answers,
         finished_at: body.finishedAt || new Date().toISOString(),
       })
       .select("id")

@@ -60,17 +60,16 @@ export async function POST(req: Request) {
       );
     }
 
-    // TODO: 나중에 채점 로직 넣고 correct_count 계산 가능
-    const correctCount = 0;
-
+    // reading_results_2026에는 test_label / correct_count 컬럼이 없다.
+    // 예전엔 둘을 함께 insert해서 매번 실패했고 결과가 하나도 저장되지 않았다.
+    // 시험 제목은 reading_tests_2026.label로 조인하고, 정답 수는 조회 시
+    // answers와 시험 페이로드로 재계산한다.
     const { error: insertErr } = await supabase
       .from("reading_results_2026")
       .insert({
         user_id: user.id,
         test_id: testId,
-        test_label: testLabel ?? null,
         total_questions: totalQuestions,
-        correct_count: correctCount,
         answers, // jsonb 컬럼
       });
 

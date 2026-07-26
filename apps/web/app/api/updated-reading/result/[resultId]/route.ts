@@ -3,6 +3,37 @@ import { NextResponse } from "next/server";
 import { getServerSupabase } from "@/lib/supabase/server";
 import type { RReadingTest2026 } from "@/models/reading";
 
+/**
+ * 답안을 {questionId: 선택값} 맵으로 정규화한다.
+ * 다중선택은 배열로 저장될 수 있어 문자열로 합쳐 비교 가능하게 만든다.
+ */
+function normalizeAnswers(raw: unknown): Record<string, string> {
+  if (!raw) return {};
+
+  const flatten = (v: unknown): string =>
+    Array.isArray(v) ? v.map(String).sort().join(",") : String(v ?? "");
+
+  if (Array.isArray(raw)) {
+    const map: Record<string, string> = {};
+    for (const entry of raw as any[]) {
+      const id = entry?.questionId ?? entry?.question_id;
+      if (!id) continue;
+      map[id] = flatten(entry?.chosenChoiceId ?? entry?.answer ?? entry?.value);
+    }
+    return map;
+  }
+
+  if (typeof raw === "object") {
+    const map: Record<string, string> = {};
+    for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
+      map[k] = flatten(v);
+    }
+    return map;
+  }
+
+  return {};
+}
+
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ resultId: string }> }
@@ -39,15 +70,23 @@ export async function GET(
       );
     }
 
-    // 3. 테스트 데이터 파싱
-    const testJson = testData.data as RReadingTest2026;
+    // 3. 테스트 데이터 파싱 — 컬럼명은 payload다 (data가 아니다)
+    const testJson = testData.payload as RReadingTest2026;
+    if (!testJson?.modules?.length) {
+      return NextResponse.json(
+        { ok: false, error: "Test payload is empty or malformed" },
+        { status: 500 }
+      );
+    }
     const allItems = [
-      ...testJson.modules[0].items,
-      ...testJson.modules[1].items,
+      ...(testJson.modules[0]?.items ?? []),
+      ...(testJson.modules[1]?.items ?? []),
     ];
 
     // 4. 사용자 답변 파싱
-    const userAnswers = resultData.answers as Record<string, string>;
+    // 저장 경로가 두 가지다: test 제출은 [{questionId, chosenChoiceId}] 배열,
+    // study 제출은 {questionId: answer} 맵. 둘 다 맵으로 정규화한다.
+    const userAnswers = normalizeAnswers(resultData.answers);
 
     // 5. 모든 question_id 수집
     const questionIds = new Set<string>();
@@ -126,15 +165,16 @@ export async function GET(
     }
 
     // 6. Stage별 점수 계산
-    const stage1Module = testJson.modules[0];
-    const stage2Module = testJson.modules[1];
+    // Module 2가 없는 시험(적응형 풀만 있는 경우 등)도 있으므로 빈 배열로 방어한다.
+    const stage1Items = testJson.modules[0]?.items ?? [];
+    const stage2Items = testJson.modules[1]?.items ?? [];
 
     let stage1Correct = 0,
       stage1Total = 0;
     let stage2Correct = 0,
       stage2Total = 0;
 
-    for (const item of stage1Module.items) {
+    for (const item of stage1Items) {
       if (item.taskKind === "complete_words") {
         const cw = item as any;
         for (const blank of cw.blanks ?? []) {
@@ -153,7 +193,7 @@ export async function GET(
       }
     }
 
-    for (const item of stage2Module.items) {
+    for (const item of stage2Items) {
       if (item.taskKind === "complete_words") {
         const cw = item as any;
         for (const blank of cw.blanks ?? []) {
@@ -174,7 +214,8 @@ export async function GET(
 
     return NextResponse.json({
       testId: resultData.test_id,
-      testLabel: testJson.meta.label,
+      // 페이로드 meta가 비어 있을 수 있으니 테이블의 label로 폴백한다.
+      testLabel: testJson.meta?.label ?? testData.label ?? "Reading Test",
       stage1: {
         correct: stage1Correct,
         total: stage1Total,
