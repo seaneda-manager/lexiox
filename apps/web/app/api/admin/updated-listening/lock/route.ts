@@ -32,20 +32,17 @@ export async function POST(req: Request) {
     // 3. Insert into listening_tests (for student access)
     const { error: insertError } = await sb
       .from('listening_tests')
-      .insert({
-        id: testData.id,
-        label: testData.label,
-        exam_era: 'ibt_2026',
-        content: testData.payload,
-        status: 'locked',
-        created_at: new Date().toISOString(),
-      })
-      .onConflict('id')
-      .update({
-        content: testData.payload,
-        status: 'locked',
-        updated_at: new Date().toISOString(),
-      });
+      .upsert(
+        {
+          id: testData.id,
+          label: testData.label,
+          exam_era: 'ibt_2026',
+          content: testData.payload,
+          status: 'locked',
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'id' }
+      );
 
     if (insertError) {
       return NextResponse.json({ ok: false, error: insertError.message }, { status: 500 });

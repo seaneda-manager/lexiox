@@ -32,20 +32,17 @@ export async function POST(req: Request) {
     // 즉시 listening_tests에 저장 (Lock 불필요)
     const { error: insertError } = await sb
       .from('listening_tests')
-      .insert({
-        id: test.meta.id,
-        label: test.meta.label,
-        exam_era: 'ibt_2026',
-        content: test,
-        status: 'active',
-        created_at: new Date().toISOString(),
-      })
-      .onConflict('id')
-      .update({
-        content: test,
-        status: 'active',
-        updated_at: new Date().toISOString(),
-      });
+      .upsert(
+        {
+          id: test.meta.id,
+          label: test.meta.label,
+          exam_era: 'ibt_2026',
+          content: test,
+          status: 'active',
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'id' }
+      );
 
     if (insertError) console.warn('listening_tests insert:', insertError);
 
