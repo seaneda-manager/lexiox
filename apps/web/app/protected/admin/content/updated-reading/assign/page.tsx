@@ -28,6 +28,38 @@ async function assignAction(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser();
 
   const service = getServiceSupabase();
+
+  // test_assignments.reading_test_id는 reading_tests(구 테이블)를 참조하는데,
+  // 이 화면 목록은 reading_tests_2026에서 가져온다. 배정 직전에 다시 한 번
+  // reading_tests_2026 → reading_tests로 동기화해서 FK 위반을 방지한다.
+  const { data: sourceTest, error: sourceError } = await service
+    .from("reading_tests_2026")
+    .select("id, label, payload")
+    .eq("id", readingTestId)
+    .maybeSingle();
+
+  if (sourceError || !sourceTest) {
+    redirect("/admin/content/updated-reading/assign?error=" + encodeURIComponent("선택한 시험을 찾을 수 없습니다."));
+  }
+
+  const { error: syncError } = await service
+    .from("reading_tests")
+    .upsert(
+      {
+        id: sourceTest!.id,
+        label: sourceTest!.label,
+        exam_era: "ibt_2026",
+        payload: sourceTest!.payload,
+        status: "active",
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "id" }
+    );
+
+  if (syncError) {
+    redirect("/admin/content/updated-reading/assign?error=" + encodeURIComponent("시험 동기화 실패: " + syncError.message));
+  }
+
   const rows = studentIds.map((sid) => ({
     student_id: sid,
     assigned_by: user?.id ?? null,

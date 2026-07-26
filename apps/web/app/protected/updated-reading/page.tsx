@@ -24,10 +24,10 @@ export default function Reading2026Home() {
           { icon: '📚', title: 'Study Mode', desc: 'Assisted 방식으로 지문을 풀고 오답 리뷰 → Daily Task까지 이어지는 학습 사이클입니다. 처음에는 여기서 시작하세요.' },
           { icon: '🎯', title: 'Test Mode', desc: '시간 제한이 있는 실전 모의고사입니다. Study를 충분히 반복한 뒤 점검용으로 활용하세요.' },
         ]}
-        nextAction={{ label: 'Study Mode 시작', href: '/updated-reading/study' }}
+        nextAction={{ label: 'Assignments 보기', href: '/updated-reading/assignments' }}
       />
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-3">
         <Link
           href="/updated-reading/study"
           className="block rounded-lg border bg-white px-4 py-6 text-left shadow-sm transition hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400/50"
@@ -39,12 +39,22 @@ export default function Reading2026Home() {
         </Link>
 
         <Link
+          href="/updated-reading/assignments"
+          className="block rounded-lg border bg-white px-4 py-6 text-left shadow-sm transition hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400/50"
+        >
+          <div className="text-sm font-semibold">📋 Assignments</div>
+          <div className="mt-1 text-xs text-neutral-500">
+            선생님이 배정한 시험을 확인하고 응시합니다.
+          </div>
+        </Link>
+
+        <Link
           href="/updated-reading/test"
           className="block rounded-lg border bg-white px-4 py-6 text-left shadow-sm transition hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400/50"
         >
           <div className="text-sm font-semibold">Test Mode</div>
           <div className="mt-1 text-xs text-neutral-500">
-            데모 시험 패킷을 포함한 실전 모의고사를 볼 수 있습니다.
+            가장 최근 공개된 시험으로 실전 모의고사를 볼 수 있습니다.
           </div>
         </Link>
       </div>

@@ -1,20 +1,12 @@
-// apps/web/app/(protected)/updated-reading/test/page.tsx
-import { getSupabaseServer } from '@/lib/supabaseServer';
-import ReadingAdaptiveRunner2026 from '@/components/reading/ReadingAdaptiveRunner2026';
+// apps/web/app/protected/updated-reading/test/page.tsx
+import { getServerSupabase } from '@/lib/supabase/server';
+import MockTestPlayer from '@/components/reading/MockTestPlayer';
 import type { RReadingTest2026 } from '@/models/reading';
 
 export const dynamic = 'force-dynamic';
 
-type SearchParams = {
-  testId?: string;
-};
-
-type PageProps = {
-  searchParams?: SearchParams;
-};
-
-export default async function Reading2026TestPage({ searchParams }: PageProps) {
-  const supabase = await getSupabaseServer();
+export default async function Reading2026TestPage() {
+  const supabase = await getServerSupabase();
 
   const {
     data: { user },
@@ -24,102 +16,31 @@ export default async function Reading2026TestPage({ searchParams }: PageProps) {
     return <div className="p-6">Please sign in.</div>;
   }
 
-  const testId = searchParams?.testId ?? 'updated-reading-demo-1';
+  const { data: testRow } = await supabase
+    .from('reading_tests_2026')
+    .select('id, label, payload')
+    .eq('is_locked', true)
+    .order('updated_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
-  const demoTest = ({
-    meta: {
-      id: testId,
-      label: '2026 Demo Reading',
-      examEra: '2026-demo', // TODO: 실제 유니온 타입에 맞게 나중에 수정
-    },
-    modules: [
-      // ------- Stage 1 -------
-      {
-        id: 'stage1-module-1',
-        label: 'Stage 1 Module (demo)',
-        items: [
-          {
-            id: 'item1',
-            taskKind: 'academic_passage',
-            stage: 1,
-            passageHtml:
-              '<p>This is a short <strong>demo academic passage</strong> for the 2026 Reading runner.</p>',
-            questions: [
-              {
-                id: 'q1',
-                number: 1,
-                stem: 'According to the passage, what is the main purpose of this demo?',
-                choices: [
-                  {
-                    id: 'q1a',
-                    text: 'To test the adaptive runner UI.',
-                    isCorrect: true,
-                  },
-                  {
-                    id: 'q1b',
-                    text: 'To measure your real TOEFL score.',
-                  },
-                  {
-                    id: 'q1c',
-                    text: 'To explain academic research in detail.',
-                  },
-                  {
-                    id: 'q1d',
-                    text: 'To practice integrated writing.',
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-
-      // ------- Stage 2 -------
-      {
-        id: 'stage2-module-1',
-        label: 'Stage 2 Module (demo)',
-        items: [
-          {
-            id: 'item2',
-            taskKind: 'academic_passage',
-            stage: 2,
-            passageHtml:
-              '<p>This is a <em>Stage 2</em> demo passage for the 2026 Reading runner.</p>',
-            questions: [
-              {
-                id: 'q2',
-                number: 2,
-                stem: 'What happens when you finish this module?',
-                choices: [
-                  {
-                    id: 'q2a',
-                    text: 'onFinish is called with your scores.',
-                    isCorrect: true,
-                  },
-                  {
-                    id: 'q2b',
-                    text: 'The app closes automatically.',
-                  },
-                  {
-                    id: 'q2c',
-                    text: 'Nothing happens.',
-                  },
-                  {
-                    id: 'q2d',
-                    text: 'You start Listening automatically.',
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-    ],
-  } as unknown) as RReadingTest2026;
+  if (!testRow || !testRow.payload) {
+    return (
+      <div className="mx-auto max-w-xl px-4 py-12 text-center text-sm text-gray-500">
+        아직 응시 가능한 Reading 시험이 없습니다. 선생님에게 문의하거나{' '}
+        <a href="/updated-reading/assignments" className="text-blue-500 underline">
+          Assignments
+        </a>
+        를 확인하세요.
+      </div>
+    );
+  }
 
   return (
-    <div className="-m-4 md:-m-6 h-[calc(100%+2rem)] md:h-[calc(100%+3rem)]">
-      <ReadingAdaptiveRunner2026 test={demoTest} />
-    </div>
+    <MockTestPlayer
+      testId={testRow.id}
+      label={testRow.label ?? 'Reading 2026 Test'}
+      test={testRow.payload as RReadingTest2026}
+    />
   );
 }

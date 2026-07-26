@@ -1,16 +1,18 @@
 // apps/web/app/api/updated-reading/result/route.ts
 import { NextResponse } from "next/server";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { getServiceSupabase } from "@/lib/supabase/service";
 
 type AnswerPayload = {
   questionId: string;
-  number: number;
-  chosenChoiceId: string | null;
+  chosenChoiceId: string | string[] | null;
 };
 
 type Body = {
   testId: string;
-  totalQuestions: number;
+  assignmentId?: string;
+  isAdaptive?: boolean;
+  stage2Difficulty?: "easy" | "hard";
   answers: AnswerPayload[];
   finishedAt: string;
 };
@@ -19,17 +21,8 @@ export async function POST(req: Request) {
   try {
     const body = (await req.json()) as Body;
 
-    // 🔍 1차 검증
-    if (
-      !body ||
-      typeof body.testId !== "string" ||
-      !Number.isFinite(body.totalQuestions) ||
-      !Array.isArray(body.answers)
-    ) {
-      return NextResponse.json(
-        { ok: false, error: "Invalid payload" },
-        { status: 400 }
-      );
+    if (!body || typeof body.testId !== "string" || !Array.isArray(body.answers)) {
+      return NextResponse.json({ ok: false, error: "Invalid payload" }, { status: 400 });
     }
 
     const supabase = await getServerSupabase();
@@ -42,15 +35,16 @@ export async function POST(req: Request) {
       console.error("updated-reading result – getUser error", userError);
     }
 
-    // ✅ DB insert
     const { data, error } = await supabase
       .from("reading_results_2026")
       .insert({
         test_id: body.testId,
+        assignment_id: body.assignmentId ?? null,
         user_id: user?.id ?? null,
-        total_questions: body.totalQuestions,
-        // 여기 컬럼명이 answers(jsonb)라고 가정
-        answers: body.answers,
+        total_questions: body.answers.length,
+        is_adaptive: body.isAdaptive ?? false,
+        stage2_difficulty: body.stage2Difficulty ?? null,
+        raw_result: body.answers,
         finished_at: body.finishedAt || new Date().toISOString(),
       })
       .select("id")
@@ -58,18 +52,20 @@ export async function POST(req: Request) {
 
     if (error) {
       console.error("updated-reading result – insert error", error);
-      return NextResponse.json(
-        { ok: false, error: error.message },
-        { status: 500 }
-      );
+      return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+    }
+
+    if (body.assignmentId) {
+      const service = getServiceSupabase();
+      await service
+        .from("test_assignments")
+        .update({ status: "completed", completed_at: new Date().toISOString() })
+        .eq("id", body.assignmentId);
     }
 
     return NextResponse.json({ ok: true, id: data.id });
   } catch (e: any) {
     console.error("updated-reading result – unexpected error", e);
-    return NextResponse.json(
-      { ok: false, error: e?.message ?? "Unknown error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ ok: false, error: e?.message ?? "Unknown error" }, { status: 500 });
   }
 }

@@ -1,7 +1,7 @@
 // components/reading/MockTestPlayer.tsx
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import ReadingTestLayout2026 from "./ReadingTestLayout2026";
 import type {
   RReadingTest2026,
@@ -31,6 +31,7 @@ type FlatQuestion = {
   summaryCorrectIndices: number[];
   summarySelectionCount: number;
   stage: 1 | 2;
+  insertionTargetSentence?: string;
 };
 
 /** Stage 1 score decides which Stage 2 module students receive. */
@@ -123,6 +124,7 @@ function flattenModule(
           summaryCorrectIndices: summaryMeta.correct ?? [],
           summarySelectionCount: summaryMeta.selectionCount ?? 3,
           stage,
+          insertionTargetSentence: meta.insertion?.targetSentence,
         });
 
         globalIdx++;
@@ -254,14 +256,33 @@ type Props = {
   test: RReadingTest2026;
   /** When provided, Stage 1 score routes to Easy or Hard Stage 2 module. */
   adaptiveConfig?: AdaptiveConfig;
+  /** Present when launched from a student assignment — threaded through to onFinish's caller. */
+  assignmentId?: string;
   onFinish?: (payload: {
     testId: string;
+    assignmentId?: string;
     isAdaptive: boolean;
     stage2Difficulty?: "easy" | "hard";
     answers: { questionId: string; chosenChoiceId: string | string[] | null }[];
     finishedAt: string;
   }) => void | Promise<void>;
 };
+
+// ── Autosave (crash/refresh recovery) ───────────────────────────────────
+
+function autosaveKey(testId: string) {
+  return `reading2026_autosave__${testId}`;
+}
+
+function loadAutosave(testId: string): { answers: Record<string, string | string[]>; flagged: string[] } | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(autosaveKey(testId));
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
 
 // ── Main Component ─────────────────────────────────────────────────────
 
@@ -270,6 +291,7 @@ export default function MockTestPlayer({
   label,
   test,
   adaptiveConfig,
+  assignmentId,
   onFinish,
 }: Props) {
   // test.stage2Pool이 있으면 adaptive, 없으면 non-adaptive
@@ -298,10 +320,29 @@ export default function MockTestPlayer({
   );
 
   const [phase, setPhase] = useState<Phase>(cwItems.length > 0 ? "direction" : "direction");
+  const [introStep, setIntroStep] = useState(0); // 0,1,2 — ETS-style multi-screen directions
   const [cwIdx, setCwIdx] = useState(0); // which complete_words item we're on
   const [currentIdx, setCurrentIdx] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
-  const [flagged, setFlagged] = useState<Set<string>>(new Set());
+  const [answers, setAnswers] = useState<Record<string, string | string[]>>(
+    () => loadAutosave(testId)?.answers ?? {}
+  );
+  const [flagged, setFlagged] = useState<Set<string>>(
+    () => new Set(loadAutosave(testId)?.flagged ?? [])
+  );
+
+  // 새로고침/탭 크래시 대비 자동저장 — 답이 바뀔 때마다 로컬에 저장
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (Object.keys(answers).length === 0 && flagged.size === 0) return;
+    try {
+      window.localStorage.setItem(
+        autosaveKey(testId),
+        JSON.stringify({ answers, flagged: Array.from(flagged) })
+      );
+    } catch {
+      // storage full/unavailable — silently skip, in-memory state is still authoritative
+    }
+  }, [answers, flagged, testId]);
   const [secondsLeft, setSecondsLeft] = useState(STAGE1_SECONDS);
   const [showNavGrid, setShowNavGrid] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -415,6 +456,7 @@ export default function MockTestPlayer({
 
     const payload = {
       testId,
+      assignmentId,
       isAdaptive,
       stage2Difficulty: stage2Difficulty ?? undefined,
       answers: [
@@ -437,12 +479,15 @@ export default function MockTestPlayer({
           body: JSON.stringify(payload),
         });
       }
+      if (typeof window !== "undefined") {
+        try { window.localStorage.removeItem(autosaveKey(testId)); } catch { /* noop */ }
+      }
     } catch {
       // silent
     } finally {
       setSubmitting(false);
     }
-  }, [phase, stage1Questions, stage2Questions, answers, testId, isAdaptive, stage2Difficulty, onFinish]);
+  }, [phase, stage1Questions, stage2Questions, answers, testId, assignmentId, isAdaptive, stage2Difficulty, onFinish]);
 
   // ── Answer handlers ────────────────────────────────────────────────
 
@@ -508,54 +553,161 @@ export default function MockTestPlayer({
   // ── Direction Screen ───────────────────────────────────────────────
 
   if (phase === "direction") {
-    const totalMinutes = isAdaptive ? 35 : 35;
-    return (
+    const beginTest = () => {
+      setCurrentIdx(0);
+      if (cwItems.length > 0) {
+        setCwIdx(0);
+        setPhase("complete_words");
+      } else {
+        setPhase("stage1_testing");
+      }
+    };
+
+    const Shell = ({
+      badge,
+      title,
+      children,
+      onBack,
+      onNext,
+      nextLabel,
+    }: {
+      badge: string;
+      title: string;
+      children: ReactNode;
+      onBack?: () => void;
+      onNext: () => void;
+      nextLabel: string;
+    }) => (
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-6 px-4 py-12">
         <div className="w-full max-w-xl rounded-xl border bg-white p-8 shadow-sm">
+          <div className="mb-1 flex items-center gap-2">
+            <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-[11px] font-semibold text-gray-500">
+              {badge}
+            </span>
+          </div>
           <h1 className="mb-1 text-xl font-bold">{label}</h1>
-          <p className="mb-6 text-sm text-gray-500">TOEFL Reading — Mock Test</p>
+          <p className="mb-6 text-sm text-gray-500">{title}</p>
 
-          <ul className="mb-8 space-y-2 text-sm text-gray-700">
+          {children}
+
+          <div className="mt-8 flex items-center justify-between gap-3">
+            {onBack ? (
+              <button
+                onClick={onBack}
+                className="rounded-lg border px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+              >
+                ← 이전
+              </button>
+            ) : (
+              <span />
+            )}
+            <button
+              onClick={onNext}
+              className="rounded-lg bg-black px-6 py-2.5 text-sm font-semibold text-white hover:bg-gray-800"
+            >
+              {nextLabel}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+
+    if (introStep === 0) {
+      return (
+        <Shell
+          badge="Reading Section · 안내 1/3"
+          title="TOEFL Reading — 시험 개요"
+          onNext={() => setIntroStep(1)}
+          nextLabel="다음 →"
+        >
+          <ul className="space-y-2.5 text-sm text-gray-700">
             <li className="flex items-start gap-2">
               <span className="mt-0.5 text-gray-400">•</span>
-              총 <strong>2 Modules</strong>, 제한 시간 <strong>{totalMinutes}분</strong> (Module 1: 18분 · Module 2: 17분)
+              이 섹션은 학술적인 영어 지문을 읽고 이해하는 능력을 측정합니다.
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5 text-gray-400">•</span>
+              Reading Section은 <strong>Module 1 · Module 2</strong> 2개로 구성되며, 총 소요 시간은 약 <strong>35분</strong>입니다 (Module 1: 18분 · Module 2: 17분).
             </li>
             {isAdaptive && (
               <li className="flex items-start gap-2">
                 <span className="mt-0.5 text-gray-400">•</span>
-                Module 1 성적에 따라 Module 2 난이도가 결정됩니다.
+                모든 응시자는 동일한 <strong>Module 1</strong>을 풀며, 그 성적에 따라 <strong>Module 2</strong>의 난이도가 자동으로 결정됩니다 (적응형 시험).
               </li>
             )}
             <li className="flex items-start gap-2">
               <span className="mt-0.5 text-gray-400">•</span>
-              지문은 왼쪽, 문제는 오른쪽에 표시됩니다.
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="mt-0.5 text-gray-400">•</span>
-              번호 그리드로 자유롭게 이동하거나 ⚑ 로 플래그를 달 수 있습니다.
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="mt-0.5 text-gray-400">•</span>
-              시간이 종료되거나 <strong>검토/제출</strong>을 누르면 자동 채점됩니다.
+              각 Module의 제한 시간은 개별적으로 작동하며, 한 Module을 완료하면 이전 Module로 돌아갈 수 없습니다.
             </li>
           </ul>
+        </Shell>
+      );
+    }
 
-          <button
-            onClick={() => {
-              setCurrentIdx(0);
-              if (cwItems.length > 0) {
-                setCwIdx(0);
-                setPhase("complete_words");
-              } else {
-                setPhase("stage1_testing");
-              }
-            }}
-            className="w-full rounded-lg bg-black py-2.5 text-sm font-semibold text-white hover:bg-gray-800"
-          >
-            시험 시작
-          </button>
-        </div>
-      </div>
+    if (introStep === 1) {
+      return (
+        <Shell
+          badge="Reading Section · 안내 2/3"
+          title="문제 유형 안내"
+          onBack={() => setIntroStep(0)}
+          onNext={() => setIntroStep(2)}
+          nextLabel="다음 →"
+        >
+          <div className="space-y-3 text-sm text-gray-700">
+            <div className="rounded-lg border bg-gray-50 p-3">
+              <p className="mb-1 font-semibold text-gray-900">📝 Complete the Words</p>
+              <p className="text-xs leading-relaxed text-gray-600">
+                지문 속 단어의 앞부분 철자는 고정되어 있고, 나머지 어미만 직접 입력해 완성합니다. Module 시작 전 별도 화면에서 진행됩니다.
+              </p>
+            </div>
+            <div className="rounded-lg border bg-gray-50 p-3">
+              <p className="mb-1 font-semibold text-gray-900">📧 Read in Daily Life</p>
+              <p className="text-xs leading-relaxed text-gray-600">
+                이메일, 공지, SNS 게시물 등 실생활 지문을 읽고 4지선다 문제를 풉니다.
+              </p>
+            </div>
+            <div className="rounded-lg border bg-gray-50 p-3">
+              <p className="mb-1 font-semibold text-gray-900">📖 Read an Academic Passage</p>
+              <p className="text-xs leading-relaxed text-gray-600">
+                학술 지문을 읽고 세부사항·추론·어휘·수사적 목적 등을 묻는 문제를 풉니다. <strong>문장 삽입(Insert Text)</strong> 문제는 지문 속 검정 사각형[■]을 클릭하면 제시문이 그 위치에 삽입되어 미리보기가 가능하며, 우측 선택지가 자동으로 선택됩니다.
+              </p>
+            </div>
+          </div>
+        </Shell>
+      );
+    }
+
+    return (
+      <Shell
+        badge="Reading Section · 안내 3/3"
+        title="진행 방법"
+        onBack={() => setIntroStep(1)}
+        onNext={beginTest}
+        nextLabel="Module 1 시작 →"
+      >
+        <ul className="space-y-2.5 text-sm text-gray-700">
+          <li className="flex items-start gap-2">
+            <span className="mt-0.5 text-gray-400">•</span>
+            지문은 왼쪽, 문제는 오른쪽에 표시됩니다 (Complete the Words는 전체 화면).
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="mt-0.5 text-gray-400">•</span>
+            <strong>Back / Next</strong>로 같은 Module 내 문제를 자유롭게 이동할 수 있습니다.
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="mt-0.5 text-gray-400">•</span>
+            상단 <strong>문제 목록</strong> 버튼으로 전체 문항의 응답 여부를 한눈에 보고 바로 이동할 수 있습니다. ⚑ 로 나중에 다시 볼 문제를 표시해두세요.
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="mt-0.5 text-gray-400">•</span>
+            Module 1을 완료(또는 시간 종료)하면 <strong>Module 2로 자동 전환</strong>되며, 이전 Module로는 돌아갈 수 없습니다.
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="mt-0.5 text-gray-400">•</span>
+            <strong>Module 1 시작</strong>을 누르는 즉시 타이머가 시작됩니다.
+          </li>
+        </ul>
+      </Shell>
     );
   }
 
@@ -1028,6 +1180,70 @@ export default function MockTestPlayer({
   const isFlagged = flagged.has(currentQ.id);
   const isLastInStage = stageLocalIdx >= stageTotal - 1;
 
+  // Insert Text (Q_AC_07): click a [■] square in the passage to preview the
+  // target sentence there and auto-select the matching choice.
+  const isInsertionActive = currentQ.type === "insertion" && currentQ.passageKind === "academic_passage";
+  const selectedMarkerIdx = isInsertionActive
+    ? currentQ.choices.findIndex((c) => c.id === currentAnswer)
+    : -1;
+
+  function renderInsertionPassage() {
+    const paraMatches = currentQ!.passageHtml.match(/<p[^>]*>([\s\S]*?)<\/p>/gi);
+    const paragraphs = paraMatches && paraMatches.length > 0
+      ? paraMatches.map((p) => p.replace(/<\/?p[^>]*>/gi, ""))
+      : [currentQ!.passageHtml];
+
+    return (
+      <>
+        {paragraphs.map((para, pi) => {
+          const plain = para.replace(/<[^>]+>/g, "");
+          const parts = plain.split(/\[\[INS:(\d)\]\]/g);
+          return (
+            <p key={pi} style={{ fontSize: 16, lineHeight: 1.9, color: "#222", marginBottom: 16 }}>
+              {parts.map((part, i) => {
+                if (i % 2 === 1) {
+                  const markerIdx = Number(part);
+                  const isSelected = selectedMarkerIdx === markerIdx;
+                  const choice = currentQ!.choices[markerIdx];
+                  return (
+                    <span key={i}>
+                      <button
+                        type="button"
+                        onClick={() => choice && handleSelect(choice.id)}
+                        title="여기에 문장 삽입"
+                        style={{
+                          display: "inline-block",
+                          margin: "0 3px",
+                          padding: "1px 8px",
+                          fontSize: 15,
+                          fontWeight: 900,
+                          color: isSelected ? "#fff" : "#0073E6",
+                          backgroundColor: isSelected ? "#0073E6" : "transparent",
+                          border: "1.5px solid #0073E6",
+                          borderRadius: 3,
+                          cursor: "pointer",
+                          lineHeight: 1.4,
+                        }}
+                      >
+                        ■
+                      </button>
+                      {isSelected && currentQ!.insertionTargetSentence && (
+                        <span style={{ backgroundColor: "#FFF3B0", padding: "1px 4px", fontWeight: 600 }}>
+                          {" "}{currentQ!.insertionTargetSentence}{" "}
+                        </span>
+                      )}
+                    </span>
+                  );
+                }
+                return <span key={i}>{part}</span>;
+              })}
+            </p>
+          );
+        })}
+      </>
+    );
+  }
+
   const header = (
     <>
       {/* 좌: 라벨 + 모듈 배지 */}
@@ -1094,17 +1310,21 @@ export default function MockTestPlayer({
           dangerouslySetInnerHTML={{ __html: currentQ.passageContentHtml ?? "" }}
         />
       ) : (
-        /* Academic Passage: 기존 prose 렌더 */
+        /* Academic Passage: 기존 prose 렌더 (Insert Text 문제일 땐 인터랙티브 렌더) */
         <>
           {currentQ.passageTitle && (
             <h2 style={{ fontSize: 18, fontWeight: 800, color: "#111", marginBottom: 20 }}>
               {currentQ.passageTitle}
             </h2>
           )}
-          <div
-            style={{ fontSize: 16, lineHeight: 1.75, color: "#222" }}
-            dangerouslySetInnerHTML={{ __html: currentQ.passageHtml }}
-          />
+          {isInsertionActive ? (
+            <div style={{ color: "#222" }}>{renderInsertionPassage()}</div>
+          ) : (
+            <div
+              style={{ fontSize: 16, lineHeight: 1.75, color: "#222" }}
+              dangerouslySetInnerHTML={{ __html: currentQ.passageHtml.replace(/\[\[INS:\d\]\]/g, "") }}
+            />
+          )}
         </>
       )}
     </div>
@@ -1185,6 +1405,12 @@ export default function MockTestPlayer({
         <p className="mb-3 text-xs text-blue-600">
           {currentQ.summarySelectionCount}개를 선택하세요 (현재{" "}
           {((currentAnswer as string[]) ?? []).length}개)
+        </p>
+      )}
+
+      {isInsertionActive && (
+        <p className="mb-3 text-xs text-blue-600">
+          왼쪽 지문에서 검정 사각형[■]을 클릭해 문장이 삽입될 위치를 선택하세요.
         </p>
       )}
 

@@ -47,6 +47,20 @@ STRUCTURE (do not deviate from these counts):
   - easy (Lower): 15 questions, 2 passages — complete_words (10 blanks, simpler vocab) + academic_passage (5 questions, low difficulty/shorter/more direct factual questions). NO daily_life in this branch.
   - IMPORTANT: hard and easy use the SAME topics (given below) but written at different difficulty levels — this is intentional, not a mistake.
 
+QUESTION TYPE DISTRIBUTION (controls the "type" field on each question — use these exact values: vocab | detail | negative_detail | paraphrasing | inference | purpose | insertion):
+
+- Module 1 academic_passage (5 questions): a natural mix — 2x detail, 1x vocab, 1x purpose or inference, 1x insertion.
+- Module 1 daily_life (4 questions each, x2 passages): mix of purpose (writer's goal), detail (a specific fact — price/deadline/policy), inference (what the reader should do next), and one more detail or purpose — vary between the 2 passages so they don't feel identical.
+- stage2Pool.hard academic_passage (5 questions) — HIGH difficulty, discriminates top scorers: 2x inference, 1x purpose, 1x paraphrasing (sentence-simplification style: "which sentence best expresses the essential information of the highlighted sentence"), 1x insertion. Do NOT use plain "detail" questions here — every question should require synthesis, not surface lookup.
+- stage2Pool.easy academic_passage (5 questions) — LOW difficulty, direct surface-level questions: 3x detail, 1x negative_detail ("which of the following is NOT true / is NOT mentioned" — bold NOT/EXCEPT in the stem), 1x vocab. Do NOT use inference or insertion here.
+
+INSERTION QUESTIONS (type: "insertion") — CRITICAL interactive format:
+- In passageHtml, embed exactly 4 inline markers at candidate insertion points using this exact syntax: [[INS:0]] [[INS:1]] [[INS:2]] [[INS:3]] (0-indexed, in reading order). These render as clickable squares on the frontend — do not use any other marker format.
+- meta.insertion.targetSentence: the exact sentence to be inserted (a string), separate from passageHtml.
+- meta.insertion.correctIndex: which marker index (0-3) is the correct placement.
+- choices must be exactly 4 options in marker order: [{"text":"First square"},{"text":"Second square"},{"text":"Third square"},{"text":"Fourth square"}], with isCorrect:true on the one matching correctIndex.
+- stem should read like: "Look at the four squares [■] that indicate where the following sentence could be added to the passage: '<the target sentence>'. Where would the sentence best fit?"
+
 TOPICS:
 - Module 1 Complete the Words topic: "${cwTopicM1}"
 - Module 1 Daily Life #1 topic: "${dailyLifeTopic1}"
@@ -75,12 +89,13 @@ B. daily_life (campus notice / email / menu / bill / SNS post / message chain):
 C. academic_passage:
 - passageHtml: "<p>paragraph 1...</p><p>paragraph 2...</p><p>paragraph 3...</p>" (3 paragraphs, ~200-250 words total)
 - No <h3> title in passageHtml — title goes in separate "title" field
-- EXACTLY 5 questions: mix of detail, vocab, inference, purpose, insertion types
-- For insertion type: add meta: { "insertion": { "anchors": ["after sentence 1", "after sentence 2", "after sentence 3", "after sentence 4"], "correctIndex": 1 } }
-- All other types: exactly 1 isCorrect: true choice
+- If the question set includes an insertion question, embed the 4 [[INS:0]]..[[INS:3]] markers directly inside passageHtml at natural sentence-boundary points (see INSERTION QUESTIONS spec above)
+- EXACTLY 5 questions, types per the QUESTION TYPE DISTRIBUTION rules above
+- All non-insertion types: exactly 1 isCorrect: true choice
 
 QUESTION format:
-{ "id": "...", "number": N, "type": "detail|vocab|inference|purpose|insertion", "stem": "...", "choices": [{"id":"...","text":"...","isCorrect":bool},...4 choices] }
+{ "id": "...", "number": N, "type": "detail|negative_detail|vocab|inference|purpose|paraphrasing|insertion", "stem": "...", "choices": [{"id":"...","text":"...","isCorrect":bool},...4 choices], "meta": { "insertion": { "targetSentence": "...", "correctIndex": 0 } } }
+(omit "meta" entirely for non-insertion questions)
 
 Return ONLY valid JSON, no markdown fences:
 
@@ -107,8 +122,14 @@ Return ONLY valid JSON, no markdown fences:
         },
         { "id": "m1-ac1", "taskKind": "academic_passage", "stage": 1, "difficulty": "core",
           "title": "Passage Title",
-          "passageHtml": "...",
-          "questions": [ ...5 questions... ]
+          "passageHtml": "<p>Paragraph 1 text with an example sentence. [[INS:0]] Another sentence follows. [[INS:1]] A third sentence. [[INS:2]] The final sentence of the paragraph. [[INS:3]]</p><p>Paragraph 2...</p>",
+          "questions": [
+            { "id": "m1-ac1-q1", "number": 1, "type": "detail", "stem": "...", "choices": [ ...4 choices, 1 isCorrect:true... ] },
+            { "id": "m1-ac1-q5", "number": 5, "type": "insertion", "stem": "Look at the four squares [■] that indicate where the following sentence could be added to the passage: 'The target sentence text here.' Where would the sentence best fit?",
+              "choices": [ {"id":"c1","text":"First square","isCorrect":false}, {"id":"c2","text":"Second square","isCorrect":true}, {"id":"c3","text":"Third square","isCorrect":false}, {"id":"c4","text":"Fourth square","isCorrect":false} ],
+              "meta": { "insertion": { "targetSentence": "The target sentence text here.", "correctIndex": 1 } }
+            }
+          ]
         }
       ]
     },
