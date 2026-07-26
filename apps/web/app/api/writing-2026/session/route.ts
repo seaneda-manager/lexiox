@@ -14,7 +14,7 @@ type SessionRow = {
   id: string;
   user_id: string | null;
   test_id: string;
-  answers: Record<string, string>;
+  raw_answers: Record<string, string>;
   created_at: string;
   updated_at: string;
 };
@@ -92,8 +92,8 @@ export async function POST(req: NextRequest) {
     .insert({
       user_id: user.id,
       test_id: testId,
-      // 🧠 DB 스키마 기준: answers(jsonb) 컬럼 사용
-      answers,
+      // DB 컬럼명은 raw_answers (answers 컬럼은 존재하지 않음 — /api/writing-2026/grade가 이미 raw_answers를 씀)
+      raw_answers: answers,
     })
     .select("id")
     .single();
@@ -128,7 +128,7 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await supabase
     .from("writing_2026_sessions")
-    .select("id, user_id, test_id, answers, created_at, updated_at")
+    .select("id, user_id, test_id, raw_answers, created_at, updated_at")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(limit);
