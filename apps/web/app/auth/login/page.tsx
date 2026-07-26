@@ -21,9 +21,15 @@ export default function LoginPage() {
         formData.append("password", password);
 
         const result = await signInEmailPassword(formData);
-        if (!result.ok) throw new Error(result.error || "Login failed");
+
+        // 로그인이 성공하면 서버 액션이 redirect()를 호출하므로 반환값이 없다.
+        // 여기서 result.ok를 바로 읽으면 TypeError가 나고, 아래 catch가 그걸
+        // 로그인 실패 메시지로 바꿔 띄운다 (실제로는 성공한 상황).
+        if (result && !result.ok) {
+          setError(result.error || "Login failed");
+        }
       } catch (err: any) {
-        setError(err.message || "Login failed");
+        setError(err?.message || "Login failed");
       }
     });
   }
