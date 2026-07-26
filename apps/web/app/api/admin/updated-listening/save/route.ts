@@ -28,7 +28,28 @@ export async function POST(req: Request) {
       : await sb.from('listening_tests_2026').insert(row);
 
     if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
-    return NextResponse.json({ ok: true });
+
+    // 즉시 listening_tests에 저장 (Lock 불필요)
+    const { error: insertError } = await sb
+      .from('listening_tests')
+      .insert({
+        id: test.meta.id,
+        label: test.meta.label,
+        exam_era: 'ibt_2026',
+        content: test,
+        status: 'active',
+        created_at: new Date().toISOString(),
+      })
+      .onConflict('id')
+      .update({
+        content: test,
+        status: 'active',
+        updated_at: new Date().toISOString(),
+      });
+
+    if (insertError) console.warn('listening_tests insert:', insertError);
+
+    return NextResponse.json({ ok: true, testId: test.meta.id });
   } catch (err: any) {
     return NextResponse.json({ ok: false, error: err?.message }, { status: 500 });
   }

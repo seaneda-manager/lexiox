@@ -6,13 +6,14 @@ export const runtime = 'nodejs';
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || 'placeholder' });
 
-type TopicKind = 'conversation' | 'lecture' | 'campus';
+type TopicKind = 'conversation' | 'announcement' | 'lecture1' | 'lecture2';
 
 async function suggestTopics(kind: TopicKind, existingTopics: string[]): Promise<string[]> {
   const kindLabel: Record<TopicKind, string> = {
     conversation: 'Campus Conversation',
-    lecture: 'Academic Lecture',
-    campus: 'Campus Announcement/Audio Log',
+    announcement: 'Campus Announcement',
+    lecture1: 'Academic Lecture',
+    lecture2: 'Academic Lecture',
   };
 
   const prompt = `You are an expert TOEFL iBT Listening content creator. Generate 4-5 diverse, realistic topic ideas for "${kindLabel[kind]}".
@@ -61,9 +62,9 @@ export async function POST(req: Request) {
   try {
     const { kind } = await req.json();
 
-    if (!['conversation', 'lecture', 'campus'].includes(kind)) {
+    if (!['conversation', 'announcement', 'lecture1', 'lecture2'].includes(kind)) {
       return NextResponse.json(
-        { ok: false, error: 'Invalid kind. Must be one of: conversation, lecture, campus' },
+        { ok: false, error: 'Invalid kind. Must be one of: conversation, announcement, lecture1, lecture2' },
         { status: 400 }
       );
     }
@@ -82,10 +83,12 @@ export async function POST(req: Request) {
         if (payload?.meta) {
           if (kind === 'conversation' && payload.meta.conversationTopic) {
             existingTopics.push(payload.meta.conversationTopic);
-          } else if (kind === 'lecture' && payload.meta.lectureTopic) {
-            existingTopics.push(payload.meta.lectureTopic);
-          } else if (kind === 'campus' && payload.meta.campusTopic) {
-            existingTopics.push(payload.meta.campusTopic);
+          } else if (kind === 'announcement' && payload.meta.announcementTopic) {
+            existingTopics.push(payload.meta.announcementTopic);
+          } else if ((kind === 'lecture1' || kind === 'lecture2') && payload.meta.lectureTopic1) {
+            existingTopics.push(payload.meta.lectureTopic1);
+          } else if ((kind === 'lecture1' || kind === 'lecture2') && payload.meta.lectureTopic2) {
+            existingTopics.push(payload.meta.lectureTopic2);
           }
         }
       }

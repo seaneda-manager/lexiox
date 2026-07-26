@@ -1,81 +1,218 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { LListeningTest2026Linear, LListeningTrack2026, LQuestion2026 } from "@/models/listening";
+import type { LListeningTest2026Linear, LListeningTrack2026 } from "@/models/listening";
 
 type Phase = "input" | "generating" | "edit" | "saving" | "locked";
 
 const KIND_LABEL: Record<string, string> = {
+  choose_response: "Choose a Response",
   conversation: "Conversation",
+  academic_talk: "Academic Talk",
   academic_lecture: "Academic Lecture",
-  campus_audio_log: "Campus Audio Log",
+  announcement: "Announcement",
 };
 
 const KIND_COLOR: Record<string, string> = {
+  choose_response: "bg-rose-100 text-rose-700",
   conversation: "bg-sky-100 text-sky-700",
+  academic_talk: "bg-indigo-100 text-indigo-700",
   academic_lecture: "bg-indigo-100 text-indigo-700",
-  campus_audio_log: "bg-teal-100 text-teal-700",
+  announcement: "bg-amber-100 text-amber-700",
 };
+
+type TopicColor = "sky" | "amber" | "indigo";
+
+const COLOR_CLASSES: Record<TopicColor, { label: string; border: string; ring: string; suggestBorder: string; suggestText: string; suggestHover: string; chipBorder: string; chipBg: string; chipText: string; chipHover: string }> = {
+  sky: {
+    label: "text-sky-700",
+    border: "border-sky-200",
+    ring: "focus:ring-sky-400",
+    suggestBorder: "border-sky-300",
+    suggestText: "text-sky-600",
+    suggestHover: "hover:bg-sky-50",
+    chipBorder: "border-sky-300",
+    chipBg: "bg-sky-50",
+    chipText: "text-sky-700",
+    chipHover: "hover:bg-sky-100",
+  },
+  amber: {
+    label: "text-amber-700",
+    border: "border-amber-200",
+    ring: "focus:ring-amber-400",
+    suggestBorder: "border-amber-300",
+    suggestText: "text-amber-600",
+    suggestHover: "hover:bg-amber-50",
+    chipBorder: "border-amber-300",
+    chipBg: "bg-amber-50",
+    chipText: "text-amber-700",
+    chipHover: "hover:bg-amber-100",
+  },
+  indigo: {
+    label: "text-indigo-700",
+    border: "border-indigo-200",
+    ring: "focus:ring-indigo-400",
+    suggestBorder: "border-indigo-300",
+    suggestText: "text-indigo-600",
+    suggestHover: "hover:bg-indigo-50",
+    chipBorder: "border-indigo-300",
+    chipBg: "bg-indigo-50",
+    chipText: "text-indigo-700",
+    chipHover: "hover:bg-indigo-100",
+  },
+};
+
+type TopicFieldConfig = {
+  key: string;
+  label: string;
+  placeholder: string;
+  color: TopicColor;
+  suggestKind: "conversation" | "announcement" | "lecture1" | "lecture2";
+};
+
+// Module 1: 공통 baseline (모든 학생). Choose a Response 5-7 + Conversation 1 + Announcement 1 + Academic Talk 1
+const MODULE1_FIELDS: TopicFieldConfig[] = [
+  { key: "m1_conversation", label: "💬 Conversation", placeholder: "예: Campus library hours", color: "sky", suggestKind: "conversation" },
+  { key: "m1_announcement", label: "📢 Announcement", placeholder: "예: Career fair announcement", color: "amber", suggestKind: "announcement" },
+  { key: "m1_lecture1", label: "🎓 Academic Lecture", placeholder: "예: Marine biology", color: "indigo", suggestKind: "lecture1" },
+];
+
+// Module 2: Hard(Announcement x2 + Academic Talk x2, Conversation 없음) / Easy(Conversation x3 + Announcement x2, Academic Talk 없음)
+// Announcement 주제는 Hard/Easy가 공유(난이도만 다르게 생성)
+const MODULE2_FIELDS: TopicFieldConfig[] = [
+  { key: "m2_conversation1", label: "💬 Conversation #1", placeholder: "예: Campus library hours", color: "sky", suggestKind: "conversation" },
+  { key: "m2_conversation2", label: "💬 Conversation #2", placeholder: "예: Dorm roommate conflict", color: "sky", suggestKind: "conversation" },
+  { key: "m2_conversation3", label: "💬 Conversation #3", placeholder: "예: Course registration issue", color: "sky", suggestKind: "conversation" },
+  { key: "m2_announcement1", label: "📢 Announcement #1", placeholder: "예: Career fair announcement", color: "amber", suggestKind: "announcement" },
+  { key: "m2_announcement2", label: "📢 Announcement #2", placeholder: "예: Campus recycling program", color: "amber", suggestKind: "announcement" },
+  { key: "m2_lecture1", label: "🎓 Lecture #1", placeholder: "예: Marine biology", color: "indigo", suggestKind: "lecture1" },
+  { key: "m2_lecture2", label: "🎓 Lecture #2", placeholder: "예: Photosynthesis", color: "indigo", suggestKind: "lecture2" },
+];
+
+const ALL_FIELDS = [...MODULE1_FIELDS, ...MODULE2_FIELDS];
+
+function AudioStatusBadge({ track }: { track: LListeningTrack2026 }) {
+  if (track.taskKind === 'choose_response') {
+    const questions = track.questions ?? [];
+    const doneCount = questions.filter((q: any) => q.audioUrl).length;
+    if (doneCount === 0) {
+      return <span className="text-[11px] text-rose-500">질문별 음성 없음</span>;
+    }
+    if (doneCount === questions.length) {
+      return <span className="text-[11px] text-emerald-600">🎧 전체 완료 ({doneCount}/{questions.length})</span>;
+    }
+    return <span className="text-[11px] text-amber-600">🎧 {doneCount}/{questions.length} 완료</span>;
+  }
+  return track.audioUrl ? (
+    <span className="text-[11px] text-emerald-600">🎧 음성 완료</span>
+  ) : (
+    <span className="text-[11px] text-rose-500">음성 없음</span>
+  );
+}
+
+function TopicInput({
+  field,
+  value,
+  onChange,
+  disabled,
+  loadingSuggestion,
+  onSuggest,
+  suggestionList,
+  onSelectSuggestion,
+}: {
+  field: TopicFieldConfig;
+  value: string;
+  onChange: (val: string) => void;
+  disabled: boolean;
+  loadingSuggestion: boolean;
+  onSuggest: () => void;
+  suggestionList: string[];
+  onSelectSuggestion: (topic: string) => void;
+}) {
+  const c = COLOR_CLASSES[field.color];
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <label className={`text-xs font-semibold ${c.label}`}>{field.label}</label>
+        <button
+          onClick={onSuggest}
+          disabled={loadingSuggestion || disabled}
+          className={`text-[10px] px-2 py-1 rounded border ${c.suggestBorder} ${c.suggestText} ${c.suggestHover} disabled:opacity-50`}
+        >
+          {loadingSuggestion ? '추천 중…' : '💡 추천'}
+        </button>
+      </div>
+      <input
+        className={`w-full rounded-lg border ${c.border} px-3 py-2 text-sm focus:outline-none focus:ring-2 ${c.ring} disabled:bg-gray-50`}
+        placeholder={field.placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+      />
+      {suggestionList.length > 0 && (
+        <div className="flex flex-wrap gap-2 pt-1">
+          {suggestionList.map((topic, i) => (
+            <button
+              key={i}
+              onClick={() => onSelectSuggestion(topic)}
+              className={`text-[11px] px-2.5 py-1 rounded-full border ${c.chipBorder} ${c.chipBg} ${c.chipText} ${c.chipHover} transition cursor-pointer`}
+            >
+              {topic}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function ListeningTestGeneratorClient() {
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>("input");
-  const [conversationTopic, setConversationTopic] = useState("");
-  const [lectureTopic, setLectureTopic] = useState("");
-  const [campusTopic, setCampusTopic] = useState("");
+
+  const [topics, setTopics] = useState<Record<string, string>>(
+    Object.fromEntries(ALL_FIELDS.map(f => [f.key, ""]))
+  );
+
   const [error, setError] = useState<string | null>(null);
   const [test, setTest] = useState<LListeningTest2026Linear | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
 
   // 주제 추천 상태
-  const [conversationSuggestions, setConversationSuggestions] = useState<string[]>([]);
-  const [lectureSuggestions, setLectureSuggestions] = useState<string[]>([]);
-  const [campusSuggestions, setCampusSuggestions] = useState<string[]>([]);
+  const [suggestions, setSuggestions] = useState<Record<string, string[]>>({});
   const [loadingSuggestions, setLoadingSuggestions] = useState<Record<string, boolean>>({});
 
-  const canGenerate = conversationTopic.trim() && lectureTopic.trim() && campusTopic.trim();
+  const canGenerate = ALL_FIELDS.every(f => topics[f.key]?.trim());
+
+  const setTopic = (key: string, value: string) => setTopics(prev => ({ ...prev, [key]: value }));
 
   const handleSuggestTopics = useCallback(
-    async (kind: 'conversation' | 'lecture' | 'campus') => {
-      setLoadingSuggestions(prev => ({ ...prev, [kind]: true }));
+    async (field: TopicFieldConfig) => {
+      setLoadingSuggestions(prev => ({ ...prev, [field.key]: true }));
       setError(null);
       try {
         const res = await fetch('/api/admin/updated-listening/suggest-topics', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ kind }),
+          body: JSON.stringify({ kind: field.suggestKind }),
         });
         const data = await res.json();
         if (!data.ok) throw new Error(data.error ?? 'Failed to suggest topics');
 
-        if (kind === 'conversation') {
-          setConversationSuggestions(data.suggestions);
-        } else if (kind === 'lecture') {
-          setLectureSuggestions(data.suggestions);
-        } else if (kind === 'campus') {
-          setCampusSuggestions(data.suggestions);
-        }
+        setSuggestions(prev => ({ ...prev, [field.key]: data.suggestions }));
       } catch (e: any) {
         setError(`주제 추천 실패: ${e.message}`);
       } finally {
-        setLoadingSuggestions(prev => ({ ...prev, [kind]: false }));
+        setLoadingSuggestions(prev => ({ ...prev, [field.key]: false }));
       }
     },
     []
   );
 
-  const handleSelectSuggestion = (kind: 'conversation' | 'lecture' | 'campus', topic: string) => {
-    if (kind === 'conversation') {
-      setConversationTopic(topic);
-      setConversationSuggestions([]);
-    } else if (kind === 'lecture') {
-      setLectureTopic(topic);
-      setLectureSuggestions([]);
-    } else if (kind === 'campus') {
-      setCampusTopic(topic);
-      setCampusSuggestions([]);
-    }
+  const handleSelectSuggestion = (key: string, topic: string) => {
+    setTopic(key, topic);
+    setSuggestions(prev => ({ ...prev, [key]: [] }));
   };
 
   const handleGenerate = useCallback(async () => {
@@ -86,7 +223,22 @@ export default function ListeningTestGeneratorClient() {
       const res = await fetch("/api/admin/updated-listening/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ conversationTopic, lectureTopic, campusTopic }),
+        body: JSON.stringify({
+          module1: {
+            conversationTopic: topics.m1_conversation,
+            announcementTopic: topics.m1_announcement,
+            lectureTopic1: topics.m1_lecture1,
+          },
+          module2: {
+            conversationTopic: topics.m2_conversation1,
+            conversationTopic2: topics.m2_conversation2,
+            conversationTopic3: topics.m2_conversation3,
+            announcementTopic: topics.m2_announcement1,
+            announcementTopic2: topics.m2_announcement2,
+            lectureTopic1: topics.m2_lecture1,
+            lectureTopic2: topics.m2_lecture2,
+          },
+        }),
       });
       const data = await res.json();
       if (!data.ok) throw new Error(data.error ?? "Generation failed");
@@ -96,58 +248,10 @@ export default function ListeningTestGeneratorClient() {
       setError(e.message);
       setPhase("input");
     }
-  }, [conversationTopic, lectureTopic, campusTopic, canGenerate]);
+  }, [topics, canGenerate]);
 
   const setLabel = (label: string) =>
     setTest((prev) => prev ? { ...prev, meta: { ...prev.meta, label } } : prev);
-
-  const setTranscript = (ti: number, val: string) =>
-    setTest((prev) => {
-      if (!prev) return prev;
-      const next = structuredClone(prev);
-      if (next.tracks[ti]) next.tracks[ti].transcript = val;
-      return next;
-    });
-
-  const setQStem = (ti: number, qi: number, val: string) =>
-    setTest((prev) => {
-      if (!prev) return prev;
-      const next = structuredClone(prev);
-      const q = next.tracks[ti]?.questions?.[qi];
-      if (q) q.stem = val;
-      return next;
-    });
-
-  const setChoiceText = (ti: number, qi: number, ci: number, val: string) =>
-    setTest((prev) => {
-      if (!prev) return prev;
-      const next = structuredClone(prev);
-      const c = next.tracks[ti]?.questions?.[qi]?.choices?.[ci];
-      if (c) c.text = val;
-      return next;
-    });
-
-  const setCorrect = (ti: number, qi: number, ci: number) =>
-    setTest((prev) => {
-      if (!prev) return prev;
-      const next = structuredClone(prev);
-      const q = next.tracks[ti]?.questions?.[qi];
-      if (!q) return next;
-      const isMulti = (q.selectCount ?? 1) > 1;
-      if (isMulti) {
-        // toggle
-        const current = q.correctIndices ?? [];
-        const newIdx = current.includes(ci)
-          ? current.filter((i) => i !== ci)
-          : [...current, ci];
-        q.correctIndices = newIdx;
-        q.choices.forEach((c, i) => { c.isCorrect = newIdx.includes(i); });
-      } else {
-        q.correctIndices = [ci];
-        q.choices.forEach((c, i) => { c.isCorrect = i === ci; });
-      }
-      return next;
-    });
 
   const handleSave = useCallback(async () => {
     if (!test) return;
@@ -169,191 +273,84 @@ export default function ListeningTestGeneratorClient() {
     }
   }, [test]);
 
-  const handleLock = useCallback(async () => {
+  const handleStartTest = useCallback(async () => {
     const id = savedId ?? test?.meta.id;
     if (!id) { setError("먼저 저장하세요."); return; }
-    if (!confirm("Lock하면 이후 수정이 불가합니다. 진행할까요?")) return;
-    setError(null);
-    setPhase("saving");
-    try {
-      await fetch("/api/admin/updated-listening/save", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ test }),
-      });
-      const res = await fetch("/api/admin/updated-listening/lock", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
-      });
-      const data = await res.json();
-      if (!data.ok) throw new Error(data.error ?? "Lock failed");
-      setPhase("locked");
-    } catch (e: any) {
-      setError(e.message);
-      setPhase("edit");
-    }
-  }, [savedId, test]);
 
-  const handleGenerateScript = useCallback(
-    async (trackIndex: number, isHard: boolean) => {
-      if (!test) return;
-      const module = isHard ? test.hard : test.easy;
-      const track = module.tracks[trackIndex];
-      if (!track || !track.transcript) {
-        setError("스크립트를 먼저 입력해주세요.");
-        return;
-      }
-
+    // 저장되지 않은 변경사항이 있으면 저장
+    if (!savedId && test) {
       setError(null);
+      setPhase("saving");
       try {
-        const res = await fetch("/api/admin/listening/generate-script", {
+        await fetch("/api/admin/updated-listening/save", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            transcript: track.transcript,
-            taskKind: track.taskKind,
-          }),
-        });
-        const data = await res.json();
-        if (!data.ok) throw new Error(data.error ?? "Script generation failed");
-
-        // test 상태 업데이트
-        setTest((prev) => {
-          if (!prev) return prev;
-          const next = structuredClone(prev);
-          const targetModule = isHard ? next.hard : next.easy;
-          targetModule.tracks[trackIndex].scriptSegments = data.payload;
-          return next;
+          body: JSON.stringify({ test }),
         });
       } catch (e: any) {
-        setError(`스크립트 생성 실패: ${e.message}`);
+        setError(e.message);
+        setPhase("edit");
+        return;
       }
-    },
-    [test]
-  );
+    }
 
-  if (phase === "locked") {
-    return (
-      <div className="space-y-4 text-center py-12">
-        <div className="text-4xl">🔒</div>
-        <p className="text-sm font-semibold text-gray-800">시험이 Lock되었습니다.</p>
-        <div className="flex justify-center gap-3">
-          <button onClick={() => router.push("/admin/content/updated-listening")} className="rounded-lg border px-4 py-2 text-xs hover:bg-gray-50">목록으로</button>
-          <button onClick={() => { setPhase("input"); setTest(null); setSavedId(null); }} className="rounded-lg border border-violet-500 bg-violet-600 px-4 py-2 text-xs text-white hover:bg-violet-700">새 시험 만들기</button>
-        </div>
-      </div>
-    );
-  }
+    // 테스트 시작
+    window.location.href = `/listening/session/${id}`;
+  }, [savedId, test]);
+
+  const module1Tracks = test?.modules?.[0]?.items ?? [];
+  const hardTracks = test?.stage2Pool?.hard?.items ?? [];
+  const easyTracks = test?.stage2Pool?.easy?.items ?? [];
 
   return (
     <div className="space-y-6">
       {/* Topic Inputs */}
-      <section className="rounded-xl border bg-white p-4 shadow-sm space-y-3">
-        <h2 className="text-sm font-semibold">토픽 입력 (3가지)</h2>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {/* Conversation Topic */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-sky-700">💬 Conversation</label>
-              <button
-                onClick={() => handleSuggestTopics('conversation')}
-                disabled={loadingSuggestions['conversation'] || phase === 'generating'}
-                className="text-[10px] px-2 py-1 rounded border border-sky-300 text-sky-600 hover:bg-sky-50 disabled:opacity-50"
-              >
-                {loadingSuggestions['conversation'] ? '추천 중…' : '💡 추천'}
-              </button>
-            </div>
-            <input
-              className="w-full rounded-lg border border-sky-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400 disabled:bg-gray-50"
-              placeholder="예: Campus library hours"
-              value={conversationTopic}
-              onChange={(e) => setConversationTopic(e.target.value)}
-              disabled={phase === "generating"}
-            />
-            {conversationSuggestions.length > 0 && (
-              <div className="flex flex-wrap gap-2 pt-1">
-                {conversationSuggestions.map((topic, i) => (
-                  <button
-                    key={i}
-                    onClick={() => handleSelectSuggestion('conversation', topic)}
-                    className="text-[11px] px-2.5 py-1 rounded-full border border-sky-300 bg-sky-50 text-sky-700 hover:bg-sky-100 transition cursor-pointer"
-                  >
-                    {topic}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Lecture Topic */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-indigo-700">🎓 Academic Lecture</label>
-              <button
-                onClick={() => handleSuggestTopics('lecture')}
-                disabled={loadingSuggestions['lecture'] || phase === 'generating'}
-                className="text-[10px] px-2 py-1 rounded border border-indigo-300 text-indigo-600 hover:bg-indigo-50 disabled:opacity-50"
-              >
-                {loadingSuggestions['lecture'] ? '추천 중…' : '💡 추천'}
-              </button>
-            </div>
-            <input
-              className="w-full rounded-lg border border-indigo-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 disabled:bg-gray-50"
-              placeholder="예: Marine biology / Photosynthesis"
-              value={lectureTopic}
-              onChange={(e) => setLectureTopic(e.target.value)}
-              disabled={phase === "generating"}
-            />
-            {lectureSuggestions.length > 0 && (
-              <div className="flex flex-wrap gap-2 pt-1">
-                {lectureSuggestions.map((topic, i) => (
-                  <button
-                    key={i}
-                    onClick={() => handleSelectSuggestion('lecture', topic)}
-                    className="text-[11px] px-2.5 py-1 rounded-full border border-indigo-300 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition cursor-pointer"
-                  >
-                    {topic}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Campus Topic */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-teal-700">📢 Campus Audio Log</label>
-              <button
-                onClick={() => handleSuggestTopics('campus')}
-                disabled={loadingSuggestions['campus'] || phase === 'generating'}
-                className="text-[10px] px-2 py-1 rounded border border-teal-300 text-teal-600 hover:bg-teal-50 disabled:opacity-50"
-              >
-                {loadingSuggestions['campus'] ? '추천 중…' : '💡 추천'}
-              </button>
-            </div>
-            <input
-              className="w-full rounded-lg border border-teal-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 disabled:bg-gray-50"
-              placeholder="예: Career fair announcement"
-              value={campusTopic}
-              onChange={(e) => setCampusTopic(e.target.value)}
-              disabled={phase === "generating"}
-            />
-            {campusSuggestions.length > 0 && (
-              <div className="flex flex-wrap gap-2 pt-1">
-                {campusSuggestions.map((topic, i) => (
-                  <button
-                    key={i}
-                    onClick={() => handleSelectSuggestion('campus', topic)}
-                    className="text-[11px] px-2.5 py-1 rounded-full border border-teal-300 bg-teal-50 text-teal-700 hover:bg-teal-100 transition cursor-pointer"
-                  >
-                    {topic}
-                  </button>
-                ))}
-              </div>
-            )}
+      <section className="rounded-xl border bg-white p-4 shadow-sm space-y-6">
+        <div>
+          <h2 className="text-sm font-semibold mb-4">
+            📘 Module 1 (공통 - 모든 학생) 주제 3가지
+          </h2>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            {MODULE1_FIELDS.map(field => (
+              <TopicInput
+                key={field.key}
+                field={field}
+                value={topics[field.key]}
+                onChange={(val) => setTopic(field.key, val)}
+                disabled={phase === "generating"}
+                loadingSuggestion={!!loadingSuggestions[field.key]}
+                onSuggest={() => handleSuggestTopics(field)}
+                suggestionList={suggestions[field.key] ?? []}
+                onSelectSuggestion={(topic) => handleSelectSuggestion(field.key, topic)}
+              />
+            ))}
           </div>
         </div>
+
+        <div>
+          <h2 className="text-sm font-semibold mb-4">
+            🔴🟢 Module 2 (적응형 - Hard & Easy) 주제 7가지{" "}
+            <span className="text-[11px] text-gray-500 font-normal">
+              (Hard: Announcement×2 + Lecture×2 · Easy: Conversation×3 + Announcement×2 — Announcement 주제는 공유, 난이도만 다르게 생성)
+            </span>
+          </h2>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {MODULE2_FIELDS.map(field => (
+              <TopicInput
+                key={field.key}
+                field={field}
+                value={topics[field.key]}
+                onChange={(val) => setTopic(field.key, val)}
+                disabled={phase === "generating"}
+                loadingSuggestion={!!loadingSuggestions[field.key]}
+                onSuggest={() => handleSuggestTopics(field)}
+                suggestionList={suggestions[field.key] ?? []}
+                onSelectSuggestion={(topic) => handleSelectSuggestion(field.key, topic)}
+              />
+            ))}
+          </div>
+        </div>
+
         <div className="flex justify-end">
           <button
             onClick={handleGenerate}
@@ -365,7 +362,7 @@ export default function ListeningTestGeneratorClient() {
         </div>
         {phase === "generating" && (
           <p className="text-xs text-gray-500 animate-pulse">
-            Claude가 3개 세트 스크립트와 문제를 생성 중입니다 (약 30–60초)…
+            Claude가 Module 1과 Module 2 (Hard/Easy)를 생성 중입니다 (약 60–90초)…
           </p>
         )}
         {error && <p className="text-xs text-rose-600">{error}</p>}
@@ -383,203 +380,61 @@ export default function ListeningTestGeneratorClient() {
             />
           </section>
 
-          {/* Tracks - Hard */}
+          {/* Module 1 Summary */}
+          <div className="rounded-xl border bg-violet-50 p-4 shadow-sm">
+            <h3 className="text-sm font-bold text-violet-900 mb-3">📘 Module 1 (공통 — {module1Tracks.length}개 트랙)</h3>
+            <div className="space-y-2">
+              {module1Tracks.map((track: LListeningTrack2026) => (
+                <div key={track.id} className="flex items-center gap-2 rounded-lg border bg-white px-3 py-2">
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${KIND_COLOR[track.taskKind] ?? "bg-gray-100 text-gray-600"}`}>
+                    {KIND_LABEL[track.taskKind] ?? track.taskKind}
+                  </span>
+                  <span className="text-xs font-medium text-gray-900 flex-1 truncate">{track.title}</span>
+                  <span className="text-[11px] text-gray-400">{track.questions?.length ?? 0}Q</span>
+                  <AudioStatusBadge track={track} />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Module 2 Hard Summary */}
           <div className="rounded-xl border bg-amber-50 p-4 shadow-sm">
-            <h3 className="text-sm font-bold text-amber-900 mb-4">🔴 Hard Module</h3>
-            {test.hard.tracks.map((track: LListeningTrack2026, ti) => (
-            <section key={track.id} className="rounded-xl border bg-white p-4 shadow-sm space-y-4">
-              <div className="flex items-center gap-2">
-                <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${KIND_COLOR[track.taskKind] ?? "bg-gray-100 text-gray-600"}`}>
-                  {KIND_LABEL[track.taskKind] ?? track.taskKind}
-                </span>
-                <span className="text-sm font-semibold text-gray-900">{track.title}</span>
-                <span className="text-xs text-gray-400">· {track.questions.length}Q · {track.audioSeconds ?? "?"}s</span>
-              </div>
-
-              {/* Audio Player */}
-              {track.audioUrl && (
-                <div className="rounded-lg bg-blue-50 p-3">
-                  <p className="text-xs font-semibold text-blue-700 mb-2">🎧 음성</p>
-                  <audio
-                    controls
-                    className="w-full"
-                    src={track.audioUrl}
-                    style={{ height: "32px" }}
-                  />
+            <h3 className="text-sm font-bold text-amber-900 mb-3">🔴 Module 2 - Hard ({hardTracks.length}개 트랙)</h3>
+            <div className="space-y-2">
+              {hardTracks.map((track: LListeningTrack2026) => (
+                <div key={track.id} className="flex items-center gap-2 rounded-lg border bg-white px-3 py-2">
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${KIND_COLOR[track.taskKind] ?? "bg-gray-100 text-gray-600"}`}>
+                    {KIND_LABEL[track.taskKind] ?? track.taskKind}
+                  </span>
+                  <span className="text-xs font-medium text-gray-900 flex-1 truncate">{track.title}</span>
+                  <span className="text-[11px] text-gray-400">{track.questions?.length ?? 0}Q</span>
+                  <AudioStatusBadge track={track} />
                 </div>
-              )}
-
-              {/* Transcript */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs text-gray-500">스크립트</label>
-                  {(track as any).scriptSegments && (
-                    <span className="text-[10px] text-emerald-600 font-semibold">✓ 타임스탐프 완료</span>
-                  )}
-                </div>
-                <textarea
-                  rows={7}
-                  className="w-full rounded-lg border px-3 py-2 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-violet-400"
-                  value={track.transcript ?? ""}
-                  onChange={(e) => setTranscript(ti, e.target.value)}
-                />
-                <button
-                  onClick={() => handleGenerateScript(ti, true)}
-                  className="w-full rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700 hover:bg-emerald-100 transition"
-                >
-                  ⚡ 타임스탐프 생성 (Claude AI)
-                </button>
-              </div>
-
-              {/* Questions */}
-              <div className="space-y-3">
-                {track.questions.map((q: LQuestion2026, qi) => {
-                  const isMulti = (q.selectCount ?? 1) > 1;
-                  return (
-                    <div key={q.id} className="rounded-lg border border-gray-100 bg-gray-50 p-3 space-y-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-medium text-gray-400">Q{q.number ?? qi + 1}</span>
-                        <span className="rounded-full border px-2 py-0.5 text-[10px] text-gray-400">{q.type}</span>
-                        {isMulti && (
-                          <span className="rounded-full bg-amber-100 text-amber-700 px-2 py-0.5 text-[10px] font-semibold">
-                            다중선택 ×{q.selectCount}
-                          </span>
-                        )}
-                      </div>
-                      <textarea
-                        rows={2}
-                        className="w-full rounded border px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-400"
-                        value={q.stem}
-                        onChange={(e) => setQStem(ti, qi, e.target.value)}
-                      />
-                      <div className="space-y-1">
-                        {q.choices.map((c, ci) => {
-                          const isCorrect = q.correctIndices.includes(ci);
-                          return (
-                            <label key={c.id} className={`flex items-start gap-2 rounded border px-2 py-1 text-xs cursor-pointer transition ${isCorrect ? "border-violet-400 bg-violet-50" : "border-gray-200 bg-white hover:border-gray-300"}`}>
-                              <input
-                                type={isMulti ? "checkbox" : "radio"}
-                                name={`t${ti}-q${qi}-correct`}
-                                checked={isCorrect}
-                                onChange={() => setCorrect(ti, qi, ci)}
-                                className="mt-0.5 shrink-0"
-                              />
-                              <input
-                                className="flex-1 bg-transparent focus:outline-none"
-                                value={c.text}
-                                onChange={(e) => setChoiceText(ti, qi, ci, e.target.value)}
-                              />
-                              {isCorrect && <span className="shrink-0 text-[10px] font-semibold text-violet-600">✓ 정답</span>}
-                            </label>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-            ))}
+              ))}
+            </div>
           </div>
 
-          {/* Tracks - Easy */}
+          {/* Module 2 Easy Summary */}
           <div className="rounded-xl border bg-blue-50 p-4 shadow-sm">
-            <h3 className="text-sm font-bold text-blue-900 mb-4">🟢 Easy Module</h3>
-            {test.easy.tracks.map((track: LListeningTrack2026, ti) => (
-            <section key={track.id} className="rounded-xl border bg-white p-4 shadow-sm space-y-4">
-              <div className="flex items-center gap-2">
-                <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${KIND_COLOR[track.taskKind] ?? "bg-gray-100 text-gray-600"}`}>
-                  {KIND_LABEL[track.taskKind] ?? track.taskKind}
-                </span>
-                <span className="text-sm font-semibold text-gray-900">{track.title}</span>
-                <span className="text-xs text-gray-400">· {track.questions.length}Q · {track.audioSeconds ?? "?"}s</span>
-              </div>
-
-              {/* Audio Player */}
-              {track.audioUrl && (
-                <div className="rounded-lg bg-blue-50 p-3">
-                  <p className="text-xs font-semibold text-blue-700 mb-2">🎧 음성</p>
-                  <audio
-                    controls
-                    className="w-full"
-                    src={track.audioUrl}
-                    style={{ height: "32px" }}
-                  />
+            <h3 className="text-sm font-bold text-blue-900 mb-3">🟢 Module 2 - Easy ({easyTracks.length}개 트랙)</h3>
+            <div className="space-y-2">
+              {easyTracks.map((track: LListeningTrack2026) => (
+                <div key={track.id} className="flex items-center gap-2 rounded-lg border bg-white px-3 py-2">
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${KIND_COLOR[track.taskKind] ?? "bg-gray-100 text-gray-600"}`}>
+                    {KIND_LABEL[track.taskKind] ?? track.taskKind}
+                  </span>
+                  <span className="text-xs font-medium text-gray-900 flex-1 truncate">{track.title}</span>
+                  <span className="text-[11px] text-gray-400">{track.questions?.length ?? 0}Q</span>
+                  <AudioStatusBadge track={track} />
                 </div>
-              )}
-
-              {/* Transcript */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs text-gray-500">스크립트</label>
-                  {(track as any).scriptSegments && (
-                    <span className="text-[10px] text-emerald-600 font-semibold">✓ 타임스탐프 완료</span>
-                  )}
-                </div>
-                <textarea
-                  rows={7}
-                  className="w-full rounded-lg border px-3 py-2 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-violet-400"
-                  value={track.transcript ?? ""}
-                  onChange={(e) => setTranscript(ti, e.target.value)}
-                />
-                <button
-                  onClick={() => handleGenerateScript(ti, true)}
-                  className="w-full rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700 hover:bg-emerald-100 transition"
-                >
-                  ⚡ 타임스탐프 생성 (Claude AI)
-                </button>
-              </div>
-
-              {/* Questions */}
-              <div className="space-y-3">
-                {track.questions.map((q: LQuestion2026, qi) => {
-                  const isMulti = (q.selectCount ?? 1) > 1;
-                  return (
-                    <div key={q.id} className="rounded-lg border border-gray-100 bg-gray-50 p-3 space-y-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-medium text-gray-400">Q{q.number ?? qi + 1}</span>
-                        <span className="rounded-full border px-2 py-0.5 text-[10px] text-gray-400">{q.type}</span>
-                        {isMulti && (
-                          <span className="rounded-full bg-amber-100 text-amber-700 px-2 py-0.5 text-[10px] font-semibold">
-                            다중선택 ×{q.selectCount}
-                          </span>
-                        )}
-                      </div>
-                      <textarea
-                        rows={2}
-                        className="w-full rounded border px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-400"
-                        value={q.stem}
-                        onChange={(e) => setQStem(ti, qi, e.target.value)}
-                      />
-                      <div className="space-y-1">
-                        {q.choices.map((c, ci) => {
-                          const isCorrect = q.correctIndices.includes(ci);
-                          return (
-                            <label key={c.id} className={`flex items-start gap-2 rounded border px-2 py-1 text-xs cursor-pointer transition ${isCorrect ? "border-violet-400 bg-violet-50" : "border-gray-200 bg-white hover:border-gray-300"}`}>
-                              <input
-                                type={isMulti ? "checkbox" : "radio"}
-                                name={`t${ti}-q${qi}-correct`}
-                                checked={isCorrect}
-                                onChange={() => setCorrect(ti, qi, ci)}
-                                className="mt-0.5 shrink-0"
-                              />
-                              <input
-                                className="flex-1 bg-transparent focus:outline-none"
-                                value={c.text}
-                                onChange={(e) => setChoiceText(ti, qi, ci, e.target.value)}
-                              />
-                              {isCorrect && <span className="shrink-0 text-[10px] font-semibold text-violet-600">✓ 정답</span>}
-                            </label>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-            ))}
+              ))}
+            </div>
           </div>
+
+          <p className="text-xs text-gray-500">
+            자세한 편집(스크립트, 문제, 음성 재생성)은 저장 후{" "}
+            <span className="font-semibold text-violet-600">수정 페이지</span>에서 할 수 있습니다.
+          </p>
 
           {/* Actions */}
           <div className="flex items-center justify-between rounded-xl border bg-white p-4 shadow-sm">
@@ -590,8 +445,8 @@ export default function ListeningTestGeneratorClient() {
               <button onClick={handleSave} disabled={phase === "saving"} className="rounded-lg border px-4 py-2 text-xs font-medium hover:bg-gray-50 disabled:opacity-50">
                 {phase === "saving" ? "저장 중…" : "임시 저장"}
               </button>
-              <button onClick={handleLock} disabled={phase === "saving"} className="rounded-lg border border-gray-800 bg-gray-900 px-4 py-2 text-xs font-medium text-white hover:bg-gray-800 disabled:opacity-50">
-                🔒 Lock & 완료
+              <button onClick={handleStartTest} disabled={phase === "saving"} className="rounded-lg border border-green-600 bg-green-600 px-4 py-2 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50">
+                🎧 테스트 시작
               </button>
             </div>
           </div>

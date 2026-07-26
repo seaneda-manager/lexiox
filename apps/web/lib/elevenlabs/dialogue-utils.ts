@@ -10,8 +10,13 @@ export interface SpeakerVoiceMap {
   [speakerName: string]: string;
 }
 
+// 줄 맨 앞의 화자 레이블로 인정할 패턴: "Speaker A", "Student", "Professor", "Resident Advisor" 등
+// 대문자로 시작하는 1~3 단어, 특수문자/문장부호 없음 (실제 문장이 콜론을 포함해 오탐되는 것 방지)
+const SPEAKER_LABEL_RE = /^[A-Z][a-zA-Z]*(?:\s[A-Z][a-zA-Z]*){0,2}$/;
+
 // Dialogue transcript 파싱 (화자별 세그멘테이션)
-// 형식: Speaker A: "..." 또는 Speaker A: ... (따옴표 없음)
+// 형식: "Speaker A: ..." 뿐 아니라 "Student: ...", "Professor: ..." 등 실제 역할명 라벨도 인식
+// (AI가 프롬프트의 "Speaker A/B" 지시를 따르지 않고 역할명을 쓰는 경우가 흔함)
 export function parseDialogueTranscript(transcript: string): DialogueSegment[] {
   const segments: DialogueSegment[] = [];
 
@@ -25,8 +30,7 @@ export function parseDialogueTranscript(transcript: string): DialogueSegment[] {
     const speakerPart = line.substring(0, colonIdx).trim();
     const textPart = line.substring(colonIdx + 1).trim();
 
-    // "Speaker A" 형식 확인
-    if (!speakerPart.startsWith('Speaker ')) continue;
+    if (!SPEAKER_LABEL_RE.test(speakerPart)) continue;
 
     // 따옴표 제거
     let text = textPart;

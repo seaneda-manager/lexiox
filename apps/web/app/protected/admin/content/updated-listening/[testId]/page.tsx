@@ -7,17 +7,108 @@ import Link from 'next/link';
 type Track = {
   id: string;
   taskKind: string;
-  title: string;
+  title?: string;
   transcript: string;
   audioUrl?: string;
   audioSeconds?: number;
   segments?: Array<{ speaker: string; text: string; audioUrl: string }>;
+  questions?: any[];
 };
 
 type Test = {
   meta: { id: string; label: string };
-  tracks: Track[];
+  // 신규 구조
+  modules?: Array<{ stage: 1 | 2; items: Track[] }>;
+  stage2Pool?: {
+    cutScore: number;
+    hard: { items: Track[] };
+    easy: { items: Track[] };
+  };
+  // 레거시 구조
+  tracks?: Track[];
+  hard?: { tracks: Track[] };
+  easy?: { tracks: Track[] };
 };
+
+type Group = { label: string; tracks: Track[] };
+
+function getGroups(test: Test): Group[] {
+  const groups: Group[] = [];
+
+  if (test.modules?.[0]?.items?.length) {
+    groups.push({ label: '📘 Module 1 (공통)', tracks: test.modules[0].items });
+  }
+  if (test.stage2Pool?.hard?.items?.length) {
+    groups.push({ label: '🔴 Module 2 - Hard', tracks: test.stage2Pool.hard.items });
+  }
+  if (test.stage2Pool?.easy?.items?.length) {
+    groups.push({ label: '🟢 Module 2 - Easy', tracks: test.stage2Pool.easy.items });
+  }
+
+  // 신규 구조가 없으면 레거시 구조로 폴백
+  if (groups.length === 0) {
+    if (test.tracks?.length) {
+      groups.push({ label: '트랙', tracks: test.tracks });
+    }
+    if (test.hard?.tracks?.length) {
+      groups.push({ label: '🔴 Hard Module', tracks: test.hard.tracks });
+    }
+    if (test.easy?.tracks?.length) {
+      groups.push({ label: '🟢 Easy Module', tracks: test.easy.tracks });
+    }
+  }
+
+  return groups;
+}
+
+function findTrack(test: Test, trackId: string): Track | undefined {
+  for (const group of getGroups(test)) {
+    const found = group.tracks.find(t => t.id === trackId);
+    if (found) return found;
+  }
+  return undefined;
+}
+
+function updateQuestionField(
+  test: Test,
+  trackId: string,
+  questionId: string,
+  patch: Partial<{ transcript: string; audioUrl: string }>
+): Test {
+  return updateTrackEverywhere(test, trackId, (t) => ({
+    ...t,
+    questions: t.questions?.map((q: any) => (q.id === questionId ? { ...q, ...patch } : q)),
+  }));
+}
+
+function updateTrackEverywhere(test: Test, trackId: string, updater: (t: Track) => Track): Test {
+  const next: Test = { ...test };
+
+  if (next.modules) {
+    next.modules = next.modules.map(m => ({
+      ...m,
+      items: m.items.map(t => (t.id === trackId ? updater(t) : t)),
+    }));
+  }
+  if (next.stage2Pool) {
+    next.stage2Pool = {
+      ...next.stage2Pool,
+      hard: { ...next.stage2Pool.hard, items: next.stage2Pool.hard.items.map(t => (t.id === trackId ? updater(t) : t)) },
+      easy: { ...next.stage2Pool.easy, items: next.stage2Pool.easy.items.map(t => (t.id === trackId ? updater(t) : t)) },
+    };
+  }
+  if (next.tracks) {
+    next.tracks = next.tracks.map(t => (t.id === trackId ? updater(t) : t));
+  }
+  if (next.hard) {
+    next.hard = { ...next.hard, tracks: next.hard.tracks.map(t => (t.id === trackId ? updater(t) : t)) };
+  }
+  if (next.easy) {
+    next.easy = { ...next.easy, tracks: next.easy.tracks.map(t => (t.id === trackId ? updater(t) : t)) };
+  }
+
+  return next;
+}
 
 export default function ListeningTestEditPage() {
   const params = useParams();
@@ -30,6 +121,7 @@ export default function ListeningTestEditPage() {
   const [uploading, setUploading] = useState<Record<string, boolean>>({});
   const [difficulty, setDifficulty] = useState<Record<string, 'easy' | 'hard'>>({});
   const [error, setError] = useState<string | null>(null);
+  const [questionGenerating, setQuestionGenerating] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const fetchTest = async () => {
@@ -48,7 +140,8 @@ export default function ListeningTestEditPage() {
   }, [testId]);
 
   const generateAudio = async (trackId: string) => {
-    const track = test?.tracks.find(t => t.id === trackId);
+    if (!test) return;
+    const track = findTrack(test, trackId);
     if (!track) return;
 
     const diff = difficulty[trackId] || 'easy';
@@ -68,23 +161,54 @@ export default function ListeningTestEditPage() {
       if (!data.ok) throw new Error(data.error);
 
       const result = data.results[trackId];
-      setTest(prev => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          tracks: prev.tracks.map(t =>
-            t.id === trackId ? {
-              ...t,
-              audioUrl: result.audioUrl,
-              segments: result.segments
-            } : t
-          )
-        };
-      });
+      setTest(prev => prev ? updateTrackEverywhere(prev, trackId, t => ({
+        ...t,
+        audioUrl: result.audioUrl,
+        segments: result.segments,
+      })) : prev);
     } catch (err: any) {
       setError(err.message);
     } finally {
       setGenerating(prev => ({ ...prev, [trackId]: false }));
+    }
+  };
+
+  const setQuestionTranscript = (trackId: string, questionId: string, val: string) => {
+    setTest(prev => prev ? updateQuestionField(prev, trackId, questionId, { transcript: val }) : prev);
+  };
+
+  const generateQuestionAudio = async (trackId: string, questionId: string) => {
+    if (!test) return;
+    const track = findTrack(test, trackId);
+    const question = track?.questions?.find((q: any) => q.id === questionId);
+    if (!question?.transcript?.trim()) {
+      setError('스크립트를 먼저 입력해주세요.');
+      return;
+    }
+
+    const key = `${trackId}:${questionId}`;
+    setQuestionGenerating(prev => ({ ...prev, [key]: true }));
+    try {
+      const virtualId = `${trackId}__${questionId}`;
+      const res = await fetch('/api/admin/updated-listening/generate-audio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          testId,
+          tracks: [{ trackId: virtualId, transcript: question.transcript, taskKind: 'single' }],
+          difficulty: difficulty[trackId] || 'easy',
+        })
+      });
+
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error);
+
+      const result = data.results[virtualId];
+      setTest(prev => prev ? updateQuestionField(prev, trackId, questionId, { audioUrl: result.audioUrl }) : prev);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setQuestionGenerating(prev => ({ ...prev, [key]: false }));
     }
   };
 
@@ -109,15 +233,10 @@ export default function ListeningTestEditPage() {
       const data = await res.json();
       if (!data.ok) throw new Error(data.error);
 
-      setTest(prev => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          tracks: prev.tracks.map(t =>
-            t.id === trackId ? { ...t, audioUrl: data.audioUrl } : t
-          )
-        };
-      });
+      setTest(prev => prev ? updateTrackEverywhere(prev, trackId, t => ({
+        ...t,
+        audioUrl: data.audioUrl,
+      })) : prev);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -145,6 +264,11 @@ export default function ListeningTestEditPage() {
   if (error) return <div className="p-6 text-red-600">에러: {error}</div>;
   if (!test) return <div className="p-6">시험을 찾을 수 없습니다.</div>;
 
+  const groups = getGroups(test);
+  if (groups.length === 0) {
+    return <div className="p-6 text-red-600">트랙을 찾을 수 없습니다.</div>;
+  }
+
   return (
     <main className="mx-auto max-w-4xl space-y-6 px-4 py-6">
       <header className="flex items-center justify-between">
@@ -162,82 +286,130 @@ export default function ListeningTestEditPage() {
         </button>
       </header>
 
-      <div className="space-y-4">
-        {test.tracks.map(track => (
-          <div key={track.id} className="rounded-lg border bg-white p-6 shadow-sm">
-            <div className="mb-4 flex items-start justify-between">
-              <div>
-                <h2 className="font-semibold text-gray-900">{track.title}</h2>
-                <p className="text-xs text-gray-500 mt-1">{track.taskKind}</p>
-              </div>
-              <div className="flex gap-2 items-center flex-wrap">
-                <select
-                  value={difficulty[track.id] || 'easy'}
-                  onChange={(e) => setDifficulty(prev => ({ ...prev, [track.id]: e.target.value as 'easy' | 'hard' }))}
-                  disabled={generating[track.id] || uploading[track.id]}
-                  className="rounded-lg border border-gray-300 px-2 py-1.5 text-xs font-medium disabled:opacity-50"
-                >
-                  <option value="easy">Easy</option>
-                  <option value="hard">Hard</option>
-                </select>
-                <button
-                  onClick={() => generateAudio(track.id)}
-                  disabled={generating[track.id] || uploading[track.id]}
-                  className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-                >
-                  {generating[track.id] ? '생성 중...' : '🎧 음성생성'}
-                </button>
-                <label className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50 cursor-pointer">
-                  📤 파일업로드
-                  <input
-                    type="file"
-                    accept="audio/*"
-                    className="hidden"
-                    disabled={uploading[track.id]}
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) uploadAudio(track.id, file);
-                    }}
-                  />
-                </label>
-                {track.audioUrl && (
-                  <audio controls className="h-7 max-w-xs">
-                    <source src={track.audioUrl} type="audio/mpeg" />
-                  </audio>
-                )}
-                {track.segments && track.segments.length > 0 && (
-                  <span className="text-xs text-gray-500 px-2 py-1 bg-blue-50 rounded">
-                    {track.segments.length} segments
-                  </span>
-                )}
-              </div>
-            </div>
-            <div className="rounded-lg bg-gray-50 p-3">
-              <p className="whitespace-pre-wrap text-sm text-gray-700">{track.transcript}</p>
-            </div>
-
-            {track.segments && track.segments.length > 0 && (
-              <div className="mt-4 space-y-2">
-                <h3 className="text-sm font-semibold text-gray-900">음성 세그먼트 ({track.segments.length})</h3>
-                <div className="space-y-2">
-                  {track.segments.map((seg, idx) => (
-                    <div key={idx} className="rounded-lg border border-gray-200 bg-white p-3">
-                      <div className="mb-2 flex items-center justify-between">
-                        <span className="text-xs font-semibold text-blue-600">{seg.speaker}</span>
-                        <span className="text-xs text-gray-500">Seg {idx}</span>
-                      </div>
-                      <p className="mb-2 text-xs text-gray-700">{seg.text}</p>
-                      <audio controls className="h-6 max-w-full">
-                        <source src={seg.audioUrl} type="audio/mpeg" />
-                      </audio>
-                    </div>
-                  ))}
+      {groups.map(group => (
+        <div key={group.label} className="space-y-4">
+          <h2 className="text-sm font-bold text-gray-700">{group.label}</h2>
+          {group.tracks.map(track => (
+            <div key={track.id} className="rounded-lg border bg-white p-6 shadow-sm">
+              <div className="mb-4 flex items-start justify-between">
+                <div>
+                  <h2 className="font-semibold text-gray-900">{track.title}</h2>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {track.taskKind}
+                    {track.questions && ` · ${track.questions.length}문항`}
+                  </p>
                 </div>
+                {track.taskKind !== 'choose_response' && (
+                  <div className="flex gap-2 items-center flex-wrap">
+                    <select
+                      value={difficulty[track.id] || 'easy'}
+                      onChange={(e) => setDifficulty(prev => ({ ...prev, [track.id]: e.target.value as 'easy' | 'hard' }))}
+                      disabled={generating[track.id] || uploading[track.id]}
+                      className="rounded-lg border border-gray-300 px-2 py-1.5 text-xs font-medium disabled:opacity-50"
+                    >
+                      <option value="easy">Easy</option>
+                      <option value="hard">Hard</option>
+                    </select>
+                    <button
+                      onClick={() => generateAudio(track.id)}
+                      disabled={generating[track.id] || uploading[track.id]}
+                      className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                    >
+                      {generating[track.id] ? '생성 중...' : '🎧 음성생성'}
+                    </button>
+                    <label className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50 cursor-pointer">
+                      📤 파일업로드
+                      <input
+                        type="file"
+                        accept="audio/*"
+                        className="hidden"
+                        disabled={uploading[track.id]}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) uploadAudio(track.id, file);
+                        }}
+                      />
+                    </label>
+                    {track.audioUrl && (
+                      <audio controls className="h-7 max-w-xs">
+                        <source src={track.audioUrl} type="audio/mpeg" />
+                      </audio>
+                    )}
+                    {track.segments && track.segments.length > 0 && (
+                      <span className="text-xs text-gray-500 px-2 py-1 bg-blue-50 rounded">
+                        {track.segments.length} segments
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        ))}
-      </div>
+
+              {track.taskKind === 'choose_response' ? (
+                <div className="space-y-3">
+                  {(track.questions ?? []).map((q: any, qi: number) => {
+                    const key = `${track.id}:${q.id}`;
+                    return (
+                      <div key={q.id} className="rounded-lg border border-gray-200 bg-gray-50 p-3 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-semibold text-gray-500">Q{q.number ?? qi + 1} · {q.stem}</span>
+                          {q.audioUrl && <span className="text-[11px] text-emerald-600">🎧 음성 완료</span>}
+                        </div>
+                        <textarea
+                          rows={2}
+                          className="w-full rounded-lg border px-3 py-2 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-violet-400"
+                          value={q.transcript ?? ""}
+                          placeholder="이 질문의 발화 스크립트 (1문장)"
+                          onChange={(e) => setQuestionTranscript(track.id, q.id, e.target.value)}
+                        />
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => generateQuestionAudio(track.id, q.id)}
+                            disabled={questionGenerating[key]}
+                            className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                          >
+                            {questionGenerating[key] ? '생성 중...' : '🎧 이 질문 음성생성'}
+                          </button>
+                          {q.audioUrl && (
+                            <audio controls className="h-7 max-w-xs">
+                              <source src={q.audioUrl} type="audio/mpeg" />
+                            </audio>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <>
+                  <div className="rounded-lg bg-gray-50 p-3">
+                    <p className="whitespace-pre-wrap text-sm text-gray-700">{track.transcript}</p>
+                  </div>
+
+                  {track.segments && track.segments.length > 0 && (
+                    <div className="mt-4 space-y-2">
+                      <h3 className="text-sm font-semibold text-gray-900">음성 세그먼트 ({track.segments.length})</h3>
+                      <div className="space-y-2">
+                        {track.segments.map((seg, idx) => (
+                          <div key={idx} className="rounded-lg border border-gray-200 bg-white p-3">
+                            <div className="mb-2 flex items-center justify-between">
+                              <span className="text-xs font-semibold text-blue-600">{seg.speaker}</span>
+                              <span className="text-xs text-gray-500">Seg {idx}</span>
+                            </div>
+                            <p className="mb-2 text-xs text-gray-700">{seg.text}</p>
+                            <audio controls className="h-6 max-w-full">
+                              <source src={seg.audioUrl} type="audio/mpeg" />
+                            </audio>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      ))}
     </main>
   );
 }

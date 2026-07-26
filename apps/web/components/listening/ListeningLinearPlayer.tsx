@@ -13,9 +13,15 @@ export default function ListeningLinearPlayer({ test }: Props) {
   const [currentTrackIdx, setCurrentTrackIdx] = useState(0);
   const [phase, setPhase] = useState<Phase>("listening");
 
-  // LListeningTest2026Linear는 hard/easy 구조, LListeningTest2026는 tracks 배열
+  // 신규: modules(Module 1) + stage2Pool(Hard/Easy) 구조
+  // 레거시: tracks 배열 또는 hard/easy 구조
   const tracks =
-    'tracks' in test ? (test.tracks ?? []) :
+    'modules' in test && test.modules?.[0]?.items?.length ? [
+      ...(test.modules[0].items ?? []),
+      ...(test.stage2Pool?.hard?.items ?? []),
+      ...(test.stage2Pool?.easy?.items ?? []),
+    ] :
+    'tracks' in test && test.tracks?.length ? (test.tracks ?? []) :
     'hard' in test ? [...(test.hard?.tracks ?? []), ...(test.easy?.tracks ?? [])] :
     [];
 
@@ -56,52 +62,32 @@ export default function ListeningLinearPlayer({ test }: Props) {
           <p className="mt-1 text-xs text-gray-500">{currentTrack.taskKind}</p>
         </div>
 
-        {/* 음성 플레이어 */}
-        <div className="mb-6">
-          {!currentTrack.audioUrl ? (
-            <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
-              ⚠️ 음성 파일이 없습니다. (audioUrl: {currentTrack.audioUrl})
-            </div>
-          ) : (
-            <audio
-              controls
-              className="w-full"
-              src={currentTrack.audioUrl}
-              style={{ height: "40px" }}
-              onError={(e) => {
-                console.error("Audio loading error:", e);
-                console.error("Audio source:", currentTrack.audioUrl);
-              }}
-            />
-          )}
-        </div>
-
-        {/* 트랜스크립트 - Review 단계에서만 표시 */}
-        {phase === "review" && (
-          <div className="mb-6 rounded-lg bg-yellow-50 border border-yellow-200 p-4">
-            <p className="text-xs font-semibold text-yellow-700 mb-2">📝 스크립트</p>
-            <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">
-              {currentTrack.transcript}
-            </p>
-          </div>
-        )}
-
-        {/* 문제들 */}
-        {currentTrack.questions && currentTrack.questions.length > 0 && (
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-gray-900">문제</h3>
-            {currentTrack.questions.map((q, idx) => (
-              <div key={q.id} className={`rounded-lg p-3 ${
-                phase === "review"
-                  ? "bg-amber-50 border border-amber-200"
-                  : "bg-blue-50"
+        {currentTrack.taskKind === 'choose_response' ? (
+          /* choose_response: 질문마다 독립된 발화 + 오디오 */
+          <div className="space-y-4">
+            {(currentTrack.questions ?? []).map((q: any, idx: number) => (
+              <div key={q.id} className={`rounded-lg p-4 ${
+                phase === "review" ? "bg-amber-50 border border-amber-200" : "bg-blue-50"
               }`}>
-                <p className="text-sm font-medium text-gray-900">
-                  {idx + 1}. {(q as any).text || (q as any).stem}
-                </p>
+                <p className="mb-2 text-xs font-semibold text-gray-500">문제 {idx + 1}</p>
+                <div className="mb-3">
+                  {!q.audioUrl ? (
+                    <div className="rounded-lg bg-red-50 border border-red-200 p-2 text-xs text-red-700">
+                      ⚠️ 음성 파일이 없습니다.
+                    </div>
+                  ) : (
+                    <audio controls className="w-full" src={q.audioUrl} style={{ height: "36px" }} />
+                  )}
+                </div>
+                {phase === "review" && q.transcript && (
+                  <p className="mb-3 whitespace-pre-wrap text-xs text-gray-600 bg-yellow-50 border border-yellow-200 rounded p-2">
+                    📝 {q.transcript}
+                  </p>
+                )}
+                <p className="text-sm font-medium text-gray-900">{q.stem}</p>
                 <div className="mt-2 space-y-2">
-                  {q.choices.map((choice) => {
-                    const correctIndices = (q as any).correctIndices ?? [];
+                  {q.choices.map((choice: any) => {
+                    const correctIndices = q.correctIndices ?? [];
                     const isCorrect = correctIndices.includes(q.choices.indexOf(choice));
                     return (
                       <label
@@ -112,12 +98,7 @@ export default function ListeningLinearPlayer({ test }: Props) {
                             : "text-gray-700"
                         }`}
                       >
-                        <input
-                          type="radio"
-                          name={`q-${q.id}`}
-                          disabled
-                          className="cursor-not-allowed"
-                        />
+                        <input type="radio" name={`q-${q.id}`} disabled className="cursor-not-allowed" />
                         {choice.text}
                         {phase === "review" && isCorrect && <span className="ml-auto">✓</span>}
                       </label>
@@ -127,6 +108,81 @@ export default function ListeningLinearPlayer({ test }: Props) {
               </div>
             ))}
           </div>
+        ) : (
+          <>
+            {/* 음성 플레이어 */}
+            <div className="mb-6">
+              {!currentTrack.audioUrl ? (
+                <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+                  ⚠️ 음성 파일이 없습니다. (audioUrl: {currentTrack.audioUrl})
+                </div>
+              ) : (
+                <audio
+                  controls
+                  className="w-full"
+                  src={currentTrack.audioUrl}
+                  style={{ height: "40px" }}
+                  onError={(e) => {
+                    console.error("Audio loading error:", e);
+                    console.error("Audio source:", currentTrack.audioUrl);
+                  }}
+                />
+              )}
+            </div>
+
+            {/* 트랜스크립트 - Review 단계에서만 표시 */}
+            {phase === "review" && (
+              <div className="mb-6 rounded-lg bg-yellow-50 border border-yellow-200 p-4">
+                <p className="text-xs font-semibold text-yellow-700 mb-2">📝 스크립트</p>
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">
+                  {currentTrack.transcript}
+                </p>
+              </div>
+            )}
+
+            {/* 문제들 */}
+            {currentTrack.questions && currentTrack.questions.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold text-gray-900">문제</h3>
+                {currentTrack.questions.map((q, idx) => (
+                  <div key={q.id} className={`rounded-lg p-3 ${
+                    phase === "review"
+                      ? "bg-amber-50 border border-amber-200"
+                      : "bg-blue-50"
+                  }`}>
+                    <p className="text-sm font-medium text-gray-900">
+                      {idx + 1}. {(q as any).text || (q as any).stem}
+                    </p>
+                    <div className="mt-2 space-y-2">
+                      {q.choices.map((choice) => {
+                        const correctIndices = (q as any).correctIndices ?? [];
+                        const isCorrect = correctIndices.includes(q.choices.indexOf(choice));
+                        return (
+                          <label
+                            key={choice.id}
+                            className={`flex items-center gap-2 text-sm px-2 py-1 rounded transition ${
+                              phase === "review" && isCorrect
+                                ? "bg-green-100 text-green-800 font-medium"
+                                : "text-gray-700"
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name={`q-${q.id}`}
+                              disabled
+                              className="cursor-not-allowed"
+                            />
+                            {choice.text}
+                            {phase === "review" && isCorrect && <span className="ml-auto">✓</span>}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
 
         {/* Review 버튼 */}

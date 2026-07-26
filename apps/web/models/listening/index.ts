@@ -83,19 +83,25 @@ export interface LChoice2026 {
 export interface LQuestion2026 {
   id: string;
   number: number;
-  type: "main_topic" | "detail" | "function" | "inference" | "attitude" | "multi_select" | "table";
+  type: "main_topic" | "detail" | "function" | "inference" | "attitude" | "multi_select" | "table" | "pragmatic_choice";
   stem: string;
   choices: LChoice2026[];
   /** 정답 인덱스 배열 (단일선택은 length 1, 다중선택은 length 2+) */
   correctIndices: number[];
   /** 다중선택 시 선택해야 할 개수 (기본 1) */
   selectCount?: number;
+  /** choose_response 문항 전용: 이 문항 하나에 대한 개별 발화 스크립트 (각 질문마다 오디오가 다름) */
+  transcript?: string;
+  /** choose_response 문항 전용: 이 문항의 개별 음성 URL */
+  audioUrl?: string;
+  /** 문항별 답변 제한 시간(초). 오디오 재생 중에는 감소하지 않고, 문제 활성화 시점부터 카운트다운 (Task1: 15-30초, 그 외: 35-45초) */
+  testingSeconds?: number;
 }
 
 /** 세트 하나 (오디오 1개 + 문항 N개) */
 export interface LListeningTrack2026 {
   id: string;
-  taskKind: "conversation" | "academic_lecture" | "campus_audio_log";
+  taskKind: "conversation" | "academic_lecture" | "campus_audio_log" | "choose_response" | "announcement" | "academic_talk";
   title?: string;
   /** 오디오 파일 URL (실제 테스트용) */
   audioUrl: string;
@@ -110,12 +116,27 @@ export interface LListeningTrack2026 {
   testingSeconds?: number;
 }
 
-/** Updated TOEFL Listening 선형 시험 */
+/** Updated TOEFL Listening 선형 시험 (Module 1 + Adaptive Stage 2) */
 export interface LListeningTest2026Linear {
   meta: LListeningTestMeta;
+
+  // 신규: Module 1 (공통) + Module 2 (기본값)
+  modules?: [
+    { stage: 1; items: LListeningTrack2026[] },
+    { stage: 2; items: LListeningTrack2026[] }
+  ];
+
+  // 신규: Stage 2 적응형 풀 (Hard/Easy)
+  stage2Pool?: {
+    cutScore: number; // e.g., 0.7 (70% 이상 → hard)
+    hard: { items: LListeningTrack2026[] };
+    easy: { items: LListeningTrack2026[] };
+  };
+
+  // 레거시: 이전 구조
   hard?: { tracks: LListeningTrack2026[] };
   easy?: { tracks: LListeningTrack2026[] };
-  tracks?: LListeningTrack2026[]; // 레거시 호환성
+  tracks?: LListeningTrack2026[];
 }
 
 /* ------------------------------------
