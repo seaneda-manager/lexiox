@@ -16,9 +16,7 @@ export default function WritingHubPage() {
   ];
 
   const testPractices = [
-    { id: 1, title: 'Practice Test 1', difficulty: 'Medium', time: '18 min', href: '/updated-writing/test/1' },
-    { id: 2, title: 'Practice Test 2', difficulty: 'Hard', time: '25 min', comingSoon: true },
-    { id: 3, title: 'Practice Test 3', difficulty: 'Medium', time: '25 min', comingSoon: true },
+    { id: 1, title: '전체 시험 목록', difficulty: '', time: '', href: '/updated-writing/test' },
   ];
 
   return (
@@ -41,10 +39,10 @@ export default function WritingHubPage() {
           { icon: '✍️', title: 'Test Mode', desc: '실전과 동일한 환경에서 모의고사를 응시합니다.' },
           { icon: '📊', title: 'Review Mode', desc: 'AI 첨삭으로 피드백을 받고 개선점을 학습합니다.' },
         ]}
-        nextAction={{ label: 'Test 시작', href: '/updated-writing/test/1' }}
+        nextAction={{ label: 'Assignments 보기', href: '/updated-writing/assignments' }}
       />
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {/* Study Mode with Dropdown */}
         <div className="relative">
           <button
@@ -101,24 +99,29 @@ export default function WritingHubPage() {
               {testPractices.map((test) => (
                 <Link
                   key={test.id}
-                  href={test.comingSoon ? '#' : test.href}
-                  onClick={(e) => test.comingSoon && e.preventDefault()}
-                  className={`block px-4 py-3 text-sm border-b last:border-b-0 ${
-                    test.comingSoon
-                      ? 'text-gray-400 cursor-not-allowed'
-                      : 'text-gray-700 hover:bg-indigo-50'
-                  }`}
+                  href={test.href}
+                  className="block px-4 py-3 text-sm border-b last:border-b-0 text-gray-700 hover:bg-indigo-50"
                 >
                   <div className="flex items-center justify-between">
                     <span>{test.title}</span>
-                    {test.comingSoon && <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded">Soon</span>}
                   </div>
-                  {!test.comingSoon && <div className="text-xs text-gray-500 mt-1">{test.difficulty} • {test.time}</div>}
                 </Link>
               ))}
             </div>
           )}
         </div>
+
+        {/* Assignments */}
+        <Link
+          href="/updated-writing/assignments"
+          className="block rounded-lg border bg-white px-4 py-6 text-left shadow-sm transition hover:bg-indigo-50 hover:border-indigo-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/50"
+        >
+          <div className="text-2xl mb-2">📋</div>
+          <div className="text-sm font-semibold">Assignments</div>
+          <div className="mt-1 text-xs text-gray-500">
+            선생님이 배정한 시험을 확인하고 응시합니다.
+          </div>
+        </Link>
 
         {/* Review Mode */}
         <Link

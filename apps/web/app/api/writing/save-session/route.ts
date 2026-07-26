@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { testId, sessionId, answers } = await req.json();
+    const { testId, sessionId, answers, assignmentId } = await req.json();
     if (!testId || !answers) return NextResponse.json({ error: "testId and answers required" }, { status: 400 });
 
     let result;
@@ -34,6 +34,19 @@ export async function POST(req: NextRequest) {
 
       if (error) throw error;
       result = data;
+    }
+
+    // 배정을 통해 들어온 경우, 완료 처리
+    if (assignmentId) {
+      const { error: assignmentError } = await supabase
+        .from("test_assignments")
+        .update({ status: "completed", completed_at: new Date().toISOString() })
+        .eq("id", assignmentId)
+        .eq("student_id", user.id);
+
+      if (assignmentError) {
+        console.error("Failed to mark writing assignment completed:", assignmentError);
+      }
     }
 
     return NextResponse.json({ sessionId: result.id });

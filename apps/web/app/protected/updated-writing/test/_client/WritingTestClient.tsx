@@ -4,7 +4,16 @@ import { useRouter, useSearchParams } from "next/navigation";
 import WritingRunnerETS from "@/components/writing/WritingRunnerETS";
 import type { WWritingTest2026 } from "@/models/writing";
 
-export default function WritingTestClient({ test, testId }: { test: WWritingTest2026; testId: string }) {
+export default function WritingTestClient({
+  test,
+  testId,
+  assignmentId,
+}: {
+  test: WWritingTest2026;
+  testId: string;
+  /** 배정을 통해 들어온 경우에만 존재. 완료 시 test_assignments 상태를 업데이트한다. */
+  assignmentId?: string;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const revisionSessionId = searchParams.get("revision");
@@ -21,6 +30,7 @@ export default function WritingTestClient({ test, testId }: { test: WWritingTest
         body: JSON.stringify({
           testId,
           sessionId: revisionSessionId, // revision인 경우 기존 session ID 사용
+          assignmentId,
           answers: {
             task_1_score_raw: answers.task1Scores.filter((s) => s.correct).length,
             task_2_submission: answers.task2Text,
