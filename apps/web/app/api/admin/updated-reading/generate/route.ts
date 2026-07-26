@@ -3,7 +3,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { randomUUID } from 'crypto';
 
 export const runtime = 'nodejs';
-export const maxDuration = 120;
+export const maxDuration = 300;
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || 'placeholder' });
 

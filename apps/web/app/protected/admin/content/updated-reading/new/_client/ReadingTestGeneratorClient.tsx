@@ -11,7 +11,23 @@ import type {
 } from "@/models/reading";
 import PassagePasteFlow from "./PassagePasteFlow";
 
-type Phase = "input" | "generating" | "edit" | "saving" | "locked";
+type Phase = "input" | "generating" | "edit" | "saving";
+
+// fetch가 성공해도 서버리스 타임아웃/크래시 시 Vercel이 JSON이 아닌 HTML 에러 페이지를
+// 돌려줄 수 있어 res.json()이 "Unexpected token 'A'..." 같은 파싱 에러로 실패한다.
+// content-type을 먼저 확인해서 사람이 읽을 수 있는 에러 메시지로 바꿔준다.
+async function safeJson(res: Response): Promise<any> {
+  const contentType = res.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json")) {
+    const text = await res.text();
+    throw new Error(
+      res.status === 504 || /timeout/i.test(text)
+        ? "생성 시간이 너무 오래 걸려 서버가 타임아웃되었습니다. 잠시 후 다시 시도해주세요."
+        : `서버 오류 (${res.status}): ${text.slice(0, 200)}`
+    );
+  }
+  return res.json();
+}
 type Mode = "auto" | "paste";
 type GroupKey = "module1" | "hard" | "easy";
 
@@ -181,7 +197,7 @@ export default function ReadingTestGeneratorClient() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ kind: field.suggestKind, avoid }),
         });
-        const data = await res.json();
+        const data = await safeJson(res);
         if (!data.ok) throw new Error(data.error ?? "Failed to suggest topics");
         setSuggestions((prev) => ({ ...prev, [field.key]: data.suggestions }));
       } catch (e: any) {
@@ -211,7 +227,7 @@ export default function ReadingTestGeneratorClient() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ kind: field.suggestKind, avoid }),
         });
-        const data = await res.json();
+        const data = await safeJson(res);
         if (!data.ok) throw new Error(data.error ?? "Failed to suggest topics");
         const pick = data.suggestions?.[0];
         if (pick) filled[field.key] = pick;
@@ -235,7 +251,7 @@ export default function ReadingTestGeneratorClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(topics),
       });
-      const data = await res.json();
+      const data = await safeJson(res);
       if (!data.ok) throw new Error(data.error ?? "Generation failed");
       setTest(data.payload as RReadingTest2026);
       setPhase("edit");
@@ -324,7 +340,7 @@ export default function ReadingTestGeneratorClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ test }),
       });
-      const data = await res.json();
+      const data = await safeJson(res);
       if (!data.ok) throw new Error(data.error ?? "Save failed");
       setSavedId(test.meta.id);
       setPhase("edit");
@@ -333,33 +349,6 @@ export default function ReadingTestGeneratorClient() {
       setPhase("edit");
     }
   }, [test]);
-
-  // ── Lock ────────────────────────────────────────────────────
-  const handleLock = useCallback(async () => {
-    const id = savedId ?? test?.meta.id;
-    if (!id) { setError("먼저 저장하세요."); return; }
-    if (!confirm("Lock하면 이후 수정이 불가합니다. 진행할까요?")) return;
-    setError(null);
-    setPhase("saving");
-    try {
-      await fetch("/api/admin/updated-reading/save", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ test }),
-      });
-      const res = await fetch("/api/admin/updated-reading/lock", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
-      });
-      const data = await res.json();
-      if (!data.ok) throw new Error(data.error ?? "Lock failed");
-      setPhase("locked");
-    } catch (e: any) {
-      setError(e.message);
-      setPhase("edit");
-    }
-  }, [savedId, test]);
 
   // ── Item editor (task kind별 분기) ──────────────────────────
   const renderItem = (group: GroupKey, item: RReadingItem, itemIndex: number) => {
@@ -501,35 +490,6 @@ export default function ReadingTestGeneratorClient() {
 
   // ── Render ──────────────────────────────────────────────────
 
-  if (phase === "locked") {
-    return (
-      <div className="space-y-4 text-center py-12">
-        <div className="text-4xl">🔒</div>
-        <p className="text-sm font-semibold text-gray-800">시험이 Lock되었습니다.</p>
-        <p className="text-xs text-gray-500">학생에게 노출 가능한 상태입니다.</p>
-        <div className="flex justify-center gap-3">
-          <button
-            onClick={() => router.push("/admin/content/updated-reading")}
-            className="rounded-lg border px-4 py-2 text-xs hover:bg-gray-50"
-          >
-            목록으로
-          </button>
-          <button
-            onClick={() => {
-              setPhase("input");
-              setTopics(Object.fromEntries(ALL_TOPIC_FIELDS.map((f) => [f.key, ""])) as Record<TopicFieldKey, string>);
-              setSuggestions({});
-              setTest(null); setSavedId(null);
-            }}
-            className="rounded-lg border border-emerald-500 bg-emerald-600 px-4 py-2 text-xs text-white hover:bg-emerald-700"
-          >
-            새 시험 만들기
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       {/* Mode toggle */}
@@ -651,26 +611,28 @@ export default function ReadingTestGeneratorClient() {
           {renderGroup("hard", "🔴 Module 2 - Upper (Hard)", "bg-amber-50")}
           {renderGroup("easy", "🟢 Module 2 - Lower (Easy)", "bg-blue-50")}
 
-          {/* Actions */}
+          {/* Actions — 저장 즉시 배정 가능한 상태가 됩니다. 별도 Lock 단계 없음.
+              배정이 하나라도 생기면 이후 저장은 서버에서 자동으로 막힙니다. */}
           <div className="flex items-center justify-between rounded-xl border bg-white p-4 shadow-sm">
             <div className="text-xs text-gray-400">
-              {savedId ? `저장됨 (ID: ${savedId.slice(0, 8)}…)` : "아직 저장되지 않았습니다."}
+              {savedId ? `저장됨 (ID: ${savedId.slice(0, 8)}…) · 바로 배정 가능합니다.` : "아직 저장되지 않았습니다."}
             </div>
             <div className="flex gap-2">
               <button
                 onClick={handleSave}
                 disabled={phase === "saving"}
-                className="rounded-lg border px-4 py-2 text-xs font-medium hover:bg-gray-50 disabled:opacity-50"
+                className="rounded-lg border border-emerald-500 bg-emerald-600 px-4 py-2 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
               >
-                {phase === "saving" ? "저장 중…" : "임시 저장"}
+                {phase === "saving" ? "저장 중…" : "저장"}
               </button>
-              <button
-                onClick={handleLock}
-                disabled={phase === "saving"}
-                className="rounded-lg border border-gray-800 bg-gray-900 px-4 py-2 text-xs font-medium text-white hover:bg-gray-800 disabled:opacity-50"
-              >
-                🔒 Lock & 완료
-              </button>
+              {savedId && (
+                <button
+                  onClick={() => router.push("/admin/content/updated-reading/assign")}
+                  className="rounded-lg border px-4 py-2 text-xs font-medium hover:bg-gray-50"
+                >
+                  배정하러 가기 →
+                </button>
+              )}
             </div>
           </div>
         </>
