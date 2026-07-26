@@ -218,6 +218,40 @@ export default function ListeningTestGeneratorClient() {
     setSuggestions(prev => ({ ...prev, [key]: [] }));
   };
 
+  const [autoFilling, setAutoFilling] = useState(false);
+
+  const handleAutoFillAll = useCallback(async () => {
+    setAutoFilling(true);
+    setError(null);
+    try {
+      // 이미 채워진 값에서 시작 (빈 필드만 채움), 한 개씩 순서대로 추천받아서
+      // 방금 채운 것까지 avoid에 반영하며 진행 (필드끼리 겹치지 않게)
+      const filled: Record<string, string> = { ...topics };
+
+      for (const field of ALL_FIELDS) {
+        if (filled[field.key]?.trim()) continue; // 이미 채워진 필드는 건너뜀
+
+        const avoid = Object.values(filled).filter(v => v.trim().length > 0);
+        const res = await fetch('/api/admin/updated-listening/suggest-topics', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ kind: field.suggestKind, avoid }),
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error ?? 'Failed to suggest topics');
+
+        const pick = data.suggestions?.[0];
+        if (pick) filled[field.key] = pick;
+      }
+
+      setTopics(filled);
+    } catch (e: any) {
+      setError(`전체 주제 자동채우기 실패: ${e.message}`);
+    } finally {
+      setAutoFilling(false);
+    }
+  }, [topics]);
+
   const handleGenerate = useCallback(async () => {
     if (!canGenerate) return;
     setError(null);
@@ -309,6 +343,19 @@ export default function ListeningTestGeneratorClient() {
     <div className="space-y-6">
       {/* Topic Inputs */}
       <section className="rounded-xl border bg-white p-4 shadow-sm space-y-6">
+        <div className="flex items-center justify-between rounded-lg bg-violet-50 border border-violet-200 px-4 py-3">
+          <p className="text-xs text-violet-700">
+            10개 필드를 하나씩 채우기 번거로우면, 아래 버튼으로 빈 필드를 한 번에 자동 채울 수 있습니다.
+          </p>
+          <button
+            onClick={handleAutoFillAll}
+            disabled={autoFilling || phase === "generating"}
+            className="shrink-0 rounded-lg border border-violet-500 bg-white px-3 py-1.5 text-xs font-semibold text-violet-700 hover:bg-violet-100 disabled:opacity-50"
+          >
+            {autoFilling ? "채우는 중…" : "🎲 빈 주제 전체 자동채우기"}
+          </button>
+        </div>
+
         <div>
           <h2 className="text-sm font-semibold mb-4">
             📘 Module 1 (공통 - 모든 학생) 주제 3가지
@@ -320,7 +367,7 @@ export default function ListeningTestGeneratorClient() {
                 field={field}
                 value={topics[field.key]}
                 onChange={(val) => setTopic(field.key, val)}
-                disabled={phase === "generating"}
+                disabled={phase === "generating" || autoFilling}
                 loadingSuggestion={!!loadingSuggestions[field.key]}
                 onSuggest={() => handleSuggestTopics(field)}
                 suggestionList={suggestions[field.key] ?? []}
@@ -344,7 +391,7 @@ export default function ListeningTestGeneratorClient() {
                 field={field}
                 value={topics[field.key]}
                 onChange={(val) => setTopic(field.key, val)}
-                disabled={phase === "generating"}
+                disabled={phase === "generating" || autoFilling}
                 loadingSuggestion={!!loadingSuggestions[field.key]}
                 onSuggest={() => handleSuggestTopics(field)}
                 suggestionList={suggestions[field.key] ?? []}
