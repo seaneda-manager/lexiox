@@ -49,28 +49,180 @@ function updateGroupItems(
   return next;
 }
 
+// ── 주제 입력 필드 설정 (AI 추천 연동) ─────────────────────────
+
+type TopicFieldKey =
+  | "cwTopicM1" | "dailyLifeTopic1" | "dailyLifeTopic2" | "academicTopicM1"
+  | "cwTopicM2" | "academicTopicM2";
+
+type TopicFieldConfig = {
+  key: TopicFieldKey;
+  label: string;
+  placeholder: string;
+  suggestKind: "complete_words" | "daily_life" | "academic";
+  color: "sky" | "amber" | "violet";
+};
+
+const MODULE1_TOPIC_FIELDS: TopicFieldConfig[] = [
+  { key: "cwTopicM1", label: "① Complete the Words", placeholder: "예: university campus life", suggestKind: "complete_words", color: "sky" },
+  { key: "dailyLifeTopic1", label: "② Daily Life #1", placeholder: "예: library overdue notice", suggestKind: "daily_life", color: "amber" },
+  { key: "dailyLifeTopic2", label: "③ Daily Life #2", placeholder: "예: dorm cafeteria menu update", suggestKind: "daily_life", color: "amber" },
+  { key: "academicTopicM1", label: "④ Academic Passage", placeholder: "예: The history of the printing press", suggestKind: "academic", color: "violet" },
+];
+
+const MODULE2_TOPIC_FIELDS: TopicFieldConfig[] = [
+  { key: "cwTopicM2", label: "⑤ Complete the Words", placeholder: "예: marine biology research", suggestKind: "complete_words", color: "sky" },
+  { key: "academicTopicM2", label: "⑥ Academic Passage", placeholder: "예: Climate change and ocean ecosystems", suggestKind: "academic", color: "violet" },
+];
+
+const ALL_TOPIC_FIELDS = [...MODULE1_TOPIC_FIELDS, ...MODULE2_TOPIC_FIELDS];
+
+const TOPIC_COLOR_CLASSES: Record<TopicFieldConfig["color"], {
+  label: string; border: string; ring: string; bg: string;
+  suggestBorder: string; suggestText: string; suggestHover: string;
+  chipBorder: string; chipBg: string; chipText: string; chipHover: string;
+}> = {
+  sky: {
+    label: "text-sky-700", border: "border-sky-200", ring: "focus:ring-sky-400", bg: "bg-sky-50",
+    suggestBorder: "border-sky-300", suggestText: "text-sky-700", suggestHover: "hover:bg-sky-50",
+    chipBorder: "border-sky-200", chipBg: "bg-sky-50", chipText: "text-sky-700", chipHover: "hover:bg-sky-100",
+  },
+  amber: {
+    label: "text-amber-700", border: "border-amber-200", ring: "focus:ring-amber-400", bg: "bg-amber-50",
+    suggestBorder: "border-amber-300", suggestText: "text-amber-700", suggestHover: "hover:bg-amber-50",
+    chipBorder: "border-amber-200", chipBg: "bg-amber-50", chipText: "text-amber-700", chipHover: "hover:bg-amber-100",
+  },
+  violet: {
+    label: "text-violet-700", border: "border-violet-200", ring: "focus:ring-violet-400", bg: "bg-violet-50",
+    suggestBorder: "border-violet-300", suggestText: "text-violet-700", suggestHover: "hover:bg-violet-50",
+    chipBorder: "border-violet-200", chipBg: "bg-violet-50", chipText: "text-violet-700", chipHover: "hover:bg-violet-100",
+  },
+};
+
+function TopicInput({
+  field, value, onChange, disabled, loadingSuggestion, onSuggest, suggestionList, onSelectSuggestion,
+}: {
+  field: TopicFieldConfig;
+  value: string;
+  onChange: (val: string) => void;
+  disabled: boolean;
+  loadingSuggestion: boolean;
+  onSuggest: () => void;
+  suggestionList: string[];
+  onSelectSuggestion: (topic: string) => void;
+}) {
+  const c = TOPIC_COLOR_CLASSES[field.color];
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between">
+        <label className={`text-xs font-semibold ${c.label}`}>{field.label}</label>
+        <button
+          type="button"
+          onClick={onSuggest}
+          disabled={loadingSuggestion || disabled}
+          className={`text-[10px] px-2 py-1 rounded border ${c.suggestBorder} ${c.suggestText} ${c.suggestHover} disabled:opacity-50`}
+        >
+          {loadingSuggestion ? "추천 중…" : "💡 추천"}
+        </button>
+      </div>
+      <input
+        className={`w-full rounded-lg border ${c.border} ${c.bg} px-3 py-2 text-sm focus:outline-none focus:ring-2 ${c.ring} disabled:opacity-60`}
+        placeholder={field.placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+      />
+      {suggestionList.length > 0 && (
+        <div className="flex flex-wrap gap-2 pt-0.5">
+          {suggestionList.map((topic, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => onSelectSuggestion(topic)}
+              className={`text-[11px] px-2.5 py-1 rounded-full border ${c.chipBorder} ${c.chipBg} ${c.chipText} ${c.chipHover} transition cursor-pointer`}
+            >
+              {topic}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ReadingTestGeneratorClient() {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("auto");
   const [phase, setPhase] = useState<Phase>("input");
 
-  // Module 1 topics (4개: CW 1 + Daily 2 + Academic 1)
-  const [cwTopicM1, setCwTopicM1] = useState("");
-  const [dailyLifeTopic1, setDailyLifeTopic1] = useState("");
-  const [dailyLifeTopic2, setDailyLifeTopic2] = useState("");
-  const [academicTopicM1, setAcademicTopicM1] = useState("");
+  const [topics, setTopics] = useState<Record<TopicFieldKey, string>>(
+    Object.fromEntries(ALL_TOPIC_FIELDS.map((f) => [f.key, ""])) as Record<TopicFieldKey, string>
+  );
+  const setTopic = (key: TopicFieldKey, value: string) => setTopics((prev) => ({ ...prev, [key]: value }));
 
-  // Module 2 topics (2개, Hard/Easy 공유: CW 1 + Academic 1)
-  const [cwTopicM2, setCwTopicM2] = useState("");
-  const [academicTopicM2, setAcademicTopicM2] = useState("");
+  const [suggestions, setSuggestions] = useState<Record<string, string[]>>({});
+  const [loadingSuggestions, setLoadingSuggestions] = useState<Record<string, boolean>>({});
+  const [autoFilling, setAutoFilling] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
   const [test, setTest] = useState<RReadingTest2026 | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
 
-  const canGenerate =
-    cwTopicM1.trim() && dailyLifeTopic1.trim() && dailyLifeTopic2.trim() && academicTopicM1.trim() &&
-    cwTopicM2.trim() && academicTopicM2.trim();
+  const canGenerate = ALL_TOPIC_FIELDS.every((f) => topics[f.key]?.trim());
+
+  const handleSuggestTopics = useCallback(
+    async (field: TopicFieldConfig) => {
+      setLoadingSuggestions((prev) => ({ ...prev, [field.key]: true }));
+      setError(null);
+      try {
+        const avoid = Object.values(topics).filter((v) => v.trim().length > 0);
+        const res = await fetch("/api/admin/updated-reading/suggest-topics", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ kind: field.suggestKind, avoid }),
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error ?? "Failed to suggest topics");
+        setSuggestions((prev) => ({ ...prev, [field.key]: data.suggestions }));
+      } catch (e: any) {
+        setError(`주제 추천 실패: ${e.message}`);
+      } finally {
+        setLoadingSuggestions((prev) => ({ ...prev, [field.key]: false }));
+      }
+    },
+    [topics]
+  );
+
+  const handleSelectSuggestion = (key: TopicFieldKey, topic: string) => {
+    setTopic(key, topic);
+    setSuggestions((prev) => ({ ...prev, [key]: [] }));
+  };
+
+  const handleAutoFillAll = useCallback(async () => {
+    setAutoFilling(true);
+    setError(null);
+    try {
+      const filled: Record<string, string> = { ...topics };
+      for (const field of ALL_TOPIC_FIELDS) {
+        if (filled[field.key]?.trim()) continue;
+        const avoid = Object.values(filled).filter((v) => v.trim().length > 0);
+        const res = await fetch("/api/admin/updated-reading/suggest-topics", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ kind: field.suggestKind, avoid }),
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error ?? "Failed to suggest topics");
+        const pick = data.suggestions?.[0];
+        if (pick) filled[field.key] = pick;
+      }
+      setTopics(filled as Record<TopicFieldKey, string>);
+    } catch (e: any) {
+      setError(`전체 주제 자동채우기 실패: ${e.message}`);
+    } finally {
+      setAutoFilling(false);
+    }
+  }, [topics]);
 
   // ── Generate ────────────────────────────────────────────────
   const handleGenerate = useCallback(async () => {
@@ -81,10 +233,7 @@ export default function ReadingTestGeneratorClient() {
       const res = await fetch("/api/admin/updated-reading/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          cwTopicM1, dailyLifeTopic1, dailyLifeTopic2, academicTopicM1,
-          cwTopicM2, academicTopicM2,
-        }),
+        body: JSON.stringify(topics),
       });
       const data = await res.json();
       if (!data.ok) throw new Error(data.error ?? "Generation failed");
@@ -94,7 +243,7 @@ export default function ReadingTestGeneratorClient() {
       setError(e.message);
       setPhase("input");
     }
-  }, [cwTopicM1, dailyLifeTopic1, dailyLifeTopic2, academicTopicM1, cwTopicM2, academicTopicM2, canGenerate]);
+  }, [topics, canGenerate]);
 
   // ── Field helpers ───────────────────────────────────────────
   const setLabel = (label: string) =>
@@ -368,8 +517,8 @@ export default function ReadingTestGeneratorClient() {
           <button
             onClick={() => {
               setPhase("input");
-              setCwTopicM1(""); setDailyLifeTopic1(""); setDailyLifeTopic2(""); setAcademicTopicM1("");
-              setCwTopicM2(""); setAcademicTopicM2("");
+              setTopics(Object.fromEntries(ALL_TOPIC_FIELDS.map((f) => [f.key, ""])) as Record<TopicFieldKey, string>);
+              setSuggestions({});
               setTest(null); setSavedId(null);
             }}
             className="rounded-lg border border-emerald-500 bg-emerald-600 px-4 py-2 text-xs text-white hover:bg-emerald-700"
@@ -417,49 +566,34 @@ export default function ReadingTestGeneratorClient() {
       {/* Topic input — 6개 (Module1: 4개, Module2: 2개 Hard/Easy 공유) */}
       {mode === "auto" && (
       <section className="rounded-xl border bg-white p-4 shadow-sm space-y-6">
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-gray-400">필드별 💡 추천을 누르거나, 한 번에 전체를 채울 수 있습니다.</p>
+          <button
+            type="button"
+            onClick={handleAutoFillAll}
+            disabled={autoFilling || phase === "generating"}
+            className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 disabled:opacity-50"
+          >
+            {autoFilling ? "채우는 중…" : "🎲 빈 주제 전체 자동채우기"}
+          </button>
+        </div>
+
         <div>
           <h2 className="mb-3 text-sm font-semibold text-gray-900">📘 Module 1 (공통 Routing) 주제 4가지</h2>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-sky-700">① Complete the Words</label>
-              <input
-                className="w-full rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400 disabled:opacity-60"
-                placeholder="예: university campus life"
-                value={cwTopicM1}
-                onChange={(e) => setCwTopicM1(e.target.value)}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {MODULE1_TOPIC_FIELDS.map((field) => (
+              <TopicInput
+                key={field.key}
+                field={field}
+                value={topics[field.key]}
+                onChange={(v) => setTopic(field.key, v)}
                 disabled={phase === "generating"}
+                loadingSuggestion={!!loadingSuggestions[field.key]}
+                onSuggest={() => handleSuggestTopics(field)}
+                suggestionList={suggestions[field.key] ?? []}
+                onSelectSuggestion={(topic) => handleSelectSuggestion(field.key, topic)}
               />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-amber-700">② Daily Life #1</label>
-              <input
-                className="w-full rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 disabled:opacity-60"
-                placeholder="예: library overdue notice"
-                value={dailyLifeTopic1}
-                onChange={(e) => setDailyLifeTopic1(e.target.value)}
-                disabled={phase === "generating"}
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-amber-700">③ Daily Life #2</label>
-              <input
-                className="w-full rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 disabled:opacity-60"
-                placeholder="예: dorm cafeteria menu update"
-                value={dailyLifeTopic2}
-                onChange={(e) => setDailyLifeTopic2(e.target.value)}
-                disabled={phase === "generating"}
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-violet-700">④ Academic Passage</label>
-              <input
-                className="w-full rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 disabled:opacity-60"
-                placeholder="예: The history of the printing press"
-                value={academicTopicM1}
-                onChange={(e) => setAcademicTopicM1(e.target.value)}
-                disabled={phase === "generating"}
-              />
-            </div>
+            ))}
           </div>
         </div>
 
@@ -468,28 +602,20 @@ export default function ReadingTestGeneratorClient() {
             🔴🟢 Module 2 (적응형 Upper/Lower) 주제 2가지{" "}
             <span className="text-[11px] font-normal text-gray-400">(Hard/Easy 공유, 난이도만 다르게 생성 · Daily Life 없음)</span>
           </h2>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-sky-700">⑤ Complete the Words</label>
-              <input
-                className="w-full rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400 disabled:opacity-60"
-                placeholder="예: marine biology research"
-                value={cwTopicM2}
-                onChange={(e) => setCwTopicM2(e.target.value)}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {MODULE2_TOPIC_FIELDS.map((field) => (
+              <TopicInput
+                key={field.key}
+                field={field}
+                value={topics[field.key]}
+                onChange={(v) => setTopic(field.key, v)}
                 disabled={phase === "generating"}
+                loadingSuggestion={!!loadingSuggestions[field.key]}
+                onSuggest={() => handleSuggestTopics(field)}
+                suggestionList={suggestions[field.key] ?? []}
+                onSelectSuggestion={(topic) => handleSelectSuggestion(field.key, topic)}
               />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-violet-700">⑥ Academic Passage</label>
-              <input
-                className="w-full rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 disabled:opacity-60"
-                placeholder="예: Climate change and ocean ecosystems"
-                value={academicTopicM2}
-                onChange={(e) => setAcademicTopicM2(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
-                disabled={phase === "generating"}
-              />
-            </div>
+            ))}
           </div>
         </div>
 

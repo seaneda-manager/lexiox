@@ -187,6 +187,11 @@ Return ONLY valid JSON, no markdown fences:
 
     const id = randomUUID();
     payload.meta.id = id;
+    payload.meta.usedTopics = {
+      complete_words: [cwTopicM1, cwTopicM2],
+      daily_life: [dailyLifeTopic1, dailyLifeTopic2],
+      academic: [academicTopicM1, academicTopicM2],
+    };
 
     return NextResponse.json({ ok: true, id, payload });
   } catch (err: any) {
