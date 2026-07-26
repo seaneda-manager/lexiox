@@ -156,7 +156,7 @@ export async function POST(req: Request) {
           console.log(`[Audio] Generating dialogue audio for ${track.trackId}`);
           const dialogueResult = await generateDialogueAudio(track.transcript);
 
-          // 각 segment별로 Supabase에 업로드
+          // 각 segment별로 Supabase에 업로드 (미리보기/검수용)
           const segmentUrls: Array<{ speaker: string; text: string; audioUrl: string }> = [];
 
           for (let i = 0; i < dialogueResult.segments.length; i++) {
@@ -186,9 +186,23 @@ export async function POST(req: Request) {
             );
           }
 
-          // 첫 번째 segment를 main audioUrl로 설정 (호환성)
+          // 전체 대화를 재생할 메인 오디오: 모든 segment를 이어붙여 하나의 파일로 업로드
+          // (segment[0]만 쓰면 첫 화자의 한 마디만 재생되고 나머지 대화가 잘림)
+          const mergedBuffer = Buffer.concat(dialogueResult.segments.map((s) => s.buffer));
+          const mainFileName = `listening/${testId}/${track.trackId}.mp3`;
+          const { error: mainUploadError } = await supabase.storage
+            .from('content')
+            .upload(mainFileName, mergedBuffer, {
+              contentType: 'audio/mpeg',
+              upsert: true,
+            });
+          if (mainUploadError) throw mainUploadError;
+          const { data: mainData } = supabase.storage
+            .from('content')
+            .getPublicUrl(mainFileName);
+
           results[track.trackId] = {
-            audioUrl: segmentUrls[0]?.audioUrl || '',
+            audioUrl: mainData.publicUrl,
             segments: segmentUrls,
           };
         } else {
