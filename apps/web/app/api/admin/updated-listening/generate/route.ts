@@ -524,10 +524,14 @@ export async function POST(req: Request) {
     // 오디오는 여기서 생성하지 않는다. 스크립트/문제만 만들고, admin이 edit 페이지에서
     // 내용을 검토한 뒤 트랙별로 "🎧 음성생성" 버튼을 눌러 개별 생성하도록 한다.
     // (모든 오디오 관련 로직은 generate-audio 엔드포인트 한 곳에만 있도록 유지)
+    // Claude가 반환하는 item에도 자체 "id": "t1"/"t2"... 필드가 들어있으므로,
+    // 반드시 스프레드 뒤에 id를 지정해 고유 prefix-id로 덮어써야 한다.
+    // (스프레드가 뒤에 오면 Claude의 id가 이겨서 Module1/Hard/Easy가 서로 같은 id "t3"를
+    // 공유하게 되고, 서로 다른 트랙의 스크립트/오디오가 뒤섞이는 심각한 버그가 생긴다)
     const buildTracks = (items: any[], prefix: string) =>
       items.map((item, i) => ({
-        id: `${prefix}-${i}`,
         ...item,
+        id: `${prefix}-${i}`,
         audioUrl: '',
         illustrationUrl: '',
       }));
