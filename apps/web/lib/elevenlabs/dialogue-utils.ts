@@ -72,3 +72,31 @@ export function isDialogue(transcript: string): boolean {
   const uniqueSpeakers = new Set(segments.map((s) => s.speaker));
   return uniqueSpeakers.size > 1;
 }
+
+// 단일 화자 트랙(academic_talk, announcement 등)에도 AI가 습관적으로
+// "Professor: ..." / "Staff: ..." 같은 화자 레이블을 앞에 붙이는 경우가 있음.
+// TTS로 보내기 전, 줄 맨 앞의 화자 레이블만 제거하고 순수 발화 텍스트만 이어붙인다.
+export function stripSpeakerLabels(transcript: string): string {
+  const lines = transcript.split('\n');
+
+  const cleaned = lines.map((line) => {
+    const trimmed = line.trim();
+    if (!trimmed) return '';
+
+    const colonIdx = trimmed.indexOf(':');
+    if (colonIdx === -1) return trimmed;
+
+    const labelPart = trimmed.substring(0, colonIdx).trim();
+    const textPart = trimmed.substring(colonIdx + 1).trim();
+
+    if (!SPEAKER_LABEL_RE.test(labelPart) || textPart.length === 0) return trimmed;
+
+    let text = textPart;
+    if (text.startsWith('"') && text.endsWith('"')) {
+      text = text.slice(1, -1);
+    }
+    return text;
+  });
+
+  return cleaned.filter((l) => l.length > 0).join(' ').trim();
+}

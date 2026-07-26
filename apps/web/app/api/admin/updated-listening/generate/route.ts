@@ -7,6 +7,7 @@ import {
   parseDialogueTranscript,
   assignVoicesToSpeakers,
   isDialogue,
+  stripSpeakerLabels,
 } from '@/lib/elevenlabs/dialogue-utils';
 
 export const runtime = 'nodejs';
@@ -96,7 +97,7 @@ async function generateDialogueAudio(transcript: string): Promise<Buffer> {
   if (segments.length === 0) {
     console.warn('[Dialogue] No dialogue segments found, falling back to single voice');
     const voiceId = getRandomVoiceId();
-    return generateSingleVoiceAudio(transcript, voiceId);
+    return generateSingleVoiceAudio(stripSpeakerLabels(transcript), voiceId);
   }
 
   const voicePool = getVoicePool();
@@ -644,9 +645,12 @@ export async function POST(req: Request) {
             console.log(`[Audio] Generating dialogue audio for ${track.id}`);
             audioBuffer = await generateDialogueAudio(track.transcript);
           } else {
+            // 단일 화자 트랙(academic_talk, announcement 등)도 AI가 "Professor:"/"Staff:" 같은
+            // 화자 레이블을 습관적으로 붙이는 경우가 있어 TTS 전송 전 항상 제거한다.
             console.log(`[Audio] Generating single-voice audio for ${track.id}`);
             const voiceId = getRandomVoiceId();
-            audioBuffer = await generateSingleVoiceAudio(track.transcript, voiceId);
+            const cleanText = stripSpeakerLabels(track.transcript);
+            audioBuffer = await generateSingleVoiceAudio(cleanText, voiceId);
           }
 
           const fileName = `listening/${testId}/${track.id}.mp3`;

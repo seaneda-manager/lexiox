@@ -5,6 +5,7 @@ import {
   parseDialogueTranscript,
   assignVoicesToSpeakers,
   isDialogue,
+  stripSpeakerLabels,
   type DialogueSegment,
 } from '@/lib/elevenlabs/dialogue-utils';
 
@@ -194,7 +195,7 @@ export async function POST(req: Request) {
           console.log(`[Audio] Generating single-voice audio for ${track.trackId}`);
           const voiceId = getRandomVoiceId();
           const audioBuffer = await generateSingleVoiceAudio(
-            track.transcript,
+            stripSpeakerLabels(track.transcript),
             voiceId
           );
 
