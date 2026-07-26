@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/supabase/service';
+import { isTestAssigned } from '@/lib/supabase/assignment-guard';
 
 export const runtime = 'nodejs';
 
@@ -10,14 +11,9 @@ export async function POST(req: Request) {
 
     const supabase = getServiceSupabase();
 
-    const { data: existing } = await supabase
-      .from('speaking_tests')
-      .select('is_locked')
-      .eq('id', test.id)
-      .maybeSingle();
-
-    if (existing?.is_locked) {
-      return NextResponse.json({ ok: false, error: 'locked' }, { status: 403 });
+    // 이미 배정된 시험은 수정 불가 (수동 Lock 대신 배정 여부로 자동 판단)
+    if (await isTestAssigned('speaking', test.id)) {
+      return NextResponse.json({ ok: false, error: '이미 학생에게 배정된 시험은 수정할 수 없습니다.' }, { status: 403 });
     }
 
     const { error } = await supabase

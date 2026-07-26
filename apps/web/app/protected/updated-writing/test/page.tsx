@@ -8,7 +8,6 @@ type WritingTest = {
   id: string;
   label: string;
   payload?: { items?: Array<{ taskKind?: string }> };
-  is_locked?: boolean;
 };
 
 export default async function WritingTestListPage() {
@@ -16,11 +15,10 @@ export default async function WritingTestListPage() {
 
   const { data: tests, error } = await supabase
     .from('writing_tests')
-    .select('id, label, payload, is_locked')
+    .select('id, label, payload')
     .order('created_at', { ascending: false });
 
-  const writingTests = (tests ?? []) as WritingTest[];
-  const availableTests = writingTests.filter(t => t.is_locked !== false); // Lock된 것만 표시
+  const availableTests = (tests ?? []) as WritingTest[];
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-6">

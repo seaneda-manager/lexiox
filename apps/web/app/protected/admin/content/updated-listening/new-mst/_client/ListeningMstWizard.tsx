@@ -41,7 +41,7 @@ function resizeArray(arr: string[], n: number): string[] {
 export default function ListeningMstWizard() {
   const router = useRouter();
   const [step, setStep] = useState<StepKey>("module1");
-  const [phase, setPhase] = useState<"form" | "saving" | "locked">("form");
+  const [phase, setPhase] = useState<"form" | "saving">("form");
 
   const [topic, setTopic] = useState<Record<StepKey, string>>({ module1: "", hard: "", easy: "" });
   const [composition, setComposition] = useState<Record<StepKey, Composition>>(DEFAULT_COMPOSITION);
@@ -118,72 +118,38 @@ export default function ListeningMstWizard() {
     }
   }, [step]);
 
-  const handleSaveAndLock = useCallback(
-    async (lock: boolean) => {
-      if (!results.module1 || !results.hard || !results.easy) return;
-      setError(null);
-      setPhase("saving");
-      const id = savedId ?? (typeof crypto !== "undefined" ? crypto.randomUUID() : `id-${Date.now()}`);
-      const test: LListeningTest2026 = {
-        meta: { id, label, examEra: "ibt_2026" },
-        modules: [
-          { id: "stage1", stage: 1, items: results.module1 },
-          { id: "stage2-default", stage: 2, items: [] },
-        ],
-        stage2Pool: {
-          cutScore: 0.7,
-          hard: { id: "stage2-hard", stage: 2, items: results.hard },
-          easy: { id: "stage2-easy", stage: 2, items: results.easy },
-        },
-      };
-      try {
-        const saveRes = await fetch("/api/admin/updated-listening/save", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ test }),
-        });
-        const saveData = await saveRes.json();
-        if (!saveData.ok) throw new Error(saveData.error ?? "저장 실패");
-        setSavedId(id);
-
-        if (lock) {
-          if (!confirm("Lock하면 이후 수정이 불가합니다. 진행할까요?")) {
-            setPhase("form");
-            return;
-          }
-          const lockRes = await fetch("/api/admin/updated-listening/lock", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id }),
-          });
-          const lockData = await lockRes.json();
-          if (!lockData.ok) throw new Error(lockData.error ?? "Lock 실패");
-          setPhase("locked");
-        } else {
-          setPhase("form");
-        }
-      } catch (e: any) {
-        setError(e.message);
-        setPhase("form");
-      }
-    },
-    [results, label, savedId]
-  );
-
-  if (phase === "locked") {
-    return (
-      <div className="space-y-4 py-12 text-center">
-        <div className="text-4xl">🔒</div>
-        <p className="text-sm font-semibold text-gray-800">시험이 Lock되었습니다.</p>
-        <button
-          onClick={() => router.push("/admin/content/updated-listening")}
-          className="rounded-lg border border-violet-500 bg-violet-600 px-4 py-2 text-xs text-white hover:bg-violet-700"
-        >
-          목록으로
-        </button>
-      </div>
-    );
-  }
+  const handleSave = useCallback(async () => {
+    if (!results.module1 || !results.hard || !results.easy) return;
+    setError(null);
+    setPhase("saving");
+    const id = savedId ?? (typeof crypto !== "undefined" ? crypto.randomUUID() : `id-${Date.now()}`);
+    const test: LListeningTest2026 = {
+      meta: { id, label, examEra: "ibt_2026" },
+      modules: [
+        { id: "stage1", stage: 1, items: results.module1 },
+        { id: "stage2-default", stage: 2, items: [] },
+      ],
+      stage2Pool: {
+        cutScore: 0.7,
+        hard: { id: "stage2-hard", stage: 2, items: results.hard },
+        easy: { id: "stage2-easy", stage: 2, items: results.easy },
+      },
+    };
+    try {
+      const saveRes = await fetch("/api/admin/updated-listening/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ test }),
+      });
+      const saveData = await saveRes.json();
+      if (!saveData.ok) throw new Error(saveData.error ?? "저장 실패");
+      setSavedId(id);
+      setPhase("form");
+    } catch (e: any) {
+      setError(e.message);
+      setPhase("form");
+    }
+  }, [results, label, savedId]);
 
   const allDone = results.module1 && results.hard && results.easy;
 
@@ -320,22 +286,25 @@ export default function ListeningMstWizard() {
             onChange={(e) => setLabel(e.target.value)}
           />
           <div className="flex items-center justify-between">
-            <span className="text-xs text-gray-400">{savedId ? `저장됨 (ID: ${savedId.slice(0, 8)}…)` : "아직 저장되지 않았습니다."}</span>
+            <span className="text-xs text-gray-400">
+              {savedId ? `저장됨 (ID: ${savedId.slice(0, 8)}…) · 바로 배정 가능합니다.` : "아직 저장되지 않았습니다."}
+            </span>
             <div className="flex gap-2">
               <button
-                onClick={() => handleSaveAndLock(false)}
+                onClick={handleSave}
                 disabled={phase === "saving"}
-                className="rounded-lg border px-4 py-2 text-xs font-medium hover:bg-gray-50 disabled:opacity-50"
+                className="rounded-lg border border-violet-500 bg-violet-600 px-4 py-2 text-xs font-medium text-white hover:bg-violet-700 disabled:opacity-50"
               >
-                {phase === "saving" ? "저장 중…" : "임시 저장"}
+                {phase === "saving" ? "저장 중…" : "저장"}
               </button>
-              <button
-                onClick={() => handleSaveAndLock(true)}
-                disabled={phase === "saving"}
-                className="rounded-lg border border-gray-800 bg-gray-900 px-4 py-2 text-xs font-medium text-white hover:bg-gray-800 disabled:opacity-50"
-              >
-                🔒 Lock & 완료
-              </button>
+              {savedId && (
+                <button
+                  onClick={() => router.push("/admin/content/updated-listening/assign")}
+                  className="rounded-lg border px-4 py-2 text-xs font-medium hover:bg-gray-50"
+                >
+                  배정하러 가기 →
+                </button>
+              )}
             </div>
           </div>
         </section>

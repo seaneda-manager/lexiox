@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import Link from "next/link";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { getServiceSupabase } from "@/lib/supabase/service";
+import { getAssignedTestIds } from "@/lib/supabase/assignment-guard";
 
 export const dynamic = "force-dynamic";
 
@@ -87,16 +88,17 @@ export default async function AssignListeningPage({ searchParams }: { searchPara
 
   const supabase = await getServerSupabase();
 
-  const [{ data: tests }, { data: students }] = await Promise.all([
+  const [{ data: tests }, { data: students }, assignedIds] = await Promise.all([
     supabase
       .from("listening_tests_2026")
-      .select("id, label, is_locked")
+      .select("id, label")
       .order("updated_at", { ascending: false }),
     supabase
       .from("profiles")
       .select("id, name, email")
       .eq("role", "student")
       .order("name"),
+    getAssignedTestIds("listening"),
   ]);
 
   return (
@@ -129,7 +131,7 @@ export default async function AssignListeningPage({ searchParams }: { searchPara
               <label key={t.id} className="flex cursor-pointer items-center gap-3 rounded-lg border p-3 hover:bg-teal-50/50 has-[:checked]:border-teal-400 has-[:checked]:bg-teal-50">
                 <input type="radio" name="listening_test_id" value={t.id} required className="accent-teal-500" />
                 <span className="flex-1 text-sm font-medium text-slate-800">{t.label}</span>
-                {t.is_locked && <span className="text-[10px] text-slate-400">🔒</span>}
+                {assignedIds.has(t.id) && <span className="text-[10px] text-slate-400">📌 배정됨</span>}
               </label>
             ))}
             {(tests ?? []).length === 0 && (

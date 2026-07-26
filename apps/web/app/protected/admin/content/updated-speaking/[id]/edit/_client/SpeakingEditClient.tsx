@@ -379,7 +379,7 @@ export default function SpeakingEditClient({ test: initial, isLocked }: Props) {
   if (isLocked) {
     return (
       <div className="rounded-xl border border-slate-200 bg-slate-50 px-6 py-8 text-center text-sm text-slate-500">
-        🔒 이 시험은 Lock되어 수정할 수 없습니다.
+        📌 이미 학생에게 배정된 시험이라 수정할 수 없습니다.
       </div>
     );
   }

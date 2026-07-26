@@ -9,7 +9,7 @@ import type {
   WAcademicWritingItem,
 } from "@/models/writing";
 
-type Phase = "input" | "generating" | "edit" | "saving" | "locked";
+type Phase = "input" | "generating" | "edit" | "saving";
 
 export default function WritingTestGeneratorClient() {
   const router = useRouter();
@@ -115,47 +115,6 @@ export default function WritingTestGeneratorClient() {
       setPhase("edit");
     }
   }, [test]);
-
-  const handleLock = useCallback(async () => {
-    const id = savedId ?? test?.meta.id;
-    if (!id) { setError("먼저 저장하세요."); return; }
-    if (!confirm("Lock하면 이후 수정이 불가합니다. 진행할까요?")) return;
-    setError(null);
-    setPhase("saving");
-    try {
-      await fetch("/api/admin/updated-writing/save", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ test }),
-      });
-      const res = await fetch("/api/admin/updated-writing/lock", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
-      });
-      const data = await res.json();
-      if (!data.ok) throw new Error(data.error ?? "Lock failed");
-      setPhase("locked");
-    } catch (e: any) {
-      setError(e.message);
-      setPhase("edit");
-    }
-  }, [savedId, test]);
-
-  if (phase === "locked") {
-    return (
-      <div className="space-y-4 text-center py-12">
-        <div className="text-4xl">🔒</div>
-        <p className="text-sm font-semibold text-gray-800">시험이 Lock되었습니다.</p>
-        <div className="flex justify-center gap-3">
-          <button onClick={() => window.location.href = "/admin/content/updated-writing"}
-            className="rounded-lg border px-4 py-2 text-xs hover:bg-gray-50">목록으로</button>
-          <button onClick={() => { setPhase("input"); setTest(null); setSavedId(null); }}
-            className="rounded-lg border border-teal-500 bg-teal-600 px-4 py-2 text-xs text-white hover:bg-teal-700">새 시험 만들기</button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -314,20 +273,22 @@ export default function WritingTestGeneratorClient() {
             </section>
           ))}
 
-          {/* Actions */}
+          {/* Actions — 저장 즉시 배정 가능한 상태가 됩니다. 별도 Lock 단계 없음. */}
           <div className="flex items-center justify-between rounded-xl border bg-white p-4 shadow-sm">
             <div className="text-xs text-gray-400">
-              {savedId ? `저장됨 (ID: ${savedId.slice(0, 8)}…)` : "아직 저장되지 않았습니다."}
+              {savedId ? `저장됨 (ID: ${savedId.slice(0, 8)}…) · 바로 배정 가능합니다.` : "아직 저장되지 않았습니다."}
             </div>
             <div className="flex gap-2">
               <button onClick={handleSave} disabled={phase === "saving"}
-                className="rounded-lg border px-4 py-2 text-xs font-medium hover:bg-gray-50 disabled:opacity-50">
-                {phase === "saving" ? "저장 중…" : "임시 저장"}
+                className="rounded-lg border border-teal-500 bg-teal-600 px-4 py-2 text-xs font-medium text-white hover:bg-teal-700 disabled:opacity-50">
+                {phase === "saving" ? "저장 중…" : "저장"}
               </button>
-              <button onClick={handleLock} disabled={phase === "saving"}
-                className="rounded-lg border border-gray-800 bg-gray-900 px-4 py-2 text-xs font-medium text-white hover:bg-gray-800 disabled:opacity-50">
-                🔒 Lock &amp; 완료
-              </button>
+              {savedId && (
+                <button onClick={() => router.push("/admin/content/updated-writing/assign")}
+                  className="rounded-lg border px-4 py-2 text-xs font-medium hover:bg-gray-50">
+                  배정하러 가기 →
+                </button>
+              )}
             </div>
           </div>
         </>

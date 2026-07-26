@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { getAssignedTestIds } from "@/lib/supabase/assignment-guard";
 import { PlusCircle } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
-type Row = { id: string; label: string; is_locked: boolean | null; updated_at: string | null };
+type Row = { id: string; label: string; updated_at: string | null };
 
 function fmt(iso: string | null) {
   if (!iso) return "-";
@@ -14,10 +15,13 @@ function fmt(iso: string | null) {
 
 export default async function WritingAdminListPage() {
   const supabase = await getServerSupabase();
-  const { data, error } = await supabase
-    .from("writing_tests")
-    .select("id,label,is_locked,updated_at")
-    .order("updated_at", { ascending: false });
+  const [{ data, error }, assignedIds] = await Promise.all([
+    supabase
+      .from("writing_tests")
+      .select("id,label,updated_at")
+      .order("updated_at", { ascending: false }),
+    getAssignedTestIds("writing"),
+  ]);
 
   const tests: Row[] = data ?? [];
 
@@ -62,8 +66,8 @@ export default async function WritingAdminListPage() {
                 <div className="font-semibold text-gray-900">{t.label}</div>
                 <div className="text-gray-500">{fmt(t.updated_at)}</div>
                 <div className="flex items-center justify-end gap-2">
-                  {t.is_locked && (
-                    <span className="rounded-full bg-gray-900 px-2 py-0.5 text-[10px] font-medium text-white">🔒 Locked</span>
+                  {assignedIds.has(t.id) && (
+                    <span className="rounded-full bg-gray-900 px-2 py-0.5 text-[10px] font-medium text-white">📌 배정됨</span>
                   )}
                 </div>
               </div>

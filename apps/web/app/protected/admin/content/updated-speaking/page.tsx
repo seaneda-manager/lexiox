@@ -8,7 +8,7 @@ import type { SpeakingTest2026 } from "@/models/speaking-2026";
 type Row = {
   id: string;
   label: string;
-  is_locked: boolean | null;
+  assigned: boolean;
   updated_at: string | null;
   payload: SpeakingTest2026;
 };
@@ -118,7 +118,6 @@ export default function SpeakingAdminListPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [previewTest, setPreviewTest] = useState<Row | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [unlocking, setUnlocking] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -173,31 +172,6 @@ export default function SpeakingAdminListPage() {
       setSelected(new Set());
     } else {
       setSelected(new Set(tests.map((t) => t.id)));
-    }
-  };
-
-  const handleToggleLock = async (id: string) => {
-    const test = tests.find((t) => t.id === id);
-    if (!test) return;
-
-    setUnlocking(id);
-    try {
-      const endpoint = test.is_locked ? '/api/admin/updated-speaking/unlock' : '/api/admin/updated-speaking/lock';
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id }),
-      });
-      const data = await res.json();
-      if (data.ok) {
-        setTests(tests.map((t) => (t.id === id ? { ...t, is_locked: !t.is_locked } : t)));
-      } else {
-        alert('실패: ' + data.error);
-      }
-    } catch (e: any) {
-      alert('실패: ' + e.message);
-    } finally {
-      setUnlocking(null);
     }
   };
 
@@ -282,14 +256,10 @@ export default function SpeakingAdminListPage() {
                 <div className="font-semibold text-gray-900">{t.label}</div>
                 <div className="text-gray-500">{fmt(t.updated_at)}</div>
                 <div className="flex items-center justify-end gap-1.5">
-                  {t.is_locked && (
-                    <button
-                      onClick={() => handleToggleLock(t.id)}
-                      disabled={unlocking === t.id}
-                      className="rounded-full bg-gray-900 px-2 py-0.5 text-[10px] font-medium text-white hover:bg-gray-700 disabled:opacity-50 cursor-pointer transition whitespace-nowrap leading-tight"
-                    >
-                      🔒 Unlock
-                    </button>
+                  {t.assigned && (
+                    <span className="rounded-full bg-gray-900 px-2 py-0.5 text-[10px] font-medium text-white whitespace-nowrap leading-tight">
+                      📌 배정됨
+                    </span>
                   )}
                   <button
                     onClick={() => setPreviewTest(t)}

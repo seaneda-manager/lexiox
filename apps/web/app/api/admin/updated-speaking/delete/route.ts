@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/supabase/service';
+import { getAssignedTestIds } from '@/lib/supabase/assignment-guard';
 
 export const runtime = 'nodejs';
 
@@ -12,13 +13,10 @@ export async function POST(req: Request) {
 
     const supabase = getServiceSupabase();
 
-    const { data: locked } = await supabase
-      .from('speaking_tests')
-      .select('id,is_locked')
-      .in('id', ids);
-
-    if (locked?.some(t => t.is_locked)) {
-      return NextResponse.json({ ok: false, error: 'cannot delete locked items' }, { status: 403 });
+    // 이미 배정된 시험은 삭제 불가 (FK on delete cascade로 학생 배정 기록까지 날아감)
+    const assignedIds = await getAssignedTestIds('speaking');
+    if (ids.some((id: string) => assignedIds.has(id))) {
+      return NextResponse.json({ ok: false, error: '이미 배정된 시험은 삭제할 수 없습니다.' }, { status: 403 });
     }
 
     const { error } = await supabase
