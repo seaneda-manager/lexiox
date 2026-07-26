@@ -21,6 +21,7 @@ export async function POST(req: Request) {
 
     if (!res.ok) {
       const text = await res.text();
+      console.error('🔴 HuggingFace API error:', { status: res.status, response: text, promptStart: prompt.substring(0, 100) });
       return NextResponse.json({ ok: false, error: text }, { status: res.status });
     }
 
@@ -30,6 +31,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ ok: true, imageUrl: dataUrl });
   } catch (e: any) {
+    console.error('🔴 Generate image exception:', e);
     return NextResponse.json({ ok: false, error: e.message }, { status: 500 });
   }
 }

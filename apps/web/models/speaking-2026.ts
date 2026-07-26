@@ -18,6 +18,7 @@ export type ListenRepeatSentence = {
   audioUrl?: string;
   speakingSeconds: number;
   region?: ImageRegion;  // site map 위 해당 영역
+  locationLabel?: string; // 그 영역의 간판/표지판 문구 (예: "Textbook Section")
 };
 
 export interface SpeakingTaskListenRepeat2026 {
@@ -25,7 +26,7 @@ export interface SpeakingTaskListenRepeat2026 {
   type: "listen_repeat";
   situation: string;
   situationDescription?: string;
-  imageUrl?: string;       // site map 이미지 URL
+  imageUrl?: string;       // site map 이미지 URL (3D 플로어플랜)
   sentences: ListenRepeatSentence[];
 }
 
@@ -41,7 +42,9 @@ export type InterviewQuestion = {
 export interface SpeakingTaskInterview2026 {
   id: string;
   type: "interview";
-  interviewerGifUrl?: string;  // 인터뷰어 애니메이션 GIF URL
+  interviewerGifUrl?: string;    // 인터뷰어 애니메이션 GIF URL (스프라이트시트 기반, 선택)
+  interviewerImageUrl?: string;  // 인터뷰어 정지 사진 URL (AI 자동생성)
+  interviewerGender?: "male" | "female";
   questions: InterviewQuestion[];
 }
 

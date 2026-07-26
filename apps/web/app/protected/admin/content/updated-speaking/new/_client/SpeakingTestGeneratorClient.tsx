@@ -224,7 +224,8 @@ export default function SpeakingTestGeneratorClient() {
       });
       const data = await res.json();
       if (!data.ok) throw new Error(data.error ?? "Generation failed");
-      setTest(data.payload as SpeakingTest2026);
+      const payload = data.payload as SpeakingTest2026;
+      setTest(payload);
       setPhase("edit");
     } catch (e: any) {
       setError(e.message);
@@ -564,9 +565,18 @@ export default function SpeakingTestGeneratorClient() {
                 </label>
               </div>
 
-              {/* AI 이미지 생성 */}
+              {/* 현재 적용된 플로어플랜 (자동 또는 수동 생성 결과) */}
+              {listenRepeatTask.imageUrl && (
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold text-slate-600">현재 플로어플랜</p>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={listenRepeatTask.imageUrl} alt="Site map" className="w-full rounded-lg border" />
+                </div>
+              )}
+
+              {/* AI 이미지 생성 (수동 재생성 / 프롬프트 커스터마이즈) */}
               <div className="space-y-3 rounded-lg border border-violet-100 bg-violet-50/50 p-4">
-                <p className="text-xs font-semibold text-violet-700">✨ AI로 Site Map 생성 (HuggingFace)</p>
+                <p className="text-xs font-semibold text-violet-700">✨ AI로 Site Map 재생성 (HuggingFace)</p>
                 <textarea
                   rows={3}
                   placeholder={defaultPrompt}
@@ -746,9 +756,20 @@ export default function SpeakingTestGeneratorClient() {
                 <span className="text-xs text-gray-400">{interviewTask.questions.length}문제 · 각 45초</span>
               </div>
 
-              {/* GIF 생성 섹션 */}
+              {/* 현재 적용된 인터뷰어 정지 사진 (AI 자동생성 결과) */}
+              {interviewTask.interviewerImageUrl && (
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold text-slate-600">
+                    현재 인터뷰어 사진 {interviewTask.interviewerGender && `(${interviewTask.interviewerGender === "male" ? "남성" : "여성"})`}
+                  </p>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={interviewTask.interviewerImageUrl} alt="Interviewer" className="h-48 w-auto rounded-xl border object-cover" />
+                </div>
+              )}
+
+              {/* GIF 생성 섹션 (선택 — 정지 사진 대신 애니메이션을 쓰고 싶을 때) */}
               <div className="space-y-3 rounded-lg border border-emerald-100 bg-emerald-50/50 p-4">
-                <p className="text-xs font-semibold text-emerald-700">✨ 스프라이트 시트로부터 GIF 생성</p>
+                <p className="text-xs font-semibold text-emerald-700">✨ 스프라이트 시트로부터 GIF 생성 (선택)</p>
                 <div className="space-y-2">
                   <label className="text-xs font-medium text-slate-600">
                     스프라이트 시트 (PNG/JPG)

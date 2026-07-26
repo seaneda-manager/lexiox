@@ -30,6 +30,7 @@ Situation topic: "${listenRepeatTopic}"
 - Sentences must be natural spoken English that someone in that situation would actually say
 - No preparation time — student hears sentence then immediately repeats it
 - speakingSeconds: 8 for sentences 1-2, 10 for sentences 3-5, 14 for sentences 6-7
+- locationLabel: for EACH sentence, a short 2-4 word sign/label for the specific corner, section, or device this sentence relates to within the situation (e.g. for "campus bookstore": "Textbook Section", "Checkout Counter", "Study Area", "Return Desk"). These will be rendered as small signage text on a floor plan illustration, so keep them short and sign-like, and make sure the 7 labels are spread across different areas (not all the same spot).
 
 Task 2 — Interview:
 Interview topic: "${interviewTopic}"
@@ -54,13 +55,13 @@ Return ONLY valid JSON, no markdown, no explanation:
       "situation": "[situation name]",
       "situationDescription": "[1-2 sentences describing the scenario]",
       "sentences": [
-        { "id": "s1", "text": "...", "speakingSeconds": 8 },
-        { "id": "s2", "text": "...", "speakingSeconds": 8 },
-        { "id": "s3", "text": "...", "speakingSeconds": 10 },
-        { "id": "s4", "text": "...", "speakingSeconds": 10 },
-        { "id": "s5", "text": "...", "speakingSeconds": 10 },
-        { "id": "s6", "text": "...", "speakingSeconds": 12 },
-        { "id": "s7", "text": "...", "speakingSeconds": 12 }
+        { "id": "s1", "text": "...", "speakingSeconds": 8, "locationLabel": "..." },
+        { "id": "s2", "text": "...", "speakingSeconds": 8, "locationLabel": "..." },
+        { "id": "s3", "text": "...", "speakingSeconds": 10, "locationLabel": "..." },
+        { "id": "s4", "text": "...", "speakingSeconds": 10, "locationLabel": "..." },
+        { "id": "s5", "text": "...", "speakingSeconds": 10, "locationLabel": "..." },
+        { "id": "s6", "text": "...", "speakingSeconds": 12, "locationLabel": "..." },
+        { "id": "s7", "text": "...", "speakingSeconds": 12, "locationLabel": "..." }
       ]
     },
     {

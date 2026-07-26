@@ -15,9 +15,18 @@ export async function GET() {
       getAssignedTestIds('speaking'),
     ]);
 
+    console.log('📋 List API Debug:', { totalRows: data?.length, error: error?.message });
+    if (data) data.forEach((t, i) => console.log(`  [${i}]`, t.id, t.label.substring(0, 40)));
+
     if (error) throw error;
     const tests = (data ?? []).map((t) => ({ ...t, assigned: assignedIds.has(t.id) }));
-    return NextResponse.json({ ok: true, tests });
+    return NextResponse.json({ ok: true, tests }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
+    });
   } catch (e: any) {
     return NextResponse.json({ ok: false, error: e.message }, { status: 500 });
   }
