@@ -27,7 +27,7 @@ export default async function StartAssignmentPage({ params }: { params: Params }
   // Load assignment
   const { data: assignment } = await supabase
     .from("test_assignments")
-    .select("id, status, sections, speaking_test_id, results_payload, speaking_round_id")
+    .select("id, status, sections, speaking_test_id, results_payload")
     .eq("id", assignmentId)
     .eq("student_id", user.id)
     .maybeSingle();
