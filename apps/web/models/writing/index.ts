@@ -27,21 +27,47 @@ export type WWritingTaskKind =
  * 0. Build a Sentence (Updated TOEFL Task 1)
  * ----------------------------------*/
 
+/**
+ * 조각의 단위. ETS는 "words or phrases"를 배열하게 한다.
+ * - WORD: 어순·문법 변별력을 직접 재는 성분(의문사, 조동사, 대명사, 동사, 부사)은 낱개로 쪼갠다.
+ * - PHRASE: 관사+명사, 전치사구처럼 문장 뼈대를 흔들지 않는 의미 단위는 2~3단어로 묶는다.
+ */
+export type WSentenceTokenType = "WORD" | "PHRASE";
+
+export interface WSentenceToken {
+  /** 조각의 고유 id. 같은 단어가 두 번 나와도 구별해야 하므로 텍스트로 식별하면 안 된다. */
+  id: string;
+  text: string;
+  type: WSentenceTokenType;
+}
+
 export interface WBuildSentenceQuestion {
   id: string;
   contextLeadIn: string;   // 문장 앞부분 (고정 텍스트)
   contextLeadOut: string;  // 문장 뒷부분 (고정 텍스트)
-  shuffledChunks: string[]; // 셔플된 단어 뭉치 (정답 + 잉여 1개 포함)
-  unnecessaryChunk?: string; // 잉여 단어 뭉치 (채점용, 화면에 노출 금지)
-  correctSequence: string[]; // 정답 순서 (채점용)
+  /** 제시 조각. 정답에 쓰이지 않는 잉여 조각은 두지 않는다 (ETS 근거 없음). */
+  tokens?: WSentenceToken[];
+  /** 정답 순서 — token id 배열 */
+  correctOrder?: string[];
+  /** 문장 끝 문장부호. 조각으로 만들지 않고 화면에 고정 표시한다. */
+  punctuation?: string;
+
+  // ── 레거시 (2026-07 이전 저장분). 신규 생성에는 쓰지 않는다. ──
+  /** @deprecated tokens 사용 */
+  shuffledChunks?: string[];
+  /** @deprecated correctOrder 사용 */
+  correctSequence?: string[];
+  /** @deprecated 잉여 조각은 ETS 스펙에 근거가 없어 제거됨 */
+  unnecessaryChunk?: string;
 }
 
 export interface WBuildSentenceItem {
   id: string;
   taskKind: "build_a_sentence";
   instruction?: string;
-  questions: WBuildSentenceQuestion[]; // 9문항
-  timeLimitSeconds?: number; // 기본 360초 (6분)
+  /** ETS 2026 스펙 기준 10문항 */
+  questions: WBuildSentenceQuestion[];
+  timeLimitSeconds?: number; // 기본 410초 (6분 50초)
 }
 
 /* ------------------------------------

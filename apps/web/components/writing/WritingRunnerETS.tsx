@@ -2,12 +2,12 @@
 
 /**
  * Updated TOEFL Writing Runner — ETS UI 스펙 [최종 확정]
- * Task 1: Build a Sentence   (10문항 Q1~Q10, 6분 글로벌 타이머, Back/Next 자유 이동)
+ * Task 1: Build a Sentence   (10문항 Q1~Q10, 6분 50초 글로벌 타이머, Back/Next 자유 이동)
  * Task 2: Write an Email     (1문항 Q11, 7분 독립 타이머, 100~120 단어)
  * Task 3: Academic Discussion (1문항 Q12, 10분 독립 타이머, 120+ 단어)
  */
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import type {
   WWritingTest2026,
   WBuildSentenceItem,
@@ -15,6 +15,7 @@ import type {
   WEmailWritingItem,
   WAcademicWritingItem,
 } from "@/models/writing";
+import { normalizeBuildSentenceQuestion, joinTokens } from "@/lib/writing/build-sentence-parser";
 
 // ── 타입 ──────────────────────────────────────────────────────────────
 type TestPhase = "task1" | "task2" | "task3" | "done";
@@ -157,20 +158,40 @@ function BuildASentence({
 }) {
   const [qIndex, setQIndex] = useState(0);
 
-  // 전역 답안 저장: 문항 index → 선택된 청크 배열 (Back해도 유지)
+  // 전역 답안 저장: 문항 index → 선택된 토큰 **id** 배열 (Back해도 유지).
+  // 텍스트로 담으면 "the"가 두 번 나오는 문장에서 두 번째를 못 고른다.
   const [allSelected, setAllSelected] = useState<Record<number, string[]>>({});
   const selected = allSelected[qIndex] ?? [];
 
   const q = item.questions[qIndex];
-  const timeLimit = item.timeLimitSeconds ?? 360;
+  const timeLimit = item.timeLimitSeconds ?? 410; // ETS 기준 6분 50초
+
+  // 문항별 정규화 (신규 tokens / 레거시 shuffledChunks 모두 처리)
+  const normalized = useMemo(
+    () => item.questions.map((qq) => normalizeBuildSentenceQuestion(qq)),
+    [item.questions],
+  );
+  const current = normalized[qIndex];
+  const tokenById = useMemo(() => {
+    const m = new Map<string, string>();
+    current?.tokens.forEach((t) => m.set(t.id, t.text));
+    return m;
+  }, [current]);
 
   const finishAll = () => {
     const finalScores = item.questions.map((qq, i) => {
-      const userSeq = allSelected[i] ?? [];
+      const norm = normalized[i];
+      const userIds = allSelected[i] ?? [];
+      const userTexts = userIds.map((id) => norm.tokens.find((t) => t.id === id)?.text ?? "");
+      const correctTexts = norm.correctOrder.map(
+        (id) => norm.tokens.find((t) => t.id === id)?.text ?? "",
+      );
       return {
         questionId: qq.id,
-        correct: JSON.stringify(userSeq) === JSON.stringify(qq.correctSequence),
-        userSequence: userSeq,
+        // 같은 텍스트의 조각이 여럿일 수 있으므로 id가 아니라 **텍스트 순서**로 채점한다.
+        // 그래야 동일 단어를 어느 조각으로 채웠든 정답으로 인정된다.
+        correct: JSON.stringify(userTexts) === JSON.stringify(correctTexts),
+        userSequence: userTexts,
       };
     });
     onComplete(finalScores);
@@ -180,14 +201,14 @@ function BuildASentence({
     finishAll();
   });
 
-  // 청크 셔플 (문항별 1회, 이미 셔플된 경우 재사용)
+  // 조각 셔플 (문항별 1회, 이미 셔플된 경우 재사용) — id 배열로 관리
   const [shuffledMap, setShuffledMap] = useState<Record<number, string[]>>({});
   useEffect(() => {
-    if (!q || shuffledMap[qIndex]) return;
-    const arr = [...q.shuffledChunks].sort(() => Math.random() - 0.5);
-    setShuffledMap((prev) => ({ ...prev, [qIndex]: arr }));
-  }, [qIndex, q, shuffledMap]);
-  const shuffled = shuffledMap[qIndex] ?? q?.shuffledChunks ?? [];
+    if (!current || shuffledMap[qIndex]) return;
+    const ids = current.tokens.map((t) => t.id).sort(() => Math.random() - 0.5);
+    setShuffledMap((prev) => ({ ...prev, [qIndex]: ids }));
+  }, [qIndex, current, shuffledMap]);
+  const shuffled = shuffledMap[qIndex] ?? current?.tokens.map((t) => t.id) ?? [];
 
   const setSelected = (updater: (prev: string[]) => string[]) => {
     setAllSelected((prev) => ({
@@ -196,13 +217,13 @@ function BuildASentence({
     }));
   };
 
-  const handleChunkClick = (chunk: string) => {
-    if (selected.includes(chunk)) return;
-    setSelected((prev) => [...prev, chunk]);
+  const handleChunkClick = (tokenId: string) => {
+    if (selected.includes(tokenId)) return;
+    setSelected((prev) => [...prev, tokenId]);
   };
 
-  const handleRemove = (chunk: string) => {
-    setSelected((prev) => prev.filter((c) => c !== chunk));
+  const handleRemove = (tokenId: string) => {
+    setSelected((prev) => prev.filter((id) => id !== tokenId));
   };
 
   const handleBack = () => {
@@ -241,7 +262,8 @@ function BuildASentence({
           <p style={{ fontSize: 18, color: "#333333", lineHeight: 1.7 }}>
             <span>{q.contextLeadIn} </span>
             <span style={{ display: "inline-block", minWidth: 120, borderBottom: "2px solid #0073E6", color: "#0073E6", fontStyle: "italic" }}>
-              {selected.join(" ") || "___"}
+              {/* 조각 사이 공백은 여기서 자동으로 한 칸씩 들어간다 */}
+              {joinTokens(selected.map((id) => tokenById.get(id) ?? ""), current?.punctuation ?? "") || "___"}
             </span>
             <span> {q.contextLeadOut}</span>
           </p>
@@ -251,27 +273,33 @@ function BuildASentence({
         <div style={{ maxWidth: 1200, margin: "0 auto", width: "100%" }}>
           <p style={{ fontSize: 12, color: "#888", marginBottom: 12 }}>Word Bank — 클릭해서 선택하세요</p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
-            {shuffled.map((chunk) => {
-              const used = selected.includes(chunk);
+            {shuffled.map((tokenId) => {
+              const used = selected.includes(tokenId);
+              const text = tokenById.get(tokenId) ?? "";
               return (
                 <button
-                  key={chunk}
-                  onClick={() => handleChunkClick(chunk)}
+                  key={tokenId}
+                  onClick={() => handleChunkClick(tokenId)}
                   disabled={used}
                   style={{
-                    height: 46,
-                    padding: "0 20px",
+                    // 단어("you")와 구절("to the airport")의 길이가 다르므로
+                    // 고정 폭이 아니라 내용에 맞춘다.
+                    width: "fit-content",
+                    minHeight: 46,
+                    padding: "8px 16px",
                     border: "1px solid #C0C8D0",
                     borderRadius: 23,
                     backgroundColor: "#FFFFFF",
                     fontSize: 15,
+                    lineHeight: 1.6,
+                    whiteSpace: "nowrap",
                     color: used ? "#AAA" : "#333",
                     opacity: used ? 0.4 : 1,
                     cursor: used ? "default" : "pointer",
                     transition: "opacity 0.2s",
                   }}
                 >
-                  {chunk}
+                  {text}
                 </button>
               );
             })}
@@ -293,18 +321,21 @@ function BuildASentence({
             alignItems: "center",
           }}>
             {selected.length === 0 ? (
-              <span style={{ color: "#9BB5D0", fontSize: 14 }}>단어 뭉치를 클릭해 여기에 배치하세요…</span>
-            ) : selected.map((chunk) => (
+              <span style={{ color: "#9BB5D0", fontSize: 14 }}>조각을 클릭해 여기에 배치하세요…</span>
+            ) : selected.map((tokenId) => (
               <button
-                key={chunk}
-                onClick={() => handleRemove(chunk)}
+                key={tokenId}
+                onClick={() => handleRemove(tokenId)}
                 style={{
-                  height: 46,
-                  padding: "0 20px",
+                  width: "fit-content",
+                  minHeight: 46,
+                  padding: "8px 16px",
                   border: "1px solid #0073E6",
                   borderRadius: 23,
                   backgroundColor: "#FFFFFF",
                   fontSize: 15,
+                  lineHeight: 1.6,
+                  whiteSpace: "nowrap",
                   color: "#0073E6",
                   cursor: "pointer",
                   display: "flex",
@@ -312,7 +343,7 @@ function BuildASentence({
                   gap: 8,
                 }}
               >
-                {chunk} <span style={{ fontSize: 12, opacity: 0.6 }}>✕</span>
+                {tokenById.get(tokenId) ?? ""} <span style={{ fontSize: 12, opacity: 0.6 }}>✕</span>
               </button>
             ))}
           </div>

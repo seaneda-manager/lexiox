@@ -21,18 +21,49 @@ export async function POST(req: Request) {
 
     const prompt = `You are an expert Updated TOEFL Writing content creator. Generate a complete Updated TOEFL Writing test JSON with exactly 3 tasks.
 
-Task 1 — Build a Sentence (10 questions, 6-minute global timer):
+Task 1 — Build a Sentence (10 questions, 6 min 50 sec global timer):
 Topic/context: "${buildSentenceTopic}"
 - Create 10 sentence completion questions all sharing the same general context/situation
 - Each question has:
-  • contextLeadIn: first part of the sentence (ends naturally where answer goes)
-  • contextLeadOut: last part of the sentence (starts naturally after answer)
-  • shuffledChunks: exactly 4 items (3 correct sequence chunks + 1 unnecessary chunk)
-  • unnecessaryChunk: the one chunk that does NOT belong in the correct answer
-  • correctSequence: array of 3 chunks in the correct order
-- The chunks should be 2-5 word phrases (not single words)
-- Sentences should be natural, academic English related to the topic
+  • contextLeadIn: first part of the sentence (ends naturally where the answer goes)
+  • contextLeadOut: last part of the sentence (starts naturally after the answer)
+  • tokens: the pieces the test taker arranges, IN CORRECT ORDER
+  • correctOrder: array of token ids in the correct order (same order as tokens)
+  • punctuation: sentence-final punctuation ("?" or "." or "") — NOT a token
+
+CRITICAL — how to split into tokens (ETS "words or phrases" rule):
+Split every answer into 5-8 tokens. Each token is {"id","text","type"} where type is "WORD" or "PHRASE".
+
+Use type "WORD" (a single word, never grouped) for anything that carries word-order or
+grammar information on its own:
+  - question words: what, which, who, where, when, why, how
+  - auxiliaries and modals: will, did, does, have, has, should, can, must, is, are
+  - pronouns and bare subjects/objects: you, it, we, they, me
+  - main verbs: buy, take, leave, finish, cancel
+  - adverbs: mainly, probably, already, always
+  - the infinitive marker "to" when followed by a verb ("to" + "cancel", never "to cancel")
+
+Use type "PHRASE" (2-4 words grouped) ONLY when the group is one meaning unit that does
+not carry the grammar being tested:
+  - noun phrases: "the conference", "a cooking class", "our trip"
+  - prepositional phrases: "to the airport", "at the new market"
+  - fixed connectives: "instead of", "because of", "next year"
+
+Never group a subject with its verb, and never group an auxiliary with a main verb.
+
+There must be NO extra or unnecessary tokens. Every token is used exactly once in the
+correct answer — the item is scored all-or-nothing, 1 point, with no partial credit.
+
+- Sentences should be natural English related to the topic
 - Difficulty: first 3 easy (q1-q3), middle 4 medium (q4-q7), last 3 harder (q8-q10)
+
+Example of a correctly split question:
+  contextLeadIn: "A: I'm going shopping later."   contextLeadOut: ""
+  answer sentence: "What brand will you buy?"
+  tokens: [{"id":"t1","text":"What","type":"WORD"},{"id":"t2","text":"brand","type":"WORD"},
+           {"id":"t3","text":"will","type":"WORD"},{"id":"t4","text":"you","type":"WORD"},
+           {"id":"t5","text":"buy","type":"WORD"}]
+  correctOrder: ["t1","t2","t3","t4","t5"]   punctuation: "?"
 
 Task 2 — Write an Email (7 minutes):
 Topic: "${emailTopic}"
@@ -64,26 +95,29 @@ Return ONLY valid JSON, no markdown, no explanation:
     {
       "id": "task-build-1",
       "taskKind": "build_a_sentence",
-      "instruction": "Read the context and arrange the word chunks to complete the sentence.",
-      "timeLimitSeconds": 360,
+      "instruction": "Read the context and arrange the words and phrases to complete the sentence.",
+      "timeLimitSeconds": 410,
       "questions": [
         {
           "id": "q1",
           "contextLeadIn": "...",
           "contextLeadOut": "...",
-          "shuffledChunks": ["chunk A", "chunk B", "chunk C", "unnecessary chunk"],
-          "unnecessaryChunk": "unnecessary chunk",
-          "correctSequence": ["chunk A", "chunk B", "chunk C"]
+          "tokens": [
+            { "id": "t1", "text": "...", "type": "WORD" },
+            { "id": "t2", "text": "...", "type": "PHRASE" }
+          ],
+          "correctOrder": ["t1", "t2"],
+          "punctuation": "?"
         },
-        { "id": "q2", "contextLeadIn": "...", "contextLeadOut": "...", "shuffledChunks": [...], "unnecessaryChunk": "...", "correctSequence": [...] },
-        { "id": "q3", "contextLeadIn": "...", "contextLeadOut": "...", "shuffledChunks": [...], "unnecessaryChunk": "...", "correctSequence": [...] },
-        { "id": "q4", "contextLeadIn": "...", "contextLeadOut": "...", "shuffledChunks": [...], "unnecessaryChunk": "...", "correctSequence": [...] },
-        { "id": "q5", "contextLeadIn": "...", "contextLeadOut": "...", "shuffledChunks": [...], "unnecessaryChunk": "...", "correctSequence": [...] },
-        { "id": "q6", "contextLeadIn": "...", "contextLeadOut": "...", "shuffledChunks": [...], "unnecessaryChunk": "...", "correctSequence": [...] },
-        { "id": "q7", "contextLeadIn": "...", "contextLeadOut": "...", "shuffledChunks": [...], "unnecessaryChunk": "...", "correctSequence": [...] },
-        { "id": "q8", "contextLeadIn": "...", "contextLeadOut": "...", "shuffledChunks": [...], "unnecessaryChunk": "...", "correctSequence": [...] },
-        { "id": "q9",  "contextLeadIn": "...", "contextLeadOut": "...", "shuffledChunks": [...], "unnecessaryChunk": "...", "correctSequence": [...] },
-        { "id": "q10", "contextLeadIn": "...", "contextLeadOut": "...", "shuffledChunks": [...], "unnecessaryChunk": "...", "correctSequence": [...] }
+        { "id": "q2",  "contextLeadIn": "...", "contextLeadOut": "...", "tokens": [...], "correctOrder": [...], "punctuation": "." },
+        { "id": "q3",  "contextLeadIn": "...", "contextLeadOut": "...", "tokens": [...], "correctOrder": [...], "punctuation": "." },
+        { "id": "q4",  "contextLeadIn": "...", "contextLeadOut": "...", "tokens": [...], "correctOrder": [...], "punctuation": "." },
+        { "id": "q5",  "contextLeadIn": "...", "contextLeadOut": "...", "tokens": [...], "correctOrder": [...], "punctuation": "." },
+        { "id": "q6",  "contextLeadIn": "...", "contextLeadOut": "...", "tokens": [...], "correctOrder": [...], "punctuation": "." },
+        { "id": "q7",  "contextLeadIn": "...", "contextLeadOut": "...", "tokens": [...], "correctOrder": [...], "punctuation": "." },
+        { "id": "q8",  "contextLeadIn": "...", "contextLeadOut": "...", "tokens": [...], "correctOrder": [...], "punctuation": "." },
+        { "id": "q9",  "contextLeadIn": "...", "contextLeadOut": "...", "tokens": [...], "correctOrder": [...], "punctuation": "." },
+        { "id": "q10", "contextLeadIn": "...", "contextLeadOut": "...", "tokens": [...], "correctOrder": [...], "punctuation": "." }
       ]
     },
     {
