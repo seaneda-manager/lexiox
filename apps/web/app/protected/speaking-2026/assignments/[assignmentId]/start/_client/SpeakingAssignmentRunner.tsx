@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import InterviewRunner from "@/app/protected/speaking-2026/components/InterviewRunner";
 import ListenAndRepeatRunner from "@/app/protected/speaking-2026/components/ListenAndRepeatRunner";
@@ -11,7 +11,8 @@ import type {
 } from "@/models/speaking-2026";
 
 type Props = {
-  assignmentId: string;
+  /** 배정을 통해 들어온 경우에만 존재. 없으면(Test Mode 등) 완료 기록을 남기지 않는다. */
+  assignmentId?: string;
   test: SpeakingTest2026;
   testLabel: string;
 };
@@ -27,15 +28,162 @@ async function markCompleted(assignmentId: string, recordings?: {
   });
 }
 
+type Phase =
+  | "directions"
+  | "audio_check"
+  | "about_to_begin"
+  | "task1_intro"
+  | "listen_repeat"
+  | "task2_intro"
+  | "interview"
+  | "done";
+
+function AudioCheckStep({ onNext }: { onNext: () => void }) {
+  const [micLevel, setMicLevel] = useState(0);
+  const [isRecording, setIsRecording] = useState(false);
+  const [speakerVolume, setSpeakerVolume] = useState(50);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const rafRef = useRef<number | null>(null);
+
+  const startMicTest = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const ctx = audioContextRef.current ?? new (window.AudioContext || (window as any).webkitAudioContext)();
+      audioContextRef.current = ctx;
+      const analyser = ctx.createAnalyser();
+      const source = ctx.createMediaStreamSource(stream);
+      source.connect(analyser);
+      setIsRecording(true);
+
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+      const update = () => {
+        analyser.getByteFrequencyData(dataArray);
+        const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+        setMicLevel(Math.min(100, avg / 2.55));
+        rafRef.current = requestAnimationFrame(update);
+      };
+      update();
+    } catch {
+      alert("마이크 권한이 필요합니다.");
+    }
+  };
+
+  const stopMicTest = () => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
+    setIsRecording(false);
+    setMicLevel(0);
+  };
+
+  useEffect(() => () => stopMicTest(), []);
+
+  const playTestSound = () => {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    gain.gain.value = speakerVolume / 100;
+    osc.frequency.value = 440;
+    osc.start();
+    setTimeout(() => osc.stop(), 500);
+  };
+
+  return (
+    <main className="mx-auto max-w-2xl space-y-6 px-4 py-10">
+      <h1 className="text-2xl font-bold text-slate-900 text-center">Audio & Device Check</h1>
+
+      <div className="rounded-xl border bg-white p-6 space-y-4 shadow-sm">
+        <h2 className="text-sm font-semibold text-slate-800">🎤 Microphone Check</h2>
+        <p className="text-xs text-slate-500">마이크 테스트를 시작하고 몇 초 동안 말씀해주세요.</p>
+        <button
+          onClick={isRecording ? stopMicTest : startMicTest}
+          className={`w-full rounded-lg px-4 py-2.5 text-sm font-semibold text-white ${
+            isRecording ? "bg-red-600 hover:bg-red-700" : "bg-blue-600 hover:bg-blue-700"
+          }`}
+        >
+          {isRecording ? "마이크 테스트 중지" : "마이크 테스트 시작"}
+        </button>
+        {isRecording && (
+          <div className="space-y-1">
+            <p className="text-xs text-slate-500">마이크 레벨: {Math.round(micLevel)}%</p>
+            <div className="h-2.5 w-full rounded-full bg-slate-200">
+              <div className="h-2.5 rounded-full bg-emerald-500 transition-all" style={{ width: `${micLevel}%` }} />
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="rounded-xl border bg-white p-6 space-y-4 shadow-sm">
+        <h2 className="text-sm font-semibold text-slate-800">🔊 Speaker & Headphone Check</h2>
+        <label className="text-xs font-medium text-slate-600">스피커/헤드폰 볼륨: {speakerVolume}%</label>
+        <input
+          type="range"
+          min={0}
+          max={100}
+          value={speakerVolume}
+          onChange={(e) => setSpeakerVolume(Number(e.target.value))}
+          className="w-full"
+        />
+        <button
+          onClick={playTestSound}
+          className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
+        >
+          테스트 음성 재생 (440Hz)
+        </button>
+      </div>
+
+      <button
+        onClick={() => { stopMicTest(); onNext(); }}
+        className="w-full rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white hover:bg-emerald-700"
+      >
+        계속하기 →
+      </button>
+    </main>
+  );
+}
+
+function AboutToBeginStep({ onNext }: { onNext: () => void }) {
+  return (
+    <main className="mx-auto max-w-2xl space-y-8 px-4 py-10 text-center">
+      <div>
+        <h1 className="text-3xl font-bold text-slate-900">Ready?</h1>
+        <p className="mt-2 text-slate-500">시험을 시작합니다</p>
+      </div>
+
+      <div className="rounded-xl border bg-white p-6 text-left shadow-sm space-y-3">
+        {["조용한 환경", "마이크 작동", "헤드폰/스피커", "인터넷 연결"].map((label) => (
+          <div key={label} className="flex items-start gap-3">
+            <span className="text-emerald-600">✓</span>
+            <span className="text-sm font-medium text-slate-800">{label}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+        ⚠️ 시험이 시작되면 이전 문제로 돌아갈 수 없습니다. (Forward-Only)
+      </div>
+
+      <button
+        onClick={onNext}
+        className="w-full rounded-xl bg-indigo-600 py-3.5 text-base font-bold text-white shadow-lg hover:bg-indigo-700"
+      >
+        시험 시작 🎤
+      </button>
+    </main>
+  );
+}
+
 export default function SpeakingAssignmentRunner({ assignmentId, test, testLabel }: Props) {
   const router = useRouter();
   const listenRepeat = test.tasks.find((t) => t.type === "listen_repeat") as SpeakingTaskListenRepeat2026 | undefined;
   const interview = test.tasks.find((t) => t.type === "interview") as SpeakingTaskInterview2026 | undefined;
 
-  // task 순서: intro → task1_intro → listen_repeat → task2_intro → interview → done
-  const [phase, setPhase] = useState<"intro" | "task1_intro" | "listen_repeat" | "task2_intro" | "interview" | "done">(
-    "intro"
-  );
+  // 시험 절차: directions → audio_check → about_to_begin → task1_intro → listen_repeat → task2_intro → interview → done
+  const [phase, setPhase] = useState<Phase>("directions");
 
   // 녹음 데이터 관리
   const [listenRepeatRecordings, setListenRepeatRecordings] = useState<Array<{ itemId: string; blob: Blob | null }>>([]);
@@ -84,48 +232,80 @@ export default function SpeakingAssignmentRunner({ assignmentId, test, testLabel
 
     setPhase("done");
 
-    // recordings 포함해서 저장
-    await markCompleted(assignmentId, {
-      listenRepeat: listenRepeatBase64,
-      interview: interviewBase64,
-    });
+    // 배정을 통해 들어온 경우에만 완료 기록 (Test Mode 등 배정 없는 경우는 스킵)
+    if (assignmentId) {
+      await markCompleted(assignmentId, {
+        listenRepeat: listenRepeatBase64,
+        interview: interviewBase64,
+      });
+    }
   };
 
-  if (phase === "intro") {
+  if (phase === "directions") {
     return (
-      <main className="mx-auto max-w-md space-y-6 px-4 py-10 text-center">
-        <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">Speaking Test</p>
-          <h1 className="text-2xl font-bold text-slate-900">{testLabel}</h1>
-        </div>
-        <div className="rounded-xl border bg-white p-6 text-left space-y-3 shadow-sm text-sm text-slate-600">
+      <main className="mx-auto max-w-3xl space-y-8 px-4 py-10">
+        <h1 className="text-3xl font-bold text-slate-900 text-center">SPEAKING SECTION DIRECTIONS</h1>
+
+        <div className="rounded-xl border bg-slate-50 p-8 space-y-6">
+          <section>
+            <h2 className="text-lg font-bold text-slate-900 mb-2">Overview</h2>
+            <p className="text-sm text-slate-600">{testLabel} — 총 {(listenRepeat?.sentences.length ?? 0) + (interview?.questions.length ?? 0)}문항입니다.</p>
+          </section>
+
           {listenRepeat && (
-            <div className="flex gap-3">
-              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-sky-100 text-[10px] font-bold text-sky-700">1</span>
-              <div>
-                <p className="font-semibold text-slate-800">듣고 따라말하기</p>
-                <p className="text-xs text-slate-400">{listenRepeat.situation} — {listenRepeat.sentences.length}문장</p>
-              </div>
-            </div>
+            <section>
+              <h2 className="text-lg font-bold text-slate-900 mb-2">Task 1: Listen and Repeat ({listenRepeat.sentences.length}문항)</h2>
+              <ul className="space-y-1.5 text-sm text-slate-600 list-disc list-inside">
+                <li>문장을 듣고 <strong>그대로 따라 말합니다.</strong></li>
+                <li>준비 시간: <strong>0초</strong> (즉시 응답)</li>
+                <li>응답 시간: 문항마다 다름 (보통 8-12초)</li>
+                <li>문장 텍스트는 볼 수 없습니다.</li>
+              </ul>
+            </section>
           )}
+
           {interview && (
-            <div className="flex gap-3">
-              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-violet-100 text-[10px] font-bold text-violet-700">2</span>
-              <div>
-                <p className="font-semibold text-slate-800">인터뷰</p>
-                <p className="text-xs text-slate-400">{interview.questions.length}문제 × {interview.questions[0]?.speakingSeconds ?? 45}초</p>
-              </div>
-            </div>
+            <section>
+              <h2 className="text-lg font-bold text-slate-900 mb-2">Task 2: Interview ({interview.questions.length}문항)</h2>
+              <ul className="space-y-1.5 text-sm text-slate-600 list-disc list-inside">
+                <li>질문을 듣고 답변합니다.</li>
+                <li>준비 시간: <strong>0초</strong> (즉시 응답)</li>
+                <li>응답 시간: 최대 45초, [답변 완료]로 조기 종료 가능</li>
+                <li>질문 텍스트는 볼 수 없습니다.</li>
+              </ul>
+            </section>
           )}
+
+          <section>
+            <h2 className="text-lg font-bold text-slate-900 mb-2">Important Rules</h2>
+            <ul className="space-y-1.5 text-sm text-slate-600 list-disc list-inside">
+              <li><strong>Forward-Only:</strong> 이전 문제로 돌아갈 수 없습니다.</li>
+              <li><strong>메모 금지:</strong> 필기 도구를 사용할 수 없습니다.</li>
+              <li><strong>자동 녹음:</strong> 모든 응답은 자동으로 녹음됩니다.</li>
+            </ul>
+          </section>
+
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+            ⚠️ 한 번 시작하면 일시정지하거나 이전 문항으로 돌아갈 수 없습니다. 조용한 환경과 마이크 작동을 미리 확인하세요.
+          </div>
         </div>
+
         <button
-          onClick={() => setPhase(listenRepeat ? "task1_intro" : "task2_intro")}
-          className="w-full rounded-xl bg-orange-500 py-3 text-sm font-semibold text-white hover:bg-orange-600"
+          onClick={() => setPhase("audio_check")}
+          className="w-full rounded-xl bg-blue-600 py-3.5 text-base font-bold text-white hover:bg-blue-700"
         >
-          시작하기
+          Dismiss Directions & Start →
         </button>
       </main>
     );
+  }
+
+  if (phase === "audio_check") {
+    return <AudioCheckStep onNext={() => setPhase("about_to_begin")} />;
+  }
+
+  if (phase === "about_to_begin") {
+    return <AboutToBeginStep onNext={() => setPhase(listenRepeat ? "task1_intro" : "task2_intro")} />;
   }
 
   if (phase === "task1_intro" && listenRepeat) {
@@ -219,7 +399,7 @@ export default function SpeakingAssignmentRunner({ assignmentId, test, testLabel
           answerSeconds: q.speakingSeconds,
           topic: q.topic,
         }))}
-        interviewerImageUrl={interview.interviewerImageUrl}
+        interviewerImageUrl={interview.interviewerGifUrl}
         mode="test"
         defaultAnswerSeconds={45}
         totalQuestionOffset={8}

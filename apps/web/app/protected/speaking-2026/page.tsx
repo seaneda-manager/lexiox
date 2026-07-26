@@ -13,20 +13,20 @@ export default function Speaking2026Home() {
         color="sky"
         icon="🎤"
         title="스피킹"
-        tagline="Study Mode로 발음·유창성·구조를 연습하고, Test Mode로 실전 TOEFL iBT을 경험합니다."
+        tagline="선생님이 배정한 시험을 응시하거나, Test Mode로 실전 TOEFL iBT을 경험합니다."
         outcomes={[
           'Task 1 (Listen & Repeat) 7문항에서 정확한 발음과 자연스러운 리듬을 구사할 수 있다',
           'Task 2 (Interview) 4문항에서 45초 이내에 명확하고 일관성 있는 답변을 할 수 있다',
           'Forward-Only 형식의 실전 환경에 익숙해져 자신감 있게 응시할 수 있다',
         ]}
         steps={[
-          { icon: '📚', title: 'Study Mode', desc: '발음·유창성·구조 드릴과 게임으로 스피킹 기초를 다집니다. 틀려도 괜찮고 몇 번이고 반복할 수 있습니다.' },
+          { icon: '📋', title: 'Assignments', desc: '선생님이 배정한 시험을 확인하고 응시합니다.' },
           { icon: '🎯', title: 'Test Mode', desc: '실제 TOEFL iBT 형식의 실전 모의고사입니다. Task 1 7개 + Task 2 4개, Forward-Only 정책을 경험합니다.' },
         ]}
-        nextAction={{ label: 'Study Mode 시작', href: '/speaking-2026/study' }}
+        nextAction={{ label: 'Assignments 보기', href: '/speaking-2026/assignments' }}
       />
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2">
         <Link
           href="/speaking-2026/assignments"
           className="block rounded-lg border bg-white px-4 py-6 text-left shadow-sm transition hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400/50"
@@ -34,16 +34,6 @@ export default function Speaking2026Home() {
           <div className="text-sm font-semibold">📋 Assignments</div>
           <div className="mt-1 text-xs text-neutral-500">
             선생님이 배정한 시험을 확인하고 응시합니다.
-          </div>
-        </Link>
-
-        <Link
-          href="/speaking-2026/study"
-          className="block rounded-lg border bg-white px-4 py-6 text-left shadow-sm transition hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400/50"
-        >
-          <div className="text-sm font-semibold">Study Mode</div>
-          <div className="mt-1 text-xs text-neutral-500">
-            드릴과 게임으로 발음, 유창성, 문장 구조를 단계별로 연습합니다.
           </div>
         </Link>
 
