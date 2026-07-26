@@ -1,83 +1,46 @@
-"use client";
+import { getServerSupabase } from "@/lib/supabase/server";
+import type { LListeningTest2026Linear } from "@/models/listening";
+import Link from "next/link";
+import ListeningSessionContainer from "../../listening/_components/ListeningSessionContainer";
 
-import ListeningAdaptiveRunner, {
-  type ListeningTest2026,
-  type ListeningItem,
-  type ListeningItemKind,
-} from "@/components/listening/ListeningAdaptiveRunner";
+export const dynamic = "force-dynamic";
 
-import { demoListeningTest2026 } from "../adaptive-demo/demo-data";
+/**
+ * Study 모드. Test 모드와 같은 러너를 mode="study"로 쓴다.
+ * 차이는 러너 안에서 갈린다 — 일시정지/탐색/재청취, 뒤로가기, 스크립트, 타이머 없음.
+ */
+export default async function Listening2026StudyPage() {
+  const supabase = await getServerSupabase();
 
-function mapTaskKindToKind(taskKind: string): ListeningItemKind {
-  switch (taskKind) {
-    case "announcement":  return "announcement";
-    case "academic_talk": return "lecture";
-    case "conversation":
-    case "short_response":
-    default:              return "conversation";
+  const { data } = await supabase
+    .from("listening_tests_2026")
+    .select("id,label,payload")
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!data?.payload) {
+    return (
+      <main className="mx-auto max-w-xl py-16 px-4 text-center space-y-4">
+        <div className="text-4xl">🎧</div>
+        <h1 className="text-lg font-bold">아직 시험이 없습니다</h1>
+        <p className="text-sm text-gray-500">
+          Admin에서 Listening 시험을 생성하고 저장하면 여기에 표시됩니다.
+        </p>
+        <Link href="/updated-listening" className="inline-block rounded-lg border px-4 py-2 text-xs hover:bg-gray-50">
+          돌아가기
+        </Link>
+      </main>
+    );
   }
-}
-
-function mapTaskKindToTitle(taskKind: string): string {
-  switch (taskKind) {
-    case "short_response": return "Listen and choose a response.";
-    case "conversation":   return "Listen to a conversation.";
-    case "announcement":   return "Listen to an announcement.";
-    case "academic_talk":  return "Listen to part of a talk.";
-    default:               return "Listen and answer.";
-  }
-}
-
-function getImageForTaskKind(taskKind: string): string {
-  switch (taskKind) {
-    case "short_response": return "/sample/listening/short-response.png";
-    case "conversation":   return "/sample/listening/conversation.png";
-    case "announcement":   return "/sample/listening/announcement.png";
-    case "academic_talk":  return "/sample/listening/lecture.png";
-    default:               return "/sample/listening/default.png";
-  }
-}
-
-function flattenListeningTest(raw: any): ListeningTest2026 {
-  const flat: ListeningItem[] = [];
-
-  for (const mod of raw.modules ?? []) {
-    const stage = mod.stage as 1 | 2;
-    for (const item of mod.items ?? []) {
-      const taskKind = item.taskKind;
-      const correct = null;
-      for (const q of item.questions ?? []) {
-        const correctChoice = q.choices.find((c: any) => c.isCorrect);
-        flat.push({
-          id: `${item.id}-${q.id}`,
-          number: q.number,
-          kind: mapTaskKindToKind(taskKind),
-          stage,
-          promptTitle: mapTaskKindToTitle(taskKind),
-          imageSrc: getImageForTaskKind(taskKind),
-          audioSrc: item.audioUrl ?? "",
-          question: q.stem ?? "",
-          choices: q.choices.map((c: any) => ({ id: c.id, text: c.text })),
-          correctChoiceId: correctChoice?.id,
-          // ── 새로 추가: scriptSegments (선택사항) ──
-          scriptSegments: item.scriptSegments,
-        });
-      }
-    }
-  }
-
-  return { meta: { id: raw.meta.id, label: raw.meta.label }, items: flat };
-}
-
-export default function Listening2026StudyPage() {
-  const test = flattenListeningTest(demoListeningTest2026);
 
   return (
-    <ListeningAdaptiveRunner
-      test={test}
-      onFinish={(result) => {
-        console.log("LISTENING FINISHED", result);
-      }}
-    />
+    <div className="-m-4 md:-m-6 h-[calc(100%+2rem)] md:h-[calc(100%+3rem)]">
+      <ListeningSessionContainer
+        testData={data.payload as LListeningTest2026Linear}
+        testId={data.id}
+        mode="study"
+      />
+    </div>
   );
 }

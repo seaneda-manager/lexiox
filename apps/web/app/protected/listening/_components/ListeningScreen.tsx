@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import StudyAudioPlayer from "./StudyAudioPlayer";
+import type { ScriptSegment } from "@/models/listening";
 
 interface ListeningScreenProps {
   taskNumber: number;
@@ -9,6 +11,12 @@ interface ListeningScreenProps {
   illustrationUrl?: string;
   title: string;
   onAudioEnd: () => void;
+  /** test: 자동재생·컨트롤 없음·끝나면 자동 진행 / study: 컨트롤·스크립트·수동 진행 */
+  mode?: "test" | "study";
+  transcript?: string;
+  scriptSegments?: ScriptSegment[];
+  /** study에서 이전 단계로 돌아가기. 첫 단계면 undefined. */
+  onBack?: () => void;
 }
 
 export default function ListeningScreen({
@@ -18,21 +26,27 @@ export default function ListeningScreen({
   illustrationUrl,
   title,
   onAudioEnd,
+  mode = "test",
+  transcript,
+  scriptSegments,
+  onBack,
 }: ListeningScreenProps) {
+  const isStudy = mode === "study";
   const [isPlaying, setIsPlaying] = useState(true);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  // Auto-play audio on mount
+  // Auto-play audio on mount (test 모드 전용 — study는 StudyAudioPlayer가 담당)
   useEffect(() => {
+    if (isStudy) return;
     if (audioRef.current) {
       audioRef.current.play().catch((err) => {
         console.error("Audio playback error:", err);
         setIsPlaying(false);
       });
     }
-  }, []);
+  }, [isStudy]);
 
   const handleTimeUpdate = (e: React.SyntheticEvent<HTMLAudioElement>) => {
     setCurrentTime(e.currentTarget.currentTime);
@@ -129,51 +143,82 @@ export default function ListeningScreen({
           )}
         </div>
 
-        {/* Progress Bar Section */}
-        <div className="w-full max-w-2xl space-y-4">
-          {/* Time Display */}
-          <div className="flex justify-between items-center text-sm text-gray-600 px-4">
-            <span className="font-mono">{formatTime(currentTime)}</span>
-            <span className="font-mono">{formatTime(duration)}</span>
-          </div>
+        {isStudy ? (
+          <StudyAudioPlayer
+            audioUrl={audioUrl}
+            transcript={transcript}
+            scriptSegments={scriptSegments}
+            autoPlay
+          />
+        ) : (
+          /* Progress Bar Section */
+          <div className="w-full max-w-2xl space-y-4">
+            {/* Time Display */}
+            <div className="flex justify-between items-center text-sm text-gray-600 px-4">
+              <span className="font-mono">{formatTime(currentTime)}</span>
+              <span className="font-mono">{formatTime(duration)}</span>
+            </div>
 
-          {/* Progress Bar */}
-          <div className="relative h-2 bg-gray-200 rounded-full overflow-hidden cursor-not-allowed shadow-sm">
-            <div
-              className="h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all"
-              style={{ width: `${progressPercent}%` }}
-            />
-          </div>
+            {/* Progress Bar */}
+            <div className="relative h-2 bg-gray-200 rounded-full overflow-hidden cursor-not-allowed shadow-sm">
+              <div
+                className="h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
 
-          {/* Info Text */}
-          <div className="text-center text-xs text-gray-500 px-4">
-            You cannot seek the audio. Listen carefully to all the information.
+            {/* Info Text */}
+            <div className="text-center text-xs text-gray-500 px-4">
+              You cannot seek the audio. Listen carefully to all the information.
+            </div>
           </div>
-        </div>
+        )}
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 px-8 py-6 flex justify-end gap-4">
-        <button
-          disabled
-          className="px-8 py-3 bg-gray-300 text-gray-500 font-semibold rounded-lg cursor-not-allowed shadow-md"
-        >
-          Next
-        </button>
+      <footer className="bg-white border-t border-gray-200 px-8 py-6 flex justify-between gap-4">
+        {isStudy && onBack ? (
+          <button
+            onClick={onBack}
+            className="px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50"
+          >
+            Back
+          </button>
+        ) : (
+          <span />
+        )}
+
+        {isStudy ? (
+          <button
+            onClick={onAudioEnd}
+            className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 shadow-md"
+          >
+            Next
+          </button>
+        ) : (
+          <button
+            disabled
+            className="px-8 py-3 bg-gray-300 text-gray-500 font-semibold rounded-lg cursor-not-allowed shadow-md"
+          >
+            Next
+          </button>
+        )}
       </footer>
 
-      {/* Hidden Audio */}
-      <audio
-        ref={audioRef}
-        src={audioUrl}
-        onTimeUpdate={handleTimeUpdate}
-        onLoadedMetadata={handleLoadedMetadata}
-        onEnded={handleAudioEnd}
-        onError={() => {
-          console.error("Audio error");
-          setIsPlaying(false);
-        }}
-      />
+      {/* Hidden Audio (test 모드 전용) */}
+      {!isStudy && (
+        <audio
+          ref={audioRef}
+          src={audioUrl}
+          onTimeUpdate={handleTimeUpdate}
+          onLoadedMetadata={handleLoadedMetadata}
+          onEnded={handleAudioEnd}
+          onError={() => {
+            console.error("Audio error");
+            setIsPlaying(false);
+          }}
+        />
+      )}
     </div>
   );
 }

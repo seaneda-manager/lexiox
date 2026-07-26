@@ -42,18 +42,27 @@ interface ListeningSessionContainerProps {
   testId: string;
   /** 배정을 통해 들어온 경우, 완료 시 test_assignments 상태를 업데이트하기 위해 필요 */
   assignmentId?: string;
+  /**
+   * test: 실전과 동일 — 자동재생, 컨트롤 없음, 뒤로가기 불가, 문항별 카운트다운.
+   * study: 일시정지·탐색·재청취·스크립트 가능, 뒤로가기 가능, 시간 제한 없음.
+   */
+  mode?: "test" | "study";
 }
 
 export default function ListeningSessionContainer({
   testData,
   testId,
   assignmentId,
+  mode = "test",
 }: ListeningSessionContainerProps) {
+  const isStudy = mode === "study";
   const [screen, setScreen] = useState<ScreenType>("volume");
   const [module, setModule] = useState<1 | 2>(1);
   const [difficulty, setDifficulty] = useState<"hard" | "easy">("hard");
   const [stepIndex, setStepIndex] = useState(0);
-  const [answers, setAnswers] = useState<AnswerRecord[]>([]);
+  // study에서는 뒤로 가서 답을 고칠 수 있어야 하므로 questionId 기준으로 덮어쓴다.
+  // (배열에 append하면 같은 문항이 중복 기록된다.)
+  const [answers, setAnswers] = useState<Record<string, AnswerRecord>>({});
 
   const module1Tracks = testData.modules?.[0]?.items ?? [];
   const module2Tracks =
@@ -65,9 +74,14 @@ export default function ListeningSessionContainer({
   const steps = useMemo(() => buildSteps(currentTracks), [currentTracks]);
   const currentStep = steps[stepIndex];
 
+  const answerList = useMemo(() => Object.values(answers), [answers]);
+
   const recordAnswer = (question: LQuestion2026, choiceIndex: number) => {
     const isCorrect = choiceIndex >= 0 && !!question.choices?.[choiceIndex]?.isCorrect;
-    setAnswers((prev) => [...prev, { questionId: question.id, choiceIndex, isCorrect }]);
+    setAnswers((prev) => ({
+      ...prev,
+      [question.id]: { questionId: question.id, choiceIndex, isCorrect },
+    }));
   };
 
   const advanceStep = () => {
@@ -78,12 +92,15 @@ export default function ListeningSessionContainer({
     });
   };
 
+  // study 전용. test에서는 호출되지 않는다.
+  const goBackStep = () => setStepIndex((prev) => Math.max(0, prev - 1));
+
   const handleVolumeNext = () => setScreen("directions");
   const handleDirectionsNext = () => setScreen("moduleStart");
 
   const handleModuleStartNext = () => {
     setStepIndex(0);
-    setAnswers([]);
+    setAnswers({});
     setScreen("step");
   };
 
@@ -95,6 +112,8 @@ export default function ListeningSessionContainer({
   };
 
   const saveModuleResult = async (correctCount: number, totalQuestions: number, isFinalModule: boolean) => {
+    // study는 연습이라 결과를 남기지 않는다. 저장하면 실전 성적 통계가 오염된다.
+    if (isStudy) return;
     try {
       await fetch("/api/student/listening/save-session", {
         method: "POST",
@@ -103,7 +122,7 @@ export default function ListeningSessionContainer({
           testId,
           module,
           difficulty,
-          answers,
+          answers: answerList,
           correctCount,
           totalQuestions,
           assignmentId,
@@ -116,8 +135,8 @@ export default function ListeningSessionContainer({
   };
 
   const handleModuleEndNext = async () => {
-    const totalQuestions = answers.length;
-    const correctCount = answers.filter((a) => a.isCorrect).length;
+    const totalQuestions = answerList.length;
+    const correctCount = answerList.filter((a) => a.isCorrect).length;
     await saveModuleResult(correctCount, totalQuestions, module === 2);
 
     if (module === 1) {
@@ -160,6 +179,9 @@ export default function ListeningSessionContainer({
     case "step": {
       if (!currentStep) return null;
 
+      // study에서만 뒤로가기. 첫 단계에서는 돌아갈 곳이 없다.
+      const backHandler = isStudy && stepIndex > 0 ? goBackStep : undefined;
+
       if (currentStep.kind === "listening") {
         return (
           <ListeningScreen
@@ -170,12 +192,17 @@ export default function ListeningSessionContainer({
             illustrationUrl={currentStep.track.illustrationUrl}
             title={currentStep.track.title ?? ""}
             onAudioEnd={handleListeningEnd}
+            mode={mode}
+            transcript={currentStep.track.transcript}
+            scriptSegments={(currentStep.track as any).scriptSegments}
+            onBack={backHandler}
           />
         );
       }
 
       const { track, question, qIndex } = currentStep;
       const totalQuestionsInTrack = track.questions.length;
+      const previousChoice = answers[question.id]?.choiceIndex ?? null;
 
       if (track.taskKind === "choose_response") {
         return (
@@ -187,6 +214,10 @@ export default function ListeningSessionContainer({
             choices={question.choices}
             maxTime={question.testingSeconds ?? 20}
             onNext={(choiceIndex) => handleQuestionNext(question, choiceIndex)}
+            mode={mode}
+            initialChoiceIndex={previousChoice}
+            onBack={backHandler}
+            transcript={question.transcript}
           />
         );
       }
@@ -202,13 +233,19 @@ export default function ListeningSessionContainer({
           choices={question.choices}
           maxTime={question.testingSeconds ?? 40}
           onNext={(choiceIndex) => handleQuestionNext(question, choiceIndex)}
+          mode={mode}
+          initialChoiceIndex={previousChoice}
+          onBack={backHandler}
+          audioUrl={track.audioUrl}
+          transcript={track.transcript}
+          scriptSegments={(track as any).scriptSegments}
         />
       );
     }
 
     case "moduleEnd": {
-      const totalQuestions = answers.length;
-      const correctCount = answers.filter((a) => a.isCorrect).length;
+      const totalQuestions = answerList.length;
+      const correctCount = answerList.filter((a) => a.isCorrect).length;
       return (
         <ModuleEndScreen
           module={module}
