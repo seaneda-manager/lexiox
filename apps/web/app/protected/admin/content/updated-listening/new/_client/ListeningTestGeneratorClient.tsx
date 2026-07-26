@@ -192,10 +192,13 @@ export default function ListeningTestGeneratorClient() {
       setLoadingSuggestions(prev => ({ ...prev, [field.key]: true }));
       setError(null);
       try {
+        // 이 화면에서 이미 골라놓은 주제는 다른 필드 추천에서도 제외
+        const avoid = Object.values(topics).filter(v => v.trim().length > 0);
+
         const res = await fetch('/api/admin/updated-listening/suggest-topics', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ kind: field.suggestKind }),
+          body: JSON.stringify({ kind: field.suggestKind, avoid }),
         });
         const data = await res.json();
         if (!data.ok) throw new Error(data.error ?? 'Failed to suggest topics');
@@ -207,7 +210,7 @@ export default function ListeningTestGeneratorClient() {
         setLoadingSuggestions(prev => ({ ...prev, [field.key]: false }));
       }
     },
-    []
+    [topics]
   );
 
   const handleSelectSuggestion = (key: string, topic: string) => {

@@ -60,7 +60,7 @@ Generate ${Math.max(4, 5 - existingTopics.length)} new topic suggestions:`;
 
 export async function POST(req: Request) {
   try {
-    const { kind } = await req.json();
+    const { kind, avoid } = await req.json() as { kind: string; avoid?: string[] };
 
     if (!['conversation', 'announcement', 'lecture1', 'lecture2'].includes(kind)) {
       return NextResponse.json(
@@ -71,15 +71,21 @@ export async function POST(req: Request) {
 
     const sb = getServiceSupabase();
 
-    // 기존 주제들 조회
+    // 기존(다른 시험) 주제들 조회
     const { data: tests } = await sb
       .from('listening_tests_2026')
       .select('payload');
+
+    const bucket = kind === 'conversation' ? 'conversation' : kind === 'announcement' ? 'announcement' : 'lecture';
 
     const existingTopics: string[] = [];
     if (tests) {
       for (const test of tests) {
         const payload = test.payload as any;
+        const used = payload?.meta?.usedTopics?.[bucket] as string[] | undefined;
+        if (used) existingTopics.push(...used.filter(Boolean));
+
+        // 레거시 payload 호환 (구버전 meta.conversationTopic 등)
         if (payload?.meta) {
           if (kind === 'conversation' && payload.meta.conversationTopic) {
             existingTopics.push(payload.meta.conversationTopic);
@@ -92,6 +98,11 @@ export async function POST(req: Request) {
           }
         }
       }
+    }
+
+    // 지금 이 화면에서 이미 골라놓은 주제도 제외 (같은 시험 내 중복 방지)
+    if (Array.isArray(avoid)) {
+      existingTopics.push(...avoid.filter((t): t is string => typeof t === 'string' && t.trim().length > 0));
     }
 
     // 중복 제거

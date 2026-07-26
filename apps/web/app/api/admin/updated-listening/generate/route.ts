@@ -546,6 +546,11 @@ export async function POST(req: Request) {
         label: 'AI Generated Listening Test',
         examEra: 'ibt_2026',
         source: 'ai-generated',
+        usedTopics: {
+          conversation: [module1.conversationTopic, module2.conversationTopic, module2.conversationTopic2, module2.conversationTopic3],
+          announcement: [module1.announcementTopic, module2.announcementTopic, module2.announcementTopic2],
+          lecture: [module1.lectureTopic1, module2.lectureTopic1, module2.lectureTopic2],
+        },
       },
       modules: [
         {
