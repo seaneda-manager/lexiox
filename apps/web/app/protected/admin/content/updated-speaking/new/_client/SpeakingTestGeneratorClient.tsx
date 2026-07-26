@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useGenerateSpeech } from "@/lib/elevenlabs/use-generate-speech";
 import type {
@@ -183,7 +183,7 @@ export default function SpeakingTestGeneratorClient() {
   } | null>(null);
 
   // 페이지 로드 시 추천 주제 가져오기
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchSuggestions = async () => {
       try {
         setLoadingTopics(true);
