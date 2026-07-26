@@ -27,7 +27,7 @@ export default function Listening2026Home() {
         nextAction={{ label: 'Study Mode 시작', href: '/updated-listening/study' }}
       />
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-3">
         <Link
           href="/updated-listening/study"
           className="block rounded-lg border bg-white px-4 py-6 text-left shadow-sm transition hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400/50"
@@ -45,6 +45,16 @@ export default function Listening2026Home() {
           <div className="text-sm font-semibold">Test Mode</div>
           <div className="mt-1 text-xs text-neutral-500">
             2단계 어댑티브 실전 모의고사를 응시합니다.
+          </div>
+        </Link>
+
+        <Link
+          href="/listening/assignments"
+          className="block rounded-lg border bg-white px-4 py-6 text-left shadow-sm transition hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400/50"
+        >
+          <div className="text-sm font-semibold">📋 Assignments</div>
+          <div className="mt-1 text-xs text-neutral-500">
+            선생님이 배정한 시험 목록을 확인하고 응시합니다.
           </div>
         </Link>
       </div>
