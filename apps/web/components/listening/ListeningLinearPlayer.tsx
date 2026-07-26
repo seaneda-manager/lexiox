@@ -84,7 +84,7 @@ export default function ListeningLinearPlayer({ test }: Props) {
                     📝 {q.transcript}
                   </p>
                 )}
-                <p className="text-sm font-medium text-gray-900">{q.stem}</p>
+                <p className="text-sm font-medium text-gray-600">가장 적절한 응답을 고르세요.</p>
                 <div className="mt-2 space-y-2">
                   {q.choices.map((choice: any) => {
                     const correctIndices = q.correctIndices ?? [];

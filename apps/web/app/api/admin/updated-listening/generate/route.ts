@@ -13,9 +13,13 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || 'plac
 
 const CHOOSE_RESPONSE_INSTRUCTIONS = (count: string, difficultyNote: string) => `## TASK 1: Listen and Choose a Response
 Create ${count} individual single-utterance QUESTIONS, grouped under ONE track (id "t1").
-IMPORTANT: Each question is a SEPARATE spoken utterance and needs its OWN "transcript" field
+IMPORTANT: This is NOT a comprehension question with a written stem. The student hears ONE
+spoken line (a statement, question, or remark from someone), and the 4 choices are possible
+RESPONSES/REACTIONS to that line — the student picks whichever response best fits what they
+heard. There is NO written question text shown on screen; the audio itself IS the question.
+Each question is a SEPARATE spoken utterance and needs its OWN "transcript" field
 (unlike other tasks, where all questions share one track-level transcript).
-- Each question: 1 spoken sentence (~3-7 seconds when spoken) + 4 response choices
+- Each question: 1 spoken line (~3-7 seconds when spoken) + 4 possible responses to it
 - Answer timer per question: 15-30 seconds (set "testingSeconds" accordingly, e.g. 20)
 - ${difficultyNote}
 - Topics: Mix campus/daily life scenarios
@@ -31,16 +35,18 @@ Example trapTypes:
   "id": "q[number]",
   "number": [1-N],
   "type": "pragmatic_choice",
-  "transcript": "[Single complete spoken sentence for THIS question only]",
+  "transcript": "[Single complete spoken line for THIS question only, e.g. \\"Do you know if the library is open this weekend?\\"]",
   "testingSeconds": 20,
-  "stem": "What does the speaker imply?",
+  "stem": "",
   "choices": [
-    {"id": "c1", "text": "[Direct response]", "correct": true},
-    {"id": "c2", "text": "[Word trap]", "correct": false},
-    {"id": "c3", "text": "[Overstatement]", "correct": false},
-    {"id": "c4", "text": "[Not mentioned]", "correct": false}
+    {"id": "c1", "text": "[A natural response to the spoken line]", "correct": true},
+    {"id": "c2", "text": "[Word trap response]", "correct": false},
+    {"id": "c3", "text": "[Overstatement response]", "correct": false},
+    {"id": "c4", "text": "[Not mentioned / irrelevant response]", "correct": false}
   ]
-}`;
+}
+Leave "stem" as an empty string "" — do not write a meta-question like "What does the speaker imply?".
+The 4 "choices" must themselves read like natural spoken responses (not descriptions of responses).`;
 
 const RESPONSE_FORMAT_CRITICAL = `CRITICAL:
 - Escape all special characters (quotes, newlines)

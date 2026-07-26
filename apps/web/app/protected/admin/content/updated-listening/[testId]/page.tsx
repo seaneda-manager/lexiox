@@ -351,7 +351,7 @@ export default function ListeningTestEditPage() {
                     return (
                       <div key={q.id} className="rounded-lg border border-gray-200 bg-gray-50 p-3 space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs font-semibold text-gray-500">Q{q.number ?? qi + 1} · {q.stem}</span>
+                          <span className="text-xs font-semibold text-gray-500">Q{q.number ?? qi + 1} (질문 없음 — 오디오에 대한 응답 고르기)</span>
                           {q.audioUrl && <span className="text-[11px] text-emerald-600">🎧 음성 완료</span>}
                         </div>
                         <textarea
