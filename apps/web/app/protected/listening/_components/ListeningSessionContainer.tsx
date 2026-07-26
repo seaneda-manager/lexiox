@@ -40,11 +40,14 @@ function buildSteps(tracks: LListeningTrack2026[]): Step[] {
 interface ListeningSessionContainerProps {
   testData: LListeningTest2026Linear;
   testId: string;
+  /** 배정을 통해 들어온 경우, 완료 시 test_assignments 상태를 업데이트하기 위해 필요 */
+  assignmentId?: string;
 }
 
 export default function ListeningSessionContainer({
   testData,
   testId,
+  assignmentId,
 }: ListeningSessionContainerProps) {
   const [screen, setScreen] = useState<ScreenType>("volume");
   const [module, setModule] = useState<1 | 2>(1);
@@ -91,7 +94,7 @@ export default function ListeningSessionContainer({
     advanceStep();
   };
 
-  const saveModuleResult = async (correctCount: number, totalQuestions: number) => {
+  const saveModuleResult = async (correctCount: number, totalQuestions: number, isFinalModule: boolean) => {
     try {
       await fetch("/api/student/listening/save-session", {
         method: "POST",
@@ -103,6 +106,8 @@ export default function ListeningSessionContainer({
           answers,
           correctCount,
           totalQuestions,
+          assignmentId,
+          markAssignmentCompleted: isFinalModule && !!assignmentId,
         }),
       });
     } catch (err) {
@@ -113,7 +118,7 @@ export default function ListeningSessionContainer({
   const handleModuleEndNext = async () => {
     const totalQuestions = answers.length;
     const correctCount = answers.filter((a) => a.isCorrect).length;
-    await saveModuleResult(correctCount, totalQuestions);
+    await saveModuleResult(correctCount, totalQuestions, module === 2);
 
     if (module === 1) {
       const cutScore = testData.stage2Pool?.cutScore ?? 0.7;
@@ -209,6 +214,7 @@ export default function ListeningSessionContainer({
           module={module}
           correctCount={correctCount}
           totalQuestions={totalQuestions}
+          cutScore={testData.stage2Pool?.cutScore ?? 0.7}
           onNext={handleModuleEndNext}
         />
       );

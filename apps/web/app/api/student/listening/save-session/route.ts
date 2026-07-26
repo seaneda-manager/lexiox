@@ -20,6 +20,8 @@ interface SaveSessionRequest {
   answers: Answer[];
   correctCount: number;
   totalQuestions: number;
+  assignmentId?: string;
+  markAssignmentCompleted?: boolean;
 }
 
 export async function POST(req: Request) {
@@ -39,6 +41,8 @@ export async function POST(req: Request) {
       answers,
       correctCount,
       totalQuestions,
+      assignmentId,
+      markAssignmentCompleted,
     } = (await req.json()) as SaveSessionRequest;
 
     if (!testId || !answers || totalQuestions === 0) {
@@ -114,10 +118,17 @@ export async function POST(req: Request) {
       );
     }
 
-    // 4. If Module 1, determine Module 2 difficulty and return info
-    let nextModuleDifficulty: "hard" | "easy" | null = null;
-    if (module === 1) {
-      nextModuleDifficulty = percentage >= 80 ? "hard" : "easy";
+    // 4. 배정을 통해 들어온 경우, Module 2까지 끝나면 assignment를 completed로 마감
+    if (assignmentId && markAssignmentCompleted) {
+      const { error: assignmentError } = await supabase
+        .from("test_assignments")
+        .update({ status: "completed", completed_at: new Date().toISOString() })
+        .eq("id", assignmentId)
+        .eq("student_id", user.id);
+
+      if (assignmentError) {
+        console.error("Failed to mark assignment completed:", assignmentError);
+      }
     }
 
     return NextResponse.json({
@@ -127,7 +138,6 @@ export async function POST(req: Request) {
       percentage,
       module,
       difficulty,
-      nextModuleDifficulty,
     });
   } catch (err: any) {
     console.error("LISTENING SAVE SESSION ERROR:", err);

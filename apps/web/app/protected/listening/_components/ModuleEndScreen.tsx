@@ -4,6 +4,8 @@ interface ModuleEndScreenProps {
   module: 1 | 2;
   correctCount: number;
   totalQuestions: number;
+  /** Module1 성적에 따라 Module2 Hard/Easy를 가르는 실제 기준선 (기본 0.7 = 70%) */
+  cutScore?: number;
   onNext: () => void;
 }
 
@@ -11,13 +13,14 @@ export default function ModuleEndScreen({
   module,
   correctCount,
   totalQuestions,
+  cutScore = 0.7,
   onNext,
 }: ModuleEndScreenProps) {
   const percentage = totalQuestions > 0
     ? Math.round((correctCount / totalQuestions) * 100)
     : 0;
 
-  const isHardModule = percentage >= 80;
+  const isHardModule = percentage >= Math.round(cutScore * 100);
   const nextModuleDifficulty = isHardModule ? "Hard (Advanced)" : "Easy (Basic)";
 
   const getPerformanceMessage = () => {
