@@ -13,6 +13,16 @@ export interface WWritingTestMeta {
   label: string;
   examEra: ExamEra; // 2026용은 항상 "ibt_2026"
   source?: string | null; // 예: "demo", "tpo1", "mock-2026-1"
+  /**
+   * 이 시험이 소비한 주제를 태스크별로 기록한다. 주제 추천 API가 저장된 시험 전체에서
+   * 이 값을 긁어모아 같은 주제가 다시 나오지 않게 한다.
+   * (Reading/Listening과 동일한 패턴)
+   */
+  usedTopics?: {
+    build_sentence?: string[];
+    email?: string[];
+    academic?: string[];
+  };
 }
 
 /** 2026 Writing에서 지원할 Task 타입 */

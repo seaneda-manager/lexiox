@@ -56,4 +56,13 @@ export interface SpeakingTest2026 {
   id: string;
   label: string;
   tasks: SpeakingTask2026[];
+  /**
+   * 이 시험이 소비한 주제를 태스크별로 기록한다. 주제 추천 API가 저장된 시험 전체에서
+   * 이 값을 긁어모아 같은 주제가 다시 나오지 않게 한다.
+   * (Reading/Listening은 meta.usedTopics를 쓰지만 Speaking 페이로드엔 meta가 없어 최상위에 둔다.)
+   */
+  usedTopics?: {
+    listen_repeat?: string[];
+    interview?: string[];
+  };
 }

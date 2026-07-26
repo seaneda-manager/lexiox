@@ -41,10 +41,12 @@ export default function WritingTestGeneratorClient() {
     const fetchSuggestions = async () => {
       try {
         setLoadingTopics(true);
+        // 태스크마다 버킷이 달라야 한다. 예전에는 셋 다 Speaking 엔드포인트를 불러서
+        // Task 1이 Speaking용 주제를 받고, Task 2와 3이 같은 주제를 받았다.
         const [bsRes, emRes, acRes] = await Promise.all([
-          fetch("/api/admin/speaking/topic-suggestions?taskType=listen_repeat"),
-          fetch("/api/admin/speaking/topic-suggestions?taskType=writing"),
-          fetch("/api/admin/speaking/topic-suggestions?taskType=writing"),
+          fetch("/api/admin/updated-writing/suggest-topics?bucket=build_sentence"),
+          fetch("/api/admin/updated-writing/suggest-topics?bucket=email"),
+          fetch("/api/admin/updated-writing/suggest-topics?bucket=academic"),
         ]);
         const bsData = await bsRes.json();
         const emData = await emRes.json();

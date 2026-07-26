@@ -187,9 +187,11 @@ export default function SpeakingTestGeneratorClient() {
     const fetchSuggestions = async () => {
       try {
         setLoadingTopics(true);
+        // 저장된 Speaking 시험이 이미 쓴 주제를 제외하고 받아온다.
+        // 예전 엔드포인트는 하드코딩 프리셋에서 랜덤으로 뽑아 같은 주제가 반복됐다.
         const [lrRes, ivRes] = await Promise.all([
-          fetch("/api/admin/speaking/topic-suggestions?taskType=listen_repeat"),
-          fetch("/api/admin/speaking/topic-suggestions?taskType=interview"),
+          fetch("/api/admin/updated-speaking/suggest-topics?bucket=listen_repeat"),
+          fetch("/api/admin/updated-speaking/suggest-topics?bucket=interview"),
         ]);
         const lrData = await lrRes.json();
         const ivData = await ivRes.json();

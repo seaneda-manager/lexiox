@@ -161,6 +161,12 @@ Return ONLY valid JSON, no markdown, no explanation:
 
     const id = randomUUID();
     payload.meta.id = id;
+    // 주제 추천이 중복을 피할 수 있도록 이번에 소비한 주제를 남긴다.
+    payload.meta.usedTopics = {
+      build_sentence: [buildSentenceTopic],
+      email: [emailTopic],
+      academic: [academicTopic],
+    };
 
     return NextResponse.json({ ok: true, id, payload });
   } catch (e: any) {
