@@ -588,7 +588,7 @@ export default function ReadingTestGeneratorClient() {
         </button>
 
         {phase === "generating" && (
-          <p className="text-xs text-gray-500 animate-pulse">Claude가 Module 1(23문항) + Module 2 Hard/Easy(각 15문항)를 생성 중입니다 (약 60-90초)…</p>
+          <p className="text-xs text-gray-500 animate-pulse">Claude가 Module 1(23문항) + Module 2 Hard/Easy(각 15문항)를 생성 중입니다 (2~3분 정도 걸립니다, 새로고침하지 말고 기다려주세요)…</p>
         )}
         {error && <p className="text-xs text-rose-600">{error}</p>}
       </section>
