@@ -18,9 +18,9 @@ async function assignAction(formData: FormData) {
   "use server";
   const studentIds = formData.getAll("student_ids") as string[];
   const speakingTestId = formData.get("speaking_test_id") as string | null;
-  const dueDate = formData.get("due_date") as string | null;
+  const dueDateInput = formData.get("due_date") as string;
 
-  if (!speakingTestId || studentIds.length === 0) {
+  if (!speakingTestId?.trim() || studentIds.length === 0) {
     redirect("/admin/content/updated-speaking/assign?error=" + encodeURIComponent("시험과 학생을 선택해주세요."));
   }
 
@@ -33,7 +33,7 @@ async function assignAction(formData: FormData) {
     assigned_by: user?.id ?? null,
     sections: ["speaking"],
     speaking_test_id: speakingTestId,
-    due_date: dueDate || null,
+    due_date: dueDateInput && dueDateInput.trim() ? dueDateInput : null,
     status: "pending",
   }));
 
@@ -44,7 +44,7 @@ async function assignAction(formData: FormData) {
   }
 
   revalidatePath("/admin/content/updated-speaking/assign");
-  redirect("/admin/content/updated-speaking/assign?success=" + encodeURIComponent(`${studentIds.length}명에게 assign 완료`));
+  redirect("/admin/content/updated-speaking/assign?success=" + encodeURIComponent(`${studentIds.length}명에게 배정 완료`));
 }
 
 export default async function AssignSpeakingPage({ searchParams }: { searchParams: SearchParamsLike }) {
