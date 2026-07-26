@@ -3,10 +3,10 @@
 import { useState, useEffect, useRef } from "react";
 
 interface ListeningScreenProps {
-  taskNumber: 2 | 3 | 4;
+  taskNumber: number;
   taskKind: "conversation" | "announcement" | "academic_talk";
   audioUrl: string;
-  speakerImageUrl?: string;
+  illustrationUrl?: string;
   title: string;
   onAudioEnd: () => void;
 }
@@ -15,7 +15,7 @@ export default function ListeningScreen({
   taskNumber,
   taskKind,
   audioUrl,
-  speakerImageUrl = "https://via.placeholder.com/300x300?text=Speaker",
+  illustrationUrl,
   title,
   onAudioEnd,
 }: ListeningScreenProps) {
@@ -100,17 +100,25 @@ export default function ListeningScreen({
         </div>
       </header>
 
-      {/* Main Content - Centered Speaker Grid */}
+      {/* Main Content - Centered */}
       <main className="flex-1 flex flex-col items-center justify-center px-8 py-12">
-        {/* Speaker Image */}
+        {/* Illustration or generic audio indicator */}
         <div className="mb-12">
-          <div className="rounded-2xl overflow-hidden shadow-xl">
-            <img
-              src={speakerImageUrl}
-              alt="Speaker"
-              className="w-80 h-80 object-cover bg-gray-200"
-            />
-          </div>
+          {illustrationUrl ? (
+            <div className="rounded-2xl overflow-hidden shadow-xl">
+              <img
+                src={illustrationUrl}
+                alt=""
+                className="w-80 h-80 object-cover bg-gray-100"
+              />
+            </div>
+          ) : (
+            <div className={`flex h-64 w-64 items-center justify-center rounded-2xl text-8xl shadow-xl ${
+              isPlaying ? "bg-blue-100" : "bg-gray-100"
+            }`}>
+              {getTaskIcon()}
+            </div>
+          )}
           {isPlaying && (
             <div className="text-center mt-6">
               <div className="inline-flex items-center gap-2 text-blue-600">

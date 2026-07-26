@@ -21,11 +21,12 @@ export async function GET(
     }
 
     // Fetch test data from listening_tests table
+    // 'locked'는 정식 배정된 시험, 'active'는 admin이 생성 직후 미리보기/스모크 테스트로 바로 여는 경우
     const { data: test, error: testError } = await supabase
       .from("listening_tests")
       .select("*")
       .eq("id", testId)
-      .eq("status", "locked")
+      .in("status", ["locked", "active"])
       .single();
 
     if (testError || !test) {

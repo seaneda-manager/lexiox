@@ -110,16 +110,25 @@ export default function ModuleStartScreen({
                         Task 2: Listen to a Conversation
                       </div>
                       <p className="text-sm text-indigo-800">
-                        Answer questions about short conversations between two speakers about campus or daily life topics.
+                        Answer questions about a short conversation between two speakers about campus or daily life topics.
+                      </p>
+                    </div>
+
+                    <div className="bg-gradient-to-r from-amber-50 to-amber-100 border-l-4 border-amber-500 p-4 rounded">
+                      <div className="font-semibold text-amber-900 mb-1">
+                        Task 3: Listen to an Announcement
+                      </div>
+                      <p className="text-sm text-amber-800">
+                        Answer questions about a campus announcement.
                       </p>
                     </div>
 
                     <div className="bg-gradient-to-r from-purple-50 to-purple-100 border-l-4 border-purple-500 p-4 rounded">
                       <div className="font-semibold text-purple-900 mb-1">
-                        Task 3 & 4: Academic Talks
+                        Task 4: Listen to an Academic Talk
                       </div>
                       <p className="text-sm text-purple-800">
-                        Answer questions about academic talks from professors covering topics like science, history, and culture.
+                        Answer questions about an academic talk from a professor.
                       </p>
                     </div>
                   </>
@@ -127,18 +136,18 @@ export default function ModuleStartScreen({
 
                 {module === 2 && isDifficultyHigh && (
                   <>
-                    <div className="bg-gradient-to-r from-indigo-50 to-indigo-100 border-l-4 border-indigo-500 p-4 rounded">
-                      <div className="font-semibold text-indigo-900 mb-1">
-                        Task 2: Listen to a Conversation
+                    <div className="bg-gradient-to-r from-amber-50 to-amber-100 border-l-4 border-amber-500 p-4 rounded">
+                      <div className="font-semibold text-amber-900 mb-1">
+                        Task 2 & 3: Announcements
                       </div>
-                      <p className="text-sm text-indigo-800">
-                        Answer 2 questions about a conversation. Requires deeper understanding and inference.
+                      <p className="text-sm text-amber-800">
+                        Answer 2 questions each about two campus announcements involving rule changes or exceptions.
                       </p>
                     </div>
 
                     <div className="bg-gradient-to-r from-purple-50 to-purple-100 border-l-4 border-purple-500 p-4 rounded">
                       <div className="font-semibold text-purple-900 mb-1">
-                        Task 3 & 4: Academic Talks (Advanced)
+                        Task 4 & 5: Academic Talks (Advanced)
                       </div>
                       <p className="text-sm text-purple-800">
                         Answer 4 questions each about two academic talks. These are more complex with advanced vocabulary.
@@ -151,16 +160,16 @@ export default function ModuleStartScreen({
                   <>
                     <div className="bg-gradient-to-r from-indigo-50 to-indigo-100 border-l-4 border-indigo-500 p-4 rounded">
                       <div className="font-semibold text-indigo-900 mb-1">
-                        Task 2: Listen to a Conversation
+                        Task 2, 3 & 4: Conversations
                       </div>
                       <p className="text-sm text-indigo-800">
-                        Answer 2 questions about a conversation with clearer, simpler content.
+                        Answer 2 questions each about three short conversations with clearer, simpler content.
                       </p>
                     </div>
 
                     <div className="bg-gradient-to-r from-amber-50 to-amber-100 border-l-4 border-amber-500 p-4 rounded">
                       <div className="font-semibold text-amber-900 mb-1">
-                        Task 3 & 4: Announcements
+                        Task 5 & 6: Announcements
                       </div>
                       <p className="text-sm text-amber-800">
                         Answer 2 questions each about two campus announcements. These are shorter and more direct.

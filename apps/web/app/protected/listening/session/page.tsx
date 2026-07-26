@@ -1,6 +1,7 @@
 "use client";
 
 import ListeningSessionContainer from "../_components/ListeningSessionContainer";
+import type { LListeningTest2026Linear } from "@/models/listening";
 
 // Dummy test data for development
 const DUMMY_TEST = {
@@ -654,5 +655,10 @@ const DUMMY_TEST = {
 };
 
 export default function ListeningSessionPage() {
-  return <ListeningSessionContainer testData={DUMMY_TEST} />;
+  return (
+    <ListeningSessionContainer
+      testData={DUMMY_TEST as unknown as LListeningTest2026Linear}
+      testId={DUMMY_TEST.meta.id}
+    />
+  );
 }

@@ -12,10 +12,8 @@ interface Task1QuestionScreenProps {
   currentQuestion: number;
   totalQuestions: number;
   audioUrl: string;
-  question: string;
   choices: Choice[];
-  maxTime?: number; // in seconds (default: 15)
-  speakerImageUrl?: string;
+  maxTime?: number; // in seconds (default: 20, spec range 15-30)
   onNext: (selectedChoiceIndex: number) => void;
   onTimeUp?: () => void;
 }
@@ -24,10 +22,8 @@ export default function Task1QuestionScreen({
   currentQuestion,
   totalQuestions,
   audioUrl,
-  question,
   choices,
-  maxTime = 15,
-  speakerImageUrl = "https://via.placeholder.com/300x300?text=Speaker",
+  maxTime = 20,
   onNext,
   onTimeUp,
 }: Task1QuestionScreenProps) {
@@ -37,20 +33,19 @@ export default function Task1QuestionScreen({
   const [audioHasPlayed, setAudioHasPlayed] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  // Timer effect
+  // 타이머: 오디오가 끝나기 전까지는 카운트다운하지 않는다 (스펙: 재생 중엔 타이머 정지)
   useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (timeLeft > 0) {
-      timer = setTimeout(() => {
-        setTimeLeft(timeLeft - 1);
-      }, 1000);
-    } else if (timeLeft === 0 && audioHasPlayed) {
-      // Auto-advance when time is up
+    if (!audioHasPlayed) return;
+
+    if (timeLeft <= 0) {
       onTimeUp?.();
       onNext(selectedChoiceIndex ?? -1);
+      return;
     }
+
+    const timer = setTimeout(() => setTimeLeft((t) => t - 1), 1000);
     return () => clearTimeout(timer);
-  }, [timeLeft, audioHasPlayed, selectedChoiceIndex, onNext, onTimeUp]);
+  }, [audioHasPlayed, timeLeft, selectedChoiceIndex, onNext, onTimeUp]);
 
   // Auto-play audio on mount
   useEffect(() => {
@@ -61,7 +56,8 @@ export default function Task1QuestionScreen({
       });
       setIsAudioPlaying(true);
     }
-  }, [audioHasPlayed]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const formatTime = (seconds: number) => {
     return `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
@@ -94,35 +90,33 @@ export default function Task1QuestionScreen({
               Task 1 - Question {currentQuestion} of {totalQuestions}
             </div>
             <div className="text-xs text-gray-400 mt-1">
-              Choose the best response
+              Listen and choose the best response
             </div>
           </div>
           <div className="flex items-center gap-4">
             <div className="text-center">
               <div className="text-xs text-gray-500">Time Left</div>
               <div className={`text-2xl font-bold font-mono ${
-                timeLeft <= 5 ? "text-red-600" : "text-blue-600"
+                audioHasPlayed && timeLeft <= 5 ? "text-red-600" : "text-blue-600"
               }`}>
-                {formatTime(timeLeft)}
+                {audioHasPlayed ? formatTime(timeLeft) : "--:--"}
               </div>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Main Content - 2 Column Layout */}
+      {/* Main Content - centered */}
       <main className="flex-1 flex items-center justify-center px-8 py-8">
-        <div className="w-full max-w-5xl grid grid-cols-2 gap-8">
-          {/* Left: Speaker Image */}
+        <div className="w-full max-w-2xl space-y-8">
+          {/* Audio status indicator */}
           <div className="flex flex-col items-center justify-center">
-            <div className="rounded-2xl overflow-hidden shadow-lg mb-4">
-              <img
-                src={speakerImageUrl}
-                alt="Speaker"
-                className="w-80 h-80 object-cover bg-gray-200"
-              />
+            <div className={`flex h-32 w-32 items-center justify-center rounded-full text-5xl transition-all ${
+              isAudioPlaying ? "bg-blue-100 animate-pulse" : "bg-gray-100"
+            }`}>
+              🔊
             </div>
-            <div className="text-center text-sm text-gray-500">
+            <div className="mt-4 text-center text-sm text-gray-500">
               {isAudioPlaying ? (
                 <span className="flex items-center gap-2 justify-center">
                   <span className="inline-block w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
@@ -136,63 +130,58 @@ export default function Task1QuestionScreen({
             </div>
           </div>
 
-          {/* Right: Question and Choices */}
-          <div className="flex flex-col justify-center space-y-8">
-            {/* Question Box */}
-            <div className="bg-white rounded-xl shadow-md p-6 border-2 border-blue-200">
-              <p className="text-center text-lg font-semibold text-gray-900">
-                {question}
-              </p>
-            </div>
+          {/* Instruction */}
+          <p className="text-center text-sm font-medium text-gray-600">
+            가장 적절한 응답을 고르세요.
+          </p>
 
-            {/* Choices */}
-            <div className="space-y-3">
-              {choices.map((choice, index) => (
-                <label
-                  key={choice.id}
-                  className={`flex items-start gap-4 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+          {/* Choices */}
+          <div className="space-y-3">
+            {choices.map((choice, index) => (
+              <label
+                key={choice.id}
+                className={`flex items-start gap-4 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                  selectedChoiceIndex === index
+                    ? "border-blue-500 bg-blue-50 shadow-md"
+                    : "border-gray-200 bg-white hover:border-gray-300"
+                } ${isChoicesDisabled ? "opacity-60 cursor-not-allowed" : ""}`}
+              >
+                <div className="flex items-center mt-1">
+                  <input
+                    type="radio"
+                    name="choice"
+                    value={index}
+                    checked={selectedChoiceIndex === index}
+                    onChange={() => handleChoiceSelect(index)}
+                    disabled={isChoicesDisabled}
+                    className="w-5 h-5 cursor-pointer"
+                  />
+                </div>
+                <div className="flex-1">
+                  <p className={`text-sm leading-relaxed ${
                     selectedChoiceIndex === index
-                      ? "border-blue-500 bg-blue-50 shadow-md"
-                      : "border-gray-200 bg-white hover:border-gray-300"
-                  } ${isChoicesDisabled ? "opacity-60 cursor-not-allowed" : ""}`}
-                >
-                  <div className="flex items-center mt-1">
-                    <input
-                      type="radio"
-                      name="choice"
-                      value={index}
-                      checked={selectedChoiceIndex === index}
-                      onChange={() => handleChoiceSelect(index)}
-                      disabled={isChoicesDisabled}
-                      className="w-5 h-5 cursor-pointer"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <p className={`text-sm leading-relaxed ${
-                      selectedChoiceIndex === index
-                        ? "text-blue-900 font-semibold"
-                        : "text-gray-700"
-                    }`}>
-                      {choice.text}
-                    </p>
-                  </div>
-                </label>
-              ))}
-            </div>
-
-            {/* Help Text */}
-            {isAudioPlaying && (
-              <div className="text-sm text-amber-700 bg-amber-50 p-3 rounded border border-amber-200">
-                Listen to the audio. You can select your answer after it finishes playing.
-              </div>
-            )}
-
-            {!audioHasPlayed && !isAudioPlaying && (
-              <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded border border-gray-200">
-                Audio will play automatically. Please wait and listen carefully.
-              </div>
-            )}
+                      ? "text-blue-900 font-semibold"
+                      : "text-gray-700"
+                  }`}>
+                    {choice.text}
+                  </p>
+                </div>
+              </label>
+            ))}
           </div>
+
+          {/* Help Text */}
+          {isAudioPlaying && (
+            <div className="text-sm text-amber-700 bg-amber-50 p-3 rounded border border-amber-200 text-center">
+              Listen to the audio. You can select your answer after it finishes playing.
+            </div>
+          )}
+
+          {!audioHasPlayed && !isAudioPlaying && (
+            <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded border border-gray-200 text-center">
+              Audio will play automatically. Please wait and listen carefully.
+            </div>
+          )}
         </div>
       </main>
 

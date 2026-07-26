@@ -9,14 +9,13 @@ interface Choice {
 }
 
 interface Task2345QuestionScreenProps {
-  taskNumber: 2 | 3 | 4;
+  taskNumber: number;
   taskKind: "conversation" | "announcement" | "academic_talk";
   currentQuestion: number;
   totalQuestions: number;
   question: string;
   choices: Choice[];
-  speakerImageUrl?: string;
-  maxTime?: number; // in seconds (default: 45)
+  maxTime?: number; // in seconds (default: 40, spec range 35-45)
   onNext: (selectedChoiceIndex: number) => void;
   onTimeUp?: () => void;
 }
@@ -28,26 +27,22 @@ export default function Task2345QuestionScreen({
   totalQuestions,
   question,
   choices,
-  speakerImageUrl = "https://via.placeholder.com/250x250?text=Speaker",
-  maxTime = 45,
+  maxTime = 40,
   onNext,
   onTimeUp,
 }: Task2345QuestionScreenProps) {
   const [selectedChoiceIndex, setSelectedChoiceIndex] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState(maxTime);
 
-  // Timer effect
+  // Timer effect. 부모가 문제마다 고유 key를 넘겨 컴포넌트를 새로 마운트시키므로
+  // 여기서는 그냥 maxTime에서부터 새로 시작하면 된다.
   useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (timeLeft > 0) {
-      timer = setTimeout(() => {
-        setTimeLeft(timeLeft - 1);
-      }, 1000);
-    } else if (timeLeft === 0) {
-      // Auto-advance when time is up
+    if (timeLeft <= 0) {
       onTimeUp?.();
       onNext(selectedChoiceIndex ?? -1);
+      return;
     }
+    const timer = setTimeout(() => setTimeLeft((t) => t - 1), 1000);
     return () => clearTimeout(timer);
   }, [timeLeft, selectedChoiceIndex, onNext, onTimeUp]);
 
@@ -116,14 +111,10 @@ export default function Task2345QuestionScreen({
       {/* Main Content - 2 Column Layout */}
       <main className="flex-1 flex items-center justify-center px-8 py-8">
         <div className="w-full max-w-5xl grid grid-cols-3 gap-8">
-          {/* Left: Speaker Image (Smaller) */}
+          {/* Left: generic task icon */}
           <div className="flex justify-center">
-            <div className="rounded-xl overflow-hidden shadow-lg">
-              <img
-                src={speakerImageUrl}
-                alt="Speaker"
-                className="w-56 h-56 object-cover bg-gray-200"
-              />
+            <div className="flex h-56 w-56 items-center justify-center rounded-xl bg-blue-50 text-7xl shadow-lg">
+              {getTaskIcon()}
             </div>
           </div>
 
