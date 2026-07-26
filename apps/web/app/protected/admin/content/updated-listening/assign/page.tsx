@@ -28,6 +28,39 @@ async function assignAction(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser();
 
   const service = getServiceSupabase();
+
+  // test_assignments.listening_test_id는 listening_tests(구 테이블)를 참조하는데,
+  // 이 화면 목록은 listening_tests_2026에서 가져온다. 예전 저장 버그(onConflict)로
+  // listening_tests에 행이 안 생긴 시험도 있을 수 있으니, 배정 직전에 다시 한 번
+  // listening_tests_2026 → listening_tests로 동기화해서 FK 위반을 방지한다.
+  const { data: sourceTest, error: sourceError } = await service
+    .from("listening_tests_2026")
+    .select("id, label, payload")
+    .eq("id", listeningTestId)
+    .maybeSingle();
+
+  if (sourceError || !sourceTest) {
+    redirect("/admin/content/updated-listening/assign?error=" + encodeURIComponent("선택한 시험을 찾을 수 없습니다."));
+  }
+
+  const { error: syncError } = await service
+    .from("listening_tests")
+    .upsert(
+      {
+        id: sourceTest.id,
+        label: sourceTest.label,
+        exam_era: "ibt_2026",
+        content: sourceTest.payload,
+        status: "active",
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "id" }
+    );
+
+  if (syncError) {
+    redirect("/admin/content/updated-listening/assign?error=" + encodeURIComponent("시험 동기화 실패: " + syncError.message));
+  }
+
   const rows = studentIds.map((sid) => ({
     student_id: sid,
     assigned_by: user?.id ?? null,
