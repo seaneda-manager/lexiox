@@ -5,9 +5,16 @@ import { useRouter } from "next/navigation";
 import type {
   WWritingTest2026,
   WBuildSentenceItem,
+  WBuildSentenceQuestion,
+  WSentenceToken,
   WEmailWritingItem,
   WAcademicWritingItem,
 } from "@/models/writing";
+import {
+  parseSentenceToTokens,
+  joinTokens,
+  normalizeBuildSentenceQuestion,
+} from "@/lib/writing/build-sentence-parser";
 
 type Phase = "input" | "generating" | "edit" | "saving";
 
@@ -216,7 +223,7 @@ export default function WritingTestGeneratorClient() {
 
         {phase === "generating" && (
           <p className="text-xs text-gray-500 animate-pulse">
-            Claude가 Build a Sentence (9문항) + Email + Academic Discussion을 생성 중입니다 (약 30-45초)…
+            Claude가 Build a Sentence (10문항) + Email + Academic Discussion을 생성 중입니다 (약 30-45초)…
           </p>
         )}
         {error && <p className="text-xs text-rose-600">{error}</p>}
@@ -246,7 +253,7 @@ export default function WritingTestGeneratorClient() {
                   Task {idx + 1}
                 </span>
                 <span className="text-sm font-semibold text-gray-900">
-                  {item.taskKind === "build_a_sentence" ? "Build a Sentence (9문항)"
+                  {item.taskKind === "build_a_sentence" ? "Build a Sentence (10문항)"
                     : item.taskKind === "email" ? "Write an Email"
                     : "Academic Discussion"}
                 </span>
@@ -298,59 +305,197 @@ export default function WritingTestGeneratorClient() {
 }
 
 // ── Build a Sentence Editor ────────────────────────────────────────────
+//
+// 작업 흐름: 정답 문장을 넣고 "자동 분할" → 파서가 Word/Phrase 초안을 만든다 →
+// 관리자가 조각을 병합/분리하거나 단위를 바꿔 마무리한다.
+// 파서에 품사 태거가 없어 명사/동사 판단이 완벽하지 않으므로, 손으로 고치는 단계가 필수다.
+//
+// tokens 배열의 순서가 곧 정답 순서다. 화면 셔플은 러너가 담당한다.
 function BuildSentenceEditor({ item, onChange }: { item: WBuildSentenceItem; onChange: (u: WBuildSentenceItem) => void }) {
-  const updateQ = (qi: number, updater: (q: any) => any) => {
-    const questions = item.questions.map((q, i) => i === qi ? updater(q) : q);
-    onChange({ ...item, questions });
+  // 문항별 "정답 문장" 입력 상태. 최초값은 기존 조각을 이어 붙여 만든다.
+  const [drafts, setDrafts] = useState<Record<number, string>>(() => {
+    const init: Record<number, string> = {};
+    item.questions.forEach((q, i) => {
+      const n = normalizeBuildSentenceQuestion(q);
+      init[i] = joinTokens(n.tokens.map((t) => t.text), n.punctuation);
+    });
+    return init;
+  });
+
+  const updateQ = (qi: number, updater: (q: WBuildSentenceQuestion) => WBuildSentenceQuestion) => {
+    onChange({ ...item, questions: item.questions.map((q, i) => (i === qi ? updater(q) : q)) });
+  };
+
+  /** tokens를 갈아끼우고 correctOrder를 순서대로 다시 맞춘다. */
+  const setTokens = (qi: number, tokens: WSentenceToken[], punctuation?: string) => {
+    updateQ(qi, (q) => ({
+      ...q,
+      tokens,
+      correctOrder: tokens.map((t) => t.id),
+      punctuation: punctuation ?? q.punctuation ?? "",
+      // 레거시 필드는 더 이상 쓰지 않으므로 같이 지운다.
+      shuffledChunks: undefined,
+      correctSequence: undefined,
+      unnecessaryChunk: undefined,
+    }));
+  };
+
+  const autoSplit = (qi: number) => {
+    const sentence = (drafts[qi] ?? "").trim();
+    if (!sentence) return;
+    const { tokens, punctuation } = parseSentenceToTokens(sentence);
+    setTokens(qi, tokens, punctuation);
+  };
+
+  const reindex = (tokens: { text: string; type: WSentenceToken["type"] }[]): WSentenceToken[] =>
+    tokens.map((t, i) => ({ id: `t${i + 1}`, text: t.text, type: t.type }));
+
+  const mergeWithPrev = (qi: number, ti: number) => {
+    const n = normalizeBuildSentenceQuestion(item.questions[qi]);
+    if (ti === 0) return;
+    const next = n.tokens.map((t) => ({ text: t.text, type: t.type }));
+    next[ti - 1] = { text: `${next[ti - 1].text} ${next[ti].text}`, type: "PHRASE" };
+    next.splice(ti, 1);
+    setTokens(qi, reindex(next));
+  };
+
+  const splitToken = (qi: number, ti: number) => {
+    const n = normalizeBuildSentenceQuestion(item.questions[qi]);
+    const parts = n.tokens[ti].text.trim().split(/\s+/);
+    if (parts.length < 2) return;
+    const next = n.tokens.map((t) => ({ text: t.text, type: t.type }));
+    next.splice(ti, 1, ...parts.map((p) => ({ text: p, type: "WORD" as const })));
+    setTokens(qi, reindex(next));
+  };
+
+  const editText = (qi: number, ti: number, text: string) => {
+    const n = normalizeBuildSentenceQuestion(item.questions[qi]);
+    const next = n.tokens.map((t, i) => (i === ti ? { text, type: t.type } : { text: t.text, type: t.type }));
+    setTokens(qi, reindex(next));
+  };
+
+  const toggleType = (qi: number, ti: number) => {
+    const n = normalizeBuildSentenceQuestion(item.questions[qi]);
+    const next = n.tokens.map((t, i) =>
+      i === ti ? { text: t.text, type: t.type === "WORD" ? ("PHRASE" as const) : ("WORD" as const) } : { text: t.text, type: t.type },
+    );
+    setTokens(qi, reindex(next));
   };
 
   return (
     <div className="space-y-4">
       <p className="text-xs text-gray-500">지시문: {item.instruction}</p>
+      <p className="rounded-lg bg-sky-50 px-3 py-2 text-[11px] leading-relaxed text-sky-800">
+        어순·문법을 재는 성분(의문사·조동사·대명사·동사·부사)은 <b>WORD</b>로 낱개,
+        관사+명사·전치사구·고정 연결어는 <b>PHRASE</b>로 묶습니다.
+        자동 분할은 초안이므로 결과를 확인하고 고쳐주세요.
+      </p>
+
       <div className="space-y-4">
-        {item.questions.map((q, qi) => (
-          <div key={q.id} className="rounded-lg border border-slate-100 bg-slate-50 p-4 space-y-3">
-            <p className="text-[11px] font-semibold text-sky-600">Q{qi + 1}</p>
+        {item.questions.map((q, qi) => {
+          const n = normalizeBuildSentenceQuestion(q);
+          return (
+            <div key={q.id} className="rounded-lg border border-slate-100 bg-slate-50 p-4 space-y-3">
+              <p className="text-[11px] font-semibold text-sky-600">Q{qi + 1}</p>
 
-            <div className="grid gap-2 md:grid-cols-2">
-              <label className="block text-xs">
-                <span className="text-gray-500">Context Lead-in (앞 문장)</span>
-                <textarea rows={2} className="mt-1 w-full rounded-lg border px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-sky-400"
-                  value={q.contextLeadIn}
-                  onChange={(e) => updateQ(qi, (qq) => ({ ...qq, contextLeadIn: e.target.value }))} />
-              </label>
-              <label className="block text-xs">
-                <span className="text-gray-500">Context Lead-out (뒷 문장)</span>
-                <textarea rows={2} className="mt-1 w-full rounded-lg border px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-sky-400"
-                  value={q.contextLeadOut}
-                  onChange={(e) => updateQ(qi, (qq) => ({ ...qq, contextLeadOut: e.target.value }))} />
-              </label>
-            </div>
+              <div className="grid gap-2 md:grid-cols-2">
+                <label className="block text-xs">
+                  <span className="text-gray-500">Context Lead-in (앞 문장)</span>
+                  <textarea rows={2} className="mt-1 w-full rounded-lg border px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-sky-400"
+                    value={q.contextLeadIn}
+                    onChange={(e) => updateQ(qi, (qq) => ({ ...qq, contextLeadIn: e.target.value }))} />
+                </label>
+                <label className="block text-xs">
+                  <span className="text-gray-500">Context Lead-out (뒷 문장)</span>
+                  <textarea rows={2} className="mt-1 w-full rounded-lg border px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-sky-400"
+                    value={q.contextLeadOut}
+                    onChange={(e) => updateQ(qi, (qq) => ({ ...qq, contextLeadOut: e.target.value }))} />
+                </label>
+              </div>
 
-            <div className="space-y-2">
-              <p className="text-xs text-gray-500">정답 순서 (3개 청크)</p>
-              {q.correctSequence.map((chunk: string, ci: number) => (
-                <div key={ci} className="flex items-center gap-2">
-                  <span className="w-5 text-center text-[10px] text-gray-400">{ci + 1}</span>
-                  <input className="flex-1 rounded border px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-sky-400"
-                    value={chunk}
-                    onChange={(e) => {
-                      const seq = [...q.correctSequence];
-                      seq[ci] = e.target.value;
-                      updateQ(qi, (qq) => ({ ...qq, correctSequence: seq }));
-                    }} />
+              {/* 정답 문장 → 자동 분할 */}
+              <div className="space-y-1">
+                <span className="text-xs text-gray-500">정답 문장</span>
+                <div className="flex gap-2">
+                  <input
+                    className="flex-1 rounded border px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-sky-400"
+                    placeholder="예: What brand will you buy?"
+                    value={drafts[qi] ?? ""}
+                    onChange={(e) => setDrafts((prev) => ({ ...prev, [qi]: e.target.value }))}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => autoSplit(qi)}
+                    className="whitespace-nowrap rounded-lg bg-sky-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-sky-700"
+                  >
+                    자동 분할
+                  </button>
                 </div>
-              ))}
-            </div>
+              </div>
 
-            <label className="block text-xs">
-              <span className="text-gray-500">잉여 청크 (unnecessary chunk)</span>
-              <input className="mt-1 w-full rounded border px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-red-300"
-                value={q.unnecessaryChunk ?? ""}
-                onChange={(e) => updateQ(qi, (qq) => ({ ...qq, unnecessaryChunk: e.target.value }))} />
-            </label>
-          </div>
-        ))}
+              {/* 조각 목록 */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">
+                    조각 {n.tokens.length}개 · 순서가 정답입니다
+                    {n.punctuation && <span className="ml-1 text-gray-400">(문장부호 {n.punctuation} 는 고정 표시)</span>}
+                  </span>
+                </div>
+
+                {n.tokens.length === 0 && (
+                  <p className="text-[11px] text-gray-400">정답 문장을 입력하고 자동 분할을 눌러주세요.</p>
+                )}
+
+                {n.tokens.map((t, ti) => (
+                  <div key={t.id} className="flex items-center gap-1.5">
+                    <span className="w-5 text-center text-[10px] text-gray-400">{ti + 1}</span>
+                    <input
+                      className="flex-1 rounded border px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-sky-400"
+                      value={t.text}
+                      onChange={(e) => editText(qi, ti, e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => toggleType(qi, ti)}
+                      title="WORD / PHRASE 전환"
+                      className={`w-16 rounded px-1.5 py-1 text-[10px] font-semibold ${
+                        t.type === "PHRASE"
+                          ? "bg-violet-100 text-violet-700"
+                          : "bg-slate-200 text-slate-600"
+                      }`}
+                    >
+                      {t.type}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => mergeWithPrev(qi, ti)}
+                      disabled={ti === 0}
+                      title="앞 조각과 합치기"
+                      className="rounded border px-1.5 py-1 text-[10px] text-gray-600 hover:bg-white disabled:opacity-30"
+                    >
+                      ←합치기
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => splitToken(qi, ti)}
+                      disabled={!t.text.trim().includes(" ")}
+                      title="공백 기준으로 쪼개기"
+                      className="rounded border px-1.5 py-1 text-[10px] text-gray-600 hover:bg-white disabled:opacity-30"
+                    >
+                      쪼개기
+                    </button>
+                  </div>
+                ))}
+
+                {n.tokens.length > 0 && (
+                  <p className="pt-1 text-[11px] text-gray-500">
+                    미리보기: <span className="text-sky-700">{joinTokens(n.tokens.map((t) => t.text), n.punctuation)}</span>
+                  </p>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
