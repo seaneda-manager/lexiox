@@ -1,7 +1,7 @@
 import { getServerSupabase } from "@/lib/supabase/server";
 import type { LListeningTest2026Linear } from "@/models/listening";
 import Link from "next/link";
-import Listening2026TestClient from "./_client/Listening2026TestClient";
+import ListeningSessionContainer from "../../listening/_components/ListeningSessionContainer";
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +33,7 @@ export default async function Listening2026TestPage() {
 
   return (
     <div className="-m-4 md:-m-6 h-[calc(100%+2rem)] md:h-[calc(100%+3rem)]">
-      <Listening2026TestClient test={data.payload as LListeningTest2026Linear} testId={data.id} />
+      <ListeningSessionContainer testData={data.payload as LListeningTest2026Linear} testId={data.id} />
     </div>
   );
 }
