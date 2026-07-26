@@ -40,7 +40,7 @@ export async function POST(req: Request) {
       .from('content')
       .getPublicUrl(fileName);
 
-    return NextResponse.json({ ok: true, audioUrl: data.publicUrl });
+    return NextResponse.json({ ok: true, audioUrl: `${data.publicUrl}?v=${Date.now()}` });
   } catch (err: any) {
     console.error('AUDIO UPLOAD ERROR', err);
     return NextResponse.json(

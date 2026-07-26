@@ -179,7 +179,7 @@ export async function POST(req: Request) {
             segmentUrls.push({
               speaker: seg.speaker,
               text: seg.text,
-              audioUrl: data.publicUrl,
+              audioUrl: `${data.publicUrl}?v=${Date.now()}`,
             });
             console.log(
               `[Audio] Uploaded segment ${i}: ${seg.speaker} → ${data.publicUrl}`
@@ -202,7 +202,7 @@ export async function POST(req: Request) {
             .getPublicUrl(mainFileName);
 
           results[track.trackId] = {
-            audioUrl: mainData.publicUrl,
+            audioUrl: `${mainData.publicUrl}?v=${Date.now()}`,
             segments: segmentUrls,
           };
         } else {
@@ -229,7 +229,7 @@ export async function POST(req: Request) {
             .getPublicUrl(fileName);
 
           results[track.trackId] = {
-            audioUrl: data.publicUrl,
+            audioUrl: `${data.publicUrl}?v=${Date.now()}`,
           };
         }
       } catch (err) {
