@@ -88,12 +88,7 @@ export default async function WritingGradeListPage() {
                 </tr>
               ) : (
                 rows.map((row) => {
-                  const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
-                  const studentName =
-                    (profile as { full_name?: string | null } | null)?.full_name ||
-                    (profile as { name?: string | null } | null)?.name ||
-                    (profile as { email?: string | null } | null)?.email ||
-                    "학생";
+                  const studentName = studentNames[(row as any).user_id] ?? "학생";
                   const status = row.grading_status ?? "ungraded";
                   const createdAt = new Date(row.created_at).toLocaleString("ko-KR", {
                     month: "2-digit",
