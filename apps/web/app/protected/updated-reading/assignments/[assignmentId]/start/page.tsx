@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { getServiceSupabase } from "@/lib/supabase/service";
-import MockTestPlayer from "@/components/reading/MockTestPlayer";
+import ReadingTestWrapper from "./_client";
 import type { RReadingTest2026 } from "@/models/reading";
 
 export const dynamic = "force-dynamic";
@@ -46,10 +46,9 @@ export default async function StartReadingAssignmentPage({ params }: { params: P
   await markInProgress(assignmentId, assignment.status);
 
   return (
-    <MockTestPlayer
+    <ReadingTestWrapper
       testId={testRow.id}
-      label={testRow.label ?? "Reading Test"}
-      test={testRow.payload as RReadingTest2026}
+      testData={testRow.payload as RReadingTest2026}
       assignmentId={assignmentId}
     />
   );
