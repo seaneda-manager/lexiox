@@ -16,6 +16,7 @@ type Props = {
   test: RReadingTest2026;
   onFinish?: (result: {
     testId: string;
+    answers: Record<string, string>;
     stage1Correct: number;
     stage1Total: number;
     stage2Correct: number;
@@ -124,18 +125,18 @@ export default function ReadingAdaptiveRunner2026({ test, onFinish }: Props) {
     setStage2Score(s2);
     setPhase("final");
     if (onFinish && !reported) {
-      onFinish({ testId: test.meta.id, stage1Correct: s1.correct, stage1Total: s1.total, stage2Correct: s2.correct, stage2Total: s2.total });
+      onFinish({ testId: test.meta.id, answers, stage1Correct: s1.correct, stage1Total: s1.total, stage2Correct: s2.correct, stage2Total: s2.total });
       setReported(true);
     }
-  }, [computeModuleScore, effectiveStage2Module, onFinish, reported, stage1Score, test]);
+  }, [computeModuleScore, effectiveStage2Module, onFinish, reported, stage1Score, test, answers]);
 
   useEffect(() => {
     if (phase !== "final" || !onFinish || reported) return;
     const s1 = stage1Score ?? computeModuleScore(test.modules[0]);
     const s2 = stage2Score ?? computeModuleScore(effectiveStage2Module);
-    onFinish({ testId: test.meta.id, stage1Correct: s1.correct, stage1Total: s1.total, stage2Correct: s2.correct, stage2Total: s2.total });
+    onFinish({ testId: test.meta.id, answers, stage1Correct: s1.correct, stage1Total: s1.total, stage2Correct: s2.correct, stage2Total: s2.total });
     setReported(true);
-  }, [phase, onFinish, reported, stage1Score, stage2Score, computeModuleScore, effectiveStage2Module, test]);
+  }, [phase, onFinish, reported, stage1Score, stage2Score, computeModuleScore, effectiveStage2Module, test, answers]);
 
   // 전체 문항 수 / 답한 문항 수 계산 (진행률 표시용, complete_words blanks 포함)
   const { totalQ, answeredQ } = useMemo(() => {

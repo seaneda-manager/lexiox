@@ -12,20 +12,26 @@ type Props = {
 export default function ReadingStudyClient({ test }: Props) {
   const [saving, setSaving] = useState(false);
 
-  // ✅ result 가 아니라 answers 그대로 받기
-  const handleFinish = async (answers: Record<string, unknown>) => {
+  const handleFinish = async (result: {
+    testId: string;
+    answers: Record<string, string>;
+    stage1Correct: number;
+    stage1Total: number;
+    stage2Correct: number;
+    stage2Total: number;
+  }) => {
     try {
       setSaving(true);
 
-      const totalQuestions = Object.keys(answers ?? {}).length;
+      const totalQuestions = Object.keys(result.answers ?? {}).length;
 
       const res = await fetch("/api/updated-reading/save-result", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          testId: test.meta.id,
+          testId: result.testId,
           totalQuestions,
-          answers,
+          answers: result.answers,
         }),
       });
 
