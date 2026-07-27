@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getServerSupabase } from "@/lib/supabase/server";
-import { EMAIL_DESCRIPTORS, DISCUSSION_DESCRIPTORS, type EtsWritingScore } from "@/lib/writing/rubric";
-import WritingGradeClient from "./_client/WritingGradeClient";
 import type { WWritingTest2026 } from "@/models/writing";
 
 export const dynamic = "force-dynamic";
