@@ -1,6 +1,9 @@
+// app/(protected)/admin/writing/grade/[id]/page.tsx
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { EMAIL_DESCRIPTORS, type EtsWritingScore } from "@/lib/writing/rubric";
+import WritingGradeClient from "./_client/WritingGradeClient";
 import type { WWritingTest2026 } from "@/models/writing";
 
 export const dynamic = "force-dynamic";
@@ -11,42 +14,65 @@ export default async function WritingGradeDetailPage({ params }: Props) {
   const { id } = await params;
   const supabase = await getServerSupabase();
 
+  // select("*")로 조회한다. 컬럼을 나열하면 프로덕션 스키마에 하나라도 없을 때
+  // 쿼리 전체가 실패해 원인이 안 보이는 404가 된다 (raw_answers가 실제로 그랬다).
   const { data: session, error } = await supabase
     .from("writing_2026_sessions")
-    .select(`
-      id, test_id, user_id, raw_answers, grading_status, created_at,
-      ai_email_score, ai_discussion_score, ai_total_score, ai_grade_feedback,
-      final_email_score, final_discussion_score, final_total_score, final_grade_feedback,
-      graded_at
-    `)
+    .select("*")
     .eq("id", id)
     .maybeSingle();
 
-  if (error || !session) return notFound();
+  if (error) {
+    return (
+      <main className="mx-auto max-w-4xl px-6 py-8">
+        <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          세션 조회 오류: {error.message}
+        </p>
+        <Link href="/admin/writing/grade" className="mt-4 inline-block text-sm text-blue-600 underline">
+          ← 목록으로
+        </Link>
+      </main>
+    );
+  }
+  if (!session) return notFound();
 
-  // 학생명 조회 (별도 쿼리)
+  const s = session as Record<string, any>;
+
+  // 답안은 writing_2026_answers 테이블에 문항별로 저장된다 (submit API 참고).
+  // 과거 스키마의 세션 raw_answers가 있으면 폴백으로 합친다.
+  const answers: Record<string, string> = {};
+  if (s.raw_answers && typeof s.raw_answers === "object") {
+    Object.assign(answers, s.raw_answers);
+  }
+  const { data: answerRows, error: answersError } = await supabase
+    .from("writing_2026_answers")
+    .select("item_key, content")
+    .eq("session_id", id);
+  for (const row of answerRows ?? []) {
+    if (row.item_key) answers[row.item_key] = row.content ?? "";
+  }
+
+  // 학생명 조회 (FK 조인은 스키마 캐시에 관계가 없어 실패하므로 별도 쿼리)
   let studentName = "학생";
-  if ((session as any).user_id) {
+  if (s.user_id) {
     const { data: profile } = await supabase
       .from("profiles")
       .select("full_name, name, email")
-      .eq("id", (session as any).user_id)
+      .eq("id", s.user_id)
       .maybeSingle();
-
-    studentName = (profile as any)?.full_name || (profile as any)?.name || (profile as any)?.email || "학생";
+    studentName =
+      (profile as any)?.full_name || (profile as any)?.name || (profile as any)?.email || "학생";
   }
 
   const { data: testRow } = await supabase
     .from("writing_tests")
     .select("label, payload")
-    .eq("id", session.test_id)
+    .eq("id", s.test_id)
     .maybeSingle();
 
   const test = testRow?.payload as WWritingTest2026 | null;
-  const answers = (session.raw_answers ?? {}) as Record<string, string>;
-
-  const status = session.grading_status ?? "ungraded";
-  const createdAt = new Date(session.created_at).toLocaleString("ko-KR");
+  const status = s.grading_status ?? "ungraded";
+  const createdAt = new Date(s.created_at).toLocaleString("ko-KR");
 
   return (
     <main className="mx-auto max-w-4xl space-y-6 px-6 py-8">
@@ -56,94 +82,104 @@ export default async function WritingGradeDetailPage({ params }: Props) {
             Admin / Writing / 채점
           </p>
           <h1 className="text-xl font-bold tracking-tight text-slate-900">
-            {studentName} — {testRow?.label ?? session.test_id ?? "-"}
+            {studentName} — {testRow?.label ?? s.test_id ?? "-"}
           </h1>
           <p className="text-sm text-slate-500">제출: {createdAt}</p>
         </div>
-        <div className="text-right">
-          <div className="text-3xl font-bold text-slate-900">
-            {session.final_total_score ?? session.ai_total_score ?? "-"}
-          </div>
-          <div className="text-xs text-slate-500">점수</div>
-        </div>
-      </header>
-
-      {/* 상태 */}
-      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-slate-700">채점 상태</span>
-          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
-            status === "teacher_graded"
-              ? "bg-emerald-100 text-emerald-700"
-              : status === "ai_graded"
-              ? "bg-blue-100 text-blue-700"
-              : "bg-amber-100 text-amber-700"
-          }`}>
-            {status === "ungraded" ? "미채점" : status === "ai_graded" ? "AI 초안" : "채점 완료"}
-          </span>
-        </div>
-      </div>
-
-      {/* 점수 상세 */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-lg border border-slate-200 p-4">
-          <div className="text-sm font-medium text-slate-700">AI 초안 점수</div>
-          <div className="mt-2 space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-slate-600">Email: </span>
-              <span className="font-semibold text-slate-900">{session.ai_email_score ?? "-"}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-600">Discussion: </span>
-              <span className="font-semibold text-slate-900">{session.ai_discussion_score ?? "-"}</span>
-            </div>
-            <div className="border-t pt-2 flex justify-between">
-              <span className="text-slate-600">합계</span>
-              <span className="font-bold text-slate-900">{session.ai_total_score ?? "-"}</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-lg border border-slate-200 p-4">
-          <div className="text-sm font-medium text-slate-700">최종 점수</div>
-          <div className="mt-2 space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-slate-600">Email: </span>
-              <span className="font-semibold text-slate-900">{session.final_email_score ?? "-"}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-600">Discussion: </span>
-              <span className="font-semibold text-slate-900">{session.final_discussion_score ?? "-"}</span>
-            </div>
-            <div className="border-t pt-2 flex justify-between">
-              <span className="text-slate-600">합계</span>
-              <span className="font-bold text-emerald-700 text-lg">{session.final_total_score ?? "-"}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 학생 답변 */}
-      <div className="rounded-lg border border-slate-200 p-4">
-        <h2 className="text-sm font-bold text-slate-900 mb-4">학생 답변</h2>
-        <div className="space-y-4">
-          {Object.entries(answers).map(([key, value]) => (
-            <div key={key} className="border-t pt-3">
-              <div className="text-xs font-semibold text-slate-600 mb-1">{key}</div>
-              <div className="text-sm text-slate-700 whitespace-pre-wrap">{value}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* 하단 버튼 */}
-      <div className="flex gap-3">
         <Link
           href="/admin/writing/grade"
-          className="flex-1 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          className="self-start rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
         >
-          ← 돌아가기
+          ← 목록
         </Link>
+      </header>
+
+      {answersError && (
+        <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-700">
+          답안 조회 오류: {answersError.message}
+        </p>
+      )}
+
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* 왼쪽: 답변 내용 */}
+        <div className="space-y-4">
+          {test?.items.map((item) => {
+            const isEmail = item.taskKind === "email";
+            const isDiscussion = item.taskKind === "academic_discussion";
+            if (!isEmail && !isDiscussion) return null;
+
+            const answerText = answers[item.id] ?? "";
+            const prompt = isEmail
+              ? `상황: ${(item as { situation: string }).situation}\n지시: ${(item as { prompt: string }).prompt}`
+              : `상황: ${(item as { context: string }).context}\n교수: ${(item as { professorPrompt: string }).professorPrompt}`;
+
+            return (
+              <div key={item.id} className="space-y-2">
+                <section className="rounded-2xl border border-blue-200 bg-blue-50/60 px-4 py-3">
+                  <p className="mb-1 text-xs font-bold text-blue-800">
+                    {isEmail ? "Email Writing" : "Academic Discussion"} Prompt
+                  </p>
+                  <p className="whitespace-pre-wrap text-xs leading-relaxed text-blue-900">{prompt}</p>
+                </section>
+                <section className="rounded-2xl border border-slate-200 bg-white px-4 py-4">
+                  <p className="mb-2 text-xs font-bold text-slate-700">학생 답변</p>
+                  {answerText ? (
+                    <p className="whitespace-pre-wrap text-xs leading-relaxed text-slate-800">{answerText}</p>
+                  ) : (
+                    <p className="text-xs text-slate-400">답변 없음</p>
+                  )}
+                </section>
+              </div>
+            );
+          })}
+
+          {/* 테스트 payload가 없어도 저장된 답안은 그대로 보여준다 */}
+          {!test && Object.keys(answers).length > 0 && (
+            <div className="space-y-2">
+              {Object.entries(answers).map(([key, value]) => (
+                <section key={key} className="rounded-2xl border border-slate-200 bg-white px-4 py-4">
+                  <p className="mb-2 text-xs font-bold text-slate-700">{key}</p>
+                  <p className="whitespace-pre-wrap text-xs leading-relaxed text-slate-800">{value}</p>
+                </section>
+              ))}
+            </div>
+          )}
+
+          {/* Rubric 참고표 */}
+          <section className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4">
+            <p className="mb-3 text-xs font-bold text-slate-600">ETS Writing Rubric 참고 (0~5)</p>
+            <div className="space-y-1.5">
+              {([5, 4, 3, 2, 1, 0] as EtsWritingScore[]).map((score) => (
+                <div key={score} className="text-[11px] leading-relaxed text-slate-700">
+                  <span className="mr-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-200 font-bold text-slate-700">
+                    {score}
+                  </span>
+                  {EMAIL_DESCRIPTORS[score]}
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+
+        {/* 오른쪽: 채점 UI */}
+        <div>
+          <WritingGradeClient
+            sessionId={s.id}
+            gradingStatus={status}
+            aiScores={{
+              email: s.ai_email_score ?? null,
+              discussion: s.ai_discussion_score ?? null,
+              total: s.ai_total_score ?? null,
+              feedback: s.ai_grade_feedback ?? null,
+            }}
+            finalScores={{
+              email: s.final_email_score ?? null,
+              discussion: s.final_discussion_score ?? null,
+              total: s.final_total_score ?? null,
+              feedback: s.final_grade_feedback ?? null,
+            }}
+          />
+        </div>
       </div>
     </main>
   );
