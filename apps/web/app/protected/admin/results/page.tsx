@@ -9,7 +9,7 @@ type SP = Promise<Record<string, string | string[] | undefined>>;
 function getTab(sp: Record<string, string | string[] | undefined>) {
   const v = sp["tab"];
   const val = Array.isArray(v) ? v[0] : v;
-  if (val === "naesin" || val === "hi-naesin") return val;
+  if (val === "naesin" || val === "hi-naesin" || val === "toefl-2026") return val;
   return "toefl";
 }
 
@@ -39,7 +39,46 @@ function TabLink({ tab, current, label }: { tab: string; current: string; label:
   );
 }
 
-// ── TOEFL Reading ─────────────────────────────────────────────────────────────
+// ── TOEFL 2026 Reading ────────────────────────────────────────────────────────
+
+async function Toefl2026Tab() {
+  const supabase = await getServerSupabase();
+
+  const { data: results, error } = await supabase
+    .from("reading_results_2026")
+    .select("id, user_id, test_id, total_questions, finished_at, created_at")
+    .order("created_at", { ascending: false })
+    .limit(200);
+
+  if (error) return <p className="text-sm text-rose-600">{error.message}</p>;
+
+  const userIds = Array.from(new Set((results ?? []).map((r) => r.user_id).filter(Boolean)));
+  const nameMap = new Map<string, string>();
+  if (userIds.length > 0) {
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, full_name, name, email")
+      .in("id", userIds);
+    for (const p of profiles ?? []) {
+      const label = (p as any).full_name || (p as any).name || p.email;
+      if (label) nameMap.set(p.id, label);
+    }
+  }
+
+  const rows = (results ?? []).map((r) => ({
+    id: r.id,
+    student: nameMap.get(r.user_id) ?? `…${r.user_id?.slice(-6)}`,
+    passage: r.test_id ?? "-",
+    mode: "test",
+    score: r.total_questions ?? null,
+    startedAt: r.created_at,
+    finishedAt: r.finished_at,
+  }));
+
+  return <ResultTable rows={rows} scoreLabel="문항 수" />;
+}
+
+// ── TOEFL Reading (레거시) ────────────────────────────────────────────────────
 
 async function ToeflTab() {
   const supabase = await getServerSupabase();
@@ -331,12 +370,14 @@ export default async function AdminResultsPage({ searchParams }: { searchParams:
         <p className="text-sm font-semibold text-violet-700">Admin</p>
         <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">학생 풀이 결과</h1>
         <div className="mt-4 flex gap-2">
-          <TabLink tab="toefl" current={tab} label="TOEFL Reading" />
+          <TabLink tab="toefl-2026" current={tab} label="TOEFL 2026 Reading" />
+          <TabLink tab="toefl" current={tab} label="TOEFL Reading (레거시)" />
           <TabLink tab="naesin" current={tab} label="내신" />
           <TabLink tab="hi-naesin" current={tab} label="Hi-naesin" />
         </div>
       </header>
 
+      {tab === "toefl-2026" && <Toefl2026Tab />}
       {tab === "toefl" && <ToeflTab />}
       {tab === "naesin" && <NaesinTab />}
       {tab === "hi-naesin" && <HiNaesinTab />}
