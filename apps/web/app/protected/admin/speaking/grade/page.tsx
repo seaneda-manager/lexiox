@@ -23,12 +23,27 @@ export default async function SpeakingGradeListPage() {
   const { data: rows, error } = await supabase
     .from("speaking_results_2026")
     .select(
-      `id, test_id, task_id, mode, grading_status,
-       ai_total_score, final_total_score, created_at,
-       profiles:user_id (full_name, name, email)`,
+      `id, test_id, task_id, mode, user_id,
+       created_at`,
     )
     .order("created_at", { ascending: false })
     .limit(100);
+
+  // 학생명 조회 (별도 쿼리)
+  let studentNames: Record<string, string> = {};
+  if (rows && rows.length > 0) {
+    const userIds = Array.from(new Set(rows.map(r => (r as any).user_id).filter(Boolean)));
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name, name, email")
+        .in("id", userIds);
+
+      for (const p of profiles ?? []) {
+        studentNames[(p as any).id] = (p as any).full_name || (p as any).name || (p as any).email || "Unknown";
+      }
+    }
+  }
 
   return (
     <main className="mx-auto max-w-5xl space-y-6 px-6 py-8">
@@ -79,16 +94,9 @@ export default async function SpeakingGradeListPage() {
                 </tr>
               ) : (
                 rows.map((row) => {
-                  const profile = Array.isArray(row.profiles)
-                    ? row.profiles[0]
-                    : row.profiles;
-                  const studentName =
-                    (profile as { full_name?: string | null } | null)?.full_name ||
-                    (profile as { name?: string | null } | null)?.name ||
-                    (profile as { email?: string | null } | null)?.email ||
-                    "학생";
-                  const status = row.grading_status ?? "ungraded";
-                  const createdAt = new Date(row.created_at).toLocaleString("ko-KR", {
+                  const studentName = studentNames[(row as any).user_id] ?? "학생";
+                  const status = (row as any).grading_status ?? "ungraded";
+                  const createdAt = new Date((row as any).created_at).toLocaleString("ko-KR", {
                     month: "2-digit",
                     day: "2-digit",
                     hour: "2-digit",
@@ -117,15 +125,15 @@ export default async function SpeakingGradeListPage() {
                         </span>
                       </td>
                       <td className="text-slate-700">
-                        {row.ai_total_score != null ? (
-                          <span className="font-semibold">{row.ai_total_score}</span>
+                        {(row as any).ai_total_score != null ? (
+                          <span className="font-semibold">{(row as any).ai_total_score}</span>
                         ) : (
                           <span className="text-slate-400">—</span>
                         )}
                       </td>
                       <td className="text-slate-700">
-                        {row.final_total_score != null ? (
-                          <span className="font-bold text-emerald-700">{row.final_total_score}</span>
+                        {(row as any).final_total_score != null ? (
+                          <span className="font-bold text-emerald-700">{(row as any).final_total_score}</span>
                         ) : (
                           <span className="text-slate-400">—</span>
                         )}
