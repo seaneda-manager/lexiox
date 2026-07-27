@@ -91,7 +91,7 @@ function ETSLayout({
     ? (currentQuestion / totalQuestions) * 100 : 0;
 
   return (
-    <div className="flex flex-col" style={{ height: "100vh", backgroundColor: "#F4F6F9", fontFamily: "Arial, Helvetica, sans-serif" }}>
+    <div className="flex flex-col" style={{ height: "100%", backgroundColor: "#F4F6F9", fontFamily: "Arial, Helvetica, sans-serif" }}>
       {/* Header */}
       <header className="flex items-center justify-between px-6 shrink-0" style={{ height: 60, backgroundColor: "#1A2B4C" }}>
         <span style={{ fontSize: 16, fontWeight: 700, color: "#FFFFFF" }}>
@@ -623,7 +623,7 @@ export default function WritingRunnerETS({ test, onFinish }: Props) {
 
   if (phase === "done") {
     return (
-      <div className="flex flex-col items-center justify-center gap-6 text-center" style={{ height: "100vh", backgroundColor: "#F4F6F9", fontFamily: "Arial, Helvetica, sans-serif" }}>
+      <div className="flex flex-col items-center justify-center gap-6 text-center" style={{ height: "100%", backgroundColor: "#F4F6F9", fontFamily: "Arial, Helvetica, sans-serif" }}>
         <div style={{ fontSize: 64 }}>✍️</div>
         <h2 style={{ fontSize: 28, fontWeight: 800, color: "#1A2B4C" }}>Writing Section Complete!</h2>
         <p style={{ fontSize: 16, color: "#666" }}>
