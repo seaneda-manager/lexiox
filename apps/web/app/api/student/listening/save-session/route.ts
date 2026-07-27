@@ -54,71 +54,36 @@ export async function POST(req: Request) {
 
     const percentage = Math.round((correctCount / totalQuestions) * 100);
 
-    // 1. Create listening session
-    const { data: session, error: sessionError } = await supabase
-      .from("listening_sessions")
+    // listening_results_2026 한 곳에 저장한다.
+    // 예전에는 listening_sessions / listening_answers / listening_results 세 곳에
+    // 나눠 썼는데, 그 테이블들은 옛 트랙 기반 스키마(track_id, mode, plays, band_score)라
+    // 여기서 쓰던 컬럼(test_id, module, difficulty, status)이 아예 없었다.
+    // 그래서 모든 제출이 실패했고 결과 테이블은 0행이었다.
+    const { data: result, error: resultError } = await supabase
+      .from("listening_results_2026")
       .insert({
         user_id: user.id,
         test_id: testId,
-        module,
-        difficulty,
-        status: "completed",
-        completed_at: new Date().toISOString(),
-      })
-      .select()
-      .single();
-
-    if (sessionError || !session) {
-      console.error("Session creation error:", sessionError);
-      return NextResponse.json(
-        { ok: false, error: "Failed to create session" },
-        { status: 500 }
-      );
-    }
-
-    // 2. Insert all answers
-    const answerRecords = answers.map((answer) => ({
-      session_id: session.id,
-      question_id: answer.questionId,
-      chosen_choice_index: answer.choiceIndex,
-      is_correct: answer.isCorrect,
-    }));
-
-    const { error: answersError } = await supabase
-      .from("listening_answers")
-      .insert(answerRecords);
-
-    if (answersError) {
-      console.error("Answers insertion error:", answersError);
-      return NextResponse.json(
-        { ok: false, error: "Failed to save answers" },
-        { status: 500 }
-      );
-    }
-
-    // 3. Create result record
-    const { data: result, error: resultError } = await supabase
-      .from("listening_results")
-      .insert({
-        session_id: session.id,
+        assignment_id: assignmentId ?? null,
         module,
         difficulty,
         correct_count: correctCount,
         total_questions: totalQuestions,
-        percentage,
+        answers,
+        finished_at: new Date().toISOString(),
       })
-      .select()
+      .select("id")
       .single();
 
     if (resultError || !result) {
-      console.error("Result creation error:", resultError);
+      console.error("Listening result insert error:", resultError);
       return NextResponse.json(
-        { ok: false, error: "Failed to create result" },
+        { ok: false, error: resultError?.message ?? "Failed to save result" },
         { status: 500 }
       );
     }
 
-    // 4. 배정을 통해 들어온 경우, Module 2까지 끝나면 assignment를 completed로 마감
+    // 배정을 통해 들어온 경우, Module 2까지 끝나면 assignment를 completed로 마감
     if (assignmentId && markAssignmentCompleted) {
       const { error: assignmentError } = await supabase
         .from("test_assignments")
@@ -133,7 +98,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       ok: true,
-      sessionId: session.id,
       resultId: result.id,
       percentage,
       module,
