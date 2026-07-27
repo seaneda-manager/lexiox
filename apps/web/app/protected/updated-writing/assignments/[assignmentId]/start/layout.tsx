@@ -1,13 +1,11 @@
 import { ReactNode } from 'react';
-import TopbarClient from '@/components/dashboard/TopbarClient';
 
+// Fullscreen test: hide sidebar, remove main padding
+// Topbar already rendered by protected layout, just override content area
 export default function WritingTestLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="h-screen overflow-hidden grid grid-rows-[auto_1fr] bg-neutral-50 text-neutral-900">
-      <div>
-        <TopbarClient email="" role="student" />
-      </div>
-      <main className="min-h-0 overflow-y-auto flex-1">
+    <div className="grid grid-cols-1 min-h-0">
+      <main className="min-h-0 overflow-y-auto">
         {children}
       </main>
     </div>
