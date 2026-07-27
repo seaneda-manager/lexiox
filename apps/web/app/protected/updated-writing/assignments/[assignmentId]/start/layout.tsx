@@ -7,7 +7,7 @@ export default function WritingTestLayout({ children }: { children: ReactNode })
       <div>
         <TopbarClient email="" role="student" />
       </div>
-      <main className="min-h-0 overflow-y-auto">
+      <main className="min-h-0 overflow-y-auto flex-1">
         {children}
       </main>
     </div>
