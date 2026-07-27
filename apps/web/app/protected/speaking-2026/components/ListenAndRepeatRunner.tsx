@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { useSpeechTranscript } from "@/lib/speech/use-speech-transcript";
 
 export type ListenRepeatItem = {
   id: string;
@@ -19,7 +20,7 @@ type Props = {
   mode?: "study" | "test";
   totalQuestionOffset?: number;
   totalQuestions?: number;
-  onComplete?: (result: { itemId: string; blob: Blob | null }[]) => void;
+  onComplete?: (result: { itemId: string; blob: Blob | null; transcript?: string }[]) => void;
 };
 
 const MODE_CONFIG = {
@@ -95,7 +96,10 @@ export default function ListenAndRepeatRunner({
   const [phase, setPhase] = useState<Phase>("idle");
   const [timeLeft, setTimeLeft] = useState(0);
   const [volume, setVolume] = useState(0);
-  const [recordings, setRecordings] = useState<{ itemId: string; blob: Blob | null }[]>([]);
+  const [recordings, setRecordings] = useState<{ itemId: string; blob: Blob | null; transcript?: string }[]>([]);
+  // 녹음과 나란히 받는 전사. speaking_results_2026의 script를 채운다.
+  const { start: startTranscript, stop: stopTranscript } = useSpeechTranscript();
+  const pendingTranscriptRef = useRef("");
   const [nextDisabled, setNextDisabled] = useState(false);
   const [showPlayButton, setShowPlayButton] = useState(true);
 
@@ -146,8 +150,10 @@ export default function ListenAndRepeatRunner({
     }
     streamRef.current?.getTracks().forEach((t) => t.stop());
     stopVolumeTracker();
+    // 전사를 확정해 둔다. recorder.onstop이 이 값을 결과에 붙인다.
+    pendingTranscriptRef.current = stopTranscript();
     clearTimer();
-  }, []);
+  }, [stopTranscript]);
 
   const startRecording = useCallback(async () => {
     if (!audioCtxRef.current) audioCtxRef.current = new AudioContext();
@@ -165,13 +171,16 @@ export default function ListenAndRepeatRunner({
       recorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
       recorder.onstop = () => {
         const blob = chunksRef.current.length ? new Blob(chunksRef.current, { type: "audio/webm" }) : null;
+        const transcript = pendingTranscriptRef.current;
+        pendingTranscriptRef.current = "";
         setRecordings((prev) => {
           const filtered = prev.filter((r) => r.itemId !== current.id);
-          return [...filtered, { itemId: current.id, blob }];
+          return [...filtered, { itemId: current.id, blob, transcript }];
         });
       };
 
       recorder.start();
+      startTranscript();
       setPhase("recording");
       setTimeLeft(speakingSeconds);
 

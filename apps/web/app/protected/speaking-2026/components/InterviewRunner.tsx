@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { useSpeechTranscript } from "@/lib/speech/use-speech-transcript";
 
 export type InterviewQuestion = {
   id: string;
@@ -12,7 +13,12 @@ export type InterviewQuestion = {
 
 type Phase = "idle" | "listening" | "prepare" | "recording" | "done";
 
-type RecordingResult = { questionId: string; blob: Blob | null };
+type RecordingResult = {
+  questionId: string;
+  blob: Blob | null;
+  /** 녹음과 나란히 받은 전사. 브라우저가 STT를 지원하지 않으면 빈 문자열. */
+  transcript?: string;
+};
 
 type Props = {
   questions: InterviewQuestion[];
@@ -82,6 +88,9 @@ export default function InterviewRunner({
   const questionNumber = totalQuestionOffset + index;
   const progressPct = totalQuestions > 0 ? (questionNumber / totalQuestions) * 100 : 0;
 
+  const { start: startTranscript, stop: stopTranscript } = useSpeechTranscript();
+  const pendingTranscriptRef = useRef("");
+
   const clearTimer = () => {
     if (timerRef.current) { window.clearInterval(timerRef.current); timerRef.current = null; }
   };
@@ -91,8 +100,10 @@ export default function InterviewRunner({
       mediaRecorderRef.current.stop();
     }
     streamRef.current?.getTracks().forEach((t) => t.stop());
+    // 전사를 확정해 둔다. recorder.onstop이 이 값을 결과에 붙인다.
+    pendingTranscriptRef.current = stopTranscript();
     clearTimer();
-  }, []);
+  }, [stopTranscript]);
 
   const startRecording = useCallback(async () => {
     if (!audioCtxRef.current) audioCtxRef.current = new AudioContext();
@@ -109,10 +120,16 @@ export default function InterviewRunner({
       recorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
       recorder.onstop = () => {
         const blob = chunksRef.current.length ? new Blob(chunksRef.current, { type: "audio/webm" }) : null;
-        setRecordings((prev) => [...prev.filter((r) => r.questionId !== current.id), { questionId: current.id, blob }]);
+        const transcript = pendingTranscriptRef.current;
+        pendingTranscriptRef.current = "";
+        setRecordings((prev) => [
+          ...prev.filter((r) => r.questionId !== current.id),
+          { questionId: current.id, blob, transcript },
+        ]);
       };
 
       recorder.start();
+      startTranscript();
       setPhase("recording");
       setTimeLeft(answerSeconds);
       setNextDisabled(false);

@@ -17,6 +17,9 @@ type Props = {
   testLabel: string;
 };
 
+type LrRec = { itemId: string; blob: Blob | null; transcript?: string };
+type IvRec = { questionId: string; blob: Blob | null; transcript?: string };
+
 async function markCompleted(assignmentId: string, recordings?: {
   listenRepeat: Array<{ itemId: string; audioDataUrl: string | null }>;
   interview: Array<{ questionId: string; audioDataUrl: string | null }>;
@@ -26,6 +29,51 @@ async function markCompleted(assignmentId: string, recordings?: {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ assignmentId, recordings }),
   });
+}
+
+/**
+ * 응답 하나를 speaking_results_2026에 기록한다.
+ *
+ * 예전에는 배정 완료 시 test_assignments.results_payload에 녹음만 넣고 끝냈다.
+ * 그래서 speaking_results_2026이 계속 비어 있었고, 그 테이블을 읽는 채점 화면
+ * (/admin/speaking/grade)과 ai-feedback은 쓸 수 있는 데이터가 없었다.
+ *
+ * 전사는 브라우저 STT로 받는다. 지원하지 않는 브라우저면 빈 문자열이 되는데,
+ * 서버가 script를 필수로 요구하므로 그 경우는 건너뛴다 (녹음은 그대로 남는다).
+ */
+async function recordSpeakingResult(input: {
+  testId: string;
+  taskId: string;
+  script: string;
+  prompt?: string;
+  mode: "study" | "test";
+  meta?: Record<string, unknown>;
+}) {
+  const script = input.script?.trim();
+  if (!script) return;
+
+  const words = script.split(/\s+/).filter(Boolean).length;
+  const sentences = script.split(/[.!?]+/).map((x) => x.trim()).filter(Boolean).length;
+
+  try {
+    await fetch("/api/speaking-2026/results", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        testId: input.testId,
+        taskId: input.taskId,
+        script,
+        prompt: input.prompt,
+        mode: input.mode,
+        approxWords: words,
+        approxSentences: sentences,
+        meta: input.meta ?? {},
+      }),
+    });
+  } catch (e) {
+    // 결과 기록 실패가 시험 완료를 막지는 않는다.
+    console.warn("Failed to record speaking result:", e);
+  }
 }
 
 type Phase =
@@ -186,24 +234,24 @@ export default function SpeakingAssignmentRunner({ assignmentId, test, testLabel
   const [phase, setPhase] = useState<Phase>("directions");
 
   // 녹음 데이터 관리
-  const [listenRepeatRecordings, setListenRepeatRecordings] = useState<Array<{ itemId: string; blob: Blob | null }>>([]);
-  const [interviewRecordings, setInterviewRecordings] = useState<Array<{ questionId: string; blob: Blob | null }>>([]);
+  const [listenRepeatRecordings, setListenRepeatRecordings] = useState<LrRec[]>([]);
+  const [interviewRecordings, setInterviewRecordings] = useState<IvRec[]>([]);
 
-  const handleListenRepeatComplete = (recordings: Array<{ itemId: string; blob: Blob | null }>) => {
-    console.log('✅ Listen & Repeat complete:', recordings.length, 'recordings');
+  const handleListenRepeatComplete = (recordings: LrRec[]) => {
     setListenRepeatRecordings(recordings);
     if (interview) setPhase("task2_intro");
-    else handleAllDone();
+    // Task 2가 없으면 여기서 끝. state가 아직 갱신되지 않았으므로 값을 직접 넘긴다.
+    else void handleAllDone(recordings, []);
   };
 
-  const handleInterviewComplete = async (recordings: Array<{ questionId: string; blob: Blob | null }>) => {
-    console.log('✅ Interview complete:', recordings.length, 'recordings');
+  const handleInterviewComplete = async (recordings: IvRec[]) => {
     setInterviewRecordings(recordings);
-    await handleAllDone();
+    // setState는 즉시 반영되지 않는다. 예전에는 handleAllDone이 state를 읽어서
+    // 인터뷰 녹음이 항상 빈 배열로 저장됐다.
+    await handleAllDone(listenRepeatRecordings, recordings);
   };
 
-  const handleAllDone = async () => {
-    console.log('✅ All done, saving results...');
+  const handleAllDone = async (lrRecs: LrRec[], ivRecs: IvRec[]) => {
 
     // Blob을 Base64로 변환
     const convertBlobToBase64 = (blob: Blob | null): Promise<string | null> => {
@@ -217,20 +265,46 @@ export default function SpeakingAssignmentRunner({ assignmentId, test, testLabel
 
     // 모든 녹음을 Base64로 변환
     const listenRepeatBase64 = await Promise.all(
-      listenRepeatRecordings.map(async (rec) => ({
+      lrRecs.map(async (rec) => ({
         itemId: rec.itemId,
         audioDataUrl: await convertBlobToBase64(rec.blob),
       }))
     );
 
     const interviewBase64 = await Promise.all(
-      interviewRecordings.map(async (rec) => ({
+      ivRecs.map(async (rec) => ({
         questionId: rec.questionId,
         audioDataUrl: await convertBlobToBase64(rec.blob),
       }))
     );
 
     setPhase("done");
+
+    // 채점·분석용 결과 기록. 배정 여부와 무관하게 남긴다.
+    await Promise.all([
+      ...lrRecs.map((rec) => {
+        const sentence = listenRepeat?.sentences.find((x) => x.id === rec.itemId);
+        return recordSpeakingResult({
+          testId: test.id,
+          taskId: "task1",
+          script: rec.transcript ?? "",
+          prompt: sentence?.text,
+          mode: "test",
+          meta: { itemId: rec.itemId, assignmentId: assignmentId ?? null },
+        });
+      }),
+      ...ivRecs.map((rec) => {
+        const question = interview?.questions.find((x) => x.id === rec.questionId);
+        return recordSpeakingResult({
+          testId: test.id,
+          taskId: "task2",
+          script: rec.transcript ?? "",
+          prompt: question?.text,
+          mode: "test",
+          meta: { questionId: rec.questionId, assignmentId: assignmentId ?? null },
+        });
+      }),
+    ]);
 
     // 배정을 통해 들어온 경우에만 완료 기록 (Test Mode 등 배정 없는 경우는 스킵)
     if (assignmentId) {
