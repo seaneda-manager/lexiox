@@ -59,41 +59,51 @@ export default async function TeacherDashboardPage() {
       // 학습 시도 조회
       const { data: attempts } = await supabase
         .from("vocab_learning_attempts")
-        .select("wrong_word_ids, stage, attempted_at")
+        .select("wrong_word_ids, stage, accuracy, attempted_at")
         .eq("student_id", student.id);
 
       const totalAttempts = attempts?.length || 0;
 
       // 약한 단어 수집 및 단계별 통계
       const weakWordIds = new Set<string>();
-      const stageWrongCounts = { know: 0, spelling: 0, speed: 0 };
-      const stageCounts = { know: 0, spelling: 0, speed: 0 };
+
+      // 성공률은 시도별 accuracy의 평균으로 낸다.
+      // 예전 식은 (시도수 - 틀린수/시도수) / 시도수 형태여서 시도 수가 제곱으로 들어갔고,
+      // 같은 오류율이어도 많이 푼 학생이 더 잘한 것처럼 보였다.
+      const accSum = { know: 0, spelling: 0, speed: 0 };
+      const accCount = { know: 0, spelling: 0, speed: 0 };
 
       if (attempts) {
         for (const attempt of attempts) {
           const wrongIds = Array.isArray(attempt.wrong_word_ids) ? attempt.wrong_word_ids : [];
           wrongIds.forEach((id) => weakWordIds.add(id));
 
-          if (attempt.stage === "know") {
-            stageCounts.know++;
-            stageWrongCounts.know += wrongIds.length;
-          } else if (attempt.stage === "spelling") {
-            stageCounts.spelling++;
-            stageWrongCounts.spelling += wrongIds.length;
-          } else if (attempt.stage === "speed") {
-            stageCounts.speed++;
-            stageWrongCounts.speed += wrongIds.length;
-          }
+          const stage = attempt.stage as "know" | "spelling" | "speed";
+          if (stage !== "know" && stage !== "spelling" && stage !== "speed") continue;
+
+          // accuracy가 없는 과거 기록은 평균에서 제외한다 (0으로 넣으면 지표가 왜곡된다).
+          const raw = attempt.accuracy;
+          if (raw === null || raw === undefined) continue;
+          const pct = Number(raw) <= 1 ? Number(raw) * 100 : Number(raw);
+          if (!Number.isFinite(pct)) continue;
+
+          accSum[stage] += pct;
+          accCount[stage] += 1;
         }
       }
 
-      // 단계별 성공률 계산
-      const knowSuccessRate = stageCounts.know > 0 ? Math.round(((stageCounts.know - stageWrongCounts.know / stageCounts.know) / stageCounts.know) * 100) : 0;
-      const spellingSuccessRate = stageCounts.spelling > 0 ? Math.round(((stageCounts.spelling - stageWrongCounts.spelling / stageCounts.spelling) / stageCounts.spelling) * 100) : 0;
-      const speedSuccessRate = stageCounts.speed > 0 ? Math.round(((stageCounts.speed - stageWrongCounts.speed / stageCounts.speed) / stageCounts.speed) * 100) : 0;
+      const rate = (s: "know" | "spelling" | "speed") =>
+        accCount[s] > 0 ? Math.round(accSum[s] / accCount[s]) : 0;
 
-      const totalStages = stageCounts.know + stageCounts.spelling + stageCounts.speed;
-      const averageSuccessRate = totalStages > 0 ? Math.round(((stageCounts.know + stageCounts.spelling + stageCounts.speed - (stageWrongCounts.know + stageWrongCounts.spelling + stageWrongCounts.speed)) / totalStages) * 100) : 0;
+      const knowSuccessRate = rate("know");
+      const spellingSuccessRate = rate("spelling");
+      const speedSuccessRate = rate("speed");
+
+      const measuredTotal = accCount.know + accCount.spelling + accCount.speed;
+      const averageSuccessRate =
+        measuredTotal > 0
+          ? Math.round((accSum.know + accSum.spelling + accSum.speed) / measuredTotal)
+          : 0;
 
       // 약한 단어 리스트
       const weakWordList = Array.from(weakWordIds)

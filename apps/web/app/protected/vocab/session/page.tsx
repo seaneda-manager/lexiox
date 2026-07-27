@@ -1466,11 +1466,18 @@ export default function VocabSessionPage() {
               // ✅ 결과 저장: 모르는 단어들 기록
               if (academyStudentId && sessionSetId) {
                 try {
+                  // accuracy를 함께 남긴다. 없으면 분모가 없어서 성공률을 낼 수 없고,
+                  // 그래서 대시보드가 시도 횟수로 나누는 잘못된 식을 쓰고 있었다.
+                  const knownN = (r.knownWordIds ?? []).length;
+                  const unknownN = (r.unknownWordIds ?? []).length;
+                  const denom = knownN + unknownN;
+
                   saveVocabAttemptAction({
                     studentId: academyStudentId,
                     setId: sessionSetId,
                     wordIds: r.unknownWordIds || [],
                     stage: "know",
+                    accuracy: denom > 0 ? knownN / denom : undefined,
                     passed: undefined,
                     assignmentId: debugInfo?.assignmentId,
                   }).catch((e) => console.warn("Failed to save prescreen attempt:", e));
@@ -1518,11 +1525,16 @@ export default function VocabSessionPage() {
               // ✅ 결과 저장: 철자를 틀린 단어들 기록
               if (academyStudentId && sessionSetId) {
                 try {
+                  // 스펠링은 "안다"고 답한 단어만 대상이므로 그 개수가 분모다.
+                  const spellingN = spellingWords.length;
+                  const failedN = (r.spellingFailedIds ?? []).length;
+
                   saveVocabAttemptAction({
                     studentId: academyStudentId,
                     setId: sessionSetId,
                     wordIds: r.spellingFailedIds || [],
                     stage: "spelling",
+                    accuracy: spellingN > 0 ? Math.max(0, spellingN - failedN) / spellingN : undefined,
                     passed: undefined,
                     assignmentId: debugInfo?.assignmentId,
                   }).catch((e) => console.warn("Failed to save spelling attempt:", e));
@@ -1909,11 +1921,14 @@ export default function VocabSessionPage() {
       const points = awardedPoints;
 
       // ✅ 전체 정답률 (prescreen + spelling + speed)
+      // 분모는 세션의 전체 단어다. 예전에는 "안다"고 답한 단어 수를 분모로 썼는데,
+      // 모른다고 답하면 스펠링 시험을 건너뛰어 분모에서 아예 빠졌다.
+      // 그래서 모른다를 많이 누를수록 정확도가 올라가는 왜곡이 있었다.
       const totalWords = allWords.length;
       const knownWords = prescreenResult?.knownWordIds?.length ?? 0;
-      const spellingPassWords = (knownWords - spellingFailedIds.size);
+      const spellingPassWords = Math.max(0, knownWords - spellingFailedIds.size);
       const speedPassWords = correctSpeedQuestions;
-      const totalAttempts = knownWords + speedQuestions.length;
+      const totalAttempts = totalWords + speedQuestions.length;
       const totalCorrect = spellingPassWords + speedPassWords;
       const overallAccuracy = totalAttempts > 0 ? Math.round((totalCorrect / totalAttempts) * 100) : 0;
 
