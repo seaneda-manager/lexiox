@@ -152,3 +152,106 @@ export async function listStudentProgressForTrackAction(params: {
     return { ok: false, error: e?.message ?? "failed" };
   }
 }
+
+/* =========================================================
+ * 학생 1명의 Day별 상세
+ * 목록에는 완료 Day 수와 진도율만 나와서 "무엇을 어떻게 틀렸는지"를 알 수 없었다.
+ * vocab_learning_attempts에 단계별 정확도와 틀린 단어가 이미 쌓여 있으므로
+ * (2026-07-27 기준 131건) 그걸 Day 단위로 묶어 보여준다.
+ * ======================================================= */
+
+export type StageResult = {
+  stage: "know" | "spelling" | "speed";
+  accuracy: number | null;
+  passed: boolean | null;
+  wrongWords: string[];
+  attemptedAt: string;
+};
+
+export type DayDetail = {
+  dayIndex: number;
+  setId: string;
+  status: string | null;
+  startedAt: string | null;
+  completedAt: string | null;
+  stages: StageResult[];
+};
+
+export async function getStudentVocabDetailAction(params: {
+  studentId: string;
+  trackId: string;
+}): Promise<{ ok: true; days: DayDetail[] } | { ok: false; error: string }> {
+  try {
+    const supabase = await getServerSupabase();
+    const studentId = String(params.studentId ?? "").trim();
+    const trackId = String(params.trackId ?? "").trim();
+    if (!studentId || !trackId) return { ok: false, error: "studentId와 trackId가 필요합니다" };
+
+    // 이 학생이 이 트랙에서 받은 Day들
+    const { data: assignments, error: asgError } = await supabase
+      .from("student_vocab_assignments")
+      .select("set_id, day_index, status, started_at, completed_at")
+      .eq("student_id", studentId)
+      .eq("track_id", trackId)
+      .order("day_index", { ascending: true });
+    if (asgError) throw asgError;
+
+    const setIds = Array.from(
+      new Set((assignments ?? []).map((a: any) => a.set_id).filter(Boolean)),
+    );
+    if (setIds.length === 0) return { ok: true, days: [] };
+
+    // 단계별 시도 기록
+    const { data: attempts, error: attError } = await supabase
+      .from("vocab_learning_attempts")
+      .select("set_id, stage, accuracy, passed, wrong_word_ids, attempted_at")
+      .eq("student_id", studentId)
+      .in("set_id", setIds)
+      .order("attempted_at", { ascending: true });
+    if (attError) throw attError;
+
+    // 틀린 단어 id → 표기 (한 번에 조회)
+    const wrongIds = new Set<string>();
+    for (const a of attempts ?? []) {
+      for (const id of (a.wrong_word_ids as string[]) ?? []) if (id) wrongIds.add(id);
+    }
+
+    const wordText = new Map<string, string>();
+    if (wrongIds.size > 0) {
+      const { data: words } = await supabase
+        .from("words")
+        .select("id, text")
+        .in("id", Array.from(wrongIds));
+      for (const w of words ?? []) wordText.set(w.id, w.text);
+    }
+
+    const attemptsBySet = new Map<string, StageResult[]>();
+    for (const a of attempts ?? []) {
+      const list = attemptsBySet.get(a.set_id) ?? [];
+      list.push({
+        stage: a.stage as StageResult["stage"],
+        accuracy: a.accuracy,
+        passed: a.passed,
+        // 시드 데이터에는 실제 단어 id가 아닌 값도 있어서, 못 찾으면 원래 값을 그대로 보여준다.
+        wrongWords: (((a.wrong_word_ids as string[]) ?? [])
+          .filter(Boolean)
+          .map((id) => wordText.get(id) ?? id)),
+        attemptedAt: a.attempted_at,
+      });
+      attemptsBySet.set(a.set_id, list);
+    }
+
+    const days: DayDetail[] = (assignments ?? []).map((a: any) => ({
+      dayIndex: Number(a.day_index ?? 0),
+      setId: a.set_id,
+      status: a.status ?? null,
+      startedAt: a.started_at ?? null,
+      completedAt: a.completed_at ?? null,
+      stages: attemptsBySet.get(a.set_id) ?? [],
+    }));
+
+    return { ok: true, days };
+  } catch (e: any) {
+    return { ok: false, error: e?.message ?? "failed" };
+  }
+}
