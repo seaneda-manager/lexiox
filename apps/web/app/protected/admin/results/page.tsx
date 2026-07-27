@@ -75,7 +75,7 @@ async function Toefl2026Tab() {
     finishedAt: r.finished_at,
   }));
 
-  return <ResultTable rows={rows} scoreLabel="문항 수" />;
+  return <ResultTable rows={rows} scoreLabel="문항 수" detailHref={(id) => `/admin/results/toefl-2026/${id}`} />;
 }
 
 // ── TOEFL Reading (레거시) ────────────────────────────────────────────────────
