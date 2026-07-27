@@ -230,6 +230,7 @@ export default function AdminPage() {
           description="학생별 풀이 이력과 문항별 정오답을 확인합니다."
           links={[
             { label: '결과 보기', href: '/admin/results', primary: true },
+            { label: 'Reading 조회', href: '/admin/results?tab=toefl' },
             { label: 'Speaking 채점', href: '/admin/speaking/grade' },
             { label: 'Writing 채점', href: '/admin/writing/grade' },
             { label: 'Listening 채점', href: '/admin/listening/grade' },
