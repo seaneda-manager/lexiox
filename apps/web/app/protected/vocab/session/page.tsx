@@ -643,6 +643,9 @@ export default function VocabSessionPage() {
   // ✅ SPEED 최종점검 + 완료
   const [sessionSetId, setSessionSetId] = useState<string | null>(null);
   const [speedWrongIds, setSpeedWrongIds] = useState<string[] | null>(null);
+  // 서버가 실제 적립한 포인트. 화면에서 자체 계산하면 표시와 실제가 어긋난다.
+  const [awardedPoints, setAwardedPoints] = useState<number | null>(null);
+  const [totalPoints, setTotalPoints] = useState<number | null>(null);
   const [speedTry, setSpeedTry] = useState<number>(1);
   const [completing, setCompleting] = useState<boolean>(false);
 
@@ -1304,10 +1307,10 @@ export default function VocabSessionPage() {
 
     const academyStudentId = debugInfo?.academyStudentId ?? null;
 
-    // ✅ 결과 저장 (know, spelling, speed)
+    // ✅ 결과 저장 (know, spelling, speed) + 포인트 적립
     if (academyStudentId && sessionSetId) {
       try {
-        await saveVocabAttemptAction({
+        const saved = await saveVocabAttemptAction({
           studentId: academyStudentId,
           setId: sessionSetId,
           wordIds: wrong,
@@ -1316,6 +1319,11 @@ export default function VocabSessionPage() {
           passed: acc >= 0.7,
           assignmentId: debugInfo?.assignmentId,
         });
+        // 완료 화면은 자체 계산이 아니라 서버가 실제로 적립한 값을 보여준다.
+        if (typeof saved?.pointsEarned === "number") {
+          setAwardedPoints(saved.pointsEarned);
+          setTotalPoints(saved.totalPoints ?? null);
+        }
       } catch (e) {
         console.warn("Failed to save speed attempt:", e);
         /* non-fatal */
@@ -1891,17 +1899,14 @@ export default function VocabSessionPage() {
         .map(id => allWords.find(w => w.id === id))
         .filter(Boolean) as SessionWord[];
 
-      // ✅ 포인트 계산: Speed 정답률 기반
       const totalSpeedQuestions = speedQuestions.length || 1;
       const correctSpeedQuestions = totalSpeedQuestions - (speedWrongIds_Set.size || 0);
       const speedAccuracy = totalSpeedQuestions > 0 ? Math.round((correctSpeedQuestions / totalSpeedQuestions) * 100) : 0;
 
-      let points = 0;
-      if (speedAccuracy >= 90) points = 100;
-      else if (speedAccuracy >= 80) points = 80;
-      else if (speedAccuracy >= 70) points = 60;
-      else if (speedAccuracy >= 60) points = 40;
-      else if (speedAccuracy >= 50) points = 20;
+      // 포인트는 서버(point_rules + award_points)가 지급한 값을 그대로 쓴다.
+      // 예전에는 여기서 정확도만 보고 100P까지 계산해 보여줬는데, 적립 호출이
+      // 아예 없어서 화면의 숫자가 실제 잔액과 무관했다.
+      const points = awardedPoints;
 
       // ✅ 전체 정답률 (prescreen + spelling + speed)
       const totalWords = allWords.length;
@@ -1931,7 +1936,12 @@ export default function VocabSessionPage() {
               </div>
               <div className="rounded-xl bg-white p-4 text-center border border-emerald-200">
                 <div className="text-sm font-semibold text-slate-600">획득 포인트</div>
-                <div className="text-3xl font-bold text-amber-600 mt-2">{points}P</div>
+                <div className="text-3xl font-bold text-amber-600 mt-2">
+                  {points === null ? "…" : `${points}P`}
+                </div>
+                {totalPoints !== null && (
+                  <div className="mt-1 text-xs text-slate-400">누적 {totalPoints}P</div>
+                )}
               </div>
             </div>
 

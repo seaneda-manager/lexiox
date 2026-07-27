@@ -1036,6 +1036,7 @@ export async function completeVocabDayAction(input: {
  * 학습 결과 저장 (Know/DontKnow, Spelling, Speed)
  */
 import { advanceVocabQueueAfterCompletionAction } from "@/app/protected/admin/vocab/Tracks/actions";
+import { awardPoints } from "@/lib/gamification/awardPoints";
 
 export type SaveVocabAttemptInput = {
   studentId: string;
@@ -1050,7 +1051,33 @@ export type SaveVocabAttemptInput = {
 export type SaveVocabAttemptResult = {
   ok: boolean;
   error?: string;
+  /** 이번 단계로 실제 적립된 포인트. 적립 실패 시 0. */
+  pointsEarned?: number;
+  /** 적립 후 누적 포인트 */
+  totalPoints?: number;
 };
+
+/**
+ * 단계 → point_rules.id
+ * 룰은 2026-06 마이그레이션에 이미 있었지만(vocab_prescreen/spelling/speed)
+ * Day 학습 경로에서 한 번도 호출하지 않아 적립이 되지 않고 있었다.
+ * 완료 화면은 자체 계산한 포인트를 크게 보여주고 있었으므로 표시와 실제가 어긋났다.
+ */
+const STAGE_POINT_RULE: Record<SaveVocabAttemptInput["stage"], string> = {
+  know: "vocab_prescreen",
+  spelling: "vocab_spelling",
+  speed: "vocab_speed",
+};
+
+/** 정확도 보너스. 기존 first_try_bonus(2~3점) 규모에 맞춘다. */
+function accuracyBonus(accuracy?: number): number {
+  if (typeof accuracy !== "number") return 0;
+  const pct = accuracy <= 1 ? accuracy * 100 : accuracy;
+  if (pct >= 90) return 3;
+  if (pct >= 80) return 2;
+  if (pct >= 70) return 1;
+  return 0;
+}
 
 export async function saveVocabAttemptAction(
   input: SaveVocabAttemptInput,
@@ -1129,7 +1156,31 @@ export async function saveVocabAttemptAction(
       }
     }
 
-    return { ok: true };
+    // 4. 포인트 적립
+    // point_rules는 auth user id를 student_id로 쓴다 (academy_students.id가 아니다).
+    // 다른 섹션(reading_session/listening_session)도 user.id를 넘긴다.
+    let pointsEarned = 0;
+    let totalPoints: number | undefined;
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const authUserId = userData?.user?.id;
+      if (authUserId) {
+        const result = await awardPoints({
+          studentId: authUserId,
+          ruleId: STAGE_POINT_RULE[input.stage],
+          bonus: input.stage === "speed" ? accuracyBonus(input.accuracy) : 0,
+          sourceRef: cleanStr(input.setId),
+          metadata: { stage: input.stage, accuracy: input.accuracy ?? null },
+        });
+        pointsEarned = result?.pointsEarned ?? 0;
+        totalPoints = result?.newTotal;
+      }
+    } catch (e: any) {
+      // 적립 실패가 학습 완료를 막지는 않는다.
+      console.warn("saveVocabAttemptAction: awardPoints failed", toErrMsg(e));
+    }
+
+    return { ok: true, pointsEarned, totalPoints };
   } catch (e: any) {
     console.warn("saveVocabAttemptAction exception:", toErrMsg(e));
     return { ok: true }; // non-fatal
