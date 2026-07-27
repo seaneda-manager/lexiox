@@ -17,32 +17,36 @@ export default async function WritingGradeDetailPage({ params }: Props) {
   const { data: session, error } = await supabase
     .from("writing_2026_sessions")
     .select(`
-      id, test_id, raw_answers, grading_status, created_at,
+      id, test_id, user_id, raw_answers, grading_status, created_at,
       ai_email_score, ai_discussion_score, ai_total_score, ai_grade_feedback,
       final_email_score, final_discussion_score, final_total_score, final_grade_feedback,
-      graded_at,
-      profiles:user_id (full_name, name, email)
+      graded_at
     `)
     .eq("id", id)
     .maybeSingle();
 
   if (error || !session) return notFound();
 
+  // 학생명 조회 (별도 쿼리)
+  let studentName = "학생";
+  if ((session as any).user_id) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name, name, email")
+      .eq("id", (session as any).user_id)
+      .maybeSingle();
+
+    studentName = (profile as any)?.full_name || (profile as any)?.name || (profile as any)?.email || "학생";
+  }
+
   const { data: testRow } = await supabase
-    .from("writing_tests")
+    .from("writing_tests_2026")
     .select("label, payload")
     .eq("id", session.test_id)
     .maybeSingle();
 
   const test = testRow?.payload as WWritingTest2026 | null;
   const answers = (session.raw_answers ?? {}) as Record<string, string>;
-
-  const profile = Array.isArray(session.profiles) ? session.profiles[0] : session.profiles;
-  const studentName =
-    (profile as { full_name?: string | null } | null)?.full_name ||
-    (profile as { name?: string | null } | null)?.name ||
-    (profile as { email?: string | null } | null)?.email ||
-    "학생";
 
   const status = session.grading_status ?? "ungraded";
   const createdAt = new Date(session.created_at).toLocaleString("ko-KR");
