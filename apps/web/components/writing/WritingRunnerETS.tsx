@@ -91,7 +91,7 @@ function ETSLayout({
     ? (currentQuestion / totalQuestions) * 100 : 0;
 
   return (
-    <div className="flex flex-col" style={{ minHeight: "100vh", backgroundColor: "#F4F6F9", fontFamily: "Arial, Helvetica, sans-serif" }}>
+    <div className="flex flex-col" style={{ height: "100vh", backgroundColor: "#F4F6F9", fontFamily: "Arial, Helvetica, sans-serif" }}>
       {/* Header */}
       <header className="flex items-center justify-between px-6 shrink-0" style={{ height: 60, backgroundColor: "#1A2B4C" }}>
         <span style={{ fontSize: 16, fontWeight: 700, color: "#FFFFFF" }}>
@@ -382,13 +382,16 @@ function WriteAnEmail({
       currentQuestion={11}
       onNext={() => onComplete(text)}
     >
-      <div style={{ display: "flex", gap: 24, padding: "30px 40px", height: "100%" }}>
+      {/* 좁은 화면(사이드바 있는 창 등)에서는 에디터가 아래로 내려오도록 wrap.
+          이전에는 좌측 650px 고정 + wrap 없음이라 에디터가 화면 밖으로 밀려 안 보였다. */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 24, padding: "30px 40px", height: "100%" }}>
 
         {/* 좌측: Scenario Card */}
         <div style={{
-          width: 650, minHeight: 800, flexShrink: 0,
+          flex: "1 1 460px", maxWidth: 650, minWidth: 0,
           backgroundColor: "#FFFFFF", borderRadius: 8, padding: 32,
           boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+          alignSelf: "flex-start",
         }}>
           <p style={{ fontSize: 13, fontWeight: 700, color: "#0073E6", marginBottom: 16, textTransform: "uppercase", letterSpacing: "0.05em" }}>
             Situation
@@ -415,7 +418,7 @@ function WriteAnEmail({
 
         {/* 우측: Email Editor */}
         <div style={{
-          flex: 1, minHeight: 800,
+          flex: "1 1 460px", minWidth: 0, minHeight: 700,
           backgroundColor: "#FFFFFF", borderRadius: 8,
           boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
           display: "flex", flexDirection: "column",
@@ -620,7 +623,7 @@ export default function WritingRunnerETS({ test, onFinish }: Props) {
 
   if (phase === "done") {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-6 text-center" style={{ backgroundColor: "#F4F6F9", fontFamily: "Arial, Helvetica, sans-serif" }}>
+      <div className="flex flex-col items-center justify-center gap-6 text-center" style={{ height: "100vh", backgroundColor: "#F4F6F9", fontFamily: "Arial, Helvetica, sans-serif" }}>
         <div style={{ fontSize: 64 }}>✍️</div>
         <h2 style={{ fontSize: 28, fontWeight: 800, color: "#1A2B4C" }}>Writing Section Complete!</h2>
         <p style={{ fontSize: 16, color: "#666" }}>
