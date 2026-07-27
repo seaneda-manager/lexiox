@@ -66,7 +66,7 @@ export default async function ProtectedLayout({ children }: { children: ReactNod
             </div>
           </aside>
           <main className={[
-            'min-h-0 overflow-y-auto p-4 md:p-6',
+            'min-h-0 overflow-y-auto',
             showMobileTabBar ? 'pb-20 md:pb-6' : '',
           ].join(' ')}>
             {children}

@@ -47,12 +47,5 @@ export default function WritingTestClient({
     }
   }
 
-  // Listening처럼 protected layout의 padding을 무시하고 full width 사용.
-  // -m-4 md:-m-6은 p-4 md:p-6을 상쇄하고,
-  // h-[calc(100%+2rem)] md:h-[calc(100%+3rem)]은 무시된 padding만큼 높이를 복구.
-  return (
-    <div className="-m-4 md:-m-6 h-[calc(100%+2rem)] md:h-[calc(100%+3rem)]">
-      <WritingRunnerETS test={test} onFinish={handleFinish} />
-    </div>
-  );
+  return <WritingRunnerETS test={test} onFinish={handleFinish} />;
 }
