@@ -1750,7 +1750,7 @@ export default function VocabSessionPage() {
         );
       }
 
-      const secondsPerQuestion = speedTry === 1 ? 16 : 11;
+      const secondsPerQuestion = speedTry === 1 ? 16 : 20;
 
       // 🔍 DEBUG
       console.log("📍 session/page.tsx SPEED stage - speedTry:", speedTry, "secondsPerQuestion:", secondsPerQuestion);

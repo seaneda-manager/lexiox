@@ -22,12 +22,27 @@ export default async function WritingGradeListPage() {
   const { data: rows, error } = await supabase
     .from("writing_2026_sessions")
     .select(
-      `id, test_id, grading_status,
-       ai_total_score, final_total_score, created_at,
-       profiles:user_id (full_name, name, email)`,
+      `id, test_id, user_id, grading_status,
+       ai_total_score, final_total_score, created_at`,
     )
     .order("created_at", { ascending: false })
     .limit(100);
+
+  // 학생명 조회 (별도 쿼리)
+  let studentNames: Record<string, string> = {};
+  if (rows && rows.length > 0) {
+    const userIds = Array.from(new Set(rows.map(r => (r as any).user_id).filter(Boolean)));
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name, name, email")
+        .in("id", userIds);
+
+      for (const p of profiles ?? []) {
+        studentNames[(p as any).id] = (p as any).full_name || (p as any).name || (p as any).email || "Unknown";
+      }
+    }
+  }
 
   return (
     <main className="mx-auto max-w-5xl space-y-6 px-6 py-8">
