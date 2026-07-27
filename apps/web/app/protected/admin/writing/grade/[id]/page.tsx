@@ -1,4 +1,3 @@
-// app/(protected)/admin/writing/grade/[id]/page.tsx
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getServerSupabase } from "@/lib/supabase/server";
@@ -63,82 +62,90 @@ export default async function WritingGradeDetailPage({ params }: Props) {
           </h1>
           <p className="text-sm text-slate-500">제출: {createdAt}</p>
         </div>
-        <Link
-          href="/admin/writing/grade"
-          className="self-start rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-        >
-          ← 목록
-        </Link>
+        <div className="text-right">
+          <div className="text-3xl font-bold text-slate-900">
+            {session.final_total_score ?? session.ai_total_score ?? "-"}
+          </div>
+          <div className="text-xs text-slate-500">점수</div>
+        </div>
       </header>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* 왼쪽: 답변 내용 */}
-        <div className="space-y-4">
-          {test?.items.map((item) => {
-            const isEmail = item.taskKind === "email";
-            const isDiscussion = item.taskKind === "academic_discussion";
-            if (!isEmail && !isDiscussion) return null;
+      {/* 상태 */}
+      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium text-slate-700">채점 상태</span>
+          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
+            status === "teacher_graded"
+              ? "bg-emerald-100 text-emerald-700"
+              : status === "ai_graded"
+              ? "bg-blue-100 text-blue-700"
+              : "bg-amber-100 text-amber-700"
+          }`}>
+            {status === "ungraded" ? "미채점" : status === "ai_graded" ? "AI 초안" : "채점 완료"}
+          </span>
+        </div>
+      </div>
 
-            const answerText = answers[item.id] ?? "";
-            const prompt = isEmail
-              ? `상황: ${(item as { situation: string }).situation}\n지시: ${(item as { prompt: string }).prompt}`
-              : `상황: ${(item as { context: string }).context}\n교수: ${(item as { professorPrompt: string }).professorPrompt}`;
-
-            return (
-              <div key={item.id} className="space-y-2">
-                <section className="rounded-2xl border border-blue-200 bg-blue-50/60 px-4 py-3">
-                  <p className="mb-1 text-xs font-bold text-blue-800">
-                    {isEmail ? "Email Writing" : "Academic Discussion"} Prompt
-                  </p>
-                  <p className="whitespace-pre-wrap text-xs leading-relaxed text-blue-900">{prompt}</p>
-                </section>
-                <section className="rounded-2xl border border-slate-200 bg-white px-4 py-4">
-                  <p className="mb-2 text-xs font-bold text-slate-700">학생 답변</p>
-                  {answerText ? (
-                    <p className="whitespace-pre-wrap text-xs leading-relaxed text-slate-800">{answerText}</p>
-                  ) : (
-                    <p className="text-xs text-slate-400">답변 없음</p>
-                  )}
-                </section>
-              </div>
-            );
-          })}
-
-          {/* Rubric 참고표 */}
-          <section className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4">
-            <p className="mb-3 text-xs font-bold text-slate-600">ETS Writing Rubric 참고 (0~5)</p>
-            <div className="space-y-1.5">
-              {([5, 4, 3, 2, 1, 0] as EtsWritingScore[]).map((score) => (
-                <div key={score} className="text-[11px] leading-relaxed text-slate-700">
-                  <span className="mr-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-200 font-bold text-slate-700">
-                    {score}
-                  </span>
-                  {EMAIL_DESCRIPTORS[score]}
-                </div>
-              ))}
+      {/* 점수 상세 */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="rounded-lg border border-slate-200 p-4">
+          <div className="text-sm font-medium text-slate-700">AI 초안 점수</div>
+          <div className="mt-2 space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-slate-600">Email: </span>
+              <span className="font-semibold text-slate-900">{session.ai_email_score ?? "-"}</span>
             </div>
-          </section>
+            <div className="flex justify-between">
+              <span className="text-slate-600">Discussion: </span>
+              <span className="font-semibold text-slate-900">{session.ai_discussion_score ?? "-"}</span>
+            </div>
+            <div className="border-t pt-2 flex justify-between">
+              <span className="text-slate-600">합계</span>
+              <span className="font-bold text-slate-900">{session.ai_total_score ?? "-"}</span>
+            </div>
+          </div>
         </div>
 
-        {/* 오른쪽: 채점 UI */}
-        <div>
-          <WritingGradeClient
-            sessionId={session.id}
-            gradingStatus={status}
-            aiScores={{
-              email: session.ai_email_score,
-              discussion: session.ai_discussion_score,
-              total: session.ai_total_score,
-              feedback: session.ai_grade_feedback,
-            }}
-            finalScores={{
-              email: session.final_email_score,
-              discussion: session.final_discussion_score,
-              total: session.final_total_score,
-              feedback: session.final_grade_feedback,
-            }}
-          />
+        <div className="rounded-lg border border-slate-200 p-4">
+          <div className="text-sm font-medium text-slate-700">최종 점수</div>
+          <div className="mt-2 space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-slate-600">Email: </span>
+              <span className="font-semibold text-slate-900">{session.final_email_score ?? "-"}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-600">Discussion: </span>
+              <span className="font-semibold text-slate-900">{session.final_discussion_score ?? "-"}</span>
+            </div>
+            <div className="border-t pt-2 flex justify-between">
+              <span className="text-slate-600">합계</span>
+              <span className="font-bold text-emerald-700 text-lg">{session.final_total_score ?? "-"}</span>
+            </div>
+          </div>
         </div>
+      </div>
+
+      {/* 학생 답변 */}
+      <div className="rounded-lg border border-slate-200 p-4">
+        <h2 className="text-sm font-bold text-slate-900 mb-4">학생 답변</h2>
+        <div className="space-y-4">
+          {Object.entries(answers).map(([key, value]) => (
+            <div key={key} className="border-t pt-3">
+              <div className="text-xs font-semibold text-slate-600 mb-1">{key}</div>
+              <div className="text-sm text-slate-700 whitespace-pre-wrap">{value}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 하단 버튼 */}
+      <div className="flex gap-3">
+        <Link
+          href="/admin/writing/grade"
+          className="flex-1 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+        >
+          ← 돌아가기
+        </Link>
       </div>
     </main>
   );
