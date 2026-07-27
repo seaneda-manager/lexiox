@@ -40,7 +40,7 @@ export default async function WritingGradeDetailPage({ params }: Props) {
   }
 
   const { data: testRow } = await supabase
-    .from("writing_tests_2026")
+    .from("writing_tests")
     .select("label, payload")
     .eq("id", session.test_id)
     .maybeSingle();
