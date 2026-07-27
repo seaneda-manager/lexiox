@@ -69,6 +69,12 @@ export default async function WritingAdminListPage() {
                   {assignedIds.has(t.id) && (
                     <span className="rounded-full bg-gray-900 px-2 py-0.5 text-[10px] font-medium text-white">📌 배정됨</span>
                   )}
+                  <Link
+                    href={`/admin/content/updated-writing/${t.id}/preview`}
+                    className="rounded-lg border border-teal-300 px-2.5 py-1 text-[11px] font-semibold text-teal-700 hover:bg-teal-50"
+                  >
+                    미리보기
+                  </Link>
                 </div>
               </div>
             ))}
