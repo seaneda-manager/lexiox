@@ -224,7 +224,13 @@ export default function ReadingTestGeneratorClient() {
       const filled: Record<string, string> = { ...topics };
       for (const field of ALL_TOPIC_FIELDS) {
         if (filled[field.key]?.trim()) continue;
-        const avoid = Object.values(filled).filter((v) => v.trim().length > 0);
+        // ✅ 값이 문자열임을 확인
+        const avoid = Object.values(filled)
+          .filter((v) => typeof v === 'string' && v.trim().length > 0)
+          .map((v) => String(v));
+
+        console.log(`[AutoFill] ${field.key}:`, { kind: field.suggestKind, avoidCount: avoid.length });
+
         const res = await fetch("/api/admin/updated-reading/suggest-topics", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -233,8 +239,12 @@ export default function ReadingTestGeneratorClient() {
         const data = await safeJson(res);
         if (!data.ok) throw new Error(data.error ?? "Failed to suggest topics");
         const pick = data.suggestions?.[0];
-        if (pick) filled[field.key] = pick;
+        if (pick && typeof pick === 'string') {
+          filled[field.key] = pick.trim();
+          console.log(`[AutoFill] Set ${field.key} = "${pick}"`);
+        }
       }
+      console.log("Final filled:", filled);
       setTopics(filled as Record<TopicFieldKey, string>);
     } catch (e: any) {
       setError(`전체 주제 자동채우기 실패: ${e.message}`);
@@ -249,10 +259,15 @@ export default function ReadingTestGeneratorClient() {
     setError(null);
     setPhase("generating");
     try {
+      // ✅ 디버깅: topics 검증
+      console.log("Topics before stringify:", topics);
+      const topicsStr = JSON.stringify(topics);
+      console.log("Stringified successfully:", topicsStr.length, "bytes");
+
       const res = await fetch("/api/admin/updated-reading/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(topics),
+        body: topicsStr,
       });
       const data = await safeJson(res);
       if (!data.ok) throw new Error(data.error ?? "Generation failed");
