@@ -237,9 +237,9 @@ Return ONLY valid JSON, no markdown fences:
     const id = randomUUID();
     payload.meta.id = id;
     payload.meta.usedTopics = {
-      complete_words: [cwTopicM1, cwTopicM2],
-      daily_life: [dailyLifeTopic1, dailyLifeTopic2],
-      academic: [academicTopicM1, academicTopicM2],
+      complete_words: [cwTopicM1, cwTopicM2Lower],
+      daily_life: [dailyLifeTopic1, dailyLifeTopic2, dailyLifeTopic2L1, dailyLifeTopic2L2].concat(dailyLifeTopic3 ? [dailyLifeTopic3] : []),
+      academic: [academicTopicM1, academicTopicM2Upper],
     };
 
     return NextResponse.json({ ok: true, id, payload });
