@@ -30,7 +30,7 @@ export default async function VocabAssignPage() {
   // Vocab plans
   const { data: plans } = await supabase
     .from('student_vocab_plans')
-    .select(\
+    .select(`
       id,
       student_id,
       track_id,
@@ -40,7 +40,7 @@ export default async function VocabAssignPage() {
         title,
         day_count
       )
-    \);
+    `);
 
   return (
     <div className="p-6">
