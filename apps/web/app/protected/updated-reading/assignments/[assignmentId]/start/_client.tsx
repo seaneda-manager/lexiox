@@ -35,11 +35,31 @@ export default function ReadingTestWrapper({
   }, [pathname]);
 
   return (
-    <MockTestPlayer
-      testId={testId}
-      label="Reading Test"
-      test={testData}
-      assignmentId={assignmentId}
-    />
+    <div className="w-full h-full">
+      <style>{`
+        main {
+          width: 100% !important;
+          max-width: 100% !important;
+          padding: 0 !important;
+          margin: 0 !important;
+        }
+        main > * {
+          max-width: 100% !important;
+          width: 100% !important;
+          margin-left: 0 !important;
+          margin-right: 0 !important;
+        }
+        main > div {
+          padding-left: 0 !important;
+          padding-right: 0 !important;
+        }
+      `}</style>
+      <MockTestPlayer
+        testId={testId}
+        label="Reading Test"
+        test={testData}
+        assignmentId={assignmentId}
+      />
+    </div>
   );
 }

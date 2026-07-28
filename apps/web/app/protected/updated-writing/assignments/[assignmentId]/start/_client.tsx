@@ -68,10 +68,21 @@ export default function WritingTestWrapper({
   return (
     <div className="w-full h-full">
       <style>{`
-        main > div[style*="maxWidth"] {
+        main {
+          width: 100% !important;
           max-width: 100% !important;
+          padding: 0 !important;
+          margin: 0 !important;
+        }
+        main > * {
+          max-width: 100% !important;
+          width: 100% !important;
           margin-left: 0 !important;
           margin-right: 0 !important;
+        }
+        main > div {
+          padding-left: 0 !important;
+          padding-right: 0 !important;
         }
       `}</style>
       <WritingRunnerETS test={test} onFinish={handleFinish} />
