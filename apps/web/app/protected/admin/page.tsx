@@ -204,11 +204,12 @@ export default function AdminPage() {
           ]}
         />
         <DashCard
-          title="학습 대시보드"
-          description="학생들의 학습 진도·약점·목표를 한눈에 확인합니다."
+          title="학습 · 진도 관리"
+          description="학생들의 학습 진도를 확인하고 단어 회차를 조정합니다."
           links={[
             { label: '대시보드', href: '/admin/vocab/dashboard', primary: true },
-            { label: '과제 배정', href: '/admin/vocab/assign' },
+            { label: '회차 조정', href: '/admin/vocab/assign' },
+            { label: '진행 현황', href: '/admin/vocab/progress' },
           ]}
           color="border-emerald-200"
         />
