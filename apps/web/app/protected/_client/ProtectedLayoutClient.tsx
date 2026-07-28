@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useMemo, useEffect, useState } from 'react';
+import { ReactNode, useLayoutEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import TopbarClient from '@/components/dashboard/TopbarClient';
 import SidebarClient from '@/components/dashboard/SidebarClient';
@@ -31,17 +31,13 @@ export default function ProtectedLayoutClient({
   showMobileTabBar,
 }: Props) {
   const pathname = usePathname();
-  const [mounted, setMounted] = useState(false);
+  const [isFullscreenTest, setIsFullscreenTest] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Hide sidebar and topbar for reading/listening/speaking/writing tests and assignments
-  const isFullscreenTest = useMemo(() => {
-    if (!mounted) return false;
-    return /\/(reading|listening|speaking|writing).*(test|assignments)/.test(pathname);
-  }, [pathname, mounted]);
+  // Synchronously check pathname BEFORE paint to prevent layout shift
+  useLayoutEffect(() => {
+    const match = /\/(reading|listening|speaking|writing).*(test|assignments)/.test(pathname);
+    setIsFullscreenTest(match);
+  }, [pathname]);
 
   if (isFullscreenTest) {
     return <>{children}</>;
