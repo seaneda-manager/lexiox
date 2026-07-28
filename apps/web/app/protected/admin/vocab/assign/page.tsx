@@ -1,4 +1,4 @@
-﻿import { listStudentsAction, listTracksReadinessAction } from "./actions";
+﻿import { listStudentsAction, listTracksWithReadinessAction } from "./actions";
 import AssignClient from "./_client/AssignClient";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +10,7 @@ export default async function AdminVocabAssignPage() {
       error: String(e?.message ?? "Unknown"),
       rows: [],
     })),
-    listTracksReadinessAction().catch((e) => ({
+    listTracksWithReadinessAction().catch((e) => ({
       ok: false as const,
       error: String(e?.message ?? "Unknown"),
       rows: [],
