@@ -1,7 +1,6 @@
 'use client';
 
-import { ReactNode, useLayoutEffect, useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { ReactNode, usePathname } from 'react/navigation';
 import TopbarClient from '@/components/dashboard/TopbarClient';
 import SidebarClient from '@/components/dashboard/SidebarClient';
 import SidebarProfile from '@/components/dashboard/SidebarProfile';
@@ -31,20 +30,16 @@ export default function ProtectedLayoutClient({
   showMobileTabBar,
 }: Props) {
   const pathname = usePathname();
-  const [isFullscreenTest, setIsFullscreenTest] = useState(false);
 
-  // Synchronously check pathname BEFORE paint to prevent layout shift
-  useLayoutEffect(() => {
-    const match = /\/(reading|listening|speaking|writing).*(test|assignments)/.test(pathname);
-    setIsFullscreenTest(match);
-  }, [pathname]);
+  // Hide sidebar and topbar for test/assignment routes
+  const isFullscreenTest = /\/(reading|listening|speaking|writing).*(test|assignments)/.test(pathname);
 
   if (isFullscreenTest) {
     return <>{children}</>;
   }
 
   return (
-    <div className="h-screen overflow-hidden grid grid-rows-[auto_1fr] bg-neutral-50 text-neutral-900">
+    <div className="h-screen overflow-hidden grid grid-rows-[auto_1fr] bg-neutral-50 text-neutral-900" suppressHydrationWarning>
       <div>
         <TopbarClient email={email} role={role} />
       </div>

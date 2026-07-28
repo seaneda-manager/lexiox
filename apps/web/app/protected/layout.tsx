@@ -2,6 +2,11 @@
 import { ReactNode } from 'react';
 import { redirect } from 'next/navigation';
 import { getServerSupabase } from '@/lib/supabase/server';
+import TopbarClient from '@/components/dashboard/TopbarClient';
+import SidebarClient from '@/components/dashboard/SidebarClient';
+import SidebarProfile from '@/components/dashboard/SidebarProfile';
+import MobileLexioxTabBar from '@/components/dashboard/MobileLexioxTabBar';
+import PWAInstallBanner from '@/components/PWAInstallBanner';
 import { LangProvider } from '@/contexts/LangContext';
 import ProtectedLayoutClient from './_client/ProtectedLayoutClient';
 
