@@ -106,6 +106,7 @@ type Stage =
   | "LEARNING_INTRO"
   | "LEARNING"
   | "SPEED"
+  | "FLASHCARD"
   | "DRILL_INTRO"
   | "DRILL"
   | "DONE";
@@ -1337,7 +1338,14 @@ export default function VocabSessionPage() {
       return;
     }
 
-    // 통과 → Day 완료 기록 + 다음 Day 오픈
+    // 통과(70% 이상) + 틀린 단어 있으면 → 깜지로 복습
+    if (acc >= 0.7 && wrong.length > 0) {
+      setSpeedWrongIds(wrong);
+      setStage("FLASHCARD");
+      return;
+    }
+
+    // 완전 통과(100%) → Day 완료 기록 + 다음 Day 오픈
     await finishDay();
   }
 
@@ -1773,6 +1781,55 @@ export default function VocabSessionPage() {
             minPassAccuracy={0.7}
             onFinish={handleSpeedFinish}
           />
+        </CardWrap>
+      );
+    }
+
+    if (stage === "FLASHCARD") {
+      const wrongWords = allWords.filter((w) => speedWrongIds.includes(w.id));
+      return (
+        <CardWrap>
+          {Debug}
+          {headerBlock}
+          <div className="rounded-2xl border bg-white p-6">
+            <div className="mb-6 text-center">
+              <div className="text-2xl font-bold text-slate-900 mb-2">📚 깜지 복습</div>
+              <div className="text-sm text-slate-600">틀린 단어 {wrongWords.length}개를 복습해요</div>
+            </div>
+            {wrongWords.length > 0 ? (
+              <div className="space-y-4">
+                {wrongWords.map((word, idx) => (
+                  <div
+                    key={word.id}
+                    className="p-4 rounded-lg border border-slate-200 hover:border-blue-400 transition"
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="font-semibold text-slate-900">{word.text}</div>
+                      <div className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                        {idx + 1}/{wrongWords.length}
+                      </div>
+                    </div>
+                    <div className="text-sm text-slate-600">
+                      {Array.isArray(word.meanings_ko)
+                        ? word.meanings_ko.join(", ")
+                        : word.meanings_ko}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-slate-500">완벽해요! 틀린 단어가 없어요</div>
+            )}
+            <button
+              onClick={async () => {
+                setStage("SUMMARY");
+                await finishDay();
+              }}
+              className="mt-6 w-full rounded-xl bg-emerald-600 py-3 text-sm font-bold text-white hover:bg-emerald-700"
+            >
+              완료 → Summary
+            </button>
+          </div>
         </CardWrap>
       );
     }
