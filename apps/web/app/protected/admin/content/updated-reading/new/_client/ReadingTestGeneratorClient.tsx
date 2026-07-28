@@ -68,8 +68,8 @@ function updateGroupItems(
 // ── 주제 입력 필드 설정 (AI 추천 연동) ─────────────────────────
 
 type TopicFieldKey =
-  | "cwTopicM1" | "dailyLifeTopic1" | "dailyLifeTopic2" | "academicTopicM1"
-  | "cwTopicM2" | "academicTopicM2";
+  | "cwTopicM1" | "dailyLifeTopic1" | "dailyLifeTopic2" | "dailyLifeTopic3" | "academicTopicM1"
+  | "cwTopicM2Lower" | "dailyLifeTopic2L1" | "dailyLifeTopic2L2" | "academicTopicM2Upper";
 
 type TopicFieldConfig = {
   key: TopicFieldKey;
@@ -80,15 +80,18 @@ type TopicFieldConfig = {
 };
 
 const MODULE1_TOPIC_FIELDS: TopicFieldConfig[] = [
-  { key: "cwTopicM1", label: "① Complete the Words", placeholder: "예: university campus life", suggestKind: "complete_words", color: "sky" },
-  { key: "dailyLifeTopic1", label: "② Daily Life #1", placeholder: "예: library overdue notice", suggestKind: "daily_life", color: "amber" },
-  { key: "dailyLifeTopic2", label: "③ Daily Life #2", placeholder: "예: dorm cafeteria menu update", suggestKind: "daily_life", color: "amber" },
-  { key: "academicTopicM1", label: "④ Academic Passage", placeholder: "예: The history of the printing press", suggestKind: "academic", color: "violet" },
+  { key: "cwTopicM1", label: "📘 Module 1 - Complete the Words (1지문)", placeholder: "예: university campus life", suggestKind: "complete_words", color: "sky" },
+  { key: "dailyLifeTopic1", label: "📘 Module 1 - Daily Life #1 (1지문)", placeholder: "예: library overdue notice", suggestKind: "daily_life", color: "amber" },
+  { key: "dailyLifeTopic2", label: "📘 Module 1 - Daily Life #2 (1지문)", placeholder: "예: dorm cafeteria menu update", suggestKind: "daily_life", color: "amber" },
+  { key: "dailyLifeTopic3", label: "📘 Module 1 - Daily Life #3 (1지문, 선택사항)", placeholder: "예: campus event registration", suggestKind: "daily_life", color: "amber" },
+  { key: "academicTopicM1", label: "📘 Module 1 - Academic Passage (1지문)", placeholder: "예: The history of the printing press", suggestKind: "academic", color: "violet" },
 ];
 
 const MODULE2_TOPIC_FIELDS: TopicFieldConfig[] = [
-  { key: "cwTopicM2", label: "⑤ Complete the Words", placeholder: "예: marine biology research", suggestKind: "complete_words", color: "sky" },
-  { key: "academicTopicM2", label: "⑥ Academic Passage", placeholder: "예: Climate change and ocean ecosystems", suggestKind: "academic", color: "violet" },
+  { key: "cwTopicM2Lower", label: "🟢 Module 2 Lower - Complete the Words (1지문, 공용)", placeholder: "예: marine biology research", suggestKind: "complete_words", color: "sky" },
+  { key: "dailyLifeTopic2L1", label: "🟢 Module 2 Lower - Daily Life #1 (1지문)", placeholder: "예: course schedule change", suggestKind: "daily_life", color: "amber" },
+  { key: "dailyLifeTopic2L2", label: "🟢 Module 2 Lower - Daily Life #2 (1지문)", placeholder: "예: parking permit renewal", suggestKind: "daily_life", color: "amber" },
+  { key: "academicTopicM2Upper", label: "🔴 Module 2 Upper - Academic Passage (1지문)", placeholder: "예: Climate change and ocean ecosystems", suggestKind: "academic", color: "violet" },
 ];
 
 const ALL_TOPIC_FIELDS = [...MODULE1_TOPIC_FIELDS, ...MODULE2_TOPIC_FIELDS];
@@ -329,6 +332,70 @@ export default function ReadingTestGeneratorClient() {
       });
     });
 
+  const setChoiceExplanation = (group: GroupKey, itemIndex: number, qi: number, ci: number, explanation: string) =>
+    setTest((prev) => {
+      if (!prev) return prev;
+      return updateGroupItems(prev, group, (items) => {
+        const next = [...items];
+        const item = { ...(next[itemIndex] as RDailyLifeItem | RAcademicPassageItem) };
+        item.questions = item.questions.map((q, i) => {
+          if (i !== qi) return q;
+          return { ...q, choices: q.choices.map((c, j) => j === ci ? { ...c, explanation } : c) };
+        });
+        next[itemIndex] = item as any;
+        return next;
+      });
+    });
+
+  const [generatingExplanations, setGeneratingExplanations] = useState<Set<string>>(new Set());
+
+  const generateExplanations = useCallback(
+    async (group: GroupKey, itemIndex: number, qi: number) => {
+      if (!test) return;
+      const item = getGroupItems(test, group)[itemIndex] as any;
+      const q = item?.questions?.[qi];
+      const passage = item?.passageHtml || "";
+
+      if (!q || !passage) {
+        setError("지문 또는 문제를 찾을 수 없습니다");
+        return;
+      }
+
+      const key = `${group}-${itemIndex}-${qi}`;
+      setGeneratingExplanations((prev) => new Set([...prev, key]));
+      setError(null);
+
+      try {
+        const res = await fetch("/api/admin/updated-reading/generate-explanations", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            passage: item.passageHtml,
+            question: q.stem,
+            choices: q.choices,
+          }),
+        });
+
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error ?? "Failed to generate explanations");
+
+        // 각 선택지에 해석 할당
+        for (let ci = 0; ci < data.explanations.length; ci++) {
+          setChoiceExplanation(group, itemIndex, qi, ci, data.explanations[ci]);
+        }
+      } catch (e: any) {
+        setError(`해석 생성 실패: ${e.message}`);
+      } finally {
+        setGeneratingExplanations((prev) => {
+          const next = new Set(prev);
+          next.delete(key);
+          return next;
+        });
+      }
+    },
+    [test]
+  );
+
   // ── Save (draft) ────────────────────────────────────────────
   const handleSave = useCallback(async () => {
     if (!test) return;
@@ -438,11 +505,22 @@ export default function ReadingTestGeneratorClient() {
 
   const renderQuestions = (group: GroupKey, questions: any[], itemIndex: number) => (
     <div className="space-y-3">
-      {questions.map((q, qi) => (
+      {questions.map((q, qi) => {
+        const isGenerating = generatingExplanations.has(`${group}-${itemIndex}-${qi}`);
+        return (
         <div key={q.id} className="rounded-lg border border-gray-100 bg-gray-50 p-3 space-y-2">
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-medium text-gray-500">Q{q.number}</span>
-            <span className="rounded-full bg-white border px-2 py-0.5 text-[10px] text-gray-500">{q.type}</span>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-medium text-gray-500">Q{q.number}</span>
+              <span className="rounded-full bg-white border px-2 py-0.5 text-[10px] text-gray-500">{q.type}</span>
+            </div>
+            <button
+              onClick={() => generateExplanations(group, itemIndex, qi)}
+              disabled={isGenerating}
+              className="text-[11px] px-2 py-1 rounded bg-violet-100 text-violet-700 hover:bg-violet-200 disabled:opacity-50 font-medium"
+            >
+              {isGenerating ? "생성 중…" : "🤖 해석 생성"}
+            </button>
           </div>
           <textarea
             rows={2}
@@ -450,27 +528,38 @@ export default function ReadingTestGeneratorClient() {
             value={q.stem}
             onChange={(e) => setQuestionStem(group, itemIndex, qi, e.target.value)}
           />
-          <div className="space-y-1">
+          <div className="space-y-2">
             {q.choices.map((c: any, ci: number) => (
-              <label key={c.id} className={`flex items-start gap-2 rounded border px-2 py-1 text-xs cursor-pointer transition ${c.isCorrect ? "border-emerald-400 bg-emerald-50" : "border-gray-200 bg-white hover:border-gray-300"}`}>
-                <input
-                  type="radio"
-                  name={`${group}-${itemIndex}-${qi}-correct`}
-                  checked={c.isCorrect === true}
-                  onChange={() => setCorrectChoice(group, itemIndex, qi, ci)}
-                  className="mt-0.5 shrink-0"
+              <div key={c.id} className={`rounded border p-2 space-y-1.5 transition ${c.isCorrect ? "border-emerald-400 bg-emerald-50" : "border-gray-200 bg-white hover:border-gray-300"}`}>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name={`${group}-${itemIndex}-${qi}-correct`}
+                    checked={c.isCorrect === true}
+                    onChange={() => setCorrectChoice(group, itemIndex, qi, ci)}
+                    className="shrink-0"
+                  />
+                  <input
+                    className="flex-1 bg-transparent focus:outline-none text-xs"
+                    placeholder="선택지 텍스트"
+                    value={c.text}
+                    onChange={(e) => setChoiceText(group, itemIndex, qi, ci, e.target.value)}
+                  />
+                  {c.isCorrect && <span className="shrink-0 text-[10px] font-semibold text-emerald-600">✓ 정답</span>}
+                </label>
+                <textarea
+                  className="w-full rounded border border-gray-200 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-400 resize-none"
+                  rows={2}
+                  placeholder="이 선택지에 대한 해석/설명을 입력하세요"
+                  value={c.explanation || ""}
+                  onChange={(e) => setChoiceExplanation(group, itemIndex, qi, ci, e.target.value)}
                 />
-                <input
-                  className="flex-1 bg-transparent focus:outline-none"
-                  value={c.text}
-                  onChange={(e) => setChoiceText(group, itemIndex, qi, ci, e.target.value)}
-                />
-                {c.isCorrect && <span className="shrink-0 text-[10px] font-semibold text-emerald-600">✓ 정답</span>}
-              </label>
+              </div>
             ))}
           </div>
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 
@@ -539,8 +628,8 @@ export default function ReadingTestGeneratorClient() {
         </div>
 
         <div>
-          <h2 className="mb-3 text-sm font-semibold text-gray-900">📘 Module 1 (공통 Routing) 주제 4가지</h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <h2 className="mb-3 text-sm font-semibold text-gray-900">📘 Module 1 (공통, 20~33문항)</h2>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {MODULE1_TOPIC_FIELDS.map((field) => (
               <TopicInput
                 key={field.key}
@@ -559,10 +648,10 @@ export default function ReadingTestGeneratorClient() {
 
         <div>
           <h2 className="mb-3 text-sm font-semibold text-gray-900">
-            🔴🟢 Module 2 (적응형 Upper/Lower) 주제 2가지{" "}
-            <span className="text-[11px] font-normal text-gray-400">(Hard/Easy 공유, 난이도만 다르게 생성 · Daily Life 없음)</span>
+            🟢 Module 2 - Lower (5~8문항) + 🔴 Module 2 - Upper (5문항){" "}
+            <span className="text-[11px] font-normal text-gray-400">(Lower: Daily Life 2개, Upper: Academic 1개)</span>
           </h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {MODULE2_TOPIC_FIELDS.map((field) => (
               <TopicInput
                 key={field.key}
@@ -588,7 +677,7 @@ export default function ReadingTestGeneratorClient() {
         </button>
 
         {phase === "generating" && (
-          <p className="text-xs text-gray-500 animate-pulse">Claude가 Module 1(23문항) + Module 2 Hard/Easy(각 15문항)를 생성 중입니다 (2~3분 정도 걸립니다, 새로고침하지 말고 기다려주세요)…</p>
+          <p className="text-xs text-gray-500 animate-pulse">Claude가 Module 1(20~33문항) + Module 2 Lower(15문항) + Module 2 Upper(15문항)를 생성 중입니다 (2~3분 정도 걸립니다, 새로고침하지 말고 기다려주세요)…</p>
         )}
         {error && <p className="text-xs text-rose-600">{error}</p>}
       </section>
@@ -607,9 +696,9 @@ export default function ReadingTestGeneratorClient() {
             />
           </section>
 
-          {renderGroup("module1", "📘 Module 1 (공통 Routing)", "bg-violet-50")}
-          {renderGroup("hard", "🔴 Module 2 - Upper (Hard)", "bg-amber-50")}
-          {renderGroup("easy", "🟢 Module 2 - Lower (Easy)", "bg-blue-50")}
+          {renderGroup("module1", "📘 Module 1 (공통 Routing, 20~33문항)", "bg-violet-50")}
+          {renderGroup("hard", "🔴 Module 2 - Upper (15문항: CW+Academic)", "bg-amber-50")}
+          {renderGroup("easy", "🟢 Module 2 - Lower (15문항: CW+Daily Life)", "bg-blue-50")}
 
           {/* Actions — 저장 즉시 배정 가능한 상태가 됩니다. 별도 Lock 단계 없음.
               배정이 하나라도 생기면 이후 저장은 서버에서 자동으로 막힙니다. */}

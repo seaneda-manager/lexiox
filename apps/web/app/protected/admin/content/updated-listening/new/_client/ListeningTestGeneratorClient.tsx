@@ -71,23 +71,22 @@ type TopicFieldConfig = {
   suggestKind: "conversation" | "announcement" | "lecture1" | "lecture2";
 };
 
-// Module 1: 공통 baseline (모든 학생). Choose a Response 5-7 + Conversation 1 + Announcement 1 + Academic Talk 1
+// Module 1: 공통 baseline (모든 학생, 약 10-12문항)
 const MODULE1_FIELDS: TopicFieldConfig[] = [
-  { key: "m1_conversation", label: "💬 Conversation", placeholder: "예: Campus library hours", color: "sky", suggestKind: "conversation" },
-  { key: "m1_announcement", label: "📢 Announcement", placeholder: "예: Career fair announcement", color: "amber", suggestKind: "announcement" },
-  { key: "m1_lecture1", label: "🎓 Academic Lecture", placeholder: "예: Marine biology", color: "indigo", suggestKind: "lecture1" },
+  { key: "m1_conversation", label: "📘 Module 1 - Conversation (1개)", placeholder: "예: Campus library hours", color: "sky", suggestKind: "conversation" },
+  { key: "m1_announcement", label: "📘 Module 1 - Announcement (1개)", placeholder: "예: Career fair announcement", color: "amber", suggestKind: "announcement" },
+  { key: "m1_lecture1", label: "📘 Module 1 - Academic Lecture (1개)", placeholder: "예: Marine biology", color: "indigo", suggestKind: "lecture1" },
 ];
 
-// Module 2: Hard(Announcement x2 + Academic Talk x2, Conversation 없음) / Easy(Conversation x3 + Announcement x2, Academic Talk 없음)
-// Announcement 주제는 Hard/Easy가 공유(난이도만 다르게 생성)
+// Module 2: Easy(Conversation x3 + Announcement x2) / Hard(Announcement x2 + Lecture x2)
 const MODULE2_FIELDS: TopicFieldConfig[] = [
-  { key: "m2_conversation1", label: "💬 Conversation #1", placeholder: "예: Campus library hours", color: "sky", suggestKind: "conversation" },
-  { key: "m2_conversation2", label: "💬 Conversation #2", placeholder: "예: Dorm roommate conflict", color: "sky", suggestKind: "conversation" },
-  { key: "m2_conversation3", label: "💬 Conversation #3", placeholder: "예: Course registration issue", color: "sky", suggestKind: "conversation" },
-  { key: "m2_announcement1", label: "📢 Announcement #1", placeholder: "예: Career fair announcement", color: "amber", suggestKind: "announcement" },
-  { key: "m2_announcement2", label: "📢 Announcement #2", placeholder: "예: Campus recycling program", color: "amber", suggestKind: "announcement" },
-  { key: "m2_lecture1", label: "🎓 Lecture #1", placeholder: "예: Marine biology", color: "indigo", suggestKind: "lecture1" },
-  { key: "m2_lecture2", label: "🎓 Lecture #2", placeholder: "예: Photosynthesis", color: "indigo", suggestKind: "lecture2" },
+  { key: "m2_conversation1", label: "🟢 Module 2 Easy - Conversation #1", placeholder: "예: Campus library hours", color: "sky", suggestKind: "conversation" },
+  { key: "m2_conversation2", label: "🟢 Module 2 Easy - Conversation #2", placeholder: "예: Dorm roommate conflict", color: "sky", suggestKind: "conversation" },
+  { key: "m2_conversation3", label: "🟢 Module 2 Easy - Conversation #3", placeholder: "예: Course registration issue", color: "sky", suggestKind: "conversation" },
+  { key: "m2_announcement1", label: "🟢🔴 Module 2 Easy/Hard - Announcement #1 (공유)", placeholder: "예: Career fair announcement", color: "amber", suggestKind: "announcement" },
+  { key: "m2_announcement2", label: "🟢🔴 Module 2 Easy/Hard - Announcement #2 (공유)", placeholder: "예: Campus recycling program", color: "amber", suggestKind: "announcement" },
+  { key: "m2_lecture1", label: "🔴 Module 2 Hard - Academic Lecture #1", placeholder: "예: Marine biology", color: "indigo", suggestKind: "lecture1" },
+  { key: "m2_lecture2", label: "🔴 Module 2 Hard - Academic Lecture #2", placeholder: "예: Photosynthesis", color: "indigo", suggestKind: "lecture2" },
 ];
 
 const ALL_FIELDS = [...MODULE1_FIELDS, ...MODULE2_FIELDS];
@@ -290,6 +289,162 @@ export default function ListeningTestGeneratorClient() {
   const setLabel = (label: string) =>
     setTest((prev) => prev ? { ...prev, meta: { ...prev.meta, label } } : prev);
 
+  const [generatingExplanations, setGeneratingExplanations] = useState<Set<string>>(new Set());
+
+  const generateExplanations = useCallback(
+    async (trackId: string, questionId: string) => {
+      if (!test) return;
+
+      let track: any = null;
+      for (const group of getGroups(test)) {
+        const found = group.tracks.find((t) => t.id === trackId);
+        if (found) {
+          track = found;
+          break;
+        }
+      }
+
+      if (!track) {
+        setError("트랙을 찾을 수 없습니다");
+        return;
+      }
+
+      const q = track.questions?.find((qq: any) => qq.id === questionId);
+      if (!q || !track.transcript) {
+        setError("문제 또는 스크립트를 찾을 수 없습니다");
+        return;
+      }
+
+      const key = `${trackId}-${questionId}`;
+      setGeneratingExplanations((prev) => new Set([...prev, key]));
+      setError(null);
+
+      try {
+        const res = await fetch("/api/admin/updated-listening/generate-explanations", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            transcript: track.transcript,
+            question: q.stem,
+            choices: q.choices,
+          }),
+        });
+
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error ?? "Failed to generate explanations");
+
+        // 각 선택지에 해석 할당
+        for (let ci = 0; ci < data.explanations.length; ci++) {
+          setChoiceExplanation(trackId, questionId, ci, data.explanations[ci]);
+        }
+      } catch (e: any) {
+        setError(`해석 생성 실패: ${e.message}`);
+      } finally {
+        setGeneratingExplanations((prev) => {
+          const next = new Set(prev);
+          next.delete(key);
+          return next;
+        });
+      }
+    },
+    [test]
+  );
+
+  function getGroups(testObj: LListeningTest2026Linear) {
+    const groups: any[] = [];
+    if (testObj.modules?.[0]?.items?.length) {
+      groups.push({ label: '📘 Module 1 (공통)', tracks: testObj.modules[0].items });
+    }
+    if (testObj.stage2Pool?.hard?.items?.length) {
+      groups.push({ label: '🔴 Module 2 - Hard', tracks: testObj.stage2Pool.hard.items });
+    }
+    if (testObj.stage2Pool?.easy?.items?.length) {
+      groups.push({ label: '🟢 Module 2 - Easy', tracks: testObj.stage2Pool.easy.items });
+    }
+    return groups;
+  }
+
+  const setTrackTranscript = (trackId: string, transcript: string) =>
+    setTest((prev) => {
+      if (!prev) return prev;
+      const updateTrack = (t: LListeningTrack2026) =>
+        t.id === trackId ? { ...t, transcript } : t;
+      return {
+        ...prev,
+        modules: prev.modules?.map(m => ({
+          ...m,
+          items: m.items.map(updateTrack),
+        })),
+        stage2Pool: prev.stage2Pool ? {
+          ...prev.stage2Pool,
+          hard: { items: prev.stage2Pool.hard.items.map(updateTrack) },
+          easy: { items: prev.stage2Pool.easy.items.map(updateTrack) },
+        } : undefined,
+      };
+    });
+
+  const setChoiceText = (trackId: string, questionId: string, choiceIndex: number, text: string) =>
+    setTest((prev) => {
+      if (!prev) return prev;
+      const updateTrack = (t: LListeningTrack2026) => {
+        if (t.id !== trackId) return t;
+        return {
+          ...t,
+          questions: t.questions?.map(q =>
+            q.id === questionId
+              ? {
+                  ...q,
+                  choices: q.choices?.map((c, i) => i === choiceIndex ? { ...c, text } : c),
+                }
+              : q
+          ),
+        };
+      };
+      return {
+        ...prev,
+        modules: prev.modules?.map(m => ({
+          ...m,
+          items: m.items.map(updateTrack),
+        })),
+        stage2Pool: prev.stage2Pool ? {
+          ...prev.stage2Pool,
+          hard: { items: prev.stage2Pool.hard.items.map(updateTrack) },
+          easy: { items: prev.stage2Pool.easy.items.map(updateTrack) },
+        } : undefined,
+      };
+    });
+
+  const setChoiceExplanation = (trackId: string, questionId: string, choiceIndex: number, explanation: string) =>
+    setTest((prev) => {
+      if (!prev) return prev;
+      const updateTrack = (t: LListeningTrack2026) => {
+        if (t.id !== trackId) return t;
+        return {
+          ...t,
+          questions: t.questions?.map(q =>
+            q.id === questionId
+              ? {
+                  ...q,
+                  choices: q.choices?.map((c, i) => i === choiceIndex ? { ...c, explanation } : c),
+                }
+              : q
+          ),
+        };
+      };
+      return {
+        ...prev,
+        modules: prev.modules?.map(m => ({
+          ...m,
+          items: m.items.map(updateTrack),
+        })),
+        stage2Pool: prev.stage2Pool ? {
+          ...prev.stage2Pool,
+          hard: { items: prev.stage2Pool.hard.items.map(updateTrack) },
+          easy: { items: prev.stage2Pool.easy.items.map(updateTrack) },
+        } : undefined,
+      };
+    });
+
   const handleSave = useCallback(async () => {
     if (!test) return;
     setError(null);
@@ -358,7 +513,7 @@ export default function ListeningTestGeneratorClient() {
 
         <div>
           <h2 className="text-sm font-semibold mb-4">
-            📘 Module 1 (공통 - 모든 학생) 주제 3가지
+            📘 Module 1 (공통, 약 10-12문항) 주제 3가지
           </h2>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             {MODULE1_FIELDS.map(field => (
@@ -379,9 +534,9 @@ export default function ListeningTestGeneratorClient() {
 
         <div>
           <h2 className="text-sm font-semibold mb-4">
-            🔴🟢 Module 2 (적응형 - Hard & Easy) 주제 7가지{" "}
+            🟢 Module 2 Easy (약 10-12문항) + 🔴 Module 2 Hard (약 10-12문항) 주제 7가지{" "}
             <span className="text-[11px] text-gray-500 font-normal">
-              (Hard: Announcement×2 + Lecture×2 · Easy: Conversation×3 + Announcement×2 — Announcement 주제는 공유, 난이도만 다르게 생성)
+              (Easy: Conversation×3 + Announcement×2 · Hard: Announcement×2 + Lecture×2)
             </span>
           </h2>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">

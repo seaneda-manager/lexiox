@@ -77,6 +77,8 @@ export interface LChoice2026 {
   id: string;
   text: string;
   isCorrect: boolean;
+  /** 선택지별 해석/설명 */
+  explanation?: string;
 }
 
 /** 문항 (4지선다 또는 다중선택) */

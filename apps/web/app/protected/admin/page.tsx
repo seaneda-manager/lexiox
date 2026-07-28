@@ -65,10 +65,10 @@ export default function AdminPage() {
         </div>
         <div className="flex gap-2">
           <Link
-            href="/dashboard"
+            href="/admin/dashboard"
             className="px-4 py-2 rounded-lg border border-neutral-200 text-neutral-700 font-semibold hover:bg-neutral-50"
           >
-            📊 대시보드
+            📊 학생 진행 현황
           </Link>
         </div>
       </div>

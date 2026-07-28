@@ -375,7 +375,7 @@ function QuestionCard({ q, chosenId }: { q: FlatQuestion; chosenId: string | nul
       </div>
 
       {/* Choices */}
-      <div className="px-4 pb-3 space-y-1.5">
+      <div className="px-4 pb-3 space-y-2">
         {q.choices.map((c, idx) => {
           const letter = String.fromCharCode(65 + idx);
           const isChosen = c.id === chosenId;
@@ -386,14 +386,22 @@ function QuestionCard({ q, chosenId }: { q: FlatQuestion; chosenId: string | nul
             : "border-gray-200 bg-gray-50 text-gray-700";
 
           return (
-            <div key={c.id} className={`flex items-start gap-2 rounded-lg border px-3 py-2 text-xs ${choiceCls}`}>
-              <span className="font-bold mt-0.5 shrink-0">{letter}.</span>
-              <span className="flex-1 leading-snug">{c.text}</span>
-              {c.isCorrect && (
-                <span className="shrink-0 rounded bg-green-200 px-1 py-0.5 text-[9px] font-bold text-green-800">정답</span>
-              )}
-              {isChosen && !c.isCorrect && (
-                <span className="shrink-0 rounded bg-red-200 px-1 py-0.5 text-[9px] font-bold text-red-800">내 답</span>
+            <div key={c.id} className={`rounded-lg border p-3 space-y-1.5 ${choiceCls}`}>
+              <div className="flex items-start gap-2">
+                <span className="font-bold mt-0.5 shrink-0">{letter}.</span>
+                <span className="flex-1 leading-snug text-xs">{c.text}</span>
+                {c.isCorrect && (
+                  <span className="shrink-0 rounded bg-green-200 px-1 py-0.5 text-[9px] font-bold text-green-800">정답</span>
+                )}
+                {isChosen && !c.isCorrect && (
+                  <span className="shrink-0 rounded bg-red-200 px-1 py-0.5 text-[9px] font-bold text-red-800">내 답</span>
+                )}
+              </div>
+              {c.explanation && (
+                <div className="pl-6 text-[12px] leading-relaxed opacity-90">
+                  <div className="text-[10px] font-semibold opacity-75 mb-1">해석:</div>
+                  <p>{c.explanation}</p>
+                </div>
               )}
             </div>
           );

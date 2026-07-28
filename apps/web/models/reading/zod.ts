@@ -27,6 +27,8 @@ export const readingChoiceSchema = z.object({
   text: z.string().min(1, "choice.text is required"),
   /** summary 외엔 meta.correctCount(기본 1)만큼 true 허용 */
   isCorrect: z.boolean().optional().default(false),
+  /** 선택지별 해석/설명 */
+  explanation: z.string().optional().default(""),
 });
 export type RChoice = z.infer<typeof readingChoiceSchema>;
 

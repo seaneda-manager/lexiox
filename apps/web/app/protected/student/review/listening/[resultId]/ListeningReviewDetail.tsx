@@ -182,21 +182,28 @@ export default function ListeningReviewDetail({
                       {/* Choices */}
                       <div>
                         <div className="text-xs font-semibold text-gray-600 mb-2">선택지</div>
-                        <div className="space-y-1">
+                        <div className="space-y-2">
                           {q.choices.map((choice, idx) => (
                             <div
                               key={choice.id}
-                              className={`text-sm p-2 rounded ${
+                              className={`rounded p-2.5 space-y-1.5 ${
                                 selected?.id === choice.id
                                   ? choice.isCorrect
                                     ? "bg-emerald-100 text-emerald-900"
-                                    : "bg-rose-100 text-rose-900 line-through"
+                                    : "bg-rose-100 text-rose-900"
                                   : choice.isCorrect
                                   ? "bg-emerald-100 text-emerald-900"
-                                  : "text-gray-700"
+                                  : "bg-gray-50 text-gray-700"
                               }`}
                             >
-                              {String.fromCharCode(65 + idx)}. {choice.text}
+                              <div className="text-sm font-medium">
+                                {String.fromCharCode(65 + idx)}. {choice.text}
+                              </div>
+                              {choice.explanation && (
+                                <div className="text-xs leading-relaxed opacity-90 pl-4 border-l-2 border-current">
+                                  {choice.explanation}
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>

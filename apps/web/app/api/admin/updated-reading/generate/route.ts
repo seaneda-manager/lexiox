@@ -10,42 +10,52 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || 'placeho
 export async function POST(req: Request) {
   try {
     const {
-      // Module 1 (공통 Routing Module) — 4개 지문: CW 1 + Daily 2 + Academic 1
+      // Module 1 (공통 Routing Module) — CW 1 + Daily 2~3 + Academic 1
       cwTopicM1,
       dailyLifeTopic1,
       dailyLifeTopic2,
+      dailyLifeTopic3,
       academicTopicM1,
-      // Module 2 (Upper/Lower 공유 주제, 난이도만 다르게 생성) — 2개 지문: CW 1 + Academic 1
-      cwTopicM2,
-      academicTopicM2,
+      // Module 2 Lower — CW 1 + Daily 2
+      cwTopicM2Lower,
+      dailyLifeTopic2L1,
+      dailyLifeTopic2L2,
+      // Module 2 Upper — CW 1 + Academic 1
+      academicTopicM2Upper,
     } = await req.json() as {
       cwTopicM1: string;
       dailyLifeTopic1: string;
       dailyLifeTopic2: string;
+      dailyLifeTopic3?: string;
       academicTopicM1: string;
-      cwTopicM2: string;
-      academicTopicM2: string;
+      cwTopicM2Lower: string;
+      dailyLifeTopic2L1: string;
+      dailyLifeTopic2L2: string;
+      academicTopicM2Upper: string;
     };
 
-    const required = { cwTopicM1, dailyLifeTopic1, dailyLifeTopic2, academicTopicM1, cwTopicM2, academicTopicM2 };
+    const required = {
+      cwTopicM1, dailyLifeTopic1, dailyLifeTopic2, academicTopicM1,
+      cwTopicM2Lower, dailyLifeTopic2L1, dailyLifeTopic2L2, academicTopicM2Upper
+    };
     const missing = Object.entries(required).filter(([, v]) => !v?.trim()).map(([k]) => k);
     if (missing.length > 0) {
       return NextResponse.json({ ok: false, error: `Missing topics: ${missing.join(', ')}` }, { status: 400 });
     }
 
-    const prompt = `You are an expert Updated TOEFL iBT 2026 content creator. Generate a complete MST (Multistage Adaptive) Reading test JSON, matching the OFFICIAL ETS Updated Reading structure exactly.
+    const prompt = `You are an expert Updated TOEFL iBT 2026 content creator. Generate a complete Adaptive Reading test JSON, matching the ETS Updated Reading 2026 structure exactly.
 
 STRUCTURE (do not deviate from these counts):
 
-- Module 1 (Routing — common baseline, ALL students take this): 23 questions total, 4 passages
-  1. complete_words: 1 passage, 10 blanks
-  2. daily_life: 2 SEPARATE passages (different scenarios), 4 questions EACH = 8 questions total
-  3. academic_passage: 1 passage, 5 questions
+- Module 1 (Routing — common baseline, ALL students take this): 20-33 questions total, 4-5 passages
+  1. complete_words: 1 passage, 10-20 blanks (flexible per difficulty)
+  2. daily_life: 2-3 SEPARATE passages (different scenarios), 2-3 questions EACH = 5-8 questions total
+  3. academic_passage: 1-2 passages, 5-10 questions total
 
 - stage2Pool (adaptive branch based on Module 1 score, cutScore 0.7):
-  - hard (Upper): 15 questions, 2 passages — complete_words (10 blanks, harder vocab) + academic_passage (5 questions, high difficulty/dense vocabulary/complex inference). NO daily_life in this branch.
-  - easy (Lower): 15 questions, 2 passages — complete_words (10 blanks, simpler vocab) + academic_passage (5 questions, low difficulty/shorter/more direct factual questions). NO daily_life in this branch.
-  - IMPORTANT: hard and easy use the SAME topics (given below) but written at different difficulty levels — this is intentional, not a mistake.
+  - hard (Upper): 15 questions total — complete_words (1 passage, 10 blanks, harder vocab) + academic_passage (1 passage, 5 questions, high difficulty/dense vocabulary/complex inference). NO daily_life in this branch.
+  - easy (Lower): 15 questions total — complete_words (1 passage, 10 blanks, simpler vocab) + daily_life (2 passages, 2-3 questions each = 5 questions total). NO academic_passage in this branch.
+  - IMPORTANT: Lower and Upper use DIFFERENT topics and different content — Lower emphasizes daily_life, Upper emphasizes academic.
 
 QUESTION TYPE DISTRIBUTION (controls the "type" field on each question — use these exact values: vocab | detail | negative_detail | paraphrasing | inference | purpose | insertion):
 
@@ -65,9 +75,12 @@ TOPICS:
 - Module 1 Complete the Words topic: "${cwTopicM1}"
 - Module 1 Daily Life #1 topic: "${dailyLifeTopic1}"
 - Module 1 Daily Life #2 topic: "${dailyLifeTopic2}"
+${dailyLifeTopic3 ? `- Module 1 Daily Life #3 topic (optional): "${dailyLifeTopic3}"` : ""}
 - Module 1 Academic Passage topic: "${academicTopicM1}"
-- Module 2 Complete the Words topic (shared hard/easy): "${cwTopicM2}"
-- Module 2 Academic Passage topic (shared hard/easy): "${academicTopicM2}"
+- Module 2 Lower - Complete the Words topic: "${cwTopicM2Lower}"
+- Module 2 Lower - Daily Life #1 topic: "${dailyLifeTopic2L1}"
+- Module 2 Lower - Daily Life #2 topic: "${dailyLifeTopic2L2}"
+- Module 2 Upper - Academic Passage topic: "${academicTopicM2Upper}"
 
 ITEM SPECS:
 
