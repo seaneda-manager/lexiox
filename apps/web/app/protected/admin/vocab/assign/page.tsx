@@ -25,8 +25,8 @@ export default async function AdminVocabAssignPage() {
       </div>
 
       <AssignClient
-        initialStudents={studentsRes.ok ? studentsRes.rows : []}
-        initialTracks={tracksRes.ok ? tracksRes.rows : []}
+        students={studentsRes.ok ? studentsRes.rows : []}
+        tracks={tracksRes.ok ? tracksRes.rows : []}
       />
     </div>
   );
