@@ -19,7 +19,21 @@ export default function ReadingTestLayout2026({ header, left, right, footer }: P
   const isSingleColumn = right == null;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', fontFamily: 'Arial, Helvetica, sans-serif' }}>
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100vh',
+      width: '100vw',
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      margin: 0,
+      padding: 0,
+      zIndex: 9999,
+      fontFamily: 'Arial, Helvetica, sans-serif'
+    }}>
 
       {/* ── ETS Header ── */}
       <header style={{
