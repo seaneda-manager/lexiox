@@ -174,7 +174,11 @@ export default function VocabAssignClient({ students, plans }: Props) {
                       key={day}
                       onClick={() => setNewDay(day)}
                       disabled={loading}
-                      className={px-3 py-1.5 rounded-lg text-sm font-medium transition \}
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                        newDay === day
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
                     >
                       Day {day}
                     </button>
@@ -203,7 +207,11 @@ export default function VocabAssignClient({ students, plans }: Props) {
       {/* 메시지 */}
       {message && (
         <div
-          className={p-4 rounded-lg \}
+          className={`p-4 rounded-lg ${
+            message.type === 'success'
+              ? 'bg-green-50 text-green-800 border border-green-200'
+              : 'bg-red-50 text-red-800 border border-red-200'
+          }`}
         >
           {message.text}
         </div>
