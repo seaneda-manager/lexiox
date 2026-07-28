@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles, Loader2, ChevronDown, ChevronUp } from "lucide-react";
+import { Sparkles, Loader2, ChevronDown, ChevronUp, Check } from "lucide-react";
 
 export default function AiFeedbackPanel({
   resultId,
@@ -16,6 +16,7 @@ export default function AiFeedbackPanel({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState(!!initialFeedback);
+  const [checkedSections, setCheckedSections] = useState<Set<number>>(new Set());
 
   async function requestFeedback() {
     setLoading(true);
@@ -109,12 +110,42 @@ export default function AiFeedbackPanel({
         <div className="border-t border-violet-100 divide-y divide-violet-50">
           {sections.length > 0
             ? sections.map((sec, i) => (
-                <div key={i} className="px-4 py-3">
-                  <div className="mb-1.5 text-[11px] font-bold text-violet-700 uppercase tracking-wide">
-                    {sec.title}
-                  </div>
-                  <div className="text-sm leading-relaxed text-gray-800 whitespace-pre-wrap">
-                    {sec.body}
+                <div
+                  key={i}
+                  className={`px-4 py-3 cursor-pointer transition ${
+                    checkedSections.has(i) ? "bg-violet-50" : "hover:bg-gray-50"
+                  }`}
+                  onClick={() => {
+                    const newSet = new Set(checkedSections);
+                    if (newSet.has(i)) {
+                      newSet.delete(i);
+                    } else {
+                      newSet.add(i);
+                    }
+                    setCheckedSections(newSet);
+                  }}
+                >
+                  <div className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      checked={checkedSections.has(i)}
+                      onChange={() => {}}
+                      className="mt-1 w-4 h-4 accent-violet-600"
+                    />
+                    <div className="flex-1">
+                      <div className="mb-1.5 text-[11px] font-bold text-violet-700 uppercase tracking-wide">
+                        {sec.title}
+                      </div>
+                      <div
+                        className={`text-sm leading-relaxed whitespace-pre-wrap ${
+                          checkedSections.has(i)
+                            ? "text-gray-500 line-through"
+                            : "text-gray-800"
+                        }`}
+                      >
+                        {sec.body}
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))

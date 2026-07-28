@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Sparkles, Loader2, ChevronDown, ChevronUp, Pencil, Check, X, RotateCcw } from "lucide-react";
+import { Sparkles, Loader2, ChevronDown, ChevronUp, Pencil, Check, X, RotateCcw, CheckCircle2 } from "lucide-react";
 import type { WWritingTest2026, WWritingItem } from "@/models/writing";
 
 const TASK_LABEL: Record<string, string> = {
@@ -42,6 +42,7 @@ export default function WritingReviewBody({
     total?: number;
   } | null>(null);
   const [showComparison, setShowComparison] = useState(false);
+  const [checkedFeedback, setCheckedFeedback] = useState<Set<number>>(new Set());
 
   function updateAnswer(key: string, value: string) {
     setAnswers((prev) => ({ ...prev, [key]: value }));
@@ -294,12 +295,40 @@ export default function WritingReviewBody({
           <div className="border-t border-teal-100 divide-y divide-teal-50">
             {feedbackSections.length > 0
               ? feedbackSections.map((sec, i) => (
-                  <div key={i} className="px-4 py-3">
-                    <div className="mb-1.5 text-[11px] font-bold text-teal-700 uppercase tracking-wide">
-                      {sec.title}
-                    </div>
-                    <div className="text-sm leading-relaxed text-gray-800 whitespace-pre-wrap">
-                      {sec.body}
+                  <div
+                    key={i}
+                    className={`px-4 py-3 cursor-pointer transition ${
+                      checkedFeedback.has(i) ? "bg-teal-50" : "hover:bg-gray-50"
+                    }`}
+                    onClick={() => {
+                      const newSet = new Set(checkedFeedback);
+                      if (newSet.has(i)) {
+                        newSet.delete(i);
+                      } else {
+                        newSet.add(i);
+                      }
+                      setCheckedFeedback(newSet);
+                    }}
+                  >
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        checked={checkedFeedback.has(i)}
+                        onChange={() => {}}
+                        className="mt-1 w-4 h-4 accent-teal-600"
+                      />
+                      <div className="flex-1">
+                        <div className="mb-1.5 text-[11px] font-bold text-teal-700 uppercase tracking-wide">
+                          {sec.title}
+                        </div>
+                        <div className={`text-sm leading-relaxed whitespace-pre-wrap ${
+                          checkedFeedback.has(i)
+                            ? "text-gray-500 line-through"
+                            : "text-gray-800"
+                        }`}>
+                          {sec.body}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))
