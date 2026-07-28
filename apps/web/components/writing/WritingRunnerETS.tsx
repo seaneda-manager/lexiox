@@ -616,6 +616,13 @@ export default function WritingRunnerETS({ test, onFinish }: Props) {
     setPhase(academicItem ? "task3" : "done");
   }, [academicItem]);
 
+  // phase가 done이 되면 onFinish 호출 (Task 3이 없는 경우)
+  useEffect(() => {
+    if (phase === "done" && !academicItem && task1Scores.length > 0) {
+      onFinish?.({ task1Scores, task2Text, task3Text: "" });
+    }
+  }, [phase, academicItem, task1Scores, task2Text, onFinish]);
+
   const handleTask3Complete = useCallback((text: string) => {
     setPhase("done");
     onFinish?.({ task1Scores, task2Text, task3Text: text });
