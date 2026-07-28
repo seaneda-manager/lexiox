@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ChevronUp, Sparkles, Loader2, BookOpen, Languages } from "lucide-react";
+import { ChevronDown, ChevronUp, Sparkles, Loader2, BookOpen, Languages, Bookmark } from "lucide-react";
 import type { RQuestion, RChoice } from "@/models/reading";
 
 // ── Question type labels & colors ────────────────────────────────────
@@ -64,22 +64,149 @@ export default function ReadingReviewV2({
   answerMap: Record<string, string | null>;
   cwItems?: CwReviewItem[];
 }) {
+  const [tab, setTab] = useState<"review" | "voca">("review");
   const groups = groupByPassage(flatQuestions);
   const aMap = new Map(Object.entries(answerMap));
 
+  // Extract all words and phrases from passages and choices
+  const allText = [
+    ...groups.map(g => g.passageText),
+    ...flatQuestions.flatMap(q => q.choices.map(c => c.text))
+  ].join(" ");
+
+  const [unknownWords, setUnknownWords] = useState<Set<string>>(new Set());
+
+  const toggleWord = (word: string) => {
+    const newSet = new Set(unknownWords);
+    if (newSet.has(word)) {
+      newSet.delete(word);
+    } else {
+      newSet.add(word);
+    }
+    setUnknownWords(newSet);
+  };
+
   return (
-    <div className="space-y-8">
-      {/* Complete the Words 섹션 */}
-      {cwItems.length > 0 && (
-        <CompleteWordsReview cwItems={cwItems} answerMap={aMap} />
+    <div className="space-y-6">
+      {/* Tab Navigation */}
+      <div className="flex gap-2 border-b">
+        <button
+          onClick={() => setTab("review")}
+          className={`px-4 py-2 font-medium border-b-2 ${
+            tab === "review"
+              ? "border-emerald-600 text-emerald-600"
+              : "border-transparent text-gray-600 hover:text-gray-900"
+          }`}
+        >
+          정/오답 리뷰
+        </button>
+        <button
+          onClick={() => setTab("voca")}
+          className={`px-4 py-2 font-medium border-b-2 flex items-center gap-2 ${
+            tab === "voca"
+              ? "border-emerald-600 text-emerald-600"
+              : "border-transparent text-gray-600 hover:text-gray-900"
+          }`}
+        >
+          <Bookmark className="h-4 w-4" />
+          단어 분석 ({unknownWords.size})
+        </button>
+      </div>
+
+      {/* Review Tab */}
+      {tab === "review" && (
+        <div className="space-y-8">
+          {/* Complete the Words 섹션 */}
+          {cwItems.length > 0 && (
+            <CompleteWordsReview cwItems={cwItems} answerMap={aMap} />
+          )}
+          {/* Academic Passage 섹션 */}
+          {groups.map((group, gi) => (
+            <PassageGroup key={gi} group={group} answerMap={aMap} />
+          ))}
+        </div>
       )}
-      {/* Academic Passage 섹션 */}
-      {groups.map((group, gi) => (
-        <PassageGroup key={gi} group={group} answerMap={aMap} />
-      ))}
+
+      {/* Voca Tab */}
+      {tab === "voca" && (
+        <VocaAnalysis
+          passages={groups.map(g => g.passageText)}
+          questions={flatQuestions}
+          unknownWords={unknownWords}
+          onToggleWord={toggleWord}
+        />
+      )}
     </div>
   );
 }
+
+function VocaAnalysis({
+  passages,
+  questions,
+  unknownWords,
+  onToggleWord,
+}: {
+  passages: string[];
+  questions: FlatQuestion[];
+  unknownWords: Set<string>;
+  onToggleWord: (word: string) => void;
+}) {
+  return (
+    <div className="space-y-6">
+      <div className="rounded-lg bg-blue-50 border border-blue-200 p-4">
+        <p className="text-sm text-blue-900">
+          모르는 단어와 표현을 클릭하여 표시하면 자동으로 정리됩니다.
+        </p>
+      </div>
+
+      {/* Passages */}
+      <div className="space-y-4">
+        {passages.map((text, idx) => (
+          <div key={idx} className="rounded-lg border p-4 space-y-2">
+            <p className="text-sm font-semibold text-gray-700">Passage {idx + 1}</p>
+            <p className="text-sm text-gray-600 leading-relaxed">{text}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Questions & Choices */}
+      <div className="space-y-3">
+        <p className="text-sm font-semibold text-gray-700">선택지와 표현</p>
+        {questions.map((q) => (
+          <div key={q.id} className="rounded-lg border p-3 space-y-2">
+            <p className="text-xs font-medium text-gray-600">Q{q.number}</p>
+            <div className="space-y-1">
+              {q.choices.map((choice) => (
+                <p key={choice.id} className="text-sm text-gray-700">
+                  • {choice.text}
+                </p>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Known Words List */}
+      {unknownWords.size > 0 && (
+        <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-4">
+          <p className="text-sm font-semibold text-emerald-900 mb-3">
+            정리된 단어 ({unknownWords.size})
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {Array.from(unknownWords).map((word) => (
+              <button
+                key={word}
+                onClick={() => onToggleWord(word)}
+                className="px-3 py-1 rounded-full bg-emerald-200 text-emerald-900 text-sm hover:bg-emerald-300 transition"
+              >
+                {word} ×
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 
 // ── Passage group ────────────────────────────────────────────────────
 
