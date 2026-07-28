@@ -107,6 +107,7 @@ type Stage =
   | "LEARNING"
   | "SPEED"
   | "FLASHCARD"
+  | "FLASHCARD_REVIEW"
   | "DRILL_INTRO"
   | "DRILL"
   | "DONE";
@@ -649,6 +650,8 @@ export default function VocabSessionPage() {
   const [totalPoints, setTotalPoints] = useState<number | null>(null);
   const [speedTry, setSpeedTry] = useState<number>(1);
   const [completing, setCompleting] = useState<boolean>(false);
+  const [currentFlashcardIndex, setCurrentFlashcardIndex] = useState<number>(0);
+  const [flashcardPoints, setFlashcardPoints] = useState<number>(0);
 
   const shortcut = useMemo(() => readShortcutParams(), []);
   const onlyType = useMemo(() => canonOnlyToDrillType(shortcut.only), [shortcut.only]);
@@ -1341,7 +1344,9 @@ export default function VocabSessionPage() {
     // 통과(70% 이상) + 틀린 단어 있으면 → 깜지로 복습
     if (acc >= 0.7 && wrong.length > 0) {
       setSpeedWrongIds(wrong);
-      setStage("FLASHCARD");
+      setCurrentFlashcardIndex(0);
+      setFlashcardPoints(0);
+      setStage("FLASHCARD_REVIEW");
       return;
     }
 
@@ -1785,49 +1790,108 @@ export default function VocabSessionPage() {
       );
     }
 
+    if (stage === "FLASHCARD_REVIEW") {
+      const { TextFlashcard } = require("@/app/protected/vocab/homework/text-flashcard");
+      const wrongWords = allWords.filter((w) => speedWrongIds.includes(w.id));
+
+      if (wrongWords.length === 0) {
+        return (
+          <CardWrap>
+            {Debug}
+            {headerBlock}
+            <div className="rounded-2xl border bg-white p-6 text-center">
+              <div className="text-2xl font-bold text-slate-900 mb-2">완벽해요! ✨</div>
+              <div className="text-slate-600 mb-6">틀린 단어가 없어요</div>
+              <button
+                onClick={async () => {
+                  setStage("SUMMARY");
+                  await finishDay();
+                }}
+                className="w-full rounded-xl bg-emerald-600 py-3 font-bold text-white hover:bg-emerald-700"
+              >
+                Summary로 이동
+              </button>
+            </div>
+          </CardWrap>
+        );
+      }
+
+      const currentWord = wrongWords[currentFlashcardIndex];
+      const meanings = Array.isArray(currentWord.meanings_ko)
+        ? currentWord.meanings_ko
+        : [currentWord.meanings_ko];
+
+      return (
+        <CardWrap>
+          {Debug}
+          {headerBlock}
+          <div className="rounded-2xl border bg-white p-6">
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold text-slate-900 mb-1">📚 깜지 복습</div>
+                <div className="text-sm text-slate-600">
+                  {currentFlashcardIndex + 1} / {wrongWords.length}
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-sm text-slate-600 mb-1">누적 포인트</div>
+                <div className="text-2xl font-bold text-emerald-600">{flashcardPoints}</div>
+              </div>
+            </div>
+
+            <div className="mb-6 h-2 w-full rounded-full bg-slate-200">
+              <div
+                className="h-full rounded-full bg-blue-600 transition-all"
+                style={{
+                  width: `${((currentFlashcardIndex + 1) / wrongWords.length) * 100}%`,
+                }}
+              />
+            </div>
+
+            <TextFlashcard
+              wordId={currentWord.id}
+              word={currentWord.text}
+              pos="명사"
+              meanings={meanings}
+              onComplete={(points) => {
+                setFlashcardPoints(prev => prev + points);
+                if (currentFlashcardIndex < wrongWords.length - 1) {
+                  setCurrentFlashcardIndex(prev => prev + 1);
+                } else {
+                  setStage("FLASHCARD");
+                }
+              }}
+            />
+          </div>
+        </CardWrap>
+      );
+    }
+
     if (stage === "FLASHCARD") {
       const wrongWords = allWords.filter((w) => speedWrongIds.includes(w.id));
       return (
         <CardWrap>
           {Debug}
           {headerBlock}
-          <div className="rounded-2xl border bg-white p-6">
-            <div className="mb-6 text-center">
-              <div className="text-2xl font-bold text-slate-900 mb-2">📚 깜지 복습</div>
-              <div className="text-sm text-slate-600">틀린 단어 {wrongWords.length}개를 복습해요</div>
-            </div>
-            {wrongWords.length > 0 ? (
-              <div className="space-y-4">
-                {wrongWords.map((word, idx) => (
-                  <div
-                    key={word.id}
-                    className="p-4 rounded-lg border border-slate-200 hover:border-blue-400 transition"
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="font-semibold text-slate-900">{word.text}</div>
-                      <div className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
-                        {idx + 1}/{wrongWords.length}
-                      </div>
-                    </div>
-                    <div className="text-sm text-slate-600">
-                      {Array.isArray(word.meanings_ko)
-                        ? word.meanings_ko.join(", ")
-                        : word.meanings_ko}
-                    </div>
-                  </div>
-                ))}
+          <div className="rounded-2xl border-2 border-emerald-200 bg-emerald-50 p-8 text-center">
+            <div className="mb-4 text-5xl">🎉</div>
+            <div className="mb-4 text-2xl font-bold text-emerald-900">깜지 완료!</div>
+            <div className="mb-6 space-y-2">
+              <div className="text-lg">
+                <span className="font-bold text-emerald-600">{flashcardPoints}</span> 포인트 획득
               </div>
-            ) : (
-              <div className="text-center py-8 text-slate-500">완벽해요! 틀린 단어가 없어요</div>
-            )}
+              <div className="text-sm text-slate-600">
+                {wrongWords.length}개 단어 복습 완료
+              </div>
+            </div>
             <button
               onClick={async () => {
                 setStage("SUMMARY");
                 await finishDay();
               }}
-              className="mt-6 w-full rounded-xl bg-emerald-600 py-3 text-sm font-bold text-white hover:bg-emerald-700"
+              className="w-full rounded-xl bg-emerald-600 py-3 font-bold text-white hover:bg-emerald-700"
             >
-              완료 → Summary
+              Summary로 이동
             </button>
           </div>
         </CardWrap>
