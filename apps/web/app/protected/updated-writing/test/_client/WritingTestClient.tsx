@@ -58,12 +58,23 @@ export default function WritingTestClient({
           },
         }),
       });
+
+      if (!res.ok) {
+        console.error(`[Writing Save] API error: ${res.status} ${res.statusText}`);
+        alert(`저장 실패: ${res.status} 서버 오류. 잠시 후 다시 시도해주세요.`);
+        return;
+      }
+
       const data = await res.json();
       if (data.sessionId) {
         router.push(`/student/review/writing/${data.sessionId}`);
+      } else {
+        console.error('[Writing Save] No sessionId in response:', data);
+        alert('저장에 실패했습니다. 잠시 후 다시 시도해주세요.');
       }
-    } catch {
-      // 저장 실패 시 완료 화면 유지
+    } catch (err) {
+      console.error('[Writing Save] Error:', err);
+      alert('저장 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
     }
   }
 
