@@ -1,6 +1,7 @@
 'use client';
 
-import { ReactNode, usePathname } from 'react/navigation';
+import { ReactNode } from 'react';
+import { usePathname } from 'next/navigation';
 import TopbarClient from '@/components/dashboard/TopbarClient';
 import SidebarClient from '@/components/dashboard/SidebarClient';
 import SidebarProfile from '@/components/dashboard/SidebarProfile';
