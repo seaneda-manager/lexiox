@@ -1,51 +1,56 @@
-// apps/web/app/(protected)/admin/vocab/assign/page.tsx
-import Link from "next/link";
-import AssignClient from "./_client/AssignClient";
-import { listStudentsAction, listTracksWithReadinessAction } from "./actions";
+﻿import { redirect } from 'next/navigation';
+import { getServerSupabase } from '@/lib/supabase/server';
+import VocabAssignClient from './_client/VocabAssignClient';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
-export default async function AdminVocabAssignPage() {
-  const [studentsRes, tracksRes] = await Promise.all([
-    listStudentsAction(),
-    listTracksWithReadinessAction(),
-  ]);
+export default async function VocabAssignPage() {
+  const supabase = await getServerSupabase();
 
-  const students = studentsRes.ok ? studentsRes.rows : [];
-  const tracks = tracksRes.ok ? tracksRes.rows : [];
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect('/auth/login');
 
-  const errorParts: string[] = [];
-  if ("error" in studentsRes) errorParts.push(`학생: ${studentsRes.error}`);
-  if ("error" in tracksRes) errorParts.push(`트랙: ${tracksRes.error}`);
-  const loadError = errorParts.join(" · ");
+  // 권한 확인
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (profile?.role !== 'admin' && profile?.role !== 'teacher') {
+    redirect('/student/home');
+  }
+
+  // 학생 목록 조회
+  const { data: students } = await supabase
+    .from('academy_students')
+    .select('id, user_id, full_name')
+    .order('full_name');
+
+  // Vocab plans
+  const { data: plans } = await supabase
+    .from('student_vocab_plans')
+    .select(\
+      id,
+      student_id,
+      track_id,
+      start_day_index,
+      vocab_tracks (
+        id,
+        title,
+        day_count
+      )
+    \);
 
   return (
-    <main className="mx-auto w-full max-w-4xl space-y-5 px-6 py-8">
-      <header className="flex items-end justify-between">
-        <div className="space-y-1">
-          <div className="text-xs uppercase tracking-[0.18em] text-neutral-400">
-            Admin / Vocab / 단어 배정
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight">단어 배정</h1>
-          <p className="text-sm text-neutral-500">
-            학생을 고르고 · 준비된 트랙을 고르고 · 일정을 확인한 뒤 배정합니다.
-          </p>
-        </div>
-        <Link
-          href="/admin/vocab/Tracks"
-          className="rounded-xl border px-4 py-2 text-sm text-neutral-600 hover:bg-neutral-50"
-        >
-          기존 배포 화면
-        </Link>
-      </header>
+    <div className="p-6">
+      <h1 className="text-3xl font-bold mb-2">📚 단어 회차 관리</h1>
+      <p className="text-gray-600 mb-8">학생의 단어 학습 시작 회차를 조정합니다.</p>
 
-      {loadError.trim() ? (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-          데이터 로드 실패 — {loadError}
-        </div>
-      ) : null}
-
-      <AssignClient students={students} tracks={tracks} />
-    </main>
+      <VocabAssignClient
+        students={students || []}
+        plans={plans || []}
+      />
+    </div>
   );
 }
