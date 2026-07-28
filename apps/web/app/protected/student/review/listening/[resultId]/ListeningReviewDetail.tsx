@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ChevronDown, ChevronUp, Sparkles, Bookmark, Mic } from "lucide-react";
+import { ChevronDown, ChevronUp, Bookmark, Mic } from "lucide-react";
 import type { ListeningTest2026 } from "@/models/listening";
 
 type Props = {
@@ -29,6 +28,7 @@ export default function ListeningReviewDetail({
   module,
   difficulty,
 }: Props) {
+  const [tab, setTab] = useState<"review" | "voca" | "notes" | "shadowing">("review");
   const [expandedQ, setExpandedQ] = useState<string | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [vocaList, setVocaList] = useState<string[]>([]);
@@ -76,16 +76,52 @@ export default function ListeningReviewDetail({
   return (
     <div className="space-y-6">
       {/* Navigation Tabs */}
-      <Tabs defaultValue="review" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="review">정/오답</TabsTrigger>
-          <TabsTrigger value="vocabulary">단어</TabsTrigger>
-          <TabsTrigger value="notes">노트</TabsTrigger>
-          <TabsTrigger value="shadowing">섀도잉</TabsTrigger>
-        </TabsList>
+      <div className="flex gap-2 border-b">
+        <button
+          onClick={() => setTab("review")}
+          className={`px-4 py-2 font-medium border-b-2 transition ${
+            tab === "review"
+              ? "border-blue-600 text-blue-600"
+              : "border-transparent text-gray-600 hover:text-gray-900"
+          }`}
+        >
+          정/오답
+        </button>
+        <button
+          onClick={() => setTab("voca")}
+          className={`px-4 py-2 font-medium border-b-2 transition ${
+            tab === "voca"
+              ? "border-blue-600 text-blue-600"
+              : "border-transparent text-gray-600 hover:text-gray-900"
+          }`}
+        >
+          단어 ({vocaList.length})
+        </button>
+        <button
+          onClick={() => setTab("notes")}
+          className={`px-4 py-2 font-medium border-b-2 transition ${
+            tab === "notes"
+              ? "border-blue-600 text-blue-600"
+              : "border-transparent text-gray-600 hover:text-gray-900"
+          }`}
+        >
+          노트
+        </button>
+        <button
+          onClick={() => setTab("shadowing")}
+          className={`px-4 py-2 font-medium border-b-2 transition ${
+            tab === "shadowing"
+              ? "border-blue-600 text-blue-600"
+              : "border-transparent text-gray-600 hover:text-gray-900"
+          }`}
+        >
+          섀도잉
+        </button>
+      </div>
 
-        {/* Review Tab: Correct/Incorrect */}
-        <TabsContent value="review" className="space-y-4">
+      {/* Review Tab */}
+      {tab === "review" && (
+        <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="rounded-lg bg-emerald-50 p-4 border border-emerald-200">
               <div className="text-sm font-medium text-emerald-900">정답</div>
@@ -101,14 +137,14 @@ export default function ListeningReviewDetail({
             {allQuestions.map((q) => {
               const choiceIdx = userAnswers[q.id];
               const selected = choiceIdx !== undefined ? q.choices[choiceIdx] : null;
-              const correct = selected?.isCorrect;
+              const isCorrect = selected?.isCorrect;
               const isExpanded = expandedQ === q.id;
 
               return (
                 <div
                   key={q.id}
                   className={`rounded-lg border ${
-                    correct
+                    isCorrect
                       ? "border-emerald-200 bg-emerald-50"
                       : "border-rose-200 bg-rose-50"
                   }`}
@@ -119,17 +155,17 @@ export default function ListeningReviewDetail({
                   >
                     <div className="flex-1 text-left">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className={`text-sm font-bold ${correct ? "text-emerald-700" : "text-rose-700"}`}>
+                        <span className={`text-sm font-bold ${isCorrect ? "text-emerald-700" : "text-rose-700"}`}>
                           Q{q.number}
                         </span>
                         <span className={`text-xs font-medium px-2 py-0.5 rounded ${
-                          correct ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"
+                          isCorrect ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"
                         }`}>
-                          {correct ? "정답" : "오답"}
+                          {isCorrect ? "정답" : "오답"}
                         </span>
                       </div>
                       {q.stem && (
-                        <p className={`text-sm ${correct ? "text-emerald-900" : "text-rose-900"}`}>
+                        <p className={`text-sm ${isCorrect ? "text-emerald-900" : "text-rose-900"}`}>
                           {q.stem}
                         </p>
                       )}
@@ -187,13 +223,15 @@ export default function ListeningReviewDetail({
               );
             })}
           </div>
-        </TabsContent>
+        </div>
+      )}
 
-        {/* Vocabulary Tab */}
-        <TabsContent value="vocabulary" className="space-y-4">
+      {/* Vocabulary Tab */}
+      {tab === "voca" && (
+        <div className="space-y-4">
           <div className="rounded-lg bg-blue-50 border border-blue-200 p-4">
             <p className="text-sm text-blue-900">
-              모르는 단어와 표현을 체크하면 자동으로 정리됩니다.
+              모르는 단어와 표현을 정리합니다.
             </p>
           </div>
 
@@ -216,42 +254,33 @@ export default function ListeningReviewDetail({
               </div>
             ))}
           </div>
+        </div>
+      )}
 
-          {vocaList.length > 0 && (
-            <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-4">
-              <div className="text-sm font-semibold text-emerald-900 mb-2">정리된 단어 ({vocaList.length})</div>
-              <div className="space-y-1">
-                {vocaList.map((word) => (
-                  <div key={word} className="text-sm text-emerald-800">• {word}</div>
-                ))}
+      {/* Notes Tab */}
+      {tab === "notes" && (
+        <div className="space-y-4">
+          {allQuestions.map((q) => (
+            <div key={q.id} className="rounded-lg border p-4 space-y-2">
+              <div className="flex items-center gap-2">
+                <Bookmark className="h-4 w-4 text-gray-400" />
+                <span className="font-medium">Q{q.number}</span>
               </div>
+              <textarea
+                value={notes[q.id] || ""}
+                onChange={(e) => setNotes({ ...notes, [q.id]: e.target.value })}
+                placeholder="이 문제에 대한 노트를 작성하세요..."
+                className="w-full p-2 border rounded text-sm"
+                rows={3}
+              />
             </div>
-          )}
-        </TabsContent>
+          ))}
+        </div>
+      )}
 
-        {/* Notes Tab */}
-        <TabsContent value="notes" className="space-y-4">
-          <div className="space-y-4">
-            {allQuestions.map((q) => (
-              <div key={q.id} className="rounded-lg border p-4 space-y-2">
-                <div className="flex items-center gap-2">
-                  <Bookmark className="h-4 w-4 text-gray-400" />
-                  <span className="font-medium">Q{q.number}</span>
-                </div>
-                <textarea
-                  value={notes[q.id] || ""}
-                  onChange={(e) => setNotes({ ...notes, [q.id]: e.target.value })}
-                  placeholder="이 문제에 대한 노트를 작성하세요..."
-                  className="w-full p-2 border rounded text-sm"
-                  rows={3}
-                />
-              </div>
-            ))}
-          </div>
-        </TabsContent>
-
-        {/* Shadowing Tab */}
-        <TabsContent value="shadowing" className="space-y-4">
+      {/* Shadowing Tab */}
+      {tab === "shadowing" && (
+        <div className="space-y-4">
           <div className="rounded-lg bg-blue-50 border border-blue-200 p-4">
             <p className="text-sm text-blue-900">
               오답한 문제들의 음성을 따라 읽으며 발음과 리듬을 연습하세요.
@@ -280,8 +309,8 @@ export default function ListeningReviewDetail({
                 </div>
               ))}
           </div>
-        </TabsContent>
-      </Tabs>
+        </div>
+      )}
     </div>
   );
 }
