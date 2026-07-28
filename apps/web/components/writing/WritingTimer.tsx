@@ -20,7 +20,7 @@ interface WritingTimerProps {
 }
 
 const TASK_TIME_LIMITS = {
-  TASK_1: 23 * 60, // 23분 (섹션 통합 타이머)
+  TASK_1: 410, // 6분 50초 (Build a Sentence 글로벌 타이머)
   TASK_2: 7 * 60, // 7분 (이메일 작성 독립 타이머)
   TASK_3: 10 * 60, // 10분 (학술 토론 독립 타이머)
 };
