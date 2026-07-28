@@ -52,14 +52,16 @@ export default function AudioCheckPage() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6">
-      <div className="max-w-2xl w-full">
+      <div className="max-w-2xl w-full space-y-8">
         {/* 헤더 */}
-        <h1 className="text-3xl font-bold text-gray-900 text-center mb-2">
-          Volume and Microphone Check
-        </h1>
-        <p className="text-gray-600 text-center mb-12">
-          Please read the sentence below in your normal voice so the system can auto-adjust your microphone volume.
-        </p>
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Volume and Microphone Check
+          </h1>
+          <p className="text-gray-600">
+            Please read the sentence below in your normal voice so the system can auto-adjust your microphone volume.
+          </p>
+        </div>
 
         {/* 마이크 아이콘 */}
         <div className="flex justify-center mb-12">
@@ -105,11 +107,11 @@ export default function AudioCheckPage() {
         </div>
 
         {/* Next 버튼 */}
-        <div className="flex justify-center">
+        <div className="flex justify-center pt-4">
           <button
             onClick={handleNext}
             disabled={!isReady}
-            className={`px-8 py-3 rounded-lg font-semibold text-white transition-all ${
+            className={`px-12 py-3 rounded-lg font-semibold text-white transition-all ${
               isReady
                 ? 'bg-blue-600 hover:bg-blue-700 cursor-pointer'
                 : 'bg-gray-300 cursor-not-allowed'
