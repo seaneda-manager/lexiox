@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { randomUUID } from 'crypto';
+import { createClient } from '@supabase/supabase-js';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
@@ -43,7 +44,42 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: `Missing topics: ${missing.join(', ')}` }, { status: 400 });
     }
 
+    // Get existing topics from previous tests to avoid duplicates
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+      process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+    );
+    const { data: existingTests } = await supabase
+      .from('reading_tests_2026')
+      .select('payload')
+      .limit(100);
+
+    const existingTopics: string[] = [];
+    if (existingTests) {
+      for (const test of existingTests) {
+        const payload = test.payload as any;
+        // Extract all topics from existing tests
+        if (payload?.meta?.usedTopics) {
+          const used = payload.meta.usedTopics;
+          Object.values(used).forEach((topics: any) => {
+            if (Array.isArray(topics)) existingTopics.push(...topics);
+            else if (typeof topics === 'string') existingTopics.push(topics);
+          });
+        }
+      }
+    }
+
+    // Add current input topics to avoid list
+    const allTopics = [cwTopicM1, dailyLifeTopic1, dailyLifeTopic2, dailyLifeTopic3,
+                       academicTopicM1, cwTopicM2Lower, dailyLifeTopic2L1, dailyLifeTopic2L2,
+                       academicTopicM2Upper].filter(Boolean);
+    existingTopics.push(...allTopics);
+
     const prompt = `You are an expert Updated TOEFL iBT 2026 content creator. Generate a complete Adaptive Reading test JSON, matching the ETS Updated Reading 2026 structure exactly.
+
+IMPORTANT: AVOID DUPLICATE TOPICS
+The following topics have already been used in previous tests. Do NOT use any of these topics or similar ones:
+${existingTopics.length > 0 ? existingTopics.map(t => `- ${t}`).join('\n') : '(none yet)'}
 
 STRUCTURE (do not deviate from these counts):
 
