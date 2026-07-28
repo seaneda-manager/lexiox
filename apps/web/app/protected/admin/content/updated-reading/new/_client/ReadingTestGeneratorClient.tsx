@@ -508,7 +508,7 @@ export default function ReadingTestGeneratorClient() {
       {questions.map((q, qi) => {
         const isGenerating = generatingExplanations.has(`${group}-${itemIndex}-${qi}`);
         return (
-        <div key={q.id} className="rounded-lg border border-gray-100 bg-gray-50 p-3 space-y-2">
+          <div key={q.id} className="rounded-lg border border-gray-100 bg-gray-50 p-3 space-y-2">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <span className="text-[11px] font-medium text-gray-500">Q{q.number}</span>

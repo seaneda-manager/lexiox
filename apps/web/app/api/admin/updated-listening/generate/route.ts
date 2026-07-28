@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { randomUUID } from 'crypto';
+import { createClient } from '@supabase/supabase-js';
 
 // 오디오는 이 라우트에서 생성하지 않는다 (스크립트/문제만 생성).
 // 실제 TTS 생성은 admin이 edit 페이지에서 트랙별로 트리거하는
@@ -65,7 +66,7 @@ type ModuleTopics = {
   lectureTopic2?: string;
 };
 
-function buildModule1Prompt(topics: ModuleTopics): string {
+function buildModule1Prompt(topics: ModuleTopics, existingTopics: string[] = []): string {
   const { conversationTopic, announcementTopic, lectureTopic1 } = topics;
   return `You are an expert Updated TOEFL iBT Listening (2026 Module 1 - Common Baseline for All Students) content creator.
 
@@ -75,6 +76,10 @@ Generate a complete Module 1 test with this exact structure (INTERMEDIATE diffic
 - Task 3: Announcement (1 passage, 3 questions)
 - Task 4: Academic Talk (1 passage, 4 questions)
 TOTAL: 15-18 items
+
+IMPORTANT: AVOID DUPLICATE TOPICS
+The following topics have already been used in previous tests. Do NOT use any of these topics or similar ones:
+${existingTopics.length > 0 ? existingTopics.map(t => `- ${t}`).join('\n') : '(none yet)'}
 
 TOPICS PROVIDED:
 - Conversation topic: "${conversationTopic}"
@@ -180,7 +185,7 @@ Return ONLY a valid JSON object:
 ${RESPONSE_FORMAT_CRITICAL}`;
 }
 
-function buildHardPrompt(topics: ModuleTopics): string {
+function buildHardPrompt(topics: ModuleTopics, existingTopics: string[] = []): string {
   const { announcementTopic, announcementTopic2, lectureTopic1, lectureTopic2 } = topics;
   return `You are an expert Updated TOEFL iBT Listening (2026 Module 2 - HARD branch) content creator.
 
@@ -192,6 +197,10 @@ Generate a complete Hard Module test with this exact structure (Conversation is 
 - Task 5: Academic Talk #2 (1 passage, 4 questions)
 TOTAL: 15-17 items
 NOTE: NO Conversation task in this branch.
+
+IMPORTANT: AVOID DUPLICATE TOPICS
+The following topics have already been used in previous tests. Do NOT use any of these topics or similar ones:
+${existingTopics.length > 0 ? existingTopics.map(t => `- ${t}`).join('\n') : '(none yet)'}
 
 TOPICS PROVIDED:
 - Announcement #1 topic: "${announcementTopic}"
@@ -297,7 +306,7 @@ Return ONLY a valid JSON object:
 ${RESPONSE_FORMAT_CRITICAL}`;
 }
 
-function buildEasyPrompt(topics: ModuleTopics): string {
+function buildEasyPrompt(topics: ModuleTopics, existingTopics: string[] = []): string {
   const { conversationTopic, conversationTopic2, conversationTopic3, announcementTopic, announcementTopic2 } = topics;
   return `You are an expert Updated TOEFL iBT Listening (2026 Module 2 - EASY branch) content creator.
 
@@ -310,6 +319,10 @@ Generate a complete Easy Module test with this exact structure (Academic Talk is
 - Task 6: Announcement #2 (1 passage, 2 questions)
 TOTAL: 15-17 items
 NOTE: NO Academic Talk / lecture task in this branch.
+
+IMPORTANT: AVOID DUPLICATE TOPICS
+The following topics have already been used in previous tests. Do NOT use any of these topics or similar ones:
+${existingTopics.length > 0 ? existingTopics.map(t => `- ${t}`).join('\n') : '(none yet)'}
 
 TOPICS PROVIDED:
 - Conversation #1 topic: "${conversationTopic}"
@@ -424,11 +437,11 @@ Return ONLY a valid JSON object:
 ${RESPONSE_FORMAT_CRITICAL}`;
 }
 
-async function generateModule(part: 'module1' | 'hard' | 'easy', topics: ModuleTopics) {
+async function generateModule(part: 'module1' | 'hard' | 'easy', topics: ModuleTopics, existingTopics: string[] = []) {
   const prompt =
-    part === 'module1' ? buildModule1Prompt(topics) :
-    part === 'hard' ? buildHardPrompt(topics) :
-    buildEasyPrompt(topics);
+    part === 'module1' ? buildModule1Prompt(topics, existingTopics) :
+    part === 'hard' ? buildHardPrompt(topics, existingTopics) :
+    buildEasyPrompt(topics, existingTopics);
 
   const message = await anthropic.messages.create({
     model: 'claude-sonnet-4-6',
@@ -491,26 +504,60 @@ export async function POST(req: Request) {
 
     console.log('[Generate] Starting Module 1 + Module 2 (Hard + Easy) generation...');
 
+    // Get existing topics from previous tests to avoid duplicates
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+      process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+    );
+    const { data: existingTests } = await supabase
+      .from('listening_tests_2026')
+      .select('payload')
+      .limit(100);
+
+    const existingTopics: string[] = [];
+    if (existingTests) {
+      for (const test of existingTests) {
+        const payload = test.payload as any;
+        // Extract all topics from existing tests
+        if (payload?.meta?.usedTopics) {
+          const used = payload.meta.usedTopics;
+          Object.values(used).forEach((topics: any) => {
+            if (Array.isArray(topics)) existingTopics.push(...topics);
+            else if (typeof topics === 'string') existingTopics.push(topics);
+          });
+        }
+      }
+    }
+
+    // Add current input topics to avoid list
+    const allCurrentTopics = [
+      module1.conversationTopic, module1.announcementTopic, module1.lectureTopic1,
+      module2.conversationTopic, module2.conversationTopic2, module2.conversationTopic3,
+      module2.announcementTopic, module2.announcementTopic2,
+      module2.lectureTopic1, module2.lectureTopic2,
+    ].filter(Boolean);
+    existingTopics.push(...allCurrentTopics);
+
     // Generate Module 1, Module 2 Hard, and Module 2 Easy in parallel
     const [module1Items, hardItems, easyItems] = await Promise.all([
       generateModule('module1', {
         conversationTopic: module1.conversationTopic,
         announcementTopic: module1.announcementTopic,
         lectureTopic1: module1.lectureTopic1,
-      }),
+      }, existingTopics),
       generateModule('hard', {
         announcementTopic: module2.announcementTopic,
         announcementTopic2: module2.announcementTopic2,
         lectureTopic1: module2.lectureTopic1,
         lectureTopic2: module2.lectureTopic2,
-      }),
+      }, existingTopics),
       generateModule('easy', {
         conversationTopic: module2.conversationTopic,
         conversationTopic2: module2.conversationTopic2,
         conversationTopic3: module2.conversationTopic3,
         announcementTopic: module2.announcementTopic,
         announcementTopic2: module2.announcementTopic2,
-      }),
+      }, existingTopics),
     ]);
 
     console.log(`[Generate] Items received — module1: ${module1Items.length}, hard: ${hardItems.length}, easy: ${easyItems.length}`);
