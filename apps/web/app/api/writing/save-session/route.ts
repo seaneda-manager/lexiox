@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
       // Revision: 기존 session 업데이트
       const { data, error } = await supabase
         .from("writing_2026_sessions")
-        .update({ raw_answers: answers, status: "completed" })
+        .update({ raw_answers: answers, grading_status: "ungraded" })
         .eq("id", sessionId)
         .eq("user_id", user.id)
         .select("id")
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
       // 새로운 session 생성
       const { data, error } = await supabase
         .from("writing_2026_sessions")
-        .insert({ user_id: user.id, test_id: testId, raw_answers: answers, status: "completed" })
+        .insert({ user_id: user.id, test_id: testId, raw_answers: answers, grading_status: "ungraded" })
         .select("id")
         .single();
 
