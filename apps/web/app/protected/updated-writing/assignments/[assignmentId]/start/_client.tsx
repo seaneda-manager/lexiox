@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import WritingRunnerETS from "@/components/writing/WritingRunnerETS";
 import type { WWritingTest2026 } from "@/models/writing";
 
-export default function WritingTestClient({
+export default function WritingTestWrapper({
   test,
   testId,
   assignmentId,
@@ -21,21 +21,19 @@ export default function WritingTestClient({
 
   useEffect(() => {
     // Hide sidebar and topbar padding for fullscreen test mode
-    if (pathname.includes("assignments") && pathname.includes("start")) {
-      const aside = document.querySelector("aside");
-      const main = document.querySelector("main");
-      const body = document.body;
+    const aside = document.querySelector("aside");
+    const main = document.querySelector("main");
+    const body = document.body;
 
-      if (aside) aside.style.display = "none";
-      if (main) main.style.padding = "0";
-      body.style.overflow = "hidden";
+    if (aside) aside.style.display = "none";
+    if (main) main.style.padding = "0";
+    body.style.overflow = "hidden";
 
-      return () => {
-        if (aside) aside.style.display = "";
-        if (main) main.style.padding = "";
-        body.style.overflow = "";
-      };
-    }
+    return () => {
+      if (aside) aside.style.display = "";
+      if (main) main.style.padding = "";
+      body.style.overflow = "";
+    };
   }, [pathname]);
 
   async function handleFinish(answers: {

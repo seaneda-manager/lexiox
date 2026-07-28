@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { getServiceSupabase } from "@/lib/supabase/service";
-import WritingTestClient from "../../../test/_client/WritingTestClient";
+import WritingTestWrapper from "./_client";
 import type { WWritingTest2026 } from "@/models/writing";
 
 export const dynamic = "force-dynamic";
@@ -46,7 +46,7 @@ export default async function StartWritingAssignmentPage({ params }: { params: P
   await markInProgress(assignmentId, assignment.status);
 
   return (
-    <WritingTestClient
+    <WritingTestWrapper
       test={testRow.payload as WWritingTest2026}
       testId={testRow.id}
       assignmentId={assignmentId}
