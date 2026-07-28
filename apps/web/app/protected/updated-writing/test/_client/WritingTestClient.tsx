@@ -44,6 +44,13 @@ export default function WritingTestClient({
     task3Text: string;
   }) {
     try {
+      const answersToSend = {
+        task_1_score_raw: answers.task1Scores.filter((s) => s.correct).length,
+        task_2_submission: answers.task2Text,
+        task_3_submission: answers.task3Text,
+      };
+      console.log('[Writing] handleFinish called with answers:', { answers, answersToSend, testId, assignmentId });
+
       const res = await fetch("/api/writing/save-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -51,11 +58,7 @@ export default function WritingTestClient({
           testId,
           sessionId: revisionSessionId,
           assignmentId,
-          answers: {
-            task_1_score_raw: answers.task1Scores.filter((s) => s.correct).length,
-            task_2_submission: answers.task2Text,
-            task_3_submission: answers.task3Text,
-          },
+          answers: answersToSend,
         }),
       });
 
