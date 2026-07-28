@@ -628,7 +628,7 @@ export default function ReadingTestGeneratorClient() {
         </div>
 
         <div>
-          <h2 className="mb-3 text-sm font-semibold text-gray-900">📘 Module 1 (공통, 20~33문항)</h2>
+          <h2 className="mb-3 text-sm font-semibold text-gray-900">📘 Module 1 (공통, 정확히 23문항)</h2>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {MODULE1_TOPIC_FIELDS.map((field) => (
               <TopicInput
@@ -677,7 +677,7 @@ export default function ReadingTestGeneratorClient() {
         </button>
 
         {phase === "generating" && (
-          <p className="text-xs text-gray-500 animate-pulse">Claude가 Module 1(20~33문항) + Module 2 Lower(15문항) + Module 2 Upper(15문항)를 생성 중입니다 (2~3분 정도 걸립니다, 새로고침하지 말고 기다려주세요)…</p>
+          <p className="text-xs text-gray-500 animate-pulse">Claude가 Module 1(23문항) + Module 2 Lower(15문항) + Module 2 Upper(15문항)를 생성 중입니다 (2~3분 정도 걸립니다, 새로고침하지 말고 기다려주세요)…</p>
         )}
         {error && <p className="text-xs text-rose-600">{error}</p>}
       </section>
@@ -696,7 +696,7 @@ export default function ReadingTestGeneratorClient() {
             />
           </section>
 
-          {renderGroup("module1", "📘 Module 1 (공통 Routing, 20~33문항)", "bg-violet-50")}
+          {renderGroup("module1", "📘 Module 1 (공통 Routing, 정확히 23문항)", "bg-violet-50")}
           {renderGroup("hard", "🔴 Module 2 - Upper (15문항: CW+Academic)", "bg-amber-50")}
           {renderGroup("easy", "🟢 Module 2 - Lower (15문항: CW+Daily Life)", "bg-blue-50")}
 

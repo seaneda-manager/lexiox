@@ -47,14 +47,14 @@ export async function POST(req: Request) {
 
 STRUCTURE (do not deviate from these counts):
 
-- Module 1 (Routing — common baseline, ALL students take this): 20-33 questions total, 4-5 passages
-  1. complete_words: 1 passage, 10-20 blanks (flexible per difficulty)
-  2. daily_life: 2-3 SEPARATE passages (different scenarios), 2-3 questions EACH = 5-8 questions total
-  3. academic_passage: 1-2 passages, 5-10 questions total
+- Module 1 (Routing — common baseline, ALL students take this): EXACTLY 23 questions total, 4 passages
+  1. complete_words: 1 passage, exactly 10 blanks
+  2. daily_life: 2 SEPARATE passages (different scenarios), exactly 4 questions EACH = 8 questions total
+  3. academic_passage: 1 passage, exactly 5 questions
 
 - stage2Pool (adaptive branch based on Module 1 score, cutScore 0.7):
-  - hard (Upper): 15 questions total — complete_words (1 passage, 10 blanks, harder vocab) + academic_passage (1 passage, 5 questions, high difficulty/dense vocabulary/complex inference). NO daily_life in this branch.
-  - easy (Lower): 15 questions total — complete_words (1 passage, 10 blanks, simpler vocab) + daily_life (2 passages, 2-3 questions each = 5 questions total). NO academic_passage in this branch.
+  - Upper (hard): 15 questions total — complete_words (1 passage, 10 blanks, harder vocab) + academic_passage (1 passage, 5 questions, high difficulty/dense vocabulary/complex inference). NO daily_life in this branch.
+  - Lower (easy): 15 questions total — complete_words (1 passage, 10 blanks, simpler vocab) + daily_life (2 passages, 2-3 questions each = 5 questions total). NO academic_passage in this branch.
   - IMPORTANT: Lower and Upper use DIFFERENT topics and different content — Lower emphasizes daily_life, Upper emphasizes academic.
 
 QUESTION TYPE DISTRIBUTION (controls the "type" field on each question — use these exact values: vocab | detail | negative_detail | paraphrasing | inference | purpose | insertion):
