@@ -50,11 +50,18 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ sessionId: result.id });
-  } catch (err) {
-    console.error("writing save-session error", err);
-    const message = err instanceof Error ? err.message : String(err);
+  } catch (err: any) {
+    const errorInfo = {
+      name: err?.name,
+      message: err?.message,
+      code: err?.code,
+      details: err?.details,
+      status: err?.status,
+    };
+    console.error("writing save-session error:", JSON.stringify(errorInfo, null, 2));
+    console.error("Raw error:", err);
     return NextResponse.json(
-      { error: "Internal server error", details: message },
+      { error: "Internal server error", details: errorInfo },
       { status: 500 }
     );
   }
