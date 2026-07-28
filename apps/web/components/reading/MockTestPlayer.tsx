@@ -1500,26 +1500,11 @@ export default function MockTestPlayer({
   );
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      width: '100vw',
-      height: '100vh',
-      zIndex: 9999,
-      margin: 0,
-      padding: 0,
-      border: 'none',
-      overflow: 'hidden'
-    }}>
-      <ReadingTestLayout2026
-        header={header}
-        left={passagePane}
-        right={questionPane}
-        footer={footer}
-      />
-    </div>
+    <ReadingTestLayout2026
+      header={header}
+      left={passagePane}
+      right={questionPane}
+      footer={footer}
+    />
   );
 }
