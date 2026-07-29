@@ -399,9 +399,13 @@ export default function ValidateAllClient({ initialTracks = [] }: Props) {
             </div>
 
             {/* Word List - Show ALL words */}
-            {allWordsWithStatus.length > 0 && (
-              <div className="mt-4 space-y-2 max-h-[600px] overflow-auto">
-                {allWordsWithStatus
+            <div className="mt-4 space-y-2 max-h-[600px] overflow-auto">
+              {allWordsWithStatus.length === 0 ? (
+                <div className="rounded-lg bg-slate-50 p-4 text-center text-sm text-slate-600">
+                  로드된 단어가 없습니다
+                </div>
+              ) : (
+                allWordsWithStatus
                   .filter((item) => {
                     const matchesFilter =
                       filterType === "all" ||
@@ -511,9 +515,9 @@ export default function ValidateAllClient({ initialTracks = [] }: Props) {
                         </button>
                       )}
                     </div>
-                  ))}
-              </div>
-            )}
+                  ))
+              )}
+            </div>
           </div>
         )
       ) : (
