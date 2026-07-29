@@ -221,7 +221,10 @@ export default function DrillsDashboard() {
         <div className="mb-12">
           <h2 className="text-3xl font-bold text-white mb-6">📚 Training Drills (Gym Equipment)</h2>
           <p className="text-slate-300 mb-8">
-            Each drill targets a specific aspect of speaking like gym equipment trains different muscles.
+            {getDescription(
+              'Each drill targets a specific aspect of speaking like gym equipment trains different muscles.',
+              '각 드릴은 마치 헬스 장비가 다른 근육을 단련하듯이 말하기의 특정 측면을 목표로 합니다.'
+            )}
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -260,7 +263,10 @@ export default function DrillsDashboard() {
         <div className="mb-12">
           <h2 className="text-3xl font-bold text-white mb-6">🎯 Pronunciation Games (Stress Challenge)</h2>
           <p className="text-slate-300 mb-8">
-            Master pronunciation elements: stress, intonation, prosody, clarity. AI recognizes words based on these.
+            {getDescription(
+              'Master pronunciation elements: stress, intonation, prosody, clarity. AI recognizes words based on these.',
+              '발음 요소를 마스터하세요: 강세, 음정, 리듬감, 명확성. AI는 이를 기반으로 단어를 인식합니다.'
+            )}
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -296,7 +302,10 @@ export default function DrillsDashboard() {
         <div className="mb-12 mt-16 border-t border-slate-600 pt-12">
           <h2 className="text-3xl font-bold text-white mb-6">📖 Reading Games (Language Mastery)</h2>
           <p className="text-slate-300 mb-8">
-            Develop reading comprehension, vocabulary, and inferential thinking through engaging games.
+            {getDescription(
+              'Develop reading comprehension, vocabulary, and inferential thinking through engaging games.',
+              '재미있는 게임을 통해 독해 이해력, 어휘, 추론 능력을 개발하세요.'
+            )}
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
