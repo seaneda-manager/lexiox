@@ -118,8 +118,8 @@ const readingGames = [
   {
     number: 2,
     title: 'Vocabulary Archery',
-    description: 'Shoot arrows at target words matching synonyms, antonyms, or definitions.',
-    description_ko: '동의어, 반의어, 정의와 일치하는 단어에 화살을 쏘세요.',
+    description: 'Dodge flying birds, butterflies, walking children, and cars. Master wind and gravity to hit the target word.',
+    description_ko: '날아가는 새, 나비, 걸어가는 아이, 자동차 등의 장애물을 피하고, 바람과 중력을 이기고 과녁을 맞추세요.',
     href: '#',
     color: 'from-amber-500 to-orange-600',
     icon: '🎯',
