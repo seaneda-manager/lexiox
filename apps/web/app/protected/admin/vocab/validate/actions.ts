@@ -101,9 +101,15 @@ export async function updateWord(
   try {
     const supabase = createServiceRoleClient();
 
+    // meanings_ko가 배열 타입이므로 쉼표로 분리해서 배열로 변환
+    const meaningsArray = meanings_ko
+      .split(',')
+      .map((m) => m.trim())
+      .filter((m) => m.length > 0);
+
     const { error } = await supabase
       .from("words")
-      .update({ text, meanings_ko })
+      .update({ text, meanings_ko: meaningsArray })
       .eq("id", wordId);
 
     if (error) throw error;
