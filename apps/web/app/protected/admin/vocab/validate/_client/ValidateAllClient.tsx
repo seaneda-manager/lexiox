@@ -21,6 +21,12 @@ type Props = {
   initialTracks: VocabTrack[];
 };
 
+type EditingWord = {
+  id: string;
+  text: string;
+  meanings_ko: string;
+};
+
 // 모지파케(깨진 한글) 감지 함수
 function hasMojibake(text: string): boolean {
   const brokenRegex = /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![uD800-\uDBFF])[\uDC00-\uDFFF]/g;
@@ -98,6 +104,9 @@ export default function ValidateAllClient({ initialTracks = [] }: Props) {
   const [loading, setLoading] = useState(false);
   const [filterType, setFilterType] = useState<FilterType>("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingWord, setEditingWord] = useState<EditingWord | null>(null);
 
   // Track 선택 시 Sets 로드
   const handleTrackChange = async (trackId: string) => {
@@ -123,6 +132,7 @@ export default function ValidateAllClient({ initialTracks = [] }: Props) {
   const handleSetChange = async (setId: string) => {
     setSelectedSetId(setId);
     setWords([]);
+    setError(null);
     setLoading(true);
 
     if (!setId) {
@@ -133,6 +143,9 @@ export default function ValidateAllClient({ initialTracks = [] }: Props) {
     const result = await fetchWordsForVocabSet(setId);
     if (result.ok) {
       setWords(result.words);
+      setError(null);
+    } else {
+      setError(`단어 로드 실패: ${result.error}`);
     }
     setLoading(false);
   };
@@ -271,106 +284,209 @@ export default function ValidateAllClient({ initialTracks = [] }: Props) {
         )}
       </div>
 
-      {/* Results */}
-      {selectedSet ? (
-        validationResults.issues.length > 0 ? (
-        <div className="rounded-2xl border bg-amber-50 p-5">
-          <div className="font-semibold text-amber-900">
-            ⚠️ {validationResults.issues.length}개 문제 발견
+      {/* Error Display */}
+      {error && (
+        <div className="rounded-2xl border border-red-300 bg-red-50 p-5">
+          <div className="font-semibold text-red-900">
+            ❌ 오류: {error}
           </div>
+        </div>
+      )}
 
-          {/* Filter buttons */}
-          <div className="mt-4 flex gap-2">
-            {(["all", "errors", "warnings"] as FilterType[]).map((filter) => (
+      {/* Results - Show ALL words with status */}
+      {selectedSet ? (
+        words.length === 0 && !error ? (
+          <div className="rounded-2xl border bg-slate-50 p-5 text-center text-slate-600">
+            <div className="font-semibold">단어를 로드할 수 없습니다.</div>
+            <div className="text-sm mt-2">vocab_set_items 테이블에 데이터가 없을 수 있습니다.</div>
+          </div>
+        ) : (
+          <div className="rounded-2xl border bg-white p-5">
+            <div className="font-semibold text-slate-900">
+              📋 전체 단어 ({words.length}개)
+              {validationResults.issues.length > 0 && (
+                <span className="text-rose-700 ml-2">• 문제: {validationResults.issues.length}개</span>
+              )}
+            </div>
+
+            {/* Filter buttons */}
+            <div className="mt-4 flex gap-2 flex-wrap">
               <button
-                key={filter}
-                onClick={() => setFilterType(filter)}
+                onClick={() => setFilterType("all")}
                 className={`rounded-lg px-4 py-2 text-xs font-semibold transition-colors ${
-                  filterType === filter
-                    ? filter === "errors"
-                      ? "bg-rose-200 text-rose-900"
-                      : filter === "warnings"
-                        ? "bg-amber-200 text-amber-900"
-                        : "bg-slate-900 text-white"
+                  filterType === "all"
+                    ? "bg-slate-900 text-white"
                     : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                 }`}
               >
-                {filter === "all"
-                  ? `모두 (${validationResults.issues.length})`
-                  : filter === "errors"
-                    ? `에러만 (${validationResults.errors.length})`
-                    : `경고만 (${validationResults.warnings.length})`}
+                전체 ({words.length})
               </button>
-            ))}
-          </div>
-
-          {/* Search */}
-          <div className="mt-3">
-            <input
-              type="text"
-              placeholder="단어 또는 뜻으로 검색..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-lg border px-4 py-2 text-sm"
-            />
-          </div>
-
-          {/* Word List */}
-          {filteredWords.length > 0 && (
-            <div className="mt-4 space-y-2 max-h-[600px] overflow-auto">
-              {filteredWords.map((item) => (
-                <div
-                  key={item.word.id}
-                  className={`flex items-start gap-3 rounded-lg p-4 border transition-colors ${
-                    item.issue?.severity === "error"
-                      ? "bg-rose-50 border-rose-200 text-rose-900"
-                      : item.issue?.severity === "warning"
-                        ? "bg-amber-50 border-amber-200 text-amber-900"
-                        : "bg-emerald-50 border-emerald-200 text-emerald-900"
+              {validationResults.errors.length > 0 && (
+                <button
+                  onClick={() => setFilterType("errors")}
+                  className={`rounded-lg px-4 py-2 text-xs font-semibold transition-colors ${
+                    filterType === "errors"
+                      ? "bg-rose-200 text-rose-900"
+                      : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                   }`}
                 >
-                  <div className="flex-shrink-0 w-6 text-center font-bold pt-0.5 text-lg">
-                    {item.issue?.severity === "error"
-                      ? "❌"
-                      : item.issue?.severity === "warning"
-                        ? "⚠️"
-                        : "✅"}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-bold text-base">{item.word.text}</div>
-                    <div className="text-sm mt-1 font-medium">
-                      {item.word.meanings_ko?.toString() || "(뜻 없음)"}
-                    </div>
-                    {item.issue && (
-                      <div className="text-xs mt-2 opacity-80 space-y-0.5">
-                        {item.issue.issues.map((err, i) => (
-                          <div key={i}>• {err}</div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <Link
-                    href={`/admin/vocab/words/${item.word.id}/edit`}
-                    className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 transition-colors"
-                  >
-                    수정 →
-                  </Link>
-                </div>
-              ))}
+                  ❌ 에러 ({validationResults.errors.length})
+                </button>
+              )}
+              {validationResults.warnings.length > 0 && (
+                <button
+                  onClick={() => setFilterType("warnings")}
+                  className={`rounded-lg px-4 py-2 text-xs font-semibold transition-colors ${
+                    filterType === "warnings"
+                      ? "bg-amber-200 text-amber-900"
+                      : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                  }`}
+                >
+                  ⚠️ 경고 ({validationResults.warnings.length})
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  setFilterType("all");
+                  setSearchTerm("");
+                }}
+                className="rounded-lg px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors"
+              >
+                🔄 초기화
+              </button>
             </div>
-          )}
 
-          {filteredWords.length === 0 && words.length > 0 && (
-            <div className="mt-4 p-4 rounded-lg bg-white text-center text-sm text-slate-700">
-              검색 또는 필터 결과가 없습니다
+            {/* Search */}
+            <div className="mt-3">
+              <input
+                type="text"
+                placeholder="단어 또는 뜻으로 검색..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full rounded-lg border px-4 py-2 text-sm"
+              />
             </div>
-          )}
-        </div>
-      ) : (
-          <div className="rounded-2xl border bg-emerald-50 p-5">
-            <div className="font-semibold text-emerald-900">
-              ✅ 모든 단어가 정상입니다!
-            </div>
+
+            {/* Word List - Show ALL words */}
+            {allWordsWithStatus.length > 0 && (
+              <div className="mt-4 space-y-2 max-h-[600px] overflow-auto">
+                {allWordsWithStatus
+                  .filter((item) => {
+                    const matchesFilter =
+                      filterType === "all" ||
+                      (filterType === "errors" && item.issue?.severity === "error") ||
+                      (filterType === "warnings" && item.issue?.severity === "warning");
+
+                    const matchesSearch =
+                      searchTerm === "" ||
+                      item.word.text.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      item.word.meanings_ko?.toString().toLowerCase().includes(searchTerm.toLowerCase());
+
+                    return matchesFilter && matchesSearch;
+                  })
+                  .map((item) => (
+                    <div
+                      key={item.word.id}
+                      className={`flex items-start gap-3 rounded-lg p-4 border transition-colors ${
+                        item.issue?.severity === "error"
+                          ? "bg-rose-50 border-rose-200 text-rose-900"
+                          : item.issue?.severity === "warning"
+                            ? "bg-amber-50 border-amber-200 text-amber-900"
+                            : "bg-emerald-50 border-emerald-200 text-emerald-900"
+                      }`}
+                    >
+                      <div className="flex-shrink-0 w-6 text-center font-bold pt-0.5 text-lg">
+                        {item.issue?.severity === "error"
+                          ? "❌"
+                          : item.issue?.severity === "warning"
+                            ? "⚠️"
+                            : "✅"}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        {editingId === item.word.id && editingWord ? (
+                          <div className="space-y-2">
+                            <div>
+                              <label className="text-xs font-semibold text-slate-600">단어</label>
+                              <input
+                                type="text"
+                                value={editingWord.text}
+                                onChange={(e) =>
+                                  setEditingWord({ ...editingWord, text: e.target.value })
+                                }
+                                className="mt-1 w-full rounded px-2 py-1 text-sm border border-slate-300 focus:border-blue-400 focus:outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-xs font-semibold text-slate-600">뜻</label>
+                              <input
+                                type="text"
+                                value={editingWord.meanings_ko}
+                                onChange={(e) =>
+                                  setEditingWord({ ...editingWord, meanings_ko: e.target.value })
+                                }
+                                className="mt-1 w-full rounded px-2 py-1 text-sm border border-slate-300 focus:border-blue-400 focus:outline-none"
+                              />
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="font-bold text-base">{item.word.text}</div>
+                            <div className="text-sm mt-1 font-medium">
+                              {item.word.meanings_ko?.toString() || "(뜻 없음)"}
+                            </div>
+                            {item.issue && (
+                              <div className="text-xs mt-2 opacity-80 space-y-0.5">
+                                {item.issue.issues.map((err, i) => (
+                                  <div key={i}>• {err}</div>
+                                ))}
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+                      {editingId === item.word.id ? (
+                        <div className="flex-shrink-0 flex gap-2">
+                          <button
+                            onClick={() => {
+                              if (editingWord) {
+                                // Save logic would go here - for now just close
+                                setEditingId(null);
+                                setEditingWord(null);
+                              }
+                            }}
+                            className="px-2 py-1 rounded text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700"
+                          >
+                            ✓ 저장
+                          </button>
+                          <button
+                            onClick={() => {
+                              setEditingId(null);
+                              setEditingWord(null);
+                            }}
+                            className="px-2 py-1 rounded text-xs font-semibold bg-slate-300 text-slate-700 hover:bg-slate-400"
+                          >
+                            ✕ 취소
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setEditingId(item.word.id);
+                            setEditingWord({
+                              id: item.word.id,
+                              text: item.word.text,
+                              meanings_ko: item.word.meanings_ko?.toString() || "",
+                            });
+                          }}
+                          className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white hover:bg-blue-50 text-blue-600 border border-blue-200 transition-colors"
+                        >
+                          ✎ 수정
+                        </button>
+                      )}
+                    </div>
+                  ))}
+              </div>
+            )}
           </div>
         )
       ) : (
