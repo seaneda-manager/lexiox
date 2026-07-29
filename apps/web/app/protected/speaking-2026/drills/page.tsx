@@ -128,8 +128,8 @@ const readingGames = [
   {
     number: 3,
     title: 'Inference Detectives',
-    description: 'Read short passages and deduce implied facts. Solve the mystery through close reading.',
-    description_ko: '짧은 지문을 읽고 암시된 사실을 추론하세요. 정밀한 읽기로 수수께끼를 풀어보세요.',
+    description: 'Read short passages and deduce implied facts. Solve mysteries through close reading. The fate of the world rests in your hands.',
+    description_ko: '짧은 지문을 읽고 암시된 사실을 추론하고 정밀한 읽기로 수수께끼를 풀어내세요. 여러분의 손에 지구의 운명이 달렸습니다.',
     href: '#',
     color: 'from-purple-500 to-pink-600',
     icon: '🔍',
