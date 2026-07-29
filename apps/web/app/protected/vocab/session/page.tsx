@@ -634,6 +634,7 @@ export default function VocabSessionPage() {
   const [trackTitle, setTrackTitle] = useState<string | null>(null);
   const [dayIndex, setDayIndex] = useState<number | null>(null);
   const [totalDays, setTotalDays] = useState<number | null>(null);
+  const [speedTimeoutSeconds, setSpeedTimeoutSeconds] = useState<number>(15);
 
   // ✅ 2 Days Review: 지난 2일 약한 단어들
   const [recentWeakWords, setRecentWeakWords] = useState<SessionWord[]>([]);
@@ -840,10 +841,12 @@ export default function VocabSessionPage() {
         const tt = (res as any).trackTitle ?? null;
         const di = (res as any).dayIndex ?? null;
         const td = (res as any).totalDays ?? null;
-        console.log("🔍 API Response:", { trackTitle: tt, dayIndex: di, totalDays: td, res });
+        const sts = (res as any).speedTimeoutSeconds ?? 6;
+        console.log("🔍 API Response:", { trackTitle: tt, dayIndex: di, totalDays: td, speedTimeoutSeconds: sts, res });
         setTrackTitle(tt);
         setDayIndex(di);
         setTotalDays(td);
+        setSpeedTimeoutSeconds(sts);
         setLoadError(null);
 
         setDebugInfo({
@@ -1763,10 +1766,8 @@ export default function VocabSessionPage() {
         );
       }
 
-      const secondsPerQuestion = speedTry === 1 ? 16 : 20;
-
       // 🔍 DEBUG
-      console.log("📍 session/page.tsx SPEED stage - speedTry:", speedTry, "secondsPerQuestion:", secondsPerQuestion);
+      console.log("📍 session/page.tsx SPEED stage - speedTry:", speedTry, "speedTimeoutSeconds:", speedTimeoutSeconds);
 
       return (
         <CardWrap>
@@ -1782,7 +1783,7 @@ export default function VocabSessionPage() {
             userId={userId}
             questions={speedQuestions}
             tryIndex={speedTry}
-            secondsPerQuestion={secondsPerQuestion}
+            secondsPerQuestion={speedTimeoutSeconds}
             minPassAccuracy={0.7}
             onFinish={handleSpeedFinish}
           />

@@ -29,6 +29,7 @@ export type LoadSessionWordsActionResult =
       trackTitle?: string;
       dayIndex?: number;
       totalDays?: number;
+      speedTimeoutSeconds?: number;
 
       wordFormsByWordId?: Record<string, WordFormRowLike>;
       wordExamplesByWordId?: Record<string, any>;
@@ -48,6 +49,7 @@ export type LoadSessionWordsActionResult =
       trackTitle?: string;
       dayIndex?: number;
       totalDays?: number;
+      speedTimeoutSeconds?: number;
 
       words?: SessionWord[];
       error?: string;
@@ -833,6 +835,7 @@ export async function loadSessionWordsAction(
     // 8) 트랙 정보 조회 (Day 표시를 위함)
     let trackTitle: string | null = null;
     let totalDays: number | null = null;
+    let speedTimeoutSeconds: number | null = null;
 
     {
       try {
@@ -846,16 +849,17 @@ export async function loadSessionWordsAction(
         if (setData?.track_id) {
           const trackId = cleanStr(setData.track_id);
 
-          // vocab_tracks → title, total_days 찾기
+          // vocab_tracks → title, total_days, speed_timeout_seconds 찾기
           const { data: trackData } = await client
             .from("vocab_tracks")
-            .select("title, total_days")
+            .select("title, total_days, speed_timeout_seconds")
             .eq("id", trackId)
             .maybeSingle();
 
           if (trackData) {
             trackTitle = cleanStr(trackData.title) || null;
             totalDays = typeof trackData.total_days === "number" ? trackData.total_days : null;
+            speedTimeoutSeconds = typeof trackData.speed_timeout_seconds === "number" ? trackData.speed_timeout_seconds : 15;
           }
 
           // student_vocab_plans에서 cursor_day_index 조회
@@ -895,6 +899,7 @@ export async function loadSessionWordsAction(
       wordFormsByWordId: wfMap,
       wordExamplesByWordId,
       wordCollocationsByWordId,
+      speedTimeoutSeconds: speedTimeoutSeconds ?? 15,
       note: input?.setId ? "loaded via forced setId" : `loaded via ${diag.assignmentSource}`,
       diag,
     };

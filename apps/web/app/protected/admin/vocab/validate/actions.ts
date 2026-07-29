@@ -107,10 +107,15 @@ export async function updateWord(
       .map((m) => m.trim())
       .filter((m) => m.length > 0);
 
-    const { error } = await supabase
+    console.log(`[updateWord] Updating wordId=${wordId}, text=${text}, meanings=${JSON.stringify(meaningsArray)}`);
+
+    const { data, error } = await supabase
       .from("words")
       .update({ text, meanings_ko: meaningsArray })
-      .eq("id", wordId);
+      .eq("id", wordId)
+      .select();
+
+    console.log(`[updateWord] Response:`, { data, error });
 
     if (error) throw error;
 

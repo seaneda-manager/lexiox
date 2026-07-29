@@ -2,6 +2,7 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Task1WordPuzzle from "./Task1WordPuzzle";
 import WritingTestDirections from "./WritingTestDirections";
 import type {
@@ -26,6 +27,7 @@ type Props = {
 type WritingItem = WBuildSentenceItem | WMicroWritingItem | WEmailWritingItem | WAcademicWritingItem;
 
 export default function WritingRunner2026({ test, mode = "study", onFinish }: Props) {
+  const router = useRouter();
   const items = useMemo(() => test.items as WritingItem[], [test.items]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -152,9 +154,17 @@ export default function WritingRunner2026({ test, mode = "study", onFinish }: Pr
 
       setSaveStatus("saved");
 
+      // Test 모드: review 페이지로 이동
+      if (mode === "test" && json.sessionId) {
+        setTimeout(() => {
+          router.push(`/writing-2026/review/${json.sessionId}`);
+        }, 500);
+      }
+
       onFinish?.({
         testId: test.meta.id,
         answers,
+        sessionId: json.sessionId,
       });
     } catch (e) {
       console.error(e);

@@ -69,7 +69,52 @@ export async function POST(req: NextRequest) {
 
   const sessionId = session.id as string;
 
-  // 2) 답안 bulk insert
+  // 2) raw_answers 변환 (WritingRunner answers → DB raw_answers)
+  const rawAnswers: Record<string, any> = {};
+
+  // Task 1: build-1 → task_1
+  if (answers["build-1"]) {
+    try {
+      const buildAnswer = answers["build-1"];
+      if (typeof buildAnswer === "string") {
+        // JSON 문자열이면 파싱, 배열이면 그대로
+        rawAnswers["task_1"] = buildAnswer.startsWith("[")
+          ? JSON.parse(buildAnswer)
+          : buildAnswer;
+      } else {
+        rawAnswers["task_1"] = buildAnswer;
+      }
+    } catch (e) {
+      rawAnswers["task_1"] = answers["build-1"];
+    }
+  }
+
+  // Task 2: email-1 → task_2_submission
+  if (answers["email-1"]) {
+    rawAnswers["task_2_submission"] = answers["email-1"];
+  }
+
+  // Task 3: acad-1 → task_3_submission
+  if (answers["acad-1"]) {
+    rawAnswers["task_3_submission"] = answers["acad-1"];
+  }
+
+  // 3) raw_answers 저장
+  if (Object.keys(rawAnswers).length > 0) {
+    const { error: updateErr } = await supabase
+      .from("writing_2026_sessions")
+      .update({ raw_answers: rawAnswers })
+      .eq("id", sessionId);
+
+    if (updateErr) {
+      return NextResponse.json(
+        { ok: false, error: updateErr.message },
+        { status: 500 }
+      );
+    }
+  }
+
+  // 4) 답안 bulk insert (writing_2026_answers)
   const rows = Object.entries(answers)
     .filter(([_, content]) => typeof content === "string" && content.trim() !== "")
     .map(([item_key, content]) => ({

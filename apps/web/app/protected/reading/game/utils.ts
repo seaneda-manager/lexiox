@@ -79,7 +79,8 @@ export function createSentenceWithBlanks(
   const blankWordMap: Map<string, BlankWord> = new Map();
 
   selectedWords.forEach((word) => {
-    blankWordMap.set(word.toLowerCase(), createBlankWord(word));
+    const lowerWord = word.toLowerCase();
+    blankWordMap.set(lowerWord, createBlankWord(lowerWord));
   });
 
   const parts: SentenceWithBlanks['parts'] = [];

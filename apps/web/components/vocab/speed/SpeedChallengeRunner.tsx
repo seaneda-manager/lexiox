@@ -34,7 +34,7 @@ export default function SpeedChallengeRunner({
   questions,
   tryIndex = 1,
   onFinish,
-  secondsPerQuestion = 6,
+  secondsPerQuestion = 15,
   minPassAccuracy = 0.7,
 }: Props) {
   // 🔍 DEBUG: secondsPerQuestion 값 확인

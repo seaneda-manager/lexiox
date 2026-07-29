@@ -46,8 +46,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Session not found" }, { status: 404 });
   }
 
-  const answers = (session.raw_answers ?? {}) as Record<string, string>;
-  if (!Object.values(answers).some((v) => v?.trim())) {
+  const answers = (session.raw_answers ?? {}) as Record<string, any>;
+  const hasAnswers = Object.values(answers).some((v) => {
+    if (typeof v === "string") return v.trim().length > 0;
+    if (typeof v === "object" && v !== null && "content" in v) return String(v.content).trim().length > 0;
+    return false;
+  });
+  if (!hasAnswers) {
     return NextResponse.json({ ok: false, error: "No answers to grade" }, { status: 422 });
   }
 
@@ -76,8 +81,15 @@ export async function POST(req: Request) {
   }
 
   const answersText = Object.entries(answers)
-    .filter(([, v]) => v?.trim())
-    .map(([k, v]) => `[${k}]\n${v}`)
+    .filter(([, v]) => {
+      if (typeof v === "string") return v.trim().length > 0;
+      if (typeof v === "object" && v !== null && "content" in v) return String(v.content).trim().length > 0;
+      return false;
+    })
+    .map(([k, v]) => {
+      const content = typeof v === "string" ? v : (v && typeof v === "object" && "content" in v ? String(v.content) : String(v));
+      return `[${k}]\n${content}`;
+    })
     .join("\n\n");
 
   const userContent = [
@@ -89,6 +101,8 @@ export async function POST(req: Request) {
 
   try {
     const ai = getAI();
+    console.log("[Writing Grade] Starting AI grading for session:", sessionId);
+
     const msg = await ai.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 512,
@@ -97,12 +111,16 @@ export async function POST(req: Request) {
     });
 
     const raw = msg.content[0]?.type === "text" ? msg.content[0].text : "";
+    console.log("[Writing Grade] AI response:", raw);
+
     const grading = parseWritingGradingJson(raw);
 
     if (!grading) {
-      console.error("Failed to parse writing grading response:", raw);
-      return NextResponse.json({ ok: false, error: "AI response parse error", raw }, { status: 500 });
+      console.error("[Writing Grade] Failed to parse AI response:", raw);
+      return NextResponse.json({ ok: false, error: "AI response parse error" }, { status: 500 });
     }
+
+    console.log("[Writing Grade] Parsed grading:", grading);
 
     const { error: updateErr } = await supabase
       .from("writing_2026_sessions")
@@ -117,12 +135,17 @@ export async function POST(req: Request) {
       .eq("id", sessionId);
 
     if (updateErr) {
-      return NextResponse.json({ ok: false, error: updateErr.message }, { status: 500 });
+      console.error("[Writing Grade] DB update error:", updateErr);
+      return NextResponse.json({ ok: false, error: `DB update failed: ${updateErr.message}` }, { status: 500 });
     }
 
+    console.log("[Writing Grade] DB update success");
+
+    console.log("[Writing Grade] Success");
     return NextResponse.json({ ok: true, grading });
   } catch (err) {
-    console.error("Writing AI grading error:", err);
-    return NextResponse.json({ ok: false, error: "AI grading failed" }, { status: 500 });
+    console.error("[Writing Grade] Error:", err);
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ ok: false, error: `AI grading failed: ${msg}` }, { status: 500 });
   }
 }

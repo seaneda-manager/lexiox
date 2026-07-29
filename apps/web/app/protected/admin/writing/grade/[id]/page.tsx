@@ -38,11 +38,18 @@ export default async function WritingGradeDetailPage({ params }: Props) {
 
   const s = session as Record<string, any>;
 
-  // 답안은 writing_2026_answers 테이블에 문항별로 저장된다 (submit API 참고).
-  // 과거 스키마의 세션 raw_answers가 있으면 폴백으로 합친다.
+  // 답안은 writing_2026_answers 테이블에 문항별로 저장되거나,
+  // 세션의 raw_answers JSON에 task_*_submission 형식으로 저장된다.
   const answers: Record<string, string> = {};
   if (s.raw_answers && typeof s.raw_answers === "object") {
-    Object.assign(answers, s.raw_answers);
+    const raw = s.raw_answers as any;
+    // test payload의 item.id가 "task_2", "task_3"이므로 이에 맞춰 매핑
+    if (raw.task_2_submission !== undefined) {
+      answers["task_2"] = raw.task_2_submission ?? "";
+    }
+    if (raw.task_3_submission !== undefined) {
+      answers["task_3"] = raw.task_3_submission ?? "";
+    }
   }
   const { data: answerRows, error: answersError } = await supabase
     .from("writing_2026_answers")
@@ -103,22 +110,89 @@ export default async function WritingGradeDetailPage({ params }: Props) {
       <div className="grid gap-6 md:grid-cols-2">
         {/* 왼쪽: 답변 내용 */}
         <div className="space-y-4">
+          {/* Build a Sentence (Choose Response) - 10개 문항 */}
+          {test?.items
+            .filter((item) => item.taskKind === "choose_response" || item.taskKind === "build_a_sentence")
+            .map((item) => {
+              const questions = (item as any).questions ?? [];
+              const studentAnswers = (answers[item.id] ?? "") as any;
+              const studentAnswerArray = Array.isArray(studentAnswers)
+                ? studentAnswers
+                : typeof studentAnswers === "string"
+                  ? studentAnswers.split(",").map((a: string) => a.trim())
+                  : [];
+
+              return (
+                <div key={`${item.id}-section`} className="space-y-3">
+                  <h3 className="text-sm font-bold text-slate-900">1. Choose a Response (Build a Sentence)</h3>
+                  <p className="text-xs text-slate-600">10개 문항</p>
+
+                  {questions.map((q: any, idx: number) => {
+                    const studentChoice = studentAnswerArray[idx] || "No Answer";
+                    const correctAnswer = q.correctAnswer || "N/A";
+                    const isCorrect = studentChoice === correctAnswer;
+
+                    return (
+                      <div key={`q-${idx}`} className="space-y-2 rounded-xl border border-slate-200 bg-white p-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1">
+                            <p className="mb-1 text-xs font-bold text-slate-700">문항 {idx + 1}</p>
+                            <p className="text-xs leading-relaxed text-slate-800">{q.stem || "Question not available"}</p>
+                          </div>
+                          <div className={`rounded-full px-2 py-1 text-xs font-bold ${isCorrect ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"}`}>
+                            {isCorrect ? "✓" : "✗"}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 pt-2">
+                          <div className="rounded-lg bg-blue-50 p-2">
+                            <p className="text-xs font-semibold text-blue-800">학생 선택</p>
+                            <p className="mt-1 text-sm font-bold text-blue-900">{studentChoice}</p>
+                          </div>
+                          <div className="rounded-lg bg-green-50 p-2">
+                            <p className="text-xs font-semibold text-green-800">정답</p>
+                            <p className="mt-1 text-sm font-bold text-green-900">{correctAnswer}</p>
+                          </div>
+                        </div>
+
+                        {q.explanation && (
+                          <div className="mt-2 border-l-2 border-slate-300 bg-slate-50 p-2">
+                            <p className="text-xs text-slate-700">{q.explanation}</p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
+
+          {/* Email Writing & Academic Discussion */}
           {test?.items.map((item) => {
+            const isBuildASentence = item.taskKind === "choose_response" || item.taskKind === "build_a_sentence";
             const isEmail = item.taskKind === "email";
             const isDiscussion = item.taskKind === "academic_discussion";
-            if (!isEmail && !isDiscussion) return null;
+            if (!isBuildASentence && !isEmail && !isDiscussion) return null;
 
             const answerText = answers[item.id] ?? "";
-            const prompt = isEmail
-              ? `상황: ${(item as { situation: string }).situation}\n지시: ${(item as { prompt: string }).prompt}`
-              : `상황: ${(item as { context: string }).context}\n교수: ${(item as { professorPrompt: string }).professorPrompt}`;
+            let title = "";
+            let prompt = "";
+
+            if (isBuildASentence) {
+              title = "1. Choose a Response (Build a Sentence)";
+              prompt = (item as any).prompt || "Choose the correct response";
+            } else if (isEmail) {
+              title = "2. Write an Email";
+              prompt = `상황: ${(item as { situation: string }).situation}\n지시: ${(item as { prompt: string }).prompt}`;
+            } else if (isDiscussion) {
+              title = "3. Academic Discussion";
+              prompt = `상황: ${(item as { context: string }).context}\n교수: ${(item as { professorPrompt: string }).professorPrompt}`;
+            }
 
             return (
               <div key={item.id} className="space-y-2">
                 <section className="rounded-2xl border border-blue-200 bg-blue-50/60 px-4 py-3">
-                  <p className="mb-1 text-xs font-bold text-blue-800">
-                    {isEmail ? "Email Writing" : "Academic Discussion"} Prompt
-                  </p>
+                  <p className="mb-1 text-xs font-bold text-blue-800">{title} Prompt</p>
                   <p className="whitespace-pre-wrap text-xs leading-relaxed text-blue-900">{prompt}</p>
                 </section>
                 <section className="rounded-2xl border border-slate-200 bg-white px-4 py-4">
@@ -147,9 +221,9 @@ export default async function WritingGradeDetailPage({ params }: Props) {
 
           {/* Rubric 참고표 */}
           <section className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4">
-            <p className="mb-3 text-xs font-bold text-slate-600">ETS Writing Rubric 참고 (0~5)</p>
+            <p className="mb-3 text-xs font-bold text-slate-600">Updated TOEFL 2026 Writing Rubric (1~6)</p>
             <div className="space-y-1.5">
-              {([5, 4, 3, 2, 1, 0] as EtsWritingScore[]).map((score) => (
+              {([6, 5, 4, 3, 2, 1] as EtsWritingScore[]).map((score) => (
                 <div key={score} className="text-[11px] leading-relaxed text-slate-700">
                   <span className="mr-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-200 font-bold text-slate-700">
                     {score}
@@ -166,16 +240,17 @@ export default async function WritingGradeDetailPage({ params }: Props) {
           <WritingGradeClient
             sessionId={s.id}
             gradingStatus={status}
+            rawAnswers={s.raw_answers ?? {}}
             aiScores={{
+              buildASentence: s.ai_build_a_sentence_score ?? null,
               email: s.ai_email_score ?? null,
               discussion: s.ai_discussion_score ?? null,
-              total: s.ai_total_score ?? null,
               feedback: s.ai_grade_feedback ?? null,
             }}
             finalScores={{
+              buildASentence: s.final_build_a_sentence_score ?? null,
               email: s.final_email_score ?? null,
               discussion: s.final_discussion_score ?? null,
-              total: s.final_total_score ?? null,
               feedback: s.final_grade_feedback ?? null,
             }}
           />
