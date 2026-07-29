@@ -317,20 +317,19 @@ export default function ValidateAllClient({ initialTracks = [] }: Props) {
 
           {/* Word List */}
           {filteredWords.length > 0 && (
-            <div className="mt-4 space-y-1 max-h-[600px] overflow-auto">
+            <div className="mt-4 space-y-2 max-h-[600px] overflow-auto">
               {filteredWords.map((item) => (
-                <Link
+                <div
                   key={item.word.id}
-                  href={`/admin/vocab/words/${item.word.id}/edit`}
-                  className={`flex items-start gap-3 rounded-lg p-3 transition-colors ${
+                  className={`flex items-start gap-3 rounded-lg p-4 border transition-colors ${
                     item.issue?.severity === "error"
-                      ? "bg-rose-100 text-rose-900 hover:bg-rose-200"
+                      ? "bg-rose-50 border-rose-200 text-rose-900"
                       : item.issue?.severity === "warning"
-                        ? "bg-amber-100 text-amber-900 hover:bg-amber-200"
-                        : "bg-slate-50 text-slate-700 hover:bg-slate-100"
+                        ? "bg-amber-50 border-amber-200 text-amber-900"
+                        : "bg-emerald-50 border-emerald-200 text-emerald-900"
                   }`}
                 >
-                  <div className="flex-shrink-0 w-6 text-center font-bold pt-0.5">
+                  <div className="flex-shrink-0 w-6 text-center font-bold pt-0.5 text-lg">
                     {item.issue?.severity === "error"
                       ? "❌"
                       : item.issue?.severity === "warning"
@@ -338,19 +337,25 @@ export default function ValidateAllClient({ initialTracks = [] }: Props) {
                         : "✅"}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold">{item.word.text}</div>
-                    <div className="text-sm mt-1 opacity-90">
-                      "{item.word.meanings_ko?.toString() || "(뜻 없음)"}"
+                    <div className="font-bold text-base">{item.word.text}</div>
+                    <div className="text-sm mt-1 font-medium">
+                      {item.word.meanings_ko?.toString() || "(뜻 없음)"}
                     </div>
                     {item.issue && (
-                      <div className="text-xs mt-2 opacity-75">
+                      <div className="text-xs mt-2 opacity-80 space-y-0.5">
                         {item.issue.issues.map((err, i) => (
                           <div key={i}>• {err}</div>
                         ))}
                       </div>
                     )}
                   </div>
-                </Link>
+                  <Link
+                    href={`/admin/vocab/words/${item.word.id}/edit`}
+                    className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 transition-colors"
+                  >
+                    수정 →
+                  </Link>
+                </div>
               ))}
             </div>
           )}
