@@ -347,7 +347,7 @@ export default function SidebarClient({ role, program = null }: Props) {
         { section: '학습', href: '/updated-writing',        label: 'Writing',   icon: PenLine },
         { section: '학습', href: '/vocab/hub-new',              label: '단어 학습', icon: Library },
         { section: '학습', href: '/grammar-2026',           label: 'Lexiox Gram', icon: BookText },
-        { section: '학습', href: '/speaking-2026/drills',   label: 'Speaking 훈련', icon: PlayCircle },
+        { section: '학습', href: '/speaking-2026/drills',   label: '🏋️ LXGym', icon: PlayCircle },
         { section: '학습', href: '/speaking-2026/shadowing', label: '쉐도잉 게임', icon: PlayCircle },
 
         { section: '내 현황', href: '/student',            label: '대시보드', icon: LayoutDashboard },

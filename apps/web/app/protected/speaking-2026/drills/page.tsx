@@ -94,6 +94,45 @@ const games = [
   },
 ];
 
+const readingGames = [
+  {
+    number: 1,
+    title: 'Sentence Sprints',
+    description: 'Read fast-moving sentences and capture the key idea before they disappear.',
+    href: '#',
+    color: 'from-blue-500 to-cyan-600',
+    icon: '⚡',
+    focus: 'Speed & Comprehension',
+  },
+  {
+    number: 2,
+    title: 'Vocabulary Archery',
+    description: 'Shoot arrows at target words matching synonyms, antonyms, or definitions.',
+    href: '#',
+    color: 'from-amber-500 to-orange-600',
+    icon: '🎯',
+    focus: 'Vocabulary & Context',
+  },
+  {
+    number: 3,
+    title: 'Inference Detectives',
+    description: 'Read short passages and deduce implied facts. Solve the mystery through close reading.',
+    href: '#',
+    color: 'from-purple-500 to-pink-600',
+    icon: '🔍',
+    focus: 'Critical Reading',
+  },
+  {
+    number: 4,
+    title: 'Bubble Pop',
+    description: 'Tap floating word bubbles in the correct order to complete sentences.',
+    href: '#',
+    color: 'from-green-500 to-emerald-600',
+    icon: '💭',
+    focus: 'Sentence Assembly',
+  },
+];
+
 export default function DrillsDashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8">
@@ -101,10 +140,10 @@ export default function DrillsDashboard() {
         {/* Header */}
         <div className="mb-12">
           <h1 className="text-5xl font-bold text-white mb-4">
-            🎮 Speaking Training Hub
+            🏋️ LXGym
           </h1>
           <p className="text-xl text-slate-300">
-            Master the 5 training drills and 4 pronunciation games. Based on 2026 TOEFL AI scoring mechanics.
+            Master Speaking, Reading, and Language skills through interactive games. All 4 skills, one platform.
           </p>
         </div>
 
@@ -199,6 +238,42 @@ export default function DrillsDashboard() {
                   <div className="border-t border-white border-opacity-30 pt-3">
                     <div className="text-sm font-bold text-white">
                       🎓 {game.focus}
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* Reading Games Section */}
+        <div className="mb-12 mt-16 border-t border-slate-600 pt-12">
+          <h2 className="text-3xl font-bold text-white mb-6">📖 Reading Games (Language Mastery)</h2>
+          <p className="text-slate-300 mb-8">
+            Develop reading comprehension, vocabulary, and inferential thinking through engaging games.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {readingGames.map((game) => (
+              <Link
+                key={game.number}
+                href={game.href}
+                className="group"
+              >
+                <div className={`bg-gradient-to-br ${game.color} rounded-lg p-6 h-full transform transition-all duration-200 hover:scale-105 hover:shadow-2xl cursor-pointer`}>
+                  <div className="text-4xl mb-3">{game.icon}</div>
+                  <div className="text-sm font-semibold text-white opacity-80 mb-1">
+                    GAME {game.number}
+                  </div>
+                  <h3 className="text-lg font-bold text-white mb-2">
+                    {game.title}
+                  </h3>
+                  <p className="text-sm text-white text-opacity-90 mb-4">
+                    {game.description}
+                  </p>
+                  <div className="border-t border-white border-opacity-30 pt-3">
+                    <div className="text-xs text-white text-opacity-80">
+                      Focus: {game.focus}
                     </div>
                   </div>
                 </div>
