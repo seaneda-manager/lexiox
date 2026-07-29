@@ -295,10 +295,10 @@ export default function ValidateAllClient({ initialTracks = [] }: Props) {
                 선택됨: <strong>{selectedSet.title}</strong>
               </div>
               <div>
-                총 단어: <strong>{validationResults.total}</strong>
+                로드된 단어: <strong>{words.length}</strong>
               </div>
               <div>
-                정상: <strong className="text-emerald-700">{validationResults.valid}</strong>
+                검증 완료: <strong className="text-emerald-700">{validationResults.valid}</strong>
               </div>
               {validationResults.errors.length > 0 && (
                 <div className="text-rose-700">
@@ -306,9 +306,21 @@ export default function ValidateAllClient({ initialTracks = [] }: Props) {
                 </div>
               )}
             </div>
-            {validationResults.total === 0 && !loading && (
-              <div className="rounded-lg bg-yellow-50 border border-yellow-200 p-3 text-sm text-yellow-800">
-                ⚠️ 이 날에 배정된 단어가 없습니다. vocab_set_items 테이블을 확인하세요.
+            {loading && (
+              <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-sm text-blue-800">
+                ⏳ 단어를 로드 중입니다...
+              </div>
+            )}
+            {words.length === 0 && !loading && selectedSetId && (
+              <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-800">
+                ❌ <strong>단어가 로드되지 않았습니다!</strong>
+                <div className="mt-2 text-xs">
+                  1. 책 ID: <code>{selectedTrackId}</code>
+                  <br />
+                  2. 날 ID: <code>{selectedSetId}</code>
+                  <br />
+                  3. vocab_set_items 테이블에서 이 날 ID로 된 레코드가 있는지 확인하세요
+                </div>
               </div>
             )}
           </div>
