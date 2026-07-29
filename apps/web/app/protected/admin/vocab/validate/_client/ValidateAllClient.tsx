@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import type { WordWithMeaning, VocabTrack, VocabSet } from "../actions";
-import { fetchVocabSetsByTrack, fetchWordsForVocabSet } from "../actions";
+import { fetchVocabSetsByTrack, fetchWordsForVocabSet, updateWord } from "../actions";
 
 type ValidationIssue = {
   id: string;
@@ -146,6 +146,30 @@ export default function ValidateAllClient({ initialTracks = [] }: Props) {
       setError(null);
     } else {
       setError(`단어 로드 실패: ${result.error}`);
+    }
+    setLoading(false);
+  };
+
+  // 단어 저장
+  const handleSaveWord = async () => {
+    if (!editingWord) return;
+
+    setLoading(true);
+    const result = await updateWord(editingWord.id, editingWord.text, editingWord.meanings_ko);
+
+    if (result.ok) {
+      // Update words list
+      setWords(
+        words.map((w) =>
+          w.id === editingWord.id
+            ? { ...w, text: editingWord.text, meanings_ko: editingWord.meanings_ko }
+            : w,
+        ),
+      );
+      setEditingId(null);
+      setEditingWord(null);
+    } else {
+      setError(`저장 실패: ${result.error}`);
     }
     setLoading(false);
   };
@@ -447,23 +471,19 @@ export default function ValidateAllClient({ initialTracks = [] }: Props) {
                       {editingId === item.word.id ? (
                         <div className="flex-shrink-0 flex gap-2">
                           <button
-                            onClick={() => {
-                              if (editingWord) {
-                                // Save logic would go here - for now just close
-                                setEditingId(null);
-                                setEditingWord(null);
-                              }
-                            }}
-                            className="px-2 py-1 rounded text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700"
+                            onClick={handleSaveWord}
+                            disabled={loading}
+                            className="px-2 py-1 rounded text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
                           >
-                            ✓ 저장
+                            {loading ? "저장중..." : "✓ 저장"}
                           </button>
                           <button
                             onClick={() => {
                               setEditingId(null);
                               setEditingWord(null);
                             }}
-                            className="px-2 py-1 rounded text-xs font-semibold bg-slate-300 text-slate-700 hover:bg-slate-400"
+                            disabled={loading}
+                            className="px-2 py-1 rounded text-xs font-semibold bg-slate-300 text-slate-700 hover:bg-slate-400 disabled:opacity-50"
                           >
                             ✕ 취소
                           </button>

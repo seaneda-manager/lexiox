@@ -90,6 +90,36 @@ export async function fetchVocabSetsByTrack(trackId: string) {
 /**
  * Fetch words for a specific vocab set
  */
+/**
+ * Update word text and meaning
+ */
+export async function updateWord(
+  wordId: string,
+  text: string,
+  meanings_ko: string,
+) {
+  try {
+    const supabase = createServiceRoleClient();
+
+    const { error } = await supabase
+      .from("words")
+      .update({ text, meanings_ko })
+      .eq("id", wordId);
+
+    if (error) throw error;
+
+    return {
+      ok: true as const,
+    };
+  } catch (e: any) {
+    console.error("[updateWord] error:", e);
+    return {
+      ok: false as const,
+      error: e?.message ?? String(e),
+    };
+  }
+}
+
 export async function fetchWordsForVocabSet(setId: string) {
   try {
     const supabase = createServiceRoleClient();
