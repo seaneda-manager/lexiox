@@ -134,10 +134,13 @@ export async function fetchWordsForVocabSet(setId: string) {
 
     const wordIds = (items ?? []).map((item: any) => item.word_id).filter(Boolean);
 
+    console.log(`[fetchWordsForVocabSet] setId=${setId}, found ${wordIds.length} word IDs`);
+
     if (wordIds.length === 0) {
       return {
         ok: true as const,
         words: [] as WordWithMeaning[],
+        note: `No items found in vocab_set_items for setId=${setId}`,
       };
     }
 
@@ -148,6 +151,8 @@ export async function fetchWordsForVocabSet(setId: string) {
       .in("id", wordIds);
 
     if (wordError) throw wordError;
+
+    console.log(`[fetchWordsForVocabSet] loaded ${(words ?? []).length} words`);
 
     return {
       ok: true as const,
