@@ -417,21 +417,7 @@ export default function ValidateAllClient({ initialTracks = [] }: Props) {
                   로드된 단어가 없습니다
                 </div>
               ) : (
-                allWordsWithStatus
-                  .filter((item) => {
-                    const matchesFilter =
-                      filterType === "all" ||
-                      (filterType === "errors" && item.issue?.severity === "error") ||
-                      (filterType === "warnings" && item.issue?.severity === "warning");
-
-                    const matchesSearch =
-                      searchTerm === "" ||
-                      item.word.text.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                      item.word.meanings_ko?.toString().toLowerCase().includes(searchTerm.toLowerCase());
-
-                    return matchesFilter && matchesSearch;
-                  })
-                  .map((item) => (
+                allWordsWithStatus.map((item) => (
                     <div
                       key={item.word.id}
                       className={`flex items-start gap-3 rounded-lg p-4 border transition-colors ${
@@ -530,6 +516,13 @@ export default function ValidateAllClient({ initialTracks = [] }: Props) {
                   ))
               )}
             </div>
+
+            {/* Search and Filter Info */}
+            {searchTerm && (
+              <div className="mt-2 text-xs text-slate-600">
+                검색어: "{searchTerm}" | 필터: {filterType === "all" ? "전체" : filterType === "errors" ? "에러" : "경고"}
+              </div>
+            )}
           </div>
         )
       ) : (
