@@ -1009,6 +1009,26 @@ export async function completeVocabDayAction(input: {
       /* non-fatal */
     }
 
+    // ✅ Stage 1 완료 → Stage 2 자동 배정
+    try {
+      const nowISO = new Date().toISOString();
+      await client
+        .from("student_vocab_assignments")
+        .insert([
+          {
+            student_id: academyStudentId,
+            set_id: setId,
+            track_id: cleanStr(row.track_id),
+            day_index: typeof row.day_index === "number" ? row.day_index : 0,
+            stage: 2, // ✅ Stage 2
+            available_at: nowISO.split('T')[0], // 즉시 사용 가능
+          },
+        ]);
+    } catch (e: any) {
+      console.warn("Stage 2 auto-assignment failed (non-fatal):", toErrMsg(e));
+      /* non-fatal */
+    }
+
     // 다음 Day 오픈 (큐 정렬) — 실패해도 완료 자체는 성공 처리
     let nextOpened = 0;
     try {

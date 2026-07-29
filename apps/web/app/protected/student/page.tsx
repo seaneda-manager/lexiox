@@ -6,6 +6,9 @@ import DdayCard from "@/components/student/DdayCard";
 import TestProgressBar from "@/components/student/TestProgressBar";
 import WeakPointsCard from "@/components/student/WeakPointsCard";
 import AnnouncementBanner from "@/components/student/AnnouncementBanner";
+import PrimaryFocusCard from "@/components/student/PrimaryFocusCard";
+import ActivityTabsCard from "@/components/student/ActivityTabsCard";
+import HomeworkCard, { type HomeworkItem } from "@/components/student/HomeworkCard";
 
 export const dynamic = "force-dynamic";
 
@@ -239,6 +242,7 @@ export default async function StudentPage() {
   // student_vocab_plans (active)
   let vocaPlanCount = 0;
   let vocaTodayCount = 0;
+  let homeworkItems: HomeworkItem[] = [];
 
   if (academyStudentId) {
     const todayISO = (() => {
@@ -258,12 +262,47 @@ export default async function StudentPage() {
       const trackIds = (vocaPlans ?? []).map((p: any) => p.track_id as string);
       const { data: todayAsg } = await supabase
         .from("student_vocab_assignments")
-        .select("id")
+        .select("id, track_id, day_index, completed_at, stage")
         .eq("student_id", academyStudentId)
         .in("track_id", trackIds)
         .lte("available_at", todayISO)
         .is("completed_at", null);
       vocaTodayCount = (todayAsg ?? []).length;
+
+      // ── Homework 구성 (Vocab Stage 1, 2)
+      if (todayAsg && todayAsg.length > 0) {
+        // Stage 1
+        const stage1 = (todayAsg as any).find((a: any) => a.stage === 1 || !a.stage);
+        if (stage1) {
+          const dayIndex = stage1.day_index as number | null;
+          const dayLabel = dayIndex ? `Day ${dayIndex}` : 'Vocab';
+
+          homeworkItems.push({
+            id: `vocab-stage-1`,
+            type: 'vocab',
+            title: dayLabel,
+            description: 'Stage 1: 단어-뜻 + Speed',
+            status: 'pending',
+            href: '/vocab/session?stage=1',
+          });
+        }
+
+        // Stage 2
+        const stage2 = (todayAsg as any).find((a: any) => a.stage === 2);
+        if (stage2) {
+          const dayIndex = stage2.day_index as number | null;
+          const dayLabel = dayIndex ? `Day ${dayIndex}` : 'Vocab';
+
+          homeworkItems.push({
+            id: `vocab-stage-2`,
+            type: 'vocab',
+            title: `${dayLabel} (숙제)`,
+            description: 'Stage 2: 동의어/반의어 + Speed',
+            status: 'pending',
+            href: '/vocab/session?stage=2',
+          });
+        }
+      }
     }
   }
 
@@ -395,36 +434,17 @@ export default async function StudentPage() {
   return (
     <main className="mx-auto max-w-3xl space-y-6 pb-12">
 
-      {/* ── 오늘 수업 CTA ─────────────────────────────────────── */}
-      <Link
-        href="/student/session"
-        className={[
-          "block rounded-3xl border p-5 transition hover:-translate-y-0.5 hover:shadow-md",
-          isClassDay
-            ? "border-sky-200 bg-gradient-to-br from-sky-50 to-white"
-            : "border-neutral-200 bg-gradient-to-br from-neutral-50 to-white",
-        ].join(" ")}
-      >
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="text-xs text-neutral-400 mb-0.5">
-              {DOW_KO[todayDow]}요일{isClassDay ? " · 수업 있는 날 🎯" : ""}
-            </p>
-            <p className="text-lg font-bold text-neutral-900">
-              {isClassDay ? "오늘 수업 시작하기" : "자율 학습 모드"}
-            </p>
-            <p className="text-xs text-neutral-500 mt-0.5">
-              숙제 채점 → 단어 → 리딩 → 그래머 → …
-            </p>
-          </div>
-          <span className={[
-            "shrink-0 rounded-2xl px-5 py-2.5 text-sm font-bold text-white",
-            isClassDay ? "bg-sky-600" : "bg-neutral-700",
-          ].join(" ")}>
-            입장 →
-          </span>
-        </div>
-      </Link>
+      {/* ── Primary Focus Card (오늘 꼭 해야 할 일 1가지) ───────── */}
+      <PrimaryFocusCard
+        program={program}
+        vocaTodayCount={vocaTodayCount}
+        vocaPlanCount={vocaPlanCount}
+        pendingTests={0}
+        pendingLectures={0}
+        nextExamDate={nextExamDate}
+        isClassDay={isClassDay}
+        dayOfWeek={todayDow}
+      />
 
       {/* ── 포인트 / 레벨 ────────────────────────────────────── */}
       {gamification && (
@@ -437,6 +457,9 @@ export default async function StudentPage() {
 
       {/* ── 데일리 태스크 ────────────────────────────────────── */}
       <DailyTaskCard task={dailyTask ?? null} />
+
+      {/* ── 숙제 ────────────────────────────────────────────── */}
+      {homeworkItems.length > 0 && <HomeworkCard items={homeworkItems} />}
 
       {/* ── Phase 1 카드: D-day ────────────────────────────────── */}
       {nextExamDate && <DdayCard nextExamDate={nextExamDate} examTitle="다음 시험" />}
@@ -569,6 +592,17 @@ export default async function StudentPage() {
           </div>
         )}
       </section>
+
+      {/* ── 활동 탭 (진행 중 / 해야 할 것 / 최근 / 추천) ──────── */}
+      <ActivityTabsCard
+        activities={[]}
+        totals={{
+          ongoing: 0,
+          todo: 0,
+          recent: 0,
+          recommended: 0,
+        }}
+      />
 
       {/* ── 정규 ─────────────────────────────────────────────── */}
       <section>
@@ -767,6 +801,18 @@ function ToeflDashboard({
         <h1 className="text-2xl font-bold text-neutral-900 leading-tight">{studentName}</h1>
         <p className={`text-sm mt-0.5 ${curriculum.accentText}`}>{curriculum.sub}</p>
       </header>
+
+      {/* ── Primary Focus Card (오늘 꼭 해야 할 일 1가지) ───────── */}
+      <PrimaryFocusCard
+        program={program === "toefl" || program === "gap" ? (program === "gap" ? "gap" : "toefl") : "toefl"}
+        vocaTodayCount={vocaTodayCount}
+        vocaPlanCount={vocaPlanCount}
+        pendingTests={pendingTests}
+        pendingLectures={pendingLectures}
+        nextExamDate={null}
+        isClassDay={false}
+        dayOfWeek={new Date().getDay()}
+      />
 
       {/* ── 게임화 ────────────────────────────────────────────── */}
       {gamification && (
