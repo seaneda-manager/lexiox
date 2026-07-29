@@ -289,19 +289,26 @@ export default function ValidateAllClient({ initialTracks = [] }: Props) {
 
         {/* Summary */}
         {selectedSet && (
-          <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-1 text-sm text-slate-700 md:grid-cols-4">
-            <div>
-              선택됨: <strong>{selectedSet.title}</strong>
+          <div className="mt-4 space-y-2">
+            <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm text-slate-700 md:grid-cols-4">
+              <div>
+                선택됨: <strong>{selectedSet.title}</strong>
+              </div>
+              <div>
+                총 단어: <strong>{validationResults.total}</strong>
+              </div>
+              <div>
+                정상: <strong className="text-emerald-700">{validationResults.valid}</strong>
+              </div>
+              {validationResults.errors.length > 0 && (
+                <div className="text-rose-700">
+                  에러: <strong>{validationResults.errors.length}</strong>
+                </div>
+              )}
             </div>
-            <div>
-              총 단어: <strong>{validationResults.total}</strong>
-            </div>
-            <div>
-              정상: <strong className="text-emerald-700">{validationResults.valid}</strong>
-            </div>
-            {validationResults.errors.length > 0 && (
-              <div className="text-rose-700">
-                에러: <strong>{validationResults.errors.length}</strong>
+            {validationResults.total === 0 && !loading && (
+              <div className="rounded-lg bg-yellow-50 border border-yellow-200 p-3 text-sm text-yellow-800">
+                ⚠️ 이 날에 배정된 단어가 없습니다. vocab_set_items 테이블을 확인하세요.
               </div>
             )}
           </div>
