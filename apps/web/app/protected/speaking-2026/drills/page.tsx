@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 
 const drills = [
@@ -7,6 +8,7 @@ const drills = [
     number: 1,
     title: '3-Second Cheat Key',
     description: 'Master question templates. Respond within 3 seconds.',
+    description_ko: '질문 템플릿을 마스터하세요. 3초 내에 답변하세요.',
     href: '/speaking-2026/drills/templates',
     color: 'from-blue-500 to-blue-600',
     icon: '⚡',
@@ -17,6 +19,7 @@ const drills = [
     number: 2,
     title: '45-Second Structure',
     description: 'Learn the 4-part structure: intro → reason 1 → story → conclusion.',
+    description_ko: '4단계 구조를 배우세요: 도입 → 이유1 → 사례 → 결론.',
     href: '/speaking-2026/drills/structure',
     color: 'from-purple-500 to-purple-600',
     icon: '📐',
@@ -27,6 +30,7 @@ const drills = [
     number: 3,
     title: '10-Second Brainstorming',
     description: 'Start speaking immediately within 3 seconds of hearing the question.',
+    description_ko: '질문을 듣고 3초 내에 즉시 말하기를 시작하세요.',
     href: '/speaking-2026/drills/brainstorming',
     color: 'from-orange-500 to-orange-600',
     icon: '🚀',
@@ -37,6 +41,7 @@ const drills = [
     number: 4,
     title: 'Fluency Marathon',
     description: 'Speak continuously without long pauses. Target: 130-150 WPM.',
+    description_ko: '긴 쉼 없이 계속 말하세요. 목표: 분당 130-150 단어.',
     href: '/speaking-2026/drills/fluency',
     color: 'from-green-500 to-green-600',
     icon: '🎙️',
@@ -47,6 +52,7 @@ const drills = [
     number: 5,
     title: 'Improvisational Ranking',
     description: 'Answer the same question multiple ways. Measure creativity and diversity.',
+    description_ko: '같은 질문을 여러 방식으로 답변하세요. 창의성과 다양성을 측정합니다.',
     href: '/speaking-2026/drills/improvisation',
     color: 'from-pink-500 to-pink-600',
     icon: '🎭',
@@ -60,6 +66,7 @@ const games = [
     number: 1,
     title: 'Stress Hunt',
     description: 'Identify correct syllable stress. Wrong stress = AI won\'t recognize the word.',
+    description_ko: '올바른 음절 강세를 찾으세요. 잘못된 강세 = AI가 단어를 인식하지 못함.',
     href: '/speaking-2026/games/stress-hunt',
     color: 'from-rose-500 to-rose-600',
     icon: '🎯',
@@ -69,6 +76,7 @@ const games = [
     number: 2,
     title: 'Intonation Wave',
     description: 'Match pitch variation. Compare your intonation curve to the native speaker.',
+    description_ko: '음정 변화를 맞추세요. 당신의 억양 곡선을 원어민과 비교하세요.',
     href: '/speaking-2026/games/intonation-wave',
     color: 'from-cyan-500 to-cyan-600',
     icon: '📈',
@@ -78,6 +86,7 @@ const games = [
     number: 3,
     title: 'Emphasis Challenge',
     description: 'Say the same sentence with different emphasis. Understand how stress changes meaning.',
+    description_ko: '같은 문장을 다른 강조로 말하세요. 강세가 의미를 어떻게 바꾸는지 이해하세요.',
     href: '/speaking-2026/games/emphasis-challenge',
     color: 'from-amber-500 to-amber-600',
     icon: '🎬',
@@ -87,6 +96,7 @@ const games = [
     number: 4,
     title: 'Prosody Race',
     description: 'Match speed and rhythm. Slow → Normal → Fast → Native.',
+    description_ko: '속도와 리듬을 맞추세요. 느림 → 보통 → 빠름 → 원어민 속도.',
     href: '/speaking-2026/games/prosody-race',
     color: 'from-indigo-500 to-indigo-600',
     icon: '🏃',
@@ -99,6 +109,7 @@ const readingGames = [
     number: 1,
     title: 'Sentence Sprints',
     description: 'Read fast-moving sentences and capture the key idea before they disappear.',
+    description_ko: '빠르게 이동하는 문장을 읽고 사라지기 전에 핵심 아이디어를 포착하세요.',
     href: '#',
     color: 'from-blue-500 to-cyan-600',
     icon: '⚡',
@@ -108,6 +119,7 @@ const readingGames = [
     number: 2,
     title: 'Vocabulary Archery',
     description: 'Shoot arrows at target words matching synonyms, antonyms, or definitions.',
+    description_ko: '동의어, 반의어, 정의와 일치하는 단어에 화살을 쏘세요.',
     href: '#',
     color: 'from-amber-500 to-orange-600',
     icon: '🎯',
@@ -117,6 +129,7 @@ const readingGames = [
     number: 3,
     title: 'Inference Detectives',
     description: 'Read short passages and deduce implied facts. Solve the mystery through close reading.',
+    description_ko: '짧은 지문을 읽고 암시된 사실을 추론하세요. 정밀한 읽기로 수수께끼를 풀어보세요.',
     href: '#',
     color: 'from-purple-500 to-pink-600',
     icon: '🔍',
@@ -126,6 +139,7 @@ const readingGames = [
     number: 4,
     title: 'Bubble Pop',
     description: 'Tap floating word bubbles in the correct order to complete sentences.',
+    description_ko: '떠다니는 단어 버블을 올바른 순서대로 터치하여 문장을 완성하세요.',
     href: '#',
     color: 'from-green-500 to-emerald-600',
     icon: '💭',
@@ -134,17 +148,49 @@ const readingGames = [
 ];
 
 export default function DrillsDashboard() {
+  const [language, setLanguage] = useState<'EN' | 'KOR'>('EN');
+
+  const getDescription = (en: string, ko: string) => {
+    return language === 'EN' ? en : ko;
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-12">
-          <h1 className="text-5xl font-bold text-white mb-4">
-            🏋️ LXGym
-          </h1>
-          <p className="text-xl text-slate-300">
-            Master Speaking, Reading, and Language skills through interactive games. All 4 skills, one platform.
-          </p>
+        {/* Header with Language Toggle */}
+        <div className="flex justify-between items-start mb-12">
+          <div>
+            <h1 className="text-5xl font-bold text-white mb-4">
+              🏋️ LXGym
+            </h1>
+            <p className="text-xl text-slate-300">
+              Master Speaking, Reading, and Language skills through interactive games. All 4 skills, one platform.
+            </p>
+          </div>
+
+          {/* Language Toggle Button */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => setLanguage('EN')}
+              className={`px-4 py-2 rounded-lg font-bold transition-all ${
+                language === 'EN'
+                  ? 'bg-blue-600 text-white shadow-lg'
+                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+              }`}
+            >
+              EN
+            </button>
+            <button
+              onClick={() => setLanguage('KOR')}
+              className={`px-4 py-2 rounded-lg font-bold transition-all ${
+                language === 'KOR'
+                  ? 'bg-blue-600 text-white shadow-lg'
+                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+              }`}
+            >
+              KOR
+            </button>
+          </div>
         </div>
 
         {/* Key Metrics */}
@@ -194,7 +240,7 @@ export default function DrillsDashboard() {
                     {drill.title}
                   </h3>
                   <p className="text-sm text-white text-opacity-90 mb-4">
-                    {drill.description}
+                    {getDescription(drill.description, drill.description_ko)}
                   </p>
                   <div className="border-t border-white border-opacity-30 pt-3">
                     <div className="text-xs text-white text-opacity-80 mb-1">
@@ -211,7 +257,7 @@ export default function DrillsDashboard() {
         </div>
 
         {/* Games Section */}
-        <div>
+        <div className="mb-12">
           <h2 className="text-3xl font-bold text-white mb-6">🎯 Pronunciation Games (Stress Challenge)</h2>
           <p className="text-slate-300 mb-8">
             Master pronunciation elements: stress, intonation, prosody, clarity. AI recognizes words based on these.
@@ -233,7 +279,7 @@ export default function DrillsDashboard() {
                     {game.title}
                   </h3>
                   <p className="text-sm text-white text-opacity-90 mb-4">
-                    {game.description}
+                    {getDescription(game.description, game.description_ko)}
                   </p>
                   <div className="border-t border-white border-opacity-30 pt-3">
                     <div className="text-sm font-bold text-white">
@@ -269,7 +315,7 @@ export default function DrillsDashboard() {
                     {game.title}
                   </h3>
                   <p className="text-sm text-white text-opacity-90 mb-4">
-                    {game.description}
+                    {getDescription(game.description, game.description_ko)}
                   </p>
                   <div className="border-t border-white border-opacity-30 pt-3">
                     <div className="text-xs text-white text-opacity-80">
