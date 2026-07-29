@@ -413,6 +413,7 @@ export default async function StudentPage() {
   if (isToefl) {
     return (
       <ToeflDashboard
+        program={program}
         studentName={studentName}
         curriculum={curriculum}
         lvBadge={lvBadge}
@@ -717,6 +718,7 @@ function deriveSteps(lecturesDone: boolean, practiceDone: number, testsDone: boo
 }
 
 function ToeflDashboard({
+  program,
   studentName,
   curriculum,
   lvBadge,
@@ -732,6 +734,7 @@ function ToeflDashboard({
   speakingDone,
   writingDone,
 }: {
+  program: string | null;
   studentName: string;
   curriculum: CurriculumMeta;
   lvBadge: { label: string; cls: string } | null;
