@@ -145,7 +145,7 @@ export default async function SpeakingGradeListPage() {
                       </td>
                       <td>
                         <Link
-                          href={`/admin/speaking/grade/${row.id}`}
+                          href={`/protected/admin/speaking/grade/${row.id}`}
                           className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                         >
                           {status === "teacher_graded" ? "보기" : "채점"}
