@@ -142,13 +142,15 @@ async function getTodayProgress(
 }
 
 /**
- * Logic B: 과거 완료 내역 조회 (복습용)
+ * Logic B: 과거 완료 내역 조회 (복습용, 오늘 것 제외)
  */
 async function getReviewChapters(
   supabase: any,
   studentId: string,
   bookId: string
 ) {
+  const todayISO = todayISO_KST();
+
   // Get distinct chapter_ids from progress
   const { data: progressData, error: progError } = await supabase
     .from("student_progress")
@@ -159,7 +161,23 @@ async function getReviewChapters(
 
   if (progError) throw progError;
 
-  const chapterIds = [...new Set((progressData ?? []).map((r: any) => r.chapter_id))];
+  let chapterIds = [...new Set((progressData ?? []).map((r: any) => r.chapter_id))];
+
+  // 오늘 완료한 chapter_ids 조회
+  const { data: todayProgressData, error: todayProgError } = await supabase
+    .from("student_progress")
+    .select("chapter_id")
+    .eq("member_id", studentId)
+    .eq("book_id", bookId)
+    .gte("completed_at", todayISO + "T00:00:00Z")
+    .lte("completed_at", todayISO + "T23:59:59Z");
+
+  if (todayProgError) throw todayProgError;
+
+  const todayChapterIds = new Set((todayProgressData ?? []).map((r: any) => r.chapter_id));
+
+  // 오늘 완료한 것 제외
+  chapterIds = chapterIds.filter(id => !todayChapterIds.has(id));
 
   if (!chapterIds.length) {
     return {

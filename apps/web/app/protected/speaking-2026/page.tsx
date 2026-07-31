@@ -21,12 +21,12 @@ export default function Speaking2026Home() {
         ]}
         steps={[
           { icon: '📋', title: 'Assignments', desc: '선생님이 배정한 시험을 확인하고 응시합니다.' },
-          { icon: '🎯', title: 'Test Mode', desc: '실제 TOEFL iBT 형식의 실전 모의고사입니다. Task 1 7개 + Task 2 4개, Forward-Only 정책을 경험합니다.' },
+          { icon: '🔍', title: 'Review', desc: '응시한 시험의 녹음을 다시 듣고 성적을 확인합니다.' },
         ]}
         nextAction={{ label: 'Assignments 보기', href: '/speaking-2026/assignments' }}
       />
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2">
         <Link
           href="/speaking-2026/assignments"
           className="block rounded-lg border bg-white px-4 py-6 text-left shadow-sm transition hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400/50"
@@ -38,12 +38,12 @@ export default function Speaking2026Home() {
         </Link>
 
         <Link
-          href="/speaking-2026/test"
+          href="/student/review"
           className="block rounded-lg border bg-white px-4 py-6 text-left shadow-sm transition hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400/50"
         >
-          <div className="text-sm font-semibold">Test Mode</div>
+          <div className="text-sm font-semibold">🔍 Review</div>
           <div className="mt-1 text-xs text-neutral-500">
-            실제 TOEFL iBT 형식으로 Task 1, 2를 연속으로 응시합니다.
+            응시한 시험의 녹음을 다시 듣고 성적을 확인하며 필수 확인 Task(발음, 답변 구조, 표현 개선, 다시 녹음)를 수행합니다.
           </div>
         </Link>
       </div>

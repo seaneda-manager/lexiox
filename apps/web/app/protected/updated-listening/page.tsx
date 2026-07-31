@@ -21,29 +21,16 @@ export default function Listening2026Home() {
           '2단계 어댑티브 구조(Stage 1 → Stage 2)에 익숙해져 실전 감각을 높인다',
         ]}
         steps={[
-          { icon: '📚', title: 'Study Mode', desc: '일시정지·되감기·다시 듣기가 되고 TEXT 버튼으로 스크립트를 볼 수 있습니다. 재생 위치에 맞춰 문장이 표시됩니다.' },
           { icon: '📋', title: 'Assignments', desc: '선생님이 배정한 시험입니다. 마감일이 있고, 제출하면 선생님에게 결과가 전달됩니다.' },
-          { icon: '🎯', title: 'Test Mode', desc: '음원은 한 번만 재생되고 컨트롤이 없습니다. 되돌아갈 수 없으며 문항마다 시간이 제한됩니다.' },
           { icon: '🔍', title: 'Review', desc: '지금까지 응시한 기록과 Module별 점수를 확인합니다.' },
         ]}
-        nextAction={{ label: 'Study Mode 시작', href: '/updated-listening/study' }}
+        nextAction={{ label: 'Assignments 보기', href: '/updated-listening/assignments' }}
       />
 
-      {/* 네 모드의 차이가 카드에서 바로 읽히도록 제약 조건을 함께 적는다 */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Assignments와 Review 2개만 노출 */}
+      <div className="grid gap-4 sm:grid-cols-2">
         <Link
-          href="/updated-listening/study"
-          className="block rounded-lg border bg-white px-4 py-6 text-left shadow-sm transition hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400/50"
-        >
-          <div className="text-sm font-semibold">📚 Study Mode</div>
-          <div className="mt-1 text-xs text-neutral-500">
-            일시정지·되감기·다시 듣기가 되고, 스크립트를 켜면 재생 위치의 문장이 표시됩니다.
-          </div>
-          <div className="mt-2 text-[11px] font-medium text-emerald-700">컨트롤 있음 · 스크립트 · 시간 제한 없음</div>
-        </Link>
-
-        <Link
-          href="/listening/assignments"
+          href="/updated-listening/assignments"
           className="block rounded-lg border bg-white px-4 py-6 text-left shadow-sm transition hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400/50"
         >
           <div className="text-sm font-semibold">📋 Assignments</div>
@@ -54,25 +41,14 @@ export default function Listening2026Home() {
         </Link>
 
         <Link
-          href="/updated-listening/test"
-          className="block rounded-lg border bg-white px-4 py-6 text-left shadow-sm transition hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400/50"
-        >
-          <div className="text-sm font-semibold">🎯 Test Mode</div>
-          <div className="mt-1 text-xs text-neutral-500">
-            음원은 한 번만 재생됩니다. Module 1 결과로 Module 2 난이도가 갈립니다.
-          </div>
-          <div className="mt-2 text-[11px] font-medium text-rose-700">1회 재생 · 되돌아가기 불가</div>
-        </Link>
-
-        <Link
           href="/updated-listening/review"
           className="block rounded-lg border bg-white px-4 py-6 text-left shadow-sm transition hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400/50"
         >
           <div className="text-sm font-semibold">🔍 Review</div>
           <div className="mt-1 text-xs text-neutral-500">
-            지금까지 응시한 기록과 Module별 점수를 확인합니다.
+            지금까지 응시한 기록과 Module별 점수를 확인하고 필수 확인 Task(해석, 근거 확인, 단어 & 표현 분석, 다시 풀기)를 수행합니다.
           </div>
-          <div className="mt-2 text-[11px] font-medium text-sky-700">기록 · Module별 점수</div>
+          <div className="mt-2 text-[11px] font-medium text-sky-700">성적 · 오답 분석 · 재학습</div>
         </Link>
       </div>
 

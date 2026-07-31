@@ -232,7 +232,35 @@ Return ONLY valid JSON, no markdown fences:
     const raw = (message.content[0] as any).text as string;
     const jsonStart = raw.indexOf('{');
     const jsonEnd = raw.lastIndexOf('}');
-    const payload = JSON.parse(raw.slice(jsonStart, jsonEnd + 1));
+
+    if (jsonStart === -1 || jsonEnd === -1) {
+      throw new Error('No JSON found in Claude response');
+    }
+
+    let payload;
+    try {
+      payload = JSON.parse(raw.slice(jsonStart, jsonEnd + 1));
+    } catch (parseErr: any) {
+      // JSON 파싱 실패 시 상세 정보 반환
+      const jsonStr = raw.slice(jsonStart, jsonEnd + 1);
+      const lines = jsonStr.split('\n');
+      const errorLine = parseErr.message.match(/line (\d+)/)?.[1];
+      const errorCol = parseErr.message.match(/column (\d+)/)?.[1];
+
+      let context = '';
+      if (errorLine) {
+        const lineNum = parseInt(errorLine);
+        const startLine = Math.max(0, lineNum - 3);
+        const endLine = Math.min(lines.length, lineNum + 2);
+        context = lines.slice(startLine, endLine).map((l, i) =>
+          `${startLine + i + 1}: ${l}`
+        ).join('\n');
+      }
+
+      throw new Error(
+        `JSON parsing failed at line ${errorLine || '?'} column ${errorCol || '?'}:\n${context}\n\nFull error: ${parseErr.message}`
+      );
+    }
 
     const id = randomUUID();
     payload.meta.id = id;

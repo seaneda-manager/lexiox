@@ -42,11 +42,13 @@ export async function GET(
     const { resultId } = await params;
     const supabase = await getServerSupabase();
 
-    // 1. 결과 데이터 조회
+    // 1. 결과 데이터 조회 (assignment_id로 조회, 최신 결과만)
     const { data: resultData, error: resultError } = await supabase
       .from("reading_results_2026")
       .select("*")
-      .eq("id", resultId)
+      .eq("assignment_id", resultId)
+      .order("created_at", { ascending: false })
+      .limit(1)
       .single();
 
     if (resultError || !resultData) {
@@ -84,9 +86,26 @@ export async function GET(
     ];
 
     // 4. 사용자 답변 파싱
-    // 저장 경로가 두 가지다: test 제출은 [{questionId, chosenChoiceId}] 배열,
-    // study 제출은 {questionId: answer} 맵. 둘 다 맵으로 정규화한다.
-    const userAnswers = normalizeAnswers(resultData.answers);
+    // 저장 경로가 세 가지다:
+    // - test 제출은 [{questionId, chosenChoiceId}] 배열
+    // - study 제출은 {questionId: answer} 맵
+    // - Complete Words는 {cw__itemId__blankId: answer} 형태
+    // 모두 맵으로 정규화하되, Complete Words 키도 변환한다.
+    let userAnswers = normalizeAnswers(resultData.answers);
+
+    // Complete Words 키를 변환: cw__itemId__blankId → blankId
+    const cwAnswers: Record<string, string> = {};
+    for (const [key, val] of Object.entries(userAnswers)) {
+      if (key.startsWith("cw__")) {
+        const parts = key.split("__");
+        if (parts.length === 3) {
+          cwAnswers[parts[2]] = val; // blankId를 키로 사용
+        }
+      } else {
+        cwAnswers[key] = val;
+      }
+    }
+    userAnswers = cwAnswers;
 
     // 5. 모든 question_id 수집
     const questionIds = new Set<string>();
@@ -126,7 +145,7 @@ export async function GET(
           questions.push({
             id: blank.id,
             number: questions.length + 1,
-            stem: cw.paragraphHtml.substring(0, 100),
+            stem: blank.stem ?? cw.paragraphHtml.substring(0, 100),
             type: "complete_words",
             itemType: `단어 채우기`,
             userAnswer: userAnswers[blank.id] ?? null,
@@ -230,6 +249,70 @@ export async function GET(
     });
   } catch (err: any) {
     console.error("[updated-reading/result/[resultId]] error:", err);
+    return NextResponse.json(
+      { ok: false, error: err?.message ?? "Unknown error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(
+  req: Request,
+  { params }: { params: Promise<{ resultId: string }> }
+) {
+  try {
+    const { resultId: assignmentId } = await params;
+    const supabase = await getServerSupabase();
+    const body = await req.json();
+
+    const { testId, answers, stage1Correct, stage1Total, stage2Correct, stage2Total } = body;
+
+    if (!testId || !answers) {
+      return NextResponse.json(
+        { ok: false, error: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+
+    // 현재 사용자 ID 가져오기
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData?.user?.id;
+
+    if (!userId) {
+      return NextResponse.json(
+        { ok: false, error: "User not authenticated" },
+        { status: 401 }
+      );
+    }
+
+    // reading_results_2026 테이블에 insert (assignment_id, user_id 사용)
+    const totalQuestions = (stage1Total ?? 0) + (stage2Total ?? 0);
+    const { data, error } = await supabase
+      .from("reading_results_2026")
+      .insert({
+        user_id: userId,
+        assignment_id: assignmentId,
+        test_id: testId,
+        answers: answers,
+        total_questions: totalQuestions,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error inserting result:", error);
+      return NextResponse.json(
+        { ok: false, error: error.message ?? "Failed to save result" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      ok: true,
+      resultId: assignmentId,
+    });
+  } catch (err: any) {
+    console.error("[updated-reading/result POST] error:", err);
     return NextResponse.json(
       { ok: false, error: err?.message ?? "Unknown error" },
       { status: 500 }

@@ -1,0 +1,7 @@
+id,topic,type,difficulty,module,category,word_count,tone,style,created_at,status
+1,Photosynthesis,complete_words,easy,M1,Biology,70,academic,scientific,2026-07-30,used
+2,Library Extended Hours,daily_life_short,easy,M1,Campus,80,casual,notice,2026-07-30,used
+3,Coffee Trade,academic_passage,medium,M1,History,280,formal,scholarly,2026-07-30,used
+4,Quantum Computing,academic_passage,hard,M2-Hard,Physics,290,formal,technical,2026-07-30,used
+5,Recycling,complete_words,medium,M2-Easy,Environment,75,academic,scientific,2026-07-30,used
+6,Company Picnic,daily_life_long,easy,M2-Easy,Campus,120,casual,email,2026-07-30,used

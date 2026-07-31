@@ -29,19 +29,8 @@ export default function Reading2026Home() {
         nextAction={{ label: 'Assignments 보기', href: '/updated-reading/assignments' }}
       />
 
-      {/* 네 모드의 차이가 카드에서 바로 읽히도록 제약 조건을 함께 적는다 */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Link
-          href="/updated-reading/study"
-          className="block rounded-lg border bg-white px-4 py-6 text-left shadow-sm transition hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400/50"
-        >
-          <div className="text-sm font-semibold">📚 Study Mode</div>
-          <div className="mt-1 text-xs text-neutral-500">
-            시간 제한 없이 풀고 바로 해설을 봅니다. 되돌아가기와 다시 풀기가 자유롭습니다.
-          </div>
-          <div className="mt-2 text-[11px] font-medium text-emerald-700">제한 없음 · 성적 미반영</div>
-        </Link>
-
+      {/* Assignments와 Review 2개만 노출 */}
+      <div className="grid gap-4 sm:grid-cols-2">
         <Link
           href="/updated-reading/assignments"
           className="block rounded-lg border bg-white px-4 py-6 text-left shadow-sm transition hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400/50"
@@ -54,25 +43,14 @@ export default function Reading2026Home() {
         </Link>
 
         <Link
-          href="/updated-reading/test"
-          className="block rounded-lg border bg-white px-4 py-6 text-left shadow-sm transition hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400/50"
-        >
-          <div className="text-sm font-semibold">🎯 Test Mode</div>
-          <div className="mt-1 text-xs text-neutral-500">
-            가장 최근 시험으로 실전과 같은 조건에서 응시합니다. Module 1 결과로 Module 2 난이도가 갈립니다.
-          </div>
-          <div className="mt-2 text-[11px] font-medium text-rose-700">시간 제한 · 되돌아가기 불가</div>
-        </Link>
-
-        <Link
           href="/updated-reading/review"
           className="block rounded-lg border bg-white px-4 py-6 text-left shadow-sm transition hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400/50"
         >
           <div className="text-sm font-semibold">🔍 Review</div>
           <div className="mt-1 text-xs text-neutral-500">
-            지금까지 푼 시험을 다시 열어 문항별 해설과 오답 이유를 확인합니다.
+            지금까지 응시한 기록과 Module별 점수를 확인하고 필수 확인 Task(해석, 근거 확인, 단어 & 표현 분석, 다시 풀기)를 수행합니다.
           </div>
-          <div className="mt-2 text-[11px] font-medium text-sky-700">해설 · 오답 분석</div>
+          <div className="mt-2 text-[11px] font-medium text-sky-700">성적 · 오답 분석 · 재학습</div>
         </Link>
       </div>
 

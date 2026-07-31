@@ -71,12 +71,14 @@ export default function Timer({
   useEffect(() => {
     let tm = 0;
     const tick = () => {
+      let elapsed = 0;
       if (!running) {
-        setElapsedMs(pausedAccRef.current);
+        elapsed = pausedAccRef.current;
+        setElapsedMs(elapsed);
       } else {
         const now = Date.now();
         if (startAtRef.current == null) startAtRef.current = now;
-        const elapsed = (now - startAtRef.current) + pausedAccRef.current;
+        elapsed = (now - startAtRef.current) + pausedAccRef.current;
         setElapsedMs(elapsed);
 
         if (!expiredRef.current && elapsed >= totalMs) {
@@ -89,7 +91,7 @@ export default function Timer({
       const remainingSeconds =
         direction === 'down'
           ? Math.max(0, Math.ceil((totalMs - (running ? (Date.now() - (startAtRef.current ?? Date.now())) + pausedAccRef.current : pausedAccRef.current)) / 1000))
-          : Math.floor(elapsedMs / 1000);
+          : Math.floor(elapsed / 1000);
 
       onTickAction?.(remainingSeconds);
       tm = window.setTimeout(tick, showTenths ? 100 : 250);
@@ -97,7 +99,7 @@ export default function Timer({
 
     tm = window.setTimeout(tick, showTenths ? 100 : 250);
     return () => window.clearTimeout(tm);
-  }, [running, totalMs, onExpireAction, onTickAction, direction, showTenths, elapsedMs]);
+  }, [running, totalMs, onExpireAction, onTickAction, direction, showTenths]);
 
   const remainingMs = Math.max(0, totalMs - elapsedMs);
   const displayMs = direction === 'down' ? remainingMs : elapsedMs;

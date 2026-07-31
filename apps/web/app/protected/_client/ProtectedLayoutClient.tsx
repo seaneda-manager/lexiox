@@ -33,7 +33,7 @@ export default function ProtectedLayoutClient({
   const pathname = usePathname();
 
   // Hide sidebar and topbar for test/assignment routes
-  const isFullscreenTest = /\/(reading|listening|speaking|writing).*(test|assignments)/.test(pathname);
+  const isFullscreenTest = /\/(updated-reading|updated-writing|reading|listening|speaking|writing|speaking-2026).*(test|assignments)/.test(pathname);
 
   if (isFullscreenTest) {
     return <>{children}</>;

@@ -36,7 +36,7 @@ export default async function ListeningAssignmentsPage() {
   const list = assignments ?? [];
 
   return (
-    <main className="mx-auto max-w-xl space-y-5 px-4 py-6">
+    <main className="mx-auto max-w-2xl space-y-5 px-4 py-6">
       <header className="space-y-1">
         <h1 className="text-xl font-bold text-slate-900">Listening 시험</h1>
         <p className="text-xs text-slate-400">선생님이 배정한 시험 목록입니다.</p>
@@ -54,30 +54,40 @@ export default async function ListeningAssignmentsPage() {
             const canStart = a.status !== "completed";
 
             return (
-              <div key={a.id} className="flex items-center justify-between rounded-xl border bg-white px-4 py-4 shadow-sm">
-                <div className="space-y-1">
-                  <p className="text-sm font-semibold text-slate-900">
-                    {test?.label ?? "시험"}
-                  </p>
-                  <div className="flex items-center gap-2 text-[11px] text-slate-400">
-                    <span className={`rounded-full px-2 py-0.5 font-medium ${statusInfo.cls}`}>
-                      {statusInfo.text}
-                    </span>
-                    {a.due_date && <span>마감 {fmtDate(a.due_date)}</span>}
+              <div key={a.id} className="rounded-xl border bg-white px-4 py-4 shadow-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="space-y-1 flex-1">
+                    <p className="text-sm font-semibold text-slate-900">
+                      {test?.label ?? "시험"}
+                    </p>
+                    <div className="flex items-center gap-2 text-[11px] text-slate-400">
+                      <span className={`rounded-full px-2 py-0.5 font-medium ${statusInfo.cls}`}>
+                        {statusInfo.text}
+                      </span>
+                      {a.due_date && <span>마감 {fmtDate(a.due_date)}</span>}
+                    </div>
                   </div>
                 </div>
 
-                {canStart ? (
-                  <Link
-                    href={`/listening/assignments/${a.id}/start`}
-                    className="rounded-lg bg-sky-500 px-4 py-2 text-xs font-semibold text-white hover:bg-sky-600"
-                  >
-                    {a.status === "in_progress" ? "이어하기" : "시작"}
-                  </Link>
+                {a.status === "completed" ? (
+                  <div className="rounded-lg border px-4 py-2 text-center text-xs font-medium text-slate-400">
+                    완료됨
+                  </div>
                 ) : (
-                  <span className="rounded-lg border px-4 py-2 text-xs font-medium text-slate-400">
-                    완료
-                  </span>
+                  <div className="flex gap-2">
+                    <Link
+                      href={`/listening/assignments/${a.id}/start?mode=test`}
+                      className="flex-1 rounded-lg bg-sky-500 px-4 py-2 text-center text-xs font-semibold text-white hover:bg-sky-600"
+                    >
+                      🎯 Test
+                    </Link>
+                    <Link
+                      href={`/listening/assignments/${a.id}/start?mode=study`}
+                      className="flex-1 rounded-lg bg-emerald-500 px-4 py-2 text-center text-xs font-semibold text-white hover:bg-emerald-600"
+                    >
+                      📚 Study
+                    </Link>
+                  </div>
                 )}
               </div>
             );

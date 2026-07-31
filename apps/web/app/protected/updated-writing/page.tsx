@@ -1,23 +1,7 @@
-'use client';
-
-import { useState } from 'react';
 import Link from 'next/link';
-import { ChevronDown } from 'lucide-react';
 import SectionGuide from '@/app/components/SectionGuide';
 
 export default function WritingHubPage() {
-  const [activeDropdown, setActiveDropdown] = useState<'study' | 'test' | null>(null);
-
-  const studyModules = [
-    { id: 1, title: 'Task 1: Build a Sentence', href: '/updated-writing/study' },
-    { id: 2, title: 'Task 2: Integrated Writing', href: '/updated-writing/study' },
-    { id: 3, title: 'Task 3: Academic Discussion', href: '/updated-writing/study' },
-    { id: 4, title: 'Writing Strategies', href: '/updated-writing/study' },
-  ];
-
-  const testPractices = [
-    { id: 1, title: '전체 시험 목록', difficulty: '', time: '', href: '/updated-writing/test' },
-  ];
 
   return (
     <div className="space-y-6 p-6">
@@ -42,82 +26,13 @@ export default function WritingHubPage() {
         nextAction={{ label: 'Assignments 보기', href: '/updated-writing/assignments' }}
       />
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {/* Study Mode with Dropdown */}
-        <div className="relative">
-          <button
-            onClick={() => setActiveDropdown(activeDropdown === 'study' ? null : 'study')}
-            className="w-full rounded-lg border bg-white px-4 py-6 text-left shadow-sm transition hover:bg-indigo-50 hover:border-indigo-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/50"
-          >
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="text-2xl mb-2">📚</div>
-                <div className="text-sm font-semibold">Study Mode</div>
-                <div className="mt-1 text-xs text-gray-500">
-                  라이팅 전략과 Task별 기초를 익힙니다.
-                </div>
-              </div>
-              <ChevronDown className={`w-5 h-5 text-gray-400 transition ${activeDropdown === 'study' ? 'rotate-180' : ''}`} />
-            </div>
-          </button>
-
-          {activeDropdown === 'study' && (
-            <div className="absolute top-full left-0 right-0 mt-2 rounded-lg border border-gray-200 bg-white shadow-lg z-10">
-              {studyModules.map((module) => (
-                <Link
-                  key={module.id}
-                  href={module.href}
-                  className="block px-4 py-3 text-sm text-gray-700 hover:bg-indigo-50 border-b last:border-b-0"
-                >
-                  {module.title}
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Test Mode with Dropdown */}
-        <div className="relative">
-          <button
-            onClick={() => setActiveDropdown(activeDropdown === 'test' ? null : 'test')}
-            className="w-full rounded-lg border bg-white px-4 py-6 text-left shadow-sm transition hover:bg-indigo-50 hover:border-indigo-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/50"
-          >
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="text-2xl mb-2">✍️</div>
-                <div className="text-sm font-semibold">Test Mode</div>
-                <div className="mt-1 text-xs text-gray-500">
-                  실전 모의고사를 25분 내에 응시합니다.
-                </div>
-              </div>
-              <ChevronDown className={`w-5 h-5 text-gray-400 transition ${activeDropdown === 'test' ? 'rotate-180' : ''}`} />
-            </div>
-          </button>
-
-          {activeDropdown === 'test' && (
-            <div className="absolute top-full left-0 right-0 mt-2 rounded-lg border border-gray-200 bg-white shadow-lg z-10">
-              {testPractices.map((test) => (
-                <Link
-                  key={test.id}
-                  href={test.href}
-                  className="block px-4 py-3 text-sm border-b last:border-b-0 text-gray-700 hover:bg-indigo-50"
-                >
-                  <div className="flex items-center justify-between">
-                    <span>{test.title}</span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-
+      <div className="grid gap-4 sm:grid-cols-2">
         {/* Assignments */}
         <Link
           href="/updated-writing/assignments"
           className="block rounded-lg border bg-white px-4 py-6 text-left shadow-sm transition hover:bg-indigo-50 hover:border-indigo-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/50"
         >
-          <div className="text-2xl mb-2">📋</div>
-          <div className="text-sm font-semibold">Assignments</div>
+          <div className="text-sm font-semibold">📋 Assignments</div>
           <div className="mt-1 text-xs text-gray-500">
             선생님이 배정한 시험을 확인하고 응시합니다.
           </div>
@@ -128,10 +43,9 @@ export default function WritingHubPage() {
           href="/student/review"
           className="block rounded-lg border bg-white px-4 py-6 text-left shadow-sm transition hover:bg-indigo-50 hover:border-indigo-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/50"
         >
-          <div className="text-2xl mb-2">📊</div>
-          <div className="text-sm font-semibold">Review Mode</div>
+          <div className="text-sm font-semibold">📊 Review</div>
           <div className="mt-1 text-xs text-gray-500">
-            AI 첨삭으로 피드백을 받고 개선합니다.
+            지금까지 응시한 기록과 Task별 성적을 확인하고 AI 첨삭으로 필수 확인 Task(논리 검토, 문법 오류, 단어 선택, 다시 작성)를 수행합니다.
           </div>
         </Link>
       </div>

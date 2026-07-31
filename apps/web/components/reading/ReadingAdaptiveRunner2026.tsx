@@ -22,14 +22,26 @@ type Props = {
     stage2Correct: number;
     stage2Total: number;
   }) => void;
+  autoFill?: boolean;
 };
 
 type Phase = "intro" | "items" | "stageSummary" | "final";
 
-export default function ReadingAdaptiveRunner2026({ test, onFinish }: Props) {
+export default function ReadingAdaptiveRunner2026({ test, onFinish, autoFill }: Props) {
   const [currentStage, setCurrentStage] = useState<1 | 2>(1);
   const [phase, setPhase] = useState<Phase>("intro");
   const [answers, setAnswers] = useState<Record<string, string>>({});
+
+  // autoFill 감지 (URL 파라미터 또는 prop)
+  const [isAutoFilling, setIsAutoFilling] = useState(false);
+  useEffect(() => {
+    const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+    const shouldAutoFill = autoFill || params?.get('autoFill') === 'true';
+    setIsAutoFilling(shouldAutoFill);
+    if (shouldAutoFill) {
+      setPhase("items");
+    }
+  }, [autoFill]);
   const [stage1Score, setStage1Score] = useState<{ correct: number; total: number } | null>(null);
   const [stage2Score, setStage2Score] = useState<{ correct: number; total: number } | null>(null);
   const [reported, setReported] = useState(false);
@@ -63,6 +75,35 @@ export default function ReadingAdaptiveRunner2026({ test, onFinish }: Props) {
   useEffect(() => {
     setItemIndex(0);
   }, [currentModule]);
+
+  // autoFill: 모든 정답을 자동으로 채우기
+  useEffect(() => {
+    if (!isAutoFilling) return;
+    const allAnswers: Record<string, string> = {};
+    const allItems = [
+      ...(test.modules[0]?.items ?? []),
+      ...(test.modules[1]?.items ?? []),
+    ];
+    for (const item of allItems) {
+      if (item.taskKind === "complete_words") {
+        const cw = item as RCompleteWordsItem;
+        for (const blank of cw.blanks ?? []) {
+          allAnswers[blank.id] = blank.correctToken;
+        }
+      } else {
+        const qs = item.taskKind === "daily_life"
+          ? (item as RDailyLifeItem).questions
+          : (item as RAcademicPassageItem).questions;
+        for (const q of qs) {
+          const correctChoice = q.choices.find((c: any) => c.isCorrect === true || c.is_correct === true);
+          if (correctChoice) {
+            allAnswers[q.id] = correctChoice.id;
+          }
+        }
+      }
+    }
+    setAnswers(allAnswers);
+  }, [isAutoFilling, test]);
 
   const handleAnswer = useCallback(
     (_item: RReadingItem, questionId: string, choiceId: string) => {
