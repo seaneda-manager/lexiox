@@ -6,6 +6,7 @@ import { WritingStageReDo } from './stages/WritingStageReDo';
 import { WritingStageReasonWriting } from './stages/WritingStageReasonWriting';
 import { WritingStageCorrection } from './stages/WritingStageCorrection';
 import { WritingStageFinalRevision } from './stages/WritingStageFinalRevision';
+import { LXGymPTRecommendation } from '@/app/protected/student/_components/LXGymPTRecommendation';
 
 interface WritingSession {
   id: string;
@@ -274,6 +275,15 @@ export function WritingReviewClient({ sessionId, initialSession }: ReviewProgres
               </div>
             </div>
           </div>
+
+          {/* LXGym PT 추천 */}
+          {session.review_attempts && session.review_attempts.length > 0 && (
+            <LXGymPTRecommendation
+              sectionType="writing"
+              reviewAttempts={session.review_attempts}
+              resultId={sessionId}
+            />
+          )}
         </div>
       </div>
     </main>
