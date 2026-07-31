@@ -9,7 +9,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from("speaking_results_2026")
-    .select("id, test_id, task_id, user_id, script, approx_words, approx_sentences, grading_status, ai_total_score, final_total_score, created_at")
+    .select("id, test_id, task_id, user_id, script, audio_url, approx_words, approx_sentences, grading_status, ai_total_score, final_total_score, created_at")
     .order("created_at", { ascending: false })
     .limit(10);
 
