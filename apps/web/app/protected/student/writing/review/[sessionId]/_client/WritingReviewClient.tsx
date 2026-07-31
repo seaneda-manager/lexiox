@@ -1,7 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { WritingStageExplanation } from './stages/WritingStageExplanation';
+import { WritingStageReDo } from './stages/WritingStageReDo';
+import { WritingStageReasonWriting } from './stages/WritingStageReasonWriting';
+import { WritingStageCorrection } from './stages/WritingStageCorrection';
+import { WritingStageFinalRevision } from './stages/WritingStageFinalRevision';
 
 interface WritingSession {
   id: string;
@@ -24,48 +28,52 @@ const STAGES = [
   { key: 'final_revision', label: '안보고 다시쓰기', step: 5 },
 ];
 
+// TODO: 실제 데이터는 API나 props에서 받아야 함
+const MOCK_EXPLANATIONS: Record<string, string> = {
+  '1': '동사의 시제를 일치시켜야 합니다. 전체 문맥에서 과거시제를 사용하고 있으므로, 이 동사도 과거시제로 맞춰야 합니다.',
+  '2': '주어와 동사의 수(단수/복수)가 일치해야 합니다. 주어가 단수이므로 동사도 단수 형태를 사용해야 합니다.',
+};
+
+const MOCK_CORE_POINTS: Record<string, string[]> = {
+  '1': ['문맥상 전체 시제 파악', '동사 시제 일치의 중요성', '일관성 있는 시제 사용'],
+  '2': ['주어 파악하기', '주어와 동사의 수 일치', '영어 문법의 기본 규칙'],
+};
+
 export function WritingReviewClient({ sessionId, initialSession }: ReviewProgressProps) {
   const [session, setSession] = useState<WritingSession>(initialSession);
   const [selectedItem, setSelectedItem] = useState<string>('1');
-  const [currentStage, setCurrentStage] = useState<string>('explanation_read');
   const [loading, setLoading] = useState(false);
 
-  // 현재 문항에 대한 최신 리뷰 시도 찾기
-  const getCurrentReviewProgress = () => {
+  // 현재 문항에 대한 최신 리뷰 attempt 찾기
+  const getItemProgress = (itemNum: string) => {
     const itemAttempts = session.review_attempts.filter(
-      (a) => a.itemKey === selectedItem
+      (a) => a.itemKey === itemNum || a.stage // 호환성 처리
     );
     return itemAttempts[itemAttempts.length - 1] || null;
   };
 
-  const currentProgress = getCurrentReviewProgress();
+  const currentProgress = getItemProgress(selectedItem);
+  const currentStage = currentProgress?.stage || 'explanation_read';
 
-  // 다음 스테이지로 진행
-  const handleProgressToNextStage = async () => {
+  // 다음 단계로 진행
+  const handleProgressStage = async (
+    nextStageName: string,
+    grammarErrors?: any[]
+  ) => {
     setLoading(true);
     try {
-      const currentStageIdx = STAGES.findIndex((s) => s.key === currentStage);
-      const nextStage = STAGES[currentStageIdx + 1];
-
-      if (!nextStage) {
-        alert('모든 리뷰 단계를 완료했습니다!');
-        return;
-      }
-
-      // API 호출 - 문법 오류 등을 포함해서 저장
+      // API 호출
       const response = await fetch('/api/review/writing/add-attempt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sessionId,
-          stage: nextStage.key,
-          grammarErrors: [], // TODO: 실제 오류 데이터
+          stage: nextStageName,
+          grammarErrors: grammarErrors || [],
         }),
       });
 
       if (!response.ok) throw new Error('Failed to save attempt');
-
-      const data = await response.json();
 
       // 세션 재조회
       const reviewResponse = await fetch(
@@ -74,7 +82,6 @@ export function WritingReviewClient({ sessionId, initialSession }: ReviewProgres
       const reviewData = await reviewResponse.json();
 
       // UI 업데이트
-      setCurrentStage(nextStage.key);
       setSession({
         ...session,
         review_attempts: reviewData.attempts,
@@ -84,6 +91,85 @@ export function WritingReviewClient({ sessionId, initialSession }: ReviewProgres
       alert('오류가 발생했습니다');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 현재 단계에 해당하는 컴포넌트 렌더링
+  const renderStageComponent = () => {
+    const originalAnswer = session.raw_answers?.[selectedItem] || '';
+    const explanation = MOCK_EXPLANATIONS[selectedItem] || 'Loading...';
+    const corePoints = MOCK_CORE_POINTS[selectedItem] || [];
+
+    const handleStageComplete = (nextStageName: string, data?: any) => {
+      const nextStageIdx = STAGES.findIndex((s) => s.key === nextStageName);
+      const nextStage = STAGES[nextStageIdx + 1];
+
+      handleProgressStage(
+        nextStage?.key || nextStageName,
+        data?.grammarErrors
+      );
+    };
+
+    switch (currentStage) {
+      case 'explanation_read':
+        return (
+          <WritingStageExplanation
+            itemNum={selectedItem}
+            itemKey={selectedItem}
+            explanation={explanation}
+            corePoints={corePoints}
+            onComplete={() => handleStageComplete('re_do')}
+            loading={loading}
+          />
+        );
+      case 're_do':
+        return (
+          <WritingStageReDo
+            itemNum={selectedItem}
+            originalAnswer={originalAnswer}
+            onComplete={(newAnswer) => {
+              handleStageComplete('reason_writing');
+            }}
+            loading={loading}
+          />
+        );
+      case 'reason_writing':
+        return (
+          <WritingStageReasonWriting
+            itemNum={selectedItem}
+            originalAnswer={originalAnswer}
+            explanation={explanation}
+            onComplete={(reason, grammarErrors) => {
+              handleStageComplete('correction', { grammarErrors });
+            }}
+            loading={loading}
+          />
+        );
+      case 'correction':
+        return (
+          <WritingStageCorrection
+            itemNum={selectedItem}
+            originalAnswer={originalAnswer}
+            feedback="(AI 첨삭 피드백이 여기에 표시됩니다)"
+            onComplete={(correctedAnswer) => {
+              handleStageComplete('final_revision');
+            }}
+            loading={loading}
+          />
+        );
+      case 'final_revision':
+        return (
+          <WritingStageFinalRevision
+            itemNum={selectedItem}
+            originalAnswer={originalAnswer}
+            onComplete={(finalAnswer) => {
+              handleStageComplete('completed');
+            }}
+            loading={loading}
+          />
+        );
+      default:
+        return <div>리뷰 컴포넌트를 로드 중입니다...</div>;
     }
   };
 
@@ -112,102 +198,80 @@ export function WritingReviewClient({ sessionId, initialSession }: ReviewProgres
               {Array.from({ length: 10 }, (_, i) => {
                 const itemNum = String(i + 1);
                 const isSelected = selectedItem === itemNum;
+                const itemProg = getItemProgress(itemNum);
+                const isCompleted = itemProg && STAGES.findIndex((s) => s.key === itemProg.stage) >= STAGES.length - 1;
+
                 return (
                   <button
                     key={itemNum}
                     onClick={() => setSelectedItem(itemNum)}
-                    className={`rounded-lg border-2 py-2 text-sm font-semibold transition ${
+                    className={`relative rounded-lg border-2 py-2 text-sm font-semibold transition ${
                       isSelected
                         ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                        : isCompleted
+                          ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                          : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
                     }`}
                   >
                     {itemNum}
+                    {isCompleted && <span className="absolute -right-1 -top-1 text-lg">✓</span>}
                   </button>
                 );
               })}
             </div>
           </div>
 
-          {/* 리뷰 진행 UI */}
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="mb-4 text-sm font-bold text-slate-900">
-              문항 {selectedItem} - {currentProgress?.stage || '시작'} 단계
-            </h2>
-
-            {/* 스테이지 진행 표시 */}
-            <div className="mb-6 space-y-4">
-              {STAGES.map((stage, idx) => {
-                const isCompleted = currentProgress && STAGES.findIndex((s) => s.key === currentProgress.stage) >= idx;
-                const isCurrent = currentProgress?.stage === stage.key;
-
-                return (
-                  <div
-                    key={stage.key}
-                    className={`rounded-lg border-2 p-4 ${
-                      isCurrent
-                        ? 'border-blue-500 bg-blue-50'
-                        : isCompleted
-                          ? 'border-emerald-500 bg-emerald-50'
-                          : 'border-slate-200 bg-slate-50'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${
-                          isCurrent
-                            ? 'bg-blue-500 text-white'
-                            : isCompleted
-                              ? 'bg-emerald-500 text-white'
-                              : 'bg-slate-300 text-slate-700'
-                        }`}
-                      >
-                        {isCompleted ? '✓' : stage.step}
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-semibold text-slate-900">{stage.label}</p>
-                        <p className="text-xs text-slate-500">
-                          {isCurrent && '현재 진행 중'}
-                          {isCompleted && !isCurrent && '완료됨'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* 다음 단계 버튼 */}
-            <button
-              onClick={handleProgressToNextStage}
-              disabled={loading || !currentProgress || STAGES.findIndex((s) => s.key === currentProgress.stage) >= STAGES.length - 1}
-              className="w-full rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-700 disabled:bg-slate-300"
-            >
-              {loading ? '저장 중...' : '다음 단계로 진행'}
-            </button>
-          </div>
+          {/* Stage 컴포넌트 렌더링 */}
+          {renderStageComponent()}
         </div>
 
         {/* 사이드바 */}
         <div className="col-span-4 space-y-6">
-          {/* 오류 분석 */}
+          {/* 진행 상황 */}
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="mb-4 text-sm font-bold text-slate-900">문법 오류 분석</h2>
-            <div className="space-y-3 text-sm">
-              <p className="text-slate-500">오류 데이터를 분석 중입니다...</p>
+            <h2 className="mb-4 text-sm font-bold text-slate-900">진행 상황</h2>
+            <div className="space-y-3">
+              {STAGES.map((stage) => {
+                const stageIdx = STAGES.findIndex((s) => s.key === stage.key);
+                const currentIdx = STAGES.findIndex((s) => s.key === currentStage);
+                const isCompleted = stageIdx < currentIdx;
+                const isCurrent = stage.key === currentStage;
+
+                return (
+                  <div
+                    key={stage.key}
+                    className={`rounded-lg px-3 py-2 text-xs font-semibold ${
+                      isCurrent
+                        ? 'border-l-4 border-blue-500 bg-blue-50 text-blue-900'
+                        : isCompleted
+                          ? 'text-emerald-700'
+                          : 'text-slate-500'
+                    }`}
+                  >
+                    {isCompleted ? '✓' : isCurrent ? '▶' : '·'} {stage.label}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
-          {/* 진행도 */}
+          {/* 통계 */}
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="mb-4 text-sm font-bold text-slate-900">전체 진행도</h2>
+            <h2 className="mb-4 text-sm font-bold text-slate-900">통계</h2>
             <div className="space-y-2 text-sm">
-              <p className="text-slate-600">
-                리뷰 시도: {session.review_attempts?.length || 0}회
-              </p>
-              <p className="text-slate-600">
-                현재 단계: {STAGES.find((s) => s.key === currentStage)?.label || '시작'}
-              </p>
+              <div className="flex justify-between">
+                <span className="text-slate-600">리뷰 총 횟수:</span>
+                <span className="font-semibold">{session.review_attempts?.length || 0}회</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-600">완료한 문항:</span>
+                <span className="font-semibold">
+                  {Array.from({ length: 10 }, (_, i) => {
+                    const itemProg = getItemProgress(String(i + 1));
+                    return itemProg && STAGES.findIndex((s) => s.key === itemProg.stage) >= STAGES.length - 1 ? 1 : 0;
+                  }).reduce((a, b) => a + b, 0)}/10
+                </span>
+              </div>
             </div>
           </div>
         </div>
