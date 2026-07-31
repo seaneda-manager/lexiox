@@ -14,6 +14,8 @@ import SummaryScreen from "@/components/vocab/summary/SummaryScreen";
 
 import LearningRunner from "@/components/vocab/learning/LearningRunner";
 import VocabSessionLearningStage from "@/components/vocab/learning/VocabSessionLearningStage";
+import VocabSessionLearningStage1 from "@/components/vocab/learning/VocabSessionLearningStage1";
+import VocabSessionLearningStage2 from "@/components/vocab/learning/VocabSessionLearningStage2";
 import type { LearningWord } from "@/components/vocab/learning/learning.types";
 
 import AsteroidGame from "@/components/vocab/game/AsteroidGame";
@@ -108,6 +110,14 @@ type Stage =
   | "SPEED"
   | "FLASHCARD"
   | "FLASHCARD_REVIEW"
+  | "LEARNING_STAGE1_INTRO"
+  | "LEARNING_STAGE1"
+  | "LEARNING_STAGE1_SPEED"
+  | "LEARNING_STAGE1_FLASHCARD_REVIEW"
+  | "LEARNING_STAGE2_INTRO"
+  | "LEARNING_STAGE2"
+  | "LEARNING_STAGE2_SPEED"
+  | "LEARNING_STAGE2_FLASHCARD_REVIEW"
   | "DRILL_INTRO"
   | "DRILL"
   | "DONE";
