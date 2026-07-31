@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { LXGymPTRecommendation } from '@/app/protected/student/_components/LXGymPTRecommendation';
 
 interface ReadingResult {
   id: string;
@@ -280,6 +281,15 @@ export function ReadingReviewClient({
               </div>
             </div>
           </div>
+
+          {/* LXGym PT 추천 */}
+          {result.review_attempts && result.review_attempts.length > 0 && (
+            <LXGymPTRecommendation
+              sectionType="reading"
+              reviewAttempts={result.review_attempts}
+              resultId={resultId}
+            />
+          )}
         </div>
       </div>
     </main>

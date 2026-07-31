@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { LXGymPTRecommendation } from '@/app/protected/student/_components/LXGymPTRecommendation';
 
 interface SpeakingResult {
   id: string;
@@ -257,6 +258,15 @@ export function SpeakingReviewClient({
               </div>
             </div>
           </div>
+
+          {/* LXGym PT 추천 */}
+          {result.review_attempts && result.review_attempts.length > 0 && (
+            <LXGymPTRecommendation
+              sectionType="speaking"
+              reviewAttempts={result.review_attempts}
+              resultId={resultId}
+            />
+          )}
         </div>
       </div>
     </main>
