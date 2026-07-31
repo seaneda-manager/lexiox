@@ -20,7 +20,7 @@ type Props = {
   mode?: "study" | "test";
   totalQuestionOffset?: number;
   totalQuestions?: number;
-  onComplete?: (result: { itemId: string; blob: Blob | null; transcript?: string }[]) => void;
+  onComplete?: (result: { itemId: string; blob: Blob | null; transcript?: string; audioUrl?: string | null }[]) => void;
 };
 
 const MODE_CONFIG = {
@@ -96,7 +96,7 @@ export default function ListenAndRepeatRunner({
   const [phase, setPhase] = useState<Phase>("idle");
   const [timeLeft, setTimeLeft] = useState(0);
   const [volume, setVolume] = useState(0);
-  const [recordings, setRecordings] = useState<{ itemId: string; blob: Blob | null; transcript?: string }[]>([]);
+  const [recordings, setRecordings] = useState<{ itemId: string; blob: Blob | null; transcript?: string; audioUrl?: string | null }[]>([]);
   // 녹음과 나란히 받는 전사. speaking_results_2026의 script를 채운다.
   const { start: startTranscript, stop: stopTranscript } = useSpeechTranscript();
   const pendingTranscriptRef = useRef("");
@@ -120,6 +120,31 @@ export default function ListenAndRepeatRunner({
   const clearTimer = () => {
     if (timerRef.current) { window.clearInterval(timerRef.current); timerRef.current = null; }
   };
+
+  // 오디오 blob을 업로드하고 Public URL 반환
+  const uploadAudioBlob = useCallback(async (blob: Blob | null): Promise<string | null> => {
+    if (!blob) return null;
+
+    try {
+      const formData = new FormData();
+      formData.append("file", blob);
+      formData.append("testId", "listen-repeat");
+      formData.append("taskId", "task1");
+
+      const res = await fetch("/api/speaking-2026/upload-audio", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json() as { ok: boolean; publicUrl?: string; error?: string };
+      if (data.ok && data.publicUrl) return data.publicUrl;
+      console.warn("Audio upload failed:", data.error);
+      return null;
+    } catch (e) {
+      console.warn("Audio upload error:", e);
+      return null;
+    }
+  }, []);
 
   const stopVolumeTracker = () => {
     if (animFrameRef.current) { cancelAnimationFrame(animFrameRef.current); animFrameRef.current = null; }
@@ -169,13 +194,14 @@ export default function ListenAndRepeatRunner({
       chunksRef.current = [];
 
       recorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
-      recorder.onstop = () => {
+      recorder.onstop = async () => {
         const blob = chunksRef.current.length ? new Blob(chunksRef.current, { type: "audio/webm" }) : null;
         const transcript = pendingTranscriptRef.current;
+        const audioUrl = await uploadAudioBlob(blob);
         pendingTranscriptRef.current = "";
         setRecordings((prev) => {
           const filtered = prev.filter((r) => r.itemId !== current.id);
-          return [...filtered, { itemId: current.id, blob, transcript }];
+          return [...filtered, { itemId: current.id, blob, transcript, audioUrl }];
         });
       };
 

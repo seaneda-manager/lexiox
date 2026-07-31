@@ -17,8 +17,8 @@ type Props = {
   testLabel: string;
 };
 
-type LrRec = { itemId: string; blob: Blob | null; transcript?: string };
-type IvRec = { questionId: string; blob: Blob | null; transcript?: string };
+type LrRec = { itemId: string; blob: Blob | null; transcript?: string; audioUrl?: string | null };
+type IvRec = { questionId: string; blob: Blob | null; transcript?: string; audioUrl?: string | null };
 
 async function markCompleted(assignmentId: string, recordings?: {
   listenRepeat: Array<{ itemId: string; audioDataUrl: string | null }>;
@@ -45,6 +45,7 @@ async function recordSpeakingResult(input: {
   testId: string;
   taskId: string;
   script: string;
+  audioUrl?: string | null;  // ← 오디오 URL 추가
   prompt?: string;
   mode: "study" | "test";
   meta?: Record<string, unknown>;
@@ -63,6 +64,7 @@ async function recordSpeakingResult(input: {
         testId: input.testId,
         taskId: input.taskId,
         script,
+        audioUrl: input.audioUrl,  // ← 오디오 URL 전송
         prompt: input.prompt,
         mode: input.mode,
         approxWords: words,
@@ -288,6 +290,7 @@ export default function SpeakingAssignmentRunner({ assignmentId, test, testLabel
           testId: test.id,
           taskId: "task1",
           script: rec.transcript ?? "",
+          audioUrl: rec.audioUrl,  // ← 오디오 URL 추가
           prompt: sentence?.text,
           mode: "test",
           meta: { itemId: rec.itemId, assignmentId: assignmentId ?? null },
@@ -299,6 +302,7 @@ export default function SpeakingAssignmentRunner({ assignmentId, test, testLabel
           testId: test.id,
           taskId: "task2",
           script: rec.transcript ?? "",
+          audioUrl: rec.audioUrl,  // ← 오디오 URL 추가
           prompt: question?.text,
           mode: "test",
           meta: { questionId: rec.questionId, assignmentId: assignmentId ?? null },
