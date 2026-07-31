@@ -1951,6 +1951,85 @@ export default function VocabSessionPage() {
       );
     }
 
+    if (stage === "LEARNING_STAGE1_SPEED") {
+      if (speedQuestions.length === 0) {
+        return (
+          <CardWrap>
+            {Debug}
+            {headerBlock}
+            <div className="rounded-2xl border bg-white p-6 text-center">
+              <div className="text-lg font-bold text-slate-900">Stage 1 최종 점검 완료</div>
+              <button
+                type="button"
+                onClick={() => setStage("LEARNING_STAGE2_INTRO")}
+                className="mt-4 w-full rounded-xl bg-purple-600 py-3 text-sm font-bold text-white"
+              >
+                Stage 2 진행
+              </button>
+            </div>
+          </CardWrap>
+        );
+      }
+
+      return (
+        <CardWrap>
+          {Debug}
+          {headerBlock}
+          {speedTry > 1 && (
+            <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-800">
+              Stage 1: 틀린 단어 {speedQuestions.length}개 재도전 ({speedTry}차)
+            </div>
+          )}
+          <SpeedChallengeRunner
+            key={`stage1-${speedTry}`}
+            userId={userId}
+            questions={speedQuestions}
+            tryIndex={speedTry}
+            secondsPerQuestion={speedTimeoutSeconds}
+            minPassAccuracy={0.7}
+            onFinish={handleSpeedFinish}
+          />
+        </CardWrap>
+      );
+    }
+
+    if (stage === "LEARNING_STAGE2_SPEED") {
+      if (stage2SpeedQuestions.length === 0) {
+        return (
+          <CardWrap>
+            {Debug}
+            {headerBlock}
+            <div className="rounded-2xl border bg-white p-6 text-center">
+              <div className="text-lg font-bold text-slate-900">Stage 2 완료!</div>
+              <button
+                type="button"
+                onClick={finishDay}
+                className="mt-4 w-full rounded-xl bg-emerald-600 py-3 text-sm font-bold text-white"
+              >
+                학습 완료
+              </button>
+            </div>
+          </CardWrap>
+        );
+      }
+
+      return (
+        <CardWrap>
+          {Debug}
+          {headerBlock}
+          <SpeedChallengeRunner
+            key={`stage2-${speedTry}`}
+            userId={userId}
+            questions={stage2SpeedQuestions}
+            tryIndex={speedTry}
+            secondsPerQuestion={speedTimeoutSeconds}
+            minPassAccuracy={0.7}
+            onFinish={handleSpeedFinish}
+          />
+        </CardWrap>
+      );
+    }
+
     if (stage === "FLASHCARD_REVIEW") {
       const { TextFlashcard } = require("@/app/protected/vocab/homework/text-flashcard");
       const wrongWords = allWords.filter((w) => speedWrongIds.includes(w.id));
