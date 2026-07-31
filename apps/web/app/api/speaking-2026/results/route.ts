@@ -8,6 +8,7 @@ type SpeakingResultPayload = {
   testId: string;  // 어떤 스피킹 세트인지
   taskId: string;  // "task1" | "task2" | "task3" 등
   script: string;  // 학생 답변 텍스트
+  audioUrl?: string | null;  // ← 오디오 파일 Public URL
 
   prompt?: string;
   mode?: string | null; // "study" | "test" | "homework" 등
@@ -45,6 +46,7 @@ export async function POST(req: Request) {
     testId,
     taskId,
     script,
+    audioUrl = null,
     prompt,
     mode = "study",
     approxSentences = null,
@@ -68,6 +70,7 @@ export async function POST(req: Request) {
     test_id: testId,
     task_id: taskId,
     script: script.trim(),
+    audio_url: audioUrl,  // ← 오디오 URL 저장
     prompt,
     mode,
     approx_sentences: approxSentences,
