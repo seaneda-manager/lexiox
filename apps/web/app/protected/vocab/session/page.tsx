@@ -1304,6 +1304,92 @@ export default function VocabSessionPage() {
     return shuffleArray(out);
   }, [allWords, speedWrongIds]);
 
+  // ✅ STAGE 2 SPEED 문항 (3가지 유형)
+  //  - 동의어 (4지선다)
+  //  - 반의어 (4지선다)
+  //  - 예문 빈칸 (4지선다)
+  const stage2SpeedQuestions: SpeedQuestion[] = useMemo(() => {
+    const pool =
+      speedWrongIds && speedWrongIds.length > 0
+        ? allWords.filter((w) => speedWrongIds.includes(w.id))
+        : allWords;
+
+    const out: SpeedQuestion[] = [];
+    const allWords_pool = pool.filter((w) => w.text && (w.meanings_ko?.length ?? 0) > 0);
+
+    for (const w of allWords_pool) {
+      const word = cleanStr(w.text);
+      if (!word) continue;
+
+      // 1️⃣ 동의어 MCQ
+      const synonyms = w.synonyms_ko || [];
+      if (synonyms.length > 0) {
+        const correctSyn = synonyms[0];
+        const otherWords = allWords_pool.filter((other) => other.id !== w.id);
+        const distractorSyns = pickRandomSample(
+          otherWords
+            .flatMap((ow) => ow.synonyms_ko || [])
+            .filter((s) => s !== correctSyn),
+          3
+        );
+        out.push({
+          id: `${w.id}:SYN`,
+          type: "WORD_TO_MEANING",
+          wordId: w.id,
+          prompt: `${word}의 동의어는?`,
+          answer: correctSyn,
+          choices: shuffleArray([correctSyn, ...distractorSyns]),
+        });
+      }
+
+      // 2️⃣ 반의어 MCQ
+      const antonyms = w.antonyms_ko || [];
+      if (antonyms.length > 0) {
+        const correctAnt = antonyms[0];
+        const otherWords = allWords_pool.filter((other) => other.id !== w.id);
+        const distractorAnts = pickRandomSample(
+          otherWords
+            .flatMap((ow) => ow.antonyms_ko || [])
+            .filter((a) => a !== correctAnt),
+          3
+        );
+        out.push({
+          id: `${w.id}:ANT`,
+          type: "WORD_TO_MEANING",
+          wordId: w.id,
+          prompt: `${word}의 반의어는?`,
+          answer: correctAnt,
+          choices: shuffleArray([correctAnt, ...distractorAnts]),
+        });
+      }
+
+      // 3️⃣ 예문 빈칸 MCQ
+      const exampleSent = (w.example_en || `The word "${word}" is commonly used.`).trim();
+      if (exampleSent) {
+        const wordRegex = new RegExp(`\\b${word}\\b`, "i");
+        const blank = exampleSent.replace(wordRegex, "___");
+
+        if (blank !== exampleSent) {
+          const otherWords = allWords_pool.filter((other) => other.id !== w.id).map((ow) => cleanStr(ow.text));
+          const distractorWords = pickRandomSample(
+            otherWords.filter((ow) => ow !== word),
+            3
+          );
+          out.push({
+            id: `${w.id}:EX`,
+            type: "WORD_TO_MEANING",
+            wordId: w.id,
+            prompt: blank,
+            answer: word,
+            choices: shuffleArray([word, ...distractorWords]),
+          });
+        }
+      }
+    }
+
+    return shuffleArray(out);
+  }, [allWords, speedWrongIds]);
+
   async function finishDay() {
     // ✅ DONE 화면을 바로 보여주고, 완료 기록은 백그라운드에서 처리
     setStage("DONE");
