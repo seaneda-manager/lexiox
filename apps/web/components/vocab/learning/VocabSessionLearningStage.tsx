@@ -87,9 +87,9 @@ export default function VocabSessionLearningStage({
   }
 
   return (
-    <div className="flex gap-6 w-full min-h-screen">
+    <div className="flex flex-col lg:flex-row gap-6 w-full min-h-screen">
       {/* 왼쪽 메인 콘텐츠 */}
-      <div className="flex-[1.5] space-y-6 overflow-y-scroll" style={{ scrollbarGutter: 'stable' }}>
+      <div className="flex-1 lg:flex-[1.5] space-y-6 overflow-y-scroll px-4 lg:px-0" style={{ scrollbarGutter: 'stable' }}>
         {/* 진도 헤더 */}
         <div className="bg-teal-500 text-white rounded-2xl p-6 flex justify-between items-center flex-shrink-0">
           <div>
@@ -174,8 +174,8 @@ export default function VocabSessionLearningStage({
         </div>
       </div>
 
-      {/* 오른쪽 사이드바 */}
-      <div className="w-80 flex flex-col overflow-y-scroll flex-shrink-0 gap-4" style={{ scrollbarGutter: 'stable', height: '100%' }}>
+      {/* 오른쪽 사이드바 - 태블릿에서는 아래로 */}
+      <div className="w-full lg:w-80 flex flex-col overflow-y-scroll flex-shrink-0 gap-4 px-4 lg:px-0" style={{ scrollbarGutter: 'stable' }}>
         {/* 오늘의 진도 */}
         <div className="bg-white rounded-lg p-4 border-2 border-green-400 flex-shrink-0" style={{ minHeight: '600px' }}>
           <div className="text-sm font-bold text-gray-700 mb-3">🏆 오늘의 진도</div>
