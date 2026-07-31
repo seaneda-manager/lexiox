@@ -24,7 +24,8 @@ export default async function SpeakingGradeListPage() {
     .from("speaking_results_2026")
     .select(
       `id, test_id, task_id, mode, user_id,
-       created_at`,
+       created_at, script, approx_words, approx_sentences,
+       grading_status, ai_total_score, final_total_score`,
     )
     .order("created_at", { ascending: false })
     .limit(100);

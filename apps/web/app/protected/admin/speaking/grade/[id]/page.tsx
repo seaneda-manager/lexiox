@@ -23,6 +23,7 @@ export default async function SpeakingGradeDetailPage({ params }: Props) {
     .from("speaking_results_2026")
     .select(`
       id, test_id, task_id, mode, script, prompt, audio_url,
+      approx_words, approx_sentences,
       grading_status, created_at,
       ai_delivery_score, ai_language_score, ai_topic_score, ai_total_score, ai_feedback,
       final_delivery_score, final_language_score, final_topic_score, final_total_score, final_feedback,
@@ -82,6 +83,26 @@ export default async function SpeakingGradeDetailPage({ params }: Props) {
               <p className="text-xs text-slate-400">스크립트 없음</p>
             )}
           </section>
+
+          {(row.approx_words != null || row.approx_sentences != null) && (
+            <section className="rounded-2xl border border-emerald-200 bg-emerald-50/60 px-4 py-4">
+              <p className="mb-2 text-xs font-bold text-emerald-800">스크립트 분석</p>
+              <div className="flex gap-4">
+                {row.approx_words != null && (
+                  <div>
+                    <p className="text-xs text-emerald-600">단어 수</p>
+                    <p className="text-lg font-bold text-emerald-900">{row.approx_words}</p>
+                  </div>
+                )}
+                {row.approx_sentences != null && (
+                  <div>
+                    <p className="text-xs text-emerald-600">문장 수</p>
+                    <p className="text-lg font-bold text-emerald-900">{row.approx_sentences}</p>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
 
           {row.audio_url && (
             <section className="rounded-2xl border border-slate-200 bg-white px-4 py-4">
