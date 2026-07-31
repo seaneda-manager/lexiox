@@ -2,7 +2,7 @@
 // 스피킹 개별 채점 페이지
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getServerSupabase } from "@/lib/supabase/server";
+import { createClient } from "@supabase/supabase-js";
 import {
   DELIVERY_DESCRIPTORS,
   LANGUAGE_DESCRIPTORS,
@@ -17,7 +17,11 @@ type Props = { params: Promise<{ id: string }> };
 
 export default async function SpeakingGradeDetailPage({ params }: Props) {
   const { id } = await params;
-  const supabase = await getServerSupabase();
+  // ✅ Admin이 모든 데이터를 볼 수 있도록 서비스 롤 사용
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+    process.env.SUPABASE_SERVICE_ROLE_KEY || ""
+  );
 
   const { data: row, error } = await supabase
     .from("speaking_results_2026")

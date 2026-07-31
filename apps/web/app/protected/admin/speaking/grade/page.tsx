@@ -1,7 +1,7 @@
 // app/(protected)/admin/speaking/grade/page.tsx
 // 스피킹 채점 대기 목록
 import Link from "next/link";
-import { getServerSupabase } from "@/lib/supabase/server";
+import { createClient } from "@supabase/supabase-js";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +18,11 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 export default async function SpeakingGradeListPage() {
-  const supabase = await getServerSupabase();
+  // ✅ Admin이 모든 데이터를 볼 수 있도록 서비스 롤 사용
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+    process.env.SUPABASE_SERVICE_ROLE_KEY || ""
+  );
 
   const { data: rows, error } = await supabase
     .from("speaking_results_2026")
