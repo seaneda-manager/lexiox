@@ -31,13 +31,17 @@ export default async function SpeakingGradeDetailPage({ params }: Props) {
       grading_status, created_at,
       ai_delivery_score, ai_language_score, ai_topic_score, ai_total_score, ai_feedback,
       final_delivery_score, final_language_score, final_topic_score, final_total_score, final_feedback,
-      graded_at,
       profiles:user_id (full_name, name, email)
     `)
     .eq("id", id)
     .maybeSingle();
 
-  if (error || !row) return notFound();
+  if (error) {
+    console.error("Supabase error:", error);
+    return notFound();
+  }
+
+  if (!row) return notFound();
 
   const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
   const studentName =
