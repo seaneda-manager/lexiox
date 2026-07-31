@@ -18,6 +18,8 @@ type RecordingResult = {
   blob: Blob | null;
   /** 녹음과 나란히 받은 전사. 브라우저가 STT를 지원하지 않으면 빈 문자열. */
   transcript?: string;
+  /** 업로드된 오디오의 Public URL */
+  audioUrl?: string | null;
 };
 
 type Props = {
@@ -91,6 +93,31 @@ export default function InterviewRunner({
   const { start: startTranscript, stop: stopTranscript } = useSpeechTranscript();
   const pendingTranscriptRef = useRef("");
 
+  // 오디오 blob을 업로드하고 Public URL 반환
+  const uploadAudioBlob = useCallback(async (blob: Blob | null): Promise<string | null> => {
+    if (!blob) return null;
+
+    try {
+      const formData = new FormData();
+      formData.append("file", blob);
+      formData.append("testId", current?.id ?? "demo");
+      formData.append("taskId", current?.id ?? "extra");
+
+      const res = await fetch("/api/speaking-2026/upload-audio", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json() as { ok: boolean; publicUrl?: string; error?: string };
+      if (data.ok && data.publicUrl) return data.publicUrl;
+      console.warn("Audio upload failed:", data.error);
+      return null;
+    } catch (e) {
+      console.warn("Audio upload error:", e);
+      return null;
+    }
+  }, [current?.id]);
+
   const clearTimer = () => {
     if (timerRef.current) { window.clearInterval(timerRef.current); timerRef.current = null; }
   };
@@ -118,13 +145,14 @@ export default function InterviewRunner({
       chunksRef.current = [];
 
       recorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
-      recorder.onstop = () => {
+      recorder.onstop = async () => {
         const blob = chunksRef.current.length ? new Blob(chunksRef.current, { type: "audio/webm" }) : null;
         const transcript = pendingTranscriptRef.current;
+        const audioUrl = await uploadAudioBlob(blob);
         pendingTranscriptRef.current = "";
         setRecordings((prev) => [
           ...prev.filter((r) => r.questionId !== current.id),
-          { questionId: current.id, blob, transcript },
+          { questionId: current.id, blob, transcript, audioUrl },
         ]);
       };
 
