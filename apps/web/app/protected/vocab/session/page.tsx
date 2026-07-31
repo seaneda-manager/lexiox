@@ -1754,6 +1754,70 @@ export default function VocabSessionPage() {
       );
     }
 
+    if (stage === "LEARNING_STAGE1_INTRO") {
+      return (
+        <CardWrap>
+          {Debug}
+          <StageIntroScreen title="Stage 1: Essential" subtitle="필수 단계 - 철자와 뜻을 완벽히" onDone={() => setStage("LEARNING_STAGE1")} />
+        </CardWrap>
+      );
+    }
+
+    if (stage === "LEARNING_STAGE1") {
+      if (!learningPayload || learningPayload.length === 0) {
+        return (
+          <CardWrap>
+            {Debug}
+            <div className="rounded-2xl border bg-white p-6 text-center text-slate-700">학습 준비 중...</div>
+          </CardWrap>
+        );
+      }
+      return (
+        <CardWrap>
+          {Debug}
+          <VocabSessionLearningStage1
+            words={learningPayload}
+            onFinish={() => setStage("LEARNING_STAGE1_SPEED")}
+            trackTitle={trackTitle}
+            dayIndex={dayIndex}
+            totalDays={totalDays}
+          />
+        </CardWrap>
+      );
+    }
+
+    if (stage === "LEARNING_STAGE2_INTRO") {
+      return (
+        <CardWrap>
+          {Debug}
+          <StageIntroScreen title="Stage 2: Advanced" subtitle="심화 학습 - 동의어, 반의어, 예문" onDone={() => setStage("LEARNING_STAGE2")} />
+        </CardWrap>
+      );
+    }
+
+    if (stage === "LEARNING_STAGE2") {
+      if (!learningPayload || learningPayload.length === 0) {
+        return (
+          <CardWrap>
+            {Debug}
+            <div className="rounded-2xl border bg-white p-6 text-center text-slate-700">학습 준비 중...</div>
+          </CardWrap>
+        );
+      }
+      return (
+        <CardWrap>
+          {Debug}
+          <VocabSessionLearningStage2
+            words={learningPayload}
+            onFinish={() => setStage("LEARNING_STAGE2_SPEED")}
+            trackTitle={trackTitle}
+            dayIndex={dayIndex}
+            totalDays={totalDays}
+          />
+        </CardWrap>
+      );
+    }
+
     if (stage === "SPEED") {
       // 테스트할 문항이 없으면(뜻 없는 세트 등) 바로 완료 처리
       if (speedQuestions.length === 0) {
