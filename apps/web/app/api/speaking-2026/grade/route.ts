@@ -2,7 +2,7 @@
 // AI 자동 채점 엔드포인트 (Claude → ETS rubric 0~4)
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { getServerSupabase } from "@/lib/supabase/server";
+import { createClient } from "@supabase/supabase-js";
 import {
   buildGradingSystemPrompt,
   calcTotalScore,
@@ -16,15 +16,11 @@ const getAI = () =>
   new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 export async function POST(req: Request) {
-  const supabase = await getServerSupabase();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
-  }
+  // ✅ 서비스 롤 사용 (RLS 무시)
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+    process.env.SUPABASE_SERVICE_ROLE_KEY || ""
+  );
 
   let resultId: string;
   try {
