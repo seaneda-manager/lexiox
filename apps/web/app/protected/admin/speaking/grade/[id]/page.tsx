@@ -62,7 +62,7 @@ export default async function SpeakingGradeDetailPage({ params }: Props) {
           <p className="text-sm text-slate-500">제출: {createdAt} · 모드: {row.mode ?? "-"}</p>
         </div>
         <Link
-          href="/protected/admin/speaking/grade"
+          href="/admin/speaking/grade"
           className="self-start rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
         >
           ← 목록
