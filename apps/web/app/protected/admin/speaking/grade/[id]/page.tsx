@@ -27,11 +27,10 @@ export default async function SpeakingGradeDetailPage({ params }: Props) {
     .from("speaking_results_2026")
     .select(`
       id, test_id, task_id, mode, script, prompt, audio_url,
-      approx_words, approx_sentences,
+      approx_words, approx_sentences, user_id,
       grading_status, created_at,
       ai_delivery_score, ai_language_score, ai_topic_score, ai_total_score, ai_feedback,
-      final_delivery_score, final_language_score, final_topic_score, final_total_score, final_feedback,
-      profiles:user_id (full_name, name, email)
+      final_delivery_score, final_language_score, final_topic_score, final_total_score, final_feedback
     `)
     .eq("id", id)
     .maybeSingle();
@@ -43,12 +42,21 @@ export default async function SpeakingGradeDetailPage({ params }: Props) {
 
   if (!row) return notFound();
 
-  const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
-  const studentName =
-    (profile as { full_name?: string | null } | null)?.full_name ||
-    (profile as { name?: string | null } | null)?.name ||
-    (profile as { email?: string | null } | null)?.email ||
-    "학생";
+  // 학생명은 별도 쿼리로 (프로필 조인 대신)
+  let studentName = "학생";
+  if (row.user_id) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name, name, email")
+      .eq("id", row.user_id)
+      .maybeSingle();
+
+    studentName =
+      profile?.full_name ||
+      profile?.name ||
+      profile?.email ||
+      "학생";
+  }
 
   const createdAt = new Date(row.created_at).toLocaleString("ko-KR");
   const status = row.grading_status ?? "ungraded";
