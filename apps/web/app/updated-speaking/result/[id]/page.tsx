@@ -34,18 +34,26 @@ export default async function SpeakingResultPage({ params }: PageProps) {
 
   try {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    const response = await fetch(`${baseUrl}/api/updated-speaking/result/${params.id}`, {
-      credentials: 'include',
+    const url = `${baseUrl}/api/updated-speaking/result/${params.id}`;
+    console.log('[SPEAKING PAGE] Fetching from:', url);
+
+    const response = await fetch(url, {
       cache: 'no-store',
     });
 
+    console.log('[SPEAKING PAGE] Response status:', response.status);
+
     if (!response.ok) {
       error = `API Error: ${response.status}`;
+      const errorText = await response.text();
+      console.error('[SPEAKING PAGE] Error response:', errorText);
     } else {
       reviewData = await response.json();
+      console.log('[SPEAKING PAGE] Success, data:', reviewData);
     }
   } catch (err: any) {
     error = err?.message || 'Failed to fetch review data';
+    console.error('[SPEAKING PAGE] Fetch error:', err);
   }
 
   if (error || !reviewData) {

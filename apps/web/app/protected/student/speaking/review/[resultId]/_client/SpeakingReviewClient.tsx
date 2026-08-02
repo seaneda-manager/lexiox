@@ -58,7 +58,7 @@ export function SpeakingReviewClient({ reviewData }: { reviewData: ReviewData })
                   : 'border-slate-200 hover:border-slate-300'
               }`}
             >
-              {selected.isCorrect ? '✓' : '✗'}{q.number}
+              {q.isCorrect ? '✓' : '✗'}{q.number}
             </button>
           ))}
         </div>

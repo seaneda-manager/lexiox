@@ -7,6 +7,7 @@ export async function GET(
 ) {
   try {
     const { resultId } = await params;
+    console.log('[SPEAKING API] GET /api/updated-speaking/result/', resultId);
     const supabase = getServiceRoleClient();
 
     let resultData;
