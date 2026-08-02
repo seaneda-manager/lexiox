@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import SentenceSprintsPlay from '../../_components/games/SentenceSprintsPlay';
 import ArcheryPlay from '../../_components/games/ArcheryPlay';
 import InferencePlay from '../../_components/games/InferencePlay';
+import ReadingBlankFillPlay from '../../_components/games/ReadingBlankFillPlay';
 
 async function GamePlayContent({
   gameId,
@@ -16,6 +17,8 @@ async function GamePlayContent({
         return <ArcheryPlay />;
       case 'inference':
         return <InferencePlay />;
+      case 'reading_blank_fill':
+        return <ReadingBlankFillPlay />;
       default:
         return <div>Unknown game</div>;
     }

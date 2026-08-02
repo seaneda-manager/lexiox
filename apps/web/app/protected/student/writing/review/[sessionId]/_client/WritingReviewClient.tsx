@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { WritingStageExplanation } from './stages/WritingStageExplanation';
 import { WritingStageReDo } from './stages/WritingStageReDo';
 import { WritingStageReasonWriting } from './stages/WritingStageReasonWriting';
@@ -29,7 +29,6 @@ const STAGES = [
   { key: 'final_revision', label: '안보고 다시쓰기', step: 5 },
 ];
 
-// TODO: 실제 데이터는 API나 props에서 받아야 함
 const MOCK_EXPLANATIONS: Record<string, string> = {
   '1': '동사의 시제를 일치시켜야 합니다. 전체 문맥에서 과거시제를 사용하고 있으므로, 이 동사도 과거시제로 맞춰야 합니다.',
   '2': '주어와 동사의 수(단수/복수)가 일치해야 합니다. 주어가 단수이므로 동사도 단수 형태를 사용해야 합니다.',
@@ -45,10 +44,9 @@ export function WritingReviewClient({ sessionId, initialSession }: ReviewProgres
   const [selectedItem, setSelectedItem] = useState<string>('1');
   const [loading, setLoading] = useState(false);
 
-  // 현재 문항에 대한 최신 리뷰 attempt 찾기
   const getItemProgress = (itemNum: string) => {
     const itemAttempts = session.review_attempts.filter(
-      (a) => a.itemKey === itemNum || a.stage // 호환성 처리
+      (a) => a.itemKey === itemNum || a.stage
     );
     return itemAttempts[itemAttempts.length - 1] || null;
   };
@@ -56,14 +54,12 @@ export function WritingReviewClient({ sessionId, initialSession }: ReviewProgres
   const currentProgress = getItemProgress(selectedItem);
   const currentStage = currentProgress?.stage || 'explanation_read';
 
-  // 다음 단계로 진행
   const handleProgressStage = async (
     nextStageName: string,
     grammarErrors?: any[]
   ) => {
     setLoading(true);
     try {
-      // API 호출
       const response = await fetch('/api/review/writing/add-attempt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -76,13 +72,11 @@ export function WritingReviewClient({ sessionId, initialSession }: ReviewProgres
 
       if (!response.ok) throw new Error('Failed to save attempt');
 
-      // 세션 재조회
       const reviewResponse = await fetch(
         `/api/review/get-review-data?type=writing&sessionId=${sessionId}`
       );
       const reviewData = await reviewResponse.json();
 
-      // UI 업데이트
       setSession({
         ...session,
         review_attempts: reviewData.attempts,
@@ -95,7 +89,6 @@ export function WritingReviewClient({ sessionId, initialSession }: ReviewProgres
     }
   };
 
-  // 현재 단계에 해당하는 컴포넌트 렌더링
   const renderStageComponent = () => {
     const originalAnswer = session.raw_answers?.[selectedItem] || '';
     const explanation = MOCK_EXPLANATIONS[selectedItem] || 'Loading...';
@@ -175,24 +168,16 @@ export function WritingReviewClient({ sessionId, initialSession }: ReviewProgres
   };
 
   return (
-    <main className="mx-auto max-w-7xl space-y-6 px-6 py-8">
-      {/* 헤더 */}
-      <header className="space-y-1">
-        <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-          Student / Writing / 리뷰
-        </p>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-          Writing 리뷰
-        </h1>
+    <div className="mx-auto max-w-7xl space-y-6">
+      <div className="space-y-1 px-6 pt-8">
+        <h2 className="text-xl font-bold tracking-tight text-slate-900">Writing 리뷰</h2>
         <p className="text-sm text-slate-500">
           1-10번 문항: 설명 읽기 → 다시 풀기 → 오답 이유 → 첨삭 반영 → 최종 작성
         </p>
-      </header>
+      </div>
 
-      <div className="grid grid-cols-12 gap-6">
-        {/* 메인 콘텐츠 */}
+      <div className="grid grid-cols-12 gap-6 px-6 pb-8">
         <div className="col-span-8 space-y-6">
-          {/* 문항 선택기 */}
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="mb-4 text-sm font-bold text-slate-900">문항 선택</h2>
             <div className="grid grid-cols-5 gap-2">
@@ -200,7 +185,8 @@ export function WritingReviewClient({ sessionId, initialSession }: ReviewProgres
                 const itemNum = String(i + 1);
                 const isSelected = selectedItem === itemNum;
                 const itemProg = getItemProgress(itemNum);
-                const isCompleted = itemProg && STAGES.findIndex((s) => s.key === itemProg.stage) >= STAGES.length - 1;
+                const isCompleted =
+                  itemProg && STAGES.findIndex((s) => s.key === itemProg.stage) >= STAGES.length - 1;
 
                 return (
                   <button
@@ -222,13 +208,10 @@ export function WritingReviewClient({ sessionId, initialSession }: ReviewProgres
             </div>
           </div>
 
-          {/* Stage 컴포넌트 렌더링 */}
           {renderStageComponent()}
         </div>
 
-        {/* 사이드바 */}
         <div className="col-span-4 space-y-6">
-          {/* 진행 상황 */}
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="mb-4 text-sm font-bold text-slate-900">진행 상황</h2>
             <div className="space-y-3">
@@ -256,7 +239,6 @@ export function WritingReviewClient({ sessionId, initialSession }: ReviewProgres
             </div>
           </div>
 
-          {/* 통계 */}
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="mb-4 text-sm font-bold text-slate-900">통계</h2>
             <div className="space-y-2 text-sm">
@@ -276,7 +258,6 @@ export function WritingReviewClient({ sessionId, initialSession }: ReviewProgres
             </div>
           </div>
 
-          {/* LXGym PT 추천 */}
           {session.review_attempts && session.review_attempts.length > 0 && (
             <LXGymPTRecommendation
               sectionType="writing"
@@ -286,6 +267,6 @@ export function WritingReviewClient({ sessionId, initialSession }: ReviewProgres
           )}
         </div>
       </div>
-    </main>
+    </div>
   );
 }

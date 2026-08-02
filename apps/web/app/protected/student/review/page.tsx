@@ -162,7 +162,7 @@ export default async function StudentReviewPage() {
       <SkillSection
         icon={<Headphones className="h-4 w-4 text-violet-500" />}
         title="Listening"
-        color="indigo"
+        color="violet"
         empty
         emptyHref="/updated-listening"
         emptyLabel="Listening 연습 시작하기"

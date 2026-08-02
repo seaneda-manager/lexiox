@@ -100,19 +100,16 @@ export function ReadingReviewClient({
     : READING_STAGES;
 
   return (
-    <main className="mx-auto max-w-7xl space-y-6 px-6 py-8">
-      {/* 헤더 */}
-      <header className="space-y-1">
-        <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-          Student / Reading / 리뷰
-        </p>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+    <div className="mx-auto max-w-7xl space-y-6">
+      {/* 서브헤더 */}
+      <div className="space-y-1">
+        <h2 className="text-xl font-bold tracking-tight text-slate-900">
           Reading 리뷰
-        </h1>
+        </h2>
         <p className="text-sm text-slate-500">
           {isCorrect ? '정답' : '오답'}에 대해 학습하세요
         </p>
-      </header>
+      </div>
 
       <div className="grid grid-cols-12 gap-6">
         {/* 메인 콘텐츠 */}
@@ -292,6 +289,6 @@ export function ReadingReviewClient({
           )}
         </div>
       </div>
-    </main>
+    </div>
   );
 }

@@ -31,6 +31,16 @@ export const GAMES: Record<string, GameMetadata> = {
     estimatedDuration: 8,
     featured: true,
   },
+  reading_blank_fill: {
+    id: 'reading_blank_fill',
+    title: 'Reading Blank Fill',
+    description: '지문의 빈칸을 채워 단어 이해도를 높여보세요',
+    emoji: '📖',
+    phase: 1,
+    difficulty: 'medium',
+    estimatedDuration: 6,
+    featured: true,
+  },
   // Phase 2 게임들 (향후 구현)
   bubble_pop: {
     id: 'bubble_pop',
@@ -105,7 +115,7 @@ export const GAMES: Record<string, GameMetadata> = {
   },
 };
 
-export const PHASE_1_GAMES = ['sentence_sprints', 'archery', 'inference'];
+export const PHASE_1_GAMES = ['sentence_sprints', 'archery', 'inference', 'reading_blank_fill'];
 export const PHASE_2_GAMES = ['bubble_pop', 'read_recall', 'mad_libs'];
 export const PHASE_3_GAMES = ['storytelling', 'scavenger_hunt', 'picture_word', 'story_creator'];
 
