@@ -337,6 +337,11 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
     }
   };
 
+  const getCircledNumber = (num: number): string => {
+    const circledNumbers = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩'];
+    return circledNumbers[num - 1] || `${num}`;
+  };
+
   const getSentenceWithBlanks = (showBlankNumber: boolean = false) => {
     const sentence = selectedQuestion.stem;
     const correctAnswer = selectedQuestion.correctAnswer;
@@ -456,12 +461,12 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
                           return (
                             <>
                               {parts.before}
-                              <span className={`font-bold px-1 rounded ${
+                              <span className={`font-bold px-0.5 ${
                                 isCorrect
-                                  ? 'bg-emerald-300 text-emerald-900'
-                                  : 'bg-rose-300 text-rose-900'
+                                  ? 'text-emerald-700'
+                                  : 'text-rose-700'
                               }`}>
-                                [{selectedQuestion.number}. {selectedQuestion.userAnswer || '미답'}]
+                                {getCircledNumber(selectedQuestion.number)}{selectedQuestion.userAnswer || '미답'}
                               </span>
                               {parts.after}
                             </>
@@ -481,8 +486,8 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
                           return (
                             <>
                               {parts.before}
-                              <span className="font-bold px-1 rounded bg-blue-400 text-blue-900">
-                                [{selectedQuestion.number}. {selectedQuestion.correctAnswer}]
+                              <span className="font-bold text-blue-700">
+                                {getCircledNumber(selectedQuestion.number)}{selectedQuestion.correctAnswer}
                               </span>
                               {parts.after}
                             </>
