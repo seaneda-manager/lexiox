@@ -4,7 +4,7 @@ import SectionGuide from '@/app/components/SectionGuide';
 export default function WritingHubPage() {
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="mx-auto max-w-4xl space-y-6 p-6">
       <h1 className="text-xl font-semibold">Writing 2026</h1>
 
       <SectionGuide
