@@ -77,6 +77,7 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
   );
   const [currentStageIndex, setCurrentStageIndex] = useState(0);
   const [stageStates, setStageStates] = useState<Record<string, ReviewStageState>>({});
+  const [isCompleteWordsOpen, setIsCompleteWordsOpen] = useState(true);
 
   const selectedQuestion = reviewData.questions.find((q) => q.id === selectedQuestionId);
   if (!selectedQuestion) {
@@ -353,7 +354,14 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
 
             {/* 1-10번: Complete Words */}
             <div className="mb-4">
-              <p className="text-xs font-bold text-slate-600 uppercase mb-2">1-10번 (빈칸채우기)</p>
+              <button
+                onClick={() => setIsCompleteWordsOpen(!isCompleteWordsOpen)}
+                className="w-full flex items-center justify-between p-2 hover:bg-slate-100 rounded-lg transition"
+              >
+                <p className="text-xs font-bold text-slate-600 uppercase">1-10번 (빈칸채우기)</p>
+                <span className="text-slate-600 text-sm">{isCompleteWordsOpen ? '▼' : '▶'}</span>
+              </button>
+              {isCompleteWordsOpen && (
               <div className="space-y-1">
                 {reviewData.questions.filter((q) => q.number <= 10).map((q) => (
                   <div
@@ -388,6 +396,7 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
                   </div>
                 ))}
               </div>
+              )}
             </div>
 
             {/* 11번 이상: 다른 문제 */}
