@@ -1,6 +1,6 @@
 // apps/web/app/api/updated-reading/result/[resultId]/route.ts
 import { NextResponse } from "next/server";
-import { getServerSupabase } from "@/lib/supabase/server";
+import { getServiceRoleClient } from "@/lib/supabase/server";
 import type { RReadingTest2026 } from "@/models/reading";
 
 /**
@@ -41,7 +41,7 @@ export async function GET(
   try {
     const { resultId } = await params;
     console.log("[API] GET /api/updated-reading/result/", resultId);
-    const supabase = await getServerSupabase();
+    const supabase = getServiceRoleClient();
 
     // 1. 결과 데이터 조회 (id 또는 assignment_id로 조회)
     let resultData;
@@ -312,7 +312,7 @@ export async function POST(
 ) {
   try {
     const { resultId: assignmentId } = await params;
-    const supabase = await getServerSupabase();
+    const supabase = getServiceRoleClient();
     const body = await req.json();
 
     const { testId, answers, stage1Correct, stage1Total, stage2Correct, stage2Total } = body;
