@@ -164,7 +164,7 @@ export async function GET(
           questions.push({
             id: blank.id,
             number: questions.length + 1,
-            stem: blank.stem ?? cw.paragraphHtml.substring(0, 100),
+            stem: blank.stem ?? cw.paragraphHtml,
             type: "complete_words",
             itemType: `단어 채우기`,
             userAnswer: userAnswers[blank.id] ?? null,
