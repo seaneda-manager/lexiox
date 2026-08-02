@@ -142,6 +142,57 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
     return 'n.'; // 기본값
   };
 
+  const getQuestionTypeGuide = (type: string) => {
+    const guides: Record<string, { title: string; description: string; strategy: string[] }> = {
+      'main_idea': {
+        title: 'Main Idea (주요 아이디어)',
+        description: '지문 전체의 중심 주제를 파악하는 문제입니다.',
+        strategy: [
+          '지문의 첫 번째와 마지막 문장에 주의하세요',
+          '반복되는 키워드를 찾아보세요',
+          '저자의 주장이나 관점을 파악하세요'
+        ]
+      },
+      'detail': {
+        title: 'Detail (세부사항)',
+        description: '지문에서 구체적인 정보를 찾는 문제입니다.',
+        strategy: [
+          '문제에서 키워드를 찾으세요',
+          '지문에서 해당 키워드를 찾고 주변 문맥을 읽으세요',
+          '정확한 정보를 확인하세요'
+        ]
+      },
+      'inference': {
+        title: 'Inference (추론)',
+        description: '지문에서 직접 명시되지 않은 의미를 추론하는 문제입니다.',
+        strategy: [
+          '지문의 명시적 정보를 먼저 파악하세요',
+          '논리적 연결고리를 찾으세요',
+          '저자의 암시적 의도를 파악하세요'
+        ]
+      },
+      'vocabulary_in_context': {
+        title: 'Vocabulary in Context (문맥상 어휘)',
+        description: '지문의 문맥에서 단어의 의미를 파악하는 문제입니다.',
+        strategy: [
+          '단어 주변의 문맥을 읽으세요',
+          '같은 의미의 유사어들을 찾아보세요',
+          '문맥에 맞는 의미를 선택하세요'
+        ]
+      },
+      'complete_words': {
+        title: 'Complete Words (빈칸 채우기)',
+        description: '지문의 빈칸에 알맞은 단어를 채우는 문제입니다.',
+        strategy: [
+          '문장 구조를 파악하세요',
+          '앞뒤 단어들의 관계를 이해하세요',
+          '문법과 의미가 맞는 단어를 선택하세요'
+        ]
+      }
+    };
+    return guides[type] || guides['detail'];
+  };
+
   const renderTextWithClickableWords = (text: string) => {
     if (!text) return '';
 
@@ -364,21 +415,46 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
           )}
 
           {currentStage.key === 'interpretation' && (
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h3 className="mb-4 text-sm font-bold text-slate-900">지문 해석</h3>
-              <p className="text-sm text-slate-600 mb-4">
-                다음 지문을 한글로 해석해보세요
-              </p>
-              <div className="rounded-lg bg-slate-50 p-4 text-sm leading-relaxed text-slate-700 mb-4">
-                {selectedQuestion.stem}
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+              <div>
+                <h3 className="mb-4 text-sm font-bold text-slate-900">지문 해석</h3>
+                <p className="text-sm text-slate-600 mb-4">
+                  지문을 읽고 한글로 해석해보세요
+                </p>
               </div>
-              <textarea
-                value={currentState.interpretation}
-                onChange={(e) => updateState({ interpretation: e.target.value })}
-                placeholder="여기에 한글 해석을 입력하세요..."
-                className="w-full rounded-lg border border-slate-300 p-3 text-sm placeholder-slate-400 focus:border-blue-500 focus:outline-none"
-                rows={6}
-              />
+
+              {/* 원문 */}
+              <div>
+                <p className="text-xs font-bold text-slate-600 uppercase mb-2">📝 원문</p>
+                <div className="rounded-lg bg-slate-50 p-4 text-sm leading-relaxed text-slate-700 max-h-32 overflow-y-auto">
+                  {selectedQuestion.stem}
+                </div>
+              </div>
+
+              {/* 해석 입력 */}
+              <div>
+                <p className="text-xs font-bold text-slate-600 uppercase mb-2">✍️ 당신의 해석</p>
+                <textarea
+                  value={currentState.interpretation}
+                  onChange={(e) => updateState({ interpretation: e.target.value })}
+                  placeholder="지문의 의미를 한글로 설명해보세요..."
+                  className="w-full rounded-lg border border-slate-300 p-3 text-sm placeholder-slate-400 focus:border-blue-500 focus:outline-none resize-none"
+                  rows={5}
+                />
+                <p className="text-xs text-slate-500 mt-2">
+                  {currentState.interpretation.length}자
+                </p>
+              </div>
+
+              {/* 팁 */}
+              <div className="rounded-lg bg-blue-50 border border-blue-200 p-3">
+                <p className="text-xs font-bold text-blue-700 mb-2">💡 팁</p>
+                <ul className="text-xs text-blue-900 space-y-1">
+                  <li>• 주어와 동사를 먼저 파악하세요</li>
+                  <li>• 주요 의미를 중심으로 해석하세요</li>
+                  <li>• 문장 구조를 이해한 후 전체 의미를 파악하세요</li>
+                </ul>
+              </div>
             </div>
           )}
 
@@ -456,15 +532,39 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
             </div>
           )}
 
-          {currentStage.key === 'question_type' && (
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h3 className="mb-4 text-sm font-bold text-slate-900">문제 유형 분석</h3>
-              <div className="rounded-lg bg-blue-50 border border-blue-200 p-4">
-                <p className="text-sm font-bold text-blue-900 mb-2">{selectedQuestion.type}</p>
-                <p className="text-sm text-blue-800">{selectedQuestion.itemType}</p>
+          {currentStage.key === 'question_type' && (() => {
+            const guide = getQuestionTypeGuide(selectedQuestion.type);
+            return (
+              <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+                <div>
+                  <h3 className="mb-4 text-sm font-bold text-slate-900">문제 유형 분석</h3>
+                  <div className="rounded-lg bg-blue-50 border border-blue-200 p-4">
+                    <p className="text-sm font-bold text-blue-900 mb-2">{guide.title}</p>
+                    <p className="text-sm text-blue-800">{selectedQuestion.itemType}</p>
+                  </div>
+                </div>
+
+                {/* 문제 유형 설명 */}
+                <div className="rounded-lg bg-cyan-50 border border-cyan-200 p-4">
+                  <p className="text-xs font-bold text-cyan-700 uppercase mb-2">📖 문제 특징</p>
+                  <p className="text-sm text-cyan-900">{guide.description}</p>
+                </div>
+
+                {/* 푸는 전략 */}
+                <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-4">
+                  <p className="text-xs font-bold text-emerald-700 uppercase mb-3">💡 푸는 전략</p>
+                  <ol className="space-y-2">
+                    {guide.strategy.map((tip, idx) => (
+                      <li key={idx} className="text-sm text-emerald-900 flex gap-2">
+                        <span className="font-bold text-emerald-700">{idx + 1}.</span>
+                        <span>{tip}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {currentStage.key === 'explanation_fill' && (
             <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
