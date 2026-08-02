@@ -169,14 +169,14 @@ export function WritingReviewClient({ sessionId, initialSession }: ReviewProgres
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
-      <div className="space-y-1 px-6 pt-8">
+      <div className="space-y-1">
         <h2 className="text-xl font-bold tracking-tight text-slate-900">Writing 리뷰</h2>
         <p className="text-sm text-slate-500">
           1-10번 문항: 설명 읽기 → 다시 풀기 → 오답 이유 → 첨삭 반영 → 최종 작성
         </p>
       </div>
 
-      <div className="grid grid-cols-12 gap-6 px-6 pb-8">
+      <div className="grid grid-cols-12 gap-6">
         <div className="col-span-8 space-y-6">
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="mb-4 text-sm font-bold text-slate-900">문항 선택</h2>
