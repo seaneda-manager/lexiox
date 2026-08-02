@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 
 interface ReviewQuestion {
   id: string;
@@ -391,23 +392,36 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
               <p className="text-xs font-bold text-slate-600 uppercase mb-2">1-10번 (빈칸채우기)</p>
               <div className="space-y-1">
                 {reviewData.questions.filter((q) => q.number <= 10).map((q) => (
-                  <button
+                  <div
                     key={q.id}
-                    onClick={() => {
-                      setSelectedQuestionId(q.id);
-                      setCurrentStageIndex(0);
-                    }}
-                    className={`w-full text-left rounded-lg border-2 p-2 text-xs transition ${
+                    className={`rounded-lg border-2 p-2 transition flex items-center justify-between ${
                       selectedQuestionId === q.id
-                        ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-slate-200 bg-white hover:border-slate-300'
                     }`}
                   >
-                    <span className="font-bold">{q.number}.</span> {q.stem}
-                    <span className={`float-right font-bold ${q.isCorrect ? 'text-green-600' : 'text-red-600'}`}>
-                      {q.isCorrect ? '✓' : '✗'}
-                    </span>
-                  </button>
+                    <button
+                      onClick={() => {
+                        setSelectedQuestionId(q.id);
+                        setCurrentStageIndex(0);
+                      }}
+                      className="flex-1 text-left text-xs"
+                    >
+                      <span className="font-bold">{q.number}.</span>
+                      <span className={`ml-2 ${selectedQuestionId === q.id ? 'text-blue-700' : 'text-slate-700'}`}>
+                        {q.stem?.substring(0, 40)}...
+                      </span>
+                      <span className={`float-right font-bold ${q.isCorrect ? 'text-green-600' : 'text-red-600'}`}>
+                        {q.isCorrect ? '✓' : '✗'}
+                      </span>
+                    </button>
+                    <Link
+                      href={`/protected/student/reading/drill/${reviewData.testId}/${q.id}`}
+                      className="ml-2 rounded-lg bg-cyan-500 px-2 py-1 text-xs font-semibold text-white hover:bg-cyan-600 whitespace-nowrap"
+                    >
+                      Drill
+                    </Link>
+                  </div>
                 ))}
               </div>
             </div>
