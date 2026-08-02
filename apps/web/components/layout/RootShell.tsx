@@ -24,6 +24,7 @@ const APP_PREFIXES = [
   "/updated-listening",
   "/speaking",
   "/speaking-2026",
+  "/updated-writing",
   "/writing",
   "/writing-2026",
   "/grammar-2026",
