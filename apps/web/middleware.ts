@@ -25,18 +25,7 @@ export function middleware(req: NextRequest) {
     pathname.startsWith("/teacher") ||
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/profile") ||
-    pathname.startsWith("/settings") ||
-    pathname.startsWith("/reading") ||
-    pathname.startsWith("/listening") ||
-    pathname.startsWith("/speaking") ||
-    pathname.startsWith("/writing") ||
-    pathname.startsWith("/vocab") ||
-    pathname.startsWith("/grammar") ||
-    pathname.startsWith("/naesin") ||
-    pathname.startsWith("/hi-naesin") ||
-    pathname.startsWith("/updated-") ||
-    pathname.startsWith("/speaking-2026") ||
-    pathname.match(/^\/\w+\/(study|test|drill|review)/)
+    pathname.startsWith("/settings")
   ) {
     const url = req.nextUrl.clone();
     url.pathname = `/protected${pathname}`;
