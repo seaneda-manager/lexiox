@@ -158,7 +158,8 @@ export async function GET(
     for (const item of allItems) {
       if (item.taskKind === "complete_words") {
         const cw = item as any;
-        const paragraph = cw.paragraphHtml || "";
+        // 여러 필드명 시도
+        const paragraph = cw.paragraphHtml || cw.paragraph || cw.content || cw.text || cw.body || "";
         const allBlanks = cw.blanks ?? [];
 
         for (const blank of allBlanks) {
