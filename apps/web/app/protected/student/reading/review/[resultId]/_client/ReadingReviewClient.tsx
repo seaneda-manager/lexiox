@@ -87,6 +87,29 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
     );
   }
 
+  // Complete Words: 문장에서 빈칸 위치 표시
+  const getSentenceWithBlanks = () => {
+    const sentence = selectedQuestion.stem;
+    const correctAnswer = selectedQuestion.correctAnswer;
+    const userAnswer = selectedQuestion.userAnswer;
+
+    if (selectedQuestion.type !== "complete_words" || !correctAnswer) {
+      return sentence;
+    }
+
+    // 정답을 기준으로 문장을 분리
+    const lowerSentence = sentence.toLowerCase();
+    const lowerCorrect = correctAnswer.toLowerCase();
+    const idx = lowerSentence.indexOf(lowerCorrect);
+
+    if (idx === -1) return sentence;
+
+    return {
+      before: sentence.substring(0, idx),
+      after: sentence.substring(idx + correctAnswer.length),
+    };
+  };
+
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       {/* 서브헤더 */}
@@ -131,43 +154,46 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
                   #{selectedQuestion.number} 빈칸 채우기
                 </h3>
 
-                {/* 빈칸이 있는 문장 */}
-                <div className="mb-6 rounded-lg bg-amber-50 border border-amber-200 p-4">
-                  <p className="text-xs font-semibold text-amber-700 uppercase mb-2">문장</p>
-                  <p className="text-sm leading-relaxed text-slate-700 italic">
-                    {selectedQuestion.stem}
+                {/* 빈칸이 있는 문장 - 사용자 답변 */}
+                <div className="mb-4 rounded-lg bg-rose-50 border border-rose-200 p-4">
+                  <p className="text-xs font-semibold text-rose-700 uppercase mb-2">
+                    {selectedQuestion.isCorrect ? '✓ 정답 - 당신의 답' : '✗ 오답 - 당신의 답'}
+                  </p>
+                  <p className="text-sm leading-relaxed text-slate-700">
+                    {typeof getSentenceWithBlanks() === 'string' ? (
+                      getSentenceWithBlanks()
+                    ) : (
+                      <>
+                        {getSentenceWithBlanks().before}
+                        <span className={`font-bold px-1 rounded ${
+                          selectedQuestion.isCorrect
+                            ? 'bg-emerald-300 text-emerald-900'
+                            : 'bg-rose-300 text-rose-900'
+                        }`}>
+                          {selectedQuestion.userAnswer || '(미답)'}
+                        </span>
+                        {getSentenceWithBlanks().after}
+                      </>
+                    )}
                   </p>
                 </div>
 
-                {/* 오답과 정답 비교 */}
-                <div className="space-y-3 mb-6">
-                  <div>
-                    <p className="text-xs font-bold text-slate-600 uppercase mb-2">
-                      {selectedQuestion.isCorrect ? '✓ 정답' : '✗ 오답'}
-                    </p>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className={`rounded-lg border-2 p-3 ${
-                        selectedQuestion.isCorrect
-                          ? 'border-emerald-500 bg-emerald-50'
-                          : 'border-rose-500 bg-rose-50'
-                      }`}>
-                        <p className="text-xs text-slate-600 mb-1">당신의 답:</p>
-                        <p className={`text-sm font-bold font-mono ${
-                          selectedQuestion.isCorrect
-                            ? 'text-emerald-700'
-                            : 'text-rose-700'
-                        }`}>
-                          {selectedQuestion.userAnswer || '(미답)'}
-                        </p>
-                      </div>
-                      <div className="rounded-lg border-2 border-blue-500 bg-blue-50 p-3">
-                        <p className="text-xs text-slate-600 mb-1">정답:</p>
-                        <p className="text-sm font-bold font-mono text-blue-700">
+                {/* 빈칸이 있는 문장 - 정답 */}
+                <div className="mb-6 rounded-lg bg-blue-50 border border-blue-200 p-4">
+                  <p className="text-xs font-semibold text-blue-700 uppercase mb-2">정답</p>
+                  <p className="text-sm leading-relaxed text-slate-700">
+                    {typeof getSentenceWithBlanks() === 'string' ? (
+                      getSentenceWithBlanks()
+                    ) : (
+                      <>
+                        {getSentenceWithBlanks().before}
+                        <span className="font-bold px-1 rounded bg-blue-400 text-blue-900">
                           {selectedQuestion.correctAnswer}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                        </span>
+                        {getSentenceWithBlanks().after}
+                      </>
+                    )}
+                  </p>
                 </div>
               </>
             ) : (

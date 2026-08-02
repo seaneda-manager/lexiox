@@ -158,13 +158,28 @@ export async function GET(
     for (const item of allItems) {
       if (item.taskKind === "complete_words") {
         const cw = item as any;
+        const paragraph = cw.paragraphHtml || "";
+
         for (const blank of cw.blanks ?? []) {
           const isCorrect = userAnswers[blank.id] === blank.correctToken;
           const explanation = explanationMap.get(blank.id);
+
+          // 해당 blank의 문장만 추출
+          let sentence = blank.stem || "";
+
+          if (!sentence && paragraph) {
+            // stem이 없으면 paragraph에서 문장 추출
+            // 정답이 포함된 문장을 찾기
+            const correctToken = blank.correctToken;
+            const sentences = paragraph.split(/[.!?]+/).map((s: string) => s.trim()).filter((s: string) => s);
+            const foundSentence = sentences.find((s: string) => s.toLowerCase().includes(correctToken.toLowerCase()));
+            sentence = foundSentence || paragraph.substring(0, 200);
+          }
+
           questions.push({
             id: blank.id,
             number: questions.length + 1,
-            stem: blank.stem ?? cw.paragraphHtml,
+            stem: sentence,
             type: "complete_words",
             itemType: `단어 채우기`,
             userAnswer: userAnswers[blank.id] ?? null,
