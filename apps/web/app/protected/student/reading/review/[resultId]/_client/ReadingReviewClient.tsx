@@ -152,7 +152,7 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
     }
   };
 
-  const toggleVocabularyWord = (word: string) => {
+  const toggleVocabularyWord = async (word: string) => {
     const lowerWord = word.toLowerCase();
     const exists = currentState.vocabulary.find(
       (v) => v.word.toLowerCase() === lowerWord
@@ -166,17 +166,45 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
       });
     } else {
       const pos = getPartOfSpeech(word);
-      const meaning = getWordMeaning(word);
-      updateState({
-        vocabulary: [
-          ...currentState.vocabulary,
-          {
-            word,
-            pos,
-            meaning,
-          },
-        ],
-      });
+      let meaning = getWordMeaning(word);
+
+      // 사전에 없으면 AI로 생성
+      if (meaning === '조회할 수 없음') {
+        meaning = '로딩 중...';
+        updateState({
+          vocabulary: [
+            ...currentState.vocabulary,
+            { word, pos, meaning },
+          ],
+        });
+
+        try {
+          const response = await fetch(`/api/word-meaning?word=${encodeURIComponent(word)}`);
+          const data = await response.json();
+          if (response.ok) {
+            meaning = data.meaning;
+          }
+        } catch (error) {
+          console.error('Error fetching meaning:', error);
+          meaning = '뜻을 찾을 수 없습니다';
+        }
+
+        // 업데이트
+        updateState({
+          vocabulary: currentState.vocabulary.map((v) =>
+            v.word.toLowerCase() === lowerWord
+              ? { ...v, meaning }
+              : v
+          ),
+        });
+      } else {
+        updateState({
+          vocabulary: [
+            ...currentState.vocabulary,
+            { word, pos, meaning },
+          ],
+        });
+      }
     }
   };
 
