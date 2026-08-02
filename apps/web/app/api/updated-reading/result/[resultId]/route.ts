@@ -46,11 +46,12 @@ export async function GET(
     let resultData;
     let resultError;
 
-    // 먼저 id로 조회 시도
-    const { data: byId, error: byIdError } = await supabase
+    // 먼저 id로 조회 시도 (숫자)
+    const idNum = parseInt(resultId, 10);
+    let { data: byId, error: byIdError } = await supabase
       .from("reading_results_2026")
       .select("*")
-      .eq("id", resultId)
+      .eq("id", !isNaN(idNum) ? idNum : resultId)
       .single();
 
     if (!byIdError && byId) {
