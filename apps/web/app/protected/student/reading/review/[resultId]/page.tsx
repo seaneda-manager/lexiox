@@ -17,6 +17,8 @@ interface ReviewData {
     id: string;
     number: number;
     stem: string;
+    paragraph?: string;
+    blanks?: Array<{ id: string; index: number; correctToken: string }>;
     type: string;
     itemType: string;
     userAnswer: string | null;
