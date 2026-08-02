@@ -26,57 +26,55 @@ interface ReviewProgressProps {
   reviewData: ReviewData;
 }
 
-const READING_STAGES = [
-  { key: 'explanation_read', label: '오답 설명 읽기', step: 1, onlyWrong: true },
-  { key: 'evidence_highlight', label: '근거 찾기 (하일라이트)', step: 2 },
-  { key: 'interpretation', label: '해석하기', step: 3 },
-  { key: 'question_type', label: '문제유형 확인', step: 4 },
-  { key: 'choices_interpretation', label: '문제/보기 해석', step: 5 },
+interface ReviewStageState {
+  vocabulary: { word: string; pos: string; meaning: string }[];
+  interpretation: string;
+  highlightedEvidence: string[];
+  questionType: string;
+  explanationFills: Record<string, string>;
+}
+
+const REVIEW_WORKFLOW = [
+  {
+    key: 'answer_check',
+    label: '1. 정답/오답 확인',
+    description: '문제의 정답과 오답을 확인합니다'
+  },
+  {
+    key: 'vocabulary_analysis',
+    label: '2. 단어 분석',
+    description: '모르는 단어와 표현을 찾아 정리합니다'
+  },
+  {
+    key: 'interpretation',
+    label: '3. 해석하기',
+    description: '지문을 한글로 해석합니다'
+  },
+  {
+    key: 'evidence_finding',
+    label: '4. 근거 찾기',
+    description: '정답에 대한 근거를 지문에서 찾습니다'
+  },
+  {
+    key: 'question_type',
+    label: '5. 문제 유형',
+    description: '문제의 유형을 확인합니다'
+  },
+  {
+    key: 'explanation_fill',
+    label: '6. 설명 채우기',
+    description: '설명에서 빈칸을 채웁니다'
+  },
 ];
 
 export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
   const [selectedQuestionId, setSelectedQuestionId] = useState<string>(
     reviewData.questions[0]?.id || ''
   );
-  const [currentStage, setCurrentStage] = useState('explanation_read');
-  const [loading, setLoading] = useState(false);
-  const [highlightedText, setHighlightedText] = useState<string[]>([]);
+  const [currentStageIndex, setCurrentStageIndex] = useState(0);
+  const [stageStates, setStageStates] = useState<Record<string, ReviewStageState>>({});
 
-  const selectedQuestion = reviewData.questions.find(
-    (q) => q.id === selectedQuestionId
-  );
-  const isCorrect = selectedQuestion?.isCorrect ?? false;
-
-  const handleProgressStage = async (nextStageName: string) => {
-    setLoading(true);
-    try {
-      const response = await fetch('/api/review/reading/add-attempt', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          questionId: selectedQuestionId,
-          stage: nextStageName,
-        }),
-      });
-
-      if (!response.ok) throw new Error('Failed to save attempt');
-
-      const nextIdx = READING_STAGES.findIndex((s) => s.key === nextStageName);
-      if (nextIdx < READING_STAGES.length - 1) {
-        setCurrentStage(READING_STAGES[nextIdx + 1].key);
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      alert('오류가 발생했습니다');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const applicableStages = isCorrect
-    ? READING_STAGES.filter((s) => !s.onlyWrong)
-    : READING_STAGES;
-
+  const selectedQuestion = reviewData.questions.find((q) => q.id === selectedQuestionId);
   if (!selectedQuestion) {
     return (
       <div className="mx-auto max-w-7xl space-y-6 px-6 py-8">
@@ -87,17 +85,46 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
     );
   }
 
-  // Complete Words: 문장에서 빈칸 위치 표시
+  const isCorrect = selectedQuestion.isCorrect;
+  const currentStage = REVIEW_WORKFLOW[currentStageIndex];
+  const currentState = stageStates[selectedQuestionId] || {
+    vocabulary: [],
+    interpretation: '',
+    highlightedEvidence: [],
+    questionType: '',
+    explanationFills: {},
+  };
+
+  const updateState = (updates: Partial<ReviewStageState>) => {
+    setStageStates((prev) => ({
+      ...prev,
+      [selectedQuestionId]: {
+        ...currentState,
+        ...updates,
+      },
+    }));
+  };
+
+  const moveToNextStage = () => {
+    if (currentStageIndex < REVIEW_WORKFLOW.length - 1) {
+      setCurrentStageIndex(currentStageIndex + 1);
+    }
+  };
+
+  const moveToPrevStage = () => {
+    if (currentStageIndex > 0) {
+      setCurrentStageIndex(currentStageIndex - 1);
+    }
+  };
+
   const getSentenceWithBlanks = () => {
     const sentence = selectedQuestion.stem;
     const correctAnswer = selectedQuestion.correctAnswer;
-    const userAnswer = selectedQuestion.userAnswer;
 
-    if (selectedQuestion.type !== "complete_words" || !correctAnswer) {
+    if (selectedQuestion.type !== 'complete_words' || !correctAnswer) {
       return sentence;
     }
 
-    // 정답을 기준으로 문장을 분리
     const lowerSentence = sentence.toLowerCase();
     const lowerCorrect = correctAnswer.toLowerCase();
     const idx = lowerSentence.indexOf(lowerCorrect);
@@ -112,13 +139,13 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
-      {/* 서브헤더 */}
+      {/* 헤더 */}
       <div className="space-y-1">
         <h2 className="text-xl font-bold tracking-tight text-slate-900">
           Reading 리뷰
         </h2>
         <p className="text-sm text-slate-500">
-          {isCorrect ? '정답' : '오답'}에 대해 학습하세요
+          {currentStage.label} - {currentStage.description}
         </p>
       </div>
 
@@ -132,7 +159,10 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
               {reviewData.questions.map((q) => (
                 <button
                   key={q.id}
-                  onClick={() => setSelectedQuestionId(q.id)}
+                  onClick={() => {
+                    setSelectedQuestionId(q.id);
+                    setCurrentStageIndex(0);
+                  }}
                   className={`rounded-lg border-2 py-1.5 text-xs font-semibold transition ${
                     selectedQuestionId === q.id
                       ? 'border-blue-500 bg-blue-50 text-blue-700'
@@ -145,175 +175,205 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
             </div>
           </div>
 
-          {/* 지문 + 문제 */}
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            {/* Complete Words 타입 처리 */}
-            {selectedQuestion.type === "complete_words" ? (
-              <>
-                <h3 className="mb-4 text-sm font-bold text-slate-900">
-                  #{selectedQuestion.number} 빈칸 채우기
-                </h3>
+          {/* 단계별 UI 렌더링 */}
+          {currentStage.key === 'answer_check' && (
+            <div className="space-y-4">
+              {/* 지문 + 문제 */}
+              <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                {selectedQuestion.type === 'complete_words' ? (
+                  <>
+                    <h3 className="mb-4 text-sm font-bold text-slate-900">
+                      #{selectedQuestion.number} 빈칸 채우기
+                    </h3>
 
-                {/* 빈칸이 있는 문장 - 사용자 답변 */}
-                <div className="mb-4 rounded-lg bg-rose-50 border border-rose-200 p-4">
-                  <p className="text-xs font-semibold text-rose-700 uppercase mb-2">
-                    {selectedQuestion.isCorrect ? '✓ 정답 - 당신의 답' : '✗ 오답 - 당신의 답'}
-                  </p>
-                  <p className="text-sm leading-relaxed text-slate-700">
-                    {typeof getSentenceWithBlanks() === 'string' ? (
-                      getSentenceWithBlanks()
-                    ) : (
-                      <>
-                        {getSentenceWithBlanks().before}
-                        <span className={`font-bold px-1 rounded ${
-                          selectedQuestion.isCorrect
-                            ? 'bg-emerald-300 text-emerald-900'
-                            : 'bg-rose-300 text-rose-900'
+                    {/* 빈칸이 있는 문장 - 사용자 답변 */}
+                    <div className="mb-4 rounded-lg bg-rose-50 border border-rose-200 p-4">
+                      <p className="text-xs font-semibold text-rose-700 uppercase mb-2">
+                        {isCorrect ? '✓ 정답 - 당신의 답' : '✗ 오답 - 당신의 답'}
+                      </p>
+                      <p className="text-sm leading-relaxed text-slate-700">
+                        {typeof getSentenceWithBlanks() === 'string' ? (
+                          getSentenceWithBlanks()
+                        ) : (
+                          <>
+                            {getSentenceWithBlanks().before}
+                            <span className={`font-bold px-1 rounded ${
+                              isCorrect
+                                ? 'bg-emerald-300 text-emerald-900'
+                                : 'bg-rose-300 text-rose-900'
+                            }`}>
+                              {selectedQuestion.userAnswer || '(미답)'}
+                            </span>
+                            {getSentenceWithBlanks().after}
+                          </>
+                        )}
+                      </p>
+                    </div>
+
+                    {/* 빈칸이 있는 문장 - 정답 */}
+                    <div className="rounded-lg bg-blue-50 border border-blue-200 p-4">
+                      <p className="text-xs font-semibold text-blue-700 uppercase mb-2">정답</p>
+                      <p className="text-sm leading-relaxed text-slate-700">
+                        {typeof getSentenceWithBlanks() === 'string' ? (
+                          getSentenceWithBlanks()
+                        ) : (
+                          <>
+                            {getSentenceWithBlanks().before}
+                            <span className="font-bold px-1 rounded bg-blue-400 text-blue-900">
+                              {selectedQuestion.correctAnswer}
+                            </span>
+                            {getSentenceWithBlanks().after}
+                          </>
+                        )}
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="mb-4 text-sm font-bold text-slate-900">지문</h3>
+                    <div className="mb-6 rounded-lg bg-slate-50 p-4 text-sm leading-relaxed text-slate-700">
+                      {selectedQuestion.stem}
+                    </div>
+
+                    <h3 className="mb-3 text-sm font-bold text-slate-900">
+                      문제 {selectedQuestion.number}
+                    </h3>
+                    <div className="mb-4 rounded-lg bg-gray-50 p-3">
+                      <p className="text-sm text-slate-700">{selectedQuestion.type}</p>
+                      <p className="text-xs text-slate-500">{selectedQuestion.itemType}</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="mb-3">
+                        <p className="text-sm font-semibold text-slate-700 mb-2">답안:</p>
+                        <div className={`rounded-lg border-2 p-3 text-sm font-mono ${
+                          isCorrect
+                            ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                            : 'border-rose-500 bg-rose-50 text-rose-700'
                         }`}>
                           {selectedQuestion.userAnswer || '(미답)'}
-                        </span>
-                        {getSentenceWithBlanks().after}
-                      </>
-                    )}
-                  </p>
-                </div>
-
-                {/* 빈칸이 있는 문장 - 정답 */}
-                <div className="mb-6 rounded-lg bg-blue-50 border border-blue-200 p-4">
-                  <p className="text-xs font-semibold text-blue-700 uppercase mb-2">정답</p>
-                  <p className="text-sm leading-relaxed text-slate-700">
-                    {typeof getSentenceWithBlanks() === 'string' ? (
-                      getSentenceWithBlanks()
-                    ) : (
-                      <>
-                        {getSentenceWithBlanks().before}
-                        <span className="font-bold px-1 rounded bg-blue-400 text-blue-900">
-                          {selectedQuestion.correctAnswer}
-                        </span>
-                        {getSentenceWithBlanks().after}
-                      </>
-                    )}
-                  </p>
-                </div>
-              </>
-            ) : (
-              <>
-                <h3 className="mb-4 text-sm font-bold text-slate-900">지문</h3>
-                <div className="mb-6 rounded-lg bg-slate-50 p-4 text-sm leading-relaxed text-slate-700">
-                  {selectedQuestion.stem}
-                </div>
-
-                <h3 className="mb-3 text-sm font-bold text-slate-900">
-                  문제 {selectedQuestion.number}
-                </h3>
-                <div className="mb-4 rounded-lg bg-gray-50 p-3">
-                  <p className="text-sm text-slate-700">{selectedQuestion.type}</p>
-                  <p className="text-xs text-slate-500">{selectedQuestion.itemType}</p>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="mb-3">
-                    <p className="text-sm font-semibold text-slate-700 mb-2">답안:</p>
-                    <div className={`rounded-lg border-2 p-3 text-sm font-mono ${
-                      selectedQuestion.isCorrect
-                        ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
-                        : 'border-rose-500 bg-rose-50 text-rose-700'
-                    }`}>
-                      {selectedQuestion.userAnswer || '(미답)'}
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-slate-700 mb-2">정답:</p>
-                    <div className="rounded-lg border-2 border-blue-500 bg-blue-50 p-3 text-sm font-mono text-blue-700">
-                      {selectedQuestion.correctAnswer}
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
-
-            {selectedQuestion.explanation && (
-              <div className="mt-4 rounded-lg border border-purple-200 bg-purple-50 p-3">
-                <p className="text-xs font-semibold text-purple-700 uppercase">설명</p>
-                <p className="mt-1 text-sm text-purple-900">{selectedQuestion.explanation}</p>
-              </div>
-            )}
-          </div>
-
-          {/* Stage 진행도 */}
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h3 className="mb-4 text-sm font-bold text-slate-900">
-              리뷰 진행 - {applicableStages.find((s) => s.key === currentStage)?.label}
-            </h3>
-
-            <div className="space-y-3 mb-6">
-              {applicableStages.map((stage) => {
-                const stageIdx = applicableStages.findIndex((s) => s.key === stage.key);
-                const currentIdx = applicableStages.findIndex((s) => s.key === currentStage);
-                const isCompleted = stageIdx < currentIdx;
-                const isCurrent = stage.key === currentStage;
-
-                return (
-                  <div
-                    key={stage.key}
-                    className={`rounded-lg border-2 p-3 ${
-                      isCurrent
-                        ? 'border-blue-500 bg-blue-50'
-                        : isCompleted
-                          ? 'border-emerald-500 bg-emerald-50'
-                          : 'border-slate-200 bg-slate-50'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <div
-                        className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
-                          isCurrent
-                            ? 'bg-blue-500 text-white'
-                            : isCompleted
-                              ? 'bg-emerald-500 text-white'
-                              : 'bg-slate-300 text-slate-700'
-                        }`}
-                      >
-                        {isCompleted ? '✓' : stage.step}
+                        </div>
                       </div>
-                      <p className="text-sm font-semibold text-slate-900">{stage.label}</p>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-700 mb-2">정답:</p>
+                        <div className="rounded-lg border-2 border-blue-500 bg-blue-50 p-3 text-sm font-mono text-blue-700">
+                          {selectedQuestion.correctAnswer}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
 
-            {/* Stage 컨텐츠 */}
-            <div className="mb-6 rounded-lg bg-blue-50 p-4">
-              <p className="text-center text-sm text-slate-600">
-                {applicableStages.find((s) => s.key === currentStage)?.label} 컨텐츠
+                    {selectedQuestion.explanation && (
+                      <div className="mt-4 rounded-lg border border-purple-200 bg-purple-50 p-3">
+                        <p className="text-xs font-semibold text-purple-700 uppercase">설명</p>
+                        <p className="mt-1 text-sm text-purple-900">
+                          {selectedQuestion.explanation}
+                        </p>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
+          {currentStage.key === 'vocabulary_analysis' && (
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h3 className="mb-4 text-sm font-bold text-slate-900">
+                단어 및 표현 분석
+              </h3>
+              <p className="text-sm text-slate-600 mb-4">
+                지문에서 모르는 단어나 표현을 선택하세요 (클릭하면 추가됩니다)
               </p>
-            </div>
+              <div className="rounded-lg bg-slate-50 p-4 text-sm leading-relaxed text-slate-700 mb-6">
+                {selectedQuestion.stem}
+              </div>
 
-            {/* 다음 단계 버튼 */}
-            {(() => {
-              const currentIdx = applicableStages.findIndex((s) => s.key === currentStage);
-              return currentIdx < applicableStages.length - 1 ? (
-                <button
-                  onClick={() => {
-                    const nextStage = applicableStages[currentIdx + 1];
-                    handleProgressStage(nextStage.key);
-                  }}
-                  disabled={loading}
-                  className="w-full rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-700 disabled:bg-slate-300"
-                >
-                  {loading ? '저장 중...' : '다음 단계로 진행'}
-                </button>
+              <div>
+                <h4 className="text-xs font-bold text-slate-600 uppercase mb-3">
+                  선택한 단어 ({currentState.vocabulary.length}개)
+                </h4>
+                {currentState.vocabulary.length === 0 ? (
+                  <p className="text-xs text-slate-500 italic">선택된 단어가 없습니다</p>
+                ) : (
+                  <div className="space-y-2">
+                    {currentState.vocabulary.map((item, idx) => (
+                      <div key={idx} className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs">
+                        <p className="font-bold text-amber-900">{item.word}</p>
+                        <p className="text-amber-700">{item.pos} - {item.meaning}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {currentStage.key === 'interpretation' && (
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h3 className="mb-4 text-sm font-bold text-slate-900">지문 해석</h3>
+              <p className="text-sm text-slate-600 mb-4">
+                다음 지문을 한글로 해석해보세요
+              </p>
+              <div className="rounded-lg bg-slate-50 p-4 text-sm leading-relaxed text-slate-700 mb-4">
+                {selectedQuestion.stem}
+              </div>
+              <textarea
+                value={currentState.interpretation}
+                onChange={(e) => updateState({ interpretation: e.target.value })}
+                placeholder="여기에 한글 해석을 입력하세요..."
+                className="w-full rounded-lg border border-slate-300 p-3 text-sm placeholder-slate-400 focus:border-blue-500 focus:outline-none"
+                rows={6}
+              />
+            </div>
+          )}
+
+          {currentStage.key === 'evidence_finding' && (
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h3 className="mb-4 text-sm font-bold text-slate-900">
+                근거 찾기
+              </h3>
+              <p className="text-sm text-slate-600 mb-4">
+                정답에 대한 근거를 지문에서 찾아 하이라이트하세요
+              </p>
+              <div className="rounded-lg bg-slate-50 p-4 text-sm leading-relaxed text-slate-700">
+                {selectedQuestion.stem}
+              </div>
+              <div className="mt-4">
+                <p className="text-xs font-bold text-slate-600 uppercase mb-2">
+                  정답: {selectedQuestion.correctAnswer}
+                </p>
+                <p className="text-xs text-slate-500">
+                  지문에서 드래그하여 근거를 선택하세요 (현재 기능 개발 중)
+                </p>
+              </div>
+            </div>
+          )}
+
+          {currentStage.key === 'question_type' && (
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h3 className="mb-4 text-sm font-bold text-slate-900">문제 유형 분석</h3>
+              <div className="rounded-lg bg-blue-50 border border-blue-200 p-4">
+                <p className="text-sm font-bold text-blue-900 mb-2">{selectedQuestion.type}</p>
+                <p className="text-sm text-blue-800">{selectedQuestion.itemType}</p>
+              </div>
+            </div>
+          )}
+
+          {currentStage.key === 'explanation_fill' && (
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h3 className="mb-4 text-sm font-bold text-slate-900">설명 채우기</h3>
+              <p className="text-sm text-slate-600 mb-4">
+                다음 설명의 빈칸을 채우세요
+              </p>
+              {selectedQuestion.explanation ? (
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 text-sm">
+                  <p className="text-purple-900">{selectedQuestion.explanation}</p>
+                </div>
               ) : (
-                <button
-                  disabled
-                  className="w-full rounded-lg bg-emerald-600 px-4 py-3 font-semibold text-white"
-                >
-                  ✓ 이 문제 리뷰 완료!
-                </button>
-              );
-            })()}
-          </div>
+                <p className="text-sm text-slate-500 italic">설명이 없습니다</p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* 사이드바 */}
@@ -343,44 +403,56 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
             </div>
           </div>
 
-          {/* 이 문제 상태 */}
+          {/* 진행도 */}
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h3 className="mb-4 text-sm font-bold text-slate-900">이 문제</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-slate-600">상태:</span>
-                <span
-                  className={`font-semibold ${
-                    isCorrect ? 'text-emerald-700' : 'text-rose-700'
+            <h3 className="mb-4 text-sm font-bold text-slate-900">학습 진행도</h3>
+            <div className="space-y-2">
+              {REVIEW_WORKFLOW.map((stage, idx) => (
+                <div
+                  key={stage.key}
+                  className={`rounded-lg border-2 p-2 text-xs transition ${
+                    idx === currentStageIndex
+                      ? 'border-blue-500 bg-blue-50'
+                      : idx < currentStageIndex
+                        ? 'border-emerald-500 bg-emerald-50'
+                        : 'border-slate-200 bg-slate-50'
                   }`}
                 >
-                  {isCorrect ? '✓ 정답' : '✗ 오답'}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-600">문제번호:</span>
-                <span className="font-semibold">{selectedQuestion.number}</span>
-              </div>
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${
+                        idx < currentStageIndex
+                          ? 'bg-emerald-500 text-white'
+                          : idx === currentStageIndex
+                            ? 'bg-blue-500 text-white'
+                            : 'bg-slate-300 text-slate-600'
+                      }`}
+                    >
+                      {idx < currentStageIndex ? '✓' : idx + 1}
+                    </div>
+                    <span className="font-semibold text-slate-900">{stage.label}</span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* 진행도 */}
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h3 className="mb-4 text-sm font-bold text-slate-900">리뷰 진행도</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-slate-600">문제:</span>
-                <span className="font-semibold">
-                  {selectedQuestion.number}/{reviewData.questions.length}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-600">총 오답:</span>
-                <span className="font-semibold">
-                  {reviewData.questions.filter((q) => !q.isCorrect).length}개
-                </span>
-              </div>
-            </div>
+          {/* 네비게이션 버튼 */}
+          <div className="space-y-2">
+            <button
+              onClick={moveToPrevStage}
+              disabled={currentStageIndex === 0}
+              className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+            >
+              ← 이전 단계
+            </button>
+            <button
+              onClick={moveToNextStage}
+              disabled={currentStageIndex === REVIEW_WORKFLOW.length - 1}
+              className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:bg-slate-300"
+            >
+              다음 단계 →
+            </button>
           </div>
         </div>
       </div>
