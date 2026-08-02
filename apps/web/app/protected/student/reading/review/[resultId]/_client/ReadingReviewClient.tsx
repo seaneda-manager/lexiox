@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { getWordMeaning, getPartOfSpeech } from '@/lib/dictionary/words';
 
 interface ReviewQuestion {
   id: string;
@@ -163,7 +164,7 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
         ),
       });
     } else {
-      const pos = detectPartOfSpeech(word);
+      const pos = getPartOfSpeech(word);
       const meaning = getWordMeaning(word);
       updateState({
         vocabulary: [
@@ -178,43 +179,6 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
     }
   };
 
-  const detectPartOfSpeech = (word: string): string => {
-    // 간단한 패턴 기반 품사 감지
-    if (/^[A-Z]/.test(word)) return 'n.'; // 고유명사
-    if (word.endsWith('ing')) return 'v.';
-    if (word.endsWith('ed')) return 'v.';
-    if (word.endsWith('ly')) return 'adv.';
-    return 'n.'; // 기본값
-  };
-
-  const getWordMeaning = (word: string): string => {
-    // 간단한 단어 사전 (실제로는 API에서 가져올 수 있음)
-    const dictionary: Record<string, string> = {
-      'rapid': '빠른, 신속한',
-      'advancement': '진전, 발전',
-      'transform': '변환하다, 바꾸다',
-      'industry': '산업',
-      'healthcare': '의료, 보건',
-      'finance': '재정, 금융',
-      'increasingly': '점점 더, 증가하는',
-      'critical': '심각한, 중요한',
-      'decision': '결정, 판단',
-      'accountability': '책임성, 설명 책임',
-      'transparency': '투명성, 명확성',
-      'unclear': '불분명한, 명확하지 않은',
-      'responsibility': '책임',
-      'bear': '지탱하다, 견디다',
-      'nature': '본질, 성질',
-      'model': '모형, 모델',
-      'prevent': '방지하다, 막다',
-      'explain': '설명하다',
-      'particular': '특정한, 특별한',
-      'decision': '결정',
-    };
-
-    const lowerWord = word.toLowerCase();
-    return dictionary[lowerWord] || '[사전에 없음]';
-  };
 
   const getQuestionTypeGuide = (type: string) => {
     const guides: Record<string, { title: string; description: string; strategy: string[] }> = {
