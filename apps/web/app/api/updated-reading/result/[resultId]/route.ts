@@ -72,9 +72,25 @@ export async function GET(
         .limit(1)
         .single();
 
-      console.log("[API] Assignment query result:", { byAssignmentId, byAssignmentError });
-      resultData = byAssignmentId;
-      resultError = byAssignmentError;
+      if (!byAssignmentError && byAssignmentId) {
+        console.log("[API] Assignment query result:", { byAssignmentId });
+        resultData = byAssignmentId;
+        resultError = null;
+      } else {
+        console.log("[API] Assignment query failed, trying test_id:", resultId);
+        // assignment_id로도 실패 시 test_id로 조회
+        const { data: byTestId, error: byTestIdError } = await supabase
+          .from("reading_results_2026")
+          .select("*")
+          .eq("test_id", resultId)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .single();
+
+        console.log("[API] Test ID query result:", { byTestId, byTestIdError });
+        resultData = byTestId;
+        resultError = byTestIdError;
+      }
     }
 
     if (resultError || !resultData) {
