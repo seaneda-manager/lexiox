@@ -105,6 +105,75 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
     }));
   };
 
+  const toggleVocabularyWord = (word: string) => {
+    const lowerWord = word.toLowerCase();
+    const exists = currentState.vocabulary.find(
+      (v) => v.word.toLowerCase() === lowerWord
+    );
+
+    if (exists) {
+      updateState({
+        vocabulary: currentState.vocabulary.filter(
+          (v) => v.word.toLowerCase() !== lowerWord
+        ),
+      });
+    } else {
+      // 간단한 품사 감지 (추후 개선 가능)
+      const pos = detectPartOfSpeech(word);
+      updateState({
+        vocabulary: [
+          ...currentState.vocabulary,
+          {
+            word,
+            pos,
+            meaning: '[뜻 검색 중...]', // 추후 API로 대체
+          },
+        ],
+      });
+    }
+  };
+
+  const detectPartOfSpeech = (word: string): string => {
+    // 간단한 패턴 기반 품사 감지
+    if (/^[A-Z]/.test(word)) return 'n.'; // 고유명사
+    if (word.endsWith('ing')) return 'v.';
+    if (word.endsWith('ed')) return 'v.';
+    if (word.endsWith('ly')) return 'adv.';
+    return 'n.'; // 기본값
+  };
+
+  const renderTextWithClickableWords = (text: string) => {
+    if (!text) return '';
+
+    // 단어 기준으로 분리 (공백, 구두점 기준)
+    const words = text.match(/\b[\w'-]+\b|[.,!?;:]/g) || [];
+
+    return words.map((word, idx) => {
+      const isWord = /^[\w'-]+$/.test(word);
+      const isSelected = currentState.vocabulary.some(
+        (v) => v.word.toLowerCase() === word.toLowerCase()
+      );
+
+      if (!isWord) {
+        return <span key={idx}>{word}</span>;
+      }
+
+      return (
+        <button
+          key={idx}
+          onClick={() => toggleVocabularyWord(word)}
+          className={`rounded px-1 transition ${
+            isSelected
+              ? 'bg-yellow-300 font-bold text-yellow-900 hover:bg-yellow-400'
+              : 'hover:bg-yellow-100'
+          }`}
+        >
+          {word}
+        </button>
+      );
+    });
+  };
+
   const moveToNextStage = () => {
     if (currentStageIndex < REVIEW_WORKFLOW.length - 1) {
       setCurrentStageIndex(currentStageIndex + 1);
@@ -282,28 +351,14 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
                 단어 및 표현 분석
               </h3>
               <p className="text-sm text-slate-600 mb-4">
-                지문에서 모르는 단어나 표현을 선택하세요 (클릭하면 추가됩니다)
+                지문에서 모르는 단어를 클릭하세요 (하이라이트되어 우측 리스트에 추가됩니다)
               </p>
-              <div className="rounded-lg bg-slate-50 p-4 text-sm leading-relaxed text-slate-700 mb-6">
-                {selectedQuestion.stem}
+              <div className="rounded-lg bg-slate-50 p-4 text-sm leading-relaxed text-slate-700 mb-6 flex flex-wrap gap-1">
+                {renderTextWithClickableWords(selectedQuestion.stem)}
               </div>
 
-              <div>
-                <h4 className="text-xs font-bold text-slate-600 uppercase mb-3">
-                  선택한 단어 ({currentState.vocabulary.length}개)
-                </h4>
-                {currentState.vocabulary.length === 0 ? (
-                  <p className="text-xs text-slate-500 italic">선택된 단어가 없습니다</p>
-                ) : (
-                  <div className="space-y-2">
-                    {currentState.vocabulary.map((item, idx) => (
-                      <div key={idx} className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs">
-                        <p className="font-bold text-amber-900">{item.word}</p>
-                        <p className="text-amber-700">{item.pos} - {item.meaning}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
+              <div className="text-xs text-slate-500">
+                💡 클릭한 단어는 우측 패널의 "단어 리스트"에서 관리됩니다
               </div>
             </div>
           )}
@@ -333,19 +388,71 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
                 근거 찾기
               </h3>
               <p className="text-sm text-slate-600 mb-4">
-                정답에 대한 근거를 지문에서 찾아 하이라이트하세요
+                정답에 대한 근거를 지문에서 드래그하여 선택하세요
               </p>
-              <div className="rounded-lg bg-slate-50 p-4 text-sm leading-relaxed text-slate-700">
+
+              {/* 정답 안내 */}
+              <div className="mb-4 rounded-lg bg-emerald-50 border border-emerald-200 p-3">
+                <p className="text-xs font-bold text-emerald-700 uppercase mb-1">
+                  정답을 뒷받침하는 문구
+                </p>
+                <p className="text-sm font-semibold text-emerald-900">
+                  {selectedQuestion.correctAnswer}
+                </p>
+              </div>
+
+              {/* 지문 (드래그 가능) */}
+              <div
+                className="rounded-lg bg-slate-50 p-4 text-sm leading-relaxed text-slate-700 select-text mb-4"
+                onMouseUp={() => {
+                  const selectedText = window.getSelection()?.toString() || '';
+                  if (selectedText.trim()) {
+                    updateState({
+                      highlightedEvidence: [
+                        ...currentState.highlightedEvidence,
+                        selectedText.trim(),
+                      ],
+                    });
+                    window.getSelection()?.removeAllRanges();
+                  }
+                }}
+              >
                 {selectedQuestion.stem}
               </div>
-              <div className="mt-4">
-                <p className="text-xs font-bold text-slate-600 uppercase mb-2">
-                  정답: {selectedQuestion.correctAnswer}
-                </p>
-                <p className="text-xs text-slate-500">
-                  지문에서 드래그하여 근거를 선택하세요 (현재 기능 개발 중)
-                </p>
-              </div>
+
+              {/* 선택된 근거 */}
+              {currentState.highlightedEvidence.length > 0 && (
+                <div>
+                  <p className="text-xs font-bold text-slate-600 uppercase mb-2">
+                    선택한 근거 ({currentState.highlightedEvidence.length}개)
+                  </p>
+                  <div className="space-y-2">
+                    {currentState.highlightedEvidence.map((evidence, idx) => (
+                      <div
+                        key={idx}
+                        className="rounded-lg bg-green-50 border border-green-200 p-2 text-xs"
+                      >
+                        <div className="flex items-start justify-between">
+                          <p className="text-green-900 italic">"{evidence}"</p>
+                          <button
+                            onClick={() =>
+                              updateState({
+                                highlightedEvidence:
+                                  currentState.highlightedEvidence.filter(
+                                    (_, i) => i !== idx
+                                  ),
+                              })
+                            }
+                            className="text-green-600 hover:text-green-800 ml-2"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -363,11 +470,47 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
             <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
               <h3 className="mb-4 text-sm font-bold text-slate-900">설명 채우기</h3>
               <p className="text-sm text-slate-600 mb-4">
-                다음 설명의 빈칸을 채우세요
+                다음 설명의 빈칸을 채우세요 (드롭다운 메뉴에서 선택)
               </p>
+
               {selectedQuestion.explanation ? (
-                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 text-sm">
-                  <p className="text-purple-900">{selectedQuestion.explanation}</p>
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 text-sm space-y-3">
+                  {/* 설명 텍스트에서 빈칸 처리 (예: [BLANK] 형태) */}
+                  <div className="text-purple-900 leading-relaxed">
+                    {selectedQuestion.explanation.split(/\[BLANK\]/).map((part, idx, arr) => (
+                      <span key={idx}>
+                        {part}
+                        {idx < arr.length - 1 && (
+                          <select
+                            value={currentState.explanationFills[`blank_${idx}`] || ''}
+                            onChange={(e) =>
+                              updateState({
+                                explanationFills: {
+                                  ...currentState.explanationFills,
+                                  [`blank_${idx}`]: e.target.value,
+                                },
+                              })
+                            }
+                            className="mx-1 px-2 py-1 rounded bg-white border border-purple-300 text-purple-700 font-semibold cursor-pointer hover:border-purple-500"
+                          >
+                            <option value="">--- 선택 ---</option>
+                            <option value="accountability">책임성</option>
+                            <option value="transparency">투명성</option>
+                            <option value="complexity">복잡성</option>
+                            <option value="limitations">한계</option>
+                            <option value="understanding">이해</option>
+                          </select>
+                        )}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* 채우기 진행도 */}
+                  <div className="pt-3 border-t border-purple-200">
+                    <p className="text-xs font-bold text-purple-700">
+                      진행도: {Object.keys(currentState.explanationFills).filter((k) => currentState.explanationFills[k]).length} / {(selectedQuestion.explanation.match(/\[BLANK\]/g) || []).length}
+                    </p>
+                  </div>
                 </div>
               ) : (
                 <p className="text-sm text-slate-500 italic">설명이 없습니다</p>
@@ -378,6 +521,50 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
 
         {/* 사이드바 */}
         <div className="col-span-4 space-y-6">
+          {/* 단어 리스트 (Stage 2에서만 표시) */}
+          {currentStage.key === 'vocabulary_analysis' && (
+            <div className="rounded-3xl border border-amber-200 bg-amber-50 p-6 shadow-sm">
+              <h3 className="mb-4 text-sm font-bold text-amber-900">📝 단어 리스트</h3>
+              {currentState.vocabulary.length === 0 ? (
+                <p className="text-xs text-amber-700 italic">
+                  지문에서 단어를 클릭하여 추가하세요
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {currentState.vocabulary.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="rounded-lg bg-white border border-amber-200 p-2"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <p className="font-bold text-amber-900 text-sm">{item.word}</p>
+                          <p className="text-xs text-amber-700">
+                            {item.pos}
+                          </p>
+                          <p className="text-xs text-amber-600 italic">
+                            {item.meaning}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => toggleVocabularyWord(item.word)}
+                          className="ml-2 text-xs text-amber-500 hover:text-amber-700"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="mt-4 pt-4 border-t border-amber-200">
+                <p className="text-xs font-bold text-amber-700">
+                  총 {currentState.vocabulary.length}개 단어
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* 테스트 정보 */}
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <h3 className="mb-4 text-sm font-bold text-slate-900">테스트 정보</h3>
