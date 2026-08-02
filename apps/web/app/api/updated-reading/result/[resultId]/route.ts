@@ -42,14 +42,33 @@ export async function GET(
     const { resultId } = await params;
     const supabase = await getServerSupabase();
 
-    // 1. 결과 데이터 조회 (assignment_id로 조회, 최신 결과만)
-    const { data: resultData, error: resultError } = await supabase
+    // 1. 결과 데이터 조회 (id 또는 assignment_id로 조회)
+    let resultData;
+    let resultError;
+
+    // 먼저 id로 조회 시도
+    const { data: byId, error: byIdError } = await supabase
       .from("reading_results_2026")
       .select("*")
-      .eq("assignment_id", resultId)
-      .order("created_at", { ascending: false })
-      .limit(1)
+      .eq("id", resultId)
       .single();
+
+    if (!byIdError && byId) {
+      resultData = byId;
+      resultError = null;
+    } else {
+      // id 조회 실패 시 assignment_id로 조회
+      const { data: byAssignmentId, error: byAssignmentError } = await supabase
+        .from("reading_results_2026")
+        .select("*")
+        .eq("assignment_id", resultId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      resultData = byAssignmentId;
+      resultError = byAssignmentError;
+    }
 
     if (resultError || !resultData) {
       return NextResponse.json(

@@ -1,4 +1,3 @@
-import { getServerSupabase } from '@/lib/supabase/server';
 import { ReadingReviewClient } from './_client/ReadingReviewClient';
 
 export const dynamic = 'force-dynamic';
@@ -9,26 +8,45 @@ interface PageProps {
   };
 }
 
+interface ReviewData {
+  testId: string;
+  testLabel: string;
+  stage1: { correct: number; total: number; score: number };
+  stage2: { correct: number; total: number; score: number };
+  questions: Array<{
+    id: string;
+    number: number;
+    stem: string;
+    type: string;
+    itemType: string;
+    userAnswer: string | null;
+    correctAnswer: string;
+    isCorrect: boolean;
+    explanation: any | null;
+  }>;
+}
+
 export default async function ReadingReviewPage({ params }: PageProps) {
-  const supabase = await getServerSupabase();
+  let reviewData: ReviewData | null = null;
+  let error: string | null = null;
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const response = await fetch(`${baseUrl}/api/updated-reading/result/${params.resultId}`, {
+      credentials: 'include',
+      cache: 'no-store',
+    });
 
-  if (!user) {
-    return <div>로그인이 필요합니다</div>;
+    if (!response.ok) {
+      error = `API Error: ${response.status}`;
+    } else {
+      reviewData = await response.json();
+    }
+  } catch (err: any) {
+    error = err?.message || 'Failed to fetch review data';
   }
 
-  // Reading 결과 조회
-  const { data: result, error } = await supabase
-    .from('reading_results_2026')
-    .select('id, test_id, raw_result, total_questions, review_attempts, created_at')
-    .eq('id', params.resultId)
-    .eq('user_id', user.id)
-    .single();
-
-  if (error || !result) {
+  if (error || !reviewData) {
     return (
       <div className="mx-auto max-w-5xl space-y-6 px-6 py-8">
         <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
@@ -38,5 +56,5 @@ export default async function ReadingReviewPage({ params }: PageProps) {
     );
   }
 
-  return <ReadingReviewClient resultId={params.resultId} initialResult={result} />;
+  return <ReadingReviewClient reviewData={reviewData} />;
 }

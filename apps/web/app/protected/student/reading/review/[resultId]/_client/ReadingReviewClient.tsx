@@ -1,20 +1,29 @@
 'use client';
 
 import { useState } from 'react';
-import { LXGymPTRecommendation } from '@/app/protected/student/_components/LXGymPTRecommendation';
 
-interface ReadingResult {
+interface ReviewQuestion {
   id: string;
-  test_id: string;
-  raw_result: any[];
-  total_questions: number;
-  review_attempts: any[];
-  created_at: string;
+  number: number;
+  stem: string;
+  type: string;
+  itemType: string;
+  userAnswer: string | null;
+  correctAnswer: string;
+  isCorrect: boolean;
+  explanation: any | null;
+}
+
+interface ReviewData {
+  testId: string;
+  testLabel: string;
+  stage1: { correct: number; total: number; score: number };
+  stage2: { correct: number; total: number; score: number };
+  questions: ReviewQuestion[];
 }
 
 interface ReviewProgressProps {
-  resultId: string;
-  initialResult: ReadingResult;
+  reviewData: ReviewData;
 }
 
 const READING_STAGES = [
@@ -25,38 +34,18 @@ const READING_STAGES = [
   { key: 'choices_interpretation', label: '문제/보기 해석', step: 5 },
 ];
 
-// Mock 데이터 (실제로는 API에서 받아야 함)
-const MOCK_PASSAGES: Record<string, string> = {
-  '1': 'The rapid advancement of artificial intelligence has transformed numerous industries. From healthcare to finance, AI systems are increasingly making critical decisions that were previously handled by humans. However, this shift raises important questions about accountability and transparency. When an AI system makes a mistake, it is often unclear who bears the responsibility—the developers, the companies deploying the system, or the AI itself. Furthermore, the "black box" nature of many machine learning models means that even the developers cannot always explain why a particular decision was made.',
-};
-
-const MOCK_QUESTIONS: Record<string, { text: string; type: string; choices: string[] }> = {
-  '1': {
-    text: 'According to the passage, what is a major concern with AI decision-making systems?',
-    type: 'Main Idea',
-    choices: [
-      'AI systems are not yet advanced enough for critical decisions',
-      'It is unclear who is responsible when AI systems make errors',
-      'AI systems are too expensive for most companies to implement',
-      'Most people do not understand how AI technology works',
-    ],
-  },
-};
-
-export function ReadingReviewClient({
-  resultId,
-  initialResult,
-}: ReviewProgressProps) {
-  const [result, setResult] = useState<ReadingResult>(initialResult);
-  const [selectedQuestion, setSelectedQuestion] = useState('1');
+export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
+  const [selectedQuestionId, setSelectedQuestionId] = useState<string>(
+    reviewData.questions[0]?.id || ''
+  );
   const [currentStage, setCurrentStage] = useState('explanation_read');
   const [loading, setLoading] = useState(false);
   const [highlightedText, setHighlightedText] = useState<string[]>([]);
 
-  const question = MOCK_QUESTIONS[selectedQuestion];
-  const passage = MOCK_PASSAGES[selectedQuestion];
-  const rawResult = result.raw_result?.[0] || {};
-  const isCorrect = rawResult.isCorrect;
+  const selectedQuestion = reviewData.questions.find(
+    (q) => q.id === selectedQuestionId
+  );
+  const isCorrect = selectedQuestion?.isCorrect ?? false;
 
   const handleProgressStage = async (nextStageName: string) => {
     setLoading(true);
@@ -65,23 +54,12 @@ export function ReadingReviewClient({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          resultId,
-          questionId: selectedQuestion,
+          questionId: selectedQuestionId,
           stage: nextStageName,
         }),
       });
 
       if (!response.ok) throw new Error('Failed to save attempt');
-
-      const reviewResponse = await fetch(
-        `/api/review/get-review-data?type=reading&resultId=${resultId}`
-      );
-      const reviewData = await reviewResponse.json();
-
-      setResult({
-        ...result,
-        review_attempts: reviewData.attempts,
-      });
 
       const nextIdx = READING_STAGES.findIndex((s) => s.key === nextStageName);
       if (nextIdx < READING_STAGES.length - 1) {
@@ -98,6 +76,16 @@ export function ReadingReviewClient({
   const applicableStages = isCorrect
     ? READING_STAGES.filter((s) => !s.onlyWrong)
     : READING_STAGES;
+
+  if (!selectedQuestion) {
+    return (
+      <div className="mx-auto max-w-7xl space-y-6 px-6 py-8">
+        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          문제가 없습니다
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
@@ -118,22 +106,19 @@ export function ReadingReviewClient({
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="mb-4 text-sm font-bold text-slate-900">문제 선택</h2>
             <div className="grid grid-cols-10 gap-2">
-              {Array.from({ length: 40 }, (_, i) => {
-                const qNum = String(i + 1);
-                return (
-                  <button
-                    key={qNum}
-                    onClick={() => setSelectedQuestion(qNum)}
-                    className={`rounded-lg border-2 py-1.5 text-xs font-semibold transition ${
-                      selectedQuestion === qNum
-                        ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-                    }`}
-                  >
-                    {qNum}
-                  </button>
-                );
-              })}
+              {reviewData.questions.map((q) => (
+                <button
+                  key={q.id}
+                  onClick={() => setSelectedQuestionId(q.id)}
+                  className={`rounded-lg border-2 py-1.5 text-xs font-semibold transition ${
+                    selectedQuestionId === q.id
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                  }`}
+                >
+                  {q.number}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -141,28 +126,42 @@ export function ReadingReviewClient({
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <h3 className="mb-4 text-sm font-bold text-slate-900">지문</h3>
             <div className="mb-6 rounded-lg bg-slate-50 p-4 text-sm leading-relaxed text-slate-700">
-              {passage}
+              {selectedQuestion.stem}
             </div>
 
-            <h3 className="mb-3 text-sm font-bold text-slate-900">문제 {selectedQuestion}</h3>
-            <p className="mb-4 text-sm text-slate-700">{question?.text}</p>
+            <h3 className="mb-3 text-sm font-bold text-slate-900">
+              문제 {selectedQuestion.number}
+            </h3>
+            <div className="mb-4 rounded-lg bg-gray-50 p-3">
+              <p className="text-sm text-slate-700">{selectedQuestion.type}</p>
+              <p className="text-xs text-slate-500">{selectedQuestion.itemType}</p>
+            </div>
 
             <div className="space-y-2">
-              {question?.choices.map((choice, idx) => (
-                <div
-                  key={idx}
-                  className={`rounded-lg border-2 p-3 text-sm ${
-                    idx === 1 // 정답이 보기 2번이라고 가정
-                      ? isCorrect
-                        ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
-                        : 'border-rose-500 bg-rose-50 text-rose-700'
-                      : 'border-slate-200 bg-white text-slate-700'
-                  }`}
-                >
-                  <strong>{String.fromCharCode(65 + idx)}.</strong> {choice}
+              <div className="mb-3">
+                <p className="text-sm font-semibold text-slate-700 mb-2">답안:</p>
+                <div className={`rounded-lg border-2 p-3 text-sm font-mono ${
+                  selectedQuestion.isCorrect
+                    ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                    : 'border-rose-500 bg-rose-50 text-rose-700'
+                }`}>
+                  {selectedQuestion.userAnswer || '(미답)'}
                 </div>
-              ))}
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-700 mb-2">정답:</p>
+                <div className="rounded-lg border-2 border-blue-500 bg-blue-50 p-3 text-sm font-mono text-blue-700">
+                  {selectedQuestion.correctAnswer}
+                </div>
+              </div>
             </div>
+
+            {selectedQuestion.explanation && (
+              <div className="mt-4 rounded-lg border border-purple-200 bg-purple-50 p-3">
+                <p className="text-xs font-semibold text-purple-700 uppercase">설명</p>
+                <p className="mt-1 text-sm text-purple-900">{selectedQuestion.explanation}</p>
+              </div>
+            )}
           </div>
 
           {/* Stage 진행도 */}
@@ -243,7 +242,32 @@ export function ReadingReviewClient({
 
         {/* 사이드바 */}
         <div className="col-span-4 space-y-6">
-          {/* 결과 상태 */}
+          {/* 테스트 정보 */}
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h3 className="mb-4 text-sm font-bold text-slate-900">테스트 정보</h3>
+            <div className="space-y-3 text-sm">
+              <div>
+                <p className="text-slate-600">테스트:</p>
+                <p className="font-semibold text-slate-900">{reviewData.testLabel}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="rounded-lg bg-blue-50 p-2">
+                  <p className="text-xs text-blue-600">Stage 1</p>
+                  <p className="font-bold text-blue-700">
+                    {reviewData.stage1.correct}/{reviewData.stage1.total}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-purple-50 p-2">
+                  <p className="text-xs text-purple-600">Stage 2</p>
+                  <p className="font-bold text-purple-700">
+                    {reviewData.stage2.correct}/{reviewData.stage2.total}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 이 문제 상태 */}
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <h3 className="mb-4 text-sm font-bold text-slate-900">이 문제</h3>
             <div className="space-y-2 text-sm">
@@ -258,8 +282,8 @@ export function ReadingReviewClient({
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-slate-600">문제유형:</span>
-                <span className="font-semibold">{question?.type}</span>
+                <span className="text-slate-600">문제번호:</span>
+                <span className="font-semibold">{selectedQuestion.number}</span>
               </div>
             </div>
           </div>
@@ -269,24 +293,19 @@ export function ReadingReviewClient({
             <h3 className="mb-4 text-sm font-bold text-slate-900">리뷰 진행도</h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-slate-600">현재 문제:</span>
-                <span className="font-semibold">{selectedQuestion}/40</span>
+                <span className="text-slate-600">문제:</span>
+                <span className="font-semibold">
+                  {selectedQuestion.number}/{reviewData.questions.length}
+                </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-600">리뷰 시도:</span>
-                <span className="font-semibold">{result.review_attempts?.length || 0}회</span>
+                <span className="text-slate-600">총 오답:</span>
+                <span className="font-semibold">
+                  {reviewData.questions.filter((q) => !q.isCorrect).length}개
+                </span>
               </div>
             </div>
           </div>
-
-          {/* LXGym PT 추천 */}
-          {result.review_attempts && result.review_attempts.length > 0 && (
-            <LXGymPTRecommendation
-              sectionType="reading"
-              reviewAttempts={result.review_attempts}
-              resultId={resultId}
-            />
-          )}
         </div>
       </div>
     </div>
