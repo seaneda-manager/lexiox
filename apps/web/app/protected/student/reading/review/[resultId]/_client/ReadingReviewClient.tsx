@@ -337,7 +337,7 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
     }
   };
 
-  const getSentenceWithBlanks = () => {
+  const getSentenceWithBlanks = (showBlankNumber: boolean = false) => {
     const sentence = selectedQuestion.stem;
     const correctAnswer = selectedQuestion.correctAnswer;
 
@@ -351,9 +351,12 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
 
     if (idx === -1) return sentence;
 
+    const blankMarker = showBlankNumber ? `[${selectedQuestion.number}. ___]` : '[___]';
+
     return {
       before: sentence.substring(0, idx),
       after: sentence.substring(idx + correctAnswer.length),
+      blankMarker,
     };
   };
 
@@ -446,21 +449,24 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
                         {isCorrect ? '✓ 정답 - 당신의 답' : '✗ 오답 - 당신의 답'}
                       </p>
                       <p className="text-sm leading-relaxed text-slate-700">
-                        {typeof getSentenceWithBlanks() === 'string' ? (
-                          getSentenceWithBlanks()
-                        ) : (
-                          <>
-                            {getSentenceWithBlanks().before}
-                            <span className={`font-bold px-1 rounded ${
-                              isCorrect
-                                ? 'bg-emerald-300 text-emerald-900'
-                                : 'bg-rose-300 text-rose-900'
-                            }`}>
-                              {selectedQuestion.userAnswer || '(미답)'}
-                            </span>
-                            {getSentenceWithBlanks().after}
-                          </>
-                        )}
+                        {typeof getSentenceWithBlanks(true) === 'string' ? (
+                          getSentenceWithBlanks(true)
+                        ) : (() => {
+                          const parts = getSentenceWithBlanks(true);
+                          return (
+                            <>
+                              {parts.before}
+                              <span className={`font-bold px-1 rounded ${
+                                isCorrect
+                                  ? 'bg-emerald-300 text-emerald-900'
+                                  : 'bg-rose-300 text-rose-900'
+                              }`}>
+                                [{selectedQuestion.number}. {selectedQuestion.userAnswer || '미답'}]
+                              </span>
+                              {parts.after}
+                            </>
+                          );
+                        })()}
                       </p>
                     </div>
 
@@ -468,17 +474,20 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
                     <div className="rounded-lg bg-blue-50 border border-blue-200 p-4">
                       <p className="text-xs font-semibold text-blue-700 uppercase mb-2">정답</p>
                       <p className="text-sm leading-relaxed text-slate-700">
-                        {typeof getSentenceWithBlanks() === 'string' ? (
-                          getSentenceWithBlanks()
-                        ) : (
-                          <>
-                            {getSentenceWithBlanks().before}
-                            <span className="font-bold px-1 rounded bg-blue-400 text-blue-900">
-                              {selectedQuestion.correctAnswer}
-                            </span>
-                            {getSentenceWithBlanks().after}
-                          </>
-                        )}
+                        {typeof getSentenceWithBlanks(true) === 'string' ? (
+                          getSentenceWithBlanks(true)
+                        ) : (() => {
+                          const parts = getSentenceWithBlanks(true);
+                          return (
+                            <>
+                              {parts.before}
+                              <span className="font-bold px-1 rounded bg-blue-400 text-blue-900">
+                                [{selectedQuestion.number}. {selectedQuestion.correctAnswer}]
+                              </span>
+                              {parts.after}
+                            </>
+                          );
+                        })()}
                       </p>
                     </div>
                   </>
