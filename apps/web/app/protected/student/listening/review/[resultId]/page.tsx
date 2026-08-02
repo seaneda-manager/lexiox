@@ -1,4 +1,3 @@
-import { getServerSupabase } from '@/lib/supabase/server';
 import { ListeningReviewClient } from './_client/ListeningReviewClient';
 
 export const dynamic = 'force-dynamic';
@@ -9,26 +8,47 @@ interface PageProps {
   };
 }
 
+interface ReviewData {
+  testId: string;
+  testLabel: string;
+  correctCount: number;
+  totalCount: number;
+  score: number;
+  questions: Array<{
+    id: string;
+    number: number;
+    conversationNumber: number;
+    stem: string;
+    type: string;
+    itemType: string;
+    userAnswer: string | null;
+    correctAnswer: string;
+    isCorrect: boolean;
+    explanation: any | null;
+  }>;
+}
+
 export default async function ListeningReviewPage({ params }: PageProps) {
-  const supabase = await getServerSupabase();
+  let reviewData: ReviewData | null = null;
+  let error: string | null = null;
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const response = await fetch(`${baseUrl}/api/updated-listening/result/${params.resultId}`, {
+      credentials: 'include',
+      cache: 'no-store',
+    });
 
-  if (!user) {
-    return <div>로그인이 필요합니다</div>;
+    if (!response.ok) {
+      error = `API Error: ${response.status}`;
+    } else {
+      reviewData = await response.json();
+    }
+  } catch (err: any) {
+    error = err?.message || 'Failed to fetch review data';
   }
 
-  // Listening 결과 조회
-  const { data: result, error } = await supabase
-    .from('listening_results_2026')
-    .select('id, test_id, module, difficulty, correct_count, total_questions, answers, review_attempts, created_at')
-    .eq('id', params.resultId)
-    .eq('user_id', user.id)
-    .single();
-
-  if (error || !result) {
+  if (error || !reviewData) {
     return (
       <div className="mx-auto max-w-5xl space-y-6 px-6 py-8">
         <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
@@ -38,5 +58,5 @@ export default async function ListeningReviewPage({ params }: PageProps) {
     );
   }
 
-  return <ListeningReviewClient resultId={params.resultId} initialResult={result} />;
+  return <ListeningReviewClient reviewData={reviewData} />;
 }
