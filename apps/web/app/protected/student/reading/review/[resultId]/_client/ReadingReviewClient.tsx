@@ -461,12 +461,19 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
                           return (
                             <>
                               {parts.before}
-                              <span className={`font-bold px-0.5 ${
+                              <span className={`font-bold ${
                                 isCorrect
                                   ? 'text-emerald-700'
                                   : 'text-rose-700'
                               }`}>
-                                {getCircledNumber(selectedQuestion.number)}{selectedQuestion.userAnswer || '미답'}
+                                {getCircledNumber(selectedQuestion.number)}
+                              </span>
+                              <span className={`font-bold px-0.5 rounded ${
+                                isCorrect
+                                  ? 'bg-emerald-200 text-emerald-900'
+                                  : 'bg-rose-200 text-rose-900'
+                              }`}>
+                                {selectedQuestion.userAnswer || '미답'}
                               </span>
                               {parts.after}
                             </>
@@ -487,7 +494,10 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
                             <>
                               {parts.before}
                               <span className="font-bold text-blue-700">
-                                {getCircledNumber(selectedQuestion.number)}{selectedQuestion.correctAnswer}
+                                {getCircledNumber(selectedQuestion.number)}
+                              </span>
+                              <span className="font-bold px-0.5 rounded bg-blue-300 text-blue-900">
+                                {selectedQuestion.correctAnswer}
                               </span>
                               {parts.after}
                             </>
