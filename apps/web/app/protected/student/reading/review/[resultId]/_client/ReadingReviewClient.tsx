@@ -500,7 +500,9 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
                       <div className="mt-4 rounded-lg border border-purple-200 bg-purple-50 p-3">
                         <p className="text-xs font-semibold text-purple-700 uppercase">설명</p>
                         <p className="mt-1 text-sm text-purple-900">
-                          {selectedQuestion.explanation}
+                          {typeof selectedQuestion.explanation === 'string'
+                            ? selectedQuestion.explanation
+                            : selectedQuestion.explanation?.correct_choice_explanation || '설명이 없습니다'}
                         </p>
                       </div>
                     )}
