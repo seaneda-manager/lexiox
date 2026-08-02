@@ -9,6 +9,7 @@ import AnnouncementBanner from "@/components/student/AnnouncementBanner";
 import PrimaryFocusCard from "@/components/student/PrimaryFocusCard";
 import ActivityTabsCard from "@/components/student/ActivityTabsCard";
 import HomeworkCard, { type HomeworkItem } from "@/components/student/HomeworkCard";
+import { LearningDashboard } from "@/app/protected/student/_components/LearningDashboard";
 
 export const dynamic = "force-dynamic";
 
@@ -930,6 +931,14 @@ function ToeflDashboard({
             </div>
           );
         })}
+      </section>
+
+      {/* ── 학습 대시보드 (통계 & 추천) ──────────────────────── */}
+      <section className="space-y-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400 mb-3">
+          학습 현황
+        </p>
+        <LearningDashboard />
       </section>
 
       {/* ── 모의고사 (테스트 모드) ───────────────────────────── */}
