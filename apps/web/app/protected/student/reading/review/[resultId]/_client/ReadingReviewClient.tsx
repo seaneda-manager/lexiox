@@ -124,37 +124,87 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
 
           {/* 지문 + 문제 */}
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h3 className="mb-4 text-sm font-bold text-slate-900">지문</h3>
-            <div className="mb-6 rounded-lg bg-slate-50 p-4 text-sm leading-relaxed text-slate-700">
-              {selectedQuestion.stem}
-            </div>
+            {/* Complete Words 타입 처리 */}
+            {selectedQuestion.type === "complete_words" ? (
+              <>
+                <h3 className="mb-4 text-sm font-bold text-slate-900">
+                  #{selectedQuestion.number} 빈칸 채우기
+                </h3>
 
-            <h3 className="mb-3 text-sm font-bold text-slate-900">
-              문제 {selectedQuestion.number}
-            </h3>
-            <div className="mb-4 rounded-lg bg-gray-50 p-3">
-              <p className="text-sm text-slate-700">{selectedQuestion.type}</p>
-              <p className="text-xs text-slate-500">{selectedQuestion.itemType}</p>
-            </div>
+                {/* 빈칸이 있는 문장 */}
+                <div className="mb-6 rounded-lg bg-amber-50 border border-amber-200 p-4">
+                  <p className="text-xs font-semibold text-amber-700 uppercase mb-2">문장</p>
+                  <p className="text-sm leading-relaxed text-slate-700 italic">
+                    {selectedQuestion.stem}
+                  </p>
+                </div>
 
-            <div className="space-y-2">
-              <div className="mb-3">
-                <p className="text-sm font-semibold text-slate-700 mb-2">답안:</p>
-                <div className={`rounded-lg border-2 p-3 text-sm font-mono ${
-                  selectedQuestion.isCorrect
-                    ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
-                    : 'border-rose-500 bg-rose-50 text-rose-700'
-                }`}>
-                  {selectedQuestion.userAnswer || '(미답)'}
+                {/* 오답과 정답 비교 */}
+                <div className="space-y-3 mb-6">
+                  <div>
+                    <p className="text-xs font-bold text-slate-600 uppercase mb-2">
+                      {selectedQuestion.isCorrect ? '✓ 정답' : '✗ 오답'}
+                    </p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className={`rounded-lg border-2 p-3 ${
+                        selectedQuestion.isCorrect
+                          ? 'border-emerald-500 bg-emerald-50'
+                          : 'border-rose-500 bg-rose-50'
+                      }`}>
+                        <p className="text-xs text-slate-600 mb-1">당신의 답:</p>
+                        <p className={`text-sm font-bold font-mono ${
+                          selectedQuestion.isCorrect
+                            ? 'text-emerald-700'
+                            : 'text-rose-700'
+                        }`}>
+                          {selectedQuestion.userAnswer || '(미답)'}
+                        </p>
+                      </div>
+                      <div className="rounded-lg border-2 border-blue-500 bg-blue-50 p-3">
+                        <p className="text-xs text-slate-600 mb-1">정답:</p>
+                        <p className="text-sm font-bold font-mono text-blue-700">
+                          {selectedQuestion.correctAnswer}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-slate-700 mb-2">정답:</p>
-                <div className="rounded-lg border-2 border-blue-500 bg-blue-50 p-3 text-sm font-mono text-blue-700">
-                  {selectedQuestion.correctAnswer}
+              </>
+            ) : (
+              <>
+                <h3 className="mb-4 text-sm font-bold text-slate-900">지문</h3>
+                <div className="mb-6 rounded-lg bg-slate-50 p-4 text-sm leading-relaxed text-slate-700">
+                  {selectedQuestion.stem}
                 </div>
-              </div>
-            </div>
+
+                <h3 className="mb-3 text-sm font-bold text-slate-900">
+                  문제 {selectedQuestion.number}
+                </h3>
+                <div className="mb-4 rounded-lg bg-gray-50 p-3">
+                  <p className="text-sm text-slate-700">{selectedQuestion.type}</p>
+                  <p className="text-xs text-slate-500">{selectedQuestion.itemType}</p>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="mb-3">
+                    <p className="text-sm font-semibold text-slate-700 mb-2">답안:</p>
+                    <div className={`rounded-lg border-2 p-3 text-sm font-mono ${
+                      selectedQuestion.isCorrect
+                        ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                        : 'border-rose-500 bg-rose-50 text-rose-700'
+                    }`}>
+                      {selectedQuestion.userAnswer || '(미답)'}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-700 mb-2">정답:</p>
+                    <div className="rounded-lg border-2 border-blue-500 bg-blue-50 p-3 text-sm font-mono text-blue-700">
+                      {selectedQuestion.correctAnswer}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
 
             {selectedQuestion.explanation && (
               <div className="mt-4 rounded-lg border border-purple-200 bg-purple-50 p-3">
