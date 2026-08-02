@@ -426,6 +426,25 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
             )}
           </div>
 
+          {/* Tab 네비게이션 */}
+          <div className="border-b border-slate-200 bg-white overflow-x-auto">
+            <div className="flex gap-1 px-6 min-w-max">
+              {REVIEW_WORKFLOW.map((stage, idx) => (
+                <button
+                  key={stage.key}
+                  onClick={() => setCurrentStageIndex(idx)}
+                  className={`px-4 py-3 text-sm font-semibold whitespace-nowrap transition ${
+                    idx === currentStageIndex
+                      ? 'border-b-2 border-blue-500 text-blue-700'
+                      : 'text-slate-600 hover:text-slate-900 border-b-2 border-transparent'
+                  }`}
+                >
+                  {idx + 1}. {stage.label.replace(' - ', '')}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* 단계별 UI 렌더링 */}
           {currentStage.key === 'answer_check' && (
             <div className="space-y-4">
