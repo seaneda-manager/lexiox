@@ -159,8 +159,9 @@ export async function GET(
       if (item.taskKind === "complete_words") {
         const cw = item as any;
         const paragraph = cw.paragraphHtml || "";
+        const allBlanks = cw.blanks ?? [];
 
-        for (const blank of cw.blanks ?? []) {
+        for (const blank of allBlanks) {
           const isCorrect = userAnswers[blank.id] === blank.correctToken;
           const explanation = explanationMap.get(blank.id);
 
@@ -180,6 +181,12 @@ export async function GET(
             id: blank.id,
             number: questions.length + 1,
             stem: sentence,
+            paragraph: paragraph, // 전체 지문
+            blanks: allBlanks.map((b: any, idx: number) => ({
+              id: b.id,
+              index: idx + 1,
+              correctToken: b.correctToken,
+            })),
             type: "complete_words",
             itemType: `단어 채우기`,
             userAnswer: userAnswers[blank.id] ?? null,

@@ -6,6 +6,8 @@ interface ReviewQuestion {
   id: string;
   number: number;
   stem: string;
+  paragraph?: string;
+  blanks?: Array<{ id: string; index: number; correctToken: string }>;
   type: string;
   itemType: string;
   userAnswer: string | null;
@@ -445,65 +447,45 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
                 {selectedQuestion.type === 'complete_words' ? (
                   <>
                     <h3 className="mb-4 text-sm font-bold text-slate-900">
-                      #{selectedQuestion.number} 빈칸 채우기
+                      빈칸 채우기 (전체 지문)
                     </h3>
 
-                    {/* 빈칸이 있는 문장 - 사용자 답변 */}
-                    <div className="mb-4 rounded-lg bg-rose-50 border border-rose-200 p-4">
-                      <p className="text-xs font-semibold text-rose-700 uppercase mb-2">
-                        {isCorrect ? '✓ 정답 - 당신의 답' : '✗ 오답 - 당신의 답'}
-                      </p>
-                      <p className="text-sm leading-relaxed text-slate-700">
-                        {typeof getSentenceWithBlanks(true) === 'string' ? (
-                          getSentenceWithBlanks(true)
-                        ) : (() => {
-                          const parts = getSentenceWithBlanks(true);
-                          return (
-                            <>
-                              {parts.before}
-                              <span className={`font-bold ${
-                                isCorrect
-                                  ? 'text-emerald-700'
-                                  : 'text-rose-700'
-                              }`}>
-                                {getCircledNumber(selectedQuestion.number)}
-                              </span>
-                              <span className={`font-bold px-0.5 rounded ${
-                                isCorrect
-                                  ? 'bg-emerald-200 text-emerald-900'
-                                  : 'bg-rose-200 text-rose-900'
-                              }`}>
-                                {selectedQuestion.userAnswer || '미답'}
-                              </span>
-                              {parts.after}
-                            </>
-                          );
-                        })()}
+                    {/* 전체 지문 */}
+                    <div className="mb-6 rounded-lg bg-slate-50 border border-slate-200 p-4">
+                      <p className="text-sm leading-relaxed text-slate-700 whitespace-pre-wrap">
+                        {selectedQuestion.paragraph || selectedQuestion.stem}
                       </p>
                     </div>
 
-                    {/* 빈칸이 있는 문장 - 정답 */}
-                    <div className="rounded-lg bg-blue-50 border border-blue-200 p-4">
-                      <p className="text-xs font-semibold text-blue-700 uppercase mb-2">정답</p>
-                      <p className="text-sm leading-relaxed text-slate-700">
-                        {typeof getSentenceWithBlanks(true) === 'string' ? (
-                          getSentenceWithBlanks(true)
-                        ) : (() => {
-                          const parts = getSentenceWithBlanks(true);
+                    {/* 빈칸별 정오 확인 */}
+                    <div className="space-y-3">
+                      {selectedQuestion.blanks && selectedQuestion.blanks.length > 0 ? (
+                        selectedQuestion.blanks.map((blank) => {
+                          const isThisCorrect = selectedQuestion.userAnswer === blank.correctToken && selectedQuestion.id === blank.id;
                           return (
-                            <>
-                              {parts.before}
-                              <span className="font-bold text-blue-700">
-                                {getCircledNumber(selectedQuestion.number)}
-                              </span>
-                              <span className="font-bold px-0.5 rounded bg-blue-300 text-blue-900">
-                                {selectedQuestion.correctAnswer}
-                              </span>
-                              {parts.after}
-                            </>
+                            <div key={blank.id} className="rounded-lg border-2 p-3">
+                              <div className="flex items-center gap-3">
+                                <span className="font-bold text-lg text-blue-600">
+                                  {getCircledNumber(blank.index)}
+                                </span>
+                                <div className="flex-1">
+                                  <p className="text-xs text-slate-600 mb-1">정답: <span className="font-mono font-bold text-blue-700">{blank.correctToken}</span></p>
+                                  <p className="text-xs text-slate-600">
+                                    당신의 답: <span className={`font-mono font-bold ${isThisCorrect ? 'text-emerald-700' : 'text-rose-700'}`}>
+                                      {selectedQuestion.userAnswer || '(미답)'}
+                                    </span>
+                                  </p>
+                                </div>
+                                <span className={`text-lg font-bold ${selectedQuestion.id === blank.id && (selectedQuestion.userAnswer === blank.correctToken ? 'text-emerald-600' : 'text-rose-600')}`}>
+                                  {selectedQuestion.id === blank.id && (selectedQuestion.userAnswer === blank.correctToken ? '✓' : '✗')}
+                                </span>
+                              </div>
+                            </div>
                           );
-                        })()}
-                      </p>
+                        })
+                      ) : (
+                        <div className="text-sm text-slate-500 italic">빈칸 정보가 없습니다</div>
+                      )}
                     </div>
                   </>
                 ) : (
