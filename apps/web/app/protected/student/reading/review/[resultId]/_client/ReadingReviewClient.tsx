@@ -375,24 +375,58 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
           {/* 문제 선택기 */}
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="mb-4 text-sm font-bold text-slate-900">문제 선택</h2>
-            <div className="grid grid-cols-10 gap-2">
-              {reviewData.questions.map((q) => (
-                <button
-                  key={q.id}
-                  onClick={() => {
-                    setSelectedQuestionId(q.id);
-                    setCurrentStageIndex(0);
-                  }}
-                  className={`rounded-lg border-2 py-1.5 text-xs font-semibold transition ${
-                    selectedQuestionId === q.id
-                      ? 'border-blue-500 bg-blue-50 text-blue-700'
-                      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-                  }`}
-                >
-                  {q.number}
-                </button>
-              ))}
+
+            {/* 1-10번: Complete Words */}
+            <div className="mb-4">
+              <p className="text-xs font-bold text-slate-600 uppercase mb-2">1-10번 (빈칸채우기)</p>
+              <div className="space-y-1">
+                {reviewData.questions.filter((q) => q.number <= 10).map((q) => (
+                  <button
+                    key={q.id}
+                    onClick={() => {
+                      setSelectedQuestionId(q.id);
+                      setCurrentStageIndex(0);
+                    }}
+                    className={`w-full text-left rounded-lg border-2 p-2 text-xs transition ${
+                      selectedQuestionId === q.id
+                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                    }`}
+                  >
+                    <span className="font-bold">{q.number}.</span> {q.stem}
+                    <span className={`float-right font-bold ${q.isCorrect ? 'text-green-600' : 'text-red-600'}`}>
+                      {q.isCorrect ? '✓' : '✗'}
+                    </span>
+                  </button>
+                ))}
+              </div>
             </div>
+
+            {/* 11번 이상: 다른 문제 */}
+            {reviewData.questions.some((q) => q.number > 10) && (
+              <div>
+                <p className="text-xs font-bold text-slate-600 uppercase mb-2">11번 이상</p>
+                <div className="grid grid-cols-10 gap-2">
+                  {reviewData.questions.filter((q) => q.number > 10).map((q) => (
+                    <button
+                      key={q.id}
+                      onClick={() => {
+                        setSelectedQuestionId(q.id);
+                        setCurrentStageIndex(0);
+                      }}
+                      className={`rounded-lg border-2 py-1.5 text-xs font-semibold transition ${
+                        selectedQuestionId === q.id
+                          ? 'border-blue-500 bg-blue-50 text-blue-700'
+                          : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                      }`}
+                      title={`${q.isCorrect ? '정답' : '오답'}`}
+                    >
+                      {q.isCorrect ? '✓' : '✗'}{q.number}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* 단계별 UI 렌더링 */}
@@ -455,13 +489,9 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
                       {selectedQuestion.stem}
                     </div>
 
-                    <h3 className="mb-3 text-sm font-bold text-slate-900">
+                    <h3 className="mb-4 text-sm font-bold text-slate-900">
                       문제 {selectedQuestion.number}
                     </h3>
-                    <div className="mb-4 rounded-lg bg-gray-50 p-3">
-                      <p className="text-sm text-slate-700">{selectedQuestion.type}</p>
-                      <p className="text-xs text-slate-500">{selectedQuestion.itemType}</p>
-                    </div>
 
                     <div className="space-y-2">
                       <div className="mb-3">
