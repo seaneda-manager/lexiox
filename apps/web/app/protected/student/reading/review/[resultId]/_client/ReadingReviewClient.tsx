@@ -105,6 +105,48 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
     }));
   };
 
+  const saveStageProgress = async (stage: string, data: any) => {
+    try {
+      await fetch(
+        `/api/updated-reading/review/${reviewData.testId}/${selectedQuestionId}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            stage,
+            stageData: data,
+          }),
+        }
+      );
+    } catch (error) {
+      console.error('Failed to save progress:', error);
+    }
+  };
+
+  const loadStageProgress = async () => {
+    try {
+      const response = await fetch(
+        `/api/updated-reading/review/${reviewData.testId}/${selectedQuestionId}`
+      );
+      const { progress } = await response.json();
+
+      if (progress) {
+        setStageStates((prev) => ({
+          ...prev,
+          [selectedQuestionId]: {
+            vocabulary: progress.vocabulary_analysis?.vocabulary || [],
+            interpretation: progress.interpretation?.text || '',
+            highlightedEvidence: progress.evidence_finding?.evidence || [],
+            questionType: progress.question_type?.type || '',
+            explanationFills: progress.explanation_fill?.fills || {},
+          },
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to load progress:', error);
+    }
+  };
+
   const toggleVocabularyWord = (word: string) => {
     const lowerWord = word.toLowerCase();
     const exists = currentState.vocabulary.find(
@@ -118,15 +160,15 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
         ),
       });
     } else {
-      // 간단한 품사 감지 (추후 개선 가능)
       const pos = detectPartOfSpeech(word);
+      const meaning = getWordMeaning(word);
       updateState({
         vocabulary: [
           ...currentState.vocabulary,
           {
             word,
             pos,
-            meaning: '[뜻 검색 중...]', // 추후 API로 대체
+            meaning,
           },
         ],
       });
@@ -140,6 +182,35 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
     if (word.endsWith('ed')) return 'v.';
     if (word.endsWith('ly')) return 'adv.';
     return 'n.'; // 기본값
+  };
+
+  const getWordMeaning = (word: string): string => {
+    // 간단한 단어 사전 (실제로는 API에서 가져올 수 있음)
+    const dictionary: Record<string, string> = {
+      'rapid': '빠른, 신속한',
+      'advancement': '진전, 발전',
+      'transform': '변환하다, 바꾸다',
+      'industry': '산업',
+      'healthcare': '의료, 보건',
+      'finance': '재정, 금융',
+      'increasingly': '점점 더, 증가하는',
+      'critical': '심각한, 중요한',
+      'decision': '결정, 판단',
+      'accountability': '책임성, 설명 책임',
+      'transparency': '투명성, 명확성',
+      'unclear': '불분명한, 명확하지 않은',
+      'responsibility': '책임',
+      'bear': '지탱하다, 견디다',
+      'nature': '본질, 성질',
+      'model': '모형, 모델',
+      'prevent': '방지하다, 막다',
+      'explain': '설명하다',
+      'particular': '특정한, 특별한',
+      'decision': '결정',
+    };
+
+    const lowerWord = word.toLowerCase();
+    return dictionary[lowerWord] || '[사전에 없음]';
   };
 
   const getQuestionTypeGuide = (type: string) => {
@@ -225,7 +296,10 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
     });
   };
 
-  const moveToNextStage = () => {
+  const moveToNextStage = async () => {
+    // 현재 stage의 진행 상황 저장
+    await saveCurrentStageProgress();
+
     if (currentStageIndex < REVIEW_WORKFLOW.length - 1) {
       setCurrentStageIndex(currentStageIndex + 1);
     }
@@ -234,6 +308,32 @@ export function ReadingReviewClient({ reviewData }: ReviewProgressProps) {
   const moveToPrevStage = () => {
     if (currentStageIndex > 0) {
       setCurrentStageIndex(currentStageIndex - 1);
+    }
+  };
+
+  const saveCurrentStageProgress = async () => {
+    const stageKey = currentStage.key;
+
+    const stageDataMap: Record<string, any> = {
+      vocabulary_analysis: {
+        vocabulary: currentState.vocabulary,
+      },
+      interpretation: {
+        text: currentState.interpretation,
+      },
+      evidence_finding: {
+        evidence: currentState.highlightedEvidence,
+      },
+      question_type: {
+        type: selectedQuestion?.type,
+      },
+      explanation_fill: {
+        fills: currentState.explanationFills,
+      },
+    };
+
+    if (stageDataMap[stageKey]) {
+      await saveStageProgress(stageKey, stageDataMap[stageKey]);
     }
   };
 
