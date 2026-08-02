@@ -40,6 +40,7 @@ export async function GET(
 ) {
   try {
     const { resultId } = await params;
+    console.log("[API] GET /api/updated-reading/result/", resultId);
     const supabase = await getServerSupabase();
 
     // 1. 결과 데이터 조회 (id 또는 assignment_id로 조회)
@@ -48,16 +49,20 @@ export async function GET(
 
     // 먼저 id로 조회 시도 (숫자)
     const idNum = parseInt(resultId, 10);
+    console.log("[API] Trying numeric id:", idNum, "or string:", resultId);
     let { data: byId, error: byIdError } = await supabase
       .from("reading_results_2026")
       .select("*")
       .eq("id", !isNaN(idNum) ? idNum : resultId)
       .single();
 
+    console.log("[API] Query result:", { byId, byIdError });
+
     if (!byIdError && byId) {
       resultData = byId;
       resultError = null;
     } else {
+      console.log("[API] Trying assignment_id:", resultId);
       // id 조회 실패 시 assignment_id로 조회
       const { data: byAssignmentId, error: byAssignmentError } = await supabase
         .from("reading_results_2026")
@@ -67,11 +72,13 @@ export async function GET(
         .limit(1)
         .single();
 
+      console.log("[API] Assignment query result:", { byAssignmentId, byAssignmentError });
       resultData = byAssignmentId;
       resultError = byAssignmentError;
     }
 
     if (resultError || !resultData) {
+      console.error("[API] Result not found:", { resultError, resultData });
       return NextResponse.json(
         { ok: false, error: "Result not found" },
         { status: 404 }
