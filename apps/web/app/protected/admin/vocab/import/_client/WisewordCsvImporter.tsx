@@ -9,7 +9,7 @@ import {
   importWisewordWordsAndCreateSetFromCsvText,
   type ImportWisewordCsvActionResult,
 } from "../wiseword-actions";
-import type { TrackLite } from "../../Tracks/actions";
+import type { TrackLite } from "../../tracks/actions";
 
 type Mode = "CSV" | "JSON";
 

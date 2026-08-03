@@ -7,7 +7,7 @@ import { createClient } from "@supabase/supabase-js";
 
 import type { SessionWord, VocabExample, VocabCollocation } from "@/models/vocab/SessionWord";
 import type { WordFormRowLike } from "@/lib/vocab/drill/buildBlockDrillTasksV1";
-import { ensureCockedQueueAdminAction } from "@/app/protected/admin/vocab/Tracks/actions";
+import { ensureCockedQueueAdminAction } from "@/app/protected/admin/vocab/tracks/actions";
 
 export type LoadSessionWordsActionInput = {
   /** Optional: force a specific setId (debug / admin / shortcut) */
@@ -1060,7 +1060,7 @@ export async function completeVocabDayAction(input: {
 /**
  * 학습 결과 저장 (Know/DontKnow, Spelling, Speed)
  */
-import { advanceVocabQueueAfterCompletionAction } from "@/app/protected/admin/vocab/Tracks/actions";
+import { advanceVocabQueueAfterCompletionAction } from "@/app/protected/admin/vocab/tracks/actions";
 import { awardPoints } from "@/lib/gamification/awardPoints";
 
 export type SaveVocabAttemptInput = {

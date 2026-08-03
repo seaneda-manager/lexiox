@@ -5,7 +5,7 @@ import { getServerSupabase } from "@/lib/supabase/server";
 import {
   createStudentVocabPlanAction,
   getStudentPlanAndQueueAction,
-} from "../Tracks/actions";
+} from "../tracks/actions";
 
 /* =========================================================
  * Types

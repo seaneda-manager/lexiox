@@ -1060,7 +1060,7 @@ export async function completeVocabDayAction(input: {
 /**
  * 학습 결과 저장 (Know/DontKnow, Spelling, Speed)
  */
-import { advanceVocabQueueAfterCompletionAction } from "@/app/protected/admin/vocab/Tracks/actions";
+import { advanceVocabQueueAfterCompletionAction } from "@/app/protected/admin/vocab/tracks/actions";
 import { awardPoints } from "@/lib/gamification/awardPoints";
 
 export type SaveVocabAttemptInput = {
