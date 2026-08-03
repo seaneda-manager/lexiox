@@ -59,14 +59,16 @@ export async function assignStudentAction(params: {
     const today = new Date();
     const startDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
-    // 기본값: 월-금, 2개 동시 활성
+    // 기본값: 주 2회 (월, 수요일)
+    const defaultWeekdays = [1, 3]; // 월(1), 수(3)
+
     const { error: perr } = await supabase
       .from("student_vocab_plans")
       .upsert({
         student_id: params.studentId,
         track_id: params.trackId,
         start_date: startDate,
-        weekdays: [1, 2, 3, 4, 5], // 월-금
+        weekdays: defaultWeekdays,
         max_active_sets: 2,
         is_enabled: true,
         start_day_index: 1,
@@ -77,17 +79,36 @@ export async function assignStudentAction(params: {
 
     if (perr) throw new Error(perr.message);
 
-    // 큐 생성
-    const { data: queue, error: qerr } = await supabase
+    // 할당된 모든 Day의 available_at 업데이트 (weekdays 기반)
+    const { data: assignments, error: fetchErr } = await supabase
       .from("student_vocab_assignments")
-      .select("id")
+      .select("id, day_index")
       .eq("student_id", params.studentId)
       .eq("track_id", params.trackId)
       .is("completed_at", null);
 
-    if (qerr) throw new Error(qerr.message);
+    if (fetchErr) throw new Error(fetchErr.message);
 
-    return { ok: true, queueSize: queue?.length ?? 0 };
+    // 각 assignment의 available_at 계산 및 업데이트
+    for (const assignment of assignments || []) {
+      const { data: newDate, error: calcErr } = await supabase.rpc(
+        "calculate_available_date",
+        {
+          p_start_date: startDate,
+          p_weekdays: defaultWeekdays,
+          p_day_index: assignment.day_index,
+        }
+      );
+
+      if (!calcErr && newDate) {
+        await supabase
+          .from("student_vocab_assignments")
+          .update({ available_at: newDate } as any)
+          .eq("id", assignment.id);
+      }
+    }
+
+    return { ok: true, queueSize: assignments?.length ?? 0 };
   } catch (e: any) {
     return { ok: false, error: e?.message ?? "failed" };
   }
@@ -100,12 +121,47 @@ export async function updateAssignmentDayAction(params: {
   try {
     const supabase = await getServerSupabase();
 
-    const { error } = await supabase
+    // Get current assignment to find its student and plan
+    const { data: assignment, error: fetchErr } = await supabase
       .from("student_vocab_assignments")
-      .update({ day_index: params.newDayIndex } as any)
+      .select("student_id, track_id")
+      .eq("id", params.assignmentId)
+      .single();
+
+    if (fetchErr) throw new Error(fetchErr.message);
+
+    // Get student plan to access start_date and weekdays
+    const { data: plan, error: planErr } = await supabase
+      .from("student_vocab_plans")
+      .select("start_date, weekdays")
+      .eq("student_id", assignment.student_id)
+      .eq("track_id", assignment.track_id)
+      .single();
+
+    if (planErr) throw new Error(planErr.message);
+
+    // Calculate new available_at using weekdays
+    const { data: dateResult, error: dateErr } = await supabase.rpc(
+      "calculate_available_date",
+      {
+        p_start_date: plan.start_date,
+        p_weekdays: plan.weekdays || [1, 2, 3, 4, 5],
+        p_day_index: params.newDayIndex,
+      }
+    );
+
+    if (dateErr) throw new Error(dateErr.message);
+
+    // Update both day_index and available_at
+    const { error: updateErr } = await supabase
+      .from("student_vocab_assignments")
+      .update({
+        day_index: params.newDayIndex,
+        available_at: dateResult,
+      } as any)
       .eq("id", params.assignmentId);
 
-    if (error) throw new Error(error.message);
+    if (updateErr) throw new Error(updateErr.message);
 
     return { ok: true };
   } catch (e: any) {
@@ -197,6 +253,26 @@ export async function dismissNoticeAction(params: {
       .from("vocab_assignment_notices")
       .update({ status: "dismissed", dismissed_at: new Date().toISOString() })
       .eq("id", params.noticeId);
+
+    if (error) throw new Error(error.message);
+
+    return { ok: true };
+  } catch (e: any) {
+    return { ok: false, error: e?.message ?? "failed" };
+  }
+}
+
+export async function updateAssignmentAvailableDateAction(params: {
+  assignmentId: string;
+  newAvailableAt: string; // YYYY-MM-DD format
+}) {
+  try {
+    const supabase = await getServerSupabase();
+
+    const { error } = await supabase
+      .from("student_vocab_assignments")
+      .update({ available_at: params.newAvailableAt } as any)
+      .eq("id", params.assignmentId);
 
     if (error) throw new Error(error.message);
 

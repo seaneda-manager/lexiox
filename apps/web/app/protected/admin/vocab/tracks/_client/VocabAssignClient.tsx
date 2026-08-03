@@ -10,6 +10,7 @@ import {
   getStudentNoticesAction,
   markNoticeReadAction,
   dismissNoticeAction,
+  updateAssignmentAvailableDateAction,
 } from "../actions";
 
 type Student = { id: string; full_name: string | null; login_id: string | null; grade: string | null };
@@ -25,6 +26,8 @@ export default function VocabAssignClient() {
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [editingId, setEditingId] = useState("");
   const [editingDay, setEditingDay] = useState(0);
+  const [editingAvailableDate, setEditingAvailableDate] = useState("");
+  const [editMode, setEditMode] = useState<"day" | "date" | null>(null);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState("");
   const [notices, setNotices] = useState<Notice[]>([]);
@@ -77,8 +80,26 @@ export default function VocabAssignClient() {
     if (res.ok) {
       setMsg("✅ Day 변경 완료");
       setEditingId("");
+      setEditMode(null);
       loadQueue();
       loadNotices();
+    } else {
+      setMsg(`❌ ${res.error}`);
+    }
+  }
+
+  async function updateAvailableDate() {
+    if (!editingId || !editingAvailableDate) return;
+    const res = await updateAssignmentAvailableDateAction({
+      assignmentId: editingId,
+      newAvailableAt: editingAvailableDate,
+    });
+    if (res.ok) {
+      setMsg("✅ 오픈일 변경 완료");
+      setEditingId("");
+      setEditingAvailableDate("");
+      setEditMode(null);
+      loadQueue();
     } else {
       setMsg(`❌ ${res.error}`);
     }
@@ -207,19 +228,38 @@ export default function VocabAssignClient() {
                 {queue.map((item) => (
                   <tr key={item.id} className="border-b hover:bg-gray-50">
                     <td className="py-2 px-4 font-bold">
-                      {editingId === item.id ? (
+                      {editingId === item.id && editMode === "day" ? (
                         <input
                           type="number"
                           min="1"
                           value={editingDay}
                           onChange={(e) => setEditingDay(Number(e.target.value))}
                           className="w-16 border rounded px-2 py-1"
+                          autoFocus
                         />
                       ) : (
                         `Day ${item.day_index}`
                       )}
                     </td>
-                    <td className="py-2 px-4 text-xs text-gray-600">{item.available_at}</td>
+                    <td className="py-2 px-4 text-xs text-gray-600 cursor-pointer hover:bg-blue-50 rounded">
+                      {editingId === item.id && editMode === "date" ? (
+                        <input
+                          type="date"
+                          value={editingAvailableDate}
+                          onChange={(e) => setEditingAvailableDate(e.target.value)}
+                          className="border rounded px-2 py-1"
+                          autoFocus
+                        />
+                      ) : (
+                        <span onClick={() => {
+                          setEditingId(item.id);
+                          setEditMode("date");
+                          setEditingAvailableDate(item.available_at);
+                        }}>
+                          {item.available_at}
+                        </span>
+                      )}
+                    </td>
                     <td className="py-2 px-4">
                       <span className={`px-2 py-1 rounded text-xs font-bold ${
                         item.status === "ASSIGNED" ? "bg-blue-100 text-blue-700" :
@@ -233,13 +273,16 @@ export default function VocabAssignClient() {
                       {editingId === item.id ? (
                         <>
                           <button
-                            onClick={updateDay}
+                            onClick={editMode === "day" ? updateDay : updateAvailableDate}
                             className="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700"
                           >
                             저장
                           </button>
                           <button
-                            onClick={() => setEditingId("")}
+                            onClick={() => {
+                              setEditingId("");
+                              setEditMode(null);
+                            }}
                             className="bg-gray-400 text-white px-3 py-1 rounded text-xs hover:bg-gray-500"
                           >
                             취소
@@ -250,6 +293,7 @@ export default function VocabAssignClient() {
                           onClick={() => {
                             setEditingId(item.id);
                             setEditingDay(item.day_index);
+                            setEditMode("day");
                           }}
                           className="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700"
                         >
