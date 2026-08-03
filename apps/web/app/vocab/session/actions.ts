@@ -7,7 +7,7 @@ import { createClient } from "@supabase/supabase-js";
 
 import type { SessionWord, VocabExample, VocabCollocation } from "@/models/vocab/SessionWord";
 import type { WordFormRowLike } from "@/lib/vocab/drill/buildBlockDrillTasksV1";
-import { ensureCockedQueueAdminAction } from "@/app/protected/admin/vocab/Tracks/actions";
+import { ensureCockedQueueAdminAction } from "@/app/protected/admin/vocab/tracks/actions";
 
 export type LoadSessionWordsActionInput = {
   /** Optional: force a specific setId (debug / admin / shortcut) */
