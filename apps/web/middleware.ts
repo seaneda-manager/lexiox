@@ -16,9 +16,7 @@ export function middleware(req: NextRequest) {
       .join('/');
 
     if (normalizedPath !== pathname) {
-      const url = req.nextUrl.clone();
-      url.pathname = normalizedPath;
-      return NextResponse.rewrite(url);
+      pathname = normalizedPath;
     }
   }
 
