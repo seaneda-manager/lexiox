@@ -147,12 +147,15 @@ function generateFakeMeanings(existing: string[], count: number): string[] {
     "유지하다",
   ];
 
-  return fakes
-    .filter((f) => !existing.includes(f))
-    .sort(() => Math.random() - 0.5)
-    .slice(0, count);
+  const filtered = fakes.filter((f) => !existing.includes(f));
+  return shuffleArray(filtered).slice(0, count);
 }
 
 function shuffleArray<T>(arr: T[]): T[] {
-  return [...arr].sort(() => Math.random() - 0.5);
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
 }
