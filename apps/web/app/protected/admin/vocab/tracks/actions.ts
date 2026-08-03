@@ -52,6 +52,7 @@ export async function listTracksAction() {
 export async function assignStudentAction(params: {
   studentId: string;
   trackId: string;
+  weekdays?: number[];
 }) {
   try {
     const supabase = await getServerSupabase();
@@ -60,7 +61,9 @@ export async function assignStudentAction(params: {
     const startDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
     // 기본값: 주 2회 (월, 수요일)
-    const defaultWeekdays = [1, 3]; // 월(1), 수(3)
+    const weekdaysToUse = params.weekdays && params.weekdays.length > 0
+      ? params.weekdays
+      : [1, 3]; // 월(1), 수(3)
 
     const { error: perr } = await supabase
       .from("student_vocab_plans")
@@ -68,7 +71,7 @@ export async function assignStudentAction(params: {
         student_id: params.studentId,
         track_id: params.trackId,
         start_date: startDate,
-        weekdays: defaultWeekdays,
+        weekdays: weekdaysToUse,
         max_active_sets: 2,
         is_enabled: true,
         start_day_index: 1,
@@ -95,7 +98,7 @@ export async function assignStudentAction(params: {
         "calculate_available_date",
         {
           p_start_date: startDate,
-          p_weekdays: defaultWeekdays,
+          p_weekdays: weekdaysToUse,
           p_day_index: assignment.day_index,
         }
       );

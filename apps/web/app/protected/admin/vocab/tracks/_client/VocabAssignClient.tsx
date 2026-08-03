@@ -23,6 +23,8 @@ export default function VocabAssignClient() {
   const [tracks, setTracks] = useState<Track[]>([]);
   const [selectedStudent, setSelectedStudent] = useState("");
   const [selectedTrack, setSelectedTrack] = useState("");
+  const [selectedWeekdays, setSelectedWeekdays] = useState<number[]>([1, 3]); // 월, 수
+  const [weekdayPreset, setWeekdayPreset] = useState("mon-wed"); // 기본값
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [editingId, setEditingId] = useState("");
   const [editingDay, setEditingDay] = useState(0);
@@ -31,6 +33,30 @@ export default function VocabAssignClient() {
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState("");
   const [notices, setNotices] = useState<Notice[]>([]);
+
+  const weekdayPresets: Record<string, { label: string; days: number[] }> = {
+    "mon-wed": { label: "월, 수 (주 2회)", days: [1, 3] },
+    "tue-thu": { label: "화, 목 (주 2회)", days: [2, 4] },
+    "mon-thu": { label: "월, 목 (주 2회)", days: [1, 4] },
+    "tue-fri": { label: "화, 금 (주 2회)", days: [2, 5] },
+    "custom": { label: "커스텀", days: [] },
+  };
+
+  const weekdayNames = ["월", "화", "수", "목", "금", "토", "일"];
+
+  function handlePresetChange(preset: string) {
+    setWeekdayPreset(preset);
+    if (preset !== "custom") {
+      setSelectedWeekdays(weekdayPresets[preset].days);
+    }
+  }
+
+  function toggleWeekday(day: number) {
+    setSelectedWeekdays((prev) =>
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day].sort()
+    );
+    setWeekdayPreset("custom");
+  }
 
   useEffect(() => {
     async function load() {
@@ -56,8 +82,16 @@ export default function VocabAssignClient() {
       setMsg("❌ 학생과 트랙을 선택하세요");
       return;
     }
+    if (selectedWeekdays.length === 0) {
+      setMsg("❌ 최소 1개 이상의 요일을 선택하세요");
+      return;
+    }
     setLoading(true);
-    const res = await assignStudentAction({ studentId: selectedStudent, trackId: selectedTrack });
+    const res = await assignStudentAction({
+      studentId: selectedStudent,
+      trackId: selectedTrack,
+      weekdays: selectedWeekdays,
+    });
     if (res.ok) {
       setMsg("✅ 배정 완료");
       loadQueue();
@@ -154,53 +188,95 @@ export default function VocabAssignClient() {
       <div className="bg-white rounded-lg shadow p-6">
         <h1 className="text-2xl font-bold mb-4">단어 학습 배정</h1>
 
-        <div className="grid grid-cols-3 gap-4 mb-4">
-          <div>
-            <label className="block text-sm font-bold mb-2">학생</label>
-            <select
-              value={selectedStudent}
-              onChange={(e) => {
-                setSelectedStudent(e.target.value);
-                setQueue([]);
-              }}
-              className="w-full border rounded-lg px-3 py-2"
-            >
-              <option value="">선택하세요</option>
-              {students.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.full_name} ({s.login_id})
-                </option>
-              ))}
-            </select>
+        <div className="space-y-4 mb-4">
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-bold mb-2">학생</label>
+              <select
+                value={selectedStudent}
+                onChange={(e) => {
+                  setSelectedStudent(e.target.value);
+                  setQueue([]);
+                }}
+                className="w-full border rounded-lg px-3 py-2"
+              >
+                <option value="">선택하세요</option>
+                {students.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.full_name} ({s.login_id})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold mb-2">트랙</label>
+              <select
+                value={selectedTrack}
+                onChange={(e) => {
+                  setSelectedTrack(e.target.value);
+                  setQueue([]);
+                }}
+                className="w-full border rounded-lg px-3 py-2"
+              >
+                <option value="">선택하세요</option>
+                {tracks.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.title} ({t.total_days}일)
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-end">
+              <button
+                onClick={handleAssign}
+                disabled={loading || !selectedStudent || !selectedTrack || selectedWeekdays.length === 0}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg disabled:opacity-50"
+              >
+                배정
+              </button>
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-bold mb-2">트랙</label>
-            <select
-              value={selectedTrack}
-              onChange={(e) => {
-                setSelectedTrack(e.target.value);
-                setQueue([]);
-              }}
-              className="w-full border rounded-lg px-3 py-2"
-            >
-              <option value="">선택하세요</option>
-              {tracks.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.title} ({t.total_days}일)
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Weekday Selection */}
+          <div className="border-t pt-4">
+            <label className="block text-sm font-bold mb-3">수업 요일 선택</label>
 
-          <div className="flex items-end">
-            <button
-              onClick={handleAssign}
-              disabled={loading || !selectedStudent || !selectedTrack}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg disabled:opacity-50"
-            >
-              배정
-            </button>
+            {/* Presets */}
+            <div className="flex gap-2 mb-3 flex-wrap">
+              {Object.entries(weekdayPresets).map(([key, { label }]) => (
+                <button
+                  key={key}
+                  onClick={() => handlePresetChange(key)}
+                  className={`px-3 py-1 rounded text-xs font-bold transition ${
+                    weekdayPreset === key
+                      ? "bg-green-600 text-white"
+                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {/* Custom Weekday Selection */}
+            <div className="flex gap-2">
+              {[1, 2, 3, 4, 5, 6, 7].map((day) => (
+                <button
+                  key={day}
+                  onClick={() => toggleWeekday(day)}
+                  className={`w-10 h-10 rounded font-bold transition ${
+                    selectedWeekdays.includes(day)
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                  title={["월", "화", "수", "목", "금", "토", "일"][day - 1]}
+                >
+                  {weekdayNames[day - 1]}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
