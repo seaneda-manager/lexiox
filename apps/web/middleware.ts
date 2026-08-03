@@ -6,8 +6,9 @@ import type { NextRequest } from "next/server";
 export function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
 
-  // Jr 경로는 독립 서비스로 proxy (localhost:3001)
-  if (pathname.startsWith("/jr")) {
+  // Production에서는 /jr도 protected로 rewrite
+  // Development에서는 localhost:3001로 proxy할 수 있으나, production은 /protected/jr 사용
+  if (process.env.NODE_ENV === 'development' && pathname.startsWith("/jr")) {
     const url = req.nextUrl.clone();
     url.hostname = 'localhost';
     url.port = '3001';
@@ -36,7 +37,11 @@ export function middleware(req: NextRequest) {
     pathname.startsWith("/updated-speaking") ||
     pathname.startsWith("/updated-listening") ||
     pathname.startsWith("/updated-reading") ||
-    pathname.startsWith("/updated-writing")
+    pathname.startsWith("/updated-writing") ||
+    pathname.startsWith("/hi-naesin") ||
+    pathname.startsWith("/jr") ||
+    pathname === "/naesin" ||
+    pathname.startsWith("/naesin/")
   ) {
     const url = req.nextUrl.clone();
     url.pathname = `/protected${pathname}`;
