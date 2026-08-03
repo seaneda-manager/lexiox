@@ -4,7 +4,23 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export function middleware(req: NextRequest) {
-  const pathname = req.nextUrl.pathname;
+  let pathname = req.nextUrl.pathname;
+
+  // Normalize uppercase letters to lowercase in path
+  // /admin/vocab/Tracks -> /admin/vocab/tracks
+  const hasUppercase = /[A-Z]/.test(pathname);
+  if (hasUppercase) {
+    const normalizedPath = pathname
+      .split('/')
+      .map(segment => segment.toLowerCase())
+      .join('/');
+
+    if (normalizedPath !== pathname) {
+      const url = req.nextUrl.clone();
+      url.pathname = normalizedPath;
+      return NextResponse.rewrite(url);
+    }
+  }
 
   // Production에서는 /jr도 protected로 rewrite
   // Development에서는 localhost:3001로 proxy할 수 있으나, production은 /protected/jr 사용
