@@ -1,7 +1,12 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { getStudentCalendarAction, CourseCalendar } from "../actions";
+import {
+  getStudentCalendarAction,
+  CourseCalendar,
+  courseTypeColors,
+  courseTypeLabels,
+} from "../actions";
 
 type CalendarDay = {
   date: string; // YYYY-MM-DD
@@ -83,10 +88,10 @@ export default function CalendarClient() {
     year: "numeric",
   });
 
-  const getStatusColor = (status: string) => {
-    if (status === "COMPLETED") return "bg-green-100 text-green-800 border-green-300";
-    if (status === "STARTED") return "bg-yellow-100 text-yellow-800 border-yellow-300";
-    return "bg-blue-100 text-blue-800 border-blue-300";
+  const getStatusBgColor = (status: string) => {
+    if (status === "COMPLETED") return "bg-green-200 border-green-400";
+    if (status === "STARTED") return "bg-yellow-200 border-yellow-400";
+    return "bg-blue-200 border-blue-400";
   };
 
   const getDateColor = (date: string, isCurrentMonth: boolean) => {
@@ -129,23 +134,36 @@ export default function CalendarClient() {
           <h2 className="text-2xl font-bold">{monthName}</h2>
         </div>
 
-        {/* Legend */}
-        <div className="p-4 border-b bg-gray-50 flex gap-4 flex-wrap">
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-blue-100 border border-blue-300 rounded"></div>
-            <span className="text-sm">미완료</span>
+        {/* Course Type Legend */}
+        <div className="p-4 border-b bg-gray-50">
+          <p className="text-sm font-bold mb-2">과정별 색상</p>
+          <div className="flex gap-4 flex-wrap">
+            {Object.entries(courseTypeLabels).map(([type, label]) => (
+              <div key={type} className="flex items-center gap-2">
+                <div className={`w-4 h-4 rounded border ${courseTypeColors[type]}`}></div>
+                <span className="text-sm">{label}</span>
+              </div>
+            ))}
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-yellow-100 border border-yellow-300 rounded"></div>
-            <span className="text-sm">진행중</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-green-100 border border-green-300 rounded"></div>
-            <span className="text-sm">완료</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-purple-100 border border-purple-300 rounded"></div>
-            <span className="text-sm">오늘</span>
+
+          <p className="text-sm font-bold mt-4 mb-2">과제 상태</p>
+          <div className="flex gap-4 flex-wrap">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-blue-200 border border-blue-400 rounded"></div>
+              <span className="text-sm">미완료</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-yellow-200 border border-yellow-400 rounded"></div>
+              <span className="text-sm">진행중</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-green-200 border border-green-400 rounded"></div>
+              <span className="text-sm">완료</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-purple-100 border border-purple-300 rounded"></div>
+              <span className="text-sm">오늘</span>
+            </div>
           </div>
         </div>
 
@@ -182,15 +200,16 @@ export default function CalendarClient() {
                     {day.assignments.map((assign, i) => (
                       <div
                         key={i}
-                        className={`text-xs p-1 rounded border ${getStatusColor(
+                        className={`text-xs p-1 rounded border ${getStatusBgColor(
                           assign.status
-                        )}`}
-                        title={`${assign.track_title} - Day ${assign.day_index}`}
+                        )} ${courseTypeColors[assign.course_type] || ""}`}
+                        title={`${courseTypeLabels[assign.course_type] || "과정"} - ${assign.course_title} - Day ${assign.day_index}`}
                       >
-                        <div className="font-bold truncate">
-                          {assign.track_title.substring(0, 8)}...
+                        <div className="font-bold truncate text-xs">
+                          {courseTypeLabels[assign.course_type]?.substring(0, 3) || "과"}
+                          {assign.course_title.substring(0, 5)}
                         </div>
-                        <div className="text-xs">Day {assign.day_index}</div>
+                        {assign.day_index && <div className="text-xs">Day {assign.day_index}</div>}
                       </div>
                     ))}
                   </div>
@@ -220,12 +239,27 @@ export default function CalendarClient() {
                   courseEndDate = new Date(lastAssign.available_at);
                 }
 
+                // 과정 타입별 경계 색상
+                const borderColorMap: Record<string, string> = {
+                  vocab: "border-blue-600",
+                  speaking: "border-red-600",
+                  listening: "border-purple-600",
+                  reading: "border-green-600",
+                  writing: "border-yellow-600",
+                  grammar: "border-orange-600",
+                };
+
                 return (
                   <div
-                    key={course.track_id}
-                    className="bg-white rounded-lg shadow p-4 border-l-4 border-blue-600"
+                    key={course.course_id}
+                    className={`bg-white rounded-lg shadow p-4 border-l-4 ${borderColorMap[course.course_type] || "border-blue-600"}`}
                   >
-                    <h4 className="font-bold text-lg mb-2">{course.track_title}</h4>
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-bold text-lg">{course.course_title}</h4>
+                      <span className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700 font-bold">
+                        {courseTypeLabels[course.course_type] || "과정"}
+                      </span>
+                    </div>
                     <div className="text-sm text-gray-600 mb-3">
                       <p>시작: {course.start_date}</p>
                       <p>
