@@ -7,11 +7,15 @@ import {
   assignStudentAction,
   getStudentQueueAction,
   updateAssignmentDayAction,
+  getStudentNoticesAction,
+  markNoticeReadAction,
+  dismissNoticeAction,
 } from "../actions";
 
 type Student = { id: string; full_name: string | null; login_id: string | null; grade: string | null };
 type Track = { id: string; title: string | null; slug: string | null; total_days: number | null };
 type QueueItem = { id: string; day_index: number; status: string; available_at: string; started_at: string | null; completed_at: string | null };
+type Notice = { id: string; student_id: string; assignment_id: string; track_id: string; day_index: number; notice_type: string; status: string; created_at: string };
 
 export default function VocabAssignClient() {
   const [students, setStudents] = useState<Student[]>([]);
@@ -23,6 +27,7 @@ export default function VocabAssignClient() {
   const [editingDay, setEditingDay] = useState(0);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState("");
+  const [notices, setNotices] = useState<Notice[]>([]);
 
   useEffect(() => {
     async function load() {
@@ -32,6 +37,16 @@ export default function VocabAssignClient() {
     }
     load();
   }, []);
+
+  async function loadNotices() {
+    if (!selectedStudent) return;
+    const res = await getStudentNoticesAction({ studentId: selectedStudent });
+    if (res.ok) setNotices(res.notices);
+  }
+
+  useEffect(() => {
+    loadNotices();
+  }, [selectedStudent]);
 
   async function handleAssign() {
     if (!selectedStudent || !selectedTrack) {
@@ -43,6 +58,7 @@ export default function VocabAssignClient() {
     if (res.ok) {
       setMsg("✅ 배정 완료");
       loadQueue();
+      loadNotices();
     } else {
       setMsg(`❌ ${res.error}`);
     }
@@ -62,13 +78,58 @@ export default function VocabAssignClient() {
       setMsg("✅ Day 변경 완료");
       setEditingId("");
       loadQueue();
+      loadNotices();
     } else {
       setMsg(`❌ ${res.error}`);
     }
   }
 
+  async function handleMarkNoticeRead(noticeId: string) {
+    const res = await markNoticeReadAction({ noticeId });
+    if (res.ok) {
+      loadNotices();
+    }
+  }
+
+  async function handleDismissNotice(noticeId: string) {
+    const res = await dismissNoticeAction({ noticeId });
+    if (res.ok) {
+      loadNotices();
+    }
+  }
+
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
+      {notices.length > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <h3 className="font-bold text-red-900 mb-3">미완료 알림 ({notices.length}개)</h3>
+          <div className="space-y-2">
+            {notices.map((notice) => (
+              <div key={notice.id} className="bg-white rounded p-3 flex justify-between items-center">
+                <div>
+                  <p className="font-bold text-sm">Day {notice.day_index}</p>
+                  <p className="text-xs text-gray-500">{new Date(notice.created_at).toLocaleString()}</p>
+                </div>
+                <div className="space-x-2">
+                  <button
+                    onClick={() => handleMarkNoticeRead(notice.id)}
+                    className="bg-blue-500 text-white px-3 py-1 rounded text-xs hover:bg-blue-600"
+                  >
+                    확인
+                  </button>
+                  <button
+                    onClick={() => handleDismissNotice(notice.id)}
+                    className="bg-gray-400 text-white px-3 py-1 rounded text-xs hover:bg-gray-500"
+                  >
+                    무시
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="bg-white rounded-lg shadow p-6">
         <h1 className="text-2xl font-bold mb-4">단어 학습 배정</h1>
 

@@ -135,3 +135,87 @@ export async function getStudentQueueAction(params: {
     return { ok: false, error: e?.message ?? "failed" };
   }
 }
+
+type Notice = {
+  id: string;
+  student_id: string;
+  assignment_id: string;
+  track_id: string;
+  day_index: number;
+  notice_type: string;
+  status: string;
+  created_at: string;
+};
+
+export async function getStudentNoticesAction(params: {
+  studentId: string;
+}) {
+  try {
+    const supabase = await getServerSupabase();
+
+    const { data, error } = await supabase
+      .from("vocab_assignment_notices")
+      .select("id, student_id, assignment_id, track_id, day_index, notice_type, status, created_at")
+      .eq("student_id", params.studentId)
+      .eq("status", "unread")
+      .order("created_at", { ascending: false });
+
+    if (error) throw new Error(error.message);
+
+    return { ok: true, notices: data as Notice[] };
+  } catch (e: any) {
+    return { ok: false, error: e?.message ?? "failed" };
+  }
+}
+
+export async function markNoticeReadAction(params: {
+  noticeId: string;
+}) {
+  try {
+    const supabase = await getServerSupabase();
+
+    const { error } = await supabase
+      .from("vocab_assignment_notices")
+      .update({ status: "read", read_at: new Date().toISOString() })
+      .eq("id", params.noticeId);
+
+    if (error) throw new Error(error.message);
+
+    return { ok: true };
+  } catch (e: any) {
+    return { ok: false, error: e?.message ?? "failed" };
+  }
+}
+
+export async function dismissNoticeAction(params: {
+  noticeId: string;
+}) {
+  try {
+    const supabase = await getServerSupabase();
+
+    const { error } = await supabase
+      .from("vocab_assignment_notices")
+      .update({ status: "dismissed", dismissed_at: new Date().toISOString() })
+      .eq("id", params.noticeId);
+
+    if (error) throw new Error(error.message);
+
+    return { ok: true };
+  } catch (e: any) {
+    return { ok: false, error: e?.message ?? "failed" };
+  }
+}
+
+export async function createOverdueNoticesAction() {
+  try {
+    const supabase = await getServerSupabase();
+
+    const { data, error } = await supabase.rpc("create_overdue_assignment_notices");
+
+    if (error) throw new Error(error.message);
+
+    return { ok: true, created: data?.[0]?.created_count ?? 0 };
+  } catch (e: any) {
+    return { ok: false, error: e?.message ?? "failed" };
+  }
+}
