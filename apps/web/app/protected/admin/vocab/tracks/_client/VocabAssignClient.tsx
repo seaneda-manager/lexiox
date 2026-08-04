@@ -540,7 +540,8 @@ export default function VocabAssignClient() {
                 ))}
               </tbody>
             </table>
-          </div>
+            </div>
+          )}
         </div>
       )}
 
