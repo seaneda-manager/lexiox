@@ -481,65 +481,63 @@ export default function VocabAssignClient() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-2 px-4">학생명</th>
-                  <th className="text-left py-2 px-4">트랙명</th>
-                  <th className="text-left py-2 px-4">옵션</th>
-                  <th className="text-left py-2 px-4">진행도</th>
-                  <th className="text-left py-2 px-4">동작</th>
-                </tr>
-              </thead>
-              <tbody>
-                {assignments.map((assign) => (
-                  <tr key={`${assign.student_id}_${assign.track_id}`} className="border-b hover:bg-gray-50">
-                    <td className="py-2 px-4 font-bold">{assign.student_name}</td>
-                    <td className="py-2 px-4">{assign.track_title}</td>
-                    <td className="py-2 px-4">
-                      <select
-                        value={assign.learning_option}
-                        onChange={(e) =>
-                          handleUpdateLearningOption(assign.student_id, assign.track_id, Number(e.target.value))
-                        }
-                        className="border rounded px-2 py-1 text-xs"
-                      >
-                        <option value={1}>Option 1</option>
-                        <option value={2}>Option 2</option>
-                        <option value={3}>Option 3</option>
-                        <option value={4}>Option 4</option>
-                      </select>
-                    </td>
-                    <td className="py-2 px-4 text-xs text-gray-600">
-                      <div className="flex items-center gap-2">
-                        <div className="w-24 bg-gray-200 rounded-full h-2">
-                          <div
-                            className="bg-blue-600 h-2 rounded-full"
-                            style={{
-                              width: `${
-                                assign.assignment_count > 0
-                                  ? Math.round((assign.completed_count / assign.assignment_count) * 100)
-                                  : 0
-                              }%`,
-                            }}
-                          ></div>
-                        </div>
-                        <span>
-                          {assign.completed_count}/{assign.assignment_count}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="py-2 px-4">
-                      <button
-                        onClick={() => handleDeleteAssignment(assign.student_id, assign.track_id)}
-                        className="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700"
-                      >
-                        삭제
-                      </button>
-                    </td>
+                <thead>
+                    <th className="text-left py-2 px-4">학생명</th>
+                    <th className="text-left py-2 px-4">트랙명</th>
+                    <th className="text-left py-2 px-4">옵션</th>
+                    <th className="text-left py-2 px-4">진행도</th>
+                    <th className="text-left py-2 px-4">동작</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {assignments.map((assign) => (
+                      <td className="py-2 px-4 font-bold">{assign.student_name}</td>
+                      <td className="py-2 px-4">{assign.track_title}</td>
+                      <td className="py-2 px-4">
+                        <select
+                          value={assign.learning_option}
+                          onChange={(e) =>
+                            handleUpdateLearningOption(assign.student_id, assign.track_id, Number(e.target.value))
+                          }
+                          className="border rounded px-2 py-1 text-xs"
+                        >
+                          <option value={1}>Option 1</option>
+                          <option value={2}>Option 2</option>
+                          <option value={3}>Option 3</option>
+                          <option value={4}>Option 4</option>
+                        </select>
+                      </td>
+                      <td className="py-2 px-4 text-xs text-gray-600">
+                        <div className="flex items-center gap-2">
+                          <div className="w-24 bg-gray-200 rounded-full h-2">
+                            <div
+                              className="bg-blue-600 h-2 rounded-full"
+                              style={{
+                                width: `${
+                                  assign.assignment_count > 0
+                                    ? Math.round((assign.completed_count / assign.assignment_count) * 100)
+                                    : 0
+                                }%`,
+                              }}
+                            ></div>
+                          </div>
+                          <span>
+                            {assign.completed_count}/{assign.assignment_count}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-2 px-4">
+                        <button
+                          onClick={() => handleDeleteAssignment(assign.student_id, assign.track_id)}
+                          className="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700"
+                        >
+                          삭제
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
