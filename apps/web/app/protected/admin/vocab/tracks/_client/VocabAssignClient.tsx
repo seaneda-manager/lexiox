@@ -11,6 +11,7 @@ import {
   markNoticeReadAction,
   dismissNoticeAction,
   updateAssignmentAvailableDateAction,
+  markAssignmentCompletedAction,
 } from "../actions";
 
 type Student = { id: string; full_name: string | null; login_id: string | null; grade: string | null };
@@ -25,6 +26,7 @@ export default function VocabAssignClient() {
   const [selectedTrack, setSelectedTrack] = useState("");
   const [selectedWeekdays, setSelectedWeekdays] = useState<number[]>([1, 3]); // 월, 수
   const [weekdayPreset, setWeekdayPreset] = useState("mon-wed"); // 기본값
+  const [startDay, setStartDay] = useState(1); // Start Day (1~20)
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [editingId, setEditingId] = useState("");
   const [editingDay, setEditingDay] = useState(0);
@@ -91,6 +93,7 @@ export default function VocabAssignClient() {
       studentId: selectedStudent,
       trackId: selectedTrack,
       weekdays: selectedWeekdays,
+      startDay: startDay,
     });
     if (res.ok) {
       setMsg("✅ 배정 완료");
@@ -150,6 +153,16 @@ export default function VocabAssignClient() {
     const res = await dismissNoticeAction({ noticeId });
     if (res.ok) {
       loadNotices();
+    }
+  }
+
+  async function handleMarkCompleted(assignmentId: string) {
+    const res = await markAssignmentCompletedAction({ assignmentId });
+    if (res.ok) {
+      setMsg("✅ 완료됨");
+      loadQueue();
+    } else {
+      setMsg(`❌ ${res.error}`);
     }
   }
 
@@ -277,6 +290,20 @@ export default function VocabAssignClient() {
                 </button>
               ))}
             </div>
+
+            {/* Start Day Selection */}
+            <div className="border-t pt-4 mt-4">
+              <label className="block text-sm font-bold mb-2">시작 Day (1~20)</label>
+              <input
+                type="number"
+                min="1"
+                max="20"
+                value={startDay}
+                onChange={(e) => setStartDay(Math.max(1, Math.min(20, Number(e.target.value))))}
+                className="w-full border rounded-lg px-3 py-2"
+              />
+              <p className="text-xs text-gray-600 mt-1">Day {startDay}부터 시작합니다</p>
+            </div>
           </div>
         </div>
 
@@ -337,13 +364,22 @@ export default function VocabAssignClient() {
                       )}
                     </td>
                     <td className="py-2 px-4">
-                      <span className={`px-2 py-1 rounded text-xs font-bold ${
-                        item.status === "ASSIGNED" ? "bg-blue-100 text-blue-700" :
-                        item.status === "COMPLETED" ? "bg-green-100 text-green-700" :
-                        "bg-gray-100 text-gray-700"
-                      }`}>
+                      <button
+                        onClick={() => {
+                          if (item.status !== "COMPLETED") {
+                            handleMarkCompleted(item.id);
+                          }
+                        }}
+                        disabled={item.status === "COMPLETED"}
+                        className={`px-2 py-1 rounded text-xs font-bold cursor-pointer transition ${
+                          item.status === "COMPLETED" ? "bg-green-100 text-green-700 opacity-50 cursor-not-allowed" :
+                          item.status === "ASSIGNED" ? "bg-blue-100 text-blue-700 hover:bg-blue-200" :
+                          "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
+                        title={item.status === "COMPLETED" ? "완료됨" : "클릭하여 완료 표시"}
+                      >
                         {item.status}
-                      </span>
+                      </button>
                     </td>
                     <td className="py-2 px-4 space-x-2">
                       {editingId === item.id ? (

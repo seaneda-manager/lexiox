@@ -53,6 +53,7 @@ export async function assignStudentAction(params: {
   studentId: string;
   trackId: string;
   weekdays?: number[];
+  startDay?: number;
 }) {
   try {
     const supabase = await getServerSupabase();
@@ -65,6 +66,8 @@ export async function assignStudentAction(params: {
       ? params.weekdays
       : [1, 3]; // 월(1), 수(3)
 
+    const startDayIndex = params.startDay || 1;
+
     const { error: perr } = await supabase
       .from("student_vocab_plans")
       .upsert({
@@ -74,8 +77,8 @@ export async function assignStudentAction(params: {
         weekdays: weekdaysToUse,
         max_active_sets: 2,
         is_enabled: true,
-        start_day_index: 1,
-        cursor_day_index: 1,
+        start_day_index: startDayIndex,
+        cursor_day_index: startDayIndex,
         is_paused: false,
         paused_reason: null,
       } as any, { onConflict: "student_id,track_id" });
@@ -275,6 +278,28 @@ export async function updateAssignmentAvailableDateAction(params: {
     const { error } = await supabase
       .from("student_vocab_assignments")
       .update({ available_at: params.newAvailableAt } as any)
+      .eq("id", params.assignmentId);
+
+    if (error) throw new Error(error.message);
+
+    return { ok: true };
+  } catch (e: any) {
+    return { ok: false, error: e?.message ?? "failed" };
+  }
+}
+
+export async function markAssignmentCompletedAction(params: {
+  assignmentId: string;
+}) {
+  try {
+    const supabase = await getServerSupabase();
+
+    const { error } = await supabase
+      .from("student_vocab_assignments")
+      .update({
+        completed_at: new Date().toISOString(),
+        status: "COMPLETED",
+      } as any)
       .eq("id", params.assignmentId);
 
     if (error) throw new Error(error.message);
