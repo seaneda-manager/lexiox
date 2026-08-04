@@ -31,6 +31,7 @@ export default function VocabAssignClient() {
   const [weekdayPreset, setWeekdayPreset] = useState("mon-wed"); // 기본값
   const [startDay, setStartDay] = useState(1); // Start Day (1~maxDay)
   const [direction, setDirection] = useState<"forward" | "backward">("forward"); // 앞→뒤 or 뒤→앞
+  const [learningOption, setLearningOption] = useState(1); // 학습 옵션 (1/2/3/4)
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [editingId, setEditingId] = useState("");
   const [editingDay, setEditingDay] = useState(0);
@@ -105,6 +106,7 @@ export default function VocabAssignClient() {
       weekdays: selectedWeekdays,
       startDay: direction === "backward" ? (tracks.find((t) => t.id === selectedTrack)?.total_days || 20) : startDay,
       direction: direction,
+      learningOption: learningOption,
     });
     if (res.ok) {
       setMsg("✅ 배정 완료");
@@ -357,6 +359,60 @@ export default function VocabAssignClient() {
                         }`}
                       >
                         뒤 ← 앞 (Day {startDay}~)
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Learning Option Selection */}
+                  <div>
+                    <label className="block text-sm font-bold mb-3">학습 옵션</label>
+                    <div className="space-y-2">
+                      <button
+                        onClick={() => setLearningOption(1)}
+                        className={`w-full p-3 rounded border-2 text-left transition ${
+                          learningOption === 1
+                            ? "border-blue-600 bg-blue-50"
+                            : "border-gray-200 bg-white hover:border-gray-300"
+                        }`}
+                      >
+                        <div className="font-bold text-sm">Option 1: 전통적 학습</div>
+                        <div className="text-xs text-gray-600">원내: PreScreen + Stage 1 / 숙제: Stage 2</div>
+                      </button>
+
+                      <button
+                        onClick={() => setLearningOption(2)}
+                        className={`w-full p-3 rounded border-2 text-left transition ${
+                          learningOption === 2
+                            ? "border-blue-600 bg-blue-50"
+                            : "border-gray-200 bg-white hover:border-gray-300"
+                        }`}
+                      >
+                        <div className="font-bold text-sm">Option 2: 고급 학습</div>
+                        <div className="text-xs text-gray-600">집: Learning Stage / 원내: Speed / 숙제: 복습 깜지</div>
+                      </button>
+
+                      <button
+                        onClick={() => setLearningOption(3)}
+                        className={`w-full p-3 rounded border-2 text-left transition ${
+                          learningOption === 3
+                            ? "border-blue-600 bg-blue-50"
+                            : "border-gray-200 bg-white hover:border-gray-300"
+                        }`}
+                      >
+                        <div className="font-bold text-sm">Option 3: 간략 학습</div>
+                        <div className="text-xs text-gray-600">집: 철자+발음+뜻 / Speed / 숙제: Stage 2</div>
+                      </button>
+
+                      <button
+                        onClick={() => setLearningOption(4)}
+                        className={`w-full p-3 rounded border-2 text-left transition ${
+                          learningOption === 4
+                            ? "border-blue-600 bg-blue-50"
+                            : "border-gray-200 bg-white hover:border-gray-300"
+                        }`}
+                      >
+                        <div className="font-bold text-sm">Option 4: 책 학습</div>
+                        <div className="text-xs text-gray-600">책으로 미리 학습 / Speed / 숙제: Stage 2</div>
                       </button>
                     </div>
                   </div>

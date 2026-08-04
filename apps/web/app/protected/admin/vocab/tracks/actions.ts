@@ -55,6 +55,7 @@ export async function assignStudentAction(params: {
   weekdays?: number[];
   startDay?: number;
   direction?: "forward" | "backward";
+  learningOption?: number; // 1=Traditional, 2=Advanced, 3=Simple, 4=BookOnly
 }) {
   try {
     const supabase = getServiceRoleClient();
@@ -69,6 +70,7 @@ export async function assignStudentAction(params: {
 
     const startDayIndex = params.startDay || 1;
     const directionValue = params.direction || "forward";
+    const learningOptionValue = params.learningOption || 1;
 
     const { error: perr } = await supabase
       .from("student_vocab_plans")
@@ -84,6 +86,7 @@ export async function assignStudentAction(params: {
         is_paused: false,
         paused_reason: null,
         direction: directionValue,
+        learning_option: learningOptionValue,
       } as any, { onConflict: "student_id,track_id" });
 
     if (perr) throw new Error(perr.message);
