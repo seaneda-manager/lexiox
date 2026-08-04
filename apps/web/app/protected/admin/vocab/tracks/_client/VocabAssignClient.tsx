@@ -470,11 +470,17 @@ export default function VocabAssignClient() {
         </div>
       )}
 
-      {activeTab === "status" && assignments.length > 0 && (
+      {activeTab === "status" && (
         <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-bold mb-4">배정 현황</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <h2 className="text-xl font-bold mb-4">단어 배정 현황</h2>
+          {assignments.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <p className="text-lg">배정된 항목이 없습니다.</p>
+              <p className="text-sm mt-2">왼쪽 탭에서 학생을 선택하고 배정해주세요.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
               <thead>
                 <tr className="border-b">
                   <th className="text-left py-2 px-4">학생명</th>
