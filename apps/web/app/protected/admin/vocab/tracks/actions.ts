@@ -85,18 +85,59 @@ export async function assignStudentAction(params: {
 
     if (perr) throw new Error(perr.message);
 
-    // 할당된 모든 Day의 available_at 업데이트 (weekdays 기반)
-    const { data: assignments, error: fetchErr } = await supabase
+    // Get track total days
+    const { data: track, error: trackErr } = await supabase
+      .from("vocab_tracks")
+      .select("total_days")
+      .eq("id", params.trackId)
+      .single();
+
+    if (trackErr || !track?.total_days) throw new Error("Track not found");
+
+    const totalDays = track.total_days;
+
+    // Create or update all assignments for this student
+    const assignmentIds: string[] = [];
+    for (let dayIndex = 1; dayIndex <= totalDays; dayIndex++) {
+      const { data: existing } = await supabase
+        .from("student_vocab_assignments")
+        .select("id")
+        .eq("student_id", params.studentId)
+        .eq("track_id", params.trackId)
+        .eq("day_index", dayIndex)
+        .single();
+
+      if (!existing) {
+        // Create new assignment
+        const { data: newAssign, error: insertErr } = await supabase
+          .from("student_vocab_assignments")
+          .insert({
+            student_id: params.studentId,
+            track_id: params.trackId,
+            day_index: dayIndex,
+            status: "ASSIGNED",
+          } as any)
+          .select("id")
+          .single();
+
+        if (!insertErr && newAssign?.id) {
+          assignmentIds.push(newAssign.id);
+        }
+      } else {
+        assignmentIds.push(existing.id);
+      }
+    }
+
+    // Update available_at for all assignments
+    const { data: allAssignments, error: fetchErr } = await supabase
       .from("student_vocab_assignments")
       .select("id, day_index")
       .eq("student_id", params.studentId)
-      .eq("track_id", params.trackId)
-      .is("completed_at", null);
+      .eq("track_id", params.trackId);
 
     if (fetchErr) throw new Error(fetchErr.message);
 
-    // 각 assignment의 available_at 계산 및 업데이트
-    for (const assignment of assignments || []) {
+    for (const assignment of allAssignments || []) {
       const { data: newDate, error: calcErr } = await supabase.rpc(
         "calculate_available_date",
         {
@@ -114,7 +155,7 @@ export async function assignStudentAction(params: {
       }
     }
 
-    return { ok: true, queueSize: assignments?.length ?? 0 };
+    return { ok: true, queueSize: totalDays };
   } catch (e: any) {
     return { ok: false, error: e?.message ?? "failed" };
   }
