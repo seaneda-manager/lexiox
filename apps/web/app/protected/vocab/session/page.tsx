@@ -645,6 +645,7 @@ export default function VocabSessionPage() {
   const [dayIndex, setDayIndex] = useState<number | null>(null);
   const [totalDays, setTotalDays] = useState<number | null>(null);
   const [speedTimeoutSeconds, setSpeedTimeoutSeconds] = useState<number>(15);
+  const [learningOption, setLearningOption] = useState<number | undefined>(undefined);
 
   // ✅ 2 Days Review: 지난 2일 약한 단어들
   const [recentWeakWords, setRecentWeakWords] = useState<SessionWord[]>([]);
@@ -852,11 +853,13 @@ export default function VocabSessionPage() {
         const di = (res as any).dayIndex ?? null;
         const td = (res as any).totalDays ?? null;
         const sts = (res as any).speedTimeoutSeconds ?? 6;
-        console.log("🔍 API Response:", { trackTitle: tt, dayIndex: di, totalDays: td, speedTimeoutSeconds: sts, res });
+        const lo = (res as any).learningOption ?? undefined;
+        console.log("🔍 API Response:", { trackTitle: tt, dayIndex: di, totalDays: td, speedTimeoutSeconds: sts, learningOption: lo, res });
         setTrackTitle(tt);
         setDayIndex(di);
         setTotalDays(td);
         setSpeedTimeoutSeconds(sts);
+        setLearningOption(lo);
         setLoadError(null);
 
         setDebugInfo({
@@ -1867,6 +1870,7 @@ export default function VocabSessionPage() {
             trackTitle={trackTitle}
             dayIndex={dayIndex}
             totalDays={totalDays}
+            learningOption={learningOption}
           />
         </CardWrap>
       );
@@ -1899,6 +1903,7 @@ export default function VocabSessionPage() {
             trackTitle={trackTitle}
             dayIndex={dayIndex}
             totalDays={totalDays}
+            learningOption={learningOption}
           />
         </CardWrap>
       );

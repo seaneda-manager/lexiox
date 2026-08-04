@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import type { LearningWord } from './learning.types';
 
 type TabType = 'synonym' | 'antonym' | 'example';
@@ -11,6 +11,7 @@ interface VocabSessionLearningStage2Props {
   trackTitle?: string | null;
   dayIndex?: number | null;
   totalDays?: number | null;
+  learningOption?: number;
 }
 
 const playAudio = async (text: string) => {
@@ -39,7 +40,15 @@ export default function VocabSessionLearningStage2({
   trackTitle,
   dayIndex,
   totalDays,
+  learningOption,
 }: VocabSessionLearningStage2Props) {
+  console.log("🎓 Stage 2 loaded with learningOption:", learningOption, {
+    "1": "Traditional (원내학습)",
+    "2": "Advanced (집예습)",
+    "3": "Simple (간략학습)",
+    "4": "BookOnly (책학습)"
+  }[learningOption ?? 1]);
+
   const [currentWordIdx, setCurrentWordIdx] = useState(0);
   const [currentTab, setCurrentTab] = useState<TabType>('synonym');
   const [synonymInput, setSynonymInput] = useState('');
@@ -55,13 +64,32 @@ export default function VocabSessionLearningStage2({
 
   const progress = `${currentWordIdx + 1}/${words.length}`;
 
-  const canProceedToNextWord = synonymDone && antonymDone && exampleDone;
+  // learningOption에 따라 필수 탭 결정
+  const requiredTabs = (() => {
+    switch (learningOption) {
+      case 2: // Advanced
+        return ['synonym', 'antonym', 'example'];
+      case 3: // Simple
+        return ['synonym']; // 동의어만 필수
+      case 4: // BookOnly
+        return []; // 최소 학습
+      default: // Traditional
+        return ['synonym', 'antonym', 'example'];
+    }
+  })();
+
+  const canProceedToNextWord = requiredTabs.every(tab => {
+    if (tab === 'synonym') return synonymDone;
+    if (tab === 'antonym') return antonymDone;
+    if (tab === 'example') return exampleDone;
+    return true;
+  });
 
   const handleNextWord = () => {
     if (!canProceedToNextWord) return;
     if (currentWordIdx + 1 < words.length) {
       setCurrentWordIdx(currentWordIdx + 1);
-      setCurrentTab('synonym');
+      setCurrentTab(requiredTabs.length > 0 ? (requiredTabs[0] as TabType) : 'synonym');
       setSynonymInput('');
       setAntonymInput('');
       setExampleInput('');
@@ -72,6 +100,15 @@ export default function VocabSessionLearningStage2({
       onFinish();
     }
   };
+
+  // BookOnly (Option 4)인 경우 자동으로 모든 탭 완료 처리
+  useEffect(() => {
+    if (requiredTabs.length === 0) {
+      setSynonymDone(true);
+      setAntonymDone(true);
+      setExampleDone(true);
+    }
+  }, [requiredTabs.length]);
 
   if (!currentWord) {
     return (
@@ -106,38 +143,46 @@ export default function VocabSessionLearningStage2({
         </div>
 
         {/* 탭 네비게이션 */}
-        <div className="flex gap-2 bg-white p-2 rounded-2xl border-2 border-gray-300">
-          <button
-            onClick={() => setCurrentTab('synonym')}
-            className={`flex-1 py-3 px-4 rounded-lg font-bold text-sm transition cursor-pointer ${
-              currentTab === 'synonym'
-                ? 'bg-purple-500 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-300'
-            }`}
-          >
-            1️⃣ Synonym {synonymDone ? '✅' : ''}
-          </button>
-          <button
-            onClick={() => setCurrentTab('antonym')}
-            className={`flex-1 py-3 px-4 rounded-lg font-bold text-sm transition cursor-pointer ${
-              currentTab === 'antonym'
-                ? 'bg-purple-500 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-300'
-            }`}
-          >
-            2️⃣ Antonym {antonymDone ? '✅' : ''}
-          </button>
-          <button
-            onClick={() => setCurrentTab('example')}
-            className={`flex-1 py-3 px-4 rounded-lg font-bold text-sm transition cursor-pointer ${
-              currentTab === 'example'
-                ? 'bg-purple-500 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-300'
-            }`}
-          >
-            3️⃣ Example {exampleDone ? '✅' : ''}
-          </button>
-        </div>
+        {requiredTabs.length > 0 && (
+          <div className="flex gap-2 bg-white p-2 rounded-2xl border-2 border-gray-300">
+            {requiredTabs.includes('synonym') && (
+              <button
+                onClick={() => setCurrentTab('synonym')}
+                className={`flex-1 py-3 px-4 rounded-lg font-bold text-sm transition cursor-pointer ${
+                  currentTab === 'synonym'
+                    ? 'bg-purple-500 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                1️⃣ Synonym {synonymDone ? '✅' : ''}
+              </button>
+            )}
+            {requiredTabs.includes('antonym') && (
+              <button
+                onClick={() => setCurrentTab('antonym')}
+                className={`flex-1 py-3 px-4 rounded-lg font-bold text-sm transition cursor-pointer ${
+                  currentTab === 'antonym'
+                    ? 'bg-purple-500 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                2️⃣ Antonym {antonymDone ? '✅' : ''}
+              </button>
+            )}
+            {requiredTabs.includes('example') && (
+              <button
+                onClick={() => setCurrentTab('example')}
+                className={`flex-1 py-3 px-4 rounded-lg font-bold text-sm transition cursor-pointer ${
+                  currentTab === 'example'
+                    ? 'bg-purple-500 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                3️⃣ Example {exampleDone ? '✅' : ''}
+              </button>
+            )}
+          </div>
+        )}
 
         {/* 탭 컨텐츠 */}
         <div className="bg-white rounded-2xl border-4 border-purple-300 p-8 flex-shrink-0">

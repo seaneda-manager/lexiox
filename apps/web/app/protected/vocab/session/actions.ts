@@ -30,6 +30,7 @@ export type LoadSessionWordsActionResult =
       dayIndex?: number;
       totalDays?: number;
       speedTimeoutSeconds?: number;
+      learningOption?: number;
 
       wordFormsByWordId?: Record<string, WordFormRowLike>;
       wordExamplesByWordId?: Record<string, any>;
@@ -50,6 +51,7 @@ export type LoadSessionWordsActionResult =
       dayIndex?: number;
       totalDays?: number;
       speedTimeoutSeconds?: number;
+      learningOption?: number;
 
       words?: SessionWord[];
       error?: string;
@@ -836,6 +838,7 @@ export async function loadSessionWordsAction(
     let trackTitle: string | null = null;
     let totalDays: number | null = null;
     let speedTimeoutSeconds: number | null = null;
+    let learningOption: number | undefined = undefined;
 
     {
       try {
@@ -875,6 +878,7 @@ export async function loadSessionWordsAction(
               if (planData && typeof planData.cursor_day_index === "number") {
                 dayIndex = planData.cursor_day_index;
               }
+              // learning_option은 미마이그레이션 상태이므로 로드하지 않음 (기본값 사용)
             } catch (e) {
               // 이 쿼리 실패는 무시 (trackTitle/totalDays는 이미 있음)
             }
@@ -900,6 +904,7 @@ export async function loadSessionWordsAction(
       wordExamplesByWordId,
       wordCollocationsByWordId,
       speedTimeoutSeconds: speedTimeoutSeconds ?? 15,
+      learningOption,
       note: input?.setId ? "loaded via forced setId" : `loaded via ${diag.assignmentSource}`,
       diag,
     };
