@@ -1,6 +1,6 @@
 "use server";
 
-import { getServerSupabase } from "@/lib/supabase/server";
+import { getServerSupabase, getServiceRoleClient } from "@/lib/supabase/server";
 
 type StudentLite = {
   id: string;
@@ -56,7 +56,7 @@ export async function assignStudentAction(params: {
   startDay?: number;
 }) {
   try {
-    const supabase = await getServerSupabase();
+    const supabase = getServiceRoleClient();
 
     const today = new Date();
     const startDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
@@ -125,7 +125,7 @@ export async function updateAssignmentDayAction(params: {
   newDayIndex: number;
 }) {
   try {
-    const supabase = await getServerSupabase();
+    const supabase = getServiceRoleClient();
 
     // Get current assignment to find its student and plan
     const { data: assignment, error: fetchErr } = await supabase
@@ -182,12 +182,23 @@ export async function getStudentQueueAction(params: {
   try {
     const supabase = await getServerSupabase();
 
+    // Get student plan to check start_day_index
+    const { data: plan, error: planErr } = await supabase
+      .from("student_vocab_plans")
+      .select("start_day_index")
+      .eq("student_id", params.studentId)
+      .eq("track_id", params.trackId)
+      .single();
+
+    const startDayIndex = plan?.start_day_index ?? 1;
+
     const { data, error } = await supabase
       .from("student_vocab_assignments")
       .select("id, day_index, status, available_at, started_at, completed_at")
       .eq("student_id", params.studentId)
       .eq("track_id", params.trackId)
       .is("completed_at", null)
+      .gte("day_index", startDayIndex)
       .order("day_index");
 
     if (error) throw new Error(error.message);
@@ -234,7 +245,7 @@ export async function markNoticeReadAction(params: {
   noticeId: string;
 }) {
   try {
-    const supabase = await getServerSupabase();
+    const supabase = getServiceRoleClient();
 
     const { error } = await supabase
       .from("vocab_assignment_notices")
@@ -253,7 +264,7 @@ export async function dismissNoticeAction(params: {
   noticeId: string;
 }) {
   try {
-    const supabase = await getServerSupabase();
+    const supabase = getServiceRoleClient();
 
     const { error } = await supabase
       .from("vocab_assignment_notices")
@@ -273,7 +284,7 @@ export async function updateAssignmentAvailableDateAction(params: {
   newAvailableAt: string; // YYYY-MM-DD format
 }) {
   try {
-    const supabase = await getServerSupabase();
+    const supabase = getServiceRoleClient();
 
     const { error } = await supabase
       .from("student_vocab_assignments")
@@ -292,7 +303,7 @@ export async function markAssignmentCompletedAction(params: {
   assignmentId: string;
 }) {
   try {
-    const supabase = await getServerSupabase();
+    const supabase = getServiceRoleClient();
 
     const { error } = await supabase
       .from("student_vocab_assignments")
