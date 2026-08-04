@@ -18,7 +18,7 @@ type TrackLite = {
 
 export async function listStudentsAction() {
   try {
-    const supabase = await getServerSupabase();
+    const supabase = getServiceRoleClient();
     const { data, error } = await supabase
       .from("academy_students")
       .select("id, full_name, login_id, grade")
@@ -36,7 +36,7 @@ export async function listStudentsAction() {
 
 export async function listTracksAction() {
   try {
-    const supabase = await getServerSupabase();
+    const supabase = getServiceRoleClient();
     const { data, error } = await supabase
       .from("vocab_tracks")
       .select("id, title, slug, total_days")
@@ -180,7 +180,7 @@ export async function getStudentQueueAction(params: {
   trackId: string;
 }) {
   try {
-    const supabase = await getServerSupabase();
+    const supabase = getServiceRoleClient();
 
     // Get student plan to check start_day_index
     const { data: plan, error: planErr } = await supabase
@@ -224,7 +224,7 @@ export async function getStudentNoticesAction(params: {
   studentId: string;
 }) {
   try {
-    const supabase = await getServerSupabase();
+    const supabase = getServiceRoleClient();
 
     const { data, error } = await supabase
       .from("vocab_assignment_notices")
