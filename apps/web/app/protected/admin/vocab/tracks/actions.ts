@@ -375,3 +375,99 @@ export async function createOverdueNoticesAction() {
     return { ok: false, error: e?.message ?? "failed" };
   }
 }
+
+export type StudentVocabAssignment = {
+  student_id: string;
+  student_name: string | null;
+  track_id: string;
+  track_title: string | null;
+  assignment_count: number;
+  completed_count: number;
+};
+
+export async function getStudentVocabAssignmentsAction() {
+  try {
+    const supabase = getServiceRoleClient();
+
+    // Get all student-track combinations with assignment counts
+    const { data, error } = await supabase
+      .from("student_vocab_assignments")
+      .select(
+        `student_id,
+         track_id,
+         academy_students(full_name),
+         vocab_tracks(title)`
+      )
+      .order("student_id")
+      .order("track_id");
+
+    if (error) throw new Error(error.message);
+
+    // Group by student and track
+    const grouped = new Map<string, StudentVocabAssignment>();
+    for (const row of data || []) {
+      const key = `${row.student_id}_${row.track_id}`;
+
+      if (!grouped.has(key)) {
+        grouped.set(key, {
+          student_id: row.student_id,
+          student_name: (row.academy_students as any)?.full_name,
+          track_id: row.track_id,
+          track_title: (row.vocab_tracks as any)?.title,
+          assignment_count: 0,
+          completed_count: 0,
+        });
+      }
+
+      const item = grouped.get(key)!;
+      item.assignment_count += 1;
+    }
+
+    // Get completed counts
+    const { data: completed, error: completedErr } = await supabase
+      .from("student_vocab_assignments")
+      .select(`student_id, track_id`)
+      .not("completed_at", "is", null);
+
+    if (!completedErr && completed) {
+      for (const row of completed) {
+        const key = `${row.student_id}_${row.track_id}`;
+        const item = grouped.get(key);
+        if (item) item.completed_count += 1;
+      }
+    }
+
+    return { ok: true, assignments: Array.from(grouped.values()) };
+  } catch (e: any) {
+    return { ok: false, error: e?.message ?? "failed" };
+  }
+}
+
+export async function deleteStudentTrackAssignmentAction(params: {
+  studentId: string;
+  trackId: string;
+}) {
+  try {
+    const supabase = getServiceRoleClient();
+
+    // Delete all assignments for this student-track combination
+    const { error } = await supabase
+      .from("student_vocab_assignments")
+      .delete()
+      .eq("student_id", params.studentId)
+      .eq("track_id", params.trackId);
+
+    if (error) throw new Error(error.message);
+
+    // Also delete the plan
+    await supabase
+      .from("student_vocab_plans")
+      .delete()
+      .eq("student_id", params.studentId)
+      .eq("track_id", params.trackId);
+
+    return { ok: true };
+  } catch (e: any) {
+    return { ok: false, error: e?.message ?? "failed" };
+  }
+}

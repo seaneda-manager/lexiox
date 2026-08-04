@@ -12,6 +12,9 @@ import {
   dismissNoticeAction,
   updateAssignmentAvailableDateAction,
   markAssignmentCompletedAction,
+  getStudentVocabAssignmentsAction,
+  deleteStudentTrackAssignmentAction,
+  type StudentVocabAssignment,
 } from "../actions";
 
 type Student = { id: string; full_name: string | null; login_id: string | null; grade: string | null };
@@ -35,6 +38,7 @@ export default function VocabAssignClient() {
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState("");
   const [notices, setNotices] = useState<Notice[]>([]);
+  const [assignments, setAssignments] = useState<StudentVocabAssignment[]>([]);
 
   const weekdayPresets: Record<string, { label: string; days: number[] }> = {
     "mon-wed": { label: "월, 수 (주 2회)", days: [1, 3] },
@@ -62,9 +66,14 @@ export default function VocabAssignClient() {
 
   useEffect(() => {
     async function load() {
-      const [sRes, tRes] = await Promise.all([listStudentsAction(), listTracksAction()]);
+      const [sRes, tRes, aRes] = await Promise.all([
+        listStudentsAction(),
+        listTracksAction(),
+        getStudentVocabAssignmentsAction(),
+      ]);
       if (sRes.ok) setStudents(sRes.students);
       if (tRes.ok) setTracks(tRes.tracks);
+      if (aRes.ok) setAssignments(aRes.assignments);
     }
     load();
   }, []);
@@ -161,6 +170,18 @@ export default function VocabAssignClient() {
     if (res.ok) {
       setMsg("✅ 완료됨");
       loadQueue();
+    } else {
+      setMsg(`❌ ${res.error}`);
+    }
+  }
+
+  async function handleDeleteAssignment(studentId: string, trackId: string) {
+    if (!confirm("정말 이 배정을 삭제하시겠습니까?")) return;
+    const res = await deleteStudentTrackAssignmentAction({ studentId, trackId });
+    if (res.ok) {
+      setMsg("✅ 배정 삭제 완료");
+      const aRes = await getStudentVocabAssignmentsAction();
+      if (aRes.ok) setAssignments(aRes.assignments);
     } else {
       setMsg(`❌ ${res.error}`);
     }
@@ -313,6 +334,59 @@ export default function VocabAssignClient() {
           </div>
         )}
       </div>
+
+      {assignments.length > 0 && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-xl font-bold mb-4">배정 현황</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-2 px-4">학생명</th>
+                  <th className="text-left py-2 px-4">트랙명</th>
+                  <th className="text-left py-2 px-4">진행도</th>
+                  <th className="text-left py-2 px-4">동작</th>
+                </tr>
+              </thead>
+              <tbody>
+                {assignments.map((assign) => (
+                  <tr key={`${assign.student_id}_${assign.track_id}`} className="border-b hover:bg-gray-50">
+                    <td className="py-2 px-4 font-bold">{assign.student_name}</td>
+                    <td className="py-2 px-4">{assign.track_title}</td>
+                    <td className="py-2 px-4 text-xs text-gray-600">
+                      <div className="flex items-center gap-2">
+                        <div className="w-24 bg-gray-200 rounded-full h-2">
+                          <div
+                            className="bg-blue-600 h-2 rounded-full"
+                            style={{
+                              width: `${
+                                assign.assignment_count > 0
+                                  ? Math.round((assign.completed_count / assign.assignment_count) * 100)
+                                  : 0
+                              }%`,
+                            }}
+                          ></div>
+                        </div>
+                        <span>
+                          {assign.completed_count}/{assign.assignment_count}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-2 px-4">
+                      <button
+                        onClick={() => handleDeleteAssignment(assign.student_id, assign.track_id)}
+                        className="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700"
+                      >
+                        삭제
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {queue.length > 0 && (
         <div className="bg-white rounded-lg shadow p-6">
