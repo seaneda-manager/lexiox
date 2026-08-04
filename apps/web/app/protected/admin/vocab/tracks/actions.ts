@@ -86,15 +86,14 @@ export async function assignStudentAction(params: {
     if (perr) throw new Error(perr.message);
 
     // Get track total days
-    const { data: track, error: trackErr } = await supabase
+    const { data: tracks, error: trackErr } = await supabase
       .from("vocab_tracks")
       .select("total_days")
-      .eq("id", params.trackId)
-      .single();
+      .eq("id", params.trackId);
 
-    if (trackErr || !track?.total_days) throw new Error("Track not found");
+    if (trackErr || !tracks?.length) throw new Error("Track not found");
 
-    const totalDays = track.total_days;
+    const totalDays = tracks[0].total_days || 20; // Default to 20 if not specified
 
     // Create or update all assignments for this student
     const assignmentIds: string[] = [];
