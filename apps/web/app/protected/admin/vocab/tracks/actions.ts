@@ -54,6 +54,7 @@ export async function assignStudentAction(params: {
   trackId: string;
   weekdays?: number[];
   startDay?: number;
+  direction?: "forward" | "backward";
 }) {
   try {
     const supabase = getServiceRoleClient();
@@ -67,6 +68,7 @@ export async function assignStudentAction(params: {
       : [1, 3]; // 월(1), 수(3)
 
     const startDayIndex = params.startDay || 1;
+    const directionValue = params.direction || "forward";
 
     const { error: perr } = await supabase
       .from("student_vocab_plans")
@@ -81,6 +83,7 @@ export async function assignStudentAction(params: {
         cursor_day_index: startDayIndex,
         is_paused: false,
         paused_reason: null,
+        direction: directionValue,
       } as any, { onConflict: "student_id,track_id" });
 
     if (perr) throw new Error(perr.message);
@@ -222,24 +225,29 @@ export async function getStudentQueueAction(params: {
   try {
     const supabase = getServiceRoleClient();
 
-    // Get student plan to check start_day_index
+    // Get student plan to check start_day_index and direction
     const { data: plan, error: planErr } = await supabase
       .from("student_vocab_plans")
-      .select("start_day_index")
+      .select("start_day_index, direction")
       .eq("student_id", params.studentId)
       .eq("track_id", params.trackId)
       .single();
 
     const startDayIndex = plan?.start_day_index ?? 1;
+    const direction = plan?.direction ?? "forward";
 
-    const { data, error } = await supabase
+    const query = supabase
       .from("student_vocab_assignments")
       .select("id, day_index, status, available_at, started_at, completed_at")
       .eq("student_id", params.studentId)
       .eq("track_id", params.trackId)
       .is("completed_at", null)
-      .gte("day_index", startDayIndex)
-      .order("day_index");
+      .gte("day_index", startDayIndex);
+
+    // Apply direction-based ordering
+    const { data, error } = direction === "backward"
+      ? await query.order("day_index", { ascending: false })
+      : await query.order("day_index", { ascending: true });
 
     if (error) throw new Error(error.message);
 

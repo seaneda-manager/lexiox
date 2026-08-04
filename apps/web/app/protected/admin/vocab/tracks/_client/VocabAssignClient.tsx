@@ -29,7 +29,8 @@ export default function VocabAssignClient() {
   const [selectedTrack, setSelectedTrack] = useState("");
   const [selectedWeekdays, setSelectedWeekdays] = useState<number[]>([1, 3]); // 월, 수
   const [weekdayPreset, setWeekdayPreset] = useState("mon-wed"); // 기본값
-  const [startDay, setStartDay] = useState(1); // Start Day (1~20)
+  const [startDay, setStartDay] = useState(1); // Start Day (1~maxDay)
+  const [direction, setDirection] = useState<"forward" | "backward">("forward"); // 앞→뒤 or 뒤→앞
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [editingId, setEditingId] = useState("");
   const [editingDay, setEditingDay] = useState(0);
@@ -102,7 +103,8 @@ export default function VocabAssignClient() {
       studentId: selectedStudent,
       trackId: selectedTrack,
       weekdays: selectedWeekdays,
-      startDay: startDay,
+      startDay: direction === "backward" ? (tracks.find((t) => t.id === selectedTrack)?.total_days || 20) : startDay,
+      direction: direction,
     });
     if (res.ok) {
       setMsg("✅ 배정 완료");
@@ -312,18 +314,56 @@ export default function VocabAssignClient() {
               ))}
             </div>
 
-            {/* Start Day Selection */}
-            <div className="border-t pt-4 mt-4">
-              <label className="block text-sm font-bold mb-2">시작 Day (1~20)</label>
-              <input
-                type="number"
-                min="1"
-                max="20"
-                value={startDay}
-                onChange={(e) => setStartDay(Math.max(1, Math.min(20, Number(e.target.value))))}
-                className="w-full border rounded-lg px-3 py-2"
-              />
-              <p className="text-xs text-gray-600 mt-1">Day {startDay}부터 시작합니다</p>
+            {/* Start Day & Direction Selection */}
+            <div className="border-t pt-4 mt-4 space-y-3">
+              {selectedTrack ? (
+                <>
+                  <div>
+                    <label className="block text-sm font-bold mb-2">
+                      시작 Day (1~{tracks.find((t) => t.id === selectedTrack)?.total_days || 20})
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max={tracks.find((t) => t.id === selectedTrack)?.total_days || 20}
+                      value={startDay}
+                      onChange={(e) => {
+                        const maxDays = tracks.find((t) => t.id === selectedTrack)?.total_days || 20;
+                        setStartDay(Math.max(1, Math.min(maxDays, Number(e.target.value))));
+                      }}
+                      className="w-full border rounded-lg px-3 py-2"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold mb-2">진행 방향</label>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setDirection("forward")}
+                        className={`flex-1 px-3 py-2 rounded text-sm font-bold transition ${
+                          direction === "forward"
+                            ? "bg-blue-600 text-white"
+                            : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                        }`}
+                      >
+                        앞 → 뒤 (Day {startDay}~)
+                      </button>
+                      <button
+                        onClick={() => setDirection("backward")}
+                        className={`flex-1 px-3 py-2 rounded text-sm font-bold transition ${
+                          direction === "backward"
+                            ? "bg-blue-600 text-white"
+                            : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                        }`}
+                      >
+                        뒤 ← 앞 (Day {startDay}~)
+                      </button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <p className="text-sm text-gray-500">트랙을 먼저 선택해주세요</p>
+              )}
             </div>
           </div>
         </div>
