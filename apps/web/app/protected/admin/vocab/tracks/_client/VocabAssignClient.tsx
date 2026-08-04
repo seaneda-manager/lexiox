@@ -14,6 +14,7 @@ import {
   markAssignmentCompletedAction,
   getStudentVocabAssignmentsAction,
   deleteStudentTrackAssignmentAction,
+  updateStudentLearningOptionAction,
   type StudentVocabAssignment,
 } from "../actions";
 
@@ -184,6 +185,17 @@ export default function VocabAssignClient() {
     const res = await deleteStudentTrackAssignmentAction({ studentId, trackId });
     if (res.ok) {
       setMsg("✅ 배정 삭제 완료");
+      const aRes = await getStudentVocabAssignmentsAction();
+      if (aRes.ok) setAssignments(aRes.assignments);
+    } else {
+      setMsg(`❌ ${res.error}`);
+    }
+  }
+
+  async function handleUpdateLearningOption(studentId: string, trackId: string, newOption: number) {
+    const res = await updateStudentLearningOptionAction({ studentId, trackId, learningOption: newOption });
+    if (res.ok) {
+      setMsg("✅ 학습 옵션 변경 완료");
       const aRes = await getStudentVocabAssignmentsAction();
       if (aRes.ok) setAssignments(aRes.assignments);
     } else {
@@ -440,6 +452,7 @@ export default function VocabAssignClient() {
                 <tr className="border-b">
                   <th className="text-left py-2 px-4">학생명</th>
                   <th className="text-left py-2 px-4">트랙명</th>
+                  <th className="text-left py-2 px-4">옵션</th>
                   <th className="text-left py-2 px-4">진행도</th>
                   <th className="text-left py-2 px-4">동작</th>
                 </tr>
@@ -449,6 +462,20 @@ export default function VocabAssignClient() {
                   <tr key={`${assign.student_id}_${assign.track_id}`} className="border-b hover:bg-gray-50">
                     <td className="py-2 px-4 font-bold">{assign.student_name}</td>
                     <td className="py-2 px-4">{assign.track_title}</td>
+                    <td className="py-2 px-4">
+                      <select
+                        value={assign.learning_option}
+                        onChange={(e) =>
+                          handleUpdateLearningOption(assign.student_id, assign.track_id, Number(e.target.value))
+                        }
+                        className="border rounded px-2 py-1 text-xs"
+                      >
+                        <option value={1}>Option 1</option>
+                        <option value={2}>Option 2</option>
+                        <option value={3}>Option 3</option>
+                        <option value={4}>Option 4</option>
+                      </select>
+                    </td>
                     <td className="py-2 px-4 text-xs text-gray-600">
                       <div className="flex items-center gap-2">
                         <div className="w-24 bg-gray-200 rounded-full h-2">

@@ -393,6 +393,7 @@ export type StudentVocabAssignment = {
   track_title: string | null;
   assignment_count: number;
   completed_count: number;
+  learning_option: number;
 };
 
 export async function getStudentVocabAssignmentsAction() {
@@ -406,7 +407,8 @@ export async function getStudentVocabAssignmentsAction() {
         `student_id,
          track_id,
          academy_students(full_name),
-         vocab_tracks(title)`
+         vocab_tracks(title),
+         student_vocab_plans(learning_option)`
       )
       .order("student_id")
       .order("track_id");
@@ -419,6 +421,7 @@ export async function getStudentVocabAssignmentsAction() {
       const key = `${row.student_id}_${row.track_id}`;
 
       if (!grouped.has(key)) {
+        const plan = (row.student_vocab_plans as any);
         grouped.set(key, {
           student_id: row.student_id,
           student_name: (row.academy_students as any)?.full_name,
@@ -426,6 +429,7 @@ export async function getStudentVocabAssignmentsAction() {
           track_title: (row.vocab_tracks as any)?.title,
           assignment_count: 0,
           completed_count: 0,
+          learning_option: Array.isArray(plan) ? plan[0]?.learning_option : plan?.learning_option || 1,
         });
       }
 
@@ -475,6 +479,28 @@ export async function deleteStudentTrackAssignmentAction(params: {
       .delete()
       .eq("student_id", params.studentId)
       .eq("track_id", params.trackId);
+
+    return { ok: true };
+  } catch (e: any) {
+    return { ok: false, error: e?.message ?? "failed" };
+  }
+}
+
+export async function updateStudentLearningOptionAction(params: {
+  studentId: string;
+  trackId: string;
+  learningOption: number;
+}) {
+  try {
+    const supabase = getServiceRoleClient();
+
+    const { error } = await supabase
+      .from("student_vocab_plans")
+      .update({ learning_option: params.learningOption })
+      .eq("student_id", params.studentId)
+      .eq("track_id", params.trackId);
+
+    if (error) throw new Error(error.message);
 
     return { ok: true };
   } catch (e: any) {
