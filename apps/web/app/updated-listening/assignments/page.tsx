@@ -25,7 +25,7 @@ export default async function ListeningAssignmentsPage() {
     .select(`
       id, status, due_date, assigned_at, sections,
       listening_test_id,
-      listening_tests!test_assignments_listening_test_id_fkey (
+      listening_tests (
         id, label
       )
     `)
