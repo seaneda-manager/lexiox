@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextResponse } from 'next/server';
 import { ElevenLabsClient } from 'elevenlabs';
 import { createClient } from '@supabase/supabase-js';

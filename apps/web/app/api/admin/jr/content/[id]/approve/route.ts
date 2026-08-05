@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserAndProfile } from '@/lib/getUserAndProfile';
 import { getSupabaseServer } from '@/lib/supabaseServer';

@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 // POST /api/speaking/generate-audio
 // 텍스트 → 음성 생성 (ElevenLabs)
 

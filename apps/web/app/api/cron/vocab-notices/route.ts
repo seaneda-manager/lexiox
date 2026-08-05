@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { getServerSupabase } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";

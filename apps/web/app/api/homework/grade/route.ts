@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 // app/api/homework/grade/route.ts
 // 학생 숙제 사진 → Claude OCR → 텍스트 정답과 비교 → 채점
 

@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 // apps/web/app/api/admin/updated-listening/generate-mst-from-scripts/route.ts
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";

@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 // normalized utf8
 // app/api/<<your-endpoint>>/route.ts
 import { NextRequest, NextResponse } from 'next/server';

@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 // app/api/homework/hint/route.ts
 // 오답 항목에 대한 단계별 힌트 생성 (3단계를 한 번에)
 

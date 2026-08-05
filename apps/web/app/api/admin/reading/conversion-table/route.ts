@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/admin/reading/conversion-table?testId=xxx&section=reading
  * POST /api/admin/reading/conversion-table (업데이트/생성)

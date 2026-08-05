@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 // apps/web/app/api/reading/consume/route.ts
 export const runtime = 'nodejs';
 

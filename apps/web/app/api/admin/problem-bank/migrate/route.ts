@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextResponse } from 'next/server';
 import { migrateAllTestsToBank } from '@/lib/utils/problemBankExtract';
 

@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 // apps/web/app/api/whoami/route.ts
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';

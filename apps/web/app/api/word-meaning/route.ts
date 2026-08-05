@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextResponse } from 'next/server';
 import { TOEFL_DICTIONARY } from '@/lib/dictionary/words';
 import { getServiceRoleClient } from '@/lib/supabase/server';

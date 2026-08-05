@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 // apps/web/app/api/updated-reading/result/route.ts
 import { NextResponse } from "next/server";
 import { getServerSupabase } from "@/lib/supabase/server";

@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 // apps/web/app/api/updated-reading/result/[resultId]/route.ts
 import { NextResponse } from "next/server";
 import { getServiceRoleClient } from "@/lib/supabase/server";
