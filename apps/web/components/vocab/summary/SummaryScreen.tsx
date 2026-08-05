@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useMemo, useState, useEffect } from "react";
-import StageIntroScreen from "@/components/common/StageIntroScreen";
 
 type AnyProps = Record<string, any>;
 
@@ -50,42 +49,19 @@ function uniqByWordId(list: any[]) {
   return out;
 }
 
-function gridClassForCount(count: number) {
-  const dense = count >= 28;
-  return {
-    list: [
-      "grid",
-      "grid-cols-1",
-      "sm:grid-cols-2",
-      "lg:grid-cols-3",
-      dense ? "gap-x-5 gap-y-1" : "gap-x-6 gap-y-1.5",
-    ].join(" "),
-    item: [
-      "break-inside-avoid",
-      dense ? "text-[11px] sm:text-[12px]" : "text-[12px] sm:text-[13px]",
-      dense ? "leading-[1.25]" : "leading-[1.35]",
-      "font-bold",
-      "text-slate-800",
-      "truncate",
-    ].join(" "),
-  };
-}
-
 export default function SummaryScreen(props: AnyProps) {
   const [canSkip, setCanSkip] = useState(false);
   const [showSkipConfirm, setShowSkipConfirm] = useState(false);
   const [cheatKeyPressed, setCheatKeyPressed] = useState(false);
 
   const isTeacher = props?.isTeacher === true;
-  const previousAccuracy = props?.previousAccuracy ?? 0; // 0-100%
-  const isReview = previousAccuracy >= 80; // 복습: 이전에 80% 이상 통과
+  const previousAccuracy = props?.previousAccuracy ?? 0;
+  const isReview = previousAccuracy >= 80;
 
-  // Skip 가능 조건: (Cheat 키 입력) OR (복습이고 학생)
   useEffect(() => {
     setCanSkip(cheatKeyPressed || isReview);
   }, [cheatKeyPressed, isReview]);
 
-  // Cheat 키 감지: 6-6-5-3 순서
   useEffect(() => {
     const keySequence: string[] = [];
     const targetSequence = ["6", "6", "5", "3"];
@@ -176,15 +152,12 @@ export default function SummaryScreen(props: AnyProps) {
       if (isKnown) kCount++;
       if (isUnknown) unknown.push(w);
 
-      // spellingFail only matters for known words
       const isSpellFailed = isKnown && spellPass !== true;
       if (isSpellFailed) failed.push(w);
     }
 
     const uniqUnknown = uniqByWordId(unknown);
     const uniqFailed = uniqByWordId(failed);
-
-    // ✅ 핵심: Learning 대상은 unknown + spellFailed 합집합
     const learn = uniqByWordId([...uniqUnknown, ...uniqFailed]);
 
     return {
@@ -197,9 +170,6 @@ export default function SummaryScreen(props: AnyProps) {
     };
   }, [words, prescreenMap, spellPassMap]);
 
-  const gridUnknown = gridClassForCount(unknownCount);
-  const gridFailed = gridClassForCount(spellFailedCount);
-
   const nextPayloadStudy = useMemo(
     () => ({
       knowCount,
@@ -207,7 +177,7 @@ export default function SummaryScreen(props: AnyProps) {
       spellFailedCount,
       unknownList,
       spellFailedList,
-      xknowList: learnList, // ✅ FIX: 반드시 이걸로!
+      xknowList: learnList,
     }),
     [knowCount, unknownCount, spellFailedCount, unknownList, spellFailedList, learnList],
   );
@@ -219,14 +189,14 @@ export default function SummaryScreen(props: AnyProps) {
       spellFailedCount,
       unknownList,
       spellFailedList,
-      xknowList: [], // skip learning
+      xknowList: [],
     }),
     [knowCount, unknownCount, spellFailedCount, unknownList, spellFailedList],
   );
 
   function fireNext(payload: any) {
     if (!onNext) return;
-    (onNext as any)(payload); // ✅ 여기선 try/catch로 삼키지 말자 (문제 있으면 바로 드러나게)
+    (onNext as any)(payload);
   }
 
   function handleSkipClick() {
@@ -239,150 +209,117 @@ export default function SummaryScreen(props: AnyProps) {
     fireNext(nextPayloadSkip);
   }
 
-  const hint = `Not Yet: ${unknownCount} • Spell failed: ${spellFailedCount} • Know: ${knowCount}`;
-
   return (
-    <div className="lx-panel-wrap" style={{ maxWidth: "1000px", margin: "0 auto", padding: "20px" }}>
-      <StageIntroScreen
-        badge={`Summary  (Keyboard supported)`}
-        title="Summary"
-        subtitle="These words will be studied in the Learning stage."
-        hint={
-          <div>
-            <div className="font-extrabold">{hint}</div>
-            <div className="mt-1 text-sm font-semibold text-slate-600">
-              Continue = go to Learning with (Not Yet + Spell failed).
-            </div>
-            {!isTeacher && !isReview && (
-              <div className="mt-2 text-xs text-slate-500">
-                💡 Skip Learning is available after completing with 80%+ accuracy.
-              </div>
-            )}
-          </div>
-        }
-        primaryLabel="Continue"
-        secondaryLabel="Skip Learning"
-        secondaryDisabled={!canSkip}
-        onPrimary={() => fireNext(nextPayloadStudy)}
-        onSecondary={handleSkipClick}
-        theme="dark"
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div
+        className="bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden"
+        style={{
+          width: "min(90vw, 800px)",
+          maxHeight: "85vh",
+          boxSizing: "border-box",
+        }}
       >
-        {learnList.length === 0 ? (
-          <div className="mt-4 rounded-2xl p-5 font-semibold" style={{ background: "rgba(26,61,48,0.6)", border: "0.5px solid rgba(255,255,255,0.1)", color: "#9FE1CB" }}>
-            Nothing to study ✅
-            <div className="mt-2 text-sm" style={{ color: "#4da88a" }}>You can skip Learning and go straight to Speed.</div>
-          </div>
-        ) : (
-          <div className="mt-4 space-y-6">
-            {/* 2 Days Review */}
-            {recentWeakWords.length > 0 ? (
-              <div className="space-y-3">
-                <div className="flex items-baseline justify-between gap-3">
-                  <div className="font-extrabold" style={{ color: "#FFE3B3" }}>
-                    2 Days Review{" "}
-                    <span className="ml-2 font-bold" style={{ color: "#FF9800" }}>({recentWeakWords.length})</span>
-                  </div>
-                  <div className="text-sm font-semibold" style={{ color: "#FF9800" }}>Vulnerable words</div>
-                </div>
-
-                <div className="rounded-2xl px-4 py-4" style={{ background: "rgba(255,152,0,0.05)", border: "0.5px solid rgba(255,152,0,0.2)" }}>
-                  <ul className={gridClassForCount(recentWeakWords.length).list}>
-                    {recentWeakWords.map((w, idx) => (
-                      <li
-                        key={`${getId(w) || getText(w) || "r"}-${idx}`}
-                        className={gridClassForCount(recentWeakWords.length).item.replace("text-slate-800", "")}
-                        style={{ color: "#FFB74D" }}
-                        title={getText(w) || ""}
-                      >
-                        {getText(w) || "—"}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            ) : null}
-            {/* Unknown */}
-            {unknownCount > 0 ? (
-              <div className="space-y-3">
-                <div className="flex items-baseline justify-between gap-3">
-                  <div className="font-extrabold" style={{ color: "#E1F5EE" }}>
-                    Not Yet <span className="ml-2 font-bold" style={{ color: "#4da88a" }}>({unknownCount})</span>
-                  </div>
-                  <div className="text-sm font-semibold" style={{ color: "#4da88a" }}>From Prescreen</div>
-                </div>
-
-                <div className="rounded-2xl px-4 py-4" style={{ background: "rgba(15,40,30,0.6)", border: "0.5px solid rgba(255,255,255,0.1)" }}>
-                  <ul className={gridUnknown.list}>
-                    {unknownList.map((w, idx) => (
-                      <li
-                        key={`${getId(w) || getText(w) || "u"}-${idx}`}
-                        className={gridUnknown.item.replace("text-slate-800", "")}
-                        style={{ color: "#C8EEE3" }}
-                        title={getText(w) || ""}
-                      >
-                        {getText(w) || "—"}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            ) : null}
-
-            {/* Spell failed */}
-            {spellFailedCount > 0 ? (
-              <div className="space-y-3">
-                <div className="flex items-baseline justify-between gap-3">
-                  <div className="font-extrabold" style={{ color: "#E1F5EE" }}>
-                    Spell Check Failed{" "}
-                    <span className="ml-2 font-bold" style={{ color: "#4da88a" }}>({spellFailedCount})</span>
-                  </div>
-                  <div className="text-sm font-semibold" style={{ color: "#4da88a" }}>From Spelling</div>
-                </div>
-
-                <div className="rounded-2xl px-4 py-4" style={{ background: "rgba(15,40,30,0.6)", border: "0.5px solid rgba(255,255,255,0.1)" }}>
-                  <ul className={gridFailed.list}>
-                    {spellFailedList.map((w, idx) => (
-                      <li
-                        key={`${getId(w) || getText(w) || "f"}-${idx}`}
-                        className={gridFailed.item.replace("text-slate-800", "")}
-                        style={{ color: "#F09595" }}
-                        title={getText(w) || ""}
-                      >
-                        {getText(w) || "—"}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            ) : null}
-          </div>
-        )}
-      </StageIntroScreen>
-
-      {/* Quiz Option */}
-      {onQuiz ? (
-        <div className="mt-4 px-4">
-          <button
-            type="button"
-            onClick={() => (onQuiz as any)()}
-            className="w-full rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 py-3 px-4 text-sm font-bold text-white hover:shadow-lg transition-shadow"
-          >
-            📝 Take Cumulative Quiz
-          </button>
-          <div className="mt-2 text-xs text-slate-500 text-center">
-            Review vulnerable words from past sessions
-          </div>
+        {/* 헤더 */}
+        <div className="bg-gradient-to-r from-teal-500 to-cyan-500 px-8 py-6 space-y-2">
+          <h1 className="text-3xl font-black text-white">📊 학습 요약</h1>
+          <p className="text-white/90 text-sm">PreScreen & Spelling 단계를 완료했습니다!</p>
         </div>
-      ) : null}
 
-      {/* Skip Confirmation Modal */}
+        {/* 콘텐츠 */}
+        <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
+          {/* 메트릭 카드 (3개) */}
+          <div className="grid grid-cols-3 gap-4">
+            {/* 학습 대상 */}
+            <div className="rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100 p-5 text-center space-y-1 border border-blue-200">
+              <div className="text-3xl font-black text-blue-600">{learnList.length}</div>
+              <div className="text-xs font-semibold text-blue-700 uppercase tracking-wider">학습 대상</div>
+            </div>
+
+            {/* 스펠링 실패 */}
+            <div className="rounded-2xl bg-gradient-to-br from-rose-50 to-red-100 p-5 text-center space-y-1 border border-rose-200">
+              <div className="text-3xl font-black text-rose-600">{spellFailedCount}</div>
+              <div className="text-xs font-semibold text-rose-700 uppercase tracking-wider">스펠링 실패</div>
+            </div>
+
+            {/* 알고 있던 단어 */}
+            <div className="rounded-2xl bg-gradient-to-br from-emerald-50 to-green-100 p-5 text-center space-y-1 border border-emerald-200">
+              <div className="text-3xl font-black text-emerald-600">{knowCount}</div>
+              <div className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">패스한 단어</div>
+            </div>
+          </div>
+
+          {/* 학습 예정 단어 */}
+          {learnList.length > 0 ? (
+            <div className="space-y-3">
+              <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+                📚 학습 예정 단어 ({learnList.length})
+              </h2>
+              <div className="rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 p-6 border border-slate-200">
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                  {learnList.map((w, idx) => (
+                    <div
+                      key={`${getId(w) || getText(w) || "l"}-${idx}`}
+                      className="px-3 py-2 bg-white rounded-lg text-sm font-semibold text-slate-700 shadow-sm hover:shadow-md transition-shadow border border-slate-200"
+                    >
+                      {getText(w) || "—"}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-2xl bg-gradient-to-br from-emerald-50 to-green-100 p-6 border border-emerald-300 text-center space-y-2">
+              <div className="text-2xl">✅</div>
+              <div className="font-bold text-emerald-700">완벽하게 완료했습니다!</div>
+              <div className="text-sm text-emerald-600">Learning 단계 없이 바로 다음으로 진행할 수 있습니다.</div>
+            </div>
+          )}
+
+          {/* 누적 퀴즈 옵션 */}
+          {onQuiz && (
+            <div className="rounded-2xl bg-gradient-to-r from-purple-50 to-pink-50 p-5 border border-purple-200 space-y-3">
+              <div className="text-sm font-bold text-purple-700 uppercase tracking-wider">📝 누적 퀴즈</div>
+              <p className="text-xs text-slate-600">지난 학습 세션의 약점 단어들을 복습하세요.</p>
+              <button
+                onClick={() => (onQuiz as any)()}
+                className="w-full py-2 px-4 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold text-sm hover:shadow-lg transition-shadow"
+              >
+                퀴즈 풀기
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* 하단 버튼 */}
+        <div className="bg-slate-50 border-t border-slate-200 px-8 py-6 flex gap-3 justify-end">
+          <button
+            onClick={handleSkipClick}
+            disabled={!canSkip}
+            className={`px-6 py-3 rounded-xl font-bold transition-all ${
+              canSkip
+                ? "bg-white border-2 border-slate-300 text-slate-700 hover:bg-slate-50"
+                : "bg-slate-100 border-2 border-slate-200 text-slate-400 cursor-not-allowed"
+            }`}
+          >
+            Skip Learning (2)
+          </button>
+          <button
+            onClick={() => fireNext(nextPayloadStudy)}
+            className="px-8 py-3 rounded-xl bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-bold hover:shadow-lg transition-all active:scale-95"
+          >
+            학습 시작 ➔ (1)
+          </button>
+        </div>
+      </div>
+
+      {/* Skip 확인 모달 */}
       {showSkipConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50">
           <div className="rounded-2xl bg-white p-8 max-w-sm space-y-6 shadow-2xl">
             <div className="space-y-2">
-              <h2 className="text-xl font-bold text-slate-900">넘어가겠습니까?</h2>
+              <h2 className="text-xl font-bold text-slate-900">Learning을 건너뛸까요?</h2>
               <p className="text-sm text-slate-600">
-                Learning 단계를 건너뛰고 다음 단계로 진행합니다.
+                학습 단계를 건너뛰고 다음 단계로 진행합니다.
               </p>
             </div>
 
@@ -397,7 +334,7 @@ export default function SummaryScreen(props: AnyProps) {
                 onClick={confirmSkip}
                 className="flex-1 rounded-lg bg-orange-500 py-2 px-4 text-sm font-semibold text-white hover:bg-orange-600"
               >
-                확인
+                건너뛰기
               </button>
             </div>
           </div>
