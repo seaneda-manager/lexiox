@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
-import ListeningSessionContainer from "../../../protected/listening/_components/ListeningSessionContainer";
+import ListeningSessionContainer from "@/components/listening/ListeningSessionContainer";
 import type { LListeningTest2026Linear } from "@/models/listening";
 
 export default function ListeningTestWrapper({
