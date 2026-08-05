@@ -121,6 +121,24 @@ export default function AdminPage() {
           ]}
           color="border-teal-100"
         />
+        <DashCard
+          title="Problem Bank"
+          description="Reading/Listening 테스트에서 추출된 문제 데이터베이스를 관리합니다."
+          links={[
+            { label: '관리', href: '/admin/problem-bank', primary: true },
+            { label: '벌크 마이그레이션', href: '/admin/problem-bank' },
+          ]}
+          color="border-teal-100"
+        />
+        <DashCard
+          title="Daily Tests"
+          description="학생을 위한 일일 학습 과제를 생성하고 할당합니다."
+          links={[
+            { label: '과제 생성', href: '/admin/daily-tests', primary: true },
+            { label: '목록', href: '/admin/daily-tests' },
+          ]}
+          color="border-cyan-100"
+        />
       </div>
 
       {/* 내신 */}

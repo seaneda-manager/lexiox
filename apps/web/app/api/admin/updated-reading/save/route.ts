@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { isTestAssigned } from "@/lib/supabase/assignment-guard";
+import { extractReadingTestToBank } from "@/lib/utils/problemBankExtract";
 import type { RReadingTest2026 } from "@/models/reading";
 
 type SaveBody = {
@@ -72,6 +73,12 @@ export async function POST(req: Request) {
         { status: 500 }
       );
     }
+
+    // ✅ Problem Bank에도 저장 (비동기 처리 - 실패해도 test는 저장됨)
+    extractReadingTestToBank(test, test.meta.id).catch((err) => {
+      console.error('[ProblemBank] Failed to extract test problems:', err);
+      // 실패해도 무시 - test는 이미 저장됨
+    });
 
     return NextResponse.json({ ok: true });
   } catch (err: any) {

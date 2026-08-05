@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { RReadingTest2026 } from "@/models/reading";
+import { validateAndShuffleIfNeeded } from "@/lib/utils/validateAnswerDistribution";
 
 type Props = {
   initialId: string;
@@ -55,6 +56,91 @@ export default function ReadingTestEditorClient({
     });
   }
 
+  // 정답 추출 헬퍼
+  function extractAnswers(data: any): string[] {
+    const answers: string[] = [];
+
+    function traverse(obj: any): void {
+      if (!obj) return;
+
+      if (obj.questions && Array.isArray(obj.questions)) {
+        obj.questions.forEach((q: any) => {
+          if (q.choices && Array.isArray(q.choices)) {
+            const correct = q.choices.find((c: any) => c.isCorrect);
+            if (correct?.id) {
+              const letter = correct.id.match(/[ABCD]/);
+              answers.push(letter?.[0] || 'A');
+            }
+          }
+        });
+      }
+
+      if (obj.items && Array.isArray(obj.items)) {
+        obj.items.forEach((item: any) => traverse(item));
+      }
+
+      if (obj.modules && Array.isArray(obj.modules)) {
+        obj.modules.forEach((mod: any) => traverse(mod));
+      }
+    }
+
+    traverse(data);
+    return answers;
+  }
+
+  // 셔플된 정답 적용 헬퍼
+  function applyShuffledAnswers(data: any, shuffledAnswers: string[]): any {
+    let answerIndex = 0;
+
+    function traverse(obj: any): void {
+      if (!obj) return;
+
+      if (obj.questions && Array.isArray(obj.questions)) {
+        obj.questions.forEach((q: any) => {
+          if (q.choices && Array.isArray(q.choices)) {
+            if (answerIndex < shuffledAnswers.length) {
+              const newCorrectAnswer = shuffledAnswers[answerIndex++];
+              q.choices.forEach((c: any) => {
+                c.isCorrect = c.id.match(/[ABCD]/)?.[0] === newCorrectAnswer;
+              });
+            }
+          }
+        });
+      }
+
+      if (obj.items && Array.isArray(obj.items)) {
+        obj.items.forEach((item: any) => traverse(item));
+      }
+
+      if (obj.modules && Array.isArray(obj.modules)) {
+        obj.modules.forEach((mod: any) => traverse(mod));
+      }
+    }
+
+    traverse(data);
+    return data;
+  }
+
+  async function handleShuffle() {
+    setStatus(null);
+    try {
+      const answers = extractAnswers(payload);
+      const { answers: shuffledAnswers, wasShuffled, validation } = validateAndShuffleIfNeeded(answers);
+
+      if (wasShuffled) {
+        setPayload((prev) => {
+          const next = structuredClone(prev) as RReadingTest2026;
+          return applyShuffledAnswers(next, shuffledAnswers);
+        });
+        setStatus(`✅ Shuffled: ${validation.distribution.A}A/${validation.distribution.B}B/${validation.distribution.C}C/${validation.distribution.D}D`);
+      } else {
+        setStatus(`✅ Already random: ${validation.distribution.A}A/${validation.distribution.B}B/${validation.distribution.C}C/${validation.distribution.D}D`);
+      }
+    } catch (e: any) {
+      setStatus(`❌ Error: ${e?.message ?? 'Unknown error'}`);
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="space-y-1">
@@ -88,17 +174,26 @@ export default function ReadingTestEditorClient({
         </div>
       )}
 
-      <button
-        type="button"
-        onClick={handleSave}
-        disabled={saving}
-        className="rounded-md border bg-black px-3 py-1 text-sm font-medium text-white disabled:opacity-50"
-      >
-        {saving ? "Saving..." : "Save"}
-      </button>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={saving}
+          className="rounded-md border bg-black px-3 py-1 text-sm font-medium text-white disabled:opacity-50"
+        >
+          {saving ? "Saving..." : "Save"}
+        </button>
+        <button
+          type="button"
+          onClick={handleShuffle}
+          className="rounded-md border bg-blue-600 px-3 py-1 text-sm font-medium text-white hover:bg-blue-700"
+        >
+          🔀 Shuffle Answers
+        </button>
+      </div>
 
       {status && (
-        <p className="text-sm text-gray-700">
+        <p className="text-sm text-gray-700 font-mono">
           {status}
         </p>
       )}

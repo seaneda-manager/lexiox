@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { randomUUID } from 'crypto';
 import { createClient } from '@supabase/supabase-js';
+import { validateAndShuffleIfNeeded } from '@/lib/utils/validateAnswerDistribution';
 
 // 오디오는 이 라우트에서 생성하지 않는다 (스크립트/문제만 생성).
 // 실제 TTS 생성은 admin이 edit 페이지에서 트랙별로 트리거하는
@@ -589,9 +590,9 @@ export async function POST(req: Request) {
         illustrationUrl: '',
       }));
 
-    const module1Tracks = buildTracks(module1Items, 'm1');
-    const hardTracks = buildTracks(hardItems, 'm2h');
-    const easyTracks = buildTracks(easyItems, 'm2e');
+    let module1Tracks = buildTracks(module1Items, 'm1');
+    let hardTracks = buildTracks(hardItems, 'm2h');
+    let easyTracks = buildTracks(easyItems, 'm2e');
 
     const payload = {
       meta: {
@@ -626,9 +627,80 @@ export async function POST(req: Request) {
       }
     };
 
-    return NextResponse.json({ ok: true, id: testId, payload });
+    // ✅ 정답 분포 검증 및 셔플 (module1, hard, easy 모두)
+    const module1Answers = extractListeningAnswers(module1Items);
+    const hardAnswers = extractListeningAnswers(hardItems);
+    const easyAnswers = extractListeningAnswers(easyItems);
+
+    const { answers: shuffledM1, wasShuffled: m1Shuffled } = validateAndShuffleIfNeeded(module1Answers);
+    const { answers: shuffledHard, wasShuffled: hardShuffled } = validateAndShuffleIfNeeded(hardAnswers);
+    const { answers: shuffledEasy, wasShuffled: easyShuffled } = validateAndShuffleIfNeeded(easyAnswers);
+
+    if (m1Shuffled) {
+      applyShuffledListeningAnswers(module1Items, shuffledM1);
+      module1Tracks = buildTracks(module1Items, 'm1');
+    }
+    if (hardShuffled) {
+      applyShuffledListeningAnswers(hardItems, shuffledHard);
+      hardTracks = buildTracks(hardItems, 'm2h');
+    }
+    if (easyShuffled) {
+      applyShuffledListeningAnswers(easyItems, shuffledEasy);
+      easyTracks = buildTracks(easyItems, 'm2e');
+    }
+
+    return NextResponse.json({ ok: true, id: testId, payload: {
+      ...payload,
+      meta: {
+        ...payload.meta,
+        answerShuffledM1: m1Shuffled,
+        answerShuffledHard: hardShuffled,
+        answerShuffledEasy: easyShuffled,
+      }
+    } });
   } catch (err: any) {
     console.error('LISTENING GENERATE ERROR', err);
     return NextResponse.json({ ok: false, error: err?.message ?? 'Unknown error' }, { status: 500 });
   }
+}
+
+// ✅ 헬퍼 함수: Listening 정답 추출
+function extractListeningAnswers(items: any[]): string[] {
+  const answers: string[] = [];
+
+  items.forEach((item: any) => {
+    if (item.questions && Array.isArray(item.questions)) {
+      item.questions.forEach((q: any) => {
+        if (q.choices && Array.isArray(q.choices)) {
+          const correct = q.choices.find((c: any) => c.correct);
+          if (correct?.id) {
+            const letter = correct.id.match(/[ABCD]/);
+            answers.push(letter?.[0] || 'A');
+          }
+        }
+      });
+    }
+  });
+
+  return answers;
+}
+
+// ✅ 헬퍼 함수: 셔플된 정답 적용 (Listening)
+function applyShuffledListeningAnswers(items: any[], shuffledAnswers: string[]): void {
+  let answerIndex = 0;
+
+  items.forEach((item: any) => {
+    if (item.questions && Array.isArray(item.questions)) {
+      item.questions.forEach((q: any) => {
+        if (q.choices && Array.isArray(q.choices)) {
+          if (answerIndex < shuffledAnswers.length) {
+            const newCorrectAnswer = shuffledAnswers[answerIndex++];
+            q.choices.forEach((c: any) => {
+              c.correct = c.id.match(/[ABCD]/)?.[0] === newCorrectAnswer;
+            });
+          }
+        }
+      });
+    }
+  });
 }

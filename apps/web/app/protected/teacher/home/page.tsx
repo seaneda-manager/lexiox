@@ -10,6 +10,9 @@ import {
   StickyNote,
 } from "lucide-react";
 import { getServerSupabase } from "@/lib/supabase/server";
+import TodaysClassCard from "@/components/teacher/TodaysClassCard";
+import TeacherHiNaesinResultsCard from "@/components/teacher/TeacherHiNaesinResultsCard";
+import TeacherVocabResultsCard from "@/components/teacher/TeacherVocabResultsCard";
 
 export const dynamic = "force-dynamic";
 
@@ -341,6 +344,31 @@ export default async function TeacherHomePage() {
         ))}
       </section>
 
+      {/* ── 오늘의 수업 & 학생 ────────────────────────────────── */}
+      <TodaysClassCard
+        classes={[
+          {
+            id: 'class-1',
+            time: '3:00 PM',
+            name: '고2 Reading 반',
+            students: [
+              { id: 's1', name: '김민수', grade: '고2', school: '신송고' },
+              { id: 's2', name: '이서연', grade: '고2', school: '서울미술고' },
+              { id: 's3', name: '박지호', grade: '고2', school: '연송고' },
+            ],
+          },
+          {
+            id: 'class-2',
+            time: '4:30 PM',
+            name: '중3 TOEFL 반',
+            students: [
+              { id: 's4', name: '최규원', grade: '중3', school: '예송중' },
+              { id: 's5', name: '조영주', grade: '중3', school: '현송중' },
+            ],
+          },
+        ]}
+      />
+
       {/* ── 새 숙제 제출 알림 ─────────────────────────────────── */}
       {recentSubmissions.length > 0 && (
         <section className="rounded-2xl border border-amber-200 bg-amber-50 p-4 space-y-3">
@@ -407,6 +435,18 @@ export default async function TeacherHomePage() {
         testsThisWeek={testsThisWeek}
         upcomingEventsCount={upcomingEventsCount}
       />
+
+      {/* Hi-내신 드릴 결과 */}
+      <section>
+        <h2 className="text-lg font-bold text-neutral-900 mb-4">📊 Hi-내신 드릴 결과</h2>
+        <TeacherHiNaesinResultsCard />
+      </section>
+
+      {/* Lexiox Voca 결과 */}
+      <section>
+        <h2 className="text-lg font-bold text-neutral-900 mb-4">📚 어휘 학습 현황</h2>
+        <TeacherVocabResultsCard />
+      </section>
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* 좌측: 오늘 할 일 + 메모 */}

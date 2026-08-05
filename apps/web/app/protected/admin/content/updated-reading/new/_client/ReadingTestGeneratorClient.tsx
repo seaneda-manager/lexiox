@@ -186,6 +186,7 @@ export default function ReadingTestGeneratorClient() {
   const [error, setError] = useState<string | null>(null);
   const [test, setTest] = useState<RReadingTest2026 | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
+  const [generatingStep, setGeneratingStep] = useState<"idle" | "module1" | "module2">("idle");
 
   const canGenerate = ALL_TOPIC_FIELDS.every((f) => topics[f.key]?.trim());
 
@@ -258,23 +259,102 @@ export default function ReadingTestGeneratorClient() {
     if (!canGenerate) return;
     setError(null);
     setPhase("generating");
+    setGeneratingStep("idle");
     try {
-      // ✅ 디버깅: topics 검증
-      console.log("Topics before stringify:", topics);
-      const topicsStr = JSON.stringify(topics);
-      console.log("Stringified successfully:", topicsStr.length, "bytes");
+      // Step 1: Module 1 생성
+      setGeneratingStep("module1");
+      console.log("🔵 [Module 1] Generating...");
+      const module1Topics = {
+        cwTopicM1: topics.cwTopicM1,
+        dailyLifeTopic1: topics.dailyLifeTopic1,
+        dailyLifeTopic2: topics.dailyLifeTopic2,
+        dailyLifeTopic3: topics.dailyLifeTopic3,
+        academicTopicM1: topics.academicTopicM1,
+      };
 
-      const res = await fetch("/api/admin/updated-reading/generate", {
+      const res1 = await fetch("/api/admin/updated-reading/generate?module=1", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: topicsStr,
+        body: JSON.stringify(module1Topics),
       });
-      const data = await safeJson(res);
-      if (!data.ok) throw new Error(data.error ?? "Generation failed");
-      setTest(data.payload as RReadingTest2026);
+      const data1 = await safeJson(res1);
+      if (!data1.ok) throw new Error(`Module 1 failed: ${data1.error ?? "Generation failed"}`);
+      const module1Payload = data1.payload;
+      console.log("✅ [Module 1] Generated:", module1Payload?.meta?.id);
+
+      // Step 2: Module 2 Upper (hard) 생성
+      setGeneratingStep("module2");
+      console.log("🔴 [Module 2 Upper] Generating...");
+      const module2UpperTopics = {
+        module1Payload,
+        cwTopicM2Lower: topics.cwTopicM2Lower,
+        dailyLifeTopic2L1: topics.dailyLifeTopic2L1,
+        dailyLifeTopic2L2: topics.dailyLifeTopic2L2,
+        academicTopicM2Upper: topics.academicTopicM2Upper,
+      };
+
+      const res2Upper = await fetch("/api/admin/updated-reading/generate?module=2", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(module2UpperTopics),
+      });
+      const data2Upper = await safeJson(res2Upper);
+
+      let module2Data: any = { stage2Pool: {} };
+      let hasModule2Upper = false;
+
+      if (data2Upper.ok) {
+        module2Data.stage2Pool.hard = data2Upper.payload.stage2Pool?.hard;
+        hasModule2Upper = true;
+        console.log("✅ [Module 2 Upper] Generated");
+      } else {
+        console.warn("⚠️ [Module 2 Upper] Failed:", data2Upper.error);
+      }
+
+      // Step 3: Module 2 Lower (easy) 생성 - 실패해도 진행
+      console.log("🟢 [Module 2 Lower] Generating...");
+      const res2Lower = await fetch("/api/admin/updated-reading/generate?module=2", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(module2UpperTopics),
+      });
+      const data2Lower = await safeJson(res2Lower);
+
+      if (data2Lower.ok) {
+        module2Data.stage2Pool.easy = data2Lower.payload.stage2Pool?.easy;
+        console.log("✅ [Module 2 Lower] Generated");
+      } else {
+        console.warn("⚠️ [Module 2 Lower] Failed:", data2Lower.error);
+      }
+
+      // 생성된 부분만 병합
+      const finalPayload = {
+        ...module1Payload,
+        stage2Pool: module2Data.stage2Pool,
+        meta: {
+          ...module1Payload.meta,
+          moduleType: 'module1_and_module2',
+          hasModule2Upper,
+          hasModule2Lower: !!module2Data.stage2Pool.easy,
+        },
+      };
+
+      const errorMessages = [];
+      if (!hasModule2Upper) errorMessages.push("Module 2 Upper 생성 실패");
+      if (!module2Data.stage2Pool.easy) errorMessages.push("Module 2 Lower 생성 실패");
+
+      if (errorMessages.length > 0) {
+        setError(`⚠️ ${errorMessages.join(", ")} (생성된 부분만 표시됩니다)`);
+      } else {
+        setError(null);
+      }
+
+      setTest(finalPayload as RReadingTest2026);
+      setGeneratingStep("idle");
       setPhase("edit");
     } catch (e: any) {
       setError(e.message);
+      setGeneratingStep("idle");
       setPhase("input");
     }
   }, [topics, canGenerate]);
@@ -544,7 +624,7 @@ export default function ReadingTestGeneratorClient() {
             onChange={(e) => setQuestionStem(group, itemIndex, qi, e.target.value)}
           />
           <div className="space-y-2">
-            {q.choices.map((c: any, ci: number) => (
+            {(q.choices ?? []).map((c: any, ci: number) => (
               <div key={c.id} className={`rounded border p-2 space-y-1.5 transition ${c.isCorrect ? "border-emerald-400 bg-emerald-50" : "border-gray-200 bg-white hover:border-gray-300"}`}>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -688,11 +768,28 @@ export default function ReadingTestGeneratorClient() {
           disabled={!canGenerate || phase === "generating"}
           className="w-full rounded-lg border border-emerald-500 bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50"
         >
-          {phase === "generating" ? "생성 중…" : test ? "재생성 (MST)" : "AI 생성 (MST)"}
+          {phase === "generating"
+            ? generatingStep === "module1"
+              ? "🔵 Module 1 생성 중…"
+              : generatingStep === "module2"
+              ? "🟢 Module 2 생성 중…"
+              : "생성 중…"
+            : test
+            ? "재생성 (MST)"
+            : "AI 생성 (MST)"}
         </button>
 
         {phase === "generating" && (
-          <p className="text-xs text-gray-500 animate-pulse">Claude가 Module 1(20~33문항) + Module 2 Lower(15문항) + Module 2 Upper(15문항)를 생성 중입니다 (2~3분 정도 걸립니다, 새로고침하지 말고 기다려주세요)…</p>
+          <div className="space-y-2">
+            <p className="text-xs text-gray-500 animate-pulse">
+              {generatingStep === "module1"
+                ? "📘 Module 1 (20~33문항)을 생성 중입니다…"
+                : generatingStep === "module2"
+                ? "🟢🔴 Module 2 (Lower 5~8문항 + Upper 5문항)을 생성 중입니다…"
+                : "생성을 준비 중입니다…"}
+            </p>
+            <p className="text-xs text-gray-400">(약 2~3분 정도 걸립니다. 새로고침하지 말고 기다려주세요)</p>
+          </div>
         )}
         {error && <p className="text-xs text-rose-600">{error}</p>}
       </section>

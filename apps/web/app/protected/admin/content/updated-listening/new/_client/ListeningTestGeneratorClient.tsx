@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { LListeningTest2026Linear, LListeningTrack2026 } from "@/models/listening";
+import { validateAndShuffleIfNeeded } from "@/lib/utils/validateAnswerDistribution";
 
 type Phase = "input" | "generating" | "edit" | "saving" | "locked";
 
@@ -445,6 +446,81 @@ export default function ListeningTestGeneratorClient() {
       };
     });
 
+  const extractListeningAnswers = (data: any): string[] => {
+    const answers: string[] = [];
+    const traverse = (obj: any): void => {
+      if (!obj) return;
+      if (obj.questions && Array.isArray(obj.questions)) {
+        obj.questions.forEach((q: any) => {
+          if (q.choices && Array.isArray(q.choices)) {
+            const correct = q.choices.find((c: any) => c.correct);
+            if (correct?.id) {
+              const letter = correct.id.match(/[ABCD]/);
+              answers.push(letter?.[0] || 'A');
+            }
+          }
+        });
+      }
+      if (obj.items && Array.isArray(obj.items)) {
+        obj.items.forEach((item: any) => traverse(item));
+      }
+      if (obj.modules && Array.isArray(obj.modules)) {
+        obj.modules.forEach((mod: any) => traverse(mod));
+      }
+    };
+    traverse(data);
+    return answers;
+  };
+
+  const applyShuffledListeningAnswers = (data: any, shuffledAnswers: string[]): void => {
+    let answerIndex = 0;
+    const traverse = (obj: any): void => {
+      if (!obj) return;
+      if (obj.questions && Array.isArray(obj.questions)) {
+        obj.questions.forEach((q: any) => {
+          if (q.choices && Array.isArray(q.choices)) {
+            if (answerIndex < shuffledAnswers.length) {
+              const newCorrectAnswer = shuffledAnswers[answerIndex++];
+              q.choices.forEach((c: any) => {
+                c.correct = c.id.match(/[ABCD]/)?.[0] === newCorrectAnswer;
+              });
+            }
+          }
+        });
+      }
+      if (obj.items && Array.isArray(obj.items)) {
+        obj.items.forEach((item: any) => traverse(item));
+      }
+      if (obj.modules && Array.isArray(obj.modules)) {
+        obj.modules.forEach((mod: any) => traverse(mod));
+      }
+    };
+    traverse(data);
+  };
+
+  const handleShuffle = useCallback(() => {
+    if (!test) return;
+    setError(null);
+    try {
+      const answers = extractListeningAnswers(test);
+      const { answers: shuffledAnswers, wasShuffled, validation } = validateAndShuffleIfNeeded(answers);
+
+      if (wasShuffled) {
+        setTest((prev) => {
+          if (!prev) return prev;
+          const next = structuredClone(prev) as typeof test;
+          if (next) applyShuffledListeningAnswers(next, shuffledAnswers);
+          return next;
+        });
+        setError(`✅ Shuffled: ${validation.distribution.A}A/${validation.distribution.B}B/${validation.distribution.C}C/${validation.distribution.D}D`);
+      } else {
+        setError(`✅ Already random: ${validation.distribution.A}A/${validation.distribution.B}B/${validation.distribution.C}C/${validation.distribution.D}D`);
+      }
+    } catch (e: any) {
+      setError(`❌ Error: ${e?.message ?? 'Unknown error'}`);
+    }
+  }, [test]);
+
   const handleSave = useCallback(async () => {
     if (!test) return;
     setError(null);
@@ -651,6 +727,9 @@ export default function ListeningTestGeneratorClient() {
             <div className="flex gap-2">
               <button onClick={handleSave} disabled={phase === "saving"} className="rounded-lg border px-4 py-2 text-xs font-medium hover:bg-gray-50 disabled:opacity-50">
                 {phase === "saving" ? "저장 중…" : "임시 저장"}
+              </button>
+              <button onClick={handleShuffle} disabled={phase === "saving"} className="rounded-lg border border-blue-600 bg-blue-600 px-4 py-2 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50">
+                🔀 셔플 답변
               </button>
               <button onClick={handleStartTest} disabled={phase === "saving"} className="rounded-lg border border-green-600 bg-green-600 px-4 py-2 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50">
                 🎧 테스트 시작

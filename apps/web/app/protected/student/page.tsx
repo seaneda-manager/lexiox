@@ -2,6 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getServerSupabase } from "@/lib/supabase/server";
 import DailyTaskCard from "@/components/gamification/DailyTaskCard";
+import DailyTasksCard from "@/components/student/DailyTasksCard";
+import HiNaesinResultsCard from "@/components/student/HiNaesinResultsCard";
 import DdayCard from "@/components/student/DdayCard";
 import TestProgressBar from "@/components/student/TestProgressBar";
 import WeakPointsCard from "@/components/student/WeakPointsCard";
@@ -595,6 +597,9 @@ export default async function StudentPage() {
         )}
       </section>
 
+      {/* ── Hi-내신 결과 ────────────────────────────────────── */}
+      <HiNaesinResultsCard />
+
       {/* ── 활동 탭 (진행 중 / 해야 할 것 / 최근 / 추천) ──────── */}
       <ActivityTabsCard
         activities={[]}
@@ -858,6 +863,9 @@ function ToeflDashboard({
           </Link>
         </div>
       </section>
+
+      {/* ── Daily Tests ────────────────────────────────────────── */}
+      <DailyTasksCard />
 
       {/* ── 섹션별 학습 플로우 ────────────────────────────────── */}
       <section className="space-y-3">
