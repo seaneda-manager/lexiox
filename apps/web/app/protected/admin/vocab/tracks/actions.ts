@@ -551,9 +551,73 @@ export async function advanceVocabQueueAfterCompletionAction(params: {
   trackId: string;
 }) {
   try {
-    // TODO: Implement queue advancement logic
-    return { ok: true };
+    const supabase = await getServerSupabase();
+    const studentId = String(params.studentId ?? "").trim();
+    const trackId = String(params.trackId ?? "").trim();
+
+    if (!studentId || !trackId) {
+      return { ok: false, error: "Missing studentId or trackId" };
+    }
+
+    // 현재 plan 조회
+    const { data: plan } = await supabase
+      .from("student_vocab_plans")
+      .select("id, cursor_day_index, total_days")
+      .eq("student_id", studentId)
+      .eq("track_id", trackId)
+      .maybeSingle();
+
+    if (!plan) {
+      return { ok: false, error: "Plan not found" };
+    }
+
+    const currentDay = plan.cursor_day_index || 1;
+    const nextDay = currentDay + 1;
+
+    // 다음 Day가 범위 초과하면 완료
+    if (nextDay > (plan.total_days || 0)) {
+      // Track 완료
+      await supabase
+        .from("student_vocab_plans")
+        .update({ completed_at: new Date().toISOString() })
+        .eq("id", plan.id);
+      return { ok: true, completed: true };
+    }
+
+    // 다음 Day의 Stage 1 (PreScreen) 배정
+    const nowISO = new Date().toISOString();
+    const { data: nextDaySet } = await supabase
+      .from("vocab_sets")
+      .select("id")
+      .eq("track_id", trackId)
+      .eq("order_index", nextDay)
+      .maybeSingle();
+
+    if (!nextDaySet) {
+      return { ok: false, error: `No vocab set for day ${nextDay}` };
+    }
+
+    // Stage 1 배정
+    await supabase
+      .from("student_vocab_assignments")
+      .insert({
+        student_id: studentId,
+        set_id: nextDaySet.id,
+        track_id: trackId,
+        day_index: nextDay,
+        stage: 1,
+        available_at: nowISO.split("T")[0],
+      });
+
+    // cursor_day_index 업데이트
+    await supabase
+      .from("student_vocab_plans")
+      .update({ cursor_day_index: nextDay })
+      .eq("id", plan.id);
+
+    return { ok: true, assignedCount: 1, nextDay };
   } catch (e: any) {
+    console.error("advanceVocabQueueAfterCompletionAction error:", e);
     return { ok: false, error: e?.message ?? "failed" };
   }
 }

@@ -1164,25 +1164,60 @@ export async function saveVocabAttemptAction(
         console.warn("saveVocabAttemptAction: assignment update failed", toErrMsg(assignmentError));
       }
 
-      // 3. 다음 회차 자동 할당 (전체 코스가 배정돼 있으므로 완료 즉시 다음 Day 오픈)
+      // 3. Stage별 진행 로직
       try {
         const { data: asg } = await client
           .from("student_vocab_assignments")
-          .select("student_id, track_id")
+          .select("student_id, track_id, set_id, day_index")
           .eq("id", input.assignmentId)
           .maybeSingle();
 
         const nextStudentId = cleanStr((asg as any)?.student_id);
         const nextTrackId = cleanStr((asg as any)?.track_id);
+        const setId = cleanStr((asg as any)?.set_id);
+        const dayIndex = Number((asg as any)?.day_index ?? 0);
 
-        if (nextStudentId && nextTrackId) {
+        if (!nextStudentId || !nextTrackId) return;
+
+        // PreScreen(know) 완료 → Spelling(Stage 2) 자동 배정
+        if (input.stage === "know") {
+          await client
+            .from("student_vocab_assignments")
+            .insert({
+              student_id: nextStudentId,
+              set_id: setId,
+              track_id: nextTrackId,
+              day_index: dayIndex,
+              stage: 2,
+              available_at: nowISO.split("T")[0],
+            });
+          return;
+        }
+
+        // Spelling(Stage 2) 완료 → Speed(Stage 3) 자동 배정
+        if (input.stage === "spelling") {
+          await client
+            .from("student_vocab_assignments")
+            .insert({
+              student_id: nextStudentId,
+              set_id: setId,
+              track_id: nextTrackId,
+              day_index: dayIndex,
+              stage: 3,
+              available_at: nowISO.split("T")[0],
+            });
+          return;
+        }
+
+        // Speed(Stage 3) 완료 → 다음 Day로 진행
+        if (input.stage === "speed") {
           await advanceVocabQueueAfterCompletionAction({
             studentId: nextStudentId,
             trackId: nextTrackId,
           });
         }
       } catch (e: any) {
-        console.warn("saveVocabAttemptAction: advance queue failed", toErrMsg(e));
+        console.warn("saveVocabAttemptAction: stage progression failed", toErrMsg(e));
       }
     }
 
