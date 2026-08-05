@@ -20,6 +20,39 @@ function norm(s: string) {
   return String(s ?? "").trim().toLowerCase();
 }
 
+// Confetti 파티클 생성
+function createConfetti() {
+  if (typeof window === "undefined") return;
+
+  const colors = ["#0F766E", "#F97316", "#F59E0B", "#EC4899"];
+  const particles = 30;
+
+  for (let i = 0; i < particles; i++) {
+    const confetti = document.createElement("div");
+    const x = Math.random() * window.innerWidth;
+    const y = -10;
+    const size = Math.random() * 6 + 2;
+    const duration = Math.random() * 3 + 2;
+    const color = colors[Math.floor(Math.random() * colors.length)];
+
+    confetti.style.cssText = `
+      position: fixed;
+      left: ${x}px;
+      top: ${y}px;
+      width: ${size}px;
+      height: ${size}px;
+      background: ${color};
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      animation: fall ${duration}s ease-in forwards;
+    `;
+
+    document.body.appendChild(confetti);
+    setTimeout(() => confetti.remove(), duration * 1000);
+  }
+}
+
 /* ── Progress Bar ─────────────────────────────────────────── */
 function ProgressBar({ current, total }: { current: number; total: number }) {
   const pct = total > 0 ? Math.round((current / total) * 100) : 0;
@@ -60,6 +93,12 @@ export default function PrescreenSpellingBoard({
   const [shake, setShake] = useState(false);
   const [animKey, setAnimKey] = useState(0);
 
+  // Streak 시스템
+  const [streak, setStreak] = useState(0);
+  const [bestStreak, setBestStreak] = useState(0);
+  const [completedWords, setCompletedWords] = useState<Word[]>([]);
+  const [showStreakEffect, setShowStreakEffect] = useState(false);
+
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const cur = list[i] ?? null;
@@ -68,8 +107,35 @@ export default function PrescreenSpellingBoard({
 
   const done = (nextFailed: string[]) => onFinish({ spellingFailedIds: nextFailed });
 
-  const goNext = (nextFailed: string[]) => {
+  const goNext = (nextFailed: string[], isCorrect: boolean = false) => {
     const nextIndex = i + 1;
+
+    // Streak 업데이트
+    if (isCorrect) {
+      const newStreak = streak + 1;
+      setStreak(newStreak);
+      setBestStreak(Math.max(bestStreak, newStreak));
+
+      // Streak 시각 효과 (5, 10, 15 등)
+      if (newStreak > 0 && newStreak % 5 === 0) {
+        setShowStreakEffect(true);
+        createConfetti();
+        setTimeout(() => setShowStreakEffect(false), 600);
+      }
+
+      // 완료 단어 목록 추가
+      if (cur) setCompletedWords((p) => [...p, cur]);
+
+      // 자동 음성 재생
+      if (typeof window !== "undefined" && window.speechSynthesis) {
+        const utterance = new SpeechSynthesisUtterance(answer);
+        utterance.lang = "en-US";
+        window.speechSynthesis.speak(utterance);
+      }
+    } else {
+      setStreak(0); // 틀리면 Streak 초기화
+    }
+
     if (nextIndex >= total) return done(nextFailed);
     setAnimKey((k) => k + 1);
     setI(nextIndex);
@@ -81,18 +147,20 @@ export default function PrescreenSpellingBoard({
     if (!cur?.id) return;
     const nextFailed = failedIds.includes(cur.id) ? failedIds : [...failedIds, cur.id];
     setFailedIds(nextFailed);
-    goNext(nextFailed);
+    goNext(nextFailed, false);
   };
 
   const submit = () => {
     if (!cur?.id) return;
     const ok = norm(value) === norm(answer);
     if (ok) {
-      goNext(failedIds);
+      goNext(failedIds, true);
       return;
     }
     setShake(true);
     window.setTimeout(() => setShake(false), 280);
+    // 오답 시 Streak 리셋
+    setStreak(0);
     if (!failedIds.includes(cur.id)) setFailedIds((p) => [...p, cur.id]);
   };
 
@@ -121,90 +189,118 @@ export default function PrescreenSpellingBoard({
   }
 
   return (
-    <div className="fixed inset-0 w-screen flex flex-col bg-[#F7FAF9] z-50">
-      <div
-        className="flex-1 flex flex-col justify-center items-center px-6 py-8"
-        key={animKey}
-        style={{ animation: "lx-card-in 220ms cubic-bezier(0.22,1,0.36,1) both" }}
-      >
-        <div className="w-full flex flex-col gap-6 items-center px-6" style={{ maxWidth: "804px", margin: "0 auto" }}>
-        {/* 헤더 */}
-        <div className="space-y-3 w-full">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-extrabold tracking-widest text-[#0F766E] uppercase">
-              LEXiOX
-            </span>
-            <span className="text-sm text-slate-300">·</span>
-            <span className="text-sm font-semibold text-slate-400">철자 확인</span>
-          </div>
-          <ProgressBar current={i + 1} total={total} />
-        </div>
-
-        {/* 카드 */}
+    <div className="fixed inset-0 w-screen h-screen flex bg-[#F7FAF9] z-50 overflow-hidden">
+      {/* 좌측 메인 영역 (70%) */}
+      <div className="flex-[7] flex flex-col justify-center items-center px-6 py-8 overflow-y-auto">
         <div
-          className={[
-            "rounded-3xl bg-white shadow-[0_4px_32px_rgba(0,0,0,0.08)] border border-slate-100 px-8 py-8 space-y-5 w-full",
-            "flex flex-col justify-center",
-            shake ? "lx-shake" : "",
-          ].join(" ")}
+          className="w-full flex flex-col gap-6 items-center px-6"
+          key={animKey}
           style={{
-            aspectRatio: "4 / 3",
-            minHeight: "400px",
-            boxSizing: "border-box",
+            maxWidth: "500px",
+            animation: "lx-card-in 220ms cubic-bezier(0.22,1,0.36,1) both",
           }}
         >
-          {/* 뜻 힌트 */}
-          <div className="text-center space-y-1">
-            <p className="text-sm font-semibold text-slate-400 uppercase tracking-wider">뜻</p>
-            <p className="font-bold text-slate-700" style={{ fontSize: "clamp(24px, 5cqi, 48px)" }}>
-              {meaning.length ? meaning.join(" / ") : "뜻 없음"}
-            </p>
+          {/* 헤더 */}
+          <div className="space-y-3 w-full">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-extrabold tracking-widest text-[#0F766E] uppercase">
+                LEXiOX
+              </span>
+              <span className="text-sm text-slate-300">·</span>
+              <span className="text-sm font-semibold text-slate-400">철자 확인</span>
+            </div>
+            <ProgressBar current={i + 1} total={total} />
           </div>
 
-          <div className="w-10 h-[2px] bg-[#0F766E] mx-auto rounded-full opacity-30" />
+          {/* 카드 */}
+          <div
+            className={[
+              "rounded-3xl bg-white shadow-[0_4px_32px_rgba(0,0,0,0.08)] border border-slate-100 px-8 py-8 space-y-5 w-full",
+              "flex flex-col justify-center",
+              shake ? "lx-shake" : "",
+              showStreakEffect ? "scale-105" : "",
+            ].join(" ")}
+            style={{
+              minHeight: "350px",
+              boxSizing: "border-box",
+              transition: "transform 200ms ease-out",
+            }}
+          >
+            {/* 뜻 힌트 */}
+            <div className="text-center space-y-1">
+              <p className="text-sm font-semibold text-slate-400 uppercase tracking-wider">뜻</p>
+              <p className="font-bold text-slate-700" style={{ fontSize: "clamp(24px, 5cqi, 48px)" }}>
+                {meaning.length ? meaning.join(" / ") : "뜻 없음"}
+              </p>
+            </div>
 
-          {/* 입력 */}
-          <div className="space-y-2">
-            <p className="text-sm font-semibold text-slate-400 text-center">영어 단어를 입력하세요</p>
-            <input
-              ref={inputRef}
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              placeholder="철자 입력..."
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-5 font-bold text-slate-900 text-center outline-none focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20 transition-all"
-              style={{ fontSize: "clamp(24px, 5cqi, 48px)" }}
-              autoCapitalize="none"
-              autoCorrect="off"
-              spellCheck={false}
-            />
+            <div className="w-10 h-[2px] bg-[#0F766E] mx-auto rounded-full opacity-30" />
+
+            {/* 입력 */}
+            <div className="space-y-2">
+              <p className="text-sm font-semibold text-slate-400 text-center">영어 단어를 입력하세요</p>
+              <input
+                ref={inputRef}
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                placeholder="철자 입력..."
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-5 font-bold text-slate-900 text-center outline-none focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20 transition-all"
+                style={{ fontSize: "clamp(24px, 5cqi, 48px)" }}
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+              />
+            </div>
           </div>
 
-          {failedIds.length > 0 && (
-            <p className="text-center text-xs text-slate-400">
-              틀린 단어: <span className="font-bold text-rose-500">{failedIds.length}개</span>
-            </p>
-          )}
-        </div>
-
-        {/* 버튼 */}
-        <div className="flex flex-col gap-3 w-full">
-          <button
-            type="button"
-            onClick={submit}
-            className="w-full rounded-2xl bg-[#0F766E] hover:bg-[#115E59] active:scale-[0.98] text-white font-bold text-lg py-5 transition-all duration-150 shadow-sm"
-          >
-            확인 <span className="ml-2 opacity-50 text-xs">(Enter)</span>
-          </button>
-          <button
-            type="button"
-            onClick={markFailAndNext}
-            className="w-full rounded-2xl bg-white hover:bg-slate-50 active:scale-[0.98] text-slate-500 font-semibold text-base py-4 transition-all duration-150 border border-slate-200"
-          >
-            모르겠어요 <span className="ml-2 opacity-40 text-xs">(Esc)</span>
-          </button>
-        </div>
+          {/* 버튼 */}
+          <div className="flex flex-col gap-3 w-full">
+            <button
+              type="button"
+              onClick={submit}
+              className="w-full rounded-2xl bg-[#0F766E] hover:bg-[#115E59] active:scale-[0.98] text-white font-bold text-lg py-5 transition-all duration-150 shadow-sm"
+            >
+              확인 <span className="ml-2 opacity-50 text-xs">(Enter)</span>
+            </button>
+            <button
+              type="button"
+              onClick={markFailAndNext}
+              className="w-full rounded-2xl bg-white hover:bg-slate-50 active:scale-[0.98] text-slate-500 font-semibold text-base py-4 transition-all duration-150 border border-slate-200"
+            >
+              모르겠어요 <span className="ml-2 opacity-40 text-xs">(Esc)</span>
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* 우측 사이드바 (30%) */}
+      <div className="flex-[3] bg-white border-l border-slate-200 px-6 py-8 flex flex-col gap-6 overflow-y-auto">
+        {/* Streak 카드 */}
+        <div className="rounded-2xl bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-200 p-5 space-y-2">
+          <div className="text-sm font-semibold text-slate-600 uppercase tracking-wider">🔥 Streak</div>
+          <div className="text-4xl font-black text-orange-600">{streak}x</div>
+          <div className="text-xs text-slate-500 pt-2 border-t border-orange-200">
+            최고 기록: <span className="font-bold text-orange-600">{bestStreak}x</span>
+          </div>
+        </div>
+
+        {/* 완료한 단어 */}
+        <div className="space-y-3">
+          <div className="text-sm font-semibold text-slate-600 uppercase tracking-wider">✅ 완료한 단어</div>
+          <div className="space-y-2 max-h-96 overflow-y-auto">
+            {completedWords.length === 0 ? (
+              <p className="text-xs text-slate-400 italic">아직 완료한 단어가 없습니다</p>
+            ) : (
+              completedWords.map((word) => (
+                <div key={word.id} className="text-xs bg-emerald-50 text-emerald-700 px-3 py-2 rounded-lg font-medium">
+                  {word.text}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
 
       <style jsx global>{`
         @keyframes lx-card-in {
@@ -217,6 +313,12 @@ export default function PrescreenSpellingBoard({
           40%     { transform: translateX(6px); }
           60%     { transform: translateX(-4px); }
           80%     { transform: translateX(4px); }
+        }
+        @keyframes fall {
+          to {
+            transform: translateY(100vh) rotateZ(360deg);
+            opacity: 0;
+          }
         }
         .lx-shake { animation: lx-shake 260ms ease; }
       `}</style>
