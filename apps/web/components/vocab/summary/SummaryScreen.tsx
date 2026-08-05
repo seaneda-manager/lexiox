@@ -170,6 +170,12 @@ export default function SummaryScreen(props: AnyProps) {
     };
   }, [words, prescreenMap, spellPassMap]);
 
+  // 동기부여 정보 계산
+  const estimatedTime = Math.ceil((learnList.length * 12) / 60); // 단어당 약 12초
+  const streakTarget = props?.streakTarget ?? 7; // 목표 연속 학습 일수
+  const currentStreak = props?.currentStreak ?? 0;
+  const streakDaysRemaining = Math.max(0, streakTarget - currentStreak);
+
   const nextPayloadStudy = useMemo(
     () => ({
       knowCount,
@@ -251,6 +257,49 @@ export default function SummaryScreen(props: AnyProps) {
             <div className="rounded-2xl bg-gradient-to-br from-emerald-50 to-green-100 p-4 text-center space-y-0.5 border border-emerald-200">
               <div className="text-2xl font-black text-emerald-600">{knowCount}</div>
               <div className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">패스</div>
+            </div>
+          </div>
+
+          {/* 동기부여 섹션 */}
+          <div className="rounded-2xl bg-gradient-to-r from-amber-50 via-orange-50 to-red-50 p-5 border-2 border-orange-300 space-y-3">
+            <div className="space-y-2">
+              {/* 오늘의 목표 */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">🔥</span>
+                  <span className="text-sm font-bold text-slate-800">오늘 목표</span>
+                </div>
+                <span className="text-base font-black text-orange-600">{learnList.length}개 단어 완전 정복</span>
+              </div>
+
+              {/* 예상 시간 */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">⏱️</span>
+                  <span className="text-sm font-bold text-slate-800">예상 시간</span>
+                </div>
+                <span className="text-base font-bold text-slate-700">약 {estimatedTime}분</span>
+              </div>
+
+              {/* 연속 학습 진행도 */}
+              {streakDaysRemaining > 0 && (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">💪</span>
+                    <span className="text-sm font-bold text-slate-800">연속 학습 목표</span>
+                  </div>
+                  <span className="text-base font-bold text-purple-600">{streakDaysRemaining}단계 남음</span>
+                </div>
+              )}
+              {streakDaysRemaining === 0 && (
+                <div className="flex items-center justify-between bg-yellow-100 px-3 py-1.5 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">🎉</span>
+                    <span className="text-sm font-bold text-slate-800">연속 학습 목표</span>
+                  </div>
+                  <span className="text-base font-bold text-yellow-700">달성 완료!</span>
+                </div>
+              )}
             </div>
           </div>
 
