@@ -256,23 +256,45 @@ export default function SummaryScreen(props: AnyProps) {
 
           {/* 학습 예정 단어 */}
           {learnList.length > 0 ? (
-            <div className="space-y-2 flex-1 overflow-hidden flex flex-col">
-              <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+            <div className="space-y-2 flex-1 overflow-hidden flex flex-col min-h-0">
+              <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex-shrink-0">
                 📚 학습 예정 단어 ({learnList.length})
               </h2>
-              <div className="rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 p-5 border border-slate-200 flex-1 overflow-hidden">
-                <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 h-full">
-                  {learnList.map((w, idx) => (
-                    <div
-                      key={`${getId(w) || getText(w) || "l"}-${idx}`}
-                      className="px-3 py-1.5 bg-white rounded-lg text-xs font-semibold text-slate-700 shadow-sm hover:shadow-md transition-shadow border border-slate-200 truncate"
-                      title={getText(w) || ""}
-                    >
-                      {getText(w) || "—"}
-                    </div>
-                  ))}
+              <div className="rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 p-5 border border-slate-200 flex-1 overflow-hidden relative flex flex-col">
+                {/* 스크롤 컨테이너 */}
+                <div className="word-list-container overflow-y-auto pr-1 flex-1" style={{ maxHeight: "220px" }}>
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+                    {learnList.map((w, idx) => (
+                      <div
+                        key={`${getId(w) || getText(w) || "l"}-${idx}`}
+                        className="px-3 py-1.5 bg-white rounded-lg text-xs font-semibold text-slate-700 shadow-sm hover:shadow-md transition-shadow border border-slate-200 truncate"
+                        title={getText(w) || ""}
+                      >
+                        {getText(w) || "—"}
+                      </div>
+                    ))}
+                  </div>
                 </div>
+
+                {/* 페이드 아웃 효과 */}
+                {learnList.length > 12 && (
+                  <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-slate-100 to-transparent pointer-events-none" />
+                )}
               </div>
+
+              {/* 스크롤바 스타일 */}
+              <style jsx>{`
+                .word-list-container::-webkit-scrollbar {
+                  width: 4px;
+                }
+                .word-list-container::-webkit-scrollbar-thumb {
+                  background-color: #cbd5e1;
+                  border-radius: 4px;
+                }
+                .word-list-container::-webkit-scrollbar-thumb:hover {
+                  background-color: #94a3b8;
+                }
+              `}</style>
             </div>
           ) : (
             <div className="rounded-2xl bg-gradient-to-br from-emerald-50 to-green-100 p-6 border border-emerald-300 text-center space-y-2">
