@@ -220,46 +220,53 @@ export default function SummaryScreen(props: AnyProps) {
         }}
       >
         {/* 헤더 */}
-        <div className="bg-gradient-to-r from-teal-500 to-cyan-500 px-8 py-6 space-y-2">
-          <h1 className="text-3xl font-black text-white">📊 학습 요약</h1>
-          <p className="text-white/90 text-sm">PreScreen & Spelling 단계를 완료했습니다!</p>
+        <div className="bg-gradient-to-r from-teal-500 to-cyan-500 px-8 py-6 space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <h1 className="text-3xl font-black text-white">📊 학습 요약</h1>
+            <div className="bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full flex items-center gap-1.5">
+              <span className="text-lg">✅</span>
+              <span className="text-xs font-bold text-white">저장됨</span>
+            </div>
+          </div>
+          <p className="text-white/90 text-sm">PreScreen & Spelling 단계를 완료했습니다. 언제든 이어서 학습할 수 있습니다.</p>
         </div>
 
         {/* 콘텐츠 */}
-        <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
+        <div className="flex-1 overflow-hidden px-8 py-5 space-y-5 flex flex-col">
           {/* 메트릭 카드 (3개) */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 gap-3">
             {/* 학습 대상 */}
-            <div className="rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100 p-5 text-center space-y-1 border border-blue-200">
-              <div className="text-3xl font-black text-blue-600">{learnList.length}</div>
-              <div className="text-xs font-semibold text-blue-700 uppercase tracking-wider">학습 대상</div>
+            <div className="rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100 p-4 text-center space-y-0.5 border border-blue-200">
+              <div className="text-2xl font-black text-blue-600">{learnList.length}</div>
+              <div className="text-[10px] font-bold text-blue-700 uppercase tracking-wider">학습 대상</div>
             </div>
 
             {/* 스펠링 실패 */}
-            <div className="rounded-2xl bg-gradient-to-br from-rose-50 to-red-100 p-5 text-center space-y-1 border border-rose-200">
-              <div className="text-3xl font-black text-rose-600">{spellFailedCount}</div>
-              <div className="text-xs font-semibold text-rose-700 uppercase tracking-wider">스펠링 실패</div>
+            <div className="rounded-2xl bg-gradient-to-br from-rose-50 to-red-100 p-4 text-center space-y-0.5 border border-rose-200">
+              <div className="text-2xl font-black text-rose-600">{spellFailedCount}</div>
+              <div className="text-[10px] font-bold text-rose-700 uppercase tracking-wider">실패</div>
             </div>
 
             {/* 알고 있던 단어 */}
-            <div className="rounded-2xl bg-gradient-to-br from-emerald-50 to-green-100 p-5 text-center space-y-1 border border-emerald-200">
-              <div className="text-3xl font-black text-emerald-600">{knowCount}</div>
-              <div className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">패스한 단어</div>
+            <div className="rounded-2xl bg-gradient-to-br from-emerald-50 to-green-100 p-4 text-center space-y-0.5 border border-emerald-200">
+              <div className="text-2xl font-black text-emerald-600">{knowCount}</div>
+              <div className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">패스</div>
             </div>
           </div>
 
           {/* 학습 예정 단어 */}
           {learnList.length > 0 ? (
-            <div className="space-y-3">
+            <div className="space-y-2 flex-1 overflow-hidden flex flex-col">
               <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
                 📚 학습 예정 단어 ({learnList.length})
               </h2>
-              <div className="rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 p-6 border border-slate-200">
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+              <div className="rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 p-5 border border-slate-200 flex-1 overflow-hidden">
+                <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 h-full">
                   {learnList.map((w, idx) => (
                     <div
                       key={`${getId(w) || getText(w) || "l"}-${idx}`}
-                      className="px-3 py-2 bg-white rounded-lg text-sm font-semibold text-slate-700 shadow-sm hover:shadow-md transition-shadow border border-slate-200"
+                      className="px-3 py-1.5 bg-white rounded-lg text-xs font-semibold text-slate-700 shadow-sm hover:shadow-md transition-shadow border border-slate-200 truncate"
+                      title={getText(w) || ""}
                     >
                       {getText(w) || "—"}
                     </div>
@@ -291,7 +298,7 @@ export default function SummaryScreen(props: AnyProps) {
         </div>
 
         {/* 하단 버튼 */}
-        <div className="bg-slate-50 border-t border-slate-200 px-8 py-6 flex gap-3 justify-end">
+        <div className="bg-slate-50 border-t border-slate-200 px-8 py-4 flex gap-3 justify-end flex-shrink-0">
           <button
             onClick={handleSkipClick}
             disabled={!canSkip}
