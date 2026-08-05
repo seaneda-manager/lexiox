@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { migrateAllTestsToBank } from '@/lib/utils/problemBankExtract';
 
 export const runtime = 'nodejs';
-export const maxDuration = 600; // 10분 (많은 테스트 처리용)
+export const maxDuration = 300; // Vercel Hobby plan max (5분)
 
 /**
  * POST /api/admin/problem-bank/migrate
