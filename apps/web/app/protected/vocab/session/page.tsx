@@ -1820,10 +1820,48 @@ export default function VocabSessionPage() {
     }
 
     if (stage === "LEARNING_INTRO") {
+      const learningCount = learningPayload?.length ?? 0;
+      const estimatedLearningTime = Math.ceil((learningCount * 20) / 60); // 단어당 약 20초 (의미 학습)
+
       return (
         <CardWrap>
           {Debug}
-          <StageIntroScreen title="Pay Attention!" subtitle="집중! 단어를 배워봅시다" onDone={() => setStage("LEARNING")} />
+          <StageIntroScreen
+            badge="LEARNING STAGE"
+            title="집중 학습 시작!"
+            subtitle="단어의 뜻과 쓰임을 완벽히 배워봅시다"
+            hint={
+              <div className="space-y-3 mt-4 rounded-2xl bg-gradient-to-r from-blue-50 to-cyan-50 p-5 border border-blue-200">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">📚</span>
+                      <span className="text-sm font-bold text-slate-800">학습 대상</span>
+                    </div>
+                    <span className="font-black text-blue-600">{learningCount}개 단어</span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">⏱️</span>
+                      <span className="text-sm font-bold text-slate-800">예상 시간</span>
+                    </div>
+                    <span className="font-bold text-slate-700">약 {estimatedLearningTime}분</span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">💡</span>
+                      <span className="text-sm font-bold text-slate-800">학습 방법</span>
+                    </div>
+                    <span className="text-sm text-slate-600">철자 + 뜻 + 예문</span>
+                  </div>
+                </div>
+              </div>
+            }
+            primaryLabel="학습 시작 ➔"
+            onPrimary={() => setStage("LEARNING")}
+          />
         </CardWrap>
       );
     }
