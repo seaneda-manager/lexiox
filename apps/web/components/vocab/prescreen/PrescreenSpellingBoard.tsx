@@ -300,7 +300,6 @@ export default function PrescreenSpellingBoard({
           </div>
         </div>
       </div>
-    </div>
 
       <style jsx global>{`
         @keyframes lx-card-in {
