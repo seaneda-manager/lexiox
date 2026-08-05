@@ -76,13 +76,13 @@ export default async function ListeningAssignmentsPage() {
                 ) : (
                   <div className="flex gap-2">
                     <Link
-                      href={`/protected/updated-listening/assignments/${a.id}/start?mode=test`}
+                      href={`/updated-listening/assignments/${a.id}/start?mode=test`}
                       className="flex-1 rounded-lg bg-sky-500 px-4 py-2 text-center text-xs font-semibold text-white hover:bg-sky-600"
                     >
                       🎯 Test
                     </Link>
                     <Link
-                      href={`/protected/updated-listening/assignments/${a.id}/start?mode=study`}
+                      href={`/updated-listening/assignments/${a.id}/start?mode=study`}
                       className="flex-1 rounded-lg bg-emerald-500 px-4 py-2 text-center text-xs font-semibold text-white hover:bg-emerald-600"
                     >
                       📚 Study
