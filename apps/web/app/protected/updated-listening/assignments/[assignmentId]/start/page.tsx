@@ -1,11 +1,21 @@
 import { getServerSupabase } from "@/lib/supabase/server";
+import { getServiceSupabase } from "@/lib/supabase/service";
 import ListeningTestWrapper from "./_client";
+import type { LListeningTest2026Linear } from "@/models/listening";
 
 export const dynamic = "force-dynamic";
 
+async function markInProgress(assignmentId: string, currentStatus: string) {
+  if (currentStatus !== "pending") return;
+  const service = getServiceSupabase();
+  await service
+    .from("test_assignments")
+    .update({ status: "in_progress", started_at: new Date().toISOString() })
+    .eq("id", assignmentId);
+}
+
 export default async function ListeningStartPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ assignmentId: string }>;
   searchParams: Promise<{ mode?: string }>;
@@ -19,27 +29,12 @@ export default async function ListeningStartPage({
   // 학생의 할당을 조회
   const { data: assignment } = await supabase
     .from("test_assignments")
-    .select(`
-      id, status, listening_test_id,
-      listening_tests (
-        id, label, sections, estimated_duration_minutes, intro_html,
-        listening_test_parts (
-          id, part_number, title, intro_html,
-          listening_test_questions (
-            id, question_number, question_type, question_text,
-            listening_test_answer_choices (
-              id, choice_number, choice_text
-            ),
-            correct_answer_choice_number
-          )
-        )
-      )
-    `)
+    .select("id, status, listening_test_id")
     .eq("id", assignmentId)
     .eq("student_id", user.id)
-    .single();
+    .maybeSingle();
 
-  if (!assignment || !assignment.listening_tests) {
+  if (!assignment || !assignment.listening_test_id) {
     return (
       <div className="p-4 text-center text-red-600">
         시험을 찾을 수 없습니다.
@@ -47,14 +42,29 @@ export default async function ListeningStartPage({
     );
   }
 
-  const test = Array.isArray(assignment.listening_tests)
-    ? assignment.listening_tests[0]
-    : assignment.listening_tests;
+  // listening_tests_2026 RLS는 status='active'인 행만 노출할 수 있어 service client로 통일한다
+  // (소유권은 이미 위에서 assignment.student_id === user.id로 확인했다).
+  const service = getServiceSupabase();
+  const { data: testRow } = await service
+    .from("listening_tests_2026")
+    .select("id, payload")
+    .eq("id", assignment.listening_test_id)
+    .maybeSingle();
+
+  if (!testRow || !testRow.payload) {
+    return (
+      <div className="p-4 text-center text-red-600">
+        시험을 찾을 수 없습니다.
+      </div>
+    );
+  }
+
+  await markInProgress(assignmentId, assignment.status);
 
   return (
     <ListeningTestWrapper
-      testData={test}
-      testId={test.id}
+      testData={testRow.payload as LListeningTest2026Linear}
+      testId={testRow.id}
       assignmentId={assignmentId}
     />
   );
