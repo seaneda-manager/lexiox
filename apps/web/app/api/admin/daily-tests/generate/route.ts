@@ -31,9 +31,10 @@ export const maxDuration = 60;
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { taskType, difficulty, studentId, classId, dueDate } = body as {
+    const { taskType, difficulty, numPassages, studentId, classId, dueDate } = body as {
       taskType: DailyTaskType;
       difficulty: 'easy' | 'core' | 'hard';
+      numPassages?: number;
       studentId?: string;
       classId?: string;
       dueDate?: string;

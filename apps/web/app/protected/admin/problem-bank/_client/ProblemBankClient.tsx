@@ -28,6 +28,7 @@ export default function ProblemBankClient({ stats, recentProblems }: { stats: St
   const [error, setError] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [preview, setPreview] = useState<any>(null);
 
   // 생성 폼 상태
   const [formData, setFormData] = useState({
@@ -123,23 +124,13 @@ export default function ProblemBankClient({ stats, recentProblems }: { stats: St
       const data = await res.json();
       if (!data.ok) throw new Error(data.error ?? 'Generation failed');
 
+      // 미리보기 표시
+      setPreview(data.problem);
+
       setMessage({
         type: 'success',
         text: `✅ ${problemType === 'complete_words' ? '완성형' : problemType === 'daily_life' ? '일상' : '학술'} 문제가 생성되었습니다`,
       });
-
-      // 폼 초기화
-      setFormData({
-        passage: '',
-        content: '',
-        topic: '',
-        title: '',
-        difficulty: 'core',
-        contextType: 'email',
-      });
-
-      // 페이지 새로고침
-      setTimeout(() => window.location.reload(), 1500);
     } catch (e: any) {
       setMessage({ type: 'error', text: `❌ ${e.message}` });
     } finally {
@@ -366,6 +357,99 @@ export default function ProblemBankClient({ stats, recentProblems }: { stats: St
                 }`}
               >
                 {message.text}
+              </div>
+            )}
+
+            {/* 미리보기 */}
+            {preview && (
+              <div className="rounded-lg border border-blue-200 bg-blue-50 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-blue-900">📋 미리보기</h3>
+                  <button
+                    onClick={() => setPreview(null)}
+                    className="text-blue-600 hover:text-blue-900 text-lg"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-xs font-medium text-blue-700">주제</p>
+                    <p className="text-sm text-blue-900">{preview.topic}</p>
+                  </div>
+
+                  <div>
+                    <p className="text-xs font-medium text-blue-700">지문</p>
+                    <p className="text-sm text-blue-900 whitespace-pre-wrap">{preview.passage}</p>
+                  </div>
+
+                  {preview.blanks && (
+                    <div>
+                      <p className="text-xs font-medium text-blue-700">빈칸 (샘플)</p>
+                      <div className="text-xs text-blue-800 space-y-1">
+                        {preview.blanks.slice(0, 3).map((b: any, i: number) => (
+                          <div key={i}>
+                            {i + 1}. {b.visible}____ ({b.word})
+                          </div>
+                        ))}
+                        {preview.blanks.length > 3 && (
+                          <p className="text-blue-600">+ {preview.blanks.length - 3}개 더...</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* QA 점수 */}
+                  {preview.qa && (
+                    <div className="rounded-lg bg-white p-3 border border-blue-100">
+                      <p className="text-xs font-medium text-gray-700 mb-2">✨ Quality Score: {preview.qa.score}점</p>
+                      {!preview.qa.valid && preview.qa.issues.length > 0 && (
+                        <div className="text-xs text-red-600 space-y-1">
+                          {preview.qa.issues.map((issue: string, i: number) => (
+                            <div key={i}>{issue}</div>
+                          ))}
+                        </div>
+                      )}
+                      {preview.qa.warnings.length > 0 && (
+                        <div className="text-xs text-amber-600 space-y-1 mt-2">
+                          {preview.qa.warnings.map((warning: string, i: number) => (
+                            <div key={i}>{warning}</div>
+                          ))}
+                        </div>
+                      )}
+                      {preview.qa.valid && preview.qa.issues.length === 0 && (
+                        <p className="text-xs text-emerald-600">✅ 모든 검증 통과!</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-4 flex gap-2">
+                  <button
+                    onClick={() => {
+                      setPreview(null);
+                      setFormData({
+                        passage: '',
+                        content: '',
+                        topic: '',
+                        title: '',
+                        difficulty: 'core',
+                        contextType: 'email',
+                      });
+                      setTimeout(() => window.location.reload(), 500);
+                    }}
+                    className="flex-1 px-3 py-1.5 text-sm bg-emerald-600 text-white rounded hover:bg-emerald-700"
+                  >
+                    ✅ 저장 완료
+                  </button>
+                  <button
+                    onClick={() => setPreview(null)}
+                    className="px-3 py-1.5 text-sm bg-gray-300 text-gray-900 rounded hover:bg-gray-400"
+                  >
+                    닫기
+                  </button>
+                </div>
               </div>
             )}
 

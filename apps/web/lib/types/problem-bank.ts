@@ -188,38 +188,44 @@ export const DAILY_TASK_COMPOSITIONS: Record<
     complete_words: number;
     daily_life: number;
     academic_passage: number;
-    total: number;
+    passages: number;  // 총 지문 개수 (default: 2)
+    total: number;     // 총 문제 개수
   }
 > = {
   light: {
-    complete_words: 2,
-    daily_life: 2,
+    complete_words: 1,
+    daily_life: 1,
     academic_passage: 0,
-    total: 4,
+    passages: 2,  // 지문 2개: CW(10) + DL(3~4)
+    total: 13,
   },
   medium_1: {
     complete_words: 1,
     daily_life: 1,
-    academic_passage: 1,
-    total: 3,
+    academic_passage: 0,
+    passages: 2,  // 지문 2개: CW(10) + DL(3~4)
+    total: 13,
   },
   medium_2: {
-    complete_words: 1,
-    daily_life: 0,
-    academic_passage: 1,
-    total: 2,
-  },
-  medium_3: {
     complete_words: 0,
     daily_life: 1,
     academic_passage: 1,
-    total: 2,
+    passages: 2,  // 지문 2개: DL(3~4) + AP(5)
+    total: 8,
+  },
+  medium_3: {
+    complete_words: 1,
+    daily_life: 0,
+    academic_passage: 1,
+    passages: 2,  // 지문 2개: CW(10) + AP(5)
+    total: 15,
   },
   medium_4: {
     complete_words: 1,
     daily_life: 1,
     academic_passage: 0,
-    total: 2,
+    passages: 2,  // 지문 2개: CW(10) + DL(3~4)
+    total: 13,
   },
 };
 

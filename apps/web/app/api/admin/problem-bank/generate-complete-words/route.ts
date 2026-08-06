@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { getServerSupabase } from '@/lib/supabase/server';
 import { generateCompleteWordsWithAI, validateCompleteWords } from '@/lib/utils/generateCompleteWords';
+import { validateProblemQuality } from '@/lib/utils/validateProblemQuality';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -112,6 +113,12 @@ export async function POST(req: Request) {
 
     console.log('[GenerateCW] ✅ Saved problem:', savedProblem.id);
 
+    // QA 검증
+    const qaResult = validateProblemQuality({
+      type: 'complete_words',
+      blanks: savedProblem.blanks,
+    });
+
     return NextResponse.json({
       ok: true,
       problem: {
@@ -121,6 +128,12 @@ export async function POST(req: Request) {
         passage: savedProblem.passage,
         blanks: savedProblem.blanks,
         metadata: generatedProblem.metadata,
+      },
+      qa: {
+        valid: qaResult.valid,
+        score: qaResult.score,
+        issues: qaResult.issues,
+        warnings: qaResult.warnings,
       },
     });
   } catch (err: any) {

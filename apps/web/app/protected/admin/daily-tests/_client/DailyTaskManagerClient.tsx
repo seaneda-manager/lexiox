@@ -47,6 +47,7 @@ export default function DailyTaskManagerClient({ stats, recentTasks }: { stats: 
     studentId: '',
     classId: '',
     dueDate: '',
+    numPassages: 2,  // 지문 개수 (default: 2)
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -72,6 +73,7 @@ export default function DailyTaskManagerClient({ stats, recentTasks }: { stats: 
         body: JSON.stringify({
           taskType: formData.taskType,
           difficulty: formData.difficulty,
+          numPassages: formData.numPassages,
           studentId: formData.assignTo === 'student' ? formData.studentId.trim() : undefined,
           classId: formData.assignTo === 'class' ? formData.classId.trim() : undefined,
           dueDate: formData.dueDate || undefined,
@@ -172,19 +174,38 @@ export default function DailyTaskManagerClient({ stats, recentTasks }: { stats: 
             </div>
 
             {/* 난이도 */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">⭐ 난이도</label>
-              <select
-                value={formData.difficulty}
-                onChange={(e) => setFormData({ ...formData, difficulty: e.target.value as Difficulty })}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {Object.entries(DIFFICULTY_LABEL).map(([diff, label]) => (
-                  <option key={diff} value={diff}>
-                    {label}
-                  </option>
-                ))}
-              </select>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">⭐ 난이도</label>
+                <select
+                  value={formData.difficulty}
+                  onChange={(e) => setFormData({ ...formData, difficulty: e.target.value as Difficulty })}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {Object.entries(DIFFICULTY_LABEL).map(([diff, label]) => (
+                    <option key={diff} value={diff}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* 지문 개수 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">📄 지문 개수</label>
+                <select
+                  value={formData.numPassages}
+                  onChange={(e) => setFormData({ ...formData, numPassages: parseInt(e.target.value) })}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value={1}>1개 (최소)</option>
+                  <option value={2}>2개 (기본)</option>
+                  <option value={3}>3개</option>
+                  <option value={4}>4개</option>
+                  <option value={5}>5개 (최대)</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-1">지문당 문제: CW(10) DL(3~4) AP(5)</p>
+              </div>
             </div>
 
             {/* 할당 대상 */}
