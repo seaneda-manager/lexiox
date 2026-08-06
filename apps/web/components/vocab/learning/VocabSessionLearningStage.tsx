@@ -112,9 +112,9 @@ export default function VocabSessionLearningStage({
   }
 
   return (
-    <div className="flex flex-col lg:flex-row w-full min-h-screen gap-0">
+    <div className="flex flex-col lg:flex-row w-full min-h-screen gap-0 bg-slate-50">
       {/* 좌측 메인 콘텐츠 (70%) */}
-      <div className="flex-[7] flex flex-col px-6 py-8 lg:pr-4 overflow-y-auto">
+      <div className="flex-[7] flex flex-col px-8 py-8 lg:pr-6 overflow-y-auto">
         {/* 헤더: 진도 + 스트릭 */}
         <div className="mb-8 flex items-center justify-between">
           <div>
@@ -135,8 +135,8 @@ export default function VocabSessionLearningStage({
           </div>
         </div>
 
-        {/* 메인 학습 카드 */}
-        <div className="bg-white rounded-3xl border-2 border-slate-200 p-8 space-y-8 flex-1" style={{ maxWidth: '600px', margin: '0 auto' }}>
+        {/* 메인 학습 카드 - 넓은 가로 너비 */}
+        <div className="bg-white rounded-3xl border-2 border-slate-200 p-10 space-y-8 flex-1" style={{ width: '100%' }}>
           {/* Spelling Section */}
           <div className="space-y-4">
             <div className="text-sm font-bold text-slate-600">📚 단어 학습 (통합 Step)</div>
@@ -169,8 +169,8 @@ export default function VocabSessionLearningStage({
                   `}</style>
 
                   <div className="word-display" style={{
-                    fontSize: currentWord.text.length <= 7 ? '2.5rem' :
-                             currentWord.text.length <= 11 ? '1.8rem' : '1.5rem',
+                    fontSize: currentWord.text.length <= 7 ? '3rem' :
+                             currentWord.text.length <= 11 ? '2.2rem' : '1.8rem',
                     color: '#d1d5db'
                   }}>
                     {currentWord.text.split('').map((char) => (
@@ -203,8 +203,8 @@ export default function VocabSessionLearningStage({
                     top: 0,
                     left: 0,
                     right: 0,
-                    fontSize: currentWord.text.length <= 7 ? '2.5rem' :
-                             currentWord.text.length <= 11 ? '1.8rem' : '1.5rem',
+                    fontSize: currentWord.text.length <= 7 ? '3rem' :
+                             currentWord.text.length <= 11 ? '2.2rem' : '1.8rem',
                     pointerEvents: 'none'
                   }}>
                     {currentWord.text.split('').map((char, idx) => (
@@ -291,8 +291,8 @@ export default function VocabSessionLearningStage({
         </div>
       </div>
 
-      {/* 우측 사이드바 (30%) */}
-      <div className="flex-[3] bg-slate-50 border-l border-slate-200 px-6 py-8 lg:pl-4 overflow-y-auto space-y-6">
+      {/* 우측 사이드바 (30%) - 콤팩트 고정 너비 */}
+      <div className="flex-[3] bg-white border-l border-slate-200 px-6 py-8 lg:pl-4 overflow-y-auto space-y-6" style={{ maxWidth: '320px' }}>
         {/* 오늘 완료한 단어 */}
         <div className="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
           <h3 className="text-sm font-bold text-slate-700">🏆 오늘 완료한 단어</h3>
