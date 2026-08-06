@@ -307,6 +307,8 @@ function QuestionCard({ q, chosenId }: { q: FlatQuestion; chosenId: string | nul
   const [open, setOpen] = useState(false);
   const [bgKnowledge, setBgKnowledge] = useState<string | null>(null);
   const [bgLoading, setBgLoading] = useState(false);
+  const [qTranslation, setQTranslation] = useState<string | null>(null);
+  const [qTransLoading, setQTransLoading] = useState(false);
 
   const correctChoice = q.choices.find((c) => c.isCorrect);
   const chosenChoice = q.choices.find((c) => c.id === chosenId);
@@ -328,6 +330,27 @@ function QuestionCard({ q, chosenId }: { q: FlatQuestion; chosenId: string | nul
       setOpen(true);
     } finally {
       setBgLoading(false);
+    }
+  }
+
+  async function fetchQuestionTranslation() {
+    if (qTranslation) { setOpen(true); return; }
+    setQTransLoading(true);
+    try {
+      const choicesText = q.choices
+        .map((c, idx) => `${String.fromCharCode(65 + idx)}. ${c.text}`)
+        .join("\n");
+      const content = `문제: ${q.stem}\n\n보기:\n${choicesText}`;
+      const res = await fetch("/api/reading/ai-explain", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "translate", content }),
+      });
+      const data = await res.json();
+      setQTranslation(data.result ?? "번역 실패");
+      setOpen(true);
+    } finally {
+      setQTransLoading(false);
     }
   }
 
@@ -357,6 +380,14 @@ function QuestionCard({ q, chosenId }: { q: FlatQuestion; chosenId: string | nul
           <p className="text-sm text-gray-900 leading-snug">{q.stem}</p>
         </div>
         <div className="flex items-center gap-1 shrink-0">
+          <button
+            onClick={fetchQuestionTranslation}
+            disabled={qTransLoading}
+            className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-2 py-1 text-[10px] font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+          >
+            {qTransLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Languages className="h-3 w-3" />}
+            번역
+          </button>
           <button
             onClick={fetchBg}
             disabled={bgLoading}
@@ -398,10 +429,10 @@ function QuestionCard({ q, chosenId }: { q: FlatQuestion; chosenId: string | nul
                   <span className="shrink-0 rounded bg-red-200 px-1 py-0.5 text-[9px] font-bold text-red-800">내 답</span>
                 )}
               </div>
-              {c.explanation && (
+              {c.explain && (
                 <div className="pl-6 text-[12px] leading-relaxed opacity-90">
                   <div className="text-[10px] font-semibold opacity-75 mb-1">해석:</div>
-                  <p>{c.explanation}</p>
+                  <p>{c.explain}</p>
                 </div>
               )}
             </div>
@@ -440,6 +471,17 @@ function QuestionCard({ q, chosenId }: { q: FlatQuestion; chosenId: string | nul
           )}
 
           {/* Background knowledge */}
+          {/* Question + choices translation */}
+          {qTranslation && (
+            <div className="px-4 py-3">
+              <div className="mb-1 text-[10px] font-bold text-blue-600 uppercase tracking-wide flex items-center gap-1">
+                <Languages className="h-3 w-3" />
+                문제/보기 번역
+              </div>
+              <div className="text-xs leading-relaxed text-gray-800 whitespace-pre-wrap">{qTranslation}</div>
+            </div>
+          )}
+
           {bgKnowledge && (
             <div className="px-4 py-3">
               <div className="mb-1 text-[10px] font-bold text-violet-600 uppercase tracking-wide flex items-center gap-1">
@@ -451,7 +493,7 @@ function QuestionCard({ q, chosenId }: { q: FlatQuestion; chosenId: string | nul
           )}
 
           {/* No explanation at all */}
-          {!q.rationale && !q.clueQuote && !q.choices.some((c) => c.explain) && !bgKnowledge && (
+          {!q.rationale && !q.clueQuote && !q.choices.some((c) => c.explain) && !bgKnowledge && !qTranslation && (
             <div className="px-4 py-3 text-xs text-gray-400">
               이 문항에는 등록된 해설이 없습니다. 위 "배경지식" 버튼으로 AI 설명을 받아보세요.
             </div>

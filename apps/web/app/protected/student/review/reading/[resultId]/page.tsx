@@ -12,7 +12,7 @@ import type {
   RChoice,
 } from "@/models/reading";
 import { ArrowLeft, FileQuestion } from "lucide-react";
-import ReadingReviewV2, { type FlatQuestion, type CwReviewItem } from "./ReadingReviewV2";
+import ReadingReviewV2, { type FlatQuestion, type CwReviewItem } from "@/components/reading/ReadingReviewV2";
 
 export const dynamic = "force-dynamic";
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { DailyTaskWithProblems } from "@/lib/types/problem-bank";
 
@@ -17,8 +18,11 @@ type DailyTaskPlayerProps = {
 };
 
 export default function DailyTaskPlayer({ task }: DailyTaskPlayerProps) {
+  const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // 모든 문제를 순서대로 배열에 담기
   // 지문 유형별로 구분되어 저장됨:
@@ -29,13 +33,6 @@ export default function DailyTaskPlayer({ task }: DailyTaskPlayerProps) {
     ...(task.daily_life ?? []),
     ...(task.academic_passage ?? []),
   ];
-
-  console.log('[DailyTaskPlayer] Task structure:', {
-    complete_words: task.complete_words?.map(p => ({ id: p.id, type: 'complete_words', blanks: p.blanks?.length })),
-    daily_life: task.daily_life?.map(p => ({ id: p.id, type: 'daily_life', questions: p.questions?.length })),
-    academic_passage: task.academic_passage?.map(p => ({ id: p.id, type: 'academic_passage', questions: p.questions?.length })),
-    total: allProblems.length,
-  });
 
   const currentProblem = allProblems[currentIndex];
   const totalProblems = allProblems.length;
@@ -61,9 +58,23 @@ export default function DailyTaskPlayer({ task }: DailyTaskPlayerProps) {
   };
 
   const handleSubmit = async () => {
-    // TODO: 답변 제출 로직
-    console.log("Submitting answers:", answers);
-    alert("제출 준비 중입니다!");
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const res = await fetch(`/api/daily-task/${task.id}/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ answers }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error ?? "제출에 실패했습니다.");
+      }
+      router.push(`/student/daily-tests/${task.id}/review`);
+    } catch (err: any) {
+      setSubmitError(err?.message ?? "제출 중 오류가 발생했습니다.");
+      setSubmitting(false);
+    }
   };
 
   if (!currentProblem) {
@@ -120,10 +131,17 @@ export default function DailyTaskPlayer({ task }: DailyTaskPlayerProps) {
             </h2>
 
             {/* 지문 표시 (모든 문제 유형) */}
-            {currentProblem.passage && (
-              <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                {currentProblem.passage}
-              </div>
+            {(currentProblem as any).passageHtml ? (
+              <div
+                className="text-gray-700 leading-relaxed space-y-3 [&_strong]:font-semibold [&_b]:font-semibold [&_em]:italic"
+                dangerouslySetInnerHTML={{ __html: (currentProblem as any).passageHtml }}
+              />
+            ) : (
+              currentProblem.passage && (
+                <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                  {currentProblem.passage}
+                </div>
+              )
             )}
           </div>
 
@@ -169,57 +187,61 @@ export default function DailyTaskPlayer({ task }: DailyTaskPlayerProps) {
                 아래의 빈칸에 맞는 단어를 입력하세요:
               </p>
               <div className="space-y-3">
-                {(currentProblem as any).blanks.map((blank: any) => (
-                  <div key={blank.id} className="flex items-center gap-3">
-                    <span className="text-sm font-medium text-gray-700 min-w-24">
-                      Blank {blank.order}:
-                    </span>
-                    <input
-                      type="text"
-                      placeholder="답변 입력"
-                      value={answers[blank.id] || ""}
-                      onChange={(e) =>
-                        handleSelectAnswer(blank.id, e.target.value)
-                      }
-                      className="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    <span className="text-xs text-gray-400">
-                      정답: {blank.correctToken}
-                    </span>
-                  </div>
-                ))}
+                {(currentProblem as any).blanks.map((blank: any) => {
+                  const key = `cw__${currentProblem.id}__${blank.id}`;
+                  return (
+                    <div key={blank.id} className="flex items-center gap-3">
+                      <span className="text-sm font-medium text-gray-700 min-w-24">
+                        Blank {blank.order}:
+                      </span>
+                      <input
+                        type="text"
+                        placeholder="답변 입력"
+                        value={answers[key] || ""}
+                        onChange={(e) => handleSelectAnswer(key, e.target.value)}
+                        className="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
         </div>
 
         {/* 네비게이션 */}
-        <div className="flex gap-3 justify-between">
-          <button
-            onClick={handlePrevious}
-            disabled={currentIndex === 0}
-            className="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            ← 이전
-          </button>
+        <div className="flex flex-col gap-2">
+          {submitError && (
+            <p className="text-sm text-red-600 text-right">{submitError}</p>
+          )}
+          <div className="flex gap-3 justify-between">
+            <button
+              onClick={handlePrevious}
+              disabled={currentIndex === 0}
+              className="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              ← 이전
+            </button>
 
-          <div className="flex gap-2">
-            {currentIndex === totalProblems - 1 && (
-              <button
-                onClick={handleSubmit}
-                className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium"
-              >
-                제출하기 ✓
-              </button>
-            )}
-            {currentIndex < totalProblems - 1 && (
-              <button
-                onClick={handleNext}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-              >
-                다음 →
-              </button>
-            )}
+            <div className="flex gap-2">
+              {currentIndex === totalProblems - 1 && (
+                <button
+                  onClick={handleSubmit}
+                  disabled={submitting}
+                  className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium disabled:opacity-50"
+                >
+                  {submitting ? "제출 중..." : "제출하기 ✓"}
+                </button>
+              )}
+              {currentIndex < totalProblems - 1 && (
+                <button
+                  onClick={handleNext}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                >
+                  다음 →
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>

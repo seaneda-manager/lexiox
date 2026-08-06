@@ -162,6 +162,7 @@ export type DailyTask = {
   // 상태
   status: 'assigned' | 'in_progress' | 'completed' | 'overdue';
   total_score?: number;
+  answers?: Record<string, string | null> | null;
 
   created_at: string;
   updated_at: string;

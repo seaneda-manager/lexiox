@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getServerSupabase } from "@/lib/supabase/server";
 import DailyTaskPlayer from "@/components/student/DailyTaskPlayer";
+import { fetchAndFormatDailyTaskProblems } from "@/lib/utils/dailyTaskFormat";
 
 type Params = {
   id: string;
@@ -30,37 +31,21 @@ export default async function DailyTaskPage({ params }: { params: Params }) {
     redirect("/student");
   }
 
-  // 문제들 조회
-  const [
-    { data: completeWords },
-    { data: dailyLife },
-    { data: academic },
-  ] = await Promise.all([
-    task.complete_words_ids && task.complete_words_ids.length > 0
-      ? supabase
-          .from("problem_bank_complete_words_2026")
-          .select("*")
-          .in("id", task.complete_words_ids)
-      : Promise.resolve({ data: [] }),
-    task.daily_life_ids && task.daily_life_ids.length > 0
-      ? supabase
-          .from("problem_bank_daily_life_2026")
-          .select("*")
-          .in("id", task.daily_life_ids)
-      : Promise.resolve({ data: [] }),
-    task.academic_passage_ids && task.academic_passage_ids.length > 0
-      ? supabase
-          .from("problem_bank_academic_passage_2026")
-          .select("*")
-          .in("id", task.academic_passage_ids)
-      : Promise.resolve({ data: [] }),
-  ]);
+  // 이미 제출된 과제는 재풀이 대신 리뷰 페이지로 보낸다
+  if (task.status === "completed") {
+    redirect(`/student/daily-tests/${id}/review`);
+  }
+
+  const { complete_words, daily_life, academic_passage } = await fetchAndFormatDailyTaskProblems(
+    supabase,
+    task
+  );
 
   const taskWithProblems = {
     ...task,
-    complete_words: completeWords ?? [],
-    daily_life: dailyLife ?? [],
-    academic_passage: academic ?? [],
+    complete_words,
+    daily_life,
+    academic_passage,
   };
 
   return (
