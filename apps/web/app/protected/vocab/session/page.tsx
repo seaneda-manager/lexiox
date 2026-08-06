@@ -1823,6 +1823,14 @@ export default function VocabSessionPage() {
       const learningCount = learningPayload?.length ?? 0;
       const estimatedLearningTime = Math.ceil((learningCount * 20) / 60); // 단어당 약 20초 (의미 학습)
 
+      // 자동으로 Learning stage로 전환 (3초)
+      useEffect(() => {
+        const timer = setTimeout(() => {
+          setStage("LEARNING");
+        }, 3000);
+        return () => clearTimeout(timer);
+      }, []);
+
       return (
         <CardWrap>
           {Debug}
