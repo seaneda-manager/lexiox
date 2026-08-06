@@ -21,10 +21,23 @@ interface Stats {
 }
 
 export default function ProblemBankClient({ stats, recentProblems }: { stats: Stats; recentProblems: RecentProblem[] }) {
-  const [activeTab, setActiveTab] = useState<ProblemType>('complete_words');
+  const [activeTab, setActiveTab] = useState<'view' | 'generate'>('view');
+  const [problemType, setProblemType] = useState<ProblemType>('complete_words');
   const [migrating, setMigrating] = useState(false);
   const [migrationResult, setMigrationResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // 생성 폼 상태
+  const [formData, setFormData] = useState({
+    passage: '',
+    content: '',
+    topic: '',
+    title: '',
+    difficulty: 'core' as Difficulty,
+    contextType: 'email' as 'email' | 'notice' | 'social_post' | 'web_article' | 'other',
+  });
 
   const TABS: { id: ProblemType; label: string; icon: string; count: number }[] = [
     { id: 'complete_words', label: '완성형', icon: '✏️', count: stats.totalCompleteWords },
@@ -55,6 +68,82 @@ export default function ProblemBankClient({ stats, recentProblems }: { stats: St
       setError(e.message);
     } finally {
       setMigrating(false);
+    }
+  };
+
+  const handleGenerate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setGenerating(true);
+    setMessage(null);
+
+    try {
+      let endpoint = '';
+      let body: any = {};
+
+      if (problemType === 'complete_words') {
+        if (!formData.passage || !formData.topic) {
+          throw new Error('지문과 주제를 입력하세요');
+        }
+        endpoint = '/api/admin/problem-bank/generate-complete-words';
+        body = {
+          passage: formData.passage,
+          topic: formData.topic,
+          difficulty: formData.difficulty,
+        };
+      } else if (problemType === 'daily_life') {
+        if (!formData.content || !formData.topic) {
+          throw new Error('내용과 주제를 입력하세요');
+        }
+        endpoint = '/api/admin/problem-bank/generate-daily-life';
+        body = {
+          content: formData.content,
+          topic: formData.topic,
+          difficulty: formData.difficulty,
+          contextType: formData.contextType,
+        };
+      } else if (problemType === 'academic_passage') {
+        if (!formData.passage || !formData.title || !formData.topic) {
+          throw new Error('지문, 제목, 주제를 입력하세요');
+        }
+        endpoint = '/api/admin/problem-bank/generate-academic';
+        body = {
+          passage: formData.passage,
+          title: formData.title,
+          topic: formData.topic,
+          difficulty: formData.difficulty,
+        };
+      }
+
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error ?? 'Generation failed');
+
+      setMessage({
+        type: 'success',
+        text: `✅ ${problemType === 'complete_words' ? '완성형' : problemType === 'daily_life' ? '일상' : '학술'} 문제가 생성되었습니다`,
+      });
+
+      // 폼 초기화
+      setFormData({
+        passage: '',
+        content: '',
+        topic: '',
+        title: '',
+        difficulty: 'core',
+        contextType: 'email',
+      });
+
+      // 페이지 새로고침
+      setTimeout(() => window.location.reload(), 1500);
+    } catch (e: any) {
+      setMessage({ type: 'error', text: `❌ ${e.message}` });
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -111,25 +200,189 @@ export default function ProblemBankClient({ stats, recentProblems }: { stats: St
 
       {/* 탭 네비게이션 */}
       <div className="border-b border-gray-200">
-        <div className="flex gap-1">
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-3 text-sm font-medium border-b-2 transition ${
-                activeTab === tab.id
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              {tab.icon} {tab.label}
-              <span className="ml-2 text-xs font-normal text-gray-500">({tab.count})</span>
-            </button>
-          ))}
+        <div className="flex gap-4">
+          <button
+            onClick={() => setActiveTab('view')}
+            className={`px-4 py-3 text-sm font-medium border-b-2 transition ${
+              activeTab === 'view'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            📋 전체 보기
+          </button>
+          <button
+            onClick={() => setActiveTab('generate')}
+            className={`px-4 py-3 text-sm font-medium border-b-2 transition ${
+              activeTab === 'generate'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            ✨ 문제 생성
+          </button>
         </div>
       </div>
 
+      {/* 생성 탭 */}
+      {activeTab === 'generate' && (
+        <div className="rounded-lg border bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-gray-900 mb-6">✨ 문제 생성</h2>
+
+          {/* 문제 유형 선택 */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-3">문제 유형 선택</label>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {[
+                { id: 'complete_words' as ProblemType, label: '✏️ 완성형', desc: '짧은 지문 (70-120단어)' },
+                { id: 'daily_life' as ProblemType, label: '💬 일상', desc: '이메일/공지 (짧은 지문)' },
+                { id: 'academic_passage' as ProblemType, label: '📖 학술', desc: '긴 학술 지문 (200-250단어)' },
+              ].map((type) => (
+                <button
+                  key={type.id}
+                  onClick={() => setProblemType(type.id)}
+                  className={`p-4 rounded-lg border-2 transition text-left ${
+                    problemType === type.id
+                      ? 'border-blue-600 bg-blue-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <p className="font-medium text-gray-900">{type.label}</p>
+                  <p className="text-xs text-gray-600 mt-1">{type.desc}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 생성 폼 */}
+          <form onSubmit={handleGenerate} className="space-y-6">
+            {/* Complete Words 폼 */}
+            {problemType === 'complete_words' && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">지문 (70-120 단어)</label>
+                  <textarea
+                    value={formData.passage}
+                    onChange={(e) => setFormData({ ...formData, passage: e.target.value })}
+                    placeholder="완성형 문제 원문을 입력하세요..."
+                    rows={6}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </>
+            )}
+
+            {/* Daily Life 폼 */}
+            {problemType === 'daily_life' && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">지문 유형</label>
+                  <select
+                    value={formData.contextType}
+                    onChange={(e) =>
+                      setFormData({ ...formData, contextType: e.target.value as any })
+                    }
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="email">📧 이메일</option>
+                    <option value="notice">📌 공지</option>
+                    <option value="social_post">📱 SNS</option>
+                    <option value="web_article">📰 웹 기사</option>
+                    <option value="other">기타</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">내용</label>
+                  <textarea
+                    value={formData.content}
+                    onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                    placeholder="일상 지문을 입력하세요..."
+                    rows={6}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </>
+            )}
+
+            {/* Academic Passage 폼 */}
+            {problemType === 'academic_passage' && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">제목</label>
+                  <input
+                    type="text"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    placeholder="예: Marine Biology"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">지문 (200-250 단어)</label>
+                  <textarea
+                    value={formData.passage}
+                    onChange={(e) => setFormData({ ...formData, passage: e.target.value })}
+                    placeholder="학술 지문을 입력하세요..."
+                    rows={8}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </>
+            )}
+
+            {/* 공통 필드 */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">주제</label>
+                <input
+                  type="text"
+                  value={formData.topic}
+                  onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
+                  placeholder="예: Prehistoric People"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">난이도</label>
+                <select
+                  value={formData.difficulty}
+                  onChange={(e) => setFormData({ ...formData, difficulty: e.target.value as Difficulty })}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="easy">쉬움</option>
+                  <option value="core">중간</option>
+                  <option value="hard">어려움</option>
+                </select>
+              </div>
+            </div>
+
+            {/* 메시지 */}
+            {message && (
+              <div
+                className={`rounded-lg p-4 text-sm ${
+                  message.type === 'success'
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    : 'bg-rose-50 text-rose-700 border border-rose-200'
+                }`}
+              >
+                {message.text}
+              </div>
+            )}
+
+            {/* 제출 버튼 */}
+            <button
+              type="submit"
+              disabled={generating}
+              className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 disabled:opacity-50"
+            >
+              {generating ? '생성 중…' : '✨ 문제 생성 및 저장'}
+            </button>
+          </form>
+        </div>
+      )}
+
       {/* 최근 문제 목록 */}
+      {activeTab === 'view' && (
       <div className="rounded-lg border bg-white shadow-sm">
         <div className="px-6 py-4 border-b">
           <h3 className="text-sm font-semibold text-gray-900">최근 추가된 문제 (완성형)</h3>
@@ -176,6 +429,7 @@ export default function ProblemBankClient({ stats, recentProblems }: { stats: St
           )}
         </div>
       </div>
+      )}
 
       {/* 정보 */}
       <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">

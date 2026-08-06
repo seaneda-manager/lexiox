@@ -64,12 +64,17 @@ export async function getClassCompletedProblems(
 
 /**
  * 사용 가능한 Complete Words 문제 선택 (topic 중복 제외)
+ *
+ * ⚠️ IMPORTANT: CW는 짧은 지문 기반 (70~120 단어)
+ * - problem_bank_complete_words_2026만 사용
+ * - Academic Passage 크기 지문은 절대 금지
  */
 export async function selectCompleteWordsProblem(
   studentId: string | undefined,
   difficulty: ProblemDifficulty,
   recentTopics: Set<string>
 ): Promise<string | null> {
+  // Complete Words 테이블에서만 선택 (짧은 지문 전용)
   let query = supabase
     .from('problem_bank_complete_words_2026')
     .select('id, topic')
@@ -84,7 +89,7 @@ export async function selectCompleteWordsProblem(
   }
 
   if (!data || data.length === 0) {
-    console.warn('[selectCompleteWordsProblem] No data available for difficulty:', difficulty);
+    console.warn('[selectCompleteWordsProblem] No complete_words problem available for difficulty:', difficulty);
     return null;
   }
 
@@ -172,7 +177,7 @@ export async function createProblemCombination(
     academic_passage_ids: [] as string[],
   };
 
-  // Complete Words 선택
+  // Complete Words 선택 (짧은 지문 기반)
   for (let i = 0; i < composition.complete_words; i++) {
     const id = await selectCompleteWordsProblem(studentId, difficulty, recentTopics as Set<string>);
     if (id) {
@@ -317,6 +322,7 @@ export async function getStudentDailyTasks(
     .from('daily_tests')
     .select('*')
     .eq('student_id', cleanStudentId)
+    .is('deleted_at', null) // soft delete 필터
     .order('due_date', { ascending: true });
 
   if (status) {
@@ -345,6 +351,7 @@ export async function getDailyTaskWithProblems(taskId: string) {
     .from('daily_tests')
     .select('*')
     .eq('id', taskId)
+    .is('deleted_at', null) // soft delete 필터
     .single();
 
   if (taskError) throw taskError;

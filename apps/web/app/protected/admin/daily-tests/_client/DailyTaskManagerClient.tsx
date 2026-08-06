@@ -50,6 +50,8 @@ export default function DailyTaskManagerClient({ stats, recentTasks }: { stats: 
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,6 +97,30 @@ export default function DailyTaskManagerClient({ stats, recentTasks }: { stats: 
       setMessage({ type: 'error', text: `❌ ${e.message}` });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async (taskId: string) => {
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/admin/daily-tests/${taskId}/delete`, {
+        method: 'DELETE',
+      });
+
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error ?? 'Failed to delete task');
+
+      // 배포 상태에 따라 다른 메시지 표시
+      setMessage({
+        type: 'success',
+        text: data.message || 'Daily Test가 처리되었습니다'
+      });
+      setDeleteConfirm(null);
+      setTimeout(() => window.location.reload(), 1500);
+    } catch (e: any) {
+      setMessage({ type: 'error', text: `❌ ${e.message}` });
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -247,48 +273,85 @@ export default function DailyTaskManagerClient({ stats, recentTasks }: { stats: 
           ) : (
             <div className="divide-y">
               {recentTasks.map((task) => (
-                <div key={task.id} className="px-6 py-4 hover:bg-gray-50 transition">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-sm font-medium text-gray-900">
-                          {TASK_TYPE_LABEL[task.task_type]}
-                        </span>
-                        <span
-                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                            task.status === 'assigned'
-                              ? 'bg-blue-100 text-blue-800'
-                              : task.status === 'in_progress'
-                              ? 'bg-amber-100 text-amber-800'
-                              : task.status === 'completed'
-                              ? 'bg-emerald-100 text-emerald-800'
-                              : 'bg-rose-100 text-rose-800'
-                          }`}
+                <div key={task.id}>
+                  {deleteConfirm === task.id ? (
+                    <div className="px-6 py-4 bg-rose-50 border-b">
+                      <p className="text-sm font-medium text-gray-900 mb-2">
+                        이 Daily Test를 삭제하시겠습니까?
+                      </p>
+                      <p className="text-xs text-gray-600 mb-3">
+                        {task.status === 'assigned'
+                          ? '📋 배포 전: 완전히 삭제됩니다'
+                          : '⚠️ 배포됨: 기록은 유지되고 보관 처리됩니다'}
+                      </p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleDelete(task.id)}
+                          disabled={deleting}
+                          className="px-3 py-1.5 text-sm bg-rose-600 text-white rounded hover:bg-rose-700 disabled:opacity-50"
                         >
-                          {task.status === 'assigned'
-                            ? '📋 할당됨'
-                            : task.status === 'in_progress'
-                            ? '⏳ 진행 중'
-                            : task.status === 'completed'
-                            ? '✅ 완료'
-                            : '⏰ 만료'}
-                        </span>
-                        <span className="text-xs text-gray-500">
-                          난이도: {DIFFICULTY_LABEL[task.difficulty]}
-                        </span>
-                      </div>
-                      <div className="text-xs text-gray-600 space-y-1">
-                        {task.student_id && <p>학생: {task.student_id.slice(0, 8)}...</p>}
-                        {task.class_id && <p>클래스: {task.class_id.slice(0, 8)}...</p>}
-                        {task.due_date && (
-                          <p>기한: {new Date(task.due_date).toLocaleDateString('ko-KR')}</p>
-                        )}
+                          {deleting ? '처리 중...' : '삭제'}
+                        </button>
+                        <button
+                          onClick={() => setDeleteConfirm(null)}
+                          disabled={deleting}
+                          className="px-3 py-1.5 text-sm bg-gray-200 text-gray-900 rounded hover:bg-gray-300 disabled:opacity-50"
+                        >
+                          취소
+                        </button>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-xs text-gray-500">{new Date(task.created_at).toLocaleDateString('ko-KR')}</p>
+                  ) : (
+                    <div className="px-6 py-4 hover:bg-gray-50 transition">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-sm font-medium text-gray-900">
+                              {TASK_TYPE_LABEL[task.task_type]}
+                            </span>
+                            <span
+                              className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                                task.status === 'assigned'
+                                  ? 'bg-blue-100 text-blue-800'
+                                  : task.status === 'in_progress'
+                                  ? 'bg-amber-100 text-amber-800'
+                                  : task.status === 'completed'
+                                  ? 'bg-emerald-100 text-emerald-800'
+                                  : 'bg-rose-100 text-rose-800'
+                              }`}
+                            >
+                              {task.status === 'assigned'
+                                ? '📋 할당됨'
+                                : task.status === 'in_progress'
+                                ? '⏳ 진행 중'
+                                : task.status === 'completed'
+                                ? '✅ 완료'
+                                : '⏰ 만료'}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              난이도: {DIFFICULTY_LABEL[task.difficulty]}
+                            </span>
+                          </div>
+                          <div className="text-xs text-gray-600 space-y-1">
+                            {task.student_id && <p>학생: {task.student_id.slice(0, 8)}...</p>}
+                            {task.class_id && <p>클래스: {task.class_id.slice(0, 8)}...</p>}
+                            {task.due_date && (
+                              <p>기한: {new Date(task.due_date).toLocaleDateString('ko-KR')}</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right space-y-2">
+                          <p className="text-xs text-gray-500">{new Date(task.created_at).toLocaleDateString('ko-KR')}</p>
+                          <button
+                            onClick={() => setDeleteConfirm(task.id)}
+                            className="px-3 py-1 text-xs bg-rose-100 text-rose-700 rounded hover:bg-rose-200 transition"
+                          >
+                            🗑 삭제
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               ))}
             </div>

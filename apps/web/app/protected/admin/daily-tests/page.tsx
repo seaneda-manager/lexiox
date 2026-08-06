@@ -9,10 +9,11 @@ export default async function DailyTaskPage() {
   );
 
   try {
-    // 전체 Daily Test 통계
+    // 전체 Daily Test 통계 (soft delete 필터 적용)
     const { data: allTasks, count } = await supabase
       .from('daily_tests')
       .select('*', { count: 'exact' })
+      .is('deleted_at', null) // 삭제되지 않은 것만
       .order('created_at', { ascending: false })
       .limit(20);
 
