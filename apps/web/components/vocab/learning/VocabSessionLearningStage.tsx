@@ -136,7 +136,7 @@ export default function VocabSessionLearningStage({
         </div>
 
         {/* 메인 학습 카드 */}
-        <div className="bg-white rounded-3xl border-2 border-slate-200 p-8 space-y-8 flex-1">
+        <div className="bg-white rounded-3xl border-2 border-slate-200 p-8 space-y-8 flex-1" style={{ maxWidth: '600px', margin: '0 auto' }}>
           {/* Spelling Section */}
           <div className="space-y-4">
             <div className="text-sm font-bold text-slate-600">📚 단어 학습 (통합 Step)</div>
@@ -147,29 +147,74 @@ export default function VocabSessionLearningStage({
                   (아래 흐릿한 철자를 따라 타이핑 하세요)
                 </p>
 
-                {/* Interactive Spelling Input */}
+                {/* Interactive Spelling Input - 반응형 폰트 사이즈 */}
                 <div className="relative">
-                  <div className="text-5xl font-light tracking-[0.3em] text-gray-300 text-center py-6">
-                    {currentWord.text}
+                  {/* 글자 길이에 따른 동적 폰트 크기 */}
+                  <style>{`
+                    .word-display {
+                      display: flex;
+                      justify-content: center;
+                      align-items: center;
+                      gap: 6px;
+                      width: 100%;
+                      padding: 24px 0;
+                      flex-wrap: wrap;
+                    }
+                    .letter-box {
+                      width: 32px;
+                      text-align: center;
+                      font-weight: 300;
+                      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
+                    }
+                  `}</style>
+
+                  <div className="word-display" style={{
+                    fontSize: currentWord.text.length <= 7 ? '2.5rem' :
+                             currentWord.text.length <= 11 ? '1.8rem' : '1.5rem',
+                    color: '#d1d5db'
+                  }}>
+                    {currentWord.text.split('').map((char) => (
+                      <div key={`${char}-${Math.random()}`} className="letter-box">
+                        {char}
+                      </div>
+                    ))}
                   </div>
+
+                  {/* Hidden input for English only */}
                   <input
                     type="text"
                     value={spellingInput}
-                    onChange={(e) => setSpellingInput(e.target.value.toLowerCase())}
+                    onChange={(e) => {
+                      const value = e.target.value.toLowerCase();
+                      setSpellingInput(value.replace(/[^a-z]/g, ''));
+                    }}
                     onKeyDown={handleSpellingKeyDown}
                     placeholder=""
-                    className="absolute inset-0 text-center text-5xl tracking-[0.3em] bg-transparent outline-none border-none opacity-0 cursor-text"
+                    className="absolute inset-0 opacity-0 cursor-text"
                     autoFocus
+                    autoComplete="off"
+                    spellCheck={false}
+                    style={{ imeMode: 'disabled' }}
                   />
+
                   {/* Overlay effect: show typed characters */}
-                  <div className="text-center text-5xl font-light tracking-[0.3em] py-6 pointer-events-none">
+                  <div className="word-display" style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    fontSize: currentWord.text.length <= 7 ? '2.5rem' :
+                             currentWord.text.length <= 11 ? '1.8rem' : '1.5rem',
+                    pointerEvents: 'none'
+                  }}>
                     {currentWord.text.split('').map((char, idx) => (
-                      <span
+                      <div
                         key={idx}
-                        className={idx < spellingInput.length ? 'text-slate-900' : 'text-gray-300'}
+                        className="letter-box"
+                        style={{ color: idx < spellingInput.length ? '#0f172a' : '#d1d5db' }}
                       >
                         {char}
-                      </span>
+                      </div>
                     ))}
                   </div>
                 </div>
