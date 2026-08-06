@@ -11,10 +11,25 @@
 
 import { ETSLayout } from "./ETSLayout";
 
-const BODY_STYLE: React.CSSProperties = {
-  maxWidth: 800,
-  margin: "60px auto",
-  padding: "0 24px",
+// 창 배경(#F4F6F9) 위에 떠 있는 흰색 카드 — 문항 화면(BuildASentence 등)과 같은 패턴.
+const OUTER_STYLE: React.CSSProperties = {
+  height: "100%",
+  boxSizing: "border-box",
+  padding: 32,
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "center",
+};
+
+const CARD_STYLE: React.CSSProperties = {
+  maxWidth: 760,
+  margin: "0 auto",
+  width: "100%",
+  backgroundColor: "#FFFFFF",
+  borderRadius: 8,
+  padding: 32,
+  boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+  boxSizing: "border-box",
 };
 
 // ══════════════════════════════════════════════════════════════════════
@@ -31,34 +46,36 @@ export function WritingIntroScreen({
 }) {
   return (
     <ETSLayout title="Writing" hideFooter onNext={onContinue} nextLabel="Continue >">
-      <div style={BODY_STYLE}>
-        <h1 style={{ fontSize: 22, fontWeight: 700, color: "#333333", borderBottom: "1px solid #E0E0E0", paddingBottom: 12, marginBottom: 20 }}>
-          Writing
-        </h1>
-        <p style={{ fontSize: 15, color: "#333333", lineHeight: 1.8, marginBottom: 20 }}>
-          In the writing section, you will answer {totalQuestions} questions to demonstrate how
-          well you can write in English. There are three types of tasks.
-        </p>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
-          <thead>
-            <tr>
-              <th style={{ textAlign: "left", padding: "10px 12px", backgroundColor: "#F4A97A", border: "1px solid #C0C8D0", fontWeight: 700 }}>
-                Type of Task
-              </th>
-              <th style={{ textAlign: "left", padding: "10px 12px", backgroundColor: "#F4A97A", border: "1px solid #C0C8D0", fontWeight: 700 }}>
-                Description
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {taskTypes.map((t) => (
-              <tr key={t.title}>
-                <td style={{ padding: "10px 12px", border: "1px solid #C0C8D0", color: "#333333" }}>{t.title}</td>
-                <td style={{ padding: "10px 12px", border: "1px solid #C0C8D0", color: "#333333" }}>{t.description}</td>
+      <div style={OUTER_STYLE}>
+        <div style={CARD_STYLE}>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: "#333333", borderBottom: "1px solid #E0E0E0", paddingBottom: 12, marginBottom: 20 }}>
+            Writing
+          </h1>
+          <p style={{ fontSize: 15, color: "#333333", lineHeight: 1.8, marginBottom: 20 }}>
+            In the writing section, you will answer {totalQuestions} questions to demonstrate how
+            well you can write in English. There are three types of tasks.
+          </p>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
+            <thead>
+              <tr>
+                <th style={{ textAlign: "left", padding: "10px 12px", backgroundColor: "#F4A97A", border: "1px solid #C0C8D0", fontWeight: 700 }}>
+                  Type of Task
+                </th>
+                <th style={{ textAlign: "left", padding: "10px 12px", backgroundColor: "#F4A97A", border: "1px solid #C0C8D0", fontWeight: 700 }}>
+                  Description
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {taskTypes.map((t) => (
+                <tr key={t.title}>
+                  <td style={{ padding: "10px 12px", border: "1px solid #C0C8D0", color: "#333333" }}>{t.title}</td>
+                  <td style={{ padding: "10px 12px", border: "1px solid #C0C8D0", color: "#333333" }}>{t.description}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </ETSLayout>
   );
@@ -78,11 +95,13 @@ export function TaskBeginScreen({
 }) {
   return (
     <ETSLayout title="Writing" hideFooter onNext={onBegin} nextLabel="Begin >">
-      <div style={BODY_STYLE}>
-        <h1 style={{ fontSize: 20, fontWeight: 700, color: "#333333", borderBottom: "1px solid #E0E0E0", paddingBottom: 12, marginBottom: 20 }}>
-          {title}
-        </h1>
-        <p style={{ fontSize: 15, color: "#333333", lineHeight: 1.8 }}>{body}</p>
+      <div style={OUTER_STYLE}>
+        <div style={CARD_STYLE}>
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: "#333333", borderBottom: "1px solid #E0E0E0", paddingBottom: 12, marginBottom: 20 }}>
+            {title}
+          </h1>
+          <p style={{ fontSize: 15, color: "#333333", lineHeight: 1.8 }}>{body}</p>
+        </div>
       </div>
     </ETSLayout>
   );
@@ -109,23 +128,25 @@ export function LeaveConfirmScreen({
       onNext={onContinue}
       nextLabel="Continue >"
     >
-      <div style={BODY_STYLE}>
-        <h1 style={{ fontSize: 20, fontWeight: 700, color: "#333333", borderBottom: "1px solid #E0E0E0", paddingBottom: 12, marginBottom: 20 }}>
-          Time Remaining
-        </h1>
-        <p style={{ fontSize: 15, color: "#333333", lineHeight: 1.8, marginBottom: 16 }}>
-          You still have time to respond. As long as there is time remaining, you can keep
-          writing or revise your response.
-        </p>
-        <p style={{ fontSize: 15, color: "#333333", lineHeight: 1.8, marginBottom: 8 }}>
-          Select <strong>Back</strong> to keep writing or revising.
-        </p>
-        <p style={{ fontSize: 15, color: "#333333", lineHeight: 1.8, marginBottom: 16 }}>
-          Select <strong>Continue</strong> to leave this question.
-        </p>
-        <p style={{ fontSize: 15, color: "#333333", lineHeight: 1.8 }}>
-          Once you leave this question, you WILL NOT be able to return to it.
-        </p>
+      <div style={OUTER_STYLE}>
+        <div style={CARD_STYLE}>
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: "#333333", borderBottom: "1px solid #E0E0E0", paddingBottom: 12, marginBottom: 20 }}>
+            Time Remaining
+          </h1>
+          <p style={{ fontSize: 15, color: "#333333", lineHeight: 1.8, marginBottom: 16 }}>
+            You still have time to respond. As long as there is time remaining, you can keep
+            writing or revise your response.
+          </p>
+          <p style={{ fontSize: 15, color: "#333333", lineHeight: 1.8, marginBottom: 8 }}>
+            Select <strong>Back</strong> to keep writing or revising.
+          </p>
+          <p style={{ fontSize: 15, color: "#333333", lineHeight: 1.8, marginBottom: 16 }}>
+            Select <strong>Continue</strong> to leave this question.
+          </p>
+          <p style={{ fontSize: 15, color: "#333333", lineHeight: 1.8 }}>
+            Once you leave this question, you WILL NOT be able to return to it.
+          </p>
+        </div>
       </div>
     </ETSLayout>
   );

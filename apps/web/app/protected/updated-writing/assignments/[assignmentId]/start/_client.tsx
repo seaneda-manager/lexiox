@@ -22,16 +22,13 @@ export default function WritingTestWrapper({
   useEffect(() => {
     // Hide sidebar and topbar padding for fullscreen test mode
     const aside = document.querySelector("aside");
-    const main = document.querySelector("main");
     const body = document.body;
 
     if (aside) aside.style.display = "none";
-    if (main) main.style.padding = "0";
     body.style.overflow = "hidden";
 
     return () => {
       if (aside) aside.style.display = "";
-      if (main) main.style.padding = "";
       body.style.overflow = "";
     };
   }, [pathname]);
@@ -67,24 +64,6 @@ export default function WritingTestWrapper({
 
   return (
     <div className="w-full h-full">
-      <style>{`
-        main {
-          width: 100% !important;
-          max-width: 100% !important;
-          padding: 0 !important;
-          margin: 0 !important;
-        }
-        main > * {
-          max-width: 100% !important;
-          width: 100% !important;
-          margin-left: 0 !important;
-          margin-right: 0 !important;
-        }
-        main > div {
-          padding-left: 0 !important;
-          padding-right: 0 !important;
-        }
-      `}</style>
       <WritingRunnerETS test={test} onFinish={handleFinish} />
     </div>
   );
