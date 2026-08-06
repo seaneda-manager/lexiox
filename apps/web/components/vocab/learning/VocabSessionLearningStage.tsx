@@ -112,31 +112,31 @@ export default function VocabSessionLearningStage({
   }
 
   return (
-    <div className="flex flex-col lg:flex-row w-full min-h-screen gap-0 bg-slate-50">
+    <div className="flex flex-col lg:flex-row w-full min-h-screen gap-0 bg-slate-50" style={{ maxWidth: '1400px', margin: '0 auto' }}>
       {/* 좌측 메인 콘텐츠 (70%) */}
-      <div className="flex-[7] flex flex-col px-8 py-8 lg:pr-6 overflow-y-auto">
+      <div className="flex-[7] flex flex-col px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:pr-6 overflow-y-auto">
         {/* 헤더: 진도 + 스트릭 */}
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <p className="text-sm text-slate-500 font-semibold">
+        <div className="mb-6 sm:mb-8 flex items-center justify-between gap-4">
+          <div className="flex-1">
+            <p className="text-xs sm:text-sm text-slate-500 font-semibold">
               {trackTitle || '단어 학습'}
               {dayIndex != null && totalDays != null && ` - Day ${dayIndex} / ${totalDays}`}
             </p>
-            <h1 className="text-4xl font-bold text-slate-900 mt-1">{progress}</h1>
+            <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 mt-1">{progress}</h1>
           </div>
-          <div className="text-right">
-            <div className="flex items-center gap-2 justify-end mb-2">
-              <span className="text-3xl">🔥</span>
+          <div className="text-right flex-shrink-0">
+            <div className="flex items-center gap-1 sm:gap-2 justify-end mb-2">
+              <span className="text-2xl sm:text-3xl">🔥</span>
               <div>
-                <p className="text-sm text-slate-600">연속 학습</p>
-                <p className="text-2xl font-bold text-orange-600">{streakDays}일째</p>
+                <p className="text-xs sm:text-sm text-slate-600">연속 학습</p>
+                <p className="text-lg sm:text-2xl font-bold text-orange-600">{streakDays}일째</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* 메인 학습 카드 - 넓은 가로 너비 */}
-        <div className="bg-white rounded-3xl border-2 border-slate-200 p-10 space-y-8 flex-1" style={{ width: '100%' }}>
+        {/* 메인 학습 카드 - 반응형 너비 */}
+        <div className="bg-white rounded-2xl sm:rounded-3xl border-2 border-slate-200 p-6 sm:p-8 lg:p-10 space-y-6 sm:space-y-8 flex-1" style={{ width: '100%' }}>
           {/* Spelling Section */}
           <div className="space-y-4">
             <div className="text-sm font-bold text-slate-600">📚 단어 학습 (통합 Step)</div>
@@ -294,8 +294,8 @@ export default function VocabSessionLearningStage({
         </div>
       </div>
 
-      {/* 우측 사이드바 (30%) - 콤팩트 고정 너비 */}
-      <div className="flex-[3] bg-white border-l border-slate-200 px-6 py-8 lg:pl-4 overflow-y-auto space-y-6" style={{ maxWidth: '320px' }}>
+      {/* 우측 사이드바 (30%) - 반응형 */}
+      <div className="flex-[3] bg-white border-t lg:border-t-0 lg:border-l border-slate-200 px-4 sm:px-6 py-6 sm:py-8 lg:pl-4 overflow-y-auto space-y-4 sm:space-y-6 lg:max-w-xs">
         {/* 오늘 완료한 단어 */}
         <div className="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
           <h3 className="text-sm font-bold text-slate-700">🏆 오늘 완료한 단어</h3>
