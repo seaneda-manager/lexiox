@@ -72,7 +72,7 @@ ${transcript}
 Generate ScriptSegment objects with word-level timestamps. Output must be valid JSON array only.`;
 
     const response = await client.messages.create({
-      model: 'claude-opus-4-1-20250805',
+      model: 'claude-sonnet-4-6',
       max_tokens: 4000,
       system: systemPrompt,
       messages: [

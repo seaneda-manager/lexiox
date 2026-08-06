@@ -32,7 +32,7 @@ Requirements:
 Generate ${Math.max(4, 5 - existingTopics.length)} new topic suggestions:`;
 
   const message = await anthropic.messages.create({
-    model: 'claude-opus-4-1-20250805',
+    model: 'claude-sonnet-4-6',
     max_tokens: 500,
     messages: [{ role: 'user', content: prompt }],
   });

@@ -220,28 +220,58 @@ export default function ListeningTestGeneratorClient() {
 
   const [autoFilling, setAutoFilling] = useState(false);
 
+  // 실제 문제 생성(module1/hard/easy)과 동일하게, 주제 추천도 3그룹 단위로
+  // 한 번에 받아온다 (필드 10개를 하나씩 순차 호출하던 방식 대신 3회 호출).
   const handleAutoFillAll = useCallback(async () => {
     setAutoFilling(true);
     setError(null);
     try {
-      // 이미 채워진 값에서 시작 (빈 필드만 채움), 한 개씩 순서대로 추천받아서
-      // 방금 채운 것까지 avoid에 반영하며 진행 (필드끼리 겹치지 않게)
       const filled: Record<string, string> = { ...topics };
+      const avoid = () => Object.values(filled).filter(v => v.trim().length > 0);
 
-      for (const field of ALL_FIELDS) {
-        if (filled[field.key]?.trim()) continue; // 이미 채워진 필드는 건너뜀
-
-        const avoid = Object.values(filled).filter(v => v.trim().length > 0);
+      const fetchTier = async (tier: 'module1' | 'hard' | 'easy') => {
         const res = await fetch('/api/admin/updated-listening/suggest-topics', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ kind: field.suggestKind, avoid }),
+          body: JSON.stringify({ tier, avoid: avoid() }),
         });
         const data = await res.json();
         if (!data.ok) throw new Error(data.error ?? 'Failed to suggest topics');
+        return data.topics as { conversation?: string[]; announcement?: string[]; lecture?: string[] };
+      };
 
-        const pick = data.suggestions?.[0];
-        if (pick) filled[field.key] = pick;
+      // Module 1: conversation / announcement / lecture 각 1개
+      if (!filled.m1_conversation?.trim() || !filled.m1_announcement?.trim() || !filled.m1_lecture1?.trim()) {
+        const t = await fetchTier('module1');
+        if (!filled.m1_conversation?.trim() && t.conversation?.[0]) filled.m1_conversation = t.conversation[0];
+        if (!filled.m1_announcement?.trim() && t.announcement?.[0]) filled.m1_announcement = t.announcement[0];
+        if (!filled.m1_lecture1?.trim() && t.lecture?.[0]) filled.m1_lecture1 = t.lecture[0];
+      }
+
+      // Module 2 - Hard: lecture 2개 + announcement 2개 (announcement는 easy와 공유)
+      if (
+        !filled.m2_lecture1?.trim() ||
+        !filled.m2_lecture2?.trim() ||
+        !filled.m2_announcement1?.trim() ||
+        !filled.m2_announcement2?.trim()
+      ) {
+        const t = await fetchTier('hard');
+        if (!filled.m2_lecture1?.trim() && t.lecture?.[0]) filled.m2_lecture1 = t.lecture[0];
+        if (!filled.m2_lecture2?.trim() && t.lecture?.[1]) filled.m2_lecture2 = t.lecture[1];
+        if (!filled.m2_announcement1?.trim() && t.announcement?.[0]) filled.m2_announcement1 = t.announcement[0];
+        if (!filled.m2_announcement2?.trim() && t.announcement?.[1]) filled.m2_announcement2 = t.announcement[1];
+      }
+
+      // Module 2 - Easy: conversation 3개
+      if (
+        !filled.m2_conversation1?.trim() ||
+        !filled.m2_conversation2?.trim() ||
+        !filled.m2_conversation3?.trim()
+      ) {
+        const t = await fetchTier('easy');
+        if (!filled.m2_conversation1?.trim() && t.conversation?.[0]) filled.m2_conversation1 = t.conversation[0];
+        if (!filled.m2_conversation2?.trim() && t.conversation?.[1]) filled.m2_conversation2 = t.conversation[1];
+        if (!filled.m2_conversation3?.trim() && t.conversation?.[2]) filled.m2_conversation3 = t.conversation[2];
       }
 
       setTopics(filled);
