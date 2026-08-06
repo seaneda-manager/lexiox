@@ -549,7 +549,7 @@ export async function loadSessionWordsAction(
             .is("completed_at", null)
             .lte("available_at", todayISO)
             .order("available_at", { ascending: false })
-            .order("day_index", { ascending: false })
+            .order("day_index", { ascending: true })  // ✅ 오름차순: 가장 처음 미완료 day
             .order("assigned_at", { ascending: false });
         } else {
           // Review mode: find the specific dayIndex
