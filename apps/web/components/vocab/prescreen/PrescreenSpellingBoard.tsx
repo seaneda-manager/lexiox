@@ -1,16 +1,8 @@
 "use client";
-
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
-type Word = {
-  id: string;
-  text: string;
-  meanings_ko?: string[];
-};
-
-type SpellingResult = {
-  spellingFailedIds: string[];
-};
+type Word = { id: string; text: string; meanings_ko?: string[] };
+type SpellingResult = { spellingFailedIds: string[] };
 
 function safeWords(v: any): Word[] {
   return Array.isArray(v) ? (v as Word[]).filter(Boolean) : [];
@@ -20,10 +12,8 @@ function norm(s: string) {
   return String(s ?? "").trim().toLowerCase();
 }
 
-// Confetti 파티클 생성
 function createConfetti() {
   if (typeof window === "undefined") return;
-
   const colors = ["#0F766E", "#F97316", "#F59E0B", "#EC4899"];
   const particles = 30;
 
@@ -53,7 +43,6 @@ function createConfetti() {
   }
 }
 
-/* ── Progress Bar ─────────────────────────────────────────── */
 function ProgressBar({ current, total }: { current: number; total: number }) {
   const pct = total > 0 ? Math.round((current / total) * 100) : 0;
   return (
@@ -76,7 +65,6 @@ function ProgressBar({ current, total }: { current: number; total: number }) {
   );
 }
 
-/* ── Main ─────────────────────────────────────────────────── */
 export default function PrescreenSpellingBoard({
   words,
   onFinish,
@@ -86,21 +74,17 @@ export default function PrescreenSpellingBoard({
 }) {
   const list = useMemo(() => safeWords(words), [words]);
   const total = list.length;
-
   const [i, setI] = useState(0);
   const [value, setValue] = useState("");
   const [failedIds, setFailedIds] = useState<string[]>([]);
   const [shake, setShake] = useState(false);
   const [animKey, setAnimKey] = useState(0);
-
-  // Streak 시스템
   const [streak, setStreak] = useState(0);
   const [bestStreak, setBestStreak] = useState(0);
   const [completedWords, setCompletedWords] = useState<Word[]>([]);
   const [showStreakEffect, setShowStreakEffect] = useState(false);
 
-  const inputRef = useRef<HTMLInputElement | null>(null);
-
+  const inputRef = useRef<HTMLInputElement>(null);
   const cur = list[i] ?? null;
   const answer = cur?.text ?? "";
   const meaning = (cur?.meanings_ko ?? []).filter(Boolean).slice(0, 2);
@@ -110,30 +94,26 @@ export default function PrescreenSpellingBoard({
   const goNext = (nextFailed: string[], isCorrect: boolean = false) => {
     const nextIndex = i + 1;
 
-    // Streak 업데이트
     if (isCorrect) {
       const newStreak = streak + 1;
       setStreak(newStreak);
       setBestStreak(Math.max(bestStreak, newStreak));
 
-      // Streak 시각 효과 (5, 10, 15 등)
       if (newStreak > 0 && newStreak % 5 === 0) {
         setShowStreakEffect(true);
         createConfetti();
         setTimeout(() => setShowStreakEffect(false), 600);
       }
 
-      // 완료 단어 목록 추가
       if (cur) setCompletedWords((p) => [...p, cur]);
 
-      // 자동 음성 재생
       if (typeof window !== "undefined" && window.speechSynthesis) {
         const utterance = new SpeechSynthesisUtterance(answer);
         utterance.lang = "en-US";
         window.speechSynthesis.speak(utterance);
       }
     } else {
-      setStreak(0); // 틀리면 Streak 초기화
+      setStreak(0);
     }
 
     if (nextIndex >= total) return done(nextFailed);
@@ -159,7 +139,6 @@ export default function PrescreenSpellingBoard({
     }
     setShake(true);
     window.setTimeout(() => setShake(false), 280);
-    // 오답 시 Streak 리셋
     setStreak(0);
     if (!failedIds.includes(cur.id)) setFailedIds((p) => [...p, cur.id]);
   };
@@ -175,7 +154,6 @@ export default function PrescreenSpellingBoard({
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [i, value, answer, failedIds, cur?.id]);
 
   if (!list.length) {
@@ -190,7 +168,6 @@ export default function PrescreenSpellingBoard({
 
   return (
     <div className="fixed inset-0 w-screen h-screen flex bg-[#F7FAF9] z-50 overflow-hidden">
-      {/* 좌측 메인 영역 (70%) */}
       <div className="flex-[7] flex flex-col justify-center items-center px-6 py-8 overflow-y-auto">
         <div
           className="w-full flex flex-col gap-6 items-center px-6"
@@ -200,7 +177,6 @@ export default function PrescreenSpellingBoard({
             animation: "lx-card-in 220ms cubic-bezier(0.22,1,0.36,1) both",
           }}
         >
-          {/* 헤더 */}
           <div className="space-y-3 w-full">
             <div className="flex items-center gap-2">
               <span className="text-sm font-extrabold tracking-widest text-[#0F766E] uppercase">
@@ -212,7 +188,6 @@ export default function PrescreenSpellingBoard({
             <ProgressBar current={i + 1} total={total} />
           </div>
 
-          {/* 카드 */}
           <div
             className={[
               "rounded-3xl bg-white shadow-[0_4px_32px_rgba(0,0,0,0.08)] border border-slate-100 px-8 py-8 space-y-5 w-full",
@@ -226,7 +201,6 @@ export default function PrescreenSpellingBoard({
               transition: "transform 200ms ease-out",
             }}
           >
-            {/* 뜻 힌트 */}
             <div className="text-center space-y-1">
               <p className="text-sm font-semibold text-slate-400 uppercase tracking-wider">뜻</p>
               <p className="font-bold text-slate-700" style={{ fontSize: "clamp(24px, 5cqi, 48px)" }}>
@@ -236,7 +210,6 @@ export default function PrescreenSpellingBoard({
 
             <div className="w-10 h-[2px] bg-[#0F766E] mx-auto rounded-full opacity-30" />
 
-            {/* 입력 */}
             <div className="space-y-2">
               <p className="text-sm font-semibold text-slate-400 text-center">영어 단어를 입력하세요</p>
               <input
@@ -253,7 +226,6 @@ export default function PrescreenSpellingBoard({
             </div>
           </div>
 
-          {/* 버튼 */}
           <div className="flex flex-col gap-3 w-full">
             <button
               type="button"
@@ -273,9 +245,7 @@ export default function PrescreenSpellingBoard({
         </div>
       </div>
 
-      {/* 우측 사이드바 (30%) */}
       <div className="flex-[3] bg-white border-l border-slate-200 px-6 py-8 flex flex-col gap-6 overflow-y-auto">
-        {/* Streak 카드 */}
         <div className="rounded-2xl bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-200 p-5 space-y-2">
           <div className="text-sm font-semibold text-slate-600 uppercase tracking-wider">🔥 Streak</div>
           <div className="text-4xl font-black text-orange-600">{streak}x</div>
@@ -284,7 +254,6 @@ export default function PrescreenSpellingBoard({
           </div>
         </div>
 
-        {/* 완료한 단어 */}
         <div className="space-y-3">
           <div className="text-sm font-semibold text-slate-600 uppercase tracking-wider">✅ 완료한 단어</div>
           <div className="space-y-2 max-h-96 overflow-y-auto">
@@ -301,17 +270,17 @@ export default function PrescreenSpellingBoard({
         </div>
       </div>
 
-      <style jsx global>{`
+      <style>{`
         @keyframes lx-card-in {
           from { opacity: 0; transform: translateY(10px) scale(0.98); }
-          to   { opacity: 1; transform: translateY(0)    scale(1); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
         }
         @keyframes lx-shake {
           0%,100% { transform: translateX(0); }
-          20%     { transform: translateX(-6px); }
-          40%     { transform: translateX(6px); }
-          60%     { transform: translateX(-4px); }
-          80%     { transform: translateX(4px); }
+          20% { transform: translateX(-6px); }
+          40% { transform: translateX(6px); }
+          60% { transform: translateX(-4px); }
+          80% { transform: translateX(4px); }
         }
         @keyframes fall {
           to {
