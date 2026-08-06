@@ -15,10 +15,18 @@ import type {
   WEmailWritingItem,
   WAcademicWritingItem,
 } from "@/models/writing";
-import { normalizeBuildSentenceQuestion, joinTokens } from "@/lib/writing/build-sentence-parser";
+import { normalizeBuildSentenceQuestion } from "@/lib/writing/build-sentence-parser";
+import Avatar from "@/components/Avatar";
+import { ETSLayout } from "./ETSLayout";
+import { WritingIntroScreen, TaskBeginScreen, LeaveConfirmScreen } from "./WritingInterstitials";
 
 // ── 타입 ──────────────────────────────────────────────────────────────
-type TestPhase = "task1" | "task2" | "task3" | "done";
+type TestPhase =
+  | "intro"
+  | "task1_begin" | "task1" | "leave_task1"
+  | "task2_begin" | "task2" | "leave_task2"
+  | "task3_begin" | "task3"
+  | "done";
 
 type Props = {
   test: WWritingTest2026;
@@ -63,88 +71,7 @@ function useCountdown(initialSeconds: number, onExpire: () => void) {
   return { timeLeft, display: `${mins}:${secs}` };
 }
 
-// ── ETS 공통 레이아웃 래퍼 ────────────────────────────────────────────
-function ETSLayout({
-  title,
-  timerDisplay,
-  questionLabel,
-  totalQuestions,
-  currentQuestion,
-  onBack,
-  backDisabled,
-  onNext,
-  nextDisabled,
-  children,
-}: {
-  title?: string;
-  timerDisplay: string;
-  questionLabel?: string;
-  totalQuestions?: number;
-  currentQuestion?: number;
-  onBack?: () => void;
-  backDisabled?: boolean;
-  onNext: () => void;
-  nextDisabled?: boolean;
-  children: React.ReactNode;
-}) {
-  const progressPct = totalQuestions && currentQuestion
-    ? (currentQuestion / totalQuestions) * 100 : 0;
-
-  return (
-    <div className="flex flex-col" style={{ height: "100%", backgroundColor: "#F4F6F9", fontFamily: "Arial, Helvetica, sans-serif" }}>
-      {/* Header */}
-      <header className="flex items-center justify-between px-6 shrink-0" style={{ height: 60, backgroundColor: "#1A2B4C" }}>
-        <span style={{ fontSize: 16, fontWeight: 700, color: "#FFFFFF" }}>
-          {title ?? "Updated TOEFL iBT - Writing"}
-        </span>
-        <div className="flex items-center" style={{ gap: 8 }}>
-          {onBack && (
-            <button
-              onClick={onBack}
-              disabled={backDisabled}
-              className="rounded border border-slate-400 bg-transparent text-white disabled:opacity-30"
-              style={{ width: 90, height: 36, fontSize: 13 }}
-            >
-              &lt; Back
-            </button>
-          )}
-          <button
-            onClick={onNext}
-            disabled={nextDisabled}
-            className="rounded font-semibold text-white disabled:opacity-40"
-            style={{ width: 100, height: 36, fontSize: 13, backgroundColor: "#0073E6", border: "none", borderRadius: 4 }}
-          >
-            Next &gt;
-          </button>
-        </div>
-      </header>
-
-      {/* Body */}
-      <main className="flex-1 overflow-y-auto overflow-x-hidden">
-        {children}
-      </main>
-
-      {/* Footer */}
-      <footer className="flex items-center justify-between shrink-0 border-t px-6"
-        style={{ height: 60, backgroundColor: "#FFFFFF", borderColor: "#E0E0E0" }}>
-        <span style={{ fontSize: 15, fontWeight: 500, color: "#333333" }}>
-          {questionLabel ?? ""}
-        </span>
-        <div className="flex items-center gap-4">
-          {totalQuestions && currentQuestion ? (
-            <div className="overflow-hidden rounded-full" style={{ width: 240, height: 8, backgroundColor: "#E0E0E0" }}>
-              <div className="h-full rounded-full transition-all duration-500"
-                style={{ width: `${progressPct}%`, backgroundColor: "#0073E6" }} />
-            </div>
-          ) : null}
-          <span className="font-mono font-semibold" style={{ fontSize: 15, color: "#333333" }}>
-            {timerDisplay}
-          </span>
-        </div>
-      </footer>
-    </div>
-  );
-}
+// ETSLayout은 components/writing/ETSLayout.tsx로 분리됨 (WritingInterstitials와 공유, 순환 참조 방지)
 
 // ══════════════════════════════════════════════════════════════════════
 // Task 1: Build a Sentence
@@ -246,27 +173,58 @@ function BuildASentence({
     <ETSLayout
       timerDisplay={timerDisplay}
       questionLabel={`Question ${questionNumber} of ${item.questions.length}`}
-      totalQuestions={11}
+      totalQuestions={12}
       currentQuestion={questionNumber}
       onBack={handleBack}
       backDisabled={qIndex === 0}
       onNext={handleNext}
     >
-      <div style={{ maxWidth: 1400, margin: "30px auto", padding: "0 24px", display: "flex", flexDirection: "column", gap: 24 }}>
+      <div style={{ maxWidth: 1200, margin: "24px auto", padding: "0 24px", display: "flex", flexDirection: "column", gap: 24 }}>
 
         {/* 지시문 + 문맥 카드 */}
         <div style={{ backgroundColor: "#FFFFFF", borderRadius: 8, padding: 24, boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
-          <p style={{ fontSize: 13, color: "#888", marginBottom: 12 }}>
+          <p style={{ fontSize: 13, color: "#888", marginBottom: 16 }}>
             {item.instruction ?? "Read the context below and arrange the words to complete the response."}
           </p>
-          <p style={{ fontSize: 18, color: "#333333", lineHeight: 1.7 }}>
-            <span>{q.contextLeadIn} </span>
-            <span style={{ display: "inline-block", minWidth: 48, borderBottom: "2px solid #0073E6", color: "#0073E6", fontStyle: "italic" }}>
-              {/* 조각 사이 공백은 여기서 자동으로 한 칸씩 들어간다 */}
-              {joinTokens(selected.map((id) => tokenById.get(id) ?? ""), current?.punctuation ?? "") || "___"}
-            </span>
-            <span> {q.contextLeadOut}</span>
-          </p>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            {/* Turn 1: 질문/발화 */}
+            <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+              <Avatar name="A" size="md" />
+              <p style={{ fontSize: 18, color: "#333333", lineHeight: 1.7, margin: 0, paddingTop: 6 }}>
+                {q.contextLeadIn}
+              </p>
+            </div>
+
+            {/* Turn 2: 조각별 빈칸 응답 */}
+            <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+              <Avatar name="B" size="md" />
+              <p style={{ fontSize: 18, color: "#333333", lineHeight: 1.7, margin: 0, paddingTop: 6 }}>
+                {Array.from({ length: current?.correctOrder.length ?? 0 }).map((_, i) => {
+                  const tokenId = selected[i];
+                  const text = tokenId ? tokenById.get(tokenId) ?? "" : "";
+                  return (
+                    <span
+                      key={i}
+                      style={{
+                        display: "inline-block",
+                        minWidth: 48,
+                        margin: "0 4px",
+                        borderBottom: "2px solid #0073E6",
+                        color: "#0073E6",
+                        fontStyle: "italic",
+                        textAlign: "center",
+                      }}
+                    >
+                      {text || " "}
+                    </span>
+                  );
+                })}
+                <span>{current?.punctuation ?? ""}</span>
+                <span> {q.contextLeadOut}</span>
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Word Bank */}
@@ -358,12 +316,15 @@ function BuildASentence({
 // ══════════════════════════════════════════════════════════════════════
 function WriteAnEmail({
   item,
+  text,
+  onTextChange,
   onComplete,
 }: {
   item: WEmailWritingItem;
+  text: string;
+  onTextChange: (text: string) => void;
   onComplete: (text: string) => void;
 }) {
-  const [text, setText] = useState("");
   const timeLimit = item.recommendedTimeSeconds ?? 420;
   const { display: timerDisplay } = useCountdown(timeLimit, () => onComplete(text));
   const wordCount = countWords(text);
@@ -384,7 +345,7 @@ function WriteAnEmail({
     >
       {/* 좁은 화면(사이드바 있는 창 등)에서는 에디터가 아래로 내려오도록 wrap.
           이전에는 좌측 650px 고정 + wrap 없음이라 에디터가 화면 밖으로 밀려 안 보였다. */}
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 24, padding: "30px 40px", height: "100%" }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 24, maxWidth: 1200, margin: "0 auto", padding: "24px 40px", height: "100%", boxSizing: "border-box" }}>
 
         {/* 좌측: Scenario Card */}
         <div style={{
@@ -440,7 +401,7 @@ function WriteAnEmail({
           <div style={{ flex: 1, position: "relative" }}>
             <textarea
               value={text}
-              onChange={(e) => setText(e.target.value)}
+              onChange={(e) => onTextChange(e.target.value)}
               spellCheck={false}
               onCopy={(e) => e.preventDefault()}
               onPaste={(e) => e.preventDefault()}
@@ -485,12 +446,15 @@ function WriteAnEmail({
 // ══════════════════════════════════════════════════════════════════════
 function AcademicDiscussion({
   item,
+  text,
+  onTextChange,
   onComplete,
 }: {
   item: WAcademicWritingItem;
+  text: string;
+  onTextChange: (text: string) => void;
   onComplete: (text: string) => void;
 }) {
-  const [text, setText] = useState("");
   // Q12, 10분(600초) 독립 타이머
   const timeLimit = item.recommendedTimeSeconds ?? 600;
   const { display: timerDisplay } = useCountdown(timeLimit, () => onComplete(text));
@@ -509,7 +473,7 @@ function AcademicDiscussion({
       currentQuestion={12}
       onNext={() => onComplete(text)}
     >
-      <div style={{ maxWidth: 1600, margin: "20px auto", padding: "0 24px", display: "flex", flexDirection: "column", gap: 20 }}>
+      <div style={{ maxWidth: 1200, margin: "24px auto", padding: "0 24px", display: "flex", flexDirection: "column", gap: 20 }}>
 
         {/* 1단: Professor */}
         <div style={{
@@ -557,7 +521,7 @@ function AcademicDiscussion({
         <div style={{ position: "relative", backgroundColor: "#FFFFFF", borderRadius: 8, boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
           <textarea
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => onTextChange(e.target.value)}
             spellCheck={false}
             onCopy={(e) => e.preventDefault()}
             onPaste={(e) => e.preventDefault()}
@@ -598,22 +562,27 @@ function AcademicDiscussion({
 // 메인 Runner
 // ══════════════════════════════════════════════════════════════════════
 export default function WritingRunnerETS({ test, onFinish }: Props) {
-  const [phase, setPhase] = useState<TestPhase>("task1");
+  const [phase, setPhase] = useState<TestPhase>("intro");
   const [task1Scores, setTask1Scores] = useState<{ questionId: string; correct: boolean; userSequence: string[] }[]>([]);
   const [task2Text, setTask2Text] = useState("");
+  const [task3Text, setTask3Text] = useState("");
 
   const buildItem = test.items.find((i) => i.taskKind === "build_a_sentence") as WBuildSentenceItem | undefined;
   const emailItem = test.items.find((i) => i.taskKind === "email") as WEmailWritingItem | undefined;
   const academicItem = test.items.find((i) => i.taskKind === "academic_discussion") as WAcademicWritingItem | undefined;
 
+  // intro 다음에 실제로 존재하는 첫 Task의 "_begin" 화면으로 간다.
+  const firstBeginPhase: TestPhase = buildItem ? "task1_begin" : emailItem ? "task2_begin" : academicItem ? "task3_begin" : "done";
+
   const handleTask1Complete = useCallback((scores: typeof task1Scores) => {
     setTask1Scores(scores);
-    setPhase(emailItem ? "task2" : academicItem ? "task3" : "done");
+    // 다음 Task가 있을 때만 "Time Remaining" 이탈 확인 화면을 보여준다.
+    setPhase(emailItem || academicItem ? "leave_task1" : "done");
   }, [emailItem, academicItem]);
 
   const handleTask2Complete = useCallback((text: string) => {
     setTask2Text(text);
-    setPhase(academicItem ? "task3" : "done");
+    setPhase(academicItem ? "leave_task2" : "done");
   }, [academicItem]);
 
   // phase가 done이 되면 onFinish 호출 (Task 3이 없는 경우)
@@ -624,6 +593,7 @@ export default function WritingRunnerETS({ test, onFinish }: Props) {
   }, [phase, academicItem, task1Scores, task2Text, onFinish]);
 
   const handleTask3Complete = useCallback((text: string) => {
+    setTask3Text(text);
     setPhase("done");
     onFinish?.({ task1Scores, task2Text, task3Text: text });
   }, [task1Scores, task2Text, onFinish]);
@@ -640,12 +610,83 @@ export default function WritingRunnerETS({ test, onFinish }: Props) {
     );
   }
 
+  if (phase === "intro") {
+    const totalQuestions = (buildItem?.questions.length ?? 0) + (emailItem ? 1 : 0) + (academicItem ? 1 : 0);
+    const taskTypes = [
+      buildItem && { title: "Build a Sentence", description: "Create a grammatical sentence." },
+      emailItem && { title: "Write an Email", description: "Write an email using information provided." },
+      academicItem && { title: "Write for an Academic Discussion", description: "Participate in an online discussion." },
+    ].filter((t): t is { title: string; description: string } => Boolean(t));
+
+    return (
+      <WritingIntroScreen
+        totalQuestions={totalQuestions}
+        taskTypes={taskTypes}
+        onContinue={() => setPhase(firstBeginPhase)}
+      />
+    );
+  }
+
+  if (phase === "task1_begin") {
+    if (!buildItem) { setPhase(emailItem ? "task2_begin" : academicItem ? "task3_begin" : "done"); return null; }
+    return (
+      <TaskBeginScreen
+        title="Build a Sentence"
+        body="Move the words in the boxes to create grammatical sentences. In an actual test, a clock will show you how much time you have to complete this task."
+        onBegin={() => setPhase("task1")}
+      />
+    );
+  }
   if (phase === "task1" && buildItem) return <BuildASentence item={buildItem} onComplete={handleTask1Complete} />;
-  if (phase === "task2" && emailItem) return <WriteAnEmail item={emailItem} onComplete={handleTask2Complete} />;
-  if (phase === "task3" && academicItem) return <AcademicDiscussion item={academicItem} onComplete={handleTask3Complete} />;
+  if (phase === "leave_task1") {
+    return (
+      <LeaveConfirmScreen
+        onBack={() => setPhase("task1")}
+        onContinue={() => setPhase(emailItem ? "task2_begin" : "task3_begin")}
+      />
+    );
+  }
+
+  if (phase === "task2_begin") {
+    if (!emailItem) { setPhase(academicItem ? "task3_begin" : "done"); return null; }
+    const minutes = Math.round((emailItem.recommendedTimeSeconds ?? 420) / 60);
+    return (
+      <TaskBeginScreen
+        title="Write an Email"
+        body={`You will read some information and use the information to write an email. You will have ${minutes} minutes to write the email.`}
+        onBegin={() => setPhase("task2")}
+      />
+    );
+  }
+  if (phase === "task2" && emailItem) {
+    return <WriteAnEmail item={emailItem} text={task2Text} onTextChange={setTask2Text} onComplete={handleTask2Complete} />;
+  }
+  if (phase === "leave_task2") {
+    return (
+      <LeaveConfirmScreen
+        onBack={() => setPhase("task2")}
+        onContinue={() => setPhase("task3_begin")}
+      />
+    );
+  }
+
+  if (phase === "task3_begin") {
+    if (!academicItem) { setPhase("done"); return null; }
+    const minutes = Math.round((academicItem.recommendedTimeSeconds ?? 600) / 60);
+    return (
+      <TaskBeginScreen
+        title="Write for an Academic Discussion"
+        body={`A professor has posted a question about a topic and students have responded with their thoughts and ideas. Make a contribution to the discussion. You will have ${minutes} minutes to write.`}
+        onBegin={() => setPhase("task3")}
+      />
+    );
+  }
+  if (phase === "task3" && academicItem) {
+    return <AcademicDiscussion item={academicItem} text={task3Text} onTextChange={setTask3Text} onComplete={handleTask3Complete} />;
+  }
 
   // fallback: 해당 task 없으면 skip
-  if (phase === "task1") { setPhase(emailItem ? "task2" : "task3"); return null; }
-  if (phase === "task2") { setPhase("task3"); return null; }
+  if (phase === "task1") { setPhase(emailItem ? "task2_begin" : academicItem ? "task3_begin" : "done"); return null; }
+  if (phase === "task2") { setPhase(academicItem ? "task3_begin" : "done"); return null; }
   return null;
 }
