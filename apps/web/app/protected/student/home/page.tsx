@@ -150,6 +150,7 @@ export default async function StudentPage() {
     { data: activities, error: activitiesError },
     { data: prescriptions, error: prescriptionsError },
     { data: pendingExams },
+    { data: vocabAssignments },
   ] = await Promise.all([
     supabase
       .from("student_activities")
@@ -176,6 +177,15 @@ export default async function StudentPage() {
       .from("generated_exam_assignments")
       .select("id, generated_exam_responses(submitted_at)")
       .eq("student_id", user.id),
+
+    // Vocabulary Day 진행 상황
+    supabase
+      .from("student_vocab_assignments")
+      .select("id, set_id, track_id, day_index, completed_at")
+      .in("student_id", studentKeys)
+      .is("canceled_at", null)
+      .order("day_index", { ascending: true })
+      .limit(1000),
   ]);
 
   if (activitiesError) {
@@ -188,12 +198,19 @@ export default async function StudentPage() {
 
   const activityRows = (activities ?? []) as StudentActivity[];
   const prescriptionRows = (prescriptions ?? []) as StudentPrescription[];
+  const vocabAssignmentRows = (vocabAssignments ?? []) as Array<{ id: string; track_id: string; day_index: number; completed_at: string | null }>;
 
   const unsubmittedExams = (pendingExams ?? []).filter((a: any) => !a.generated_exam_responses?.[0]?.submitted_at);
 
   const current = activityRows.find((a) => a.status === "in_progress") ?? null;
   const todos = activityRows.filter((a) => a.status === "todo");
   const recent = activityRows.slice(0, 5);
+
+  // Vocabulary Day 진행 상황
+  const completedDayCount = vocabAssignmentRows.filter((a) => a.completed_at).length;
+  const nextIncompleteDay = vocabAssignmentRows.find((a) => !a.completed_at);
+  const totalDayCount = vocabAssignmentRows.length;
+  const vocabProgress = totalDayCount > 0 ? Math.round((completedDayCount / totalDayCount) * 100) : 0;
 
   return (
     <main className="mx-auto max-w-6xl space-y-6 px-6 py-8">
@@ -212,6 +229,48 @@ export default async function StudentPage() {
       )}
 
       <section className="grid gap-4 md:grid-cols-2">
+        {/* Vocabulary Day Progress Card */}
+        {totalDayCount > 0 && (
+          <Link
+            href={nextIncompleteDay ? "/vocab/session" : "/vocab/hub"}
+            className="group rounded-3xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md"
+          >
+            <div className="space-y-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-600">
+                  📚 Vocabulary Track
+                </p>
+                <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950">
+                  Day {(nextIncompleteDay?.day_index ?? totalDayCount) + 1}/{totalDayCount}
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  {nextIncompleteDay
+                    ? `다음: Day ${(nextIncompleteDay.day_index ?? 0) + 1}을 진행하세요.`
+                    : "모든 Day를 완료했습니다! 🎉"}
+                </p>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-xs font-semibold">
+                  <span className="text-slate-600">진행률</span>
+                  <span className="text-blue-600">{vocabProgress}%</span>
+                </div>
+                <div className="h-2 w-full rounded-full bg-slate-200 overflow-hidden">
+                  <div
+                    className="h-full bg-blue-500 transition-all"
+                    style={{ width: `${vocabProgress}%` }}
+                  />
+                </div>
+                <p className="text-xs text-slate-500">
+                  {completedDayCount}/{totalDayCount} 완료
+                </p>
+              </div>
+              <span className="inline-block rounded-full bg-blue-700 px-4 py-2 text-xs font-bold text-white transition group-hover:bg-blue-800">
+                {nextIncompleteDay ? "진행하기" : "보기"} →
+              </span>
+            </div>
+          </Link>
+        )}
+
         <Link
           href="/vocab/hub"
           className="group rounded-3xl border border-violet-200 bg-gradient-to-br from-violet-50 via-white to-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-md"
