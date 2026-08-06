@@ -155,16 +155,19 @@ export default function VocabSessionLearningStage({
                       display: flex;
                       justify-content: center;
                       align-items: center;
-                      gap: 6px;
+                      gap: 4px;
                       width: 100%;
                       padding: 24px 0;
-                      flex-wrap: wrap;
+                      flex-wrap: nowrap;
+                      overflow: visible;
                     }
                     .letter-box {
-                      width: 32px;
+                      width: auto;
+                      min-width: 28px;
                       text-align: center;
                       font-weight: 300;
                       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
+                      flex-shrink: 0;
                     }
                   `}</style>
 
