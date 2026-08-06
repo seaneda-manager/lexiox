@@ -32,8 +32,14 @@ import SpeedChallengeRunner from "@/components/vocab/speed/SpeedChallengeRunner"
 import type { SpeedQuestion, SpeedAttemptResult } from "@/models/vocab/speed.types";
 
 // ✅ server action (service-role)
-import { loadSessionWordsAction, completeVocabDayAction, saveVocabAttemptAction } from "./actions";
-import type { LoadSessionWordsActionResult } from "./actions";
+import {
+  loadSessionWordsAction,
+  completeVocabDayAction,
+  saveVocabAttemptAction,
+  getVocabSessionProgressAction,
+  saveVocabSessionProgressAction,
+} from "./actions";
+import type { LoadSessionWordsActionResult, VocabSessionProgressData } from "./actions";
 
 import type { PrescreenResult } from "@/models/vocab/session/prescreen";
 import type { SpellingResult } from "@/models/vocab/session/spelling";
@@ -734,6 +740,47 @@ export default function VocabSessionPage() {
         const user = data.user;
         const id = user?.id;
 
+        // Check for saved session progress
+        const setIdParam = shortcut.setId ? shortcut.setId : null;
+        if (setIdParam && typeof window !== 'undefined') {
+          const saved = localStorage.getItem(`vocab_progress_${setIdParam}`);
+          if (saved) {
+            try {
+              const progress = JSON.parse(saved);
+              console.log('🔄 Resuming session from:', progress.stage);
+              // Resume from saved stage
+              if (progress.stage === 'SPELLING') {
+                setPrescreenResult(progress.prescreenResult);
+                setSpellingResult(makeEmptySpellingResult());
+                setStage('SPELLING');
+                return;
+              } else if (progress.stage === 'SUMMARY') {
+                setPrescreenResult(progress.prescreenResult);
+                setSpellingResult(progress.spellingResult || makeEmptySpellingResult());
+
+                // Calculate learning words from prescreen & spelling results
+                const base = (progress.prescreenResult?.unknownWordIds || [])
+                  .map((id: string) => allWords.find((w) => w.id === id))
+                  .filter(Boolean) as SessionWord[];
+
+                const failedArr = (progress.spellingResult?.spellingFailedIds || [])
+                  .map((id: string) => allWords.find((w) => w.id === id))
+                  .filter(Boolean) as SessionWord[];
+
+                const map = new Map<string, SessionWord>();
+                [...base, ...failedArr].forEach((w) => map.set(w.id, w));
+
+                const final = [...map.values()];
+                setLearningWords(final);
+                setStage('LEARNING_INTRO');
+                return;
+              }
+            } catch (e) {
+              console.warn('Failed to resume session:', e);
+            }
+          }
+        }
+
         const forcedSetId = shortcut.setId ? shortcut.setId : null;
 
         if (!id) {
@@ -1403,15 +1450,20 @@ export default function VocabSessionPage() {
   }, [allWords, speedWrongIds]);
 
   async function finishDay() {
-    // ✅ DONE 화면을 바로 보여주고, 완료 기록은 백그라운드에서 처리
-    setStage("DONE");
-
-    // 백그라운드에서 완료 기록 (기다리지 않음)
+    // ✅ 먼저 완료 기록을 저장하고, 그 다음 DONE 화면 표시
     if (sessionSetId) {
-      completeVocabDayAction({ setId: sessionSetId }).catch((e) => {
-        console.warn("Background: Failed to complete day:", e);
-      });
+      try {
+        console.log('[FINISH] Saving day completion...');
+        await completeVocabDayAction({ setId: sessionSetId });
+        console.log('[FINISH] ✅ Day completion saved!');
+      } catch (e) {
+        console.error('[FINISH] ❌ Failed to complete day:', e);
+        // 실패해도 DONE 화면은 보여주되, 경고 표시
+      }
     }
+
+    // DONE 화면 표시
+    setStage("DONE");
   }
 
   async function handleSpeedFinish(result: SpeedAttemptResult) {
@@ -1480,8 +1532,7 @@ export default function VocabSessionPage() {
           .from("vocab_learning_attempts")
           .select("wrong_word_ids")
           .eq("student_id", debugInfo.academyStudentId)
-          .gte("attempted_at", twoDaysAgo.toISOString())
-          .execute();
+          .gte("attempted_at", twoDaysAgo.toISOString());
 
         if (error) {
           console.warn("Failed to load 2-days review:", error);
@@ -1612,6 +1663,23 @@ export default function VocabSessionPage() {
 
               const knownCount = Array.isArray((r as any)?.knownWordIds) ? (r as any).knownWordIds.length : 0;
 
+              // 진행 상황 저장 (localStorage)
+              if (sessionSetId && typeof window !== 'undefined') {
+                localStorage.setItem(`vocab_progress_${sessionSetId}`, JSON.stringify({
+                  stage: knownCount === 0 ? "SUMMARY" : "SPELLING",
+                  prescreenResult: r,
+                }));
+              }
+
+              if (sessionSetId) {
+                saveVocabSessionProgressAction({
+                  setId: sessionSetId,
+                  currentStage: knownCount === 0 ? "SUMMARY" : "SPELLING",
+                  currentWordIndex: 0,
+                  prescreenResult: r,
+                }).catch((e) => console.warn("Failed to save session progress:", e));
+              }
+
               if (knownCount === 0) {
                 setSpellingResult(makeEmptySpellingResult());
                 setStage("SUMMARY");
@@ -1665,6 +1733,24 @@ export default function VocabSessionPage() {
                 } catch (e) {
                   console.warn("Failed to save spelling attempt:", e);
                 }
+              }
+
+              // 진행 상황 저장 (localStorage)
+              if (sessionSetId && typeof window !== 'undefined') {
+                localStorage.setItem(`vocab_progress_${sessionSetId}`, JSON.stringify({
+                  stage: "SUMMARY",
+                  prescreenResult,
+                  spellingResult: r,
+                }));
+              }
+
+              if (sessionSetId) {
+                saveVocabSessionProgressAction({
+                  setId: sessionSetId,
+                  currentStage: "SUMMARY",
+                  currentWordIndex: 0,
+                  spellingResult: r,
+                }).catch((e) => console.warn("Failed to save session progress:", e));
               }
 
               setStage("SUMMARY");
@@ -2424,6 +2510,24 @@ export default function VocabSessionPage() {
 
             {/* 버튼 */}
             <div className="space-y-2">
+              <button
+                className="w-full rounded-xl bg-blue-600 py-3 text-white font-bold hover:bg-blue-700 transition"
+                onClick={() => {
+                  // Clear current day's progress and go to next day
+                  if (sessionSetId) {
+                    try {
+                      localStorage.removeItem(`vocab_progress_${sessionSetId}`);
+                      sessionStorage.removeItem(SPEED_DRILL_KEY);
+                      sessionStorage.removeItem(STORAGE_KEY);
+                    } catch {}
+                  }
+                  // Navigate without setId so server fetches next day
+                  window.location.href = "/vocab/session";
+                }}
+              >
+                다음 Day 시작 ➔
+              </button>
+
               <button
                 className="w-full rounded-xl bg-emerald-600 py-3 text-white font-bold hover:bg-emerald-700 transition"
                 onClick={() => window.location.reload()}

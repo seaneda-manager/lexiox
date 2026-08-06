@@ -1042,13 +1042,15 @@ export async function completeVocabDayAction(input: {
     // 다음 Day 오픈 (큐 정렬) — 실패해도 완료 자체는 성공 처리
     let nextOpened = 0;
     try {
+      console.log('[COMPLETE] Opening next day:', { student: academyStudentId, track: cleanStr(row.track_id) });
       const ensure: any = await ensureCockedQueueAdminAction({
         studentId: academyStudentId,
         trackId: cleanStr(row.track_id),
       } as any);
       nextOpened = Number(ensure?.assignedCount ?? 0);
-    } catch {
-      /* non-fatal */
+      console.log('[COMPLETE] ✅ Next day opened:', nextOpened);
+    } catch (e) {
+      console.error('[COMPLETE] ❌ Next day failed:', toErrMsg(e));
     }
 
     return {
@@ -1249,5 +1251,109 @@ export async function saveVocabAttemptAction(
   } catch (e: any) {
     console.warn("saveVocabAttemptAction exception:", toErrMsg(e));
     return { ok: true }; // non-fatal
+  }
+}
+
+/* =========================================================
+ * VOCAB SESSION PROGRESS (저장 / 조회)
+ * ======================================================= */
+
+export type VocabSessionProgressData = {
+  id: string;
+  currentStage: string;
+  currentWordIndex: number;
+  prescreenResult?: any;
+  spellingResult?: any;
+  learningData?: any;
+};
+
+export async function getVocabSessionProgressAction(
+  setId: string
+): Promise<VocabSessionProgressData | null> {
+  try {
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
+      { cookies: { getAll: () => cookieStore.getAll() } }
+    );
+
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData?.user?.id;
+    if (!userId) return null;
+
+    // RPC 호출로 진행 상황 조회
+    const { data, error } = await supabase.rpc("get_vocab_session_progress", {
+      p_student_id: userId,
+      p_set_id: setId,
+    });
+
+    if (error) {
+      console.error("getVocabSessionProgressAction error:", error);
+      return null;
+    }
+
+    if (!data || data.length === 0) return null;
+
+    const row = data[0];
+    return {
+      id: row.id,
+      currentStage: row.current_stage,
+      currentWordIndex: row.current_word_index,
+      prescreenResult: row.prescreen_result,
+      spellingResult: row.spelling_result,
+      learningData: row.learning_data,
+    };
+  } catch (e: any) {
+    console.error("getVocabSessionProgressAction exception:", toErrMsg(e));
+    return null;
+  }
+}
+
+export async function saveVocabSessionProgressAction(input: {
+  setId: string;
+  currentStage: string;
+  currentWordIndex: number;
+  prescreenResult?: any;
+  spellingResult?: any;
+  learningData?: any;
+  sessionCompleted?: boolean;
+}): Promise<{ ok: boolean; id?: string }> {
+  try {
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
+      { cookies: { getAll: () => cookieStore.getAll() } }
+    );
+
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData?.user?.id;
+    if (!userId) return { ok: false };
+
+    // RPC 호출로 진행 상황 저장/업데이트
+    const { data, error } = await supabase.rpc(
+      "upsert_vocab_session_progress",
+      {
+        p_student_id: userId,
+        p_set_id: input.setId,
+        p_current_stage: input.currentStage,
+        p_current_word_index: input.currentWordIndex,
+        p_prescreen_result: input.prescreenResult,
+        p_spelling_result: input.spellingResult,
+        p_learning_data: input.learningData,
+        p_session_completed: input.sessionCompleted || false,
+      }
+    );
+
+    if (error) {
+      console.error("saveVocabSessionProgressAction error:", error);
+      return { ok: false };
+    }
+
+    return { ok: true, id: data };
+  } catch (e: any) {
+    console.error("saveVocabSessionProgressAction exception:", toErrMsg(e));
+    return { ok: false };
   }
 }

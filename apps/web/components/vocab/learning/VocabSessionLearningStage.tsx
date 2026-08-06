@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useLayoutEffect, useRef } from 'react';
 import type { LearningWord } from './learning.types';
 
 interface VocabSessionLearningStageProps {
@@ -46,18 +46,69 @@ export default function VocabSessionLearningStage({
   const [meaningDone, setMeaningDone] = useState(false);
   const [completedWords, setCompletedWords] = useState<LearningWord[]>([]);
   const [streakDays] = useState(7);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const meaning1Ref = useRef<HTMLInputElement>(null);
+  const meaning2Ref = useRef<HTMLInputElement>(null);
 
   const currentWord = useMemo(() => {
     return words[currentWordIdx];
   }, [words, currentWordIdx]);
 
+  // Debug: log all words on mount
+  useMemo(() => {
+    console.log('[WORDS] Total:', words.length);
+    console.log('[WORDS] List:', words.map((w, i) => `${i}: ${w.text}`).join(', '));
+    const duplicates = words
+      .map((w) => w.text.toLowerCase())
+      .filter((text, idx, arr) => arr.indexOf(text) !== idx);
+    if (duplicates.length > 0) {
+      console.warn('[WORDS] ⚠️ DUPLICATES FOUND:', duplicates);
+    }
+  }, [words]);
+
+  // Focus on input when component mounts or word changes (use useLayoutEffect for earlier execution)
+  useLayoutEffect(() => {
+    if (!spellingDone && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+      // Force English input mode (clear any Korean/other language input state)
+      try {
+        inputRef.current.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true }));
+      } catch (e) {
+        // Fallback: just ensure focus
+      }
+    }
+  }, [spellingDone, currentWordIdx]);
+
   const progress = `${currentWordIdx + 1}/${words.length}`;
   const canProceedToNextWord = spellingDone && meaningDone;
 
-  // Auto-play pronunciation when spelling complete
+  // Check if spelling is correct (independent of onChange)
+  useEffect(() => {
+    if (!spellingDone && spellingInput && currentWord?.text) {
+      const wordTextNormalized = String(currentWord.text)
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z]/g, '');
+      const inputNormalized = spellingInput
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z]/g, '');
+
+      if (inputNormalized === wordTextNormalized) {
+        setSpellingDone(true);
+      }
+    }
+  }, [spellingInput, currentWord?.text, spellingDone]);
+
+  // Auto-play pronunciation when spelling complete + auto focus meaning
   useEffect(() => {
     if (spellingDone && currentWord?.text) {
       playAudio(currentWord.text);
+      // Auto focus to meaning field
+      setTimeout(() => {
+        meaning1Ref.current?.focus();
+      }, 100);
     }
   }, [spellingDone, currentWord?.text]);
 
@@ -82,17 +133,29 @@ export default function VocabSessionLearningStage({
 
   const handleNextWord = () => {
     if (!canProceedToNextWord) return;
+
+    console.log('[NEXT] Before:', {
+      currentWordIdx,
+      totalWords: words.length,
+      canProceed: canProceedToNextWord,
+      currentWord: currentWord?.text,
+    });
+
     if (currentWord) {
       setCompletedWords([...completedWords, currentWord]);
     }
+
     if (currentWordIdx + 1 < words.length) {
-      setCurrentWordIdx(currentWordIdx + 1);
+      const nextIdx = currentWordIdx + 1;
+      console.log('[NEXT] Moving to word:', nextIdx, words[nextIdx]?.text);
+      setCurrentWordIdx(nextIdx);
       setSpellingInput('');
       setMeaning1Input('');
       setMeaning2Input('');
       setSpellingDone(false);
       setMeaningDone(false);
     } else {
+      console.log('[NEXT] Finished all words!');
       onFinish();
     }
   };
@@ -112,7 +175,7 @@ export default function VocabSessionLearningStage({
   }
 
   return (
-    <div className="flex flex-col lg:flex-row w-full min-h-screen gap-0 bg-slate-50" style={{ maxWidth: '1400px', margin: '0 auto' }}>
+    <div className="flex flex-col lg:flex-row w-full h-full gap-0 bg-slate-50" style={{ maxWidth: '1400px', margin: '0 auto' }}>
       {/* 좌측 메인 콘텐츠 (70%) */}
       <div className="flex-[7] flex flex-col px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:pr-6 overflow-y-auto">
         {/* 헤더: 진도 + 스트릭 */}
@@ -142,89 +205,68 @@ export default function VocabSessionLearningStage({
             <div className="text-sm font-bold text-slate-600">📚 단어 학습 (통합 Step)</div>
 
             {!spellingDone && (
-              <div className="space-y-4">
-                <p className="text-sm text-slate-600 text-center italic">
-                  (아래 흐릿한 철자를 따라 타이핑 하세요)
-                </p>
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold text-slate-600">📝 철자 입력</p>
+                  <p className="text-xs text-slate-500 italic">
+                    아래에 단어의 철자를 입력하세요 (자동 진행)
+                  </p>
+                </div>
 
-                {/* Interactive Spelling Input - 반응형 폰트 사이즈 */}
-                <div className="relative">
-                  {/* 글자 길이에 따른 동적 폰트 크기 */}
-                  <style>{`
-                    .word-display {
-                      display: flex;
-                      justify-content: center;
-                      align-items: center;
-                      gap: 4px;
-                      width: 100%;
-                      padding: 24px 0;
-                      flex-wrap: nowrap;
-                      overflow: visible;
-                    }
-                    .letter-box {
-                      width: auto;
-                      min-width: 28px;
-                      text-align: center;
-                      font-weight: 300;
-                      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
-                      flex-shrink: 0;
-                    }
-                  `}</style>
-
-                  <div className="word-display" style={{
-                    fontSize: currentWord.text.length <= 7 ? '3rem' :
-                             currentWord.text.length <= 11 ? '2.2rem' : '1.8rem',
-                    color: '#d1d5db'
-                  }}>
-                    {currentWord.text.split('').map((char) => (
-                      <div key={`${char}-${Math.random()}`} className="letter-box">
-                        {char}
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Hidden input for English only */}
-                  <input
-                    type="text"
-                    value={spellingInput}
-                    onChange={(e) => {
-                      const value = e.target.value.toLowerCase();
-                      setSpellingInput(value.replace(/[^a-z]/g, ''));
-                    }}
-                    onKeyDown={handleSpellingKeyDown}
-                    placeholder=""
-                    className="absolute inset-0 opacity-0 cursor-text"
-                    autoFocus
-                    autoComplete="off"
-                    spellCheck={false}
-                    style={{ imeMode: 'disabled' }}
-                  />
-
-                  {/* Overlay effect: show typed characters */}
-                  <div className="word-display" style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    fontSize: currentWord.text.length <= 7 ? '3rem' :
-                             currentWord.text.length <= 11 ? '2.2rem' : '1.8rem',
-                    pointerEvents: 'none'
+                {/* Clear letter display */}
+                <div className="text-center py-8 bg-slate-100 rounded-xl">
+                  <div style={{
+                    fontSize: currentWord.text.length <= 7 ? '2.5rem' :
+                             currentWord.text.length <= 11 ? '1.8rem' : '1.4rem',
+                    fontWeight: 300,
+                    letterSpacing: '0.1em',
+                    color: '#1e293b',
+                    fontFamily: 'monospace'
                   }}>
                     {currentWord.text.split('').map((char, idx) => (
-                      <div
-                        key={idx}
-                        className="letter-box"
-                        style={{ color: idx < spellingInput.length ? '#0f172a' : '#d1d5db' }}
-                      >
+                      <span key={`${currentWordIdx}-${idx}`} style={{ marginRight: '0.2em' }}>
                         {char}
-                      </div>
+                      </span>
                     ))}
                   </div>
                 </div>
 
-                <p className="text-xs text-slate-500 text-center">
-                  (완료 시 원어민 음성 자동 재생 🔊)
-                </p>
+                {/* Input field - auto advance on correct spelling */}
+                <div className="space-y-2">
+                  <input
+                    key={`spelling-${currentWordIdx}`}
+                    ref={inputRef}
+                    type="text"
+                    value={spellingInput}
+                    onChange={(e) => {
+                      const value = e.target.value.toLowerCase();
+                      const cleaned = value.replace(/[^a-z]/g, '');
+                      setSpellingInput(cleaned);
+
+                      // 자동 진행: 철자가 올바르면 다음 단계로
+                      if (currentWord?.text) {
+                        // Remove all whitespace and special characters from word text too
+                        const wordTextNormalized = String(currentWord.text)
+                          .toLowerCase()
+                          .trim()
+                          .replace(/[^a-z]/g, '');
+                        const isMatch = cleaned === wordTextNormalized;
+
+                        if (isMatch) {
+                          setSpellingDone(true);
+                        }
+                      }
+                    }}
+                    placeholder="철자를 입력하세요..."
+                    className="w-full px-4 py-3 border-2 border-slate-300 rounded-lg text-center text-lg font-semibold placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    autoFocus
+                    autoComplete="off"
+                    spellCheck={false}
+                  />
+                  <p className="text-xs text-slate-500 text-center">
+                    올바르게 입력하면 자동으로 진행됩니다 ✨
+                  </p>
+                </div>
               </div>
             )}
 
@@ -243,36 +285,51 @@ export default function VocabSessionLearningStage({
 
               <div className="space-y-3">
                 <input
+                  ref={meaning1Ref}
                   type="text"
                   value={meaning1Input}
-                  onChange={(e) => setMeaning1Input(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleMeaningComplete()}
+                  onChange={(e) => {
+                    setMeaning1Input(e.target.value);
+                    // 자동 진행: 두 뜻이 모두 채워지면 다음 단계로
+                    if (e.target.value.trim() && meaning2Input.trim()) {
+                      setMeaningDone(true);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') e.preventDefault();
+                    if (e.key === 'Tab') {
+                      e.preventDefault();
+                      meaning2Ref.current?.focus();
+                    }
+                  }}
                   placeholder={currentWord.meanings_ko?.[0] || '한국어 뜻을 입력하세요...'}
                   className="w-full px-4 py-3 border border-slate-300 rounded-lg placeholder-slate-400 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <input
+                  ref={meaning2Ref}
                   type="text"
                   value={meaning2Input}
-                  onChange={(e) => setMeaning2Input(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleMeaningComplete()}
+                  onChange={(e) => {
+                    setMeaning2Input(e.target.value);
+                    // 자동 진행: 두 뜻이 모두 채워지면 다음 단계로
+                    if (meaning1Input.trim() && e.target.value.trim()) {
+                      setMeaningDone(true);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleMeaningComplete();
+                    }
+                  }}
                   placeholder={currentWord.meanings_ko?.[1] || '또 다른 뜻을 입력하세요...'}
                   className="w-full px-4 py-3 border border-slate-300 rounded-lg placeholder-slate-400 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <p className="text-xs text-slate-500 text-center">
-                (완료 시 한국어 뜻 음성 자동 재생 🔊)
+                (두 뜻을 입력하면 자동으로 진행됩니다 ✨)
               </p>
-
-              {!meaningDone && (
-                <button
-                  onClick={handleMeaningComplete}
-                  disabled={!meaning1Input.trim() && !meaning2Input.trim()}
-                  className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-bold rounded-lg transition"
-                >
-                  뜻 입력 완료
-                </button>
-              )}
 
               {meaningDone && (
                 <div className="bg-blue-50 border border-blue-300 rounded-lg p-4 text-center">

@@ -1,5 +1,6 @@
-"use client";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+'use client';
+
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 type Word = { id: string; text: string; meanings_ko?: string[] };
 type SpellingResult = { spellingFailedIds: string[] };
@@ -8,17 +9,17 @@ function safeWords(v: any): Word[] {
   return Array.isArray(v) ? (v as Word[]).filter(Boolean) : [];
 }
 
-function norm(s: string) {
-  return String(s ?? "").trim().toLowerCase();
+function norm(s: string): string {
+  return String(s ?? '').trim().toLowerCase();
 }
 
 function createConfetti() {
-  if (typeof window === "undefined") return;
-  const colors = ["#0F766E", "#F97316", "#F59E0B", "#EC4899"];
+  if (typeof window === 'undefined') return;
+  const colors = ['#0F766E', '#F97316', '#F59E0B', '#EC4899'];
   const particles = 30;
 
   for (let i = 0; i < particles; i++) {
-    const confetti = document.createElement("div");
+    const confetti = document.createElement('div');
     const x = Math.random() * window.innerWidth;
     const y = -10;
     const size = Math.random() * 6 + 2;
@@ -74,19 +75,22 @@ export default function PrescreenSpellingBoard({
 }) {
   const list = useMemo(() => safeWords(words), [words]);
   const total = list.length;
+
   const [i, setI] = useState(0);
-  const [value, setValue] = useState("");
+  const [value, setValue] = useState('');
   const [failedIds, setFailedIds] = useState<string[]>([]);
   const [shake, setShake] = useState(false);
   const [animKey, setAnimKey] = useState(0);
+
   const [streak, setStreak] = useState(0);
   const [bestStreak, setBestStreak] = useState(0);
   const [completedWords, setCompletedWords] = useState<Word[]>([]);
   const [showStreakEffect, setShowStreakEffect] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
+
   const cur = list[i] ?? null;
-  const answer = cur?.text ?? "";
+  const answer = cur?.text ?? '';
   const meaning = (cur?.meanings_ko ?? []).filter(Boolean).slice(0, 2);
 
   const done = (nextFailed: string[]) => onFinish({ spellingFailedIds: nextFailed });
@@ -107,9 +111,9 @@ export default function PrescreenSpellingBoard({
 
       if (cur) setCompletedWords((p) => [...p, cur]);
 
-      if (typeof window !== "undefined" && window.speechSynthesis) {
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
         const utterance = new SpeechSynthesisUtterance(answer);
-        utterance.lang = "en-US";
+        utterance.lang = 'en-US';
         window.speechSynthesis.speak(utterance);
       }
     } else {
@@ -119,7 +123,7 @@ export default function PrescreenSpellingBoard({
     if (nextIndex >= total) return done(nextFailed);
     setAnimKey((k) => k + 1);
     setI(nextIndex);
-    setValue("");
+    setValue('');
     requestAnimationFrame(() => inputRef.current?.focus());
   };
 
@@ -149,11 +153,17 @@ export default function PrescreenSpellingBoard({
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Enter") { e.preventDefault(); submit(); }
-      if (e.key === "Escape") { e.preventDefault(); markFailAndNext(); }
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        submit();
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        markFailAndNext();
+      }
     };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
   }, [i, value, answer, failedIds, cur?.id]);
 
   if (!list.length) {
@@ -173,8 +183,8 @@ export default function PrescreenSpellingBoard({
           className="w-full flex flex-col gap-6 items-center px-6"
           key={animKey}
           style={{
-            maxWidth: "500px",
-            animation: "lx-card-in 220ms cubic-bezier(0.22,1,0.36,1) both",
+            maxWidth: '500px',
+            animation: 'lx-card-in 220ms cubic-bezier(0.22,1,0.36,1) both',
           }}
         >
           <div className="space-y-3 w-full">
@@ -190,21 +200,21 @@ export default function PrescreenSpellingBoard({
 
           <div
             className={[
-              "rounded-3xl bg-white shadow-[0_4px_32px_rgba(0,0,0,0.08)] border border-slate-100 px-8 py-8 space-y-5 w-full",
-              "flex flex-col justify-center",
-              shake ? "lx-shake" : "",
-              showStreakEffect ? "scale-105" : "",
-            ].join(" ")}
+              'rounded-3xl bg-white shadow-[0_4px_32px_rgba(0,0,0,0.08)] border border-slate-100 px-8 py-8 space-y-5 w-full',
+              'flex flex-col justify-center',
+              shake ? 'lx-shake' : '',
+              showStreakEffect ? 'scale-105' : '',
+            ].join(' ')}
             style={{
-              minHeight: "350px",
-              boxSizing: "border-box",
-              transition: "transform 200ms ease-out",
+              minHeight: '350px',
+              boxSizing: 'border-box',
+              transition: 'transform 200ms ease-out',
             }}
           >
             <div className="text-center space-y-1">
               <p className="text-sm font-semibold text-slate-400 uppercase tracking-wider">뜻</p>
-              <p className="font-bold text-slate-700" style={{ fontSize: "clamp(24px, 5cqi, 48px)" }}>
-                {meaning.length ? meaning.join(" / ") : "뜻 없음"}
+              <p className="font-bold text-slate-700" style={{ fontSize: 'clamp(24px, 5cqi, 48px)' }}>
+                {meaning.length ? meaning.join(' / ') : '뜻 없음'}
               </p>
             </div>
 
@@ -218,7 +228,7 @@ export default function PrescreenSpellingBoard({
                 onChange={(e) => setValue(e.target.value)}
                 placeholder="철자 입력..."
                 className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-5 font-bold text-slate-900 text-center outline-none focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20 transition-all"
-                style={{ fontSize: "clamp(24px, 5cqi, 48px)" }}
+                style={{ fontSize: 'clamp(24px, 5cqi, 48px)' }}
                 autoCapitalize="none"
                 autoCorrect="off"
                 spellCheck={false}
