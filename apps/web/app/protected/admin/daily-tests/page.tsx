@@ -17,6 +17,18 @@ export default async function DailyTaskPage() {
       .order('created_at', { ascending: false })
       .limit(20);
 
+    // 학생 목록 조회
+    const { data: students } = await supabase
+      .from('auth.users')
+      .select('id, user_metadata')
+      .order('created_at', { ascending: false });
+
+    const studentList = students?.map((s) => ({
+      id: s.id,
+      name: s.user_metadata?.full_name || s.user_metadata?.name || 'Unknown',
+      email: s.user_metadata?.email || '',
+    })) ?? [];
+
     // 상태별 집계
     const stats = {
       total: count ?? 0,
@@ -34,12 +46,6 @@ export default async function DailyTaskPage() {
             <h1 className="text-3xl font-bold text-gray-900">📚 Daily Tests 관리</h1>
             <p className="text-sm text-gray-600 mt-1">학생을 위한 일일 학습 과제 생성 및 할당</p>
           </div>
-          <Link
-            href="/admin/daily-tests/assign"
-            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition"
-          >
-            👤 학생 이름으로 할당
-          </Link>
         </div>
 
         {/* Stats */}
@@ -96,7 +102,11 @@ export default async function DailyTaskPage() {
         </div>
 
         {/* Client Component */}
-        <DailyTaskManagerClient stats={stats} recentTasks={allTasks ?? []} />
+        <DailyTaskManagerClient
+          stats={stats}
+          recentTasks={allTasks ?? []}
+          students={studentList}
+        />
       </div>
     );
   } catch (error) {

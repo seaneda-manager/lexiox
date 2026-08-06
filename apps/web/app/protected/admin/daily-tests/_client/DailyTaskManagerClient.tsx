@@ -24,6 +24,12 @@ interface Stats {
   overdue: number;
 }
 
+interface Student {
+  id: string;
+  name: string;
+  email: string;
+}
+
 const TASK_TYPE_LABEL: Record<TaskType, string> = {
   light: '기초 (4문제)',
   medium_1: '중급 유형1 (3문제)',
@@ -38,17 +44,26 @@ const DIFFICULTY_LABEL: Record<Difficulty, string> = {
   hard: '어려움',
 };
 
-export default function DailyTaskManagerClient({ stats, recentTasks }: { stats: Stats; recentTasks: DailyTask[] }) {
+export default function DailyTaskManagerClient({
+  stats,
+  recentTasks,
+  students = [],
+}: {
+  stats: Stats;
+  recentTasks: DailyTask[];
+  students: Student[];
+}) {
   const [activeTab, setActiveTab] = useState<'create' | 'list'>('create');
   const [formData, setFormData] = useState({
     taskType: 'light' as TaskType,
     difficulty: 'core' as Difficulty,
     assignTo: 'student' as 'student' | 'class',
-    studentId: '',
+    selectedStudents: [] as string[],
     classId: '',
     dueDate: '',
     numPassages: 2,  // 지문 개수 (default: 2)
   });
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
@@ -60,38 +75,65 @@ export default function DailyTaskManagerClient({ stats, recentTasks }: { stats: 
     setMessage(null);
 
     try {
-      if (formData.assignTo === 'student' && !formData.studentId) {
-        throw new Error('학생을 선택해주세요');
+      if (formData.assignTo === 'student' && formData.selectedStudents.length === 0) {
+        throw new Error('최소 1명의 학생을 선택해주세요');
       }
       if (formData.assignTo === 'class' && !formData.classId) {
         throw new Error('클래스를 선택해주세요');
       }
 
-      const res = await fetch('/api/admin/daily-tests/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          taskType: formData.taskType,
-          difficulty: formData.difficulty,
-          numPassages: formData.numPassages,
-          studentId: formData.assignTo === 'student' ? formData.studentId.trim() : undefined,
-          classId: formData.assignTo === 'class' ? formData.classId.trim() : undefined,
-          dueDate: formData.dueDate || undefined,
-        }),
+      // 선택된 학생들에게 일괄 배정
+      if (formData.assignTo === 'student') {
+        for (const studentId of formData.selectedStudents) {
+          const res = await fetch('/api/admin/daily-tests/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              taskType: formData.taskType,
+              difficulty: formData.difficulty,
+              numPassages: formData.numPassages,
+              studentId: studentId,
+              dueDate: formData.dueDate || undefined,
+            }),
+          });
+
+          const data = await res.json();
+          if (!data.ok) throw new Error(data.error ?? 'Failed to create task');
+        }
+      } else {
+        // 클래스 배정
+        const res = await fetch('/api/admin/daily-tests/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            taskType: formData.taskType,
+            difficulty: formData.difficulty,
+            numPassages: formData.numPassages,
+            classId: formData.classId.trim(),
+            dueDate: formData.dueDate || undefined,
+          }),
+        });
+
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error ?? 'Failed to create task');
+      }
+
+      const count = formData.assignTo === 'student' ? formData.selectedStudents.length : 1;
+      setMessage({
+        type: 'success',
+        text: `✅ Daily Test가 ${count}명에게 배정되었습니다`,
       });
 
-      const data = await res.json();
-      if (!data.ok) throw new Error(data.error ?? 'Failed to create task');
-
-      setMessage({ type: 'success', text: `✅ Daily Test가 생성되었습니다 (ID: ${data.payload?.id?.slice(0, 8)}...)` });
       setFormData({
         taskType: 'light',
         difficulty: 'core',
         assignTo: 'student',
-        studentId: '',
+        selectedStudents: [],
         classId: '',
         dueDate: '',
+        numPassages: 2,
       });
+      setDropdownOpen(false);
 
       // 페이지 새로고침 (실제로는 리스트를 새로 로드해야 함)
       setTimeout(() => window.location.reload(), 1500);
@@ -223,15 +265,89 @@ export default function DailyTaskManagerClient({ stats, recentTasks }: { stats: 
               </div>
 
               {formData.assignTo === 'student' ? (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">학생 ID</label>
-                  <input
-                    type="text"
-                    placeholder="학생 UUID 입력"
-                    value={formData.studentId}
-                    onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                <div className="relative">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    👥 학생 선택 (다중선택)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-left bg-white hover:bg-gray-50 transition"
+                  >
+                    {formData.selectedStudents.length === 0
+                      ? '학생을 선택해주세요...'
+                      : `${formData.selectedStudents.length}명 선택됨`}
+                  </button>
+
+                  {dropdownOpen && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-64 overflow-y-auto">
+                      {students.length === 0 ? (
+                        <div className="p-3 text-sm text-gray-600">학생 정보를 불러올 수 없습니다</div>
+                      ) : (
+                        students.map((student) => (
+                          <label
+                            key={student.id}
+                            className="flex items-center px-3 py-2 hover:bg-blue-50 cursor-pointer border-b last:border-b-0"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={formData.selectedStudents.includes(student.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setFormData({
+                                    ...formData,
+                                    selectedStudents: [...formData.selectedStudents, student.id],
+                                  });
+                                } else {
+                                  setFormData({
+                                    ...formData,
+                                    selectedStudents: formData.selectedStudents.filter(
+                                      (id) => id !== student.id
+                                    ),
+                                  });
+                                }
+                              }}
+                              className="w-4 h-4 text-blue-600 rounded"
+                            />
+                            <div className="ml-3">
+                              <p className="text-sm font-medium text-gray-900">{student.name}</p>
+                              <p className="text-xs text-gray-500">{student.email}</p>
+                            </div>
+                          </label>
+                        ))
+                      )}
+                    </div>
+                  )}
+
+                  {formData.selectedStudents.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {formData.selectedStudents.map((studentId) => {
+                        const student = students.find((s) => s.id === studentId);
+                        return (
+                          <span
+                            key={studentId}
+                            className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded"
+                          >
+                            {student?.name}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setFormData({
+                                  ...formData,
+                                  selectedStudents: formData.selectedStudents.filter(
+                                    (id) => id !== studentId
+                                  ),
+                                })
+                              }
+                              className="text-blue-600 hover:text-blue-900"
+                            >
+                              ✕
+                            </button>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div>
