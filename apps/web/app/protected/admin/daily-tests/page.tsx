@@ -2,6 +2,12 @@ import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
 import DailyTaskManagerClient from './_client/DailyTaskManagerClient';
 
+interface Student {
+  id: string;
+  name: string;
+  email: string;
+}
+
 export default async function DailyTaskPage() {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL || '',
@@ -17,17 +23,24 @@ export default async function DailyTaskPage() {
       .order('created_at', { ascending: false })
       .limit(20);
 
-    // 학생 목록 조회
-    const { data: students } = await supabase
-      .from('auth.users')
-      .select('id, user_metadata')
-      .order('created_at', { ascending: false });
+    // 학생 목록 조회 (Admin API 사용)
+    let studentList: Student[] = [];
+    try {
+      const { data: { users }, error } = await supabase.auth.admin.listUsers();
 
-    const studentList = students?.map((s) => ({
-      id: s.id,
-      name: s.user_metadata?.full_name || s.user_metadata?.name || 'Unknown',
-      email: s.user_metadata?.email || '',
-    })) ?? [];
+      if (!error && users) {
+        studentList = users
+          .filter(u => !u.user_metadata?.role || u.user_metadata?.role === 'student')
+          .map(u => ({
+            id: u.id,
+            name: u.user_metadata?.full_name || u.user_metadata?.name || u.email?.split('@')[0] || 'Unknown',
+            email: u.email || '',
+          }))
+          .sort((a, b) => a.name.localeCompare(b.name));
+      }
+    } catch (err) {
+      console.error('Failed to fetch students:', err);
+    }
 
     // 상태별 집계
     const stats = {
