@@ -251,11 +251,20 @@ export default function VocabAssignClient() {
                 className="w-full border rounded-lg px-3 py-2"
               >
                 <option value="">선택하세요</option>
-                {students.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.full_name} ({s.login_id})
-                  </option>
-                ))}
+                {students.map((s) => {
+                  const studentAssignments = assignments.filter((a: any) => a.student_id === s.id);
+                  const completedCount = studentAssignments.filter((a: any) => a.completed_at).length;
+                  const nextIncomplete = studentAssignments.find((a: any) => !a.completed_at);
+                  const progressText = studentAssignments.length > 0
+                    ? `(Day ${(nextIncomplete?.day_index ?? studentAssignments.length - 1) + 1}/${studentAssignments.length})`
+                    : "(미배정)";
+
+                  return (
+                    <option key={s.id} value={s.id}>
+                      {s.full_name} ({s.login_id}) {progressText}
+                    </option>
+                  );
+                })}
               </select>
             </div>
 
@@ -476,23 +485,28 @@ export default function VocabAssignClient() {
                         <option value={4}>Option 4</option>
                       </select>
                     </td>
-                    <td className="py-2 px-4 text-xs text-gray-600">
-                      <div className="flex items-center gap-2">
-                        <div className="w-24 bg-gray-200 rounded-full h-2">
-                          <div
-                            className="bg-blue-600 h-2 rounded-full"
-                            style={{
-                              width: `${
-                                assign.assignment_count > 0
-                                  ? Math.round((assign.completed_count / assign.assignment_count) * 100)
-                                  : 0
-                              }%`,
-                            }}
-                          ></div>
+                    <td className="py-2 px-4 text-xs">
+                      <div className="flex flex-col gap-2">
+                        <div className="font-bold text-blue-700 bg-blue-50 px-2 py-1 rounded">
+                          📍 Day {(assign.completed_count ?? 0) + 1}/{assign.assignment_count}
                         </div>
-                        <span>
-                          {assign.completed_count}/{assign.assignment_count}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <div className="w-24 bg-gray-200 rounded-full h-2">
+                            <div
+                              className="bg-blue-600 h-2 rounded-full"
+                              style={{
+                                width: `${
+                                  assign.assignment_count > 0
+                                    ? Math.round((assign.completed_count / assign.assignment_count) * 100)
+                                    : 0
+                                }%`,
+                              }}
+                            ></div>
+                          </div>
+                          <span className="text-gray-600">
+                            {assign.completed_count}/{assign.assignment_count}
+                          </span>
+                        </div>
                       </div>
                     </td>
                     <td className="py-2 px-4">
