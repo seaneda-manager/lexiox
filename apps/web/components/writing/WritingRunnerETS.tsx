@@ -261,7 +261,7 @@ function BuildASentence({
           </p>
           <p style={{ fontSize: 18, color: "#333333", lineHeight: 1.7 }}>
             <span>{q.contextLeadIn} </span>
-            <span style={{ display: "inline-block", minWidth: 120, borderBottom: "2px solid #0073E6", color: "#0073E6", fontStyle: "italic" }}>
+            <span style={{ display: "inline-block", minWidth: 48, borderBottom: "2px solid #0073E6", color: "#0073E6", fontStyle: "italic" }}>
               {/* 조각 사이 공백은 여기서 자동으로 한 칸씩 들어간다 */}
               {joinTokens(selected.map((id) => tokenById.get(id) ?? ""), current?.punctuation ?? "") || "___"}
             </span>
