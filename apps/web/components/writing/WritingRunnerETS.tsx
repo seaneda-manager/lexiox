@@ -49,6 +49,13 @@ function useCountdown(initialSeconds: number, onExpire: () => void) {
   const [timeLeft, setTimeLeft] = useState(initialSeconds);
   const expiredRef = useRef(false);
 
+  // onExpire는 매 렌더마다 새로 만들어지는 클로저(현재 입력 중인 text/state를 캡처)이므로
+  // ref에 최신 값을 담아두고 interval은 ref를 통해 호출한다.
+  // 그렇지 않으면 아래 effect가 [initialSeconds]에만 의존하기 때문에, 타이머가 만료될 때
+  // 항상 "최초 렌더 시점의" onExpire(빈 문자열/빈 상태)를 호출해 학생이 입력한 답이 유실된다.
+  const onExpireRef = useRef(onExpire);
+  onExpireRef.current = onExpire;
+
   useEffect(() => {
     expiredRef.current = false;
     setTimeLeft(initialSeconds);
@@ -56,7 +63,7 @@ function useCountdown(initialSeconds: number, onExpire: () => void) {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           window.clearInterval(id);
-          if (!expiredRef.current) { expiredRef.current = true; onExpire(); }
+          if (!expiredRef.current) { expiredRef.current = true; onExpireRef.current(); }
           return 0;
         }
         return prev - 1;

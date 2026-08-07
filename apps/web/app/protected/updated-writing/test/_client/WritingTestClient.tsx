@@ -46,6 +46,10 @@ export default function WritingTestClient({
     try {
       const answersToSend = {
         task_1_score_raw: answers.task1Scores.filter((s) => s.correct).length,
+        // 문항별 학생 답안(단어 배열을 이어붙인 문장)과 정오답 — 채점 화면에서
+        // 1~10번 문항을 개별적으로 보여주기 위해 집계 점수와 별도로 저장한다.
+        task_1_answers: answers.task1Scores.map((s) => s.userSequence.join(" ")),
+        task_1_correct: answers.task1Scores.map((s) => s.correct),
         task_2_submission: answers.task2Text,
         task_3_submission: answers.task3Text,
       };

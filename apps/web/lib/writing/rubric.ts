@@ -10,9 +10,7 @@ export interface WritingRubricScores {
 }
 
 export interface WritingGradingResult {
-  scores: WritingRubricScores;
-  rawScore: number;             // 0~30 (가중치 적용)
-  bandScore: number;            // 1.0~6.0 (최종 밴드)
+  scores: Pick<WritingRubricScores, "email" | "discussion">;
   feedback: string;
 }
 
@@ -91,14 +89,13 @@ export function parseWritingGradingJson(raw: string): WritingGradingResult | nul
       return null;
     }
 
-    const scores: WritingRubricScores = {
+    const scores: Pick<WritingRubricScores, "email" | "discussion"> = {
       email: Math.round(parsed.email * 2) / 2 as EtsWritingScore,
       discussion: Math.round(parsed.discussion * 2) / 2 as EtsWritingScore,
     };
 
     return {
       scores,
-      totalScore: calcWritingTotal(scores),
       feedback: parsed.feedback ?? "",
     };
   } catch (err) {

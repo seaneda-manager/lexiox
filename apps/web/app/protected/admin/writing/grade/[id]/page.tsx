@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { EMAIL_DESCRIPTORS, type EtsWritingScore } from "@/lib/writing/rubric";
+import { normalizeBuildSentenceQuestion, joinTokens } from "@/lib/writing/build-sentence-parser";
 import WritingGradeClient from "./_client/WritingGradeClient";
 import type { WWritingTest2026 } from "@/models/writing";
 
@@ -40,10 +41,18 @@ export default async function WritingGradeDetailPage({ params }: Props) {
 
   // 답안은 writing_2026_answers 테이블에 문항별로 저장되거나,
   // 세션의 raw_answers JSON에 task_*_submission 형식으로 저장된다.
-  const answers: Record<string, string> = {};
+  // 실제 생성된 test payload의 item.id("task-build-1" 등)는 raw_answers의 키("task_1"/"task_2"/"task_3")와
+  // 다르므로, item.id가 아니라 taskKind 기준의 고정 키로 매핑한다.
+  const answers: Record<string, any> = {};
+  let task1Correct: boolean[] = [];
   if (s.raw_answers && typeof s.raw_answers === "object") {
     const raw = s.raw_answers as any;
-    // test payload의 item.id가 "task_2", "task_3"이므로 이에 맞춰 매핑
+    if (raw.task_1_answers !== undefined) {
+      answers["task_1"] = raw.task_1_answers ?? [];
+    }
+    if (Array.isArray(raw.task_1_correct)) {
+      task1Correct = raw.task_1_correct;
+    }
     if (raw.task_2_submission !== undefined) {
       answers["task_2"] = raw.task_2_submission ?? "";
     }
@@ -115,12 +124,7 @@ export default async function WritingGradeDetailPage({ params }: Props) {
             .filter((item) => item.taskKind === "choose_response" || item.taskKind === "build_a_sentence")
             .map((item) => {
               const questions = (item as any).questions ?? [];
-              const studentAnswers = (answers[item.id] ?? "") as any;
-              const studentAnswerArray = Array.isArray(studentAnswers)
-                ? studentAnswers
-                : typeof studentAnswers === "string"
-                  ? studentAnswers.split(",").map((a: string) => a.trim())
-                  : [];
+              const studentAnswerArray: string[] = Array.isArray(answers["task_1"]) ? answers["task_1"] : [];
 
               return (
                 <div key={`${item.id}-section`} className="space-y-3">
@@ -128,16 +132,23 @@ export default async function WritingGradeDetailPage({ params }: Props) {
                   <p className="text-xs text-slate-600">10개 문항</p>
 
                   {questions.map((q: any, idx: number) => {
-                    const studentChoice = studentAnswerArray[idx] || "No Answer";
-                    const correctAnswer = q.correctAnswer || "N/A";
-                    const isCorrect = studentChoice === correctAnswer;
+                    const studentChoice = studentAnswerArray[idx]?.trim() || "No Answer";
+                    // tokens/correctOrder로부터 정답 문장을 복원한다 (실제 채점 로직과 동일한 방식).
+                    const norm = normalizeBuildSentenceQuestion(q);
+                    const correctTexts = norm.correctOrder.map(
+                      (id) => norm.tokens.find((t) => t.id === id)?.text ?? "",
+                    );
+                    const correctAnswer = joinTokens(correctTexts, norm.punctuation);
+                    const isCorrect = task1Correct[idx] ?? studentChoice === correctAnswer;
 
                     return (
                       <div key={`q-${idx}`} className="space-y-2 rounded-xl border border-slate-200 bg-white p-3">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1">
                             <p className="mb-1 text-xs font-bold text-slate-700">문항 {idx + 1}</p>
-                            <p className="text-xs leading-relaxed text-slate-800">{q.stem || "Question not available"}</p>
+                            <p className="text-xs leading-relaxed text-slate-800">
+                              {q.contextLeadIn ?? ""} ___ {q.contextLeadOut ?? ""}
+                            </p>
                           </div>
                           <div className={`rounded-full px-2 py-1 text-xs font-bold ${isCorrect ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"}`}>
                             {isCorrect ? "✓" : "✗"}
@@ -154,12 +165,6 @@ export default async function WritingGradeDetailPage({ params }: Props) {
                             <p className="mt-1 text-sm font-bold text-green-900">{correctAnswer}</p>
                           </div>
                         </div>
-
-                        {q.explanation && (
-                          <div className="mt-2 border-l-2 border-slate-300 bg-slate-50 p-2">
-                            <p className="text-xs text-slate-700">{q.explanation}</p>
-                          </div>
-                        )}
                       </div>
                     );
                   })}
@@ -167,21 +172,17 @@ export default async function WritingGradeDetailPage({ params }: Props) {
               );
             })}
 
-          {/* Email Writing & Academic Discussion */}
+          {/* Email Writing & Academic Discussion (Build a Sentence는 위 문항별 섹션에서 이미 표시됨) */}
           {test?.items.map((item) => {
-            const isBuildASentence = item.taskKind === "choose_response" || item.taskKind === "build_a_sentence";
             const isEmail = item.taskKind === "email";
             const isDiscussion = item.taskKind === "academic_discussion";
-            if (!isBuildASentence && !isEmail && !isDiscussion) return null;
+            if (!isEmail && !isDiscussion) return null;
 
-            const answerText = answers[item.id] ?? "";
+            const answerText = (item.taskKind === "email" ? answers["task_2"] : answers["task_3"]) ?? "";
             let title = "";
             let prompt = "";
 
-            if (isBuildASentence) {
-              title = "1. Choose a Response (Build a Sentence)";
-              prompt = (item as any).prompt || "Choose the correct response";
-            } else if (isEmail) {
+            if (isEmail) {
               title = "2. Write an Email";
               prompt = `상황: ${(item as { situation: string }).situation}\n지시: ${(item as { prompt: string }).prompt}`;
             } else if (isDiscussion) {

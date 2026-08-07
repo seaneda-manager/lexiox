@@ -5,7 +5,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { getServerSupabase } from "@/lib/supabase/server";
 import {
   buildWritingGradingSystemPrompt,
-  calcWritingTotal,
+  calcWritingRawScore,
   parseWritingGradingJson,
 } from "@/lib/writing/rubric";
 import type { WWritingTest2026 } from "@/models/writing";
@@ -122,12 +122,21 @@ export async function POST(req: Request) {
 
     console.log("[Writing Grade] Parsed grading:", grading);
 
+    // Build a Sentence는 AI가 아니라 정답 매칭으로 이미 채점되어 raw_answers.task_1_score_raw(0~10)에 저장돼 있다.
+    const buildASentenceScore = Number((session.raw_answers as any)?.task_1_score_raw ?? 0);
+    const totalScore = calcWritingRawScore({
+      buildASentence: buildASentenceScore,
+      email: grading.scores.email,
+      discussion: grading.scores.discussion,
+    });
+
     const { error: updateErr } = await supabase
       .from("writing_2026_sessions")
       .update({
+        ai_build_a_sentence_score: buildASentenceScore,
         ai_email_score: grading.scores.email,
         ai_discussion_score: grading.scores.discussion,
-        ai_total_score: grading.totalScore,
+        ai_total_score: totalScore,
         ai_grade_feedback: grading.feedback,
         ai_graded_at: new Date().toISOString(),
         grading_status: "ai_graded",
