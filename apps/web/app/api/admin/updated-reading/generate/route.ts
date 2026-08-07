@@ -6,6 +6,7 @@ import { randomUUID } from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 import { validateAndShuffleIfNeeded } from '@/lib/utils/validateAnswerDistribution';
 import { extractReadingTestToBank } from '@/lib/utils/problemBankExtract';
+import { logAnthropicUsage } from '@/lib/ai/logAnthropicUsage';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
@@ -250,6 +251,7 @@ Return ONLY this JSON structure (NO markdown, NO explanations, NO extra text):
       max_tokens: 12000,
       messages: [{ role: 'user', content: prompt }],
     });
+    void logAnthropicUsage('admin/updated-reading/generate:module1', 'claude-sonnet-4-6', message.usage);
 
     const raw = (message.content[0] as any).text as string;
     const jsonStart = raw.indexOf('{');
@@ -470,6 +472,7 @@ Return ONLY this JSON structure (NO markdown, NO explanations):
       max_tokens: 12000,
       messages: [{ role: 'user', content: prompt }],
     });
+    void logAnthropicUsage('admin/updated-reading/generate:module2', 'claude-sonnet-4-6', message.usage);
 
     const raw = (message.content[0] as any).text as string;
     const jsonStart = raw.indexOf('{');

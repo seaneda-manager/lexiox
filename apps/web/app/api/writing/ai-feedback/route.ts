@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { logAnthropicUsage } from "@/lib/ai/logAnthropicUsage";
 import type { WWritingTest2026 } from "@/models/writing";
 import { TASK1_RUBRIC, TASK2_RUBRIC, TASK3_RUBRIC, calculateTotalScore } from "@/lib/writing/scoring-rubric";
 
@@ -133,6 +134,7 @@ Be specific, encouraging, and practical. Keep English examples in English.`;
       thinking: { type: "adaptive" },
       messages: [{ role: "user", content: prompt }],
     });
+    void logAnthropicUsage("writing/ai-feedback", "claude-opus-4-8", message.usage);
 
     const feedbackText = message.content
       .filter((b) => b.type === "text")

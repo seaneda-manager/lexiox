@@ -5,6 +5,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { randomUUID } from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 import { validateAndShuffleIfNeeded } from '@/lib/utils/validateAnswerDistribution';
+import { logAnthropicUsage } from '@/lib/ai/logAnthropicUsage';
 
 // 오디오는 이 라우트에서 생성하지 않는다 (스크립트/문제만 생성).
 // 실제 TTS 생성은 admin이 edit 페이지에서 트랙별로 트리거하는
@@ -451,6 +452,7 @@ async function generateModule(part: 'module1' | 'hard' | 'easy', topics: ModuleT
     max_tokens: 16000,
     messages: [{ role: 'user', content: prompt }],
   });
+  void logAnthropicUsage(`admin/updated-listening/generate:${part}`, 'claude-sonnet-4-6', message.usage);
 
   const raw = (message.content[0] as { type: string; text: string }).text.trim();
   const jsonStart = raw.indexOf('{');

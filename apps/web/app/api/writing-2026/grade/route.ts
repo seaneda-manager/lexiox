@@ -3,6 +3,7 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { logAnthropicUsage } from "@/lib/ai/logAnthropicUsage";
 import {
   buildWritingGradingSystemPrompt,
   calcWritingRawScore,
@@ -109,6 +110,7 @@ export async function POST(req: Request) {
       system: buildWritingGradingSystemPrompt(),
       messages: [{ role: "user", content: userContent }],
     });
+    void logAnthropicUsage("writing-2026/grade", "claude-haiku-4-5-20251001", msg.usage);
 
     const raw = msg.content[0]?.type === "text" ? msg.content[0].text : "";
     console.log("[Writing Grade] AI response:", raw);

@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { logAnthropicUsage } from "@/lib/ai/logAnthropicUsage";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -76,6 +77,7 @@ Be specific, encouraging, and practical. Use Korean for explanations but keep En
       thinking: { type: "adaptive" },
       messages: [{ role: "user", content: prompt }],
     });
+    void logAnthropicUsage("speaking/ai-feedback", "claude-opus-4-8", message.usage);
 
     const feedbackText = message.content
       .filter((b) => b.type === "text")
