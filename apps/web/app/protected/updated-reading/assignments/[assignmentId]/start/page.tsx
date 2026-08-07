@@ -32,13 +32,26 @@ export default async function StartReadingAssignmentPage({ params }: { params: P
 
   if (!assignment || !assignment.reading_test_id) notFound();
 
-  // reading_tests_2026이 실제 콘텐츠 원본이다 (admin assign 화면에서 배정 직전에
-  // reading_tests_2026 → reading_tests(레거시, FK 전용)로 동기화하지만, id는 동일하다).
-  const { data: testRow } = await supabase
+  // test_assignments.reading_test_id의 FK는 reading_tests(레거시)를 향한다 — admin assign
+  // 화면이 배정 직전에 reading_tests_2026 → reading_tests로 동기화해서 넣어주기 때문에 FK가
+  // 항상 만족되지만, reading_tests_2026 쪽 행은 그 이후 삭제/재생성됐을 수 있어 보장되지 않는다.
+  // 최신 콘텐츠가 있으면 reading_tests_2026을 우선 쓰고, 없으면 FK가 보장하는 reading_tests로 폴백한다.
+  const { data: freshTestRow } = await supabase
     .from("reading_tests_2026")
     .select("id, label, payload")
     .eq("id", assignment.reading_test_id)
     .maybeSingle();
+
+  // reading_tests RLS는 status='active'인 행만 노출할 수 있어 service client로 통일한다.
+  const testRow =
+    freshTestRow ??
+    (
+      await getServiceSupabase()
+        .from("reading_tests")
+        .select("id, label, payload")
+        .eq("id", assignment.reading_test_id)
+        .maybeSingle()
+    ).data;
 
   if (!testRow || !testRow.payload) notFound();
 
