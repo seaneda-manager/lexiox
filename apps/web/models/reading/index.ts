@@ -360,6 +360,8 @@ export type DailyLifeContextType =
   | "notice"
   | "email"
   | "social_post"
+  | "text_message"
+  | "advertisement"
   | "web_article"
   | "other";
 

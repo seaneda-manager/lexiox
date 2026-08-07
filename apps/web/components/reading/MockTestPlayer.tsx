@@ -3,12 +3,15 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import ReadingTestLayout2026 from "./ReadingTestLayout2026";
+import { ReadingETSFrame } from "./ReadingETSFrame";
+import { DailyLifeContent } from "./DailyLifeCards";
 import type {
   RReadingTest2026,
   RReadingModule,
   RAcademicPassageItem,
   RCompleteWordsItem,
   RDailyLifeItem,
+  DailyLifeContextType,
   RQuestion,
   RChoice,
 } from "@/models/reading";
@@ -21,6 +24,7 @@ type FlatQuestion = {
   passageTitle: string;
   passageHtml: string;
   passageContentHtml?: string; // daily_life 전용
+  passageContextType?: DailyLifeContextType; // daily_life 전용 (email/notice/social_post/text_message/advertisement/...)
   passageKind: "academic_passage" | "daily_life";
   id: string;
   number: number;
@@ -146,6 +150,7 @@ function flattenModule(
           passageTitle: title,
           passageHtml: "",
           passageContentHtml: dl.contentHtml ?? "",
+          passageContextType: dl.contextType,
           passageKind: "daily_life",
           id: q.id,
           number: q.number,
@@ -578,38 +583,46 @@ export default function MockTestPlayer({
       onNext: () => void;
       nextLabel: string;
     }) => (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-6 px-4 py-12">
-        <div className="w-full max-w-xl rounded-xl border bg-white p-8 shadow-sm">
-          <div className="mb-1 flex items-center gap-2">
-            <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-[11px] font-semibold text-gray-500">
-              {badge}
-            </span>
-          </div>
-          <h1 className="mb-1 text-xl font-bold">{label}</h1>
-          <p className="mb-6 text-sm text-gray-500">{title}</p>
-
-          {children}
-
-          <div className="mt-8 flex items-center justify-between gap-3">
-            {onBack ? (
+      <ReadingETSFrame>
+        <header style={{
+          height: 60, backgroundColor: "#1A2B4C", display: "flex",
+          alignItems: "center", justifyContent: "space-between", padding: "0 24px", flexShrink: 0,
+        }}>
+          <span style={{ fontSize: 15, fontWeight: 700, color: "#FFFFFF" }}>{label}</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {onBack && (
               <button
                 onClick={onBack}
-                className="rounded-lg border px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+                className="rounded border border-slate-400 bg-transparent text-white"
+                style={{ width: 90, height: 36, fontSize: 13 }}
               >
-                ← 이전
+                &lt; 이전
               </button>
-            ) : (
-              <span />
             )}
             <button
               onClick={onNext}
-              className="rounded-lg bg-black px-6 py-2.5 text-sm font-semibold text-white hover:bg-gray-800"
+              className="rounded font-semibold text-white"
+              style={{ height: 36, padding: "0 18px", fontSize: 13, backgroundColor: "#0073E6", border: "none", borderRadius: 4 }}
             >
               {nextLabel}
             </button>
           </div>
-        </div>
-      </div>
+        </header>
+
+        <main style={{ flex: 1, overflowY: "auto", backgroundColor: "#F4F6F9", padding: 32 }}>
+          <div style={{ maxWidth: 760, margin: "0 auto", backgroundColor: "#FFFFFF", borderRadius: 8, padding: 32, boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
+            <div className="mb-1 flex items-center gap-2">
+              <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-[11px] font-semibold text-gray-500">
+                {badge}
+              </span>
+            </div>
+            <h1 className="mb-1 text-xl font-bold">{label}</h1>
+            <p className="mb-6 text-sm text-gray-500">{title}</p>
+
+            {children}
+          </div>
+        </main>
+      </ReadingETSFrame>
     );
 
     if (introStep === 0) {
@@ -784,7 +797,7 @@ export default function MockTestPlayer({
     }
 
     return (
-      <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", fontFamily: "Arial, Helvetica, sans-serif" }}>
+      <ReadingETSFrame>
         {/* ETS Header */}
         <header style={{
           height: 60, backgroundColor: "#1A2B4C",
@@ -800,7 +813,7 @@ export default function MockTestPlayer({
         </header>
 
         {/* Body */}
-        <div style={{ flex: 1, backgroundColor: "#F4F6F9", display: "flex", alignItems: "center", justifyContent: "center", padding: 40 }}>
+        <div style={{ flex: 1, overflowY: "auto", backgroundColor: "#F4F6F9", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: 40 }}>
           <div style={{ width: "100%", maxWidth: 900, backgroundColor: "#FFFFFF", borderRadius: 8, padding: 48, boxShadow: "0 1px 6px rgba(0,0,0,0.08)" }}>
 
             <div style={{ marginBottom: 24 }}>
@@ -853,7 +866,7 @@ export default function MockTestPlayer({
             {allFilled ? "✓ 모든 빈칸 완료" : `빈칸 ${cwItem.blanks.filter((b) => !((answers[cwKey(b.id)] as string) ?? "").trim()).length}개 남음`}
           </span>
         </footer>
-      </div>
+      </ReadingETSFrame>
     );
   }
 
@@ -865,7 +878,8 @@ export default function MockTestPlayer({
     const s1Flagged = stage1Questions.filter((q) => flagged.has(q.id)).length;
 
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-[#f5f7f8] px-4 py-12">
+      <ReadingETSFrame>
+      <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto px-4 py-12" style={{ backgroundColor: "#F4F6F9" }}>
         <div className="w-full max-w-lg">
 
           {/* 완료 배지 */}
@@ -963,6 +977,7 @@ export default function MockTestPlayer({
           </button>
         </div>
       </div>
+      </ReadingETSFrame>
     );
   }
 
@@ -971,6 +986,8 @@ export default function MockTestPlayer({
   if (phase === "result" && score) {
     const pct = Math.round((score.correct / score.total) * 100);
     return (
+      <ReadingETSFrame>
+      <div className="flex-1 overflow-y-auto" style={{ backgroundColor: "#F4F6F9" }}>
       <div className="mx-auto max-w-2xl px-4 py-10">
         <div className="rounded-xl border bg-white p-8 shadow-sm">
           <h2 className="mb-1 text-xl font-bold">채점 완료</h2>
@@ -1061,6 +1078,8 @@ export default function MockTestPlayer({
           )}
         </div>
       </div>
+      </div>
+      </ReadingETSFrame>
     );
   }
 
@@ -1071,6 +1090,8 @@ export default function MockTestPlayer({
     const unanswered = reviewQs.filter((q) => !answers[q.id]);
 
     return (
+      <ReadingETSFrame>
+      <div className="flex-1 overflow-y-auto" style={{ backgroundColor: "#F4F6F9" }}>
       <div className="mx-auto max-w-2xl px-4 py-10">
         <div className="rounded-xl border bg-white p-8 shadow-sm">
           <h2 className="mb-1 text-xl font-bold">검토</h2>
@@ -1162,6 +1183,8 @@ export default function MockTestPlayer({
           </div>
         </div>
       </div>
+      </div>
+      </ReadingETSFrame>
     );
   }
 
@@ -1304,10 +1327,10 @@ export default function MockTestPlayer({
       </p>
 
       {currentQ.passageKind === "daily_life" ? (
-        /* Daily Life: graphic card 렌더 */
-        <div
-          style={{ fontSize: 15, lineHeight: 1.7, color: "#222" }}
-          dangerouslySetInnerHTML={{ __html: currentQ.passageContentHtml ?? "" }}
+        /* Daily Life: 형식(이메일/공지/SNS/문자/광고)에 맞는 그래픽 카드로 렌더 */
+        <DailyLifeContent
+          contextType={currentQ.passageContextType ?? "other"}
+          contentHtml={currentQ.passageContentHtml ?? ""}
         />
       ) : (
         /* Academic Passage: 기존 prose 렌더 (Insert Text 문제일 땐 인터랙티브 렌더) */

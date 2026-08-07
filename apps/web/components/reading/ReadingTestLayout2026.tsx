@@ -1,6 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
+import { ReadingETSFrame } from './ReadingETSFrame';
 
 type Props = {
   header: ReactNode;
@@ -10,7 +11,8 @@ type Props = {
 };
 
 /**
- * ETS 스펙 레이아웃: 1920×1080 기준
+ * ETS 스펙 레이아웃.
+ * 실제 ETS 시험처럼 브라우저 전체가 아니라 중앙의 고정 크기 창(ReadingETSFrame) 안에 그린다.
  * - Header: #1A2B4C, height 60px
  * - Body: #FFFFFF panels (left 50% / right 50%)
  * - Footer: #F4F6F9, height 60px
@@ -19,17 +21,7 @@ export default function ReadingTestLayout2026({ header, left, right, footer }: P
   const isSingleColumn = right == null;
 
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      position: 'fixed',
-      inset: 0,
-      margin: 0,
-      padding: 0,
-      zIndex: 9999,
-      fontFamily: 'Arial, Helvetica, sans-serif'
-    }}>
-
+    <ReadingETSFrame>
       {/* ── ETS Header ── */}
       <header style={{
         height: 60,
@@ -92,6 +84,6 @@ export default function ReadingTestLayout2026({ header, left, right, footer }: P
           {footer}
         </footer>
       )}
-    </div>
+    </ReadingETSFrame>
   );
 }
