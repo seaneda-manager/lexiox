@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { getServiceSupabase } from "@/lib/supabase/service";
-import ReadingTestWrapper from "./_client";
+import ReadingTestRunnerClient from "@/app/protected/updated-reading/test/[testId]/_client/ReadingTestRunnerClient";
 import type { RReadingTest2026 } from "@/models/reading";
 
 export const dynamic = "force-dynamic";
@@ -25,18 +25,17 @@ export default async function StartReadingAssignmentPage({ params }: { params: P
 
   const { data: assignment } = await supabase
     .from("test_assignments")
-    .select("id, status, sections, reading_test_id")
+    .select("id, status, reading_test_id")
     .eq("id", assignmentId)
     .eq("student_id", user.id)
     .maybeSingle();
 
   if (!assignment || !assignment.reading_test_id) notFound();
 
-  // reading_tests RLS는 status='active'인 행만 노출할 수 있어 service client로 통일한다
-  // (소유권은 이미 위에서 assignment.student_id === user.id로 확인했다).
-  const service = getServiceSupabase();
-  const { data: testRow } = await service
-    .from("reading_tests")
+  // reading_tests_2026이 실제 콘텐츠 원본이다 (admin assign 화면에서 배정 직전에
+  // reading_tests_2026 → reading_tests(레거시, FK 전용)로 동기화하지만, id는 동일하다).
+  const { data: testRow } = await supabase
+    .from("reading_tests_2026")
     .select("id, label, payload")
     .eq("id", assignment.reading_test_id)
     .maybeSingle();
@@ -46,9 +45,10 @@ export default async function StartReadingAssignmentPage({ params }: { params: P
   await markInProgress(assignmentId, assignment.status);
 
   return (
-    <ReadingTestWrapper
+    <ReadingTestRunnerClient
       testId={testRow.id}
-      testData={testRow.payload as RReadingTest2026}
+      label={testRow.label ?? "Reading Test"}
+      test={testRow.payload as RReadingTest2026}
       assignmentId={assignmentId}
     />
   );
