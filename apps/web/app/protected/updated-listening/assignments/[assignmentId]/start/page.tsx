@@ -1,6 +1,6 @@
 import { getServerSupabase } from "@/lib/supabase/server";
 import { getServiceSupabase } from "@/lib/supabase/service";
-import ListeningTestWrapper from "./_client";
+import ListeningSessionContainer from "@/app/protected/listening/_components/ListeningSessionContainer";
 import type { LListeningTest2026Linear } from "@/models/listening";
 
 export const dynamic = "force-dynamic";
@@ -62,10 +62,11 @@ export default async function ListeningStartPage({
   await markInProgress(assignmentId, assignment.status);
 
   return (
-    <ListeningTestWrapper
+    <ListeningSessionContainer
       testData={testRow.payload as LListeningTest2026Linear}
       testId={testRow.id}
       assignmentId={assignmentId}
+      mode="test"
     />
   );
 }

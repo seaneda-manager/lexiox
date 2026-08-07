@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import VolumeAdjustmentScreen from "./VolumeAdjustmentScreen";
 import ListeningDirectionsScreen from "./ListeningDirectionsScreen";
 import ModuleStartScreen from "./ModuleStartScreen";
 import Task1QuestionScreen from "./Task1QuestionScreen";
@@ -10,7 +9,7 @@ import Task2345QuestionScreen from "./Task2345QuestionScreen";
 import ModuleEndScreen from "./ModuleEndScreen";
 import type { LListeningTest2026Linear, LListeningTrack2026, LQuestion2026 } from "@/models/listening";
 
-type ScreenType = "volume" | "directions" | "moduleStart" | "step" | "moduleEnd" | "final";
+type ScreenType = "directions" | "moduleStart" | "step" | "moduleEnd" | "final";
 
 interface AnswerRecord {
   questionId: string;
@@ -56,7 +55,9 @@ export default function ListeningSessionContainer({
   mode = "test",
 }: ListeningSessionContainerProps) {
   const isStudy = mode === "study";
-  const [screen, setScreen] = useState<ScreenType>("volume");
+  // 실제 ETS는 전용 볼륨 조절 화면이 없다 — 헤더의 Volume 버튼으로 시험 내내 조절한다.
+  const [volume, setVolume] = useState(70);
+  const [screen, setScreen] = useState<ScreenType>("directions");
   const [module, setModule] = useState<1 | 2>(1);
   const [difficulty, setDifficulty] = useState<"hard" | "easy">("hard");
   const [stepIndex, setStepIndex] = useState(0);
@@ -95,7 +96,6 @@ export default function ListeningSessionContainer({
   // study 전용. test에서는 호출되지 않는다.
   const goBackStep = () => setStepIndex((prev) => Math.max(0, prev - 1));
 
-  const handleVolumeNext = () => setScreen("directions");
   const handleDirectionsNext = () => setScreen("moduleStart");
 
   const handleModuleStartNext = () => {
@@ -161,11 +161,8 @@ export default function ListeningSessionContainer({
   }
 
   switch (screen) {
-    case "volume":
-      return <VolumeAdjustmentScreen onNext={handleVolumeNext} />;
-
     case "directions":
-      return <ListeningDirectionsScreen onNext={handleDirectionsNext} />;
+      return <ListeningDirectionsScreen onNext={handleDirectionsNext} volume={volume} onVolumeChange={setVolume} />;
 
     case "moduleStart":
       return (
@@ -173,6 +170,8 @@ export default function ListeningSessionContainer({
           module={module}
           difficulty={module === 2 ? difficulty : undefined}
           onNext={handleModuleStartNext}
+          volume={volume}
+          onVolumeChange={setVolume}
         />
       );
 
@@ -186,7 +185,7 @@ export default function ListeningSessionContainer({
         return (
           <ListeningScreen
             key={currentStep.track.id}
-            taskNumber={stepIndex + 1}
+            module={module}
             taskKind={currentStep.track.taskKind as "conversation" | "announcement" | "academic_talk"}
             audioUrl={currentStep.track.audioUrl}
             illustrationUrl={currentStep.track.illustrationUrl}
@@ -196,6 +195,8 @@ export default function ListeningSessionContainer({
             transcript={currentStep.track.transcript}
             scriptSegments={(currentStep.track as any).scriptSegments}
             onBack={backHandler}
+            volume={volume}
+            onVolumeChange={setVolume}
           />
         );
       }
@@ -208,9 +209,11 @@ export default function ListeningSessionContainer({
         return (
           <Task1QuestionScreen
             key={question.id}
+            module={module}
             currentQuestion={qIndex + 1}
             totalQuestions={totalQuestionsInTrack}
             audioUrl={question.audioUrl ?? ""}
+            illustrationUrl={track.illustrationUrl}
             choices={question.choices}
             maxTime={question.testingSeconds ?? 20}
             onNext={(choiceIndex) => handleQuestionNext(question, choiceIndex)}
@@ -218,6 +221,8 @@ export default function ListeningSessionContainer({
             initialChoiceIndex={previousChoice}
             onBack={backHandler}
             transcript={question.transcript}
+            volume={volume}
+            onVolumeChange={setVolume}
           />
         );
       }
@@ -225,7 +230,7 @@ export default function ListeningSessionContainer({
       return (
         <Task2345QuestionScreen
           key={question.id}
-          taskNumber={stepIndex + 1}
+          module={module}
           taskKind={track.taskKind as "conversation" | "announcement" | "academic_talk"}
           currentQuestion={qIndex + 1}
           totalQuestions={totalQuestionsInTrack}
@@ -237,8 +242,11 @@ export default function ListeningSessionContainer({
           initialChoiceIndex={previousChoice}
           onBack={backHandler}
           audioUrl={track.audioUrl}
+          illustrationUrl={track.illustrationUrl}
           transcript={track.transcript}
           scriptSegments={(track as any).scriptSegments}
+          volume={volume}
+          onVolumeChange={setVolume}
         />
       );
     }

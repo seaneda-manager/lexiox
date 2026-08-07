@@ -11,6 +11,7 @@ type Track = {
   transcript: string;
   audioUrl?: string;
   audioSeconds?: number;
+  illustrationUrl?: string;
   segments?: Array<{ speaker: string; text: string; audioUrl: string }>;
   questions?: any[];
 };
@@ -118,6 +119,7 @@ export default function ListeningTestEditPage() {
   const [test, setTest] = useState<Test | null>(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState<Record<string, boolean>>({});
+  const [imageGenerating, setImageGenerating] = useState<Record<string, boolean>>({});
   const [uploading, setUploading] = useState<Record<string, boolean>>({});
   const [difficulty, setDifficulty] = useState<Record<string, 'easy' | 'hard'>>({});
   const [error, setError] = useState<string | null>(null);
@@ -170,6 +172,36 @@ export default function ListeningTestEditPage() {
       setError(err.message);
     } finally {
       setGenerating(prev => ({ ...prev, [trackId]: false }));
+    }
+  };
+
+  const generateImage = async (trackId: string) => {
+    if (!test) return;
+    const track = findTrack(test, trackId);
+    if (!track) return;
+
+    setImageGenerating(prev => ({ ...prev, [trackId]: true }));
+    try {
+      const res = await fetch('/api/admin/updated-listening/generate-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tracks: [{ trackId, taskKind: track.taskKind }],
+        })
+      });
+
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error);
+
+      const result = data.results[trackId];
+      setTest(prev => prev ? updateTrackEverywhere(prev, trackId, t => ({
+        ...t,
+        illustrationUrl: result.illustrationUrl,
+      })) : prev);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setImageGenerating(prev => ({ ...prev, [trackId]: false }));
     }
   };
 
@@ -292,12 +324,25 @@ export default function ListeningTestEditPage() {
           {group.tracks.map(track => (
             <div key={track.id} className="rounded-lg border bg-white p-6 shadow-sm">
               <div className="mb-4 flex items-start justify-between">
-                <div>
-                  <h2 className="font-semibold text-gray-900">{track.title}</h2>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {track.taskKind}
-                    {track.questions && ` · ${track.questions.length}문항`}
-                  </p>
+                <div className="flex items-start gap-3">
+                  {track.illustrationUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={track.illustrationUrl} alt="" className="h-14 w-14 rounded-lg object-cover border" />
+                  )}
+                  <div>
+                    <h2 className="font-semibold text-gray-900">{track.title}</h2>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {track.taskKind}
+                      {track.questions && ` · ${track.questions.length}문항`}
+                    </p>
+                    <button
+                      onClick={() => generateImage(track.id)}
+                      disabled={imageGenerating[track.id]}
+                      className="mt-2 rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-700 disabled:opacity-50"
+                    >
+                      {imageGenerating[track.id] ? '생성 중...' : track.illustrationUrl ? '🖼️ 이미지 재생성' : '🖼️ 이미지생성'}
+                    </button>
+                  </div>
                 </div>
                 {track.taskKind !== 'choose_response' && (
                   <div className="flex gap-2 items-center flex-wrap">

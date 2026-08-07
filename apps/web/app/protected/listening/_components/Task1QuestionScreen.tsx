@@ -1,6 +1,9 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import ListeningTestLayout2026, { ListeningHeaderLabel, ListeningSubHeaderLabel } from "@/components/listening/ListeningTestLayout2026";
+import VolumeControl from "@/components/listening/VolumeControl";
+import SpeakerVisual from "@/components/listening/SpeakerVisual";
 import StudyAudioPlayer from "./StudyAudioPlayer";
 import type { ScriptSegment } from "@/models/listening";
 
@@ -11,9 +14,11 @@ interface Choice {
 }
 
 interface Task1QuestionScreenProps {
+  module: 1 | 2;
   currentQuestion: number;
   totalQuestions: number;
   audioUrl: string;
+  illustrationUrl?: string;
   choices: Choice[];
   maxTime?: number; // in seconds (default: 20, spec range 15-30)
   onNext: (selectedChoiceIndex: number) => void;
@@ -24,12 +29,28 @@ interface Task1QuestionScreenProps {
   onBack?: () => void;
   transcript?: string;
   scriptSegments?: ScriptSegment[];
+  volume: number;
+  onVolumeChange: (volume: number) => void;
 }
 
+const nextButtonStyle: React.CSSProperties = {
+  height: 32,
+  padding: "0 16px",
+  fontSize: 12,
+  fontWeight: 700,
+  border: "none",
+  borderRadius: 4,
+  backgroundColor: "#0073E6",
+  color: "#FFFFFF",
+  cursor: "pointer",
+};
+
 export default function Task1QuestionScreen({
+  module,
   currentQuestion,
   totalQuestions,
   audioUrl,
+  illustrationUrl,
   choices,
   maxTime = 20,
   onNext,
@@ -39,6 +60,8 @@ export default function Task1QuestionScreen({
   onBack,
   transcript,
   scriptSegments,
+  volume,
+  onVolumeChange,
 }: Task1QuestionScreenProps) {
   const isStudy = mode === "study";
   const [selectedChoiceIndex, setSelectedChoiceIndex] = useState<number | null>(initialChoiceIndex);
@@ -67,6 +90,7 @@ export default function Task1QuestionScreen({
   useEffect(() => {
     if (isStudy) return;
     if (audioRef.current && !audioHasPlayed) {
+      audioRef.current.volume = volume / 100;
       audioRef.current.play().catch((err) => {
         console.error("Audio playback error:", err);
         setIsAudioPlaying(false);
@@ -75,6 +99,11 @@ export default function Task1QuestionScreen({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isStudy]);
+
+  // 헤더에서 볼륨을 바꾸면 재생 중인 오디오에도 즉시 반영
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.volume = volume / 100;
+  }, [volume]);
 
   const formatTime = (seconds: number) => {
     return `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
@@ -85,10 +114,6 @@ export default function Task1QuestionScreen({
     setAudioHasPlayed(true);
   };
 
-  const handleChoiceSelect = (index: number) => {
-    setSelectedChoiceIndex(index);
-  };
-
   const handleNext = () => {
     if (selectedChoiceIndex !== null) {
       onNext(selectedChoiceIndex);
@@ -97,154 +122,101 @@ export default function Task1QuestionScreen({
 
   // study에서는 언제든 답을 고치고 다시 들을 수 있어야 한다.
   const isChoicesDisabled = isStudy ? false : isAudioPlaying || !audioHasPlayed;
+  const canAdvance = selectedChoiceIndex !== null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex flex-col">
-      {/* Header with Timer */}
-      <header className="bg-white border-b border-gray-200 px-8 py-4 shadow-sm">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-sm text-gray-500">
-              Task 1 - Question {currentQuestion} of {totalQuestions}
-            </div>
-            <div className="text-xs text-gray-400 mt-1">
-              Listen and choose the best response
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            {isStudy ? (
-              <div className="rounded-lg bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">
-                Study — 시간 제한 없음
-              </div>
-            ) : (
-              <div className="text-center">
-                <div className="text-xs text-gray-500">Time Left</div>
-                <div className={`text-2xl font-bold font-mono ${
-                  audioHasPlayed && timeLeft <= 5 ? "text-red-600" : "text-blue-600"
-                }`}>
-                  {audioHasPlayed ? formatTime(timeLeft) : "--:--"}
-                </div>
-              </div>
-            )}
-          </div>
+    <ListeningTestLayout2026
+      headerLeft={<ListeningHeaderLabel module={module} />}
+      headerRight={
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <VolumeControl volume={volume} onVolumeChange={onVolumeChange} />
+          {canAdvance && (
+            <button onClick={handleNext} style={nextButtonStyle}>
+              Next &gt;
+            </button>
+          )}
         </div>
-      </header>
-
-      {/* Main Content - centered */}
-      <main className="flex-1 flex items-center justify-center px-8 py-8">
-        <div className="w-full max-w-2xl space-y-8">
-          {/* Audio: study는 반복 재생 + 스크립트, test는 상태 표시만 */}
-          {isStudy ? (
-            <div className="flex justify-center">
-              <StudyAudioPlayer
-                audioUrl={audioUrl}
-                transcript={transcript}
-                scriptSegments={scriptSegments}
-                autoPlay
-              />
+      }
+      subHeaderLeft={<ListeningSubHeaderLabel questionInfo={`Question ${currentQuestion} of ${totalQuestions}`} />}
+      subHeaderRight={
+        !isStudy ? (
+          <span style={{ fontSize: 13, fontWeight: 700, fontFamily: "monospace", color: audioHasPlayed && timeLeft <= 5 ? "#DC2626" : "#333" }}>
+            {audioHasPlayed ? formatTime(timeLeft) : "--:--"}
+          </span>
+        ) : (
+          <span style={{ fontSize: 11, fontWeight: 700, color: "#0F9D58" }}>Study — no time limit</span>
+        )
+      }
+    >
+      <div style={{ display: "flex", gap: 40, alignItems: "center", height: "100%" }}>
+        {/* 좌: 화자 이미지 */}
+        <div style={{ flexShrink: 0 }}>
+          <SpeakerVisual taskKind="choose_response" illustrationUrl={illustrationUrl} size={200} />
+          {!isStudy && (
+            <div style={{ textAlign: "center", marginTop: 10, fontSize: 12, color: isAudioPlaying ? "#0073E6" : "#666" }}>
+              {isAudioPlaying ? "🔊 Now playing..." : audioHasPlayed ? "✓ Audio played" : "Ready to listen"}
             </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center">
-              <div className={`flex h-32 w-32 items-center justify-center rounded-full text-5xl transition-all ${
-                isAudioPlaying ? "bg-blue-100 animate-pulse" : "bg-gray-100"
-              }`}>
-                🔊
-              </div>
-              <div className="mt-4 text-center text-sm text-gray-500">
-                {isAudioPlaying ? (
-                  <span className="flex items-center gap-2 justify-center">
-                    <span className="inline-block w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-                    Now playing...
-                  </span>
-                ) : audioHasPlayed ? (
-                  <span className="text-green-600 font-semibold">✓ Audio played</span>
-                ) : (
-                  <span>Ready to listen</span>
-                )}
-              </div>
+          )}
+        </div>
+
+        {/* 우: 질문 + 선택지 */}
+        <div style={{ flex: 1 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 800, color: "#111", marginBottom: 20 }}>
+            Choose the best response.
+          </h2>
+
+          {isStudy && (
+            <div style={{ marginBottom: 20 }}>
+              <StudyAudioPlayer audioUrl={audioUrl} transcript={transcript} scriptSegments={scriptSegments} autoPlay />
             </div>
           )}
 
-          {/* Instruction */}
-          <p className="text-center text-sm font-medium text-gray-600">
-            가장 적절한 응답을 고르세요.
-          </p>
-
-          {/* Choices */}
-          <div className="space-y-3">
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             {choices.map((choice, index) => (
               <label
                 key={choice.id}
-                className={`flex items-start gap-4 p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                  selectedChoiceIndex === index
-                    ? "border-blue-500 bg-blue-50 shadow-md"
-                    : "border-gray-200 bg-white hover:border-gray-300"
-                } ${isChoicesDisabled ? "opacity-60 cursor-not-allowed" : ""}`}
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 10,
+                  padding: "8px 6px",
+                  cursor: isChoicesDisabled ? "not-allowed" : "pointer",
+                  opacity: isChoicesDisabled ? 0.55 : 1,
+                }}
               >
-                <div className="flex items-center mt-1">
-                  <input
-                    type="radio"
-                    name="choice"
-                    value={index}
-                    checked={selectedChoiceIndex === index}
-                    onChange={() => handleChoiceSelect(index)}
-                    disabled={isChoicesDisabled}
-                    className="w-5 h-5 cursor-pointer"
-                  />
-                </div>
-                <div className="flex-1">
-                  <p className={`text-sm leading-relaxed ${
-                    selectedChoiceIndex === index
-                      ? "text-blue-900 font-semibold"
-                      : "text-gray-700"
-                  }`}>
-                    {choice.text}
-                  </p>
-                </div>
+                <input
+                  type="radio"
+                  name="choice"
+                  checked={selectedChoiceIndex === index}
+                  onChange={() => setSelectedChoiceIndex(index)}
+                  disabled={isChoicesDisabled}
+                  style={{ width: 16, height: 16, marginTop: 2, accentColor: "#0073E6", cursor: "inherit" }}
+                />
+                <span style={{ fontSize: 15, lineHeight: 1.5, color: selectedChoiceIndex === index ? "#0073E6" : "#222", fontWeight: selectedChoiceIndex === index ? 600 : 400 }}>
+                  {choice.text}
+                </span>
               </label>
             ))}
           </div>
 
-          {/* Help Text (test 모드 전용) */}
           {!isStudy && isAudioPlaying && (
-            <div className="text-sm text-amber-700 bg-amber-50 p-3 rounded border border-amber-200 text-center">
+            <p style={{ marginTop: 16, fontSize: 12, color: "#92600A" }}>
               Listen to the audio. You can select your answer after it finishes playing.
-            </div>
-          )}
-
-          {!isStudy && !audioHasPlayed && !isAudioPlaying && (
-            <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded border border-gray-200 text-center">
-              Audio will play automatically. Please wait and listen carefully.
-            </div>
+            </p>
           )}
         </div>
-      </main>
+      </div>
 
-      {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 px-8 py-6 flex justify-between gap-4">
-        {isStudy && onBack ? (
+      {onBack && isStudy && (
+        <div style={{ position: "absolute", bottom: 24, left: 36 }}>
           <button
             onClick={onBack}
-            className="px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50"
+            style={{ height: 32, padding: "0 16px", fontSize: 12, fontWeight: 600, border: "1px solid #D0D5DD", borderRadius: 4, backgroundColor: "#FFFFFF", color: "#333", cursor: "pointer" }}
           >
-            Back
+            &lt; Back
           </button>
-        ) : (
-          <span />
-        )}
-
-        <button
-          onClick={handleNext}
-          disabled={selectedChoiceIndex === null}
-          className={`px-8 py-3 font-semibold rounded-lg transition-colors shadow-md ${
-            selectedChoiceIndex !== null
-              ? "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
-              : "bg-gray-300 text-gray-500 cursor-not-allowed"
-          }`}
-        >
-          Next
-        </button>
-      </footer>
+        </div>
+      )}
 
       {/* Hidden Audio (test 모드 전용) */}
       {!isStudy && (
@@ -259,6 +231,6 @@ export default function Task1QuestionScreen({
           }}
         />
       )}
-    </div>
+    </ListeningTestLayout2026>
   );
 }

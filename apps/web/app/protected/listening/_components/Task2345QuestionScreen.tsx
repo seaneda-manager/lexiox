@@ -1,6 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import ListeningTestLayout2026, { ListeningHeaderLabel, ListeningSubHeaderLabel } from "@/components/listening/ListeningTestLayout2026";
+import VolumeControl from "@/components/listening/VolumeControl";
+import SpeakerVisual from "@/components/listening/SpeakerVisual";
 import StudyAudioPlayer from "./StudyAudioPlayer";
 import type { ScriptSegment } from "@/models/listening";
 
@@ -11,7 +14,7 @@ interface Choice {
 }
 
 interface Task2345QuestionScreenProps {
-  taskNumber: number;
+  module: 1 | 2;
   taskKind: "conversation" | "announcement" | "academic_talk";
   currentQuestion: number;
   totalQuestions: number;
@@ -26,12 +29,27 @@ interface Task2345QuestionScreenProps {
   initialChoiceIndex?: number | null;
   onBack?: () => void;
   audioUrl?: string;
+  illustrationUrl?: string;
   transcript?: string;
   scriptSegments?: ScriptSegment[];
+  volume: number;
+  onVolumeChange: (volume: number) => void;
 }
 
+const nextButtonStyle: React.CSSProperties = {
+  height: 32,
+  padding: "0 16px",
+  fontSize: 12,
+  fontWeight: 700,
+  border: "none",
+  borderRadius: 4,
+  backgroundColor: "#0073E6",
+  color: "#FFFFFF",
+  cursor: "pointer",
+};
+
 export default function Task2345QuestionScreen({
-  taskNumber,
+  module,
   taskKind,
   currentQuestion,
   totalQuestions,
@@ -44,8 +62,11 @@ export default function Task2345QuestionScreen({
   initialChoiceIndex = null,
   onBack,
   audioUrl,
+  illustrationUrl,
   transcript,
   scriptSegments,
+  volume,
+  onVolumeChange,
 }: Task2345QuestionScreenProps) {
   const isStudy = mode === "study";
   const [selectedChoiceIndex, setSelectedChoiceIndex] = useState<number | null>(initialChoiceIndex);
@@ -69,159 +90,92 @@ export default function Task2345QuestionScreen({
     return `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
   };
 
-  const getTaskTitle = () => {
-    switch (taskKind) {
-      case "conversation":
-        return "Conversation";
-      case "announcement":
-        return "Announcement";
-      case "academic_talk":
-        return "Academic Talk";
-      default:
-        return "Audio";
-    }
-  };
-
-  const getTaskIcon = () => {
-    switch (taskKind) {
-      case "conversation":
-        return "💬";
-      case "announcement":
-        return "📢";
-      case "academic_talk":
-        return "🎓";
-      default:
-        return "🎧";
-    }
-  };
-
   const handleNext = () => {
     if (selectedChoiceIndex !== null) {
       onNext(selectedChoiceIndex);
     }
   };
 
+  const canAdvance = selectedChoiceIndex !== null;
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex flex-col">
-      {/* Header with Timer */}
-      <header className="bg-white border-b border-gray-200 px-8 py-4 shadow-sm">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-sm text-gray-500">
-              Task {taskNumber} - Question {currentQuestion} of {totalQuestions}
-            </div>
-            <div className="text-xs text-gray-400 mt-1">
-              {getTaskIcon()} {getTaskTitle()}
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            {isStudy ? (
-              <div className="rounded-lg bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">
-                Study — 시간 제한 없음
-              </div>
-            ) : (
-              <div className="text-center">
-                <div className="text-xs text-gray-500">Time Left</div>
-                <div className={`text-2xl font-bold font-mono ${
-                  timeLeft <= 10 ? "text-red-600" : "text-blue-600"
-                }`}>
-                  {formatTime(timeLeft)}
-                </div>
-              </div>
-            )}
+    <ListeningTestLayout2026
+      headerLeft={<ListeningHeaderLabel module={module} />}
+      headerRight={
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <VolumeControl volume={volume} onVolumeChange={onVolumeChange} />
+          {canAdvance && (
+            <button onClick={handleNext} style={nextButtonStyle}>
+              Next &gt;
+            </button>
+          )}
+        </div>
+      }
+      subHeaderLeft={<ListeningSubHeaderLabel questionInfo={`Question ${currentQuestion} of ${totalQuestions}`} />}
+      subHeaderRight={
+        !isStudy ? (
+          <span style={{ fontSize: 13, fontWeight: 700, fontFamily: "monospace", color: timeLeft <= 10 ? "#DC2626" : "#333" }}>
+            {formatTime(timeLeft)}
+          </span>
+        ) : (
+          <span style={{ fontSize: 11, fontWeight: 700, color: "#0F9D58" }}>Study — no time limit</span>
+        )
+      }
+    >
+      <div style={{ display: "flex", gap: 40, alignItems: "flex-start", height: "100%" }}>
+        {/* 좌: 화자 이미지 (conversation은 2명, 그 외는 1명) — study는 재청취/스크립트로 대체 */}
+        <div style={{ flexShrink: 0 }}>
+          {isStudy && audioUrl ? (
+            <StudyAudioPlayer audioUrl={audioUrl} transcript={transcript} scriptSegments={scriptSegments} />
+          ) : (
+            <SpeakerVisual taskKind={taskKind} illustrationUrl={illustrationUrl} size={200} />
+          )}
+        </div>
+
+        {/* 우: 질문 + 선택지 */}
+        <div style={{ flex: 1 }}>
+          <p style={{ fontSize: 16, fontWeight: 700, color: "#111", marginBottom: 20, lineHeight: 1.5 }}>
+            {question}
+          </p>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            {choices.map((choice, index) => (
+              <label
+                key={choice.id}
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 10,
+                  padding: "8px 6px",
+                  cursor: "pointer",
+                }}
+              >
+                <input
+                  type="radio"
+                  name="choice"
+                  checked={selectedChoiceIndex === index}
+                  onChange={() => setSelectedChoiceIndex(index)}
+                  style={{ width: 16, height: 16, marginTop: 2, accentColor: "#0073E6", cursor: "pointer" }}
+                />
+                <span style={{ fontSize: 15, lineHeight: 1.5, color: selectedChoiceIndex === index ? "#0073E6" : "#222", fontWeight: selectedChoiceIndex === index ? 600 : 400 }}>
+                  {choice.text}
+                </span>
+              </label>
+            ))}
           </div>
         </div>
-      </header>
+      </div>
 
-      {/* Main Content - 2 Column Layout */}
-      <main className="flex-1 flex items-center justify-center px-8 py-8">
-        <div className="w-full max-w-5xl grid grid-cols-3 gap-8">
-          {/* Left: task icon — study에서는 다시 듣기 + 스크립트 */}
-          <div className="flex justify-center">
-            {isStudy && audioUrl ? (
-              <StudyAudioPlayer
-                audioUrl={audioUrl}
-                transcript={transcript}
-                scriptSegments={scriptSegments}
-              />
-            ) : (
-              <div className="flex h-56 w-56 items-center justify-center rounded-xl bg-blue-50 text-7xl shadow-lg">
-                {getTaskIcon()}
-              </div>
-            )}
-          </div>
-
-          {/* Right: Question and Choices */}
-          <div className="col-span-2 flex flex-col justify-center space-y-6">
-            {/* Question Box */}
-            <div className="bg-white rounded-xl shadow-md p-6 border-2 border-blue-200">
-              <p className="text-lg font-semibold text-gray-900 leading-relaxed">
-                {question}
-              </p>
-            </div>
-
-            {/* Choices */}
-            <div className="space-y-3">
-              {choices.map((choice, index) => (
-                <label
-                  key={choice.id}
-                  className={`flex items-start gap-4 p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                    selectedChoiceIndex === index
-                      ? "border-blue-500 bg-blue-50 shadow-md"
-                      : "border-gray-200 bg-white hover:border-gray-300"
-                  }`}
-                >
-                  <div className="flex items-center mt-1">
-                    <input
-                      type="radio"
-                      name="choice"
-                      value={index}
-                      checked={selectedChoiceIndex === index}
-                      onChange={() => setSelectedChoiceIndex(index)}
-                      className="w-5 h-5 cursor-pointer"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <p className={`text-sm leading-relaxed ${
-                      selectedChoiceIndex === index
-                        ? "text-blue-900 font-semibold"
-                        : "text-gray-700"
-                    }`}>
-                      {choice.text}
-                    </p>
-                  </div>
-                </label>
-              ))}
-            </div>
-          </div>
-        </div>
-      </main>
-
-      {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 px-8 py-6 flex justify-between gap-4">
-        {isStudy && onBack ? (
+      {onBack && isStudy && (
+        <div style={{ position: "absolute", bottom: 24, left: 36 }}>
           <button
             onClick={onBack}
-            className="px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50"
+            style={{ height: 32, padding: "0 16px", fontSize: 12, fontWeight: 600, border: "1px solid #D0D5DD", borderRadius: 4, backgroundColor: "#FFFFFF", color: "#333", cursor: "pointer" }}
           >
-            Back
+            &lt; Back
           </button>
-        ) : (
-          <span />
-        )}
-
-        <button
-          onClick={handleNext}
-          disabled={selectedChoiceIndex === null}
-          className={`px-8 py-3 font-semibold rounded-lg transition-colors shadow-md ${
-            selectedChoiceIndex !== null
-              ? "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
-              : "bg-gray-300 text-gray-500 cursor-not-allowed"
-          }`}
-        >
-          Next
-        </button>
-      </footer>
-    </div>
+        </div>
+      )}
+    </ListeningTestLayout2026>
   );
 }
