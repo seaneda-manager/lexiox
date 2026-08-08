@@ -39,7 +39,7 @@ C. [직독직해 분석]
 D. [직독직해 분석]`;
 
     const message = await client.messages.create({
-      model: "claude-opus-5-20250805",
+      model: "claude-opus-5",
       max_tokens: 1024,
       messages: [
         {

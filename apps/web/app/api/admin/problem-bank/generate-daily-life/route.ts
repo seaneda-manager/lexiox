@@ -99,7 +99,7 @@ ${content}
 난이도: ${difficulty}`;
 
     const message = await client.messages.create({
-      model: 'claude-opus-5-20250514',
+      model: 'claude-opus-5',
       max_tokens: 2000,
       system: systemPrompt,
       messages: [{ role: 'user', content: userPrompt }],
