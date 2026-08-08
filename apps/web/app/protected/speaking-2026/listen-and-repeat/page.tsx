@@ -21,6 +21,7 @@ export default function ListenAndRepeatPage() {
   const { generateAudio, loading } = useGenerateSpeech();
   const [items, setItems] = useState<ListenRepeatItem[]>([]);
   const [generatingIds, setGeneratingIds] = useState<Set<string>>(new Set());
+  const [volume, setVolume] = useState(70);
 
   useEffect(() => {
     const loadAudio = async () => {
@@ -78,6 +79,8 @@ export default function ListenAndRepeatPage() {
       mode="test"
       totalQuestions={items.length}
       totalQuestionOffset={1}
+      volume={volume}
+      onVolumeChange={setVolume}
       onComplete={(result) => {
         console.log("Listen & Repeat 시험 완료:", result);
       }}

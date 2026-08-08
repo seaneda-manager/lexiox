@@ -4,6 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import InterviewRunner from "@/app/protected/speaking-2026/components/InterviewRunner";
 import ListenAndRepeatRunner from "@/app/protected/speaking-2026/components/ListenAndRepeatRunner";
+import SpeakingTestLayout2026, { SpeakingHeaderLabel, SpeakingSubHeaderLabel } from "@/components/speaking/SpeakingTestLayout2026";
+import VolumeControl from "@/components/speaking/VolumeControl";
 import type {
   SpeakingTest2026,
   SpeakingTaskListenRepeat2026,
@@ -88,10 +90,21 @@ type Phase =
   | "interview"
   | "done";
 
-function AudioCheckStep({ onNext }: { onNext: () => void }) {
+const nextButtonStyle: React.CSSProperties = {
+  height: 32,
+  padding: "0 16px",
+  fontSize: 12,
+  fontWeight: 700,
+  border: "none",
+  borderRadius: 4,
+  backgroundColor: "#0073E6",
+  color: "#FFFFFF",
+  cursor: "pointer",
+};
+
+function AudioCheckStep({ onNext, volume, onVolumeChange }: { onNext: () => void; volume: number; onVolumeChange: (v: number) => void }) {
   const [micLevel, setMicLevel] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
-  const [speakerVolume, setSpeakerVolume] = useState(50);
   const audioContextRef = useRef<AudioContext | null>(null);
   const rafRef = useRef<number | null>(null);
 
@@ -132,98 +145,103 @@ function AudioCheckStep({ onNext }: { onNext: () => void }) {
 
   const playTestSound = () => {
     const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const osc = ctx.createOscillator();
     const gain = ctx.createGain();
+    const osc = ctx.createOscillator();
     osc.connect(gain);
     gain.connect(ctx.destination);
-    gain.gain.value = speakerVolume / 100;
+    gain.gain.value = volume / 100;
     osc.frequency.value = 440;
     osc.start();
     setTimeout(() => osc.stop(), 500);
   };
 
   return (
-    <main className="mx-auto max-w-2xl space-y-6 px-4 py-10">
-      <h1 className="text-2xl font-bold text-slate-900 text-center">Audio & Device Check</h1>
+    <SpeakingTestLayout2026
+      headerLeft={<SpeakingHeaderLabel />}
+      headerRight={
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <VolumeControl volume={volume} onVolumeChange={onVolumeChange} />
+          <button onClick={() => { stopMicTest(); onNext(); }} style={nextButtonStyle}>
+            Next &gt;
+          </button>
+        </div>
+      }
+      subHeaderLeft={<SpeakingSubHeaderLabel />}
+    >
+      <h2 style={{ fontSize: 22, fontWeight: 800, color: "#111", marginBottom: 20 }}>
+        Audio &amp; Microphone Check
+      </h2>
 
-      <div className="rounded-xl border bg-white p-6 space-y-4 shadow-sm">
-        <h2 className="text-sm font-semibold text-slate-800">🎤 Microphone Check</h2>
-        <p className="text-xs text-slate-500">마이크 테스트를 시작하고 몇 초 동안 말씀해주세요.</p>
-        <button
-          onClick={isRecording ? stopMicTest : startMicTest}
-          className={`w-full rounded-lg px-4 py-2.5 text-sm font-semibold text-white ${
-            isRecording ? "bg-red-600 hover:bg-red-700" : "bg-blue-600 hover:bg-blue-700"
-          }`}
-        >
-          {isRecording ? "마이크 테스트 중지" : "마이크 테스트 시작"}
-        </button>
-        {isRecording && (
-          <div className="space-y-1">
-            <p className="text-xs text-slate-500">마이크 레벨: {Math.round(micLevel)}%</p>
-            <div className="h-2.5 w-full rounded-full bg-slate-200">
-              <div className="h-2.5 rounded-full bg-emerald-500 transition-all" style={{ width: `${micLevel}%` }} />
+      <div style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: 560 }}>
+        <div style={{ border: "1px solid #E0E0E0", borderRadius: 6, padding: "18px 20px" }}>
+          <p style={{ fontSize: 14, fontWeight: 700, color: "#222", marginBottom: 8 }}>🎤 Microphone Check</p>
+          <p style={{ fontSize: 13, color: "#666", marginBottom: 12 }}>마이크 테스트를 시작하고 몇 초 동안 말씀해주세요.</p>
+          <button
+            onClick={isRecording ? stopMicTest : startMicTest}
+            style={{
+              width: "100%", padding: "10px 0", fontSize: 13, fontWeight: 700, color: "#FFFFFF",
+              backgroundColor: isRecording ? "#DC2626" : "#0073E6", border: "none", borderRadius: 4, cursor: "pointer",
+            }}
+          >
+            {isRecording ? "마이크 테스트 중지" : "마이크 테스트 시작"}
+          </button>
+          {isRecording && (
+            <div style={{ marginTop: 12 }}>
+              <p style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>마이크 레벨: {Math.round(micLevel)}%</p>
+              <div style={{ height: 8, width: "100%", borderRadius: 4, backgroundColor: "#E0E0E0" }}>
+                <div style={{ height: "100%", borderRadius: 4, backgroundColor: "#0F9D58", width: `${micLevel}%`, transition: "width 0.1s" }} />
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
 
-      <div className="rounded-xl border bg-white p-6 space-y-4 shadow-sm">
-        <h2 className="text-sm font-semibold text-slate-800">🔊 Speaker & Headphone Check</h2>
-        <label className="text-xs font-medium text-slate-600">스피커/헤드폰 볼륨: {speakerVolume}%</label>
-        <input
-          type="range"
-          min={0}
-          max={100}
-          value={speakerVolume}
-          onChange={(e) => setSpeakerVolume(Number(e.target.value))}
-          className="w-full"
-        />
-        <button
-          onClick={playTestSound}
-          className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
-        >
-          테스트 음성 재생 (440Hz)
-        </button>
+        <div style={{ border: "1px solid #E0E0E0", borderRadius: 6, padding: "18px 20px" }}>
+          <p style={{ fontSize: 14, fontWeight: 700, color: "#222", marginBottom: 8 }}>🔊 Speaker &amp; Headphone Check</p>
+          <p style={{ fontSize: 13, color: "#666", marginBottom: 8 }}>Volume 버튼(우측 상단)에서 스피커/헤드폰 볼륨을 조절하세요.</p>
+          <button
+            onClick={playTestSound}
+            style={{ width: "100%", padding: "10px 0", fontSize: 13, fontWeight: 700, color: "#FFFFFF", backgroundColor: "#0073E6", border: "none", borderRadius: 4, cursor: "pointer" }}
+          >
+            테스트 음성 재생 (440Hz)
+          </button>
+        </div>
       </div>
-
-      <button
-        onClick={() => { stopMicTest(); onNext(); }}
-        className="w-full rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white hover:bg-emerald-700"
-      >
-        계속하기 →
-      </button>
-    </main>
+    </SpeakingTestLayout2026>
   );
 }
 
-function AboutToBeginStep({ onNext }: { onNext: () => void }) {
+function AboutToBeginStep({ onNext, volume, onVolumeChange }: { onNext: () => void; volume: number; onVolumeChange: (v: number) => void }) {
   return (
-    <main className="mx-auto max-w-2xl space-y-8 px-4 py-10 text-center">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900">Ready?</h1>
-        <p className="mt-2 text-slate-500">시험을 시작합니다</p>
-      </div>
+    <SpeakingTestLayout2026
+      headerLeft={<SpeakingHeaderLabel />}
+      headerRight={
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <VolumeControl volume={volume} onVolumeChange={onVolumeChange} />
+          <button onClick={onNext} style={nextButtonStyle}>
+            Begin &gt;
+          </button>
+        </div>
+      }
+      subHeaderLeft={<SpeakingSubHeaderLabel />}
+    >
+      <div style={{ maxWidth: 480, margin: "20px auto 0", textAlign: "center" }}>
+        <h2 style={{ fontSize: 22, fontWeight: 800, color: "#111", marginBottom: 8 }}>Ready?</h2>
+        <p style={{ fontSize: 14, color: "#666", marginBottom: 24 }}>시험을 시작합니다</p>
 
-      <div className="rounded-xl border bg-white p-6 text-left shadow-sm space-y-3">
-        {["조용한 환경", "마이크 작동", "헤드폰/스피커", "인터넷 연결"].map((label) => (
-          <div key={label} className="flex items-start gap-3">
-            <span className="text-emerald-600">✓</span>
-            <span className="text-sm font-medium text-slate-800">{label}</span>
-          </div>
-        ))}
-      </div>
+        <div style={{ border: "1px solid #E0E0E0", borderRadius: 6, padding: "18px 22px", textAlign: "left", marginBottom: 20 }}>
+          {["조용한 환경", "마이크 작동", "헤드폰/스피커", "인터넷 연결"].map((label) => (
+            <div key={label} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+              <span style={{ color: "#0F9D58", fontWeight: 700 }}>✓</span>
+              <span style={{ fontSize: 14, color: "#333" }}>{label}</span>
+            </div>
+          ))}
+        </div>
 
-      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-        ⚠️ 시험이 시작되면 이전 문제로 돌아갈 수 없습니다. (Forward-Only)
+        <div style={{ backgroundColor: "#FFF8E1", border: "1px solid #F0D98C", borderRadius: 6, padding: "14px 16px", fontSize: 13, color: "#7A5B00" }}>
+          ⚠️ 시험이 시작되면 이전 문제로 돌아갈 수 없습니다. (Forward-Only)
+        </div>
       </div>
-
-      <button
-        onClick={onNext}
-        className="w-full rounded-xl bg-indigo-600 py-3.5 text-base font-bold text-white shadow-lg hover:bg-indigo-700"
-      >
-        시험 시작 🎤
-      </button>
-    </main>
+    </SpeakingTestLayout2026>
   );
 }
 
@@ -234,6 +252,8 @@ export default function SpeakingAssignmentRunner({ assignmentId, test, testLabel
 
   // 시험 절차: directions → audio_check → about_to_begin → task1_intro → listen_repeat → task2_intro → interview → done
   const [phase, setPhase] = useState<Phase>("directions");
+  // 실제 ETS는 전용 볼륨 조절 화면이 없다 — 헤더의 Volume 버튼으로 시험 내내 조절한다.
+  const [volume, setVolume] = useState(70);
 
   // 녹음 데이터 관리
   const [listenRepeatRecordings, setListenRepeatRecordings] = useState<LrRec[]>([]);
@@ -320,131 +340,130 @@ export default function SpeakingAssignmentRunner({ assignmentId, test, testLabel
   };
 
   if (phase === "directions") {
+    const totalQuestions = (listenRepeat?.sentences.length ?? 0) + (interview?.questions.length ?? 0);
     return (
-      <main className="mx-auto max-w-3xl space-y-8 px-4 py-10">
-        <h1 className="text-3xl font-bold text-slate-900 text-center">SPEAKING SECTION DIRECTIONS</h1>
-
-        <div className="rounded-xl border bg-slate-50 p-8 space-y-6">
-          <section>
-            <h2 className="text-lg font-bold text-slate-900 mb-2">Overview</h2>
-            <p className="text-sm text-slate-600">{testLabel} — 총 {(listenRepeat?.sentences.length ?? 0) + (interview?.questions.length ?? 0)}문항입니다.</p>
-          </section>
-
-          {listenRepeat && (
-            <section>
-              <h2 className="text-lg font-bold text-slate-900 mb-2">Task 1: Listen and Repeat ({listenRepeat.sentences.length}문항)</h2>
-              <ul className="space-y-1.5 text-sm text-slate-600 list-disc list-inside">
-                <li>문장을 듣고 <strong>그대로 따라 말합니다.</strong></li>
-                <li>준비 시간: <strong>0초</strong> (즉시 응답)</li>
-                <li>응답 시간: 문항마다 다름 (보통 8-12초)</li>
-                <li>문장 텍스트는 볼 수 없습니다.</li>
-              </ul>
-            </section>
-          )}
-
-          {interview && (
-            <section>
-              <h2 className="text-lg font-bold text-slate-900 mb-2">Task 2: Interview ({interview.questions.length}문항)</h2>
-              <ul className="space-y-1.5 text-sm text-slate-600 list-disc list-inside">
-                <li>질문을 듣고 답변합니다.</li>
-                <li>준비 시간: <strong>0초</strong> (즉시 응답)</li>
-                <li>응답 시간: 최대 45초, [답변 완료]로 조기 종료 가능</li>
-                <li>질문 텍스트는 볼 수 없습니다.</li>
-              </ul>
-            </section>
-          )}
-
-          <section>
-            <h2 className="text-lg font-bold text-slate-900 mb-2">Important Rules</h2>
-            <ul className="space-y-1.5 text-sm text-slate-600 list-disc list-inside">
-              <li><strong>Forward-Only:</strong> 이전 문제로 돌아갈 수 없습니다.</li>
-              <li><strong>메모 금지:</strong> 필기 도구를 사용할 수 없습니다.</li>
-              <li><strong>자동 녹음:</strong> 모든 응답은 자동으로 녹음됩니다.</li>
-            </ul>
-          </section>
-
-          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-            ⚠️ 한 번 시작하면 일시정지하거나 이전 문항으로 돌아갈 수 없습니다. 조용한 환경과 마이크 작동을 미리 확인하세요.
+      <SpeakingTestLayout2026
+        headerLeft={<SpeakingHeaderLabel />}
+        headerRight={
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <VolumeControl volume={volume} onVolumeChange={setVolume} />
+            <button onClick={() => setPhase("audio_check")} style={nextButtonStyle}>
+              Begin &gt;
+            </button>
           </div>
-        </div>
+        }
+        subHeaderLeft={<SpeakingSubHeaderLabel />}
+      >
+        <h2 style={{ fontSize: 22, fontWeight: 800, color: "#111", marginBottom: 20 }}>
+          Speaking Section
+        </h2>
 
-        <button
-          onClick={() => setPhase("audio_check")}
-          className="w-full rounded-xl bg-blue-600 py-3.5 text-base font-bold text-white hover:bg-blue-700"
-        >
-          Dismiss Directions & Start →
-        </button>
-      </main>
+        <p style={{ fontSize: 15, lineHeight: 1.7, color: "#333", marginBottom: 20 }}>
+          In the speaking section, you will answer {totalQuestions} questions to demonstrate how well you can
+          speak English. There are two types of tasks.
+        </p>
+
+        <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 24, fontSize: 14 }}>
+          <thead>
+            <tr>
+              <th style={{ backgroundColor: "#1A2B4C", color: "#FFFFFF", textAlign: "left", padding: "10px 14px", fontWeight: 700 }}>
+                Type of Task
+              </th>
+              <th style={{ backgroundColor: "#1A2B4C", color: "#FFFFFF", textAlign: "left", padding: "10px 14px", fontWeight: 700 }}>
+                Description
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {listenRepeat && (
+              <tr style={{ borderBottom: "1px solid #E0E0E0" }}>
+                <td style={{ padding: "10px 14px", fontWeight: 700, color: "#222" }}>Listen and Repeat</td>
+                <td style={{ padding: "10px 14px", color: "#333" }}>Listen and repeat what you heard.</td>
+              </tr>
+            )}
+            {interview && (
+              <tr style={{ borderBottom: "1px solid #E0E0E0" }}>
+                <td style={{ padding: "10px 14px", fontWeight: 700, color: "#222" }}>Take an Interview</td>
+                <td style={{ padding: "10px 14px", color: "#333" }}>Answer questions from the interviewer.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+
+        <p style={{ fontSize: 15, color: "#333" }}>
+          You <strong>WILL NOT</strong> be able to return to previous questions. No preparation time is provided.
+        </p>
+      </SpeakingTestLayout2026>
     );
   }
 
   if (phase === "audio_check") {
-    return <AudioCheckStep onNext={() => setPhase("about_to_begin")} />;
+    return <AudioCheckStep onNext={() => setPhase("about_to_begin")} volume={volume} onVolumeChange={setVolume} />;
   }
 
   if (phase === "about_to_begin") {
-    return <AboutToBeginStep onNext={() => setPhase(listenRepeat ? "task1_intro" : "task2_intro")} />;
+    return (
+      <AboutToBeginStep
+        onNext={() => setPhase(listenRepeat ? "task1_intro" : "task2_intro")}
+        volume={volume}
+        onVolumeChange={setVolume}
+      />
+    );
   }
 
   if (phase === "task1_intro" && listenRepeat) {
     return (
-      <main className="mx-auto max-w-md space-y-6 px-4 py-10">
-        <div className="space-y-4">
-          <div className="rounded-full bg-sky-100 w-16 h-16 flex items-center justify-center mx-auto">
-            <span className="text-2xl">🎤</span>
+      <SpeakingTestLayout2026
+        headerLeft={<SpeakingHeaderLabel task={1} />}
+        headerRight={
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <VolumeControl volume={volume} onVolumeChange={setVolume} />
+            <button onClick={() => setPhase("listen_repeat")} style={nextButtonStyle}>
+              Begin &gt;
+            </button>
           </div>
-          <div className="space-y-2 text-center">
-            <h1 className="text-2xl font-bold text-slate-900">Task 1: 듣고 따라말하기</h1>
-            <p className="text-sm text-slate-500">{listenRepeat.situation}</p>
-          </div>
-        </div>
-        <div className="rounded-xl border bg-blue-50 p-6 space-y-3">
-          <p className="text-sm font-semibold text-slate-800">📋 Instructions</p>
-          <ul className="text-sm text-slate-600 space-y-2">
-            <li>✓ 음성으로 주어진 문장을 주의깊게 들으세요</li>
-            <li>✓ 준비 시간이 주어집니다</li>
-            <li>✓ 음성을 따라 반복해서 말해주세요</li>
-            <li>✓ 발음, 유창성, 정확성이 평가됩니다</li>
-          </ul>
-        </div>
-        <button
-          onClick={() => setPhase("listen_repeat")}
-          className="w-full rounded-xl bg-sky-500 py-3 text-sm font-semibold text-white hover:bg-sky-600"
-        >
-          시작하기
-        </button>
-      </main>
+        }
+        subHeaderLeft={<SpeakingSubHeaderLabel />}
+      >
+        <h2 style={{ fontSize: 22, fontWeight: 800, color: "#111", marginBottom: 20 }}>
+          Listen and Repeat
+        </h2>
+        <p style={{ fontSize: 15, lineHeight: 1.7, color: "#333", marginBottom: 14 }}>
+          You will listen as someone speaks to you. Listen carefully and then repeat what you have heard.
+          The clock will indicate how much time you have to speak.
+        </p>
+        <p style={{ fontSize: 15, lineHeight: 1.7, color: "#333" }}>
+          No time for preparation will be provided.
+        </p>
+      </SpeakingTestLayout2026>
     );
   }
 
   if (phase === "task2_intro" && interview) {
     return (
-      <main className="mx-auto max-w-md space-y-6 px-4 py-10">
-        <div className="space-y-4">
-          <div className="rounded-full bg-violet-100 w-16 h-16 flex items-center justify-center mx-auto">
-            <span className="text-2xl">💬</span>
+      <SpeakingTestLayout2026
+        headerLeft={<SpeakingHeaderLabel task={2} />}
+        headerRight={
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <VolumeControl volume={volume} onVolumeChange={setVolume} />
+            <button onClick={() => setPhase("interview")} style={nextButtonStyle}>
+              Begin &gt;
+            </button>
           </div>
-          <div className="space-y-2 text-center">
-            <h1 className="text-2xl font-bold text-slate-900">Task 2: 인터뷰</h1>
-            <p className="text-sm text-slate-500">{interview.questions.length}개 질문</p>
-          </div>
-        </div>
-        <div className="rounded-xl border bg-violet-50 p-6 space-y-3">
-          <p className="text-sm font-semibold text-slate-800">📋 Instructions</p>
-          <ul className="text-sm text-slate-600 space-y-2">
-            <li>✓ 각 질문을 주의깊게 들으세요</li>
-            <li>✓ 준비 시간이 주어집니다</li>
-            <li>✓ 자신의 생각과 경험을 바탕으로 답해주세요</li>
-            <li>✓ 문법, 발음, 일관성이 평가됩니다</li>
-          </ul>
-        </div>
-        <button
-          onClick={() => setPhase("interview")}
-          className="w-full rounded-xl bg-violet-500 py-3 text-sm font-semibold text-white hover:bg-violet-600"
-        >
-          시작하기
-        </button>
-      </main>
+        }
+        subHeaderLeft={<SpeakingSubHeaderLabel />}
+      >
+        <h2 style={{ fontSize: 22, fontWeight: 800, color: "#111", marginBottom: 20 }}>
+          Take an Interview
+        </h2>
+        <p style={{ fontSize: 15, lineHeight: 1.7, color: "#333", marginBottom: 14 }}>
+          An interviewer will ask you questions. Answer the questions and be sure to say as much
+          as you can in the time allowed.
+        </p>
+        <p style={{ fontSize: 15, lineHeight: 1.7, color: "#333" }}>
+          No time for preparation will be provided.
+        </p>
+      </SpeakingTestLayout2026>
     );
   }
 
@@ -462,6 +481,8 @@ export default function SpeakingAssignmentRunner({ assignmentId, test, testLabel
         mode="test"
         totalQuestionOffset={1}
         totalQuestions={11}
+        volume={volume}
+        onVolumeChange={setVolume}
         onComplete={handleListenRepeatComplete}
       />
     );
@@ -482,6 +503,8 @@ export default function SpeakingAssignmentRunner({ assignmentId, test, testLabel
         defaultAnswerSeconds={45}
         totalQuestionOffset={8}
         totalQuestions={11}
+        volume={volume}
+        onVolumeChange={setVolume}
         onComplete={handleInterviewComplete}
       />
     );

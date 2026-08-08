@@ -2,6 +2,10 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useSpeechTranscript } from "@/lib/speech/use-speech-transcript";
+import SpeakingTestLayout2026, { SpeakingHeaderLabel, SpeakingSubHeaderLabel } from "@/components/speaking/SpeakingTestLayout2026";
+import VolumeControl from "@/components/speaking/VolumeControl";
+import SpeakingVisual from "@/components/speaking/SpeakingVisual";
+import ResponseTimeBadge from "@/components/speaking/ResponseTimeBadge";
 
 export type InterviewQuestion = {
   id: string;
@@ -30,6 +34,8 @@ type Props = {
   totalQuestionOffset?: number;
   totalQuestions?: number;
   autoStartAfterAudio?: boolean;
+  volume: number;
+  onVolumeChange: (volume: number) => void;
   onComplete?: (results: RecordingResult[]) => void;
 };
 
@@ -37,17 +43,23 @@ const MODE_CONFIG = {
   test: {
     prepareSeconds: 15,
     responseSeconds: 45,
-    headerBg: "#1A2B4C",
-    headerText: "TOEFL 2026 - Speaking - Task 2: Take an Interview",
-    description: "Answer the 4 interview questions. 15 seconds preparation. 45 seconds per question.",
   },
   study: {
     prepareSeconds: 15,
     responseSeconds: 60,
-    headerBg: "#2563EB",
-    headerText: "Speaking Practice - Task 2: Take an Interview",
-    description: "Answer the 4 interview questions. 15 seconds to prepare. 60 seconds per question.",
   },
+};
+
+const nextButtonStyle: React.CSSProperties = {
+  height: 32,
+  padding: "0 16px",
+  fontSize: 12,
+  fontWeight: 700,
+  border: "none",
+  borderRadius: 4,
+  backgroundColor: "#0073E6",
+  color: "#FFFFFF",
+  cursor: "pointer",
 };
 
 function playBeep(ctx: AudioContext, freq = 880, duration = 0.15) {
@@ -70,6 +82,8 @@ export default function InterviewRunner({
   totalQuestionOffset = 8,
   totalQuestions = 11,
   autoStartAfterAudio = true,
+  volume,
+  onVolumeChange,
   onComplete,
 }: Props) {
   const [index, setIndex] = useState(0);
@@ -88,7 +102,6 @@ export default function InterviewRunner({
   const current = questions[index];
   const answerSeconds = current?.answerSeconds ?? defaultAnswerSeconds;
   const questionNumber = totalQuestionOffset + index;
-  const progressPct = totalQuestions > 0 ? (questionNumber / totalQuestions) * 100 : 0;
 
   const { start: startTranscript, stop: stopTranscript } = useSpeechTranscript();
   const pendingTranscriptRef = useRef("");
@@ -187,6 +200,7 @@ export default function InterviewRunner({
     if (current?.audioUrl) {
       if (!audioRef.current) audioRef.current = new Audio();
       audioRef.current.src = current.audioUrl;
+      audioRef.current.volume = volume / 100;
       audioRef.current.onended = () => {
         if (autoStartAfterAudio) void startRecording();
         else setNextDisabled(false);
@@ -199,7 +213,7 @@ export default function InterviewRunner({
       // 오디오 없으면 즉시 녹음
       setTimeout(() => void startRecording(), 500);
     }
-  }, [current, autoStartAfterAudio, startRecording]);
+  }, [current, autoStartAfterAudio, startRecording, volume]);
 
   useEffect(() => {
     setPhase("idle");
@@ -207,6 +221,11 @@ export default function InterviewRunner({
     setTimeout(() => playQuestion(), 600);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [index]);
+
+  // 헤더에서 볼륨을 바꾸면 재생 중인 오디오에도 즉시 반영
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.volume = volume / 100;
+  }, [volume]);
 
   const handleNext = () => {
     if (nextDisabled) return;
@@ -227,95 +246,45 @@ export default function InterviewRunner({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const mins = String(Math.floor(timeLeft / 60)).padStart(2, "0");
-  const secs = String(timeLeft % 60).padStart(2, "0");
+  const canAdvance = phase === "done" && !nextDisabled;
 
   return (
-    <div className="flex flex-col" style={{ minHeight: "100vh", backgroundColor: "#F4F6F9", fontFamily: "Arial, Helvetica, sans-serif" }}>
-
-      {/* ── Header ── */}
-      <header className="flex items-center justify-between px-6 shrink-0" style={{ height: 60, backgroundColor: "#1A2B4C" }}>
-        <span style={{ fontSize: 16, fontWeight: 700, color: "#FFFFFF" }}>Updated TOEFL iBT - Speaking</span>
-        <div className="flex items-center" style={{ gap: 12 }}>
-          <button className="flex items-center gap-1 rounded border border-slate-400 bg-transparent px-3 text-white" style={{ width: 90, height: 36, fontSize: 13 }}>
-            🔊 Volume
-          </button>
-          <button className="rounded border border-slate-400 bg-transparent text-white" style={{ width: 70, height: 36, fontSize: 13 }}>
-            Help
-          </button>
-          <button
-            onClick={handleNext}
-            disabled={nextDisabled || phase === "listening" || phase === "recording"}
-            className="rounded font-semibold text-white disabled:opacity-40"
-            style={{ width: 100, height: 36, fontSize: 13, backgroundColor: "#0073E6", border: "none", borderRadius: 4 }}
-          >
-            Next &gt;
-          </button>
-        </div>
-      </header>
-
-      {/* ── Main Body ── */}
-      <main className="flex flex-1 flex-col items-center justify-center" style={{ gap: 0 }}>
-
-        {/* 아바타 비디오 영역 */}
-        <div className="overflow-hidden"
-          style={{ width: 860, height: 485, border: "4px solid #E0E0E0", borderRadius: 12, backgroundColor: "#1A2B4C", flexShrink: 0 }}>
-          {interviewerImageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={interviewerImageUrl} alt="Interviewer" className="h-full w-full" style={{ objectFit: "cover" }} />
-          ) : (
-            <div className="flex h-full w-full flex-col items-center justify-center gap-3" style={{ color: "#94A3B8" }}>
-              <div style={{ fontSize: 64 }}>👤</div>
-              <p style={{ fontSize: 14 }}>인터뷰어 GIF를 에셋 편집 페이지에서 업로드하세요</p>
-            </div>
+    <SpeakingTestLayout2026
+      headerLeft={<SpeakingHeaderLabel task={2} />}
+      headerRight={
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <VolumeControl volume={volume} onVolumeChange={onVolumeChange} />
+          {canAdvance && (
+            <button onClick={handleNext} style={nextButtonStyle}>
+              {index < questions.length - 1 ? "Next >" : "Submit"}
+            </button>
           )}
         </div>
+      }
+      subHeaderLeft={<SpeakingSubHeaderLabel questionInfo={`Question ${questionNumber} of ${totalQuestions}`} />}
+    >
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", gap: 20 }}>
+        <h2 style={{ fontSize: 18, fontWeight: 800, color: "#111", textAlign: "center" }}>
+          Please answer the interviewer&apos;s questions.
+        </h2>
 
-        {/* 답변 상황판 */}
-        <div className="flex flex-col items-center" style={{ marginTop: 40, gap: 16 }}>
+        <SpeakingVisual imageUrl={interviewerImageUrl} isPerson size={220} />
 
-          {/* 상태 문구 */}
-          <p style={{
-            fontSize: 20,
-            fontWeight: 600,
-            color: phase === "recording" ? "#D9383A" : "#333333",
-          }}>
-            {phase === "listening" ? "Listening to question..."
-              : phase === "recording" ? "Status: RECORDING..."
-              : phase === "done" ? "Response complete"
-              : "Preparing..."}
-          </p>
+        <p style={{
+          fontSize: 14,
+          fontWeight: 600,
+          color: phase === "recording" ? "#D9383A" : "#1A2B4C",
+        }}>
+          {phase === "listening" ? "Listening to question..."
+            : phase === "recording" ? "● Recording..."
+            : phase === "done" ? "Response complete"
+            : "Preparing..."}
+        </p>
 
-          {/* 디지털 타이머 */}
-          <p style={{ fontSize: 48, fontWeight: 800, color: "#333333", fontFamily: "monospace", lineHeight: 1 }}>
-            {mins}:{secs}
-          </p>
-
-          {/* 카운트다운 게이지 바 */}
-          <div className="overflow-hidden rounded-full" style={{ width: 600, height: 16, backgroundColor: "#E8EBF0" }}>
-            <div
-              className="h-full rounded-full"
-              style={{
-                width: phase === "recording" ? `${(timeLeft / answerSeconds) * 100}%` : phase === "done" ? "0%" : "100%",
-                backgroundColor: "#0073E6",
-                transition: "width 1s linear",
-              }}
-            />
-          </div>
-        </div>
-      </main>
-
-      {/* ── Footer ── */}
-      <footer className="flex items-center justify-between shrink-0 border-t px-6"
-        style={{ height: 60, backgroundColor: "#FFFFFF", borderColor: "#E0E0E0" }}>
-        <span style={{ fontSize: 15, fontWeight: 500, color: "#333333" }}>
-          Question {questionNumber} of {totalQuestions}
-        </span>
-        <div className="overflow-hidden rounded-full" style={{ width: 240, height: 8, backgroundColor: "#E0E0E0" }}>
-          <div className="h-full rounded-full transition-all duration-500"
-            style={{ width: `${progressPct}%`, backgroundColor: "#0073E6" }} />
-        </div>
-      </footer>
-    </div>
+        {(phase === "recording" || phase === "prepare") && (
+          <ResponseTimeBadge secondsLeft={phase === "recording" ? timeLeft : null} urgent={phase === "recording" && timeLeft <= 5} />
+        )}
+      </div>
+    </SpeakingTestLayout2026>
   );
 }

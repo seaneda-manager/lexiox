@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import InterviewRunner, {
   InterviewQuestion,
 } from "../components/InterviewRunner";
@@ -33,10 +34,13 @@ const demoQuestions: InterviewQuestion[] = [
 ];
 
 export default function InterviewPage() {
+  const [volume, setVolume] = useState(70);
   return (
     <InterviewRunner
       questions={demoQuestions}
       mode="test"
+      volume={volume}
+      onVolumeChange={setVolume}
       onComplete={(results) => {
         console.log("Interview 완료:", results);
       }}

@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { getServiceSupabase } from "@/lib/supabase/service";
 import type { SpeakingTest2026, SpeakingTaskListenRepeat2026, SpeakingTaskInterview2026 } from "@/models/speaking-2026";
-import SpeakingAssignmentWrapper from "./_client/SpeakingAssignmentWrapper";
+import SpeakingAssignmentRunner from "./_client/SpeakingAssignmentRunner";
 import SpeakingAssignmentResults from "./_client/SpeakingAssignmentResults";
 
 export const dynamic = "force-dynamic";
@@ -66,7 +66,7 @@ export default async function StartAssignmentPage({ params }: { params: Params }
   await markInProgress(assignmentId, assignment.status);
 
   return (
-    <SpeakingAssignmentWrapper
+    <SpeakingAssignmentRunner
       assignmentId={assignmentId}
       test={test}
       testLabel={testLabel}
