@@ -37,6 +37,12 @@ export default async function ReadingAssignmentsPage() {
 
   return (
     <main className="mx-auto max-w-2xl space-y-5 px-4 py-6">
+      <Link
+        href="/student"
+        className="inline-flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-slate-600"
+      >
+        ← 홈으로
+      </Link>
       <header className="space-y-1">
         <h1 className="text-xl font-bold text-slate-900">Reading 시험</h1>
         <p className="text-xs text-slate-400">선생님이 배정한 시험 목록입니다.</p>

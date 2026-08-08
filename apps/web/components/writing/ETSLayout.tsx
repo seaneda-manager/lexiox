@@ -1,5 +1,7 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 /**
  * Writing 화면 전반에서 재사용하는 ETS 스타일 레이아웃 래퍼.
  * WritingRunnerETS(문항 화면)와 WritingInterstitials(인터스티셜 화면) 양쪽에서 쓰므로
@@ -34,6 +36,14 @@ export function ETSLayout({
 }) {
   const progressPct = totalQuestions && currentQuestion
     ? (currentQuestion / totalQuestions) * 100 : 0;
+  const router = useRouter();
+
+  const handleExit = () => {
+    const confirmed = window.confirm(
+      "If you exit now, your progress will not be saved and you will need to restart this test from the beginning.\n\nAre you sure you want to exit?"
+    );
+    if (confirmed) router.push("/student");
+  };
 
   return (
     // 실제 ETS 시험 화면은 브라우저 전체가 아니라 중앙에 뜨는 고정 크기 "창"이다.
@@ -50,6 +60,26 @@ export function ETSLayout({
         boxSizing: "border-box",
       }}
     >
+      <button
+        onClick={handleExit}
+        style={{
+          position: "fixed",
+          top: 16,
+          left: 16,
+          padding: "8px 14px",
+          fontSize: 12,
+          fontWeight: 700,
+          color: "#1A2B4C",
+          backgroundColor: "#FFFFFF",
+          border: "1px solid rgba(0,0,0,0.15)",
+          borderRadius: 6,
+          cursor: "pointer",
+          boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+          zIndex: 50,
+        }}
+      >
+        ✕ Exit
+      </button>
       <div
         className="flex flex-col"
         style={{
