@@ -107,7 +107,11 @@ export async function POST(req: Request) {
     const msg = await ai.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 512,
-      system: buildWritingGradingSystemPrompt(),
+      // 채점 루브릭은 모든 학생/제출마다 동일하게 재사용되므로 캐싱 대상으로 표시한다.
+      // (userContent만 매번 다르고, system은 고정 텍스트라 순서 재배치 없이 그대로 캐싱 가능)
+      system: [
+        { type: "text", text: buildWritingGradingSystemPrompt(), cache_control: { type: "ephemeral" } },
+      ],
       messages: [{ role: "user", content: userContent }],
     });
     void logAnthropicUsage("writing-2026/grade", "claude-haiku-4-5-20251001", msg.usage);
