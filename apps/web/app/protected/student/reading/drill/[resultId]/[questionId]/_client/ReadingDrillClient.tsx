@@ -15,11 +15,16 @@ interface ReviewQuestion {
 }
 
 interface ReviewStageState {
-  vocabulary: { word: string; pos: string; meaning: string }[];
+  vocabulary: { word: string; pos: string; meaning: string; loading?: boolean }[];
   interpretation: string;
   highlightedEvidence: string[];
   questionType: string;
   explanationFills: Record<string, string>;
+}
+
+function findContextSentence(text: string, word: string): string {
+  const sentences = text.split(/(?<=[.!?])\s+/);
+  return sentences.find((s) => new RegExp(`\\b${word}\\b`, "i").test(s)) ?? text.slice(0, 200);
 }
 
 const BASE_DRILL_WORKFLOW = [
@@ -102,56 +107,52 @@ export function ReadingDrillClient({
     }
   };
 
-  const detectPartOfSpeech = (word: string): string => {
-    if (/^[A-Z]/.test(word)) return 'n.';
-    if (word.endsWith('ing')) return 'v.';
-    if (word.endsWith('ed')) return 'v.';
-    if (word.endsWith('ly')) return 'adv.';
-    return 'n.';
-  };
-
-  const getWordMeaning = (word: string): string => {
-    const dictionary: Record<string, string> = {
-      'rapid': '빠른, 신속한',
-      'advancement': '진전, 발전',
-      'transform': '변환하다, 바꾸다',
-      'industry': '산업',
-      'healthcare': '의료, 보건',
-      'finance': '재정, 금융',
-      'increasingly': '점점 더, 증가하는',
-      'critical': '심각한, 중요한',
-      'decision': '결정, 판단',
-      'accountability': '책임성, 설명 책임',
-      'transparency': '투명성, 명확성',
-    };
-    return dictionary[word.toLowerCase()] || '[사전에 없음]';
-  };
-
-  const toggleVocabularyWord = (word: string) => {
+  const toggleVocabularyWord = async (word: string) => {
     const lowerWord = word.toLowerCase();
     const exists = stageStates.vocabulary.find(
       (v) => v.word.toLowerCase() === lowerWord
     );
 
     if (exists) {
-      updateState({
-        vocabulary: stageStates.vocabulary.filter(
-          (v) => v.word.toLowerCase() !== lowerWord
+      setStageStates((prev) => ({
+        ...prev,
+        vocabulary: prev.vocabulary.filter((v) => v.word.toLowerCase() !== lowerWord),
+      }));
+      return;
+    }
+
+    // 먼저 로딩 상태로 추가해서 클릭 반응이 바로 보이게 한다.
+    setStageStates((prev) => ({
+      ...prev,
+      vocabulary: [...prev.vocabulary, { word, pos: '', meaning: '뜻을 찾는 중...', loading: true }],
+    }));
+
+    const context = findContextSentence(questionData.paragraph || questionData.stem, word);
+
+    try {
+      const res = await fetch('/api/reading/ai-explain', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'vocab', content: word, context }),
+      });
+      const data = await res.json();
+      setStageStates((prev) => ({
+        ...prev,
+        vocabulary: prev.vocabulary.map((v) =>
+          v.word.toLowerCase() === lowerWord
+            ? { word, pos: data.pos ?? '', meaning: data.meaning ?? '뜻을 찾지 못했습니다', loading: false }
+            : v
         ),
-      });
-    } else {
-      const pos = detectPartOfSpeech(word);
-      const meaning = getWordMeaning(word);
-      updateState({
-        vocabulary: [
-          ...stageStates.vocabulary,
-          {
-            word,
-            pos,
-            meaning,
-          },
-        ],
-      });
+      }));
+    } catch {
+      setStageStates((prev) => ({
+        ...prev,
+        vocabulary: prev.vocabulary.map((v) =>
+          v.word.toLowerCase() === lowerWord
+            ? { word, pos: '', meaning: '뜻을 찾지 못했습니다', loading: false }
+            : v
+        ),
+      }));
     }
   };
 
@@ -382,9 +383,12 @@ export function ReadingDrillClient({
               ) : (
                 <div className="space-y-2">
                   {stageStates.vocabulary.map((item, idx) => (
-                    <div key={idx} className="rounded-lg bg-white border border-amber-200 p-2">
+                    <div
+                      key={idx}
+                      className={`rounded-lg bg-white border border-amber-200 p-2 ${item.loading ? 'opacity-60' : ''}`}
+                    >
                       <p className="font-bold text-amber-900 text-sm">{item.word}</p>
-                      <p className="text-xs text-amber-700">{item.pos}</p>
+                      {item.pos && <p className="text-xs text-amber-700">{item.pos}</p>}
                       <p className="text-xs text-amber-600 italic">{item.meaning}</p>
                     </div>
                   ))}
