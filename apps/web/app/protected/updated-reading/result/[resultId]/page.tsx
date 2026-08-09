@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 type ResultData = {
   testId: string;
@@ -41,11 +42,13 @@ type ResultData = {
 export default function ReadingResultPage({ params }: { params: Promise<{ resultId: string }> }) {
   const [result, setResult] = useState<ResultData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [resultId, setResultId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchResult = async () => {
       try {
         const { resultId } = await params;
+        setResultId(resultId);
         const res = await fetch(`/api/updated-reading/result/${resultId}`);
         if (!res.ok) throw new Error("결과를 불러올 수 없습니다");
         const data = await res.json();
@@ -153,6 +156,18 @@ export default function ReadingResultPage({ params }: { params: Promise<{ result
                     >
                       {q.isCorrect ? "정답" : "오답"}
                     </span>
+                    {resultId && q.type !== "complete_words" && (
+                      <Link
+                        href={`/student/reading/drill/${resultId}/${q.id}`}
+                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${
+                          q.isCorrect
+                            ? "bg-sky-100 text-sky-700 hover:bg-sky-200"
+                            : "bg-rose-100 text-rose-700 hover:bg-rose-200"
+                        }`}
+                      >
+                        🏋️ 드릴로 연습하기
+                      </Link>
+                    )}
                   </div>
                   <p className="mb-3 text-sm text-gray-700 line-clamp-2">
                     {q.stem}
