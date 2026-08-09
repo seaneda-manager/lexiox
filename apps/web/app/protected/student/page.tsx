@@ -12,6 +12,7 @@ import PrimaryFocusCard from "@/components/student/PrimaryFocusCard";
 import ActivityTabsCard from "@/components/student/ActivityTabsCard";
 import HomeworkCard, { type HomeworkItem } from "@/components/student/HomeworkCard";
 import { LearningDashboard } from "@/app/protected/student/_components/LearningDashboard";
+import OnboardingTour from "@/components/student/OnboardingTour";
 
 export const dynamic = "force-dynamic";
 
@@ -416,6 +417,7 @@ export default async function StudentPage() {
   if (isToefl) {
     return (
       <ToeflDashboard
+        userId={user.id}
         program={program}
         studentName={studentName}
         curriculum={curriculum}
@@ -437,6 +439,7 @@ export default async function StudentPage() {
 
   return (
     <main className="mx-auto max-w-3xl space-y-6 pb-12">
+      <OnboardingTour userId={user.id} studentName={studentName} />
 
       {/* ── Primary Focus Card (오늘 꼭 해야 할 일 1가지) ───────── */}
       <PrimaryFocusCard
@@ -724,6 +727,7 @@ function deriveSteps(lecturesDone: boolean, practiceDone: number, testsDone: boo
 }
 
 function ToeflDashboard({
+  userId,
   program,
   studentName,
   curriculum,
@@ -740,6 +744,7 @@ function ToeflDashboard({
   speakingDone,
   writingDone,
 }: {
+  userId: string;
   program: string | null;
   studentName: string;
   curriculum: CurriculumMeta;
@@ -794,6 +799,7 @@ function ToeflDashboard({
 
   return (
     <main className="mx-auto max-w-3xl space-y-6 pb-12">
+      <OnboardingTour userId={userId} studentName={studentName} />
 
       {/* ── 헤더 ──────────────────────────────────────────────── */}
       <header className={`rounded-3xl border border-neutral-200 bg-gradient-to-br p-6 shadow-sm ${curriculum.accentBg}`}>

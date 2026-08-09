@@ -88,6 +88,8 @@ export async function POST(req: Request) {
         whyWrong: string;
       }>;
       vocabulary_notes: Record<string, string>;
+      key_point_summary: string | null;
+      key_point_distractors: string[];
     }> = [];
 
     for (let qIdx = 0; qIdx < questions.length; qIdx++) {
@@ -117,15 +119,19 @@ ${q.choices.map((c, i) => `${String.fromCharCode(65 + i)}. ${c.text}`).join("\n"
   "incorrectChoices": [
     {"choiceId": "B", "interpretation": "선택지 해석", "whyWrong": "틀린 이유"}
   ],
-  "vocabularyNotes": {"단어": "정의"}
+  "vocabularyNotes": {"단어": "정의"},
+  "keyPointSummary": "이 문제의 핵심 근거를 한 문장으로 요약 (학생이 리뷰 화면 팝업 퀴즈에서 정답 보기로 고를 문장)",
+  "keyPointDistractors": ["핵심 근거처럼 보이지만 실제로는 틀린 문장 1", "핵심 근거처럼 보이지만 실제로는 틀린 문장 2"]
 }
+
+keyPointSummary/keyPointDistractors는 셋 다 비슷한 길이와 문체로 작성해서, 실제로 근거를 이해하지 못하면 헷갈릴 수 있게 만들어주세요 (너무 뻔하게 틀린 보기 금지).
 
 JSON만 반환하세요.`;
 
       try {
         console.log(`[GENERATE] Calling Claude API for ${q.id}...`);
         const message = await client.messages.create({
-          model: "claude-opus-4-8",
+          model: "claude-opus-5",
           max_tokens: 2000,
           messages: [
             {
@@ -165,6 +171,10 @@ JSON만 반환하세요.`;
           correct_choice_explanation: parsed.correctChoiceExplanation || "",
           incorrect_choices: parsed.incorrectChoices || [],
           vocabulary_notes: parsed.vocabularyNotes || {},
+          key_point_summary: parsed.keyPointSummary || null,
+          key_point_distractors: Array.isArray(parsed.keyPointDistractors)
+            ? parsed.keyPointDistractors.slice(0, 2)
+            : [],
         });
         console.log(
           `[GENERATE] Successfully added explanation for ${q.id}`
@@ -191,6 +201,8 @@ JSON만 반환하세요.`;
           correct_choice_explanation: exp.correct_choice_explanation,
           incorrect_choices: exp.incorrect_choices,
           vocabulary_notes: exp.vocabulary_notes,
+          key_point_summary: exp.key_point_summary,
+          key_point_distractors: exp.key_point_distractors,
         })),
         { onConflict: "question_id" }
       );

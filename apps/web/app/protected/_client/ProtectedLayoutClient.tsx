@@ -1,6 +1,7 @@
 'use client';
 
 import { ReactNode } from 'react';
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import TopbarClient from '@/components/dashboard/TopbarClient';
 import SidebarClient from '@/components/dashboard/SidebarClient';
@@ -49,6 +50,16 @@ export default function ProtectedLayoutClient({
           <div className="flex-1 min-h-0 overflow-hidden">
             <SidebarClient role={role} program={program} />
           </div>
+          {role === 'student' && (
+            <div className="shrink-0 px-3 pb-1">
+              <Link
+                href="/student?tour=1"
+                className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs text-neutral-400 hover:bg-neutral-50 hover:text-neutral-600"
+              >
+                ❓ 가이드 다시보기
+              </Link>
+            </div>
+          )}
           <div className="shrink-0">
             <SidebarProfile name={fullName ?? email} avatarUrl={avatarUrl} />
           </div>

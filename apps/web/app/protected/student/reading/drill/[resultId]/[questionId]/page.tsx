@@ -1,3 +1,4 @@
+import { headers } from 'next/headers';
 import { ReadingDrillClient } from './_client/ReadingDrillClient';
 
 export const dynamic = 'force-dynamic';
@@ -25,7 +26,13 @@ export default async function ReadingDrillPage({ params }: PageProps) {
   let error: string | null = null;
 
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    // 서버 컴포넌트에서 자기 자신의 API를 절대 URL로 호출해야 하므로,
+    // 배포 환경마다 달라지는 host를 요청 헤더에서 그대로 읽어 baseUrl을 만든다.
+    // (하드코딩된 localhost 폴백은 로컬 밖에서는 항상 실패했다.)
+    const headerList = await headers();
+    const host = headerList.get('x-forwarded-host') ?? headerList.get('host');
+    const protocol = headerList.get('x-forwarded-proto') ?? (host?.includes('localhost') ? 'http' : 'https');
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || `${protocol}://${host}`;
     const response = await fetch(`${baseUrl}/api/updated-reading/result/${params.resultId}`, {
       credentials: 'include',
       cache: 'no-store',
@@ -54,5 +61,5 @@ export default async function ReadingDrillPage({ params }: PageProps) {
     );
   }
 
-  return <ReadingDrillClient questionData={questionData} />;
+  return <ReadingDrillClient questionData={questionData} resultId={params.resultId} />;
 }

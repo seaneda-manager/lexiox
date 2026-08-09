@@ -5,72 +5,57 @@ import {
   ArrowLeft,
   BarChart2,
   BookOpen,
-  CalendarDays,
+  Headphones,
   Mic2,
+  PenLine,
   NotebookText,
-  TrendingDown,
-  TrendingUp,
-  Activity,
+  CalendarDays,
 } from "lucide-react";
 import { getServerSupabase } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-type Trend = "up" | "down" | "flat";
-
-type StudentDetail = {
-  id: string;
-  name: string;
-  school: string;
-  grade: string;
-  levelLabel: string;
-  trend: Trend;
-  currentFocus: string;
-  nextGoal: string;
-};
-
-type TestResult = {
-  id: string;
-  label: string;
-  date: string;
-  totalQuestions: number | null;
-};
-
-type StudentNote = {
-  id: string;
-  date: string;
-  author: string;
-  type: "teacher" | "parent" | "student";
-  content: string;
-};
-
-function getTrendLabel(trend: Trend) {
-  if (trend === "up") return "최근 상승 추세";
-  if (trend === "down") return "최근 하락 추세";
-  return "점수 변화 거의 없음";
-}
-
-function getTrendIcon(trend: Trend) {
-  if (trend === "up") {
-    return <TrendingUp className="h-4 w-4 text-emerald-600" />;
-  }
-  if (trend === "down") {
-    return <TrendingDown className="h-4 w-4 text-red-500" />;
-  }
-  return <Activity className="h-4 w-4 text-gray-400" />;
-}
-
 type PageProps = {
   params: Promise<{ studentId: string }>;
 };
 
+function fmtDate(iso: string | null) {
+  if (!iso) return "날짜 정보 없음";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "날짜 정보 없음";
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function scoreColor(pct: number) {
+  if (pct >= 70) return "bg-emerald-50 text-emerald-700";
+  if (pct >= 50) return "bg-amber-50 text-amber-700";
+  return "bg-rose-50 text-rose-700";
+}
+
+async function fetchLabels(
+  supabase: Awaited<ReturnType<typeof getServerSupabase>>,
+  table: string,
+  ids: (string | null)[],
+) {
+  const uniqueIds = [...new Set(ids.filter((id): id is string => !!id))];
+  const map = new Map<string, string>();
+  if (uniqueIds.length === 0) return map;
+
+  const { data, error } = await supabase.from(table).select("id, label").in("id", uniqueIds);
+  if (error) {
+    console.error(`TeacherStudentDetailPage ${table} label lookup error`, error);
+    return map;
+  }
+  (data ?? []).forEach((row: any) => map.set(row.id, row.label ?? "시험"));
+  return map;
+}
+
 export default async function TeacherStudentDetailPage({ params }: PageProps) {
   const { studentId } = await params;
-
   const supabase = await getServerSupabase();
 
-  // 1) 학생 프로필 가져오기 (profiles)
+  // 1) 학생 프로필
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("id, full_name")
@@ -81,234 +66,329 @@ export default async function TeacherStudentDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  // 2) Reading 2026 결과 가져오기 (최신 10개)
-  const { data: readingRows, error: readingError } = await supabase
-    .from("reading_results_2026")
-    .select("id, label, total_questions, finished_at")
-    .eq("user_id", studentId)
-    .order("finished_at", { ascending: false })
-    .limit(10);
+  const studentName = profile!.full_name ?? "이름 미등록";
 
-  if (readingError) {
-    console.error("TeacherStudentDetailPage reading_results_2026 error", readingError);
+  // 2) R/L/S/W 결과 (각 최신 10건)
+  const [
+    { data: readingRows, error: readingError },
+    { data: listeningRows, error: listeningError },
+    { data: speakingRows, error: speakingError },
+    { data: writingRows, error: writingError },
+  ] = await Promise.all([
+    supabase
+      .from("reading_results_2026")
+      .select("id, test_id, total_questions, finished_at")
+      .eq("user_id", studentId)
+      .order("finished_at", { ascending: false })
+      .limit(10),
+    supabase
+      .from("listening_results_2026")
+      .select("id, test_id, module, difficulty, correct_count, total_questions, finished_at")
+      .eq("user_id", studentId)
+      .order("finished_at", { ascending: false })
+      .limit(10),
+    supabase
+      .from("speaking_results_2026")
+      .select("id, test_id, final_total_score, ai_total_score, grading_status, created_at")
+      .eq("user_id", studentId)
+      .order("created_at", { ascending: false })
+      .limit(10),
+    supabase
+      .from("writing_2026_sessions")
+      .select("id, test_id, final_total_score, grading_status, created_at")
+      .eq("user_id", studentId)
+      .order("created_at", { ascending: false })
+      .limit(10),
+  ]);
+
+  for (const [name, error] of [
+    ["reading_results_2026", readingError],
+    ["listening_results_2026", listeningError],
+    ["speaking_results_2026", speakingError],
+    ["writing_2026_sessions", writingError],
+  ] as const) {
+    if (error) console.error(`TeacherStudentDetailPage ${name} error`, error);
   }
 
-  const safeReading = readingRows ?? [];
+  const reading = readingRows ?? [];
+  const listening = listeningRows ?? [];
+  const speaking = speakingRows ?? [];
+  const writing = writingRows ?? [];
 
-  const testResults: TestResult[] = safeReading.map((r) => ({
-    id: (r as any).id,
-    label: (r as any).label ?? "Reading 2026 Test",
-    date: (r as any).finished_at ? String((r as any).finished_at).slice(0, 10) : "날짜 정보 없음",
-    totalQuestions: (r as any).total_questions ?? null,
-  }));
+  // 3) 시험 라벨 (test_id → label)
+  const [readingLabels, listeningLabels, speakingLabels, writingLabels] = await Promise.all([
+    fetchLabels(supabase, "reading_tests_2026", reading.map((r: any) => r.test_id)),
+    fetchLabels(supabase, "listening_tests_2026", listening.map((r: any) => r.test_id)),
+    fetchLabels(supabase, "speaking_tests", speaking.map((r: any) => r.test_id)),
+    fetchLabels(supabase, "writing_tests", writing.map((r: any) => r.test_id)),
+  ]);
 
-  const latestTest = testResults[0];
+  // 4) 요약 통계
+  const listeningAvg = listening.length
+    ? Math.round(
+        listening.reduce(
+          (sum: number, r: any) =>
+            sum + (r.total_questions ? (r.correct_count / r.total_questions) * 100 : 0),
+          0,
+        ) / listening.length,
+      )
+    : null;
 
-  // 3) 학생 기본 정보 (지금은 프로필 + placeholder)
-  const student: StudentDetail = {
-    id: profile.id,
-    name: profile.full_name ?? "이름 미등록",
-    school: "학교 정보 없음",
-    grade: "학년 정보 없음",
-    levelLabel: "레벨 미지정",
-    trend: "flat", // 추후 성적 추이 계산해서 바꾸기
-    currentFocus:
-      "아직 설정된 포커스가 없습니다. 상담 후 이 학생의 주요 지도 포인트를 정해 주세요.",
-    nextGoal:
-      "다음 목표를 정한 뒤, 메모/노트 테이블과 연동해서 이 영역에 보여줄 예정입니다.",
-  };
+  const gradedSpeaking = speaking.filter(
+    (r: any) => r.final_total_score != null || r.ai_total_score != null,
+  );
+  const speakingAvg = gradedSpeaking.length
+    ? Math.round(
+        gradedSpeaking.reduce(
+          (sum: number, r: any) => sum + (r.final_total_score ?? r.ai_total_score ?? 0),
+          0,
+        ) / gradedSpeaking.length,
+      )
+    : null;
 
-  // 4) 약점/메모는 아직 DB 없음 → 빈 배열 + 안내 문구
-  const weaknesses: never[] = [];
-  const notes: StudentNote[] = [];
+  const gradedWriting = writing.filter((r: any) => r.final_total_score != null);
+  const writingAvg = gradedWriting.length
+    ? Math.round(
+        gradedWriting.reduce((sum: number, r: any) => sum + (r.final_total_score ?? 0), 0) /
+          gradedWriting.length,
+      )
+    : null;
+
+  const hasAnyResult = reading.length + listening.length + speaking.length + writing.length > 0;
 
   return (
     <main className="mx-auto max-w-6xl space-y-6 px-4 py-6">
       {/* 상단 헤더 */}
       <header className="space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <Link
-              href="/teacher/students"
-              className="inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-medium text-gray-700 hover:border-emerald-500 hover:text-emerald-700"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" />
-              학생 목록으로
-            </Link>
-          </div>
-        </div>
+        <Link
+          href="/teacher/students"
+          className="inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-medium text-gray-700 hover:border-emerald-500 hover:text-emerald-700"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          학생 목록으로
+        </Link>
 
-        <div className="flex flex-col justify-between gap-3 rounded-xl border bg-white p-4 shadow-sm md:flex-row md:items-center">
-          <div className="space-y-1">
-            <div className="text-xs font-semibold text-gray-500">Student Profile</div>
-            <h1 className="text-xl font-bold tracking-tight text-gray-900">{student.name}</h1>
-            <div className="text-xs text-gray-600">
-              {student.school} · {student.grade} · {student.levelLabel}
-            </div>
-            <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-700">
-              {getTrendIcon(student.trend)}
-              <span>{getTrendLabel(student.trend)}</span>
-            </div>
-          </div>
-
-          {latestTest && (
-            <div className="flex gap-2 text-xs sm:text-sm">
-              <div className="rounded-lg border bg-gray-50 px-3 py-2 text-left">
-                <div className="flex items-center gap-1 text-[10px] font-medium text-gray-500">
-                  <CalendarDays className="h-3 w-3" />
-                  <span>최근 Reading 시험</span>
-                </div>
-                <div className="mt-1 text-xs font-semibold text-gray-900">{latestTest.label}</div>
-                <div className="mt-1 text-[11px] text-gray-600">
-                  {latestTest.date}
-                  {latestTest.totalQuestions !== null && ` · 문항 수 ${latestTest.totalQuestions}문항`}
-                </div>
-              </div>
-
-              <div className="rounded-lg border bg-gray-50 px-3 py-2 text-left">
-                <div className="flex items-center gap-1 text-[10px] font-medium text-gray-500">
-                  <BarChart2 className="h-3 w-3" />
-                  <span>다음 목표</span>
-                </div>
-                <p className="mt-1 max-w-xs text-[11px] text-gray-700">{student.nextGoal}</p>
-              </div>
-            </div>
-          )}
+        <div className="rounded-xl border bg-white p-4 shadow-sm">
+          <div className="text-xs font-semibold text-gray-500">Student Profile</div>
+          <h1 className="text-xl font-bold tracking-tight text-gray-900">{studentName}</h1>
         </div>
       </header>
 
-      {/* 메인 2컬럼 레이아웃 */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        {/* 왼쪽: 시험 히스토리 */}
-        <section className="space-y-3 lg:col-span-2">
-          <div className="flex items-center gap-2">
-            <BookOpen className="h-4 w-4 text-emerald-600" />
-            <h2 className="text-sm font-semibold text-gray-800">최근 Reading 2026 시험 히스토리</h2>
-          </div>
-
-          {testResults.length === 0 ? (
-            <div className="rounded-xl border border-dashed bg-gray-50 p-3 text-xs text-gray-600">
-              아직 Reading 2026 시험 기록이 없습니다. 시험이 쌓이면 이곳에 자동으로 표시됩니다.
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {testResults.map((t) => (
-                <article
-                  key={t.id}
-                  className="flex flex-col gap-2 rounded-xl border bg-white p-3 text-xs shadow-sm md:flex-row md:items-center md:justify-between"
-                >
-                  <div className="space-y-1">
-                    <div className="text-[11px] font-medium text-gray-500">{t.date} · Reading</div>
-                    <div className="text-sm font-semibold text-gray-900">{t.label}</div>
-                    <p className="text-[11px] text-gray-600">
-                      {t.totalQuestions !== null
-                        ? `총 ${t.totalQuestions}문항 · 세부 문항별 분석은 추후 리포트 화면에서 제공 예정입니다.`
-                        : "문항 수 정보 없음"}
-                    </p>
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* 오른쪽: 현재 포커스 & 약점 요약 */}
-        <section className="space-y-3">
-          <div className="rounded-xl border bg-white p-4 shadow-sm">
-            <h2 className="flex items-center gap-2 text-sm font-semibold text-gray-800">
-              <BarChart2 className="h-4 w-4 text-emerald-600" />
-              현재 포커스 & 목표
-            </h2>
-            <div className="mt-2 space-y-2 text-xs">
-              <div>
-                <div className="text-[11px] font-medium text-gray-500">현재 지도 포인트</div>
-                <p className="mt-1 text-gray-700">{student.currentFocus}</p>
-              </div>
-              <div className="mt-2 border-t pt-2">
-                <div className="text-[11px] font-medium text-gray-500">다음 목표</div>
-                <p className="mt-1 text-gray-700">{student.nextGoal}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-xl border bg-white p-4 shadow-sm">
-            <h2 className="flex items-center gap-2 text-sm font-semibold text-gray-800">
-              <NotebookText className="h-4 w-4 text-emerald-600" />
-              약점 요약
-            </h2>
-            {weaknesses.length === 0 ? (
-              <div className="mt-2 rounded-lg border border-dashed bg-gray-50 p-3 text-[11px] text-gray-600">
-                아직 영역별 약점 데이터가 없습니다.
-                <br />
-                나중에 RLSP/내신/TOEFL 결과와 연결해서 자동으로 생성할 수 있습니다.
-              </div>
-            ) : (
-              <ul className="mt-2 space-y-2 text-xs">{/* 향후 DB 연결 시 map 추가 */}</ul>
-            )}
-          </div>
-        </section>
+      {/* 섹션별 요약 카드 */}
+      <div className="grid gap-3 sm:grid-cols-4">
+        <StatCard
+          icon={<BookOpen className="h-4 w-4" />}
+          label="Reading"
+          count={reading.length}
+          sub="응시 횟수"
+        />
+        <StatCard
+          icon={<Headphones className="h-4 w-4" />}
+          label="Listening"
+          count={listening.length}
+          sub={listeningAvg !== null ? `평균 정답률 ${listeningAvg}%` : "응시 횟수"}
+        />
+        <StatCard
+          icon={<Mic2 className="h-4 w-4" />}
+          label="Speaking"
+          count={speaking.length}
+          sub={
+            speakingAvg !== null
+              ? `평균 점수 ${speakingAvg}/30`
+              : speaking.length > 0
+                ? "채점 대기중"
+                : "응시 횟수"
+          }
+        />
+        <StatCard
+          icon={<PenLine className="h-4 w-4" />}
+          label="Writing"
+          count={writing.length}
+          sub={
+            writingAvg !== null
+              ? `평균 점수 ${writingAvg}/30`
+              : writing.length > 0
+                ? "채점 대기중"
+                : "응시 횟수"
+          }
+        />
       </div>
 
-      {/* 하단: 영역별 약점 상세 + 메모 */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        {/* 약점 상세 (placeholder) */}
-        <section className="space-y-3 lg:col-span-2">
-          <h2 className="flex items-center gap-2 text-sm font-semibold text-gray-800">
-            <Mic2 className="h-4 w-4 text-emerald-600" />
-            영역별 약점 & 수업 플랜 (Coming Soon)
-          </h2>
-          <div className="rounded-xl border border-dashed bg-white p-3 text-xs text-gray-600">
-            나중에 이 영역에는 문법/구문/Reading/Listening/Speaking/Writing 별로 약점과 구체적인 수업 플랜을
-            보여줄 수 있습니다.
-            <br />
-            현재는 DB 스키마 설계 후 연동 예정입니다.
-          </div>
-        </section>
+      {!hasAnyResult && (
+        <div className="rounded-xl border border-dashed bg-gray-50 p-8 text-center text-sm text-gray-500">
+          아직 응시한 R/L/S/W 시험 기록이 없습니다. 학생이 시험을 완료하면 이곳에 자동으로 표시됩니다.
+        </div>
+      )}
 
-        {/* 메모 / 코멘트 */}
-        <section className="space-y-3">
+      {/* 섹션별 히스토리 */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <ResultSection title="Reading" icon={<BookOpen className="h-4 w-4 text-sky-600" />} empty={reading.length === 0}>
+          {reading.map((r: any) => (
+            <ResultRow
+              key={r.id}
+              label={readingLabels.get(r.test_id) ?? "Reading 시험"}
+              date={fmtDate(r.finished_at)}
+              rightLabel={r.total_questions != null ? `${r.total_questions}문항` : "-"}
+              href={`/student/review/reading/${r.id}`}
+            />
+          ))}
+        </ResultSection>
+
+        <ResultSection title="Listening" icon={<Headphones className="h-4 w-4 text-violet-600" />} empty={listening.length === 0}>
+          {listening.map((r: any) => {
+            const pct =
+              r.total_questions != null ? Math.round((r.correct_count / r.total_questions) * 100) : null;
+            return (
+              <ResultRow
+                key={r.id}
+                label={listeningLabels.get(r.test_id) ?? "Listening 시험"}
+                date={fmtDate(r.finished_at)}
+                rightLabel={pct !== null ? `${pct}%` : "-"}
+                rightClass={pct !== null ? scoreColor(pct) : undefined}
+                href={`/student/review/listening/${r.id}`}
+              />
+            );
+          })}
+        </ResultSection>
+
+        <ResultSection title="Speaking" icon={<Mic2 className="h-4 w-4 text-amber-600" />} empty={speaking.length === 0}>
+          {speaking.map((r: any) => {
+            const score = r.final_total_score ?? r.ai_total_score;
+            return (
+              <ResultRow
+                key={r.id}
+                label={speakingLabels.get(r.test_id) ?? "Speaking 시험"}
+                date={fmtDate(r.created_at)}
+                rightLabel={score != null ? `${score}/30` : "채점 대기중"}
+                href={`/student/review/speaking/${r.id}`}
+              />
+            );
+          })}
+        </ResultSection>
+
+        <ResultSection title="Writing" icon={<PenLine className="h-4 w-4 text-emerald-600" />} empty={writing.length === 0}>
+          {writing.map((r: any) => (
+            <ResultRow
+              key={r.id}
+              label={writingLabels.get(r.test_id) ?? "Writing 시험"}
+              date={fmtDate(r.created_at)}
+              rightLabel={r.final_total_score != null ? `${r.final_total_score}/30` : "채점 대기중"}
+              href={`/student/review/writing/${r.id}`}
+            />
+          ))}
+        </ResultSection>
+      </div>
+
+      {/* 약점 & 메모 — 아직 별도 테이블 없음 */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="rounded-xl border bg-white p-4 shadow-sm">
+          <h2 className="flex items-center gap-2 text-sm font-semibold text-gray-800">
+            <BarChart2 className="h-4 w-4 text-emerald-600" />
+            약점 요약 (Coming Soon)
+          </h2>
+          <div className="mt-2 rounded-lg border border-dashed bg-gray-50 p-3 text-[11px] text-gray-600">
+            영역별 약점 자동 분석은 아직 준비 중입니다. 위 시험 기록의 상세보기에서 문항별 정오답을 확인할 수
+            있습니다.
+          </div>
+        </div>
+
+        <div className="rounded-xl border bg-white p-4 shadow-sm">
           <h2 className="flex items-center gap-2 text-sm font-semibold text-gray-800">
             <NotebookText className="h-4 w-4 text-emerald-600" />
-            메모 & 코멘트
+            메모 & 코멘트 (Coming Soon)
           </h2>
-
-          <div className="space-y-2 text-xs">
-            {notes.length === 0 && (
-              <div className="rounded-xl border border-dashed bg-gray-50 p-3 text-[11px] text-gray-600">
-                아직 등록된 메모가 없습니다.
-                <br />
-                수업 중 느낀 점, 학부모와의 대화, 학생 자기 코멘트를 기록할 수 있는 별도 테이블을 만든 뒤 이
-                영역에 연결할 예정입니다.
-              </div>
-            )}
-
-            {notes.map((n) => (
-              <article key={n.id} className="rounded-xl border bg-white p-3 text-xs shadow-sm">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="text-[11px] font-medium text-gray-500">{n.date}</div>
-                  <div className="text-[11px] font-semibold text-gray-700">
-                    {n.author}
-                    <span className="ml-1 text-[10px] text-gray-500">
-                      {n.type === "teacher" && "선생님 메모"}
-                      {n.type === "parent" && "학부모 코멘트"}
-                      {n.type === "student" && "학생 코멘트"}
-                    </span>
-                  </div>
-                </div>
-                <p className="mt-1 text-[11px] text-gray-700">{n.content}</p>
-              </article>
-            ))}
+          <div className="mt-2 rounded-lg border border-dashed bg-gray-50 p-3 text-[11px] text-gray-600">
+            수업 메모/코멘트 기능은 아직 준비 중입니다.
           </div>
-
-          <div className="rounded-xl border border-dashed bg-white p-3 text-xs text-gray-600">
-            <div className="text-[11px] font-semibold text-gray-800">메모 추가 (Coming Soon)</div>
-            <p className="mt-1 text-[11px]">
-              추후 이 영역에 간단한 메모 입력 폼을 넣어서, 선생님이 바로 기록하고 저장할 수 있도록 Supabase
-              테이블과 연결할 예정입니다.
-            </p>
-          </div>
-        </section>
+        </div>
       </div>
     </main>
+  );
+}
+
+function StatCard({
+  icon,
+  label,
+  count,
+  sub,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  count: number;
+  sub: string;
+}) {
+  return (
+    <div className="rounded-xl border bg-white p-4 shadow-sm">
+      <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500">
+        {icon}
+        {label}
+      </div>
+      <div className="mt-1 text-2xl font-bold text-gray-900">{count}</div>
+      <div className="mt-0.5 text-[11px] text-gray-500">{sub}</div>
+    </div>
+  );
+}
+
+function ResultSection({
+  title,
+  icon,
+  empty,
+  children,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  empty: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="space-y-2 rounded-xl border bg-white p-4 shadow-sm">
+      <h2 className="flex items-center gap-2 text-sm font-semibold text-gray-800">
+        {icon}
+        {title}
+      </h2>
+      {empty ? (
+        <div className="rounded-lg border border-dashed bg-gray-50 p-3 text-[11px] text-gray-600">
+          아직 {title} 시험 기록이 없습니다.
+        </div>
+      ) : (
+        <div className="space-y-2">{children}</div>
+      )}
+    </section>
+  );
+}
+
+function ResultRow({
+  label,
+  date,
+  rightLabel,
+  rightClass,
+  href,
+}: {
+  label: string;
+  date: string;
+  rightLabel: string;
+  rightClass?: string;
+  href: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 p-2.5 text-xs hover:border-emerald-400 hover:bg-emerald-50"
+    >
+      <div className="min-w-0">
+        <div className="flex items-center gap-1 truncate font-medium text-gray-900">
+          <CalendarDays className="h-3 w-3 shrink-0 text-gray-400" />
+          {label}
+        </div>
+        <div className="mt-0.5 text-[10px] text-gray-500">{date}</div>
+      </div>
+      <span
+        className={`shrink-0 rounded-full px-2 py-1 text-[11px] font-semibold ${
+          rightClass ?? "bg-gray-100 text-gray-700"
+        }`}
+      >
+        {rightLabel}
+      </span>
+    </Link>
   );
 }

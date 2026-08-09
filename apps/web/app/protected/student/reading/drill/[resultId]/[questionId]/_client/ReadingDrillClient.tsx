@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 
 interface ReviewQuestion {
   id: string;
@@ -21,7 +22,7 @@ interface ReviewStageState {
   explanationFills: Record<string, string>;
 }
 
-const DRILL_WORKFLOW = [
+const BASE_DRILL_WORKFLOW = [
   {
     key: 'vocabulary_analysis',
     label: '1. 단어 분석',
@@ -49,10 +50,26 @@ const DRILL_WORKFLOW = [
   },
 ];
 
+// 오답/무응답 문제에는 유사 문제로 한 번 더 연습하는 단계를 추가한다.
+// 정답 문제는 이해도 강화가 목적이라 다섯 단계로 끝난다.
+function getDrillWorkflow(isCorrect: boolean) {
+  if (isCorrect) return BASE_DRILL_WORKFLOW;
+  return [
+    ...BASE_DRILL_WORKFLOW,
+    {
+      key: 'similar_questions',
+      label: '6. 유사 문제',
+      description: '같은 유형의 문제를 다시 풀어봅니다',
+    },
+  ];
+}
+
 export function ReadingDrillClient({
   questionData,
+  resultId,
 }: {
   questionData: ReviewQuestion;
+  resultId: string;
 }) {
   const [currentStageIndex, setCurrentStageIndex] = useState(0);
   const [stageStates, setStageStates] = useState<ReviewStageState>({
@@ -63,7 +80,8 @@ export function ReadingDrillClient({
     explanationFills: {},
   });
 
-  const currentStage = DRILL_WORKFLOW[currentStageIndex];
+  const workflow = getDrillWorkflow(questionData.isCorrect);
+  const currentStage = workflow[currentStageIndex];
 
   const updateState = (updates: Partial<ReviewStageState>) => {
     setStageStates((prev) => ({
@@ -73,7 +91,7 @@ export function ReadingDrillClient({
   };
 
   const moveToNextStage = () => {
-    if (currentStageIndex < DRILL_WORKFLOW.length - 1) {
+    if (currentStageIndex < workflow.length - 1) {
       setCurrentStageIndex(currentStageIndex + 1);
     }
   };
@@ -192,6 +210,12 @@ export function ReadingDrillClient({
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <div className="space-y-1">
+        <Link
+          href={`/student/review/reading/${resultId}`}
+          className="inline-flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-slate-600"
+        >
+          ← 리뷰로 돌아가기
+        </Link>
         <h2 className="text-xl font-bold tracking-tight text-slate-900">
           Reading Drill - 문제 {questionData.number}
         </h2>
@@ -331,6 +355,18 @@ export function ReadingDrillClient({
               </div>
             </div>
           )}
+
+          {currentStage.key === 'similar_questions' && (
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h3 className="mb-4 text-sm font-bold text-slate-900">유사 문제로 연습하기</h3>
+              <p className="text-sm text-slate-600 mb-4">
+                이 문제와 같은 유형({questionData.type})의 문제를 하나 더 풀어보며 제대로 이해했는지 확인합니다.
+              </p>
+              <div className="bg-rose-50 border border-rose-200 rounded-lg p-4 text-sm">
+                <p className="text-rose-900">유사 문제 자동 생성은 아직 준비 중입니다. (곧 추가될 예정)</p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* 사이드바 */}
@@ -398,7 +434,7 @@ export function ReadingDrillClient({
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <h3 className="mb-4 text-sm font-bold text-slate-900">학습 진행도</h3>
             <div className="space-y-2">
-              {DRILL_WORKFLOW.map((stage, idx) => (
+              {workflow.map((stage, idx) => (
                 <div
                   key={stage.key}
                   className={`rounded-lg border-2 p-2 text-xs transition ${
@@ -439,7 +475,7 @@ export function ReadingDrillClient({
             </button>
             <button
               onClick={moveToNextStage}
-              disabled={currentStageIndex === DRILL_WORKFLOW.length - 1}
+              disabled={currentStageIndex === workflow.length - 1}
               className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:bg-slate-300"
             >
               다음 단계 →

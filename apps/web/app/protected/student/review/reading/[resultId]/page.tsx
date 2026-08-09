@@ -143,8 +143,31 @@ export default async function StudentReadingReviewDetailPage({ params }: PagePro
     : [];
 
   const administeredItems = collectAdministeredItems(test, answers);
-  const flatQuestions = buildFlatQuestions(administeredItems);
   const cwItems = buildCwItems(administeredItems);
+
+  // 필수 확인 팝업 퀴즈용 AI 생성 콘텐츠 (없으면 컴포넌트 쪽에서 rationale 등으로 대체)
+  const { data: explanationRows, error: explanationError } = await supabase
+    .from("reading_question_explanations")
+    .select("question_id, key_point_summary, key_point_distractors")
+    .eq("test_id", resultRow.test_id);
+
+  if (explanationError) console.error("ReadingReview explanations error", explanationError);
+
+  const keyPointMap = new Map(
+    (explanationRows ?? []).map((e: any) => [
+      e.question_id,
+      { summary: e.key_point_summary as string | null, distractors: (e.key_point_distractors ?? []) as string[] },
+    ])
+  );
+
+  const flatQuestions = buildFlatQuestions(administeredItems).map((q) => {
+    const kp = keyPointMap.get(q.id);
+    return {
+      ...q,
+      keyPointSummary: kp?.summary ?? null,
+      keyPointDistractors: kp?.distractors ?? [],
+    };
+  });
 
   const answerMap: Record<string, string | null> = {};
   answers.forEach((a) => {
@@ -193,6 +216,7 @@ export default async function StudentReadingReviewDetailPage({ params }: PagePro
       </header>
 
       <ReadingReviewV2
+        resultId={resultId}
         flatQuestions={flatQuestions}
         answerMap={answerMap}
         cwItems={cwItems}

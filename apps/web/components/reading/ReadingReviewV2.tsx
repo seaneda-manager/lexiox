@@ -1,8 +1,40 @@
 "use client";
 
-import { useState } from "react";
-import { ChevronDown, ChevronUp, Sparkles, Loader2, BookOpen, Languages, Bookmark } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { ChevronDown, ChevronUp, Sparkles, Loader2, BookOpen, Languages, Bookmark, Dumbbell, Lock, Pin } from "lucide-react";
 import type { RQuestion, RChoice } from "@/models/reading";
+
+// 정답이어도 이 유형들은 추측으로 맞혔을 가능성이 있어 핵심 요지 확인을 필수로 요구한다.
+const MANDATORY_TYPES = new Set(["inference", "negative_detail", "insertion", "insert_sentence"]);
+
+function isMandatoryQuestion(q: FlatQuestion, chosenId: string | null) {
+  const chosenChoice = q.choices.find((c) => c.id === chosenId);
+  const isCorrect = chosenChoice?.isCorrect ?? false;
+  if (!isCorrect) return true; // 오답/무응답은 전부 필수
+  return MANDATORY_TYPES.has(q.type); // 정답이어도 고난도 유형이면 필수
+}
+
+function keyPointOf(q: FlatQuestion): string {
+  const correctChoice = q.choices.find((c) => c.isCorrect);
+  return (
+    q.keyPointSummary?.trim() ||
+    q.rationale?.trim() ||
+    q.clueQuote?.trim() ||
+    correctChoice?.explain?.trim() ||
+    correctChoice?.text?.trim() ||
+    "이 문제의 핵심 근거"
+  );
+}
+
+function shuffle<T>(arr: T[]): T[] {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
 
 // ── Question type labels & colors ────────────────────────────────────
 
@@ -49,6 +81,9 @@ export type FlatQuestion = {
   choices: { id: string; text: string; isCorrect: boolean; explain?: string | null }[];
   rationale?: string | null;
   clueQuote?: string | null;
+  /** 필수 확인 팝업 퀴즈용 AI 생성 콘텐츠. 없으면 rationale/clueQuote 등으로 대체한다. */
+  keyPointSummary?: string | null;
+  keyPointDistractors?: string[] | null;
 };
 
 type AnswerMap = Map<string, string | null>; // questionId → chosenChoiceId
@@ -56,10 +91,12 @@ type AnswerMap = Map<string, string | null>; // questionId → chosenChoiceId
 // ── Main component ───────────────────────────────────────────────────
 
 export default function ReadingReviewV2({
+  resultId,
   flatQuestions,
   answerMap,
   cwItems = [],
 }: {
+  resultId: string;
   flatQuestions: FlatQuestion[];
   answerMap: Record<string, string | null>;
   cwItems?: CwReviewItem[];
@@ -67,6 +104,23 @@ export default function ReadingReviewV2({
   const [tab, setTab] = useState<"review" | "voca">("review");
   const groups = groupByPassage(flatQuestions);
   const aMap = new Map(Object.entries(answerMap));
+
+  // ── 필수 확인 게이트: 오답 + 정답이어도 고난도 유형인 문제는
+  // 핵심 요지 팝업 퀴즈를 통과해야 다음 문제가 잠금 해제된다.
+  const mandatoryIds = useMemo(
+    () => flatQuestions.filter((q) => isMandatoryQuestion(q, aMap.get(q.id) ?? null)).map((q) => q.id),
+    [flatQuestions, answerMap]
+  );
+  const [clearedMandatory, setClearedMandatory] = useState<Set<string>>(new Set());
+  const [openGateId, setOpenGateId] = useState<string | null>(null);
+  const activeMandatoryId = mandatoryIds.find((id) => !clearedMandatory.has(id)) ?? null;
+
+  // 다음 필수 문제로 넘어갈 때마다 팝업을 자동으로 띄운다.
+  useEffect(() => {
+    setOpenGateId(activeMandatoryId);
+  }, [activeMandatoryId]);
+
+  const gateQuestion = flatQuestions.find((q) => q.id === openGateId) ?? null;
 
   // Extract all words and phrases from passages and choices
   const allText = [
@@ -122,9 +176,29 @@ export default function ReadingReviewV2({
           )}
           {/* Academic Passage 섹션 */}
           {groups.map((group, gi) => (
-            <PassageGroup key={gi} group={group} answerMap={aMap} />
+            <PassageGroup
+              key={gi}
+              group={group}
+              answerMap={aMap}
+              resultId={resultId}
+              mandatoryIds={mandatoryIds}
+              clearedMandatory={clearedMandatory}
+              activeMandatoryId={activeMandatoryId}
+              onOpenGate={setOpenGateId}
+            />
           ))}
         </div>
+      )}
+
+      {gateQuestion && (
+        <KeyPointGateModal
+          question={gateQuestion}
+          onClose={() => setOpenGateId(null)}
+          onPass={() => {
+            setClearedMandatory((prev) => new Set(prev).add(gateQuestion.id));
+            setOpenGateId(null);
+          }}
+        />
       )}
 
       {/* Voca Tab */}
@@ -214,9 +288,19 @@ function VocaAnalysis({
 function PassageGroup({
   group,
   answerMap,
+  resultId,
+  mandatoryIds,
+  clearedMandatory,
+  activeMandatoryId,
+  onOpenGate,
 }: {
   group: { passageHtml: string; passageText: string; questions: FlatQuestion[] };
   answerMap: AnswerMap;
+  resultId: string;
+  mandatoryIds: string[];
+  clearedMandatory: Set<string>;
+  activeMandatoryId: string | null;
+  onOpenGate: (id: string) => void;
 }) {
   const [showPassage, setShowPassage] = useState(true);
   const [translation, setTranslation] = useState<string | null>(null);
@@ -294,7 +378,16 @@ function PassageGroup({
       {/* Questions */}
       <div className="space-y-3">
         {group.questions.map((q) => (
-          <QuestionCard key={q.id} q={q} chosenId={answerMap.get(q.id) ?? null} />
+          <QuestionCard
+            key={q.id}
+            q={q}
+            chosenId={answerMap.get(q.id) ?? null}
+            resultId={resultId}
+            isMandatory={mandatoryIds.includes(q.id)}
+            isCleared={clearedMandatory.has(q.id)}
+            isLocked={mandatoryIds.includes(q.id) && !clearedMandatory.has(q.id) && q.id !== activeMandatoryId}
+            onOpenGate={() => onOpenGate(q.id)}
+          />
         ))}
       </div>
     </div>
@@ -303,7 +396,23 @@ function PassageGroup({
 
 // ── Question card ────────────────────────────────────────────────────
 
-function QuestionCard({ q, chosenId }: { q: FlatQuestion; chosenId: string | null }) {
+function QuestionCard({
+  q,
+  chosenId,
+  resultId,
+  isMandatory,
+  isCleared,
+  isLocked,
+  onOpenGate,
+}: {
+  q: FlatQuestion;
+  chosenId: string | null;
+  resultId: string;
+  isMandatory: boolean;
+  isCleared: boolean;
+  isLocked: boolean;
+  onOpenGate: () => void;
+}) {
   const [open, setOpen] = useState(false);
   const [bgKnowledge, setBgKnowledge] = useState<string | null>(null);
   const [bgLoading, setBgLoading] = useState(false);
@@ -365,8 +474,45 @@ function QuestionCard({ q, chosenId }: { q: FlatQuestion; chosenId: string | nul
     ? "bg-green-100 text-green-700"
     : "bg-red-100 text-red-700";
 
+  if (isLocked) {
+    return (
+      <article className="rounded-xl border border-dashed bg-gray-50 shadow-sm overflow-hidden">
+        <div className="flex items-center gap-3 px-4 py-4 text-gray-400">
+          <Lock className="h-4 w-4 shrink-0" />
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold">Q{q.number}</span>
+              <QTypeBadge type={q.type} />
+            </div>
+            <p className="mt-0.5 text-xs">이전 필수 확인 문제를 먼저 통과해야 열립니다.</p>
+          </div>
+        </div>
+      </article>
+    );
+  }
+
   return (
     <article className="rounded-xl border bg-white shadow-sm overflow-hidden">
+      {isMandatory && (
+        <div
+          className={`flex items-center justify-between gap-2 px-4 py-2 text-[11px] font-semibold ${
+            isCleared ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+          }`}
+        >
+          <span className="inline-flex items-center gap-1">
+            <Pin className="h-3 w-3" />
+            {isCleared ? "필수 확인 완료" : "필수 확인 문제 — 핵심 요지를 확인해야 통과됩니다"}
+          </span>
+          {!isCleared && (
+            <button
+              onClick={onOpenGate}
+              className="rounded-full bg-amber-600 px-2.5 py-1 text-[10px] font-bold text-white hover:bg-amber-700"
+            >
+              퀴즈 열기
+            </button>
+          )}
+        </div>
+      )}
       {/* Question header */}
       <div className="flex items-start justify-between gap-2 px-4 py-3">
         <div className="space-y-1 flex-1 min-w-0">
@@ -380,6 +526,24 @@ function QuestionCard({ q, chosenId }: { q: FlatQuestion; chosenId: string | nul
           <p className="text-sm text-gray-900 leading-snug">{q.stem}</p>
         </div>
         <div className="flex items-center gap-1 shrink-0">
+          {isMandatory && !isCleared ? (
+            <span className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-gray-50 px-2 py-1 text-[10px] font-semibold text-gray-400">
+              <Lock className="h-3 w-3" />
+              퀴즈 통과 후 드릴 가능
+            </span>
+          ) : (
+            <Link
+              href={`/student/reading/drill/${resultId}/${q.id}`}
+              className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-[10px] font-semibold ${
+                isCorrect
+                  ? "border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100"
+                  : "border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100"
+              }`}
+            >
+              <Dumbbell className="h-3 w-3" />
+              드릴로 연습하기
+            </Link>
+          )}
           <button
             onClick={fetchQuestionTranslation}
             disabled={qTransLoading}
@@ -501,6 +665,94 @@ function QuestionCard({ q, chosenId }: { q: FlatQuestion; chosenId: string | nul
         </div>
       )}
     </article>
+  );
+}
+
+// ── 필수 확인 팝업 퀴즈 ──────────────────────────────────────────────
+// TODO(콘텐츠): 지금은 플로우만 연결된 상태라 함정 보기가 임시 문구다.
+// 실제로는 generate-explanations처럼 AI로 문제별 함정 보기를 생성해서
+// reading_question_explanations에 저장해두고 여기서 읽어와야 한다.
+function KeyPointGateModal({
+  question,
+  onPass,
+  onClose,
+}: {
+  question: FlatQuestion;
+  onPass: () => void;
+  onClose: () => void;
+}) {
+  const correctOption = useMemo(() => keyPointOf(question), [question]);
+  // AI가 문항별로 생성한 함정 보기가 있으면 그걸 쓰고, 없으면 임시 문구로 대체한다.
+  const generatedDistractors = (question.keyPointDistractors ?? []).filter((d) => d?.trim());
+  const distractors =
+    generatedDistractors.length >= 2
+      ? generatedDistractors.slice(0, 2)
+      : ["문제와 직접적인 관련이 없는 진술입니다.", "정답과 반대되는 근거를 설명하는 내용입니다."];
+  const options = useMemo(() => shuffle([correctOption, ...distractors]), [correctOption, distractors.join("|")]);
+
+  const [selected, setSelected] = useState("");
+  const [wrongTried, setWrongTried] = useState(false);
+
+  function submit() {
+    if (selected === correctOption) {
+      onPass();
+    } else {
+      setWrongTried(true);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
+      <div className="w-full max-w-md space-y-4 rounded-2xl bg-white p-6 shadow-2xl">
+        <div className="flex items-start gap-2">
+          <Pin className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+          <div>
+            <h3 className="text-sm font-bold text-gray-900">필수 확인 퀴즈</h3>
+            <p className="mt-0.5 text-xs text-gray-500">
+              Q{question.number} — 이 문제의 핵심 근거/설명 요지를 골라야 다음으로 넘어갈 수 있어요.
+            </p>
+          </div>
+        </div>
+
+        <select
+          value={selected}
+          onChange={(e) => {
+            setSelected(e.target.value);
+            setWrongTried(false);
+          }}
+          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800"
+        >
+          <option value="">선택하세요</option>
+          {options.map((opt, i) => (
+            <option key={i} value={opt}>
+              {opt}
+            </option>
+          ))}
+        </select>
+
+        {wrongTried && (
+          <p className="text-xs font-medium text-rose-600">
+            다시 생각해보세요 — 위 "해설" 버튼으로 지문 근거를 다시 확인해보세요.
+          </p>
+        )}
+
+        <div className="flex gap-2">
+          <button
+            onClick={onClose}
+            className="flex-1 rounded-lg border border-gray-200 py-2 text-xs font-semibold text-gray-500 hover:bg-gray-50"
+          >
+            나중에
+          </button>
+          <button
+            onClick={submit}
+            disabled={!selected}
+            className="flex-1 rounded-lg bg-emerald-600 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-40"
+          >
+            확인하고 통과하기
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
