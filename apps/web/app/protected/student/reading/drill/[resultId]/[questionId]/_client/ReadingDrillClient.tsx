@@ -9,7 +9,9 @@ interface ReviewQuestion {
   stem: string;
   paragraph?: string;
   type: string;
+  choices?: { id: string; text: string; isCorrect: boolean }[];
   userAnswer: string | null;
+  userAnswerId?: string | null;
   correctAnswer: string;
   isCorrect: boolean;
 }
@@ -228,10 +230,58 @@ export function ReadingDrillClient({
       <div className="grid grid-cols-12 gap-6">
         {/* 메인 콘텐츠 */}
         <div className="col-span-8 space-y-6">
-          {/* 지문 */}
+          {/* 문제 — 모든 단계에서 계속 보여야 지문에서 뭘 찾는지 알 수 있다 */}
+          <div className="rounded-3xl border border-blue-200 bg-blue-50 p-6 shadow-sm">
+            <h3 className="mb-2 text-sm font-bold text-blue-900">문제</h3>
+            <p className="text-sm leading-relaxed text-blue-900">{questionData.stem}</p>
+
+            {questionData.choices && questionData.choices.length > 0 && (
+              <div className="mt-4 space-y-2">
+                {questionData.choices.map((c, idx) => {
+                  const isChosen = c.id === questionData.userAnswerId;
+                  const cls = c.isCorrect
+                    ? 'border-emerald-300 bg-emerald-50 text-emerald-900'
+                    : isChosen
+                      ? 'border-rose-300 bg-rose-50 text-rose-900'
+                      : 'border-blue-100 bg-white text-blue-900';
+                  return (
+                    <div key={c.id} className={`flex items-start gap-2 rounded-lg border p-2.5 text-xs ${cls}`}>
+                      <span className="font-bold shrink-0">{String.fromCharCode(65 + idx)}.</span>
+                      <span className="flex-1 leading-snug">{c.text}</span>
+                      {c.isCorrect && (
+                        <span className="shrink-0 rounded bg-emerald-200 px-1.5 py-0.5 text-[10px] font-bold text-emerald-800">정답</span>
+                      )}
+                      {isChosen && !c.isCorrect && (
+                        <span className="shrink-0 rounded bg-rose-200 px-1.5 py-0.5 text-[10px] font-bold text-rose-800">내 답</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* 지문 — 근거 찾기 단계에서는 이 박스 자체가 드래그 선택 가능해진다 */}
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <h3 className="mb-4 text-sm font-bold text-slate-900">지문</h3>
-            <div className="rounded-lg bg-slate-50 p-4 text-sm leading-relaxed text-slate-700 max-h-48 overflow-y-auto">
+            <div
+              className={`rounded-lg bg-slate-50 p-4 text-sm leading-relaxed text-slate-700 max-h-48 overflow-y-auto ${
+                currentStage.key === 'evidence_finding' ? 'select-text ring-2 ring-amber-300' : ''
+              }`}
+              onMouseUp={
+                currentStage.key === 'evidence_finding'
+                  ? () => {
+                      const selectedText = window.getSelection()?.toString() || '';
+                      if (selectedText.trim()) {
+                        updateState({
+                          highlightedEvidence: [...stageStates.highlightedEvidence, selectedText.trim()],
+                        });
+                        window.getSelection()?.removeAllRanges();
+                      }
+                    }
+                  : undefined
+              }
+            >
               {questionData.paragraph || questionData.stem}
             </div>
           </div>

@@ -16,7 +16,9 @@ interface ReviewQuestion {
   stem: string;
   paragraph?: string;
   type: string;
+  choices?: { id: string; text: string; isCorrect: boolean }[];
   userAnswer: string | null;
+  userAnswerId?: string | null;
   correctAnswer: string;
   isCorrect: boolean;
 }

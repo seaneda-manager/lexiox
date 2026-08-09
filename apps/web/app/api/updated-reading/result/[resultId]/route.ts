@@ -241,6 +241,9 @@ export async function GET(
           const correctChoice = q.choices.find(
             (c: any) => c.isCorrect === true || c.is_correct === true
           );
+          // userAnswers[q.id]는 선택지 id다. 화면엔 그 id가 아니라
+          // 실제로 고른 선택지의 텍스트를 보여줘야 한다 — correctChoice.text처럼.
+          const chosenChoice = q.choices.find((c: any) => c.id === userAnswers[q.id]);
           const isCorrect = userAnswers[q.id] === correctChoice?.id;
           const explanation = explanationMap.get(q.id);
           questions.push({
@@ -253,7 +256,13 @@ export async function GET(
               item.taskKind === "daily_life"
                 ? `일상 읽기 (${(item as any).contextType})`
                 : "학술 지문",
-            userAnswer: userAnswers[q.id] ?? null,
+            choices: q.choices.map((c: any) => ({
+              id: c.id,
+              text: c.text,
+              isCorrect: c.isCorrect === true || c.is_correct === true,
+            })),
+            userAnswer: chosenChoice?.text ?? (userAnswers[q.id] ? "(선택지 정보 없음)" : null),
+            userAnswerId: userAnswers[q.id] ?? null,
             correctAnswer: correctChoice?.text ?? "Unknown",
             isCorrect,
             explanation: explanation ?? null,
