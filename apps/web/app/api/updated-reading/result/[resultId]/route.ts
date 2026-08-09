@@ -5,6 +5,10 @@ import { NextResponse } from "next/server";
 import { getServiceRoleClient } from "@/lib/supabase/server";
 import type { RReadingTest2026 } from "@/models/reading";
 
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+}
+
 /**
  * 답안을 {questionId: 선택값} 맵으로 정규화한다.
  * 다중선택은 배열로 저장될 수 있어 문자열로 합쳐 비교 가능하게 만든다.
@@ -223,9 +227,15 @@ export async function GET(
           });
         }
       } else {
-        const qs = item.taskKind === "daily_life"
-          ? (item as any).questions
-          : (item as any).questions;
+        const qs = (item as any).questions;
+        // daily_life는 contentHtml, academic_passage는 passageHtml에 지문이 들어있다.
+        // 이게 빠져 있으면 프론트에서 questionData.paragraph || questionData.stem
+        // 폴백 때문에 "지문" 자리에 문제 문장이 그대로 뜨는 버그가 생긴다.
+        const passageHtml =
+          item.taskKind === "daily_life"
+            ? (item as any).contentHtml ?? ""
+            : (item as any).passageHtml ?? "";
+        const paragraph = stripHtml(passageHtml);
 
         for (const q of qs) {
           const correctChoice = q.choices.find(
@@ -237,6 +247,7 @@ export async function GET(
             id: q.id,
             number: questions.length + 1,
             stem: q.stem,
+            paragraph,
             type: item.taskKind,
             itemType:
               item.taskKind === "daily_life"
