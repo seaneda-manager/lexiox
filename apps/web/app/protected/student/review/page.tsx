@@ -98,6 +98,37 @@ export default async function StudentReviewPage() {
     totalQuestions: r.total_questions ?? 0,
   }));
 
+  // Listening 결과
+  const { data: listeningRaw } = await supabase
+    .from("listening_results_2026")
+    .select("id,test_id,module,difficulty,correct_count,total_questions,finished_at")
+    .eq("user_id", user.id)
+    .order("finished_at", { ascending: false })
+    .limit(30);
+
+  const listeningTestIds = [...new Set((listeningRaw ?? []).map((r) => r.test_id).filter(Boolean))] as string[];
+  let listeningLabelMap: Record<string, string> = {};
+  if (listeningTestIds.length > 0) {
+    const { data: tests } = await supabase
+      .from("listening_tests_2026")
+      .select("id,label")
+      .in("id", listeningTestIds);
+    listeningLabelMap = (tests ?? []).reduce<Record<string, string>>((acc, t) => {
+      if (t?.id) acc[t.id] = t.label ?? t.id;
+      return acc;
+    }, {});
+  }
+
+  const listeningRows = (listeningRaw ?? []).map((r) => ({
+    id: r.id,
+    label: (r.test_id && listeningLabelMap[r.test_id]) || r.test_id || "Unknown",
+    finishedAt: r.finished_at,
+    module: r.module,
+    difficulty: r.difficulty as string | null,
+    correctCount: r.correct_count ?? 0,
+    totalQuestions: r.total_questions ?? 0,
+  }));
+
   const speakingRows = (speakingRaw ?? []).map((r) => ({
     id: r.id,
     label: (r.test_id && speakingLabelMap[r.test_id]) || r.test_id || "Unknown",
@@ -158,17 +189,28 @@ export default async function StudentReviewPage() {
         ))}
       </SkillSection>
 
-      {/* Listening - 결과 테이블 준비 중 */}
+      {/* Listening */}
       <SkillSection
         icon={<Headphones className="h-4 w-4 text-violet-500" />}
         title="Listening"
         color="violet"
-        empty
+        empty={listeningRows.length === 0}
         emptyHref="/updated-listening"
         emptyLabel="Listening 연습 시작하기"
-        soon
       >
-        {[]}
+        {listeningRows.map((r) => {
+          const pct = r.totalQuestions > 0 ? Math.round((r.correctCount / r.totalQuestions) * 100) : null;
+          const diffLabel = r.difficulty === "hard" ? " · Hard" : r.difficulty === "easy" ? " · Easy" : "";
+          return (
+            <ResultRow
+              key={r.id}
+              label={r.label}
+              meta={`Module ${r.module}${diffLabel} · ${pct !== null ? `${pct}% (${r.correctCount}/${r.totalQuestions})` : `${r.totalQuestions}문항`} · ${r.finishedAt ? new Date(r.finishedAt).toLocaleString("ko-KR") : "-"}`}
+              href={`/student/review/listening/${r.id}`}
+              color="violet"
+            />
+          );
+        })}
       </SkillSection>
 
       {/* Writing */}

@@ -17,7 +17,7 @@ export default async function ListeningReviewPage({ params }: PageProps) {
   // Get listening result
   const { data: result, error: resultError } = await supabase
     .from("listening_results_2026")
-    .select("id, test_id, module, difficulty, correct_count, total_questions, finished_at, answers_payload")
+    .select("id, test_id, module, difficulty, correct_count, total_questions, finished_at, answers, review_notes")
     .eq("id", resultId)
     .eq("user_id", user.id)
     .maybeSingle();
@@ -77,9 +77,10 @@ export default async function ListeningReviewPage({ params }: PageProps) {
         <ListeningReviewDetail
           resultId={resultId}
           test={test}
-          answers={result.answers_payload ?? {}}
+          answers={result.answers ?? []}
           module={result.module}
           difficulty={result.difficulty}
+          initialNotes={result.review_notes ?? {}}
         />
       )}
     </main>
