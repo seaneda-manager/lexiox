@@ -46,6 +46,28 @@ export default async function StudentHomeworkPage() {
         </p>
       </header>
 
+      <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-5 space-y-3">
+        <h2 className="text-xs font-bold uppercase tracking-wide text-neutral-400">진행 방법</h2>
+        <ol className="space-y-2 text-sm text-neutral-600">
+          <li className="flex gap-2">
+            <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-neutral-900 text-[11px] font-bold text-white">1</span>
+            <span>교재(종이)에 손으로 숙제를 풀어주세요.</span>
+          </li>
+          <li className="flex gap-2">
+            <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-neutral-900 text-[11px] font-bold text-white">2</span>
+            <span>아래 숙제에서 <strong className="text-neutral-800">📷 채점 시작</strong>을 눌러 밝은 곳에서 페이지 전체가 잘 보이게 촬영하세요.</span>
+          </li>
+          <li className="flex gap-2">
+            <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-neutral-900 text-[11px] font-bold text-white">3</span>
+            <span>AI가 10~20초 안에 문항별로 채점하고 점수를 보여줍니다.</span>
+          </li>
+          <li className="flex gap-2">
+            <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-neutral-900 text-[11px] font-bold text-white">4</span>
+            <span>틀린 문제가 있으면 <strong className="text-neutral-800">오답 교정하기</strong>로 들어가 힌트를 보며 다시 풀어보세요.</span>
+          </li>
+        </ol>
+      </div>
+
       {(homeworks ?? []).length === 0 ? (
         <div className="rounded-2xl border border-dashed p-12 text-center text-sm text-neutral-400">
           배정된 숙제가 없습니다.
