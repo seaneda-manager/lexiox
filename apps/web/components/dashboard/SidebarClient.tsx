@@ -245,11 +245,14 @@ export default function SidebarClient({ role, program = null }: Props) {
     if (role === 'admin') {
       return [
         { section: '대시보드' as NavSection, href: '/admin', label: '대시보드', icon: LayoutDashboard },
+        { section: '대시보드' as NavSection, href: '/admin/dashboard', label: '학생 진행 현황', icon: Users },
 
         { section: 'Updated TOEFL' as NavSection, href: '/admin/content/updated-reading',   label: 'Reading',   icon: BookOpen },
         { section: 'Updated TOEFL' as NavSection, href: '/admin/content/updated-listening', label: 'Listening', icon: Headphones },
         { section: 'Updated TOEFL' as NavSection, href: '/admin/content/updated-writing',   label: 'Writing',   icon: PenLine },
         { section: 'Updated TOEFL' as NavSection, href: '/admin/content/grammar-2026',      label: 'Grammar',   icon: BookText },
+        { section: 'Updated TOEFL' as NavSection, href: '/admin/problem-bank',              label: 'Problem Bank', icon: Library },
+        { section: 'Updated TOEFL' as NavSection, href: '/admin/daily-tests',               label: 'Daily Tests', icon: CheckSquare },
 
         { section: 'Updated-Speaking' as NavSection, href: '/admin/content/updated-speaking',  label: 'Speaking',  icon: Mic },
         { section: 'Updated-Speaking' as NavSection, href: '/admin/speaking-drills',           label: '🎮 Speaking 훈련',  icon: PlayCircle },
@@ -257,6 +260,7 @@ export default function SidebarClient({ role, program = null }: Props) {
         { section: '내신관리' as NavSection, href: '/admin/naesin',              label: '고등 드릴 관리', icon: ClipboardList },
         { section: '내신관리' as NavSection, href: '/admin/hi-naesin/passages',  label: '고등 지문',      icon: FileText },
         { section: '내신관리' as NavSection, href: '/admin/middle-naesin/units', label: '중학 단원·드릴', icon: GraduationCap },
+        { section: '내신관리' as NavSection, href: '/admin/hi-naesin/wrong-answers', label: '오답 검토', icon: ClipboardCheck },
 
         { section: 'Jr.' as NavSection, href: '/admin/jr/content/generate',              label: 'AI 콘텐츠 생성', icon: Mic },
         { section: 'Jr.' as NavSection, href: '/admin/jr/content/review',               label: 'AI 검토',        icon: ClipboardCheck },

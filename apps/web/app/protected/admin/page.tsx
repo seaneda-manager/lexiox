@@ -178,6 +178,14 @@ export default function AdminPage() {
           ]}
           color="border-emerald-100"
         />
+        <DashCard
+          title="오답 검토"
+          description="Hi-내신 드릴에서 학생이 틀린 문제를 확인하고 검토 완료 처리합니다."
+          links={[
+            { label: '오답 목록', href: '/admin/hi-naesin/wrong-answers', primary: true },
+          ]}
+          color="border-rose-100"
+        />
       </div>
 
       {/* Jr. Learning */}
