@@ -4,8 +4,10 @@ const DRILL_TYPE_LABEL: Record<string, string> = {
   vocab: "어휘",
   identify_categorize: "구문 식별",
   translation: "번역",
+  translation_arrange: "번역 순서 배열",
   fill_blank: "빈칸 채우기",
   writing: "작문",
+  writing_arrange: "작문 순서 배열",
   grammar_choice: "문법 선택",
 };
 
@@ -22,26 +24,95 @@ export type WrongAnswerRow = {
   studentName?: string;
 };
 
-function getPromptAndAnswer(drillType: string, payload: Record<string, unknown>): { prompt: string; answer: string } {
+type Chunk = { id: string; ko?: string; en?: string };
+
+// 순서 배열형 드릴은 response_choice에 학생이 배열한 chunk id 순서가
+// JSON 배열 문자열로 저장된다 (예: '["k0","k2","k1"]'). 콤마로만 저장된 과거 데이터도 방어적으로 처리.
+function parseOrderIds(raw: string | null): string[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed.map(String);
+  } catch {
+    // not JSON — fall through
+  }
+  return raw.split(",").map((s) => s.trim()).filter(Boolean);
+}
+
+function joinChunks(chunks: Chunk[], ids: string[], field: "ko" | "en"): string {
+  const byId = new Map(chunks.map((c) => [c.id, c[field] ?? ""]));
+  return ids.map((id) => byId.get(id) ?? `[${id}]`).join(" ");
+}
+
+function getDisplayFields(row: WrongAnswerRow): { prompt: string; correctAnswer: string; studentAnswer: string } {
+  const { drillType, payload } = row;
+  const fallbackStudentAnswer = row.response_text || row.response_choice || "(무응답)";
+
   switch (drillType) {
     case "vocab":
-      return { prompt: String(payload.word ?? ""), answer: String(payload.meaningKo ?? "") };
+      return {
+        prompt: String(payload.word ?? ""),
+        correctAnswer: String(payload.meaningKo ?? ""),
+        studentAnswer: fallbackStudentAnswer,
+      };
     case "fill_blank":
-      return { prompt: String(payload.sentenceTemplate ?? ""), answer: String(payload.answer ?? "") };
+      return {
+        prompt: String(payload.sentenceTemplate ?? ""),
+        correctAnswer: String(payload.answer ?? ""),
+        studentAnswer: fallbackStudentAnswer,
+      };
     case "translation":
-      return { prompt: String(payload.sentenceEn ?? ""), answer: String(payload.answerKo ?? "") };
+      return {
+        prompt: String(payload.sentenceEn ?? ""),
+        correctAnswer: String(payload.answerKo ?? ""),
+        studentAnswer: fallbackStudentAnswer,
+      };
     case "writing":
-      return { prompt: String(payload.koPrompt ?? ""), answer: String(payload.answerEn ?? "") };
+      return {
+        prompt: String(payload.koPrompt ?? ""),
+        correctAnswer: String(payload.answerEn ?? ""),
+        studentAnswer: fallbackStudentAnswer,
+      };
     case "grammar_choice": {
       const correct = String(payload.correct ?? "").toLowerCase();
       const optionKey = `option${correct.toUpperCase()}`;
       return {
         prompt: String(payload.sentenceTemplate ?? ""),
-        answer: String((payload as Record<string, unknown>)[optionKey] ?? ""),
+        correctAnswer: String((payload as Record<string, unknown>)[optionKey] ?? ""),
+        studentAnswer: fallbackStudentAnswer,
+      };
+    }
+    case "translation_arrange": {
+      const chunks = Array.isArray(payload.chunks) ? (payload.chunks as Chunk[]) : [];
+      const studentIds = parseOrderIds(row.response_choice ?? row.response_text);
+      return {
+        prompt: String(payload.sentenceEn ?? ""),
+        correctAnswer: joinChunks(chunks, chunks.map((c) => c.id), "ko"),
+        studentAnswer: studentIds.length ? joinChunks(chunks, studentIds, "ko") : fallbackStudentAnswer,
+      };
+    }
+    case "writing_arrange": {
+      const chunks = Array.isArray(payload.chunks) ? (payload.chunks as Chunk[]) : [];
+      const studentIds = parseOrderIds(row.response_choice ?? row.response_text);
+      return {
+        prompt: String(payload.koPrompt ?? ""),
+        correctAnswer: joinChunks(chunks, chunks.map((c) => c.id), "en"),
+        studentAnswer: studentIds.length ? joinChunks(chunks, studentIds, "en") : fallbackStudentAnswer,
+      };
+    }
+    case "identify_categorize": {
+      const targets = Array.isArray(payload.targets) ? (payload.targets as Record<string, unknown>[]) : [];
+      const t = targets[0];
+      const options = Array.isArray(t?.options) ? (t?.options as { key: string; label: string }[]) : [];
+      const correctLabel = options.find((o) => o.key === t?.category)?.label ?? String(t?.category ?? "");
+      return {
+        prompt: String(payload.sentence ?? ""),
+        correctAnswer: t ? `"${t.span}" → ${correctLabel}` : "",
+        studentAnswer: fallbackStudentAnswer,
       };
     }
     default:
-      return { prompt: "", answer: "" };
+      return { prompt: "", correctAnswer: "", studentAnswer: fallbackStudentAnswer };
   }
 }
 
@@ -62,8 +133,7 @@ export default function WrongAnswerCard({
   row: WrongAnswerRow;
   revalidateTargetPath: string;
 }) {
-  const { prompt, answer } = getPromptAndAnswer(row.drillType, row.payload);
-  const studentAnswer = row.response_text || row.response_choice || "(무응답)";
+  const { prompt, correctAnswer, studentAnswer } = getDisplayFields(row);
 
   return (
     <div className="rounded-lg border border-rose-100 bg-white p-4 shadow-sm space-y-2">
@@ -87,10 +157,10 @@ export default function WrongAnswerCard({
           <p className="text-[10px] font-semibold text-rose-500">학생 답</p>
           <p className="text-sm text-rose-800 break-words">{studentAnswer}</p>
         </div>
-        {answer && (
+        {correctAnswer && (
           <div className="rounded-md border border-emerald-100 bg-emerald-50 px-3 py-2">
             <p className="text-[10px] font-semibold text-emerald-600">정답</p>
-            <p className="text-sm text-emerald-800 break-words">{answer}</p>
+            <p className="text-sm text-emerald-800 break-words">{correctAnswer}</p>
           </div>
         )}
       </div>
