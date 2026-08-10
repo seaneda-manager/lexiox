@@ -3,6 +3,7 @@ import { getServerSupabase } from '@/lib/supabase/server';
 import { getServiceSupabase } from '@/lib/supabase/service';
 import { redirect } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
+import TeacherReviewPanel from './_client/TeacherReviewPanel';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,7 +20,7 @@ export default async function AdminDeepCheckPage() {
   const service = getServiceSupabase();
   const { data: sessions } = await service
     .from('deepcheck_sessions')
-    .select('id, student_id, core_concepts, weaknesses, strengths, english_explanation, skills_covered, status, created_at')
+    .select('id, student_id, core_concepts, weaknesses, strengths, english_explanation, skills_covered, status, teacher_notes, created_at')
     .in('status', ['ready', 'completed'])
     .order('created_at', { ascending: false })
     .limit(100);
@@ -51,7 +52,15 @@ export default async function AdminDeepCheckPage() {
           {(sessions ?? []).map((s) => (
             <div key={s.id} className="rounded-lg border bg-white shadow-sm p-4 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-gray-900">{nameById.get(s.student_id)}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-gray-900">{nameById.get(s.student_id)}</span>
+                  <span className={[
+                    'rounded-full px-2 py-0.5 text-[11px] font-medium',
+                    s.status === 'completed' ? 'bg-sky-100 text-sky-700' : 'bg-emerald-100 text-emerald-700',
+                  ].join(' ')}>
+                    {s.status === 'completed' ? '세션 완료' : '준비 완료'}
+                  </span>
+                </div>
                 <span className="text-[11px] text-gray-400">
                   {new Date(s.created_at).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
                 </span>
@@ -88,6 +97,12 @@ export default async function AdminDeepCheckPage() {
                   <p className="text-xs text-sky-900">{s.english_explanation}</p>
                 </div>
               )}
+
+              <TeacherReviewPanel
+                sessionId={s.id}
+                initialNotes={s.teacher_notes}
+                isCompleted={s.status === 'completed'}
+              />
             </div>
           ))}
         </div>

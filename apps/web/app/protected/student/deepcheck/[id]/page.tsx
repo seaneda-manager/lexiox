@@ -42,9 +42,16 @@ export default async function DeepCheckDetailPage({ params }: PageProps) {
         </div>
         <h1 className="text-xl font-bold text-neutral-900">DeepCheck 준비 내용</h1>
         <p className="text-xs text-neutral-400 mt-0.5">
-          세션 전까지 자유롭게 수정할 수 있어요.
+          {session.status === 'completed' ? '세션이 완료되었어요.' : '세션 전까지 자유롭게 수정할 수 있어요.'}
         </p>
       </header>
+
+      {session.teacher_notes && (
+        <div className="rounded-2xl border border-sky-200 bg-sky-50 p-5 space-y-1">
+          <p className="text-xs font-semibold text-sky-700">👩‍🏫 선생님 메모</p>
+          <p className="text-sm text-sky-900 whitespace-pre-wrap">{session.teacher_notes}</p>
+        </div>
+      )}
 
       <DeepCheckForm
         initial={{
