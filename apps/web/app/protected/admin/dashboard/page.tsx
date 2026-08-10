@@ -73,6 +73,12 @@ export default async function StudentListDashboard() {
       : { data: [] as { student_id: string }[] };
   const hiNaesinIds = new Set((hiNaesinRows ?? []).map((r) => r.student_id));
 
+  const { count: unreviewedWrongAnswerCount } = await supabase
+    .from("hi_naesin_drill_responses")
+    .select("id", { count: "exact", head: true })
+    .eq("is_correct", false)
+    .is("reviewed_at", null);
+
   const { data: vocabPlanRows } =
     academyIds.length > 0
       ? await supabase
@@ -130,7 +136,17 @@ export default async function StudentListDashboard() {
     <main className="mx-auto max-w-6xl space-y-10 px-4 py-6">
       {/* Header */}
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-gray-900">👨‍🎓 학생별 진행 현황</h1>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="text-3xl font-bold text-gray-900">👨‍🎓 학생별 진행 현황</h1>
+          {!!unreviewedWrongAnswerCount && (
+            <Link
+              href="/admin/hi-naesin/wrong-answers"
+              className="inline-flex items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100"
+            >
+              🔴 오답 검토 {unreviewedWrongAnswerCount}건
+            </Link>
+          )}
+        </div>
         <p className="text-sm text-gray-600">
           학생을 선택하여 상세한 시험 결과를 확인하세요. 총 {students.length}명.
         </p>

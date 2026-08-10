@@ -3,6 +3,8 @@ import { getServerSupabase } from "@/lib/supabase/server";
 import { getServiceSupabase } from "@/lib/supabase/service";
 import { redirect, notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink } from "lucide-react";
+import ProgramTabs, { type ProgramTab } from "./_client/ProgramTabs";
+import WrongAnswerCard, { type WrongAnswerRow } from "@/components/admin/hi-naesin/WrongAnswerCard";
 
 export const dynamic = "force-dynamic";
 
@@ -111,17 +113,17 @@ export default async function StudentDetailDashboard({ params }: PageProps) {
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
 
-  // Hi-내신 드릴 결과 (hi_naesin_sessions.student_id는 auth id를 그대로 쓴다 — academy_students.id 아님)
-  const { data: hiNaesinSessionRows } = await service
+  // ── Hi-내신 (hi_naesin_*.student_id는 auth id를 그대로 쓴다 — academy_students.id 아님) ──
+  const { data: hiNaesinAllSessions } = await service
     .from("hi_naesin_sessions")
-    .select("id, passage_id, assignment_id, submitted_at, score_percent")
+    .select("id, passage_id, assignment_id, status, submitted_at, score_percent")
     .eq("student_id", studentId)
     .eq("session_type", "drill")
-    .eq("status", "submitted")
     .order("submitted_at", { ascending: false });
 
-  const hiNaesinPassageIds = [...new Set((hiNaesinSessionRows ?? []).map((s) => s.passage_id).filter(Boolean))];
-  const hiNaesinAssignmentIds = [...new Set((hiNaesinSessionRows ?? []).map((s) => s.assignment_id).filter(Boolean))];
+  const hiNaesinSessionIds = (hiNaesinAllSessions ?? []).map((s) => s.id);
+  const hiNaesinPassageIds = [...new Set((hiNaesinAllSessions ?? []).map((s) => s.passage_id).filter(Boolean))];
+  const hiNaesinAssignmentIds = [...new Set((hiNaesinAllSessions ?? []).map((s) => s.assignment_id).filter(Boolean))];
 
   const { data: hiNaesinPassages } =
     hiNaesinPassageIds.length > 0
@@ -137,15 +139,56 @@ export default async function StudentDetailDashboard({ params }: PageProps) {
     (hiNaesinAssignmentRows ?? []).map((a) => [a.id, a.enabled_drill_types])
   );
 
-  const hiNaesinSessions = (hiNaesinSessionRows ?? []).map((s) => ({
-    ...s,
-    passageTitle: (s.passage_id && hiNaesinPassageTitleById.get(s.passage_id)) || null,
-    // enabled_drill_types가 없으면(null) 전체 유형(어휘/문법/번역/독해/작문/토론)을 다 배정한 것이다.
-    drillTypes: (s.assignment_id && drillTypesByAssignmentId.get(s.assignment_id)) || null,
-  }));
+  const hiNaesinSessions = (hiNaesinAllSessions ?? [])
+    .filter((s) => s.status === "submitted")
+    .map((s) => ({
+      ...s,
+      passageTitle: (s.passage_id && hiNaesinPassageTitleById.get(s.passage_id)) || null,
+      // enabled_drill_types가 없으면(null) 전체 유형(어휘/문법/번역/독해/작문/토론)을 다 배정한 것이다.
+      drillTypes: (s.assignment_id && drillTypesByAssignmentId.get(s.assignment_id)) || null,
+    }));
+
+  // 이 학생의 미확인 오답 (선생님이 "확인함"을 누르면 reviewed_at이 채워져 목록에서 빠진다)
+  const sessionPassageById = new Map((hiNaesinAllSessions ?? []).map((s) => [s.id, s.passage_id]));
+  const { data: wrongAnswerRows } =
+    hiNaesinSessionIds.length > 0
+      ? await service
+          .from("hi_naesin_drill_responses")
+          .select("id, drill_id, session_id, response_text, response_choice, score_pct, feedback_text, created_at")
+          .in("session_id", hiNaesinSessionIds)
+          .eq("is_correct", false)
+          .is("reviewed_at", null)
+          .order("created_at", { ascending: false })
+      : { data: [] as any[] };
+
+  const wrongDrillIds = [...new Set((wrongAnswerRows ?? []).map((r) => r.drill_id).filter(Boolean))];
+  const { data: wrongDrills } =
+    wrongDrillIds.length > 0
+      ? await service.from("hi_naesin_drills").select("id, drill_type, payload").in("id", wrongDrillIds)
+      : { data: [] as { id: string; drill_type: string; payload: Record<string, unknown> }[] };
+  const drillById = new Map((wrongDrills ?? []).map((d) => [d.id, d]));
+
+  const wrongAnswers: WrongAnswerRow[] = (wrongAnswerRows ?? []).flatMap((r) => {
+    const drill = drillById.get(r.drill_id);
+    if (!drill) return [];
+    const passageId = sessionPassageById.get(r.session_id);
+    return [{
+      id: r.id,
+      response_text: r.response_text,
+      response_choice: r.response_choice,
+      score_pct: r.score_pct,
+      feedback_text: r.feedback_text,
+      created_at: r.created_at,
+      drillType: drill.drill_type,
+      payload: drill.payload,
+      passageTitle: (passageId && hiNaesinPassageTitleById.get(passageId)) || null,
+    }];
+  });
 
   const academyStudentId = await resolveAcademyStudentId(supabase, studentId);
   let vocabPlans: { trackTitle: string; cursorDayIndex: number; totalDays: number; isEnabled: boolean; isPaused: boolean }[] = [];
+  // Junior 커리큘럼 활동 신호. 아직 jr_reading_sessions 외 테이블은 실제 DB에 없어 이것만 확인한다.
+  let jrReadingSessionCount = 0;
   if (academyStudentId) {
     const { data: plans } = await service
       .from("student_vocab_plans")
@@ -168,6 +211,12 @@ export default async function StudentDetailDashboard({ params }: PageProps) {
         isPaused: !!p.is_paused,
       }));
     }
+
+    const { count } = await service
+      .from("jr_reading_sessions")
+      .select("id", { count: "exact", head: true })
+      .eq("student_id", academyStudentId);
+    jrReadingSessionCount = count ?? 0;
   }
 
   const groupMembersByGroup = new Map<string, any[]>();
@@ -194,11 +243,341 @@ export default async function StudentDetailDashboard({ params }: PageProps) {
     return result.score;
   };
 
-  const getScoreColor = (score: number) => {
-    if (score >= 70) return "text-emerald-700 bg-emerald-50";
-    if (score >= 50) return "text-amber-700 bg-amber-50";
-    return "text-rose-700 bg-rose-50";
-  };
+  const revalidateTargetPath = `/admin/dashboard/students/${studentId}`;
+
+  // ── TOEFL 탭 ──────────────────────────────────────────────
+  const hasToeflActivity =
+    (groups ?? []).length > 0 ||
+    (soloAssignments ?? []).length > 0 ||
+    (dailyTests ?? []).length > 0 ||
+    !!readingResults?.length ||
+    !!listeningResults?.length ||
+    !!speakingResults?.length ||
+    !!writingResults?.length;
+
+  const toeflContent = (
+    <div className="space-y-6">
+      {((groups ?? []).length > 0 || (soloAssignments ?? []).length > 0 || (dailyTests ?? []).length > 0) && (
+        <div className="space-y-4">
+          <h3 className="text-sm font-semibold text-gray-700">📋 배정 현황</h3>
+
+          {(groups ?? []).length > 0 && (
+            <div className="rounded-lg border bg-white shadow-sm p-4 space-y-3">
+              <h4 className="text-sm font-semibold text-gray-700">Full / Half Test</h4>
+              {(groups ?? []).map((g) => {
+                const members = groupMembersByGroup.get(g.id) ?? [];
+                const gStatus = STATUS_LABEL[g.status] ?? STATUS_LABEL.pending;
+                return (
+                  <div key={g.id} className="rounded-lg border border-gray-200 p-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-900">
+                        {g.kind === "full" ? "Full Test" : "Half Test"}
+                      </span>
+                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${gStatus.cls}`}>
+                        {gStatus.text}
+                      </span>
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {members.map((m) => {
+                        const mStatus = STATUS_LABEL[m.status] ?? STATUS_LABEL.pending;
+                        const section = (m.sections as string[])?.[0];
+                        return (
+                          <span key={m.id} className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${mStatus.cls}`}>
+                            {SECTION_LABEL_KO[section] ?? section}
+                          </span>
+                        );
+                      })}
+                    </div>
+                    <p className="mt-1 text-[11px] text-gray-400">
+                      배정 {formatDate(g.created_at)}
+                      {g.due_date ? ` · 마감 ${formatDate(g.due_date)}` : ""}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {(soloAssignments ?? []).length > 0 && (
+            <div className="rounded-lg border bg-white shadow-sm p-4">
+              <h4 className="mb-3 text-sm font-semibold text-gray-700">개별 영역 배정</h4>
+              <div className="space-y-2">
+                {(soloAssignments ?? []).map((a) => {
+                  const aStatus = STATUS_LABEL[a.status] ?? STATUS_LABEL.pending;
+                  const section = (a.sections as string[])?.[0];
+                  return (
+                    <div key={a.id} className="flex items-center justify-between rounded-lg border border-gray-100 px-3 py-2">
+                      <span className="text-sm text-gray-800">{SECTION_LABEL_KO[section] ?? section}</span>
+                      <div className="flex items-center gap-2">
+                        {a.due_date && <span className="text-[11px] text-gray-400">마감 {formatDate(a.due_date)}</span>}
+                        <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${aStatus.cls}`}>
+                          {aStatus.text}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {(dailyTests ?? []).length > 0 && (
+            <div className="rounded-lg border bg-white shadow-sm p-4">
+              <h4 className="mb-3 text-sm font-semibold text-gray-700">Daily Tests</h4>
+              <div className="space-y-2">
+                {(dailyTests ?? []).map((t) => {
+                  const tStatus = STATUS_LABEL[t.status] ?? STATUS_LABEL.pending;
+                  return (
+                    <Link
+                      key={t.id}
+                      href={t.status === "completed" ? `/admin/daily-tests/${t.id}` : "/admin/daily-tests"}
+                      className="flex items-center justify-between rounded-lg border border-gray-100 px-3 py-2 hover:border-blue-300 hover:bg-blue-50 transition"
+                    >
+                      <span className="text-sm text-gray-800">{t.task_type} · {t.difficulty}</span>
+                      <div className="flex items-center gap-2">
+                        {t.due_date && <span className="text-[11px] text-gray-400">마감 {formatDate(t.due_date)}</span>}
+                        <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${tStatus.cls}`}>
+                          {tStatus.text}
+                        </span>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="grid gap-4 sm:grid-cols-4">
+        <StatCard
+          icon="📖"
+          label="Reading"
+          count={readingResults?.length || 0}
+          avgScore={
+            readingResults?.length
+              ? Math.round(
+                  readingResults.reduce((sum, r: any) => {
+                    const score = Math.round((r.correct_count / r.total_questions) * 100);
+                    return sum + score;
+                  }, 0) / readingResults.length
+                )
+              : 0
+          }
+        />
+        <StatCard
+          icon="🎧"
+          label="Listening"
+          count={listeningResults?.length || 0}
+          avgScore={
+            listeningResults?.length
+              ? Math.round(
+                  listeningResults.reduce((sum, r: any) => {
+                    const score = Math.round((r.correct_count / r.total_questions) * 100);
+                    return sum + score;
+                  }, 0) / listeningResults.length
+                )
+              : 0
+          }
+        />
+        <StatCard
+          icon="🎤"
+          label="Speaking"
+          count={speakingResults?.length || 0}
+          avgScore={
+            speakingResults?.length
+              ? Math.round(speakingResults.reduce((sum, r: any) => sum + r.score, 0) / speakingResults.length)
+              : 0
+          }
+        />
+        <StatCard
+          icon="✍️"
+          label="Writing"
+          count={writingResults?.length || 0}
+          avgScore={
+            writingResults?.length
+              ? Math.round(writingResults.reduce((sum, r: any) => sum + r.score, 0) / writingResults.length)
+              : 0
+          }
+        />
+      </div>
+
+      <div className="space-y-6">
+        {readingResults && readingResults.length > 0 && (
+          <ResultSection title="📖 Reading">
+            <div className="space-y-2">
+              {readingResults.map((result: any, idx: number) => (
+                <ResultRow
+                  key={result.id}
+                  number={idx + 1}
+                  score={getScore(result)}
+                  date={formatDate(result.finished_at)}
+                  href={`/student/review/reading/${result.id}`}
+                />
+              ))}
+            </div>
+          </ResultSection>
+        )}
+
+        {listeningResults && listeningResults.length > 0 && (
+          <ResultSection title="🎧 Listening">
+            <div className="space-y-2">
+              {listeningResults.map((result: any, idx: number) => (
+                <ResultRow
+                  key={result.id}
+                  number={idx + 1}
+                  score={getScore(result)}
+                  date={formatDate(result.finished_at)}
+                  subtitle={`Module ${result.module}`}
+                  href={`/student/review/listening/${result.id}`}
+                />
+              ))}
+            </div>
+          </ResultSection>
+        )}
+
+        {speakingResults && speakingResults.length > 0 && (
+          <ResultSection title="🎤 Speaking">
+            <div className="space-y-2">
+              {speakingResults.map((result: any, idx: number) => (
+                <ResultRow
+                  key={result.id}
+                  number={idx + 1}
+                  score={result.score}
+                  date={formatDate(result.finished_at)}
+                  href={`/student/review/speaking/${result.id}`}
+                />
+              ))}
+            </div>
+          </ResultSection>
+        )}
+
+        {writingResults && writingResults.length > 0 && (
+          <ResultSection title="✍️ Writing">
+            <div className="space-y-2">
+              {writingResults.map((result: any, idx: number) => (
+                <ResultRow
+                  key={result.id}
+                  number={idx + 1}
+                  score={result.score}
+                  date={formatDate(result.finished_at)}
+                  href={`/student/review/writing/${result.id}`}
+                />
+              ))}
+            </div>
+          </ResultSection>
+        )}
+      </div>
+    </div>
+  );
+
+  // ── 내신(Hi-내신) 탭 ──────────────────────────────────────
+  const hasNaesinActivity = hiNaesinSessions.length > 0 || wrongAnswers.length > 0;
+
+  const naesinContent = (
+    <div className="space-y-6">
+      {wrongAnswers.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-gray-700">
+            🔴 오답 검토 <span className="font-normal text-gray-400">({wrongAnswers.length}건 미확인)</span>
+          </h3>
+          <div className="space-y-2">
+            {wrongAnswers.map((row) => (
+              <WrongAnswerCard key={row.id} row={row} revalidateTargetPath={revalidateTargetPath} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {hiNaesinSessions.length > 0 && (
+        <div className="rounded-lg border bg-white shadow-sm p-4">
+          <h3 className="mb-3 text-sm font-semibold text-gray-700">Hi-내신 드릴 결과</h3>
+          <div className="space-y-2">
+            {hiNaesinSessions.map((sess) => {
+              const score = sess.score_percent ?? 0;
+              const scoreCls =
+                score >= 80
+                  ? "bg-emerald-50 text-emerald-700"
+                  : score >= 60
+                  ? "bg-amber-50 text-amber-700"
+                  : "bg-rose-50 text-rose-700";
+              return (
+                <div
+                  key={sess.id}
+                  className="flex items-center justify-between gap-3 rounded-lg border border-gray-100 px-3 py-2"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm text-gray-800">
+                      {sess.passageTitle ?? `지문 ${sess.passage_id ? String(sess.passage_id).slice(0, 8) : "-"}…`}
+                    </p>
+                    <span className="text-[10px] text-gray-400">
+                      {sess.drillTypes ? sess.drillTypes.join(" · ") : "전체 유형"}
+                    </span>
+                  </div>
+                  <div className="flex flex-shrink-0 items-center gap-2">
+                    <span className="text-[11px] text-gray-400">{formatDate(sess.submitted_at)}</span>
+                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${scoreCls}`}>
+                      {score}%
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  // ── Junior 탭 ─────────────────────────────────────────────
+  const hasJuniorActivity = jrReadingSessionCount > 0;
+  const juniorContent = (
+    <div className="rounded-lg border bg-white shadow-sm p-4">
+      <h3 className="mb-1 text-sm font-semibold text-gray-700">Junior Reading</h3>
+      <p className="text-sm text-gray-600">진행한 세션 {jrReadingSessionCount}개</p>
+    </div>
+  );
+
+  // ── Voca 탭 ───────────────────────────────────────────────
+  const hasVocaActivity = vocabPlans.length > 0;
+  const vocaContent = (
+    <div className="rounded-lg border bg-white shadow-sm p-4">
+      <h3 className="mb-3 text-sm font-semibold text-gray-700">Vocabulary</h3>
+      <div className="space-y-2">
+        {vocabPlans.map((p, idx) => (
+          <div key={idx} className="flex items-center justify-between rounded-lg border border-gray-100 px-3 py-2">
+            <span className="text-sm text-gray-800">{p.trackTitle}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-gray-500">
+                Day {p.cursorDayIndex}{p.totalDays ? ` / ${p.totalDays}` : ""}
+              </span>
+              {!p.isEnabled && (
+                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-500">비활성</span>
+              )}
+              {p.isPaused && (
+                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">일시정지</span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const tabs: (ProgramTab | null)[] = [
+    hasToeflActivity ? { id: "toefl", label: "🎯 TOEFL", content: toeflContent } : null,
+    hasNaesinActivity
+      ? {
+          id: "naesin",
+          label: "📘 내신",
+          badge: wrongAnswers.length || undefined,
+          content: naesinContent,
+        }
+      : null,
+    hasJuniorActivity ? { id: "junior", label: "🧒 Junior", content: juniorContent } : null,
+    hasVocaActivity ? { id: "voca", label: "🔤 Voca", content: vocaContent } : null,
+  ];
+  const activeTabs: ProgramTab[] = tabs.filter((t): t is ProgramTab => t !== null);
 
   return (
     <main className="mx-auto max-w-6xl space-y-6 px-4 py-6">
@@ -220,318 +599,13 @@ export default async function StudentDetailDashboard({ params }: PageProps) {
         </div>
       </div>
 
-      {/* 배정 현황 */}
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900">📋 배정 현황</h2>
-
-        {/* Full/Half Test 그룹 */}
-        {(groups ?? []).length > 0 && (
-          <div className="rounded-lg border bg-white shadow-sm p-4 space-y-3">
-            <h3 className="text-sm font-semibold text-gray-700">Full / Half Test</h3>
-            {(groups ?? []).map((g) => {
-              const members = groupMembersByGroup.get(g.id) ?? [];
-              const gStatus = STATUS_LABEL[g.status] ?? STATUS_LABEL.pending;
-              return (
-                <div key={g.id} className="rounded-lg border border-gray-200 p-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-900">
-                      {g.kind === "full" ? "Full Test" : "Half Test"}
-                    </span>
-                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${gStatus.cls}`}>
-                      {gStatus.text}
-                    </span>
-                  </div>
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {members.map((m) => {
-                      const mStatus = STATUS_LABEL[m.status] ?? STATUS_LABEL.pending;
-                      const section = (m.sections as string[])?.[0];
-                      return (
-                        <span key={m.id} className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${mStatus.cls}`}>
-                          {SECTION_LABEL_KO[section] ?? section}
-                        </span>
-                      );
-                    })}
-                  </div>
-                  <p className="mt-1 text-[11px] text-gray-400">
-                    배정 {formatDate(g.created_at)}
-                    {g.due_date ? ` · 마감 ${formatDate(g.due_date)}` : ""}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* 개별 영역 배정 */}
-        {(soloAssignments ?? []).length > 0 && (
-          <div className="rounded-lg border bg-white shadow-sm p-4">
-            <h3 className="mb-3 text-sm font-semibold text-gray-700">개별 영역 배정</h3>
-            <div className="space-y-2">
-              {(soloAssignments ?? []).map((a) => {
-                const aStatus = STATUS_LABEL[a.status] ?? STATUS_LABEL.pending;
-                const section = (a.sections as string[])?.[0];
-                return (
-                  <div key={a.id} className="flex items-center justify-between rounded-lg border border-gray-100 px-3 py-2">
-                    <span className="text-sm text-gray-800">{SECTION_LABEL_KO[section] ?? section}</span>
-                    <div className="flex items-center gap-2">
-                      {a.due_date && <span className="text-[11px] text-gray-400">마감 {formatDate(a.due_date)}</span>}
-                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${aStatus.cls}`}>
-                        {aStatus.text}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Daily Tests */}
-        {(dailyTests ?? []).length > 0 && (
-          <div className="rounded-lg border bg-white shadow-sm p-4">
-            <h3 className="mb-3 text-sm font-semibold text-gray-700">Daily Tests</h3>
-            <div className="space-y-2">
-              {(dailyTests ?? []).map((t) => {
-                const tStatus = STATUS_LABEL[t.status] ?? STATUS_LABEL.pending;
-                return (
-                  <Link
-                    key={t.id}
-                    href={t.status === "completed" ? `/admin/daily-tests/${t.id}` : "/admin/daily-tests"}
-                    className="flex items-center justify-between rounded-lg border border-gray-100 px-3 py-2 hover:border-blue-300 hover:bg-blue-50 transition"
-                  >
-                    <span className="text-sm text-gray-800">{t.task_type} · {t.difficulty}</span>
-                    <div className="flex items-center gap-2">
-                      {t.due_date && <span className="text-[11px] text-gray-400">마감 {formatDate(t.due_date)}</span>}
-                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${tStatus.cls}`}>
-                        {tStatus.text}
-                      </span>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Vocab */}
-        {vocabPlans.length > 0 && (
-          <div className="rounded-lg border bg-white shadow-sm p-4">
-            <h3 className="mb-3 text-sm font-semibold text-gray-700">Vocabulary</h3>
-            <div className="space-y-2">
-              {vocabPlans.map((p, idx) => (
-                <div key={idx} className="flex items-center justify-between rounded-lg border border-gray-100 px-3 py-2">
-                  <span className="text-sm text-gray-800">{p.trackTitle}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] text-gray-500">
-                      Day {p.cursorDayIndex}{p.totalDays ? ` / ${p.totalDays}` : ""}
-                    </span>
-                    {!p.isEnabled && (
-                      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-500">비활성</span>
-                    )}
-                    {p.isPaused && (
-                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">일시정지</span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Hi-내신 결과 */}
-        {(hiNaesinSessions ?? []).length > 0 && (
-          <div className="rounded-lg border bg-white shadow-sm p-4">
-            <h3 className="mb-3 text-sm font-semibold text-gray-700">Hi-내신 드릴 결과</h3>
-            <div className="space-y-2">
-              {(hiNaesinSessions ?? []).map((sess) => {
-                const score = sess.score_percent ?? 0;
-                const scoreCls =
-                  score >= 80
-                    ? "bg-emerald-50 text-emerald-700"
-                    : score >= 60
-                    ? "bg-amber-50 text-amber-700"
-                    : "bg-rose-50 text-rose-700";
-                return (
-                  <div
-                    key={sess.id}
-                    className="flex items-center justify-between gap-3 rounded-lg border border-gray-100 px-3 py-2"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm text-gray-800">
-                        {sess.passageTitle ?? `지문 ${sess.passage_id ? String(sess.passage_id).slice(0, 8) : "-"}…`}
-                      </p>
-                      <span className="text-[10px] text-gray-400">
-                        {sess.drillTypes ? sess.drillTypes.join(" · ") : "전체 유형"}
-                      </span>
-                    </div>
-                    <div className="flex flex-shrink-0 items-center gap-2">
-                      <span className="text-[11px] text-gray-400">{formatDate(sess.submitted_at)}</span>
-                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${scoreCls}`}>
-                        {score}%
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {(groups ?? []).length === 0 &&
-          (soloAssignments ?? []).length === 0 &&
-          (dailyTests ?? []).length === 0 &&
-          (hiNaesinSessions ?? []).length === 0 &&
-          vocabPlans.length === 0 && (
-            <div className="rounded-lg border border-dashed bg-gray-50 p-8 text-center">
-              <p className="text-sm text-gray-500">배정된 내용이 없습니다.</p>
-            </div>
-          )}
-      </div>
-
-      {/* Stats Summary */}
-      <div className="grid gap-4 sm:grid-cols-4">
-        <StatCard
-          icon="📖"
-          label="Reading"
-          count={readingResults?.length || 0}
-          avgScore={
-            readingResults?.length
-              ? Math.round(
-                  readingResults.reduce((sum, r: any) => {
-                    const score = Math.round(
-                      (r.correct_count / r.total_questions) * 100
-                    );
-                    return sum + score;
-                  }, 0) / readingResults.length
-                )
-              : 0
-          }
-        />
-        <StatCard
-          icon="🎧"
-          label="Listening"
-          count={listeningResults?.length || 0}
-          avgScore={
-            listeningResults?.length
-              ? Math.round(
-                  listeningResults.reduce((sum, r: any) => {
-                    const score = Math.round(
-                      (r.correct_count / r.total_questions) * 100
-                    );
-                    return sum + score;
-                  }, 0) / listeningResults.length
-                )
-              : 0
-          }
-        />
-        <StatCard
-          icon="🎤"
-          label="Speaking"
-          count={speakingResults?.length || 0}
-          avgScore={
-            speakingResults?.length
-              ? Math.round(
-                  speakingResults.reduce((sum, r: any) => sum + r.score, 0) /
-                    speakingResults.length
-                )
-              : 0
-          }
-        />
-        <StatCard
-          icon="✍️"
-          label="Writing"
-          count={writingResults?.length || 0}
-          avgScore={
-            writingResults?.length
-              ? Math.round(
-                  writingResults.reduce((sum, r: any) => sum + r.score, 0) /
-                    writingResults.length
-                )
-              : 0
-          }
-        />
-      </div>
-
-      {/* Results Sections */}
-      <div className="space-y-6">
-        {/* Reading */}
-        {readingResults && readingResults.length > 0 && (
-          <ResultSection title="📖 Reading" icon="📖">
-            <div className="space-y-2">
-              {readingResults.map((result: any, idx: number) => (
-                <ResultRow
-                  key={result.id}
-                  number={idx + 1}
-                  score={getScore(result)}
-                  date={formatDate(result.finished_at)}
-                  href={`/student/review/reading/${result.id}`}
-                />
-              ))}
-            </div>
-          </ResultSection>
-        )}
-
-        {/* Listening */}
-        {listeningResults && listeningResults.length > 0 && (
-          <ResultSection title="🎧 Listening" icon="🎧">
-            <div className="space-y-2">
-              {listeningResults.map((result: any, idx: number) => (
-                <ResultRow
-                  key={result.id}
-                  number={idx + 1}
-                  score={getScore(result)}
-                  date={formatDate(result.finished_at)}
-                  subtitle={`Module ${result.module}`}
-                  href={`/student/review/listening/${result.id}`}
-                />
-              ))}
-            </div>
-          </ResultSection>
-        )}
-
-        {/* Speaking */}
-        {speakingResults && speakingResults.length > 0 && (
-          <ResultSection title="🎤 Speaking" icon="🎤">
-            <div className="space-y-2">
-              {speakingResults.map((result: any, idx: number) => (
-                <ResultRow
-                  key={result.id}
-                  number={idx + 1}
-                  score={result.score}
-                  date={formatDate(result.finished_at)}
-                  href={`/student/review/speaking/${result.id}`}
-                />
-              ))}
-            </div>
-          </ResultSection>
-        )}
-
-        {/* Writing */}
-        {writingResults && writingResults.length > 0 && (
-          <ResultSection title="✍️ Writing" icon="✍️">
-            <div className="space-y-2">
-              {writingResults.map((result: any, idx: number) => (
-                <ResultRow
-                  key={result.id}
-                  number={idx + 1}
-                  score={result.score}
-                  date={formatDate(result.finished_at)}
-                  href={`/student/review/writing/${result.id}`}
-                />
-              ))}
-            </div>
-          </ResultSection>
-        )}
-      </div>
-
-      {!readingResults?.length &&
-        !listeningResults?.length &&
-        !speakingResults?.length &&
-        !writingResults?.length && (
-          <div className="rounded-lg border border-dashed bg-gray-50 p-12 text-center">
-            <p className="text-gray-500">아직 완료된 과제가 없습니다.</p>
-          </div>
-        )}
+      {activeTabs.length > 0 ? (
+        <ProgramTabs tabs={activeTabs} />
+      ) : (
+        <div className="rounded-lg border border-dashed bg-gray-50 p-12 text-center">
+          <p className="text-gray-500">배정된 내용이 없습니다.</p>
+        </div>
+      )}
     </main>
   );
 }
@@ -567,11 +641,9 @@ function StatCard({
 
 function ResultSection({
   title,
-  icon,
   children,
 }: {
   title: string;
-  icon: string;
   children: React.ReactNode;
 }) {
   return (
