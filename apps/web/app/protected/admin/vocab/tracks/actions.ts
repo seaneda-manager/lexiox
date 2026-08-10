@@ -560,9 +560,14 @@ export async function advanceVocabQueueAfterCompletionAction(params: {
     }
 
     // 현재 plan 조회
+    // ⚠️ student_vocab_plans에는 total_days 컬럼이 없다 — 이걸 select에 넣으면
+    // 매번 42703 에러로 조용히 실패해서 plan이 null이 되고, 그래서 이 함수는
+    // 호출될 때마다 아무 것도 안 하고 "Plan not found"만 반환하고 있었다.
+    // "다음 Day가 있는지"는 아래 vocab_sets 조회(nextDaySet)로 이미 판단하므로
+    // total_days 컬럼 자체가 필요 없다.
     const { data: plan } = await supabase
       .from("student_vocab_plans")
-      .select("id, cursor_day_index, total_days")
+      .select("id, cursor_day_index")
       .eq("student_id", studentId)
       .eq("track_id", trackId)
       .maybeSingle();
@@ -574,16 +579,6 @@ export async function advanceVocabQueueAfterCompletionAction(params: {
     const currentDay = plan.cursor_day_index || 1;
     const nextDay = currentDay + 1;
 
-    // 다음 Day가 범위 초과하면 완료
-    if (nextDay > (plan.total_days || 0)) {
-      // Track 완료
-      await supabase
-        .from("student_vocab_plans")
-        .update({ completed_at: new Date().toISOString() })
-        .eq("id", plan.id);
-      return { ok: true, completed: true };
-    }
-
     // 다음 Day의 Stage 1 (PreScreen) 배정
     const nowISO = new Date().toISOString();
     const { data: nextDaySet } = await supabase
@@ -594,7 +589,9 @@ export async function advanceVocabQueueAfterCompletionAction(params: {
       .maybeSingle();
 
     if (!nextDaySet) {
-      return { ok: false, error: `No vocab set for day ${nextDay}` };
+      // 트랙의 마지막 Day까지 다 끝남. student_vocab_plans에는 완료를 기록할
+      // 컬럼이 없으므로(completed_at 없음) 그냥 성공으로 반환만 한다.
+      return { ok: true, completed: true };
     }
 
     // Stage 1 배정

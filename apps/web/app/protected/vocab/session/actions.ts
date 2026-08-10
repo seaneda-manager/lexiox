@@ -7,7 +7,7 @@ import { createClient } from "@supabase/supabase-js";
 
 import type { SessionWord, VocabExample, VocabCollocation } from "@/models/vocab/SessionWord";
 import type { WordFormRowLike } from "@/lib/vocab/drill/buildBlockDrillTasksV1";
-import { ensureCockedQueueAdminAction } from "@/app/protected/admin/vocab/tracks/actions";
+import { advanceVocabQueueAfterCompletionAction } from "@/app/protected/admin/vocab/tracks/actions";
 
 export type LoadSessionWordsActionInput = {
   /** Optional: force a specific setId (debug / admin / shortcut) */
@@ -1019,36 +1019,19 @@ export async function completeVocabDayAction(input: {
       /* non-fatal */
     }
 
-    // ✅ Stage 1 완료 → Stage 2 자동 배정
-    try {
-      const nowISO = new Date().toISOString();
-      await client
-        .from("student_vocab_assignments")
-        .insert([
-          {
-            student_id: academyStudentId,
-            set_id: setId,
-            track_id: cleanStr(row.track_id),
-            day_index: typeof row.day_index === "number" ? row.day_index : 0,
-            stage: 2, // ✅ Stage 2
-            available_at: nowISO.split('T')[0], // 즉시 사용 가능
-          },
-        ]);
-    } catch (e: any) {
-      console.warn("Stage 2 auto-assignment failed (non-fatal):", toErrMsg(e));
-      /* non-fatal */
-    }
-
-    // 다음 Day 오픈 (큐 정렬) — 실패해도 완료 자체는 성공 처리
+    // 다음 Day 오픈 — finishDay()에서 여기로 오는 시점이 하루 학습의 진짜
+    // 끝이므로(Stage 1 Speed 등 중간 체크포인트에서는 더 이상 열지 않는다),
+    // 여기서만 다음 Day의 Stage 1을 배정하고 cursor를 전진시킨다.
+    // 실패해도 완료 자체는 성공 처리(non-fatal).
     let nextOpened = 0;
     try {
       console.log('[COMPLETE] Opening next day:', { student: academyStudentId, track: cleanStr(row.track_id) });
-      const ensure: any = await ensureCockedQueueAdminAction({
+      const advance = await advanceVocabQueueAfterCompletionAction({
         studentId: academyStudentId,
         trackId: cleanStr(row.track_id),
-      } as any);
-      nextOpened = Number(ensure?.assignedCount ?? 0);
-      console.log('[COMPLETE] ✅ Next day opened:', nextOpened);
+      });
+      nextOpened = advance.ok && !("completed" in advance && advance.completed) ? 1 : 0;
+      console.log('[COMPLETE] ✅ Next day result:', advance);
     } catch (e) {
       console.error('[COMPLETE] ❌ Next day failed:', toErrMsg(e));
     }
@@ -1067,7 +1050,6 @@ export async function completeVocabDayAction(input: {
 /**
  * 학습 결과 저장 (Know/DontKnow, Spelling, Speed)
  */
-import { advanceVocabQueueAfterCompletionAction } from "@/app/protected/admin/vocab/tracks/actions";
 import { awardPoints } from "@/lib/gamification/awardPoints";
 
 export type SaveVocabAttemptInput = {
@@ -1211,13 +1193,11 @@ export async function saveVocabAttemptAction(
           return;
         }
 
-        // Speed(Stage 3) 완료 → 다음 Day로 진행
-        if (input.stage === "speed") {
-          await advanceVocabQueueAfterCompletionAction({
-            studentId: nextStudentId,
-            trackId: nextTrackId,
-          });
-        }
+        // "다음 Day로 진행"은 여기서 하지 않는다. UI에는 Speed 체크가 여러 번
+        // 있다(Stage 1 Speed, Stage 1 Speed 재도전, Stage 2 Speed) — 전부 이
+        // 함수를 stage:"speed"로 호출하므로, 여기서 다음 Day를 열면 하루 학습
+        // 중에 큐가 여러 번 전진해 Day를 건너뛰게 된다. 실제 "하루 완료"는
+        // finishDay()가 명시적으로 호출하는 completeVocabDayAction에서만 연다.
       } catch (e: any) {
         console.warn("saveVocabAttemptAction: stage progression failed", toErrMsg(e));
       }
