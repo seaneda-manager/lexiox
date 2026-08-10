@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getServerSupabase } from "@/lib/supabase/server";
 import DailyTaskCard from "@/components/gamification/DailyTaskCard";
 import DailyTasksCard from "@/components/student/DailyTasksCard";
+import FullTestsCard from "@/components/student/FullTestsCard";
 import HiNaesinResultsCard from "@/components/student/HiNaesinResultsCard";
 import DdayCard from "@/components/student/DdayCard";
 import TestProgressBar from "@/components/student/TestProgressBar";
@@ -869,6 +870,9 @@ function ToeflDashboard({
           </Link>
         </div>
       </section>
+
+      {/* ── Full / Half Test ──────────────────────────────────── */}
+      <FullTestsCard />
 
       {/* ── Daily Tests ────────────────────────────────────────── */}
       <DailyTasksCard />

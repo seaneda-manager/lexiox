@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getCurrentUser } from "@/lib/auth/get-user";
+import { advanceGroupAfterCompletion } from "@/lib/supabase/testAssignmentGroups";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || "",
@@ -86,6 +87,7 @@ export async function POST(req: Request) {
     }
 
     // 배정을 통해 들어온 경우, Module 2까지 끝나면 assignment를 completed로 마감
+    let groupProgress: Awaited<ReturnType<typeof advanceGroupAfterCompletion>> | null = null;
     if (assignmentId && markAssignmentCompleted) {
       const { error: assignmentError } = await supabase
         .from("test_assignments")
@@ -95,6 +97,8 @@ export async function POST(req: Request) {
 
       if (assignmentError) {
         console.error("Failed to mark assignment completed:", assignmentError);
+      } else {
+        groupProgress = await advanceGroupAfterCompletion(assignmentId);
       }
     }
 
@@ -104,6 +108,9 @@ export async function POST(req: Request) {
       percentage,
       module,
       difficulty,
+      nextSection: groupProgress?.nextSection ?? null,
+      groupCompleted: groupProgress?.groupCompleted ?? false,
+      groupId: groupProgress?.groupId ?? null,
     });
   } catch (err: any) {
     console.error("LISTENING SAVE SESSION ERROR:", err);

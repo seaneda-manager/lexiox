@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from "next/server";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { getServiceSupabase } from "@/lib/supabase/service";
+import { advanceGroupAfterCompletion } from "@/lib/supabase/testAssignmentGroups";
 
 export async function POST(req: Request) {
   try {
@@ -35,7 +36,15 @@ export async function POST(req: Request) {
       .eq("student_id", user.id);
 
     if (error) throw error;
-    return NextResponse.json({ ok: true });
+
+    const groupProgress = await advanceGroupAfterCompletion(assignmentId);
+
+    return NextResponse.json({
+      ok: true,
+      nextSection: groupProgress.nextSection,
+      groupCompleted: groupProgress.groupCompleted,
+      groupId: groupProgress.groupId,
+    });
   } catch (e: any) {
     return NextResponse.json({ ok: false, error: e.message }, { status: 500 });
   }

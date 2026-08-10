@@ -1,6 +1,7 @@
 // components/reading/MockTestPlayer.tsx
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import ReadingTestLayout2026 from "./ReadingTestLayout2026";
 import { ReadingETSFrame } from "./ReadingETSFrame";
@@ -374,6 +375,9 @@ export default function MockTestPlayer({
   }, [phase, stage1Questions, allQuestions]);
 
   const [score, setScore] = useState<ReturnType<typeof scoreAnswers> | null>(null);
+  const [nextSection, setNextSection] = useState<{ href: string; section: string } | null>(null);
+  const [groupCompleted, setGroupCompleted] = useState(false);
+  const [groupId, setGroupId] = useState<string | null>(null);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const passagePaneRef = useRef<HTMLDivElement>(null);
@@ -478,11 +482,19 @@ export default function MockTestPlayer({
       if (onFinish) {
         await onFinish(payload);
       } else {
-        await fetch("/api/updated-reading/result", {
+        const res = await fetch("/api/updated-reading/result", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
+        const json = await res.json().catch(() => null);
+        if (json?.nextSection) {
+          setNextSection({ href: json.nextSection.href, section: json.nextSection.section });
+        }
+        if (json?.groupCompleted) {
+          setGroupCompleted(true);
+          setGroupId(json.groupId ?? null);
+        }
       }
       if (typeof window !== "undefined") {
         try { window.localStorage.removeItem(autosaveKey(testId)); } catch { /* noop */ }
@@ -1075,6 +1087,23 @@ export default function MockTestPlayer({
 
           {submitting && (
             <p className="mt-4 text-xs text-gray-400">결과 저장 중…</p>
+          )}
+
+          {nextSection && (
+            <Link
+              href={nextSection.href}
+              className="mt-6 block rounded-lg bg-black py-3 text-center text-sm font-bold text-white hover:bg-gray-800"
+            >
+              다음 영역: {nextSection.section === "listening" ? "Listening" : nextSection.section} 계속하기 →
+            </Link>
+          )}
+          {groupCompleted && groupId && (
+            <Link
+              href={`/student/full-tests/${groupId}`}
+              className="mt-6 block rounded-lg bg-emerald-600 py-3 text-center text-sm font-bold text-white hover:bg-emerald-700"
+            >
+              전체 결과 보기 →
+            </Link>
           )}
         </div>
       </div>

@@ -122,6 +122,14 @@ export default function AdminPage() {
           color="border-teal-100"
         />
         <DashCard
+          title="Full / Half Test"
+          description="Reading→Listening→Speaking→Writing을 실제 TOEFL 순서로 묶어 하나의 시험으로 배정합니다."
+          links={[
+            { label: '통합 배정', href: '/admin/content/full-test/assign', primary: true },
+          ]}
+          color="border-neutral-300"
+        />
+        <DashCard
           title="Problem Bank"
           description="Reading/Listening 테스트에서 추출된 문제 데이터베이스를 관리합니다."
           links={[

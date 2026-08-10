@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Link from "next/link";
 import ListeningDirectionsScreen from "./ListeningDirectionsScreen";
 import ModuleStartScreen from "./ModuleStartScreen";
 import Task1QuestionScreen from "./Task1QuestionScreen";
@@ -64,6 +65,9 @@ export default function ListeningSessionContainer({
   // study에서는 뒤로 가서 답을 고칠 수 있어야 하므로 questionId 기준으로 덮어쓴다.
   // (배열에 append하면 같은 문항이 중복 기록된다.)
   const [answers, setAnswers] = useState<Record<string, AnswerRecord>>({});
+  const [nextSection, setNextSection] = useState<{ href: string; section: string } | null>(null);
+  const [groupCompleted, setGroupCompleted] = useState(false);
+  const [groupId, setGroupId] = useState<string | null>(null);
 
   const module1Tracks = testData.modules?.[0]?.items ?? [];
   const module2Tracks =
@@ -115,7 +119,7 @@ export default function ListeningSessionContainer({
     // study는 연습이라 결과를 남기지 않는다. 저장하면 실전 성적 통계가 오염된다.
     if (isStudy) return;
     try {
-      await fetch("/api/student/listening/save-session", {
+      const res = await fetch("/api/student/listening/save-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -129,6 +133,14 @@ export default function ListeningSessionContainer({
           markAssignmentCompleted: isFinalModule && !!assignmentId,
         }),
       });
+      const json = await res.json().catch(() => null);
+      if (json?.nextSection) {
+        setNextSection({ href: json.nextSection.href, section: json.nextSection.section });
+      }
+      if (json?.groupCompleted) {
+        setGroupCompleted(true);
+        setGroupId(json.groupId ?? null);
+      }
     } catch (err) {
       console.error("Failed to save listening session:", err);
     }
@@ -274,6 +286,22 @@ export default function ListeningSessionContainer({
             <p className="text-gray-600 text-lg">
               Your Listening section is complete. Your results are being calculated.
             </p>
+            {nextSection && (
+              <Link
+                href={nextSection.href}
+                className="block px-8 py-3 bg-black text-white font-semibold rounded-lg hover:bg-gray-800 transition-colors"
+              >
+                다음 영역: {nextSection.section === "speaking" ? "Speaking" : nextSection.section} 계속하기 →
+              </Link>
+            )}
+            {groupCompleted && groupId && (
+              <Link
+                href={`/student/full-tests/${groupId}`}
+                className="block px-8 py-3 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition-colors"
+              >
+                전체 결과 보기 →
+              </Link>
+            )}
             <button
               onClick={() => (window.location.href = "/")}
               className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"

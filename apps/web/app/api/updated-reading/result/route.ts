@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from "next/server";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { getServiceSupabase } from "@/lib/supabase/service";
+import { advanceGroupAfterCompletion } from "@/lib/supabase/testAssignmentGroups";
 
 type AnswerPayload = {
   questionId: string;
@@ -59,15 +60,24 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
     }
 
+    let groupProgress: Awaited<ReturnType<typeof advanceGroupAfterCompletion>> | null = null;
     if (body.assignmentId) {
       const service = getServiceSupabase();
       await service
         .from("test_assignments")
         .update({ status: "completed", completed_at: new Date().toISOString() })
         .eq("id", body.assignmentId);
+
+      groupProgress = await advanceGroupAfterCompletion(body.assignmentId);
     }
 
-    return NextResponse.json({ ok: true, id: data.id });
+    return NextResponse.json({
+      ok: true,
+      id: data.id,
+      nextSection: groupProgress?.nextSection ?? null,
+      groupCompleted: groupProgress?.groupCompleted ?? false,
+      groupId: groupProgress?.groupId ?? null,
+    });
   } catch (e: any) {
     console.error("updated-reading result – unexpected error", e);
     return NextResponse.json({ ok: false, error: e?.message ?? "Unknown error" }, { status: 500 });

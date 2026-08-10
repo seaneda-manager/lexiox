@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import InterviewRunner from "@/app/protected/speaking-2026/components/InterviewRunner";
 import ListenAndRepeatRunner from "@/app/protected/speaking-2026/components/ListenAndRepeatRunner";
 import SpeakingTestLayout2026, { SpeakingHeaderLabel, SpeakingSubHeaderLabel } from "@/components/speaking/SpeakingTestLayout2026";
@@ -26,11 +27,12 @@ async function markCompleted(assignmentId: string, recordings?: {
   listenRepeat: Array<{ itemId: string; audioDataUrl: string | null }>;
   interview: Array<{ questionId: string; audioDataUrl: string | null }>;
 }) {
-  await fetch("/api/speaking/assignment-complete", {
+  const res = await fetch("/api/speaking/assignment-complete", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ assignmentId, recordings }),
   });
+  return res.json().catch(() => null);
 }
 
 /**
@@ -258,6 +260,9 @@ export default function SpeakingAssignmentRunner({ assignmentId, test, testLabel
   // 녹음 데이터 관리
   const [listenRepeatRecordings, setListenRepeatRecordings] = useState<LrRec[]>([]);
   const [interviewRecordings, setInterviewRecordings] = useState<IvRec[]>([]);
+  const [nextSection, setNextSection] = useState<{ href: string; section: string } | null>(null);
+  const [groupCompleted, setGroupCompleted] = useState(false);
+  const [groupId, setGroupId] = useState<string | null>(null);
 
   const handleListenRepeatComplete = (recordings: LrRec[]) => {
     setListenRepeatRecordings(recordings);
@@ -332,10 +337,17 @@ export default function SpeakingAssignmentRunner({ assignmentId, test, testLabel
 
     // 배정을 통해 들어온 경우에만 완료 기록 (Test Mode 등 배정 없는 경우는 스킵)
     if (assignmentId) {
-      await markCompleted(assignmentId, {
+      const json = await markCompleted(assignmentId, {
         listenRepeat: listenRepeatBase64,
         interview: interviewBase64,
       });
+      if (json?.nextSection) {
+        setNextSection({ href: json.nextSection.href, section: json.nextSection.section });
+      }
+      if (json?.groupCompleted) {
+        setGroupCompleted(true);
+        setGroupId(json.groupId ?? null);
+      }
     }
   };
 
@@ -570,6 +582,23 @@ export default function SpeakingAssignmentRunner({ assignmentId, test, testLabel
               ))}
             </div>
           </section>
+        )}
+
+        {nextSection && (
+          <Link
+            href={nextSection.href}
+            className="block rounded-xl bg-black py-3 text-center text-sm font-bold text-white hover:bg-gray-800"
+          >
+            다음 영역: {nextSection.section === "writing" ? "Writing" : nextSection.section} 계속하기 →
+          </Link>
+        )}
+        {groupCompleted && groupId && (
+          <Link
+            href={`/student/full-tests/${groupId}`}
+            className="block rounded-xl bg-emerald-600 py-3 text-center text-sm font-bold text-white hover:bg-emerald-700"
+          >
+            전체 결과 보기 →
+          </Link>
         )}
 
         {/* 액션 버튼 */}

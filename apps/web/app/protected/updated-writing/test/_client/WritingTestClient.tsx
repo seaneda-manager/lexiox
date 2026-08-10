@@ -74,7 +74,13 @@ export default function WritingTestClient({
 
       const data = await res.json();
       if (data.sessionId) {
-        router.push(`/student/review/writing/${data.sessionId}`);
+        // Writing은 Full/Half Test에서 항상 마지막 영역이다 — 그룹이 완료됐다면
+        // 개별 리뷰 대신 전체 결과 허브로 보낸다.
+        if (data.groupCompleted && data.groupId) {
+          router.push(`/student/full-tests/${data.groupId}`);
+        } else {
+          router.push(`/student/review/writing/${data.sessionId}`);
+        }
       } else {
         console.error('[Writing Save] No sessionId in response:', data);
         alert('저장에 실패했습니다. 잠시 후 다시 시도해주세요.');

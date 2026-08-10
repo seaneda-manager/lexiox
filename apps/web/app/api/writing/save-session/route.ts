@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { advanceGroupAfterCompletion } from "@/lib/supabase/testAssignmentGroups";
 
 export async function POST(req: NextRequest) {
   try {
@@ -39,6 +40,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 배정을 통해 들어온 경우, 완료 처리
+    let groupProgress: Awaited<ReturnType<typeof advanceGroupAfterCompletion>> | null = null;
     if (assignmentId) {
       const { error: assignmentError } = await supabase
         .from("test_assignments")
@@ -48,10 +50,17 @@ export async function POST(req: NextRequest) {
 
       if (assignmentError) {
         console.error("Failed to mark writing assignment completed:", assignmentError);
+      } else {
+        groupProgress = await advanceGroupAfterCompletion(assignmentId);
       }
     }
 
-    return NextResponse.json({ sessionId: result.id });
+    return NextResponse.json({
+      sessionId: result.id,
+      nextSection: groupProgress?.nextSection ?? null,
+      groupCompleted: groupProgress?.groupCompleted ?? false,
+      groupId: groupProgress?.groupId ?? null,
+    });
   } catch (err: any) {
     const errorInfo = {
       name: err?.name,
