@@ -111,6 +111,39 @@ export default async function StudentDetailDashboard({ params }: PageProps) {
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
 
+  // Hi-내신 드릴 결과 (hi_naesin_sessions.student_id는 auth id를 그대로 쓴다 — academy_students.id 아님)
+  const { data: hiNaesinSessionRows } = await service
+    .from("hi_naesin_sessions")
+    .select("id, passage_id, assignment_id, submitted_at, score_percent")
+    .eq("student_id", studentId)
+    .eq("session_type", "drill")
+    .eq("status", "submitted")
+    .order("submitted_at", { ascending: false });
+
+  const hiNaesinPassageIds = [...new Set((hiNaesinSessionRows ?? []).map((s) => s.passage_id).filter(Boolean))];
+  const hiNaesinAssignmentIds = [...new Set((hiNaesinSessionRows ?? []).map((s) => s.assignment_id).filter(Boolean))];
+
+  const { data: hiNaesinPassages } =
+    hiNaesinPassageIds.length > 0
+      ? await service.from("hi_naesin_passages").select("id, title").in("id", hiNaesinPassageIds)
+      : { data: [] as { id: string; title: string | null }[] };
+  const hiNaesinPassageTitleById = new Map((hiNaesinPassages ?? []).map((p) => [p.id, p.title]));
+
+  const { data: hiNaesinAssignmentRows } =
+    hiNaesinAssignmentIds.length > 0
+      ? await service.from("hi_naesin_assignments").select("id, enabled_drill_types").in("id", hiNaesinAssignmentIds)
+      : { data: [] as { id: string; enabled_drill_types: string[] | null }[] };
+  const drillTypesByAssignmentId = new Map(
+    (hiNaesinAssignmentRows ?? []).map((a) => [a.id, a.enabled_drill_types])
+  );
+
+  const hiNaesinSessions = (hiNaesinSessionRows ?? []).map((s) => ({
+    ...s,
+    passageTitle: (s.passage_id && hiNaesinPassageTitleById.get(s.passage_id)) || null,
+    // enabled_drill_types가 없으면(null) 전체 유형(어휘/문법/번역/독해/작문/토론)을 다 배정한 것이다.
+    drillTypes: (s.assignment_id && drillTypesByAssignmentId.get(s.assignment_id)) || null,
+  }));
+
   const academyStudentId = await resolveAcademyStudentId(supabase, studentId);
   let vocabPlans: { trackTitle: string; cursorDayIndex: number; totalDays: number; isEnabled: boolean; isPaused: boolean }[] = [];
   if (academyStudentId) {
@@ -305,9 +338,49 @@ export default async function StudentDetailDashboard({ params }: PageProps) {
           </div>
         )}
 
+        {/* Hi-내신 결과 */}
+        {(hiNaesinSessions ?? []).length > 0 && (
+          <div className="rounded-lg border bg-white shadow-sm p-4">
+            <h3 className="mb-3 text-sm font-semibold text-gray-700">Hi-내신 드릴 결과</h3>
+            <div className="space-y-2">
+              {(hiNaesinSessions ?? []).map((sess) => {
+                const score = sess.score_percent ?? 0;
+                const scoreCls =
+                  score >= 80
+                    ? "bg-emerald-50 text-emerald-700"
+                    : score >= 60
+                    ? "bg-amber-50 text-amber-700"
+                    : "bg-rose-50 text-rose-700";
+                return (
+                  <div
+                    key={sess.id}
+                    className="flex items-center justify-between gap-3 rounded-lg border border-gray-100 px-3 py-2"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm text-gray-800">
+                        {sess.passageTitle ?? `지문 ${sess.passage_id ? String(sess.passage_id).slice(0, 8) : "-"}…`}
+                      </p>
+                      <span className="text-[10px] text-gray-400">
+                        {sess.drillTypes ? sess.drillTypes.join(" · ") : "전체 유형"}
+                      </span>
+                    </div>
+                    <div className="flex flex-shrink-0 items-center gap-2">
+                      <span className="text-[11px] text-gray-400">{formatDate(sess.submitted_at)}</span>
+                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${scoreCls}`}>
+                        {score}%
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {(groups ?? []).length === 0 &&
           (soloAssignments ?? []).length === 0 &&
           (dailyTests ?? []).length === 0 &&
+          (hiNaesinSessions ?? []).length === 0 &&
           vocabPlans.length === 0 && (
             <div className="rounded-lg border border-dashed bg-gray-50 p-8 text-center">
               <p className="text-sm text-gray-500">배정된 내용이 없습니다.</p>
