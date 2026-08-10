@@ -5,6 +5,8 @@ import { redirect, notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import ProgramTabs, { type ProgramTab } from "./_client/ProgramTabs";
 import WrongAnswerCard, { type WrongAnswerRow } from "@/components/admin/hi-naesin/WrongAnswerCard";
+import WeaknessSummary from "@/components/admin/hi-naesin/WeaknessSummary";
+import { summarizeWeaknesses } from "@/lib/hi-naesin/weaknessCategories";
 
 export const dynamic = "force-dynamic";
 
@@ -148,42 +150,50 @@ export default async function StudentDetailDashboard({ params }: PageProps) {
       drillTypes: (s.assignment_id && drillTypesByAssignmentId.get(s.assignment_id)) || null,
     }));
 
-  // 이 학생의 미확인 오답 (선생님이 "확인함"을 누르면 reviewed_at이 채워져 목록에서 빠진다)
+  // 이 학생의 전체 드릴 응답 (오답 목록 + 약점 집계 둘 다 여기서 파생시켜 쿼리를 아낀다)
   const sessionPassageById = new Map((hiNaesinAllSessions ?? []).map((s) => [s.id, s.passage_id]));
-  const { data: wrongAnswerRows } =
+  const { data: allResponseRows } =
     hiNaesinSessionIds.length > 0
       ? await service
           .from("hi_naesin_drill_responses")
-          .select("id, drill_id, session_id, response_text, response_choice, score_pct, feedback_text, created_at")
+          .select("id, drill_id, session_id, response_text, response_choice, is_correct, score_pct, feedback_text, created_at, reviewed_at")
           .in("session_id", hiNaesinSessionIds)
-          .eq("is_correct", false)
-          .is("reviewed_at", null)
           .order("created_at", { ascending: false })
       : { data: [] as any[] };
 
-  const wrongDrillIds = [...new Set((wrongAnswerRows ?? []).map((r) => r.drill_id).filter(Boolean))];
-  const { data: wrongDrills } =
-    wrongDrillIds.length > 0
-      ? await service.from("hi_naesin_drills").select("id, drill_type, payload").in("id", wrongDrillIds)
+  const responseDrillIds = [...new Set((allResponseRows ?? []).map((r) => r.drill_id).filter(Boolean))];
+  const { data: responseDrills } =
+    responseDrillIds.length > 0
+      ? await service.from("hi_naesin_drills").select("id, drill_type, payload").in("id", responseDrillIds)
       : { data: [] as { id: string; drill_type: string; payload: Record<string, unknown> }[] };
-  const drillById = new Map((wrongDrills ?? []).map((d) => [d.id, d]));
+  const drillById = new Map((responseDrills ?? []).map((d) => [d.id, d]));
 
-  const wrongAnswers: WrongAnswerRow[] = (wrongAnswerRows ?? []).flatMap((r) => {
-    const drill = drillById.get(r.drill_id);
-    if (!drill) return [];
-    const passageId = sessionPassageById.get(r.session_id);
-    return [{
-      id: r.id,
-      response_text: r.response_text,
-      response_choice: r.response_choice,
-      score_pct: r.score_pct,
-      feedback_text: r.feedback_text,
-      created_at: r.created_at,
-      drillType: drill.drill_type,
-      payload: drill.payload,
-      passageTitle: (passageId && hiNaesinPassageTitleById.get(passageId)) || null,
-    }];
-  });
+  const weaknessStats = summarizeWeaknesses(
+    (allResponseRows ?? []).flatMap((r) => {
+      const drill = drillById.get(r.drill_id);
+      if (!drill) return [];
+      return [{ drillType: drill.drill_type, payload: drill.payload, isCorrect: r.is_correct }];
+    }),
+  );
+
+  const wrongAnswers: WrongAnswerRow[] = (allResponseRows ?? [])
+    .filter((r) => r.is_correct === false && r.reviewed_at === null)
+    .flatMap((r) => {
+      const drill = drillById.get(r.drill_id);
+      if (!drill) return [];
+      const passageId = sessionPassageById.get(r.session_id);
+      return [{
+        id: r.id,
+        response_text: r.response_text,
+        response_choice: r.response_choice,
+        score_pct: r.score_pct,
+        feedback_text: r.feedback_text,
+        created_at: r.created_at,
+        drillType: drill.drill_type,
+        payload: drill.payload,
+        passageTitle: (passageId && hiNaesinPassageTitleById.get(passageId)) || null,
+      }];
+    });
 
   const academyStudentId = await resolveAcademyStudentId(supabase, studentId);
   let vocabPlans: { trackTitle: string; cursorDayIndex: number; totalDays: number; isEnabled: boolean; isPaused: boolean }[] = [];
@@ -472,10 +482,12 @@ export default async function StudentDetailDashboard({ params }: PageProps) {
   );
 
   // ── 내신(Hi-내신) 탭 ──────────────────────────────────────
-  const hasNaesinActivity = hiNaesinSessions.length > 0 || wrongAnswers.length > 0;
+  const hasNaesinActivity = hiNaesinSessions.length > 0 || wrongAnswers.length > 0 || weaknessStats.length > 0;
 
   const naesinContent = (
     <div className="space-y-6">
+      <WeaknessSummary stats={weaknessStats} />
+
       {wrongAnswers.length > 0 && (
         <div className="space-y-3">
           <h3 className="text-sm font-semibold text-gray-700">
