@@ -53,3 +53,37 @@ alter table photo_homework
 
 create index if not exists idx_photo_homework_student on photo_homework(student_id);
 create index if not exists idx_student_homework_plans_student on student_homework_plans(student_id);
+
+-- ── RLS ─────────────────────────────────────────────────────────────
+-- homework_book_units에는 정답지가 그대로 들어있으므로 학생이 절대 직접
+-- 읽을 수 없어야 한다 (학생 화면은 이 테이블이 아니라 photo_homework만 본다).
+-- 관리자 쪽 코드는 전부 getServiceSupabase()(service role)를 쓰므로 RLS를
+-- 걸어도 admin 기능은 전혀 영향받지 않는다.
+
+alter table homework_books enable row level security;
+alter table homework_book_units enable row level security;
+alter table student_homework_plans enable row level security;
+
+create policy "homework_books_admin_all"
+  on homework_books
+  for all
+  using (exists (select 1 from public.profiles where profiles.id = auth.uid() and profiles.role = 'admin'))
+  with check (exists (select 1 from public.profiles where profiles.id = auth.uid() and profiles.role = 'admin'));
+
+create policy "homework_book_units_admin_all"
+  on homework_book_units
+  for all
+  using (exists (select 1 from public.profiles where profiles.id = auth.uid() and profiles.role = 'admin'))
+  with check (exists (select 1 from public.profiles where profiles.id = auth.uid() and profiles.role = 'admin'));
+
+create policy "student_homework_plans_admin_all"
+  on student_homework_plans
+  for all
+  using (exists (select 1 from public.profiles where profiles.id = auth.uid() and profiles.role = 'admin'))
+  with check (exists (select 1 from public.profiles where profiles.id = auth.uid() and profiles.role = 'admin'));
+
+-- 학생은 자기 자신의 페이스 플랜만 읽을 수 있다 (쓰기는 관리자 전용).
+create policy "student_homework_plans_select_own"
+  on student_homework_plans
+  for select
+  using (auth.uid() = student_id);
