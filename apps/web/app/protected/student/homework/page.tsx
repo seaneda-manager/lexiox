@@ -16,11 +16,13 @@ export default async function StudentHomeworkPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) notFound();
 
-  // 활성 숙제 목록
+  // 활성 숙제 목록. student_id가 null이면 전체 공개(특별) 숙제, 내 id면 나에게만 배정된
+  // 정기(교재 기반) 숙제 — 다른 학생에게 배정된 건 보이면 안 되므로 반드시 이 필터가 필요하다.
   const { data: homeworks } = await supabase
     .from('photo_homework')
-    .select('id, title, description, subject, due_at, created_at')
+    .select('id, title, description, subject, due_at, created_at, book_id')
     .eq('is_active', true)
+    .or(`student_id.is.null,student_id.eq.${user.id}`)
     .order('due_at', { ascending: true, nullsFirst: false });
 
   // 이 학생의 제출 현황
@@ -96,6 +98,12 @@ export default async function StudentHomeworkPage() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
+                      <span className={[
+                        'rounded-full px-2 py-0.5 text-[11px] font-medium',
+                        hw.book_id ? 'bg-sky-50 text-sky-600' : 'bg-violet-50 text-violet-600',
+                      ].join(' ')}>
+                        {hw.book_id ? '정기' : '특별'}
+                      </span>
                       {hw.subject && (
                         <span className="rounded-full border border-neutral-200 bg-neutral-50 px-2 py-0.5 text-[11px] text-neutral-500">
                           {SUBJECT_LABEL[hw.subject] ?? hw.subject}

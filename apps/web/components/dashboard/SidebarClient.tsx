@@ -285,6 +285,7 @@ export default function SidebarClient({ role, program = null }: Props) {
         { section: '선생님 도구' as NavSection, href: '/teacher/students',         label: '학생 현황',    icon: Users },
         { section: '선생님 도구' as NavSection, href: '/teacher/reports/students', label: '활동 리포트',  icon: BarChart2 },
         { section: '선생님 도구' as NavSection, href: '/admin/homework',           label: '숙제 채점',    icon: ClipboardCheck },
+        { section: '선생님 도구' as NavSection, href: '/admin/homework/books',     label: '교재별 정기 숙제', icon: Library },
         { section: '선생님 도구' as NavSection, href: '/admin/lectures',           label: '강의 관리',    icon: PlayCircle },
         { section: '선생님 도구' as NavSection, href: '/admin/toefl/curriculum',     label: 'TOEFL 커리',     icon: PlayCircle },
         { section: '선생님 도구' as NavSection, href: '/admin/toefl/content/practice', label: 'Practice 지문', icon: PlayCircle },

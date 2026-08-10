@@ -42,12 +42,20 @@ export default async function AdminHomeworkPage() {
             정답지를 업로드하면 학생들이 카메라로 자동 채점받을 수 있습니다.
           </p>
         </div>
-        <Link
-          href="/admin/homework/new"
-          className="rounded-xl bg-neutral-900 px-4 py-2 text-xs font-semibold text-white hover:bg-neutral-800"
-        >
-          + 새 숙제
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            href="/admin/homework/books"
+            className="rounded-xl border border-neutral-200 px-4 py-2 text-xs font-semibold text-neutral-700 hover:bg-neutral-50"
+          >
+            📚 교재별 정기 숙제
+          </Link>
+          <Link
+            href="/admin/homework/new"
+            className="rounded-xl bg-neutral-900 px-4 py-2 text-xs font-semibold text-white hover:bg-neutral-800"
+          >
+            + 새 숙제
+          </Link>
+        </div>
       </header>
 
       {(homeworks ?? []).length === 0 ? (
