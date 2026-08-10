@@ -1,9 +1,36 @@
 import Link from "next/link";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { getServiceSupabase } from "@/lib/supabase/service";
 import { redirect, notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 
 export const dynamic = "force-dynamic";
+
+const STATUS_LABEL: Record<string, { text: string; cls: string }> = {
+  pending: { text: "대기", cls: "bg-slate-100 text-slate-600" },
+  in_progress: { text: "진행중", cls: "bg-amber-100 text-amber-700" },
+  completed: { text: "완료", cls: "bg-emerald-100 text-emerald-700" },
+  assigned: { text: "할당됨", cls: "bg-slate-100 text-slate-600" },
+  overdue: { text: "기한만료", cls: "bg-rose-100 text-rose-700" },
+};
+
+const SECTION_LABEL_KO: Record<string, string> = {
+  reading: "Reading",
+  listening: "Listening",
+  speaking: "Speaking",
+  writing: "Writing",
+};
+
+async function resolveAcademyStudentId(
+  supabase: Awaited<ReturnType<typeof getServerSupabase>>,
+  authUserId: string,
+): Promise<string | null> {
+  for (const col of ["id", "auth_user_id", "user_id", "profile_id"] as const) {
+    const { data } = await supabase.from("academy_students").select("id").eq(col, authUserId).maybeSingle();
+    if (data?.id) return String(data.id);
+  }
+  return null;
+}
 
 type PageProps = { params: Promise<{ studentId: string }> };
 
@@ -51,6 +78,72 @@ export default async function StudentDetailDashboard({ params }: PageProps) {
     .eq("user_id", studentId)
     .order("finished_at", { ascending: false });
 
+  // ── 배정 현황 (지금 뭐가 배정돼 있는지 — 완료된 결과와는 별개) ──────────
+  const service = getServiceSupabase();
+
+  const { data: groups } = await service
+    .from("test_assignment_groups")
+    .select("id, kind, status, due_date, created_at")
+    .eq("student_id", studentId)
+    .order("created_at", { ascending: false });
+
+  const groupIds = (groups ?? []).map((g) => g.id);
+  const { data: groupMembers } =
+    groupIds.length > 0
+      ? await service
+          .from("test_assignments")
+          .select("id, group_id, group_sequence, sections, status")
+          .in("group_id", groupIds)
+          .order("group_sequence", { ascending: true })
+      : { data: [] as any[] };
+
+  const { data: soloAssignments } = await service
+    .from("test_assignments")
+    .select("id, sections, status, due_date, assigned_at")
+    .eq("student_id", studentId)
+    .is("group_id", null)
+    .order("assigned_at", { ascending: false });
+
+  const { data: dailyTests } = await service
+    .from("daily_tests")
+    .select("id, task_type, difficulty, status, due_date, created_at")
+    .eq("student_id", studentId)
+    .is("deleted_at", null)
+    .order("created_at", { ascending: false });
+
+  const academyStudentId = await resolveAcademyStudentId(supabase, studentId);
+  let vocabPlans: { trackTitle: string; cursorDayIndex: number; totalDays: number; isEnabled: boolean; isPaused: boolean }[] = [];
+  if (academyStudentId) {
+    const { data: plans } = await service
+      .from("student_vocab_plans")
+      .select("track_id, cursor_day_index, is_enabled, is_paused")
+      .eq("student_id", academyStudentId);
+
+    if (plans && plans.length > 0) {
+      const trackIds = plans.map((p) => p.track_id);
+      const { data: tracks } = await service
+        .from("vocab_tracks")
+        .select("id, title, total_days")
+        .in("id", trackIds);
+      const trackById = new Map((tracks ?? []).map((t) => [t.id, t]));
+
+      vocabPlans = plans.map((p) => ({
+        trackTitle: trackById.get(p.track_id)?.title ?? "알 수 없는 트랙",
+        cursorDayIndex: p.cursor_day_index ?? 1,
+        totalDays: trackById.get(p.track_id)?.total_days ?? 0,
+        isEnabled: !!p.is_enabled,
+        isPaused: !!p.is_paused,
+      }));
+    }
+  }
+
+  const groupMembersByGroup = new Map<string, any[]>();
+  for (const m of groupMembers ?? []) {
+    const list = groupMembersByGroup.get(m.group_id) ?? [];
+    list.push(m);
+    groupMembersByGroup.set(m.group_id, list);
+  }
+
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return "N/A";
     return new Date(dateStr).toLocaleDateString("ko-KR", {
@@ -92,6 +185,134 @@ export default async function StudentDetailDashboard({ params }: PageProps) {
             Student ID: {studentId.slice(0, 8)}…
           </p>
         </div>
+      </div>
+
+      {/* 배정 현황 */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold text-gray-900">📋 배정 현황</h2>
+
+        {/* Full/Half Test 그룹 */}
+        {(groups ?? []).length > 0 && (
+          <div className="rounded-lg border bg-white shadow-sm p-4 space-y-3">
+            <h3 className="text-sm font-semibold text-gray-700">Full / Half Test</h3>
+            {(groups ?? []).map((g) => {
+              const members = groupMembersByGroup.get(g.id) ?? [];
+              const gStatus = STATUS_LABEL[g.status] ?? STATUS_LABEL.pending;
+              return (
+                <div key={g.id} className="rounded-lg border border-gray-200 p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-900">
+                      {g.kind === "full" ? "Full Test" : "Half Test"}
+                    </span>
+                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${gStatus.cls}`}>
+                      {gStatus.text}
+                    </span>
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {members.map((m) => {
+                      const mStatus = STATUS_LABEL[m.status] ?? STATUS_LABEL.pending;
+                      const section = (m.sections as string[])?.[0];
+                      return (
+                        <span key={m.id} className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${mStatus.cls}`}>
+                          {SECTION_LABEL_KO[section] ?? section}
+                        </span>
+                      );
+                    })}
+                  </div>
+                  <p className="mt-1 text-[11px] text-gray-400">
+                    배정 {formatDate(g.created_at)}
+                    {g.due_date ? ` · 마감 ${formatDate(g.due_date)}` : ""}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* 개별 영역 배정 */}
+        {(soloAssignments ?? []).length > 0 && (
+          <div className="rounded-lg border bg-white shadow-sm p-4">
+            <h3 className="mb-3 text-sm font-semibold text-gray-700">개별 영역 배정</h3>
+            <div className="space-y-2">
+              {(soloAssignments ?? []).map((a) => {
+                const aStatus = STATUS_LABEL[a.status] ?? STATUS_LABEL.pending;
+                const section = (a.sections as string[])?.[0];
+                return (
+                  <div key={a.id} className="flex items-center justify-between rounded-lg border border-gray-100 px-3 py-2">
+                    <span className="text-sm text-gray-800">{SECTION_LABEL_KO[section] ?? section}</span>
+                    <div className="flex items-center gap-2">
+                      {a.due_date && <span className="text-[11px] text-gray-400">마감 {formatDate(a.due_date)}</span>}
+                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${aStatus.cls}`}>
+                        {aStatus.text}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Daily Tests */}
+        {(dailyTests ?? []).length > 0 && (
+          <div className="rounded-lg border bg-white shadow-sm p-4">
+            <h3 className="mb-3 text-sm font-semibold text-gray-700">Daily Tests</h3>
+            <div className="space-y-2">
+              {(dailyTests ?? []).map((t) => {
+                const tStatus = STATUS_LABEL[t.status] ?? STATUS_LABEL.pending;
+                return (
+                  <Link
+                    key={t.id}
+                    href={t.status === "completed" ? `/admin/daily-tests/${t.id}` : "/admin/daily-tests"}
+                    className="flex items-center justify-between rounded-lg border border-gray-100 px-3 py-2 hover:border-blue-300 hover:bg-blue-50 transition"
+                  >
+                    <span className="text-sm text-gray-800">{t.task_type} · {t.difficulty}</span>
+                    <div className="flex items-center gap-2">
+                      {t.due_date && <span className="text-[11px] text-gray-400">마감 {formatDate(t.due_date)}</span>}
+                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${tStatus.cls}`}>
+                        {tStatus.text}
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Vocab */}
+        {vocabPlans.length > 0 && (
+          <div className="rounded-lg border bg-white shadow-sm p-4">
+            <h3 className="mb-3 text-sm font-semibold text-gray-700">Vocabulary</h3>
+            <div className="space-y-2">
+              {vocabPlans.map((p, idx) => (
+                <div key={idx} className="flex items-center justify-between rounded-lg border border-gray-100 px-3 py-2">
+                  <span className="text-sm text-gray-800">{p.trackTitle}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] text-gray-500">
+                      Day {p.cursorDayIndex}{p.totalDays ? ` / ${p.totalDays}` : ""}
+                    </span>
+                    {!p.isEnabled && (
+                      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-500">비활성</span>
+                    )}
+                    {p.isPaused && (
+                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">일시정지</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {(groups ?? []).length === 0 &&
+          (soloAssignments ?? []).length === 0 &&
+          (dailyTests ?? []).length === 0 &&
+          vocabPlans.length === 0 && (
+            <div className="rounded-lg border border-dashed bg-gray-50 p-8 text-center">
+              <p className="text-sm text-gray-500">배정된 내용이 없습니다.</p>
+            </div>
+          )}
       </div>
 
       {/* Stats Summary */}

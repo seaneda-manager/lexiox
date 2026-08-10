@@ -74,9 +74,12 @@ function getDrillWorkflow(isCorrect: boolean) {
 export function ReadingDrillClient({
   questionData,
   resultId,
+  backHref,
 }: {
   questionData: ReviewQuestion;
   resultId: string;
+  /** "리뷰로 돌아가기" 링크 대상. 기본값은 Reading 리뷰 화면. */
+  backHref?: string;
 }) {
   const [currentStageIndex, setCurrentStageIndex] = useState(0);
   const [stageStates, setStageStates] = useState<ReviewStageState>({
@@ -214,7 +217,7 @@ export function ReadingDrillClient({
     <div className="mx-auto max-w-7xl space-y-6">
       <div className="space-y-1">
         <Link
-          href={`/student/review/reading/${resultId}`}
+          href={backHref ?? `/student/review/reading/${resultId}`}
           className="inline-flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-slate-600"
         >
           ← 리뷰로 돌아가기

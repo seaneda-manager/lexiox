@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 
 type TaskType = 'light' | 'medium_1' | 'medium_2' | 'medium_3' | 'medium_4';
 type Difficulty = 'easy' | 'core' | 'hard';
@@ -63,6 +64,7 @@ export default function DailyTaskManagerClient({
     dueDate: '',
     numPassages: 2,  // 지문 개수 (default: 2)
   });
+  const studentNameById = new Map(students.map((s) => [s.id, s.name]));
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -470,7 +472,9 @@ export default function DailyTaskManagerClient({
                             </span>
                           </div>
                           <div className="text-xs text-gray-600 space-y-1">
-                            {task.student_id && <p>학생: {task.student_id.slice(0, 8)}...</p>}
+                            {task.student_id && (
+                              <p>학생: {studentNameById.get(task.student_id) ?? `${task.student_id.slice(0, 8)}...`}</p>
+                            )}
                             {task.class_id && <p>클래스: {task.class_id.slice(0, 8)}...</p>}
                             {task.due_date && (
                               <p>기한: {new Date(task.due_date).toLocaleDateString('ko-KR')}</p>
@@ -479,12 +483,22 @@ export default function DailyTaskManagerClient({
                         </div>
                         <div className="text-right space-y-2">
                           <p className="text-xs text-gray-500">{new Date(task.created_at).toLocaleDateString('ko-KR')}</p>
-                          <button
-                            onClick={() => setDeleteConfirm(task.id)}
-                            className="px-3 py-1 text-xs bg-rose-100 text-rose-700 rounded hover:bg-rose-200 transition"
-                          >
-                            🗑 삭제
-                          </button>
+                          <div className="flex justify-end gap-2">
+                            {task.status === 'completed' && (
+                              <Link
+                                href={`/admin/daily-tests/${task.id}`}
+                                className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition"
+                              >
+                                📊 결과 보기
+                              </Link>
+                            )}
+                            <button
+                              onClick={() => setDeleteConfirm(task.id)}
+                              className="px-3 py-1 text-xs bg-rose-100 text-rose-700 rounded hover:bg-rose-200 transition"
+                            >
+                              🗑 삭제
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>

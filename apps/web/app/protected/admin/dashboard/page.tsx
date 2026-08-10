@@ -15,73 +15,60 @@ type StudentSummary = {
   total_completed: number;
 };
 
+const GRADE_ORDER = ["중1", "중2", "중3", "고1", "고2", "고3", "미지정"] as const;
+
+// academy_students.grade는 관리자가 자유 입력한 값이라 "고1"/"H1"/"3학년" 등 형식이
+// 제각각이다. 확실히 판별되는 것만 6개 학년으로 묶고, 애매한 건 "미지정"으로 둔다.
+function normalizeGrade(raw: string | null | undefined): (typeof GRADE_ORDER)[number] {
+  const s = (raw ?? "").trim();
+  if (/^중\s*1|^M1/i.test(s)) return "중1";
+  if (/^중\s*2|^M2/i.test(s)) return "중2";
+  if (/^중\s*3|^M3/i.test(s)) return "중3";
+  if (/^고\s*1|^H1/i.test(s)) return "고1";
+  if (/^고\s*2|^H2/i.test(s)) return "고2";
+  if (/^고\s*3|^H3/i.test(s)) return "고3";
+  return "미지정";
+}
+
 export default async function StudentListDashboard() {
   const supabase = await getServerSupabase();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) redirect("/login");
 
-  // Get all students (users who have taken any test)
-  const { data: allResults } = await supabase
-    .from("reading_results_2026")
-    .select("user_id")
-    .limit(1000);
+  // 전체 학생 목록. 예전엔 "완료된 시험이 있는 유저"만 auth.users에서 추려서
+  // 대부분이 "Unknown Student"로 뜨고, 시험을 아직 안 본 학생은 아예 안 보였다.
+  // profiles가 실제 학생 전체 명단이고 이름도 여기(full_name/name)에 있다.
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("id, full_name, name, email, program")
+    .eq("role", "student")
+    .order("full_name", { ascending: true });
 
-  const { data: listeningResults } = await supabase
-    .from("listening_results_2026")
-    .select("user_id")
-    .limit(1000);
+  const students = profiles ?? [];
+  const studentIds = students.map((s) => s.id);
 
-  const { data: speakingResults } = await supabase
-    .from("speaking_results_2026")
-    .select("user_id")
-    .limit(1000);
+  // academy_students가 실제로 관리자가 채워 넣는 학년 정보를 갖고 있다
+  // (profiles.grade는 대부분 비어있다).
+  const { data: academyRows } =
+    studentIds.length > 0
+      ? await supabase
+          .from("academy_students")
+          .select("auth_user_id, grade")
+          .in("auth_user_id", studentIds)
+      : { data: [] as { auth_user_id: string; grade: string | null }[] };
 
-  const { data: writingResults } = await supabase
-    .from("writing_2026_sessions")
-    .select("user_id")
-    .limit(1000);
+  const gradeByAuthId = new Map((academyRows ?? []).map((r) => [r.auth_user_id, r.grade]));
 
-  const uniqueUserIds = new Set<string>();
-  [allResults, listeningResults, speakingResults, writingResults].forEach(
-    (results) => results?.forEach((r: any) => uniqueUserIds.add(r.user_id))
-  );
-
-  // Get student names
-  const { data: authUsers } = await supabase.auth.admin.listUsers();
-  const userMap = new Map(
-    authUsers?.users.map((u) => [
-      u.id,
-      u.user_metadata?.name ||
-        u.user_metadata?.full_name ||
-        u.email ||
-        "Unknown",
-    ]) || []
-  );
-
-  // Count results for each student
+  // 완료 개수 (기존 로직 그대로 — 학생 수가 적어 N+1이어도 감내할 수준)
   const studentSummaries: StudentSummary[] = [];
-
-  for (const studentId of uniqueUserIds) {
-    const readingCount = await supabase
-      .from("reading_results_2026")
-      .select("id", { count: "exact" })
-      .eq("user_id", studentId);
-
-    const listeningCount = await supabase
-      .from("listening_results_2026")
-      .select("id", { count: "exact" })
-      .eq("user_id", studentId);
-
-    const speakingCount = await supabase
-      .from("speaking_results_2026")
-      .select("id", { count: "exact" })
-      .eq("user_id", studentId);
-
-    const writingCount = await supabase
-      .from("writing_2026_sessions")
-      .select("id", { count: "exact" })
-      .eq("user_id", studentId);
+  for (const s of students) {
+    const [readingCount, listeningCount, speakingCount, writingCount] = await Promise.all([
+      supabase.from("reading_results_2026").select("id", { count: "exact", head: true }).eq("user_id", s.id),
+      supabase.from("listening_results_2026").select("id", { count: "exact", head: true }).eq("user_id", s.id),
+      supabase.from("speaking_results_2026").select("id", { count: "exact", head: true }).eq("user_id", s.id),
+      supabase.from("writing_2026_sessions").select("id", { count: "exact", head: true }).eq("user_id", s.id),
+    ]);
 
     const reading = readingCount.count || 0;
     const listening = listeningCount.count || 0;
@@ -89,8 +76,8 @@ export default async function StudentListDashboard() {
     const writing = writingCount.count || 0;
 
     studentSummaries.push({
-      id: studentId,
-      name: userMap.get(studentId) || "Unknown Student",
+      id: s.id,
+      name: s.full_name || s.name || s.email || "이름 미설정",
       reading_count: reading,
       listening_count: listening,
       speaking_count: speaking,
@@ -99,62 +86,117 @@ export default async function StudentListDashboard() {
     });
   }
 
-  // Sort by total completed (desc), then by name
-  studentSummaries.sort((a, b) => {
-    if (b.total_completed !== a.total_completed) {
-      return b.total_completed - a.total_completed;
-    }
-    return a.name.localeCompare(b.name);
-  });
+  const summaryById = new Map(studentSummaries.map((s) => [s.id, s]));
+  const byName = (a: { id: string }, b: { id: string }) =>
+    (summaryById.get(a.id)?.name ?? "").localeCompare(summaryById.get(b.id)?.name ?? "");
+
+  const toeflStudents = students.filter((s) => s.program === "toefl").sort(byName);
+  const lexioxStudents = students.filter((s) => s.program === "lexiox").sort(byName);
+  const otherStudents = students.filter((s) => s.program !== "toefl" && s.program !== "lexiox").sort(byName);
+
+  const lexioxByGrade = new Map<(typeof GRADE_ORDER)[number], typeof lexioxStudents>();
+  for (const g of GRADE_ORDER) lexioxByGrade.set(g, []);
+  for (const s of lexioxStudents) {
+    const grade = normalizeGrade(gradeByAuthId.get(s.id));
+    lexioxByGrade.get(grade)!.push(s);
+  }
 
   return (
-    <main className="mx-auto max-w-6xl space-y-6 px-4 py-6">
+    <main className="mx-auto max-w-6xl space-y-10 px-4 py-6">
       {/* Header */}
       <div className="space-y-2">
         <h1 className="text-3xl font-bold text-gray-900">👨‍🎓 학생별 진행 현황</h1>
         <p className="text-sm text-gray-600">
-          학생을 선택하여 상세한 시험 결과를 확인하세요.
+          학생을 선택하여 상세한 시험 결과를 확인하세요. 총 {students.length}명.
         </p>
       </div>
 
-      {/* Student Grid */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {studentSummaries.map((student) => (
-          <Link
-            key={student.id}
-            href={`/admin/dashboard/students/${student.id}`}
-            className="rounded-lg border bg-white p-4 shadow-sm hover:shadow-md transition group"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-gray-900 truncate group-hover:text-blue-600">
-                  {student.name}
-                </h3>
-                <p className="text-xs text-gray-500 mt-1">
-                  총 {student.total_completed}개 과제 완료
-                </p>
-              </div>
-              <ChevronRight className="h-5 w-5 text-gray-300 group-hover:text-blue-600 flex-shrink-0 mt-0.5" />
-            </div>
+      <CategorySection title="🎯 TOEFL" students={toeflStudents} summaryById={summaryById} />
 
-            {/* Stats */}
-            <div className="mt-4 grid grid-cols-4 gap-2 text-xs">
-              <StatItem label="📖 Reading" count={student.reading_count} />
-              <StatItem label="🎧 Listening" count={student.listening_count} />
-              <StatItem label="🎤 Speaking" count={student.speaking_count} />
-              <StatItem label="✍️ Writing" count={student.writing_count} />
-            </div>
-          </Link>
-        ))}
+      <div className="space-y-6">
+        <h2 className="text-xl font-bold text-gray-900">📘 Lexiox</h2>
+        {GRADE_ORDER.map((grade) => {
+          const list = lexioxByGrade.get(grade) ?? [];
+          if (list.length === 0) return null;
+          return (
+            <CategorySection
+              key={grade}
+              title={grade === "미지정" ? "학년 미지정" : `${grade.startsWith("중") ? "중학생" : "고등학생"} ${grade}`}
+              students={list}
+              summaryById={summaryById}
+              muted={grade === "미지정"}
+            />
+          );
+        })}
+        {lexioxStudents.length === 0 && (
+          <p className="text-sm text-gray-400">Lexiox 프로그램 학생이 없습니다.</p>
+        )}
       </div>
 
-      {studentSummaries.length === 0 && (
+      {otherStudents.length > 0 && (
+        <CategorySection title="프로그램 미지정" students={otherStudents} summaryById={summaryById} muted />
+      )}
+
+      {students.length === 0 && (
         <div className="rounded-lg border border-dashed bg-gray-50 p-12 text-center">
           <BookOpen className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500">아직 완료된 과제가 없습니다.</p>
+          <p className="text-gray-500">등록된 학생이 없습니다.</p>
         </div>
       )}
     </main>
+  );
+}
+
+function CategorySection({
+  title,
+  students,
+  summaryById,
+  muted = false,
+}: {
+  title: string;
+  students: { id: string }[];
+  summaryById: Map<string, StudentSummary>;
+  muted?: boolean;
+}) {
+  if (students.length === 0) return null;
+  return (
+    <section className="space-y-3">
+      <h3 className={`text-sm font-semibold ${muted ? "text-gray-400" : "text-gray-700"}`}>
+        {title} <span className="font-normal text-gray-400">({students.length}명)</span>
+      </h3>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {students.map((s) => {
+          const summary = summaryById.get(s.id);
+          if (!summary) return null;
+          return (
+            <Link
+              key={s.id}
+              href={`/admin/dashboard/students/${s.id}`}
+              className="rounded-lg border bg-white p-4 shadow-sm hover:shadow-md transition group"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-semibold text-gray-900 truncate group-hover:text-blue-600">
+                    {summary.name}
+                  </h4>
+                  <p className="text-xs text-gray-500 mt-1">
+                    총 {summary.total_completed}개 과제 완료
+                  </p>
+                </div>
+                <ChevronRight className="h-5 w-5 text-gray-300 group-hover:text-blue-600 flex-shrink-0 mt-0.5" />
+              </div>
+
+              <div className="mt-4 grid grid-cols-4 gap-2 text-xs">
+                <StatItem label="📖 Reading" count={summary.reading_count} />
+                <StatItem label="🎧 Listening" count={summary.listening_count} />
+                <StatItem label="🎤 Speaking" count={summary.speaking_count} />
+                <StatItem label="✍️ Writing" count={summary.writing_count} />
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 

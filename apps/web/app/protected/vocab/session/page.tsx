@@ -30,6 +30,7 @@ import MascotLayer from "@/components/common/MascotLayer";
 
 import SpeedChallengeRunner from "@/components/vocab/speed/SpeedChallengeRunner";
 import type { SpeedQuestion, SpeedAttemptResult } from "@/models/vocab/speed.types";
+import NeedFlashcardWidget from "@/components/vocab/NeedFlashcardWidget";
 
 // ✅ server action (service-role)
 import {
@@ -2574,6 +2575,7 @@ export default function VocabSessionPage() {
       <StageBackground stage={stage} />
       <MascotLayer stage={stage} mood={penguin.mood} />
       <div className="relative z-10">{renderStage()}</div>
+      <NeedFlashcardWidget />
     </PageShell>
   );
 }

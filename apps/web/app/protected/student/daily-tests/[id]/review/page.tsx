@@ -7,7 +7,7 @@ import { ArrowLeft, FileQuestion } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
-const TASK_TYPE_LABEL: Record<string, string> = {
+export const TASK_TYPE_LABEL: Record<string, string> = {
   light: "기초 (4문제)",
   medium_1: "중급 유형1",
   medium_2: "중급 유형2",
@@ -22,7 +22,7 @@ function escapeHtml(text: string) {
     .replace(/>/g, "&gt;");
 }
 
-function buildFlatQuestions(items: any[]): FlatQuestion[] {
+export function buildFlatQuestions(items: any[]): FlatQuestion[] {
   const result: FlatQuestion[] = [];
   items.forEach((item: any) => {
     const passageHtml =
@@ -53,7 +53,7 @@ function buildFlatQuestions(items: any[]): FlatQuestion[] {
   return result;
 }
 
-function buildCwItems(items: any[]): CwReviewItem[] {
+export function buildCwItems(items: any[]): CwReviewItem[] {
   return items.map((item: any) => ({
     id: item.id,
     paragraphHtml: normalizeBlankMarkers(item.passage ?? ""),
@@ -149,7 +149,13 @@ export default async function DailyTaskReviewPage({ params }: PageProps) {
         </div>
       </header>
 
-      <ReadingReviewV2 flatQuestions={flatQuestions} answerMap={answerMap} cwItems={cwItems} />
+      <ReadingReviewV2
+        resultId={id}
+        flatQuestions={flatQuestions}
+        answerMap={answerMap}
+        cwItems={cwItems}
+        drillBasePath="/student/daily-tests/drill"
+      />
     </main>
   );
 }

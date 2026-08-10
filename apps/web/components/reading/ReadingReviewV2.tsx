@@ -95,11 +95,14 @@ export default function ReadingReviewV2({
   flatQuestions,
   answerMap,
   cwItems = [],
+  drillBasePath = "/student/reading/drill",
 }: {
   resultId: string;
   flatQuestions: FlatQuestion[];
   answerMap: Record<string, string | null>;
   cwItems?: CwReviewItem[];
+  /** 드릴 링크 prefix. 최종 href는 `${drillBasePath}/${resultId}/${questionId}`. */
+  drillBasePath?: string;
 }) {
   const [tab, setTab] = useState<"review" | "voca">("review");
   const groups = groupByPassage(flatQuestions);
@@ -181,6 +184,7 @@ export default function ReadingReviewV2({
               group={group}
               answerMap={aMap}
               resultId={resultId}
+              drillBasePath={drillBasePath}
               mandatoryIds={mandatoryIds}
               clearedMandatory={clearedMandatory}
               activeMandatoryId={activeMandatoryId}
@@ -289,6 +293,7 @@ function PassageGroup({
   group,
   answerMap,
   resultId,
+  drillBasePath,
   mandatoryIds,
   clearedMandatory,
   activeMandatoryId,
@@ -297,6 +302,7 @@ function PassageGroup({
   group: { passageHtml: string; passageText: string; questions: FlatQuestion[] };
   answerMap: AnswerMap;
   resultId: string;
+  drillBasePath: string;
   mandatoryIds: string[];
   clearedMandatory: Set<string>;
   activeMandatoryId: string | null;
@@ -383,6 +389,7 @@ function PassageGroup({
             q={q}
             chosenId={answerMap.get(q.id) ?? null}
             resultId={resultId}
+            drillBasePath={drillBasePath}
             isMandatory={mandatoryIds.includes(q.id)}
             isCleared={clearedMandatory.has(q.id)}
             isLocked={mandatoryIds.includes(q.id) && !clearedMandatory.has(q.id) && q.id !== activeMandatoryId}
@@ -400,6 +407,7 @@ function QuestionCard({
   q,
   chosenId,
   resultId,
+  drillBasePath,
   isMandatory,
   isCleared,
   isLocked,
@@ -408,6 +416,7 @@ function QuestionCard({
   q: FlatQuestion;
   chosenId: string | null;
   resultId: string;
+  drillBasePath: string;
   isMandatory: boolean;
   isCleared: boolean;
   isLocked: boolean;
@@ -533,7 +542,7 @@ function QuestionCard({
             </span>
           ) : (
             <Link
-              href={`/student/reading/drill/${resultId}/${q.id}`}
+              href={`${drillBasePath}/${resultId}/${q.id}`}
               className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-[10px] font-semibold ${
                 isCorrect
                   ? "border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100"
