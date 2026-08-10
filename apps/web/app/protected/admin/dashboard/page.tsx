@@ -13,6 +13,7 @@ type StudentSummary = {
   speaking_count: number;
   writing_count: number;
   total_completed: number;
+  has_hi_naesin: boolean;
 };
 
 const GRADE_ORDER = ["중1", "중2", "중3", "고1", "고2", "고3", "미지정"] as const;
@@ -60,6 +61,14 @@ export default async function StudentListDashboard() {
 
   const gradeByAuthId = new Map((academyRows ?? []).map((r) => [r.auth_user_id, r.grade]));
 
+  // "Lexiox"는 프로그램명이 아니라 브랜드명이라 그 자체로는 학생이 뭘 하는지 알 수 없다.
+  // profiles.program이 "toefl"이 아닌 학생들이 실제로 Hi-내신 과제를 배정받았는지로 구분한다.
+  const { data: hiNaesinRows } =
+    studentIds.length > 0
+      ? await supabase.from("hi_naesin_assignments").select("student_id").in("student_id", studentIds)
+      : { data: [] as { student_id: string }[] };
+  const hiNaesinIds = new Set((hiNaesinRows ?? []).map((r) => r.student_id));
+
   // 완료 개수 (기존 로직 그대로 — 학생 수가 적어 N+1이어도 감내할 수준)
   const studentSummaries: StudentSummary[] = [];
   for (const s of students) {
@@ -83,6 +92,7 @@ export default async function StudentListDashboard() {
       speaking_count: speaking,
       writing_count: writing,
       total_completed: reading + listening + speaking + writing,
+      has_hi_naesin: hiNaesinIds.has(s.id),
     });
   }
 
@@ -114,7 +124,7 @@ export default async function StudentListDashboard() {
       <CategorySection title="🎯 TOEFL" students={toeflStudents} summaryById={summaryById} />
 
       <div className="space-y-6">
-        <h2 className="text-xl font-bold text-gray-900">📘 Lexiox</h2>
+        <h2 className="text-xl font-bold text-gray-900">📘 내신 / Junior</h2>
         {GRADE_ORDER.map((grade) => {
           const list = lexioxByGrade.get(grade) ?? [];
           if (list.length === 0) return null;
@@ -125,16 +135,23 @@ export default async function StudentListDashboard() {
               students={list}
               summaryById={summaryById}
               muted={grade === "미지정"}
+              showToeflStats={false}
             />
           );
         })}
         {lexioxStudents.length === 0 && (
-          <p className="text-sm text-gray-400">Lexiox 프로그램 학생이 없습니다.</p>
+          <p className="text-sm text-gray-400">내신/Junior 프로그램 학생이 없습니다.</p>
         )}
       </div>
 
       {otherStudents.length > 0 && (
-        <CategorySection title="프로그램 미지정" students={otherStudents} summaryById={summaryById} muted />
+        <CategorySection
+          title="프로그램 미지정"
+          students={otherStudents}
+          summaryById={summaryById}
+          muted
+          showToeflStats={false}
+        />
       )}
 
       {students.length === 0 && (
@@ -152,11 +169,14 @@ function CategorySection({
   students,
   summaryById,
   muted = false,
+  showToeflStats = true,
 }: {
   title: string;
   students: { id: string }[];
   summaryById: Map<string, StudentSummary>;
   muted?: boolean;
+  /** TOEFL 섹션 R/L/S/W 통계 표시 여부. 내신/Junior 학생은 이 값들이 항상 0이라 대신 Hi-내신 배지를 보여준다. */
+  showToeflStats?: boolean;
 }) {
   if (students.length === 0) return null;
   return (
@@ -179,19 +199,31 @@ function CategorySection({
                   <h4 className="font-semibold text-gray-900 truncate group-hover:text-blue-600">
                     {summary.name}
                   </h4>
-                  <p className="text-xs text-gray-500 mt-1">
-                    총 {summary.total_completed}개 과제 완료
-                  </p>
+                  {showToeflStats ? (
+                    <p className="text-xs text-gray-500 mt-1">
+                      총 {summary.total_completed}개 과제 완료
+                    </p>
+                  ) : (
+                    summary.has_hi_naesin && (
+                      <span className="inline-block mt-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-700">
+                        Hi-내신 배정됨
+                      </span>
+                    )
+                    // 단어(Voca) 배정 여부는 DB에서 신뢰성 있게 조회할 방법이 아직 없어
+                    // "미배정"처럼 단정하는 표시는 넣지 않는다 (오탐 위험).
+                  )}
                 </div>
                 <ChevronRight className="h-5 w-5 text-gray-300 group-hover:text-blue-600 flex-shrink-0 mt-0.5" />
               </div>
 
-              <div className="mt-4 grid grid-cols-4 gap-2 text-xs">
-                <StatItem label="📖 Reading" count={summary.reading_count} />
-                <StatItem label="🎧 Listening" count={summary.listening_count} />
-                <StatItem label="🎤 Speaking" count={summary.speaking_count} />
-                <StatItem label="✍️ Writing" count={summary.writing_count} />
-              </div>
+              {showToeflStats && (
+                <div className="mt-4 grid grid-cols-4 gap-2 text-xs">
+                  <StatItem label="📖 Reading" count={summary.reading_count} />
+                  <StatItem label="🎧 Listening" count={summary.listening_count} />
+                  <StatItem label="🎤 Speaking" count={summary.speaking_count} />
+                  <StatItem label="✍️ Writing" count={summary.writing_count} />
+                </div>
+              )}
             </Link>
           );
         })}
