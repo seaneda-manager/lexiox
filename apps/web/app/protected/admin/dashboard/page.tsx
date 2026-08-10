@@ -14,6 +14,7 @@ type StudentSummary = {
   writing_count: number;
   total_completed: number;
   has_hi_naesin: boolean;
+  has_vocab_plan: boolean;
 };
 
 const GRADE_ORDER = ["중1", "중2", "중3", "고1", "고2", "고3", "미지정"] as const;
@@ -55,19 +56,32 @@ export default async function StudentListDashboard() {
     studentIds.length > 0
       ? await supabase
           .from("academy_students")
-          .select("auth_user_id, grade")
+          .select("id, auth_user_id, grade")
           .in("auth_user_id", studentIds)
-      : { data: [] as { auth_user_id: string; grade: string | null }[] };
+      : { data: [] as { id: string; auth_user_id: string; grade: string | null }[] };
 
   const gradeByAuthId = new Map((academyRows ?? []).map((r) => [r.auth_user_id, r.grade]));
+  // vocab/hi-naesin 관련 테이블은 profiles.id가 아니라 academy_students.id를 student_id로 쓴다.
+  const academyIdByAuthId = new Map((academyRows ?? []).map((r) => [r.auth_user_id, r.id]));
+  const academyIds = (academyRows ?? []).map((r) => r.id);
 
   // "Lexiox"는 프로그램명이 아니라 브랜드명이라 그 자체로는 학생이 뭘 하는지 알 수 없다.
-  // profiles.program이 "toefl"이 아닌 학생들이 실제로 Hi-내신 과제를 배정받았는지로 구분한다.
+  // profiles.program이 "toefl"이 아닌 학생들이 실제로 Hi-내신 과제를 배정받았는지/Voca 플랜이 있는지로 구분한다.
   const { data: hiNaesinRows } =
     studentIds.length > 0
       ? await supabase.from("hi_naesin_assignments").select("student_id").in("student_id", studentIds)
       : { data: [] as { student_id: string }[] };
   const hiNaesinIds = new Set((hiNaesinRows ?? []).map((r) => r.student_id));
+
+  const { data: vocabPlanRows } =
+    academyIds.length > 0
+      ? await supabase
+          .from("student_vocab_plans")
+          .select("student_id")
+          .in("student_id", academyIds)
+          .eq("is_active", true)
+      : { data: [] as { student_id: string }[] };
+  const vocabPlanAcademyIds = new Set((vocabPlanRows ?? []).map((r) => r.student_id));
 
   // 완료 개수 (기존 로직 그대로 — 학생 수가 적어 N+1이어도 감내할 수준)
   const studentSummaries: StudentSummary[] = [];
@@ -93,6 +107,7 @@ export default async function StudentListDashboard() {
       writing_count: writing,
       total_completed: reading + listening + speaking + writing,
       has_hi_naesin: hiNaesinIds.has(s.id),
+      has_vocab_plan: vocabPlanAcademyIds.has(academyIdByAuthId.get(s.id) ?? ""),
     });
   }
 
@@ -204,13 +219,23 @@ function CategorySection({
                       총 {summary.total_completed}개 과제 완료
                     </p>
                   ) : (
-                    summary.has_hi_naesin && (
-                      <span className="inline-block mt-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-700">
-                        Hi-내신 배정됨
-                      </span>
-                    )
-                    // 단어(Voca) 배정 여부는 DB에서 신뢰성 있게 조회할 방법이 아직 없어
-                    // "미배정"처럼 단정하는 표시는 넣지 않는다 (오탐 위험).
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {summary.has_hi_naesin && (
+                        <span className="inline-block text-[10px] font-medium px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-700">
+                          Hi-내신
+                        </span>
+                      )}
+                      {summary.has_vocab_plan && (
+                        <span className="inline-block text-[10px] font-medium px-2 py-0.5 rounded-full bg-violet-50 text-violet-700">
+                          Voca
+                        </span>
+                      )}
+                      {!summary.has_hi_naesin && !summary.has_vocab_plan && (
+                        <span className="inline-block text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-400">
+                          미배정
+                        </span>
+                      )}
+                    </div>
                   )}
                 </div>
                 <ChevronRight className="h-5 w-5 text-gray-300 group-hover:text-blue-600 flex-shrink-0 mt-0.5" />
