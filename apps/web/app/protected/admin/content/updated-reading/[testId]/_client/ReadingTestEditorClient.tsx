@@ -56,6 +56,14 @@ export default function ReadingTestEditorClient({
     });
   }
 
+  // Choice ID에서 선택지 글자(A/B/C/D) 추출
+  function extractChoiceLetter(choiceId: string): string {
+    const match = choiceId.match(/(\d+)/);
+    if (!match) return 'A';
+    const num = parseInt(match[1], 10);
+    return String.fromCharCode(64 + num); // 1→A, 2→B, 3→C, 4→D
+  }
+
   // 정답 추출 헬퍼
   function extractAnswers(data: any): string[] {
     const answers: string[] = [];
@@ -66,9 +74,10 @@ export default function ReadingTestEditorClient({
       if (obj.questions && Array.isArray(obj.questions)) {
         obj.questions.forEach((q: any) => {
           if (q.choices && Array.isArray(q.choices)) {
-            const correctIdx = q.choices.findIndex((c: any) => c.isCorrect);
-            if (correctIdx >= 0 && correctIdx < 4) {
-              answers.push(String.fromCharCode(65 + correctIdx)); // 65 = 'A'
+            const correct = q.choices.find((c: any) => c.isCorrect);
+            if (correct?.id) {
+              const letter = extractChoiceLetter(correct.id);
+              answers.push(letter);
             }
           }
         });
@@ -99,9 +108,9 @@ export default function ReadingTestEditorClient({
           if (q.choices && Array.isArray(q.choices)) {
             if (answerIndex < shuffledAnswers.length) {
               const newCorrectAnswer = shuffledAnswers[answerIndex++];
-              const correctIdx = newCorrectAnswer.charCodeAt(0) - 65; // 'A' = 65
-              q.choices.forEach((c: any, idx: number) => {
-                c.isCorrect = idx === correctIdx;
+              q.choices.forEach((c: any) => {
+                const choiceLetter = extractChoiceLetter(c.id);
+                c.isCorrect = choiceLetter === newCorrectAnswer;
               });
             }
           }

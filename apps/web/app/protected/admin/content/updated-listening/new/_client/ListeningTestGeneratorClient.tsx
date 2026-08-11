@@ -483,9 +483,10 @@ export default function ListeningTestGeneratorClient() {
       if (obj.questions && Array.isArray(obj.questions)) {
         obj.questions.forEach((q: any) => {
           if (q.choices && Array.isArray(q.choices)) {
-            const correctIdx = q.choices.findIndex((c: any) => c.correct);
-            if (correctIdx >= 0 && correctIdx < 4) {
-              answers.push(String.fromCharCode(65 + correctIdx)); // 65 = 'A'
+            const correct = q.choices.find((c: any) => c.correct);
+            if (correct?.id) {
+              const letter = extractChoiceLetter(correct.id);
+              answers.push(letter);
             }
           }
         });
@@ -517,9 +518,9 @@ export default function ListeningTestGeneratorClient() {
           if (q.choices && Array.isArray(q.choices)) {
             if (answerIndex < shuffledAnswers.length) {
               const newCorrectAnswer = shuffledAnswers[answerIndex++];
-              const correctIdx = newCorrectAnswer.charCodeAt(0) - 65; // 'A' = 65
-              q.choices.forEach((c: any, idx: number) => {
-                c.correct = idx === correctIdx;
+              q.choices.forEach((c: any) => {
+                const choiceLetter = extractChoiceLetter(c.id);
+                c.correct = choiceLetter === newCorrectAnswer;
               });
             }
           }
