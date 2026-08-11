@@ -2,6 +2,7 @@
 
 import { useTransition } from 'react';
 import { toggleQuestionActiveAction } from '../actions';
+import { TRACK_LABEL, SUB_LEVEL_LABEL, type Track, type SubLevel } from '@/lib/level-test/proficiencyLevels';
 
 type Question = {
   id: string;
@@ -9,6 +10,9 @@ type Question = {
   choices: { id: string; text: string }[] | null;
   correct_choice_id: string | null;
   is_active: boolean;
+  track?: Track | null;
+  sub_level?: SubLevel | null;
+  generated_by_ai?: boolean;
 };
 
 export default function QuestionRow({ question }: { question: Question }) {
@@ -18,6 +22,16 @@ export default function QuestionRow({ question }: { question: Question }) {
   return (
     <div className={`flex items-start justify-between gap-3 rounded-lg border px-3 py-2 ${question.is_active ? 'border-neutral-100' : 'border-neutral-100 bg-neutral-50 opacity-50'}`}>
       <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-1 mb-1">
+          {question.track && (
+            <span className="rounded-full bg-violet-50 px-1.5 py-0.5 text-[10px] text-violet-600">
+              {TRACK_LABEL[question.track]}{question.sub_level ? ` ${SUB_LEVEL_LABEL[question.sub_level]}` : ''}
+            </span>
+          )}
+          {question.generated_by_ai && (
+            <span className="rounded-full bg-indigo-50 px-1.5 py-0.5 text-[10px] text-indigo-500">🤖 AI</span>
+          )}
+        </div>
         <p className="text-sm text-neutral-800">{question.prompt}</p>
         {correctText && <p className="text-[11px] text-emerald-600 mt-0.5">정답: {correctText}</p>}
       </div>

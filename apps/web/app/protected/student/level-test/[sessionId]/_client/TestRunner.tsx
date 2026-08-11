@@ -21,9 +21,10 @@ const SECTION_META: Record<string, { label: string; icon: string }> = {
   listening: { label: '듣기', icon: '🎧' },
   reading: { label: '읽기', icon: '📖' },
   speaking: { label: '말하기', icon: '🎤' },
+  writing: { label: '쓰기', icon: '✍️' },
 };
 
-type Answer = { choiceId?: string; audioUrl?: string };
+type Answer = { choiceId?: string; audioUrl?: string; textResponse?: string };
 
 export default function TestRunner({
   sessionId,
@@ -46,12 +47,18 @@ export default function TestRunner({
   const isLastSection = sectionIdx === sectionOrder.length - 1;
 
   const answeredInSection = useMemo(
-    () => currentQuestions.filter((q) => answers[q.id]?.choiceId || answers[q.id]?.audioUrl).length,
+    () =>
+      currentQuestions.filter(
+        (q) => answers[q.id]?.choiceId || answers[q.id]?.audioUrl || answers[q.id]?.textResponse?.trim(),
+      ).length,
     [currentQuestions, answers],
   );
 
   const setChoice = (questionId: string, choiceId: string) =>
     setAnswers((prev) => ({ ...prev, [questionId]: { ...prev[questionId], choiceId } }));
+
+  const setTextResponse = (questionId: string, textResponse: string) =>
+    setAnswers((prev) => ({ ...prev, [questionId]: { ...prev[questionId], textResponse } }));
 
   const handleRecorded = async (questionId: string, blob: Blob) => {
     setUploadingId(questionId);
@@ -87,6 +94,7 @@ export default function TestRunner({
       questionId,
       choiceId: a.choiceId,
       audioUrl: a.audioUrl,
+      textResponse: a.textResponse,
     }));
     const result = await submitLevelTestAction(sessionId, allAnswers);
     setSubmitting(false);
@@ -150,6 +158,14 @@ export default function TestRunner({
                   </button>
                 ))}
               </div>
+            ) : q.section === 'writing' ? (
+              <textarea
+                value={answers[q.id]?.textResponse ?? ''}
+                onChange={(e) => setTextResponse(q.id, e.target.value)}
+                rows={6}
+                placeholder="여기에 영어로 작성하세요…"
+                className="w-full rounded-xl border border-neutral-200 px-4 py-2.5 text-sm outline-none focus:border-neutral-400 resize-none"
+              />
             ) : (
               <div className="space-y-2">
                 <AudioRecorder

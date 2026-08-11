@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { getServerSupabase } from '@/lib/supabase/server';
 import { getServiceSupabase } from '@/lib/supabase/service';
 
-export type LevelTestAnswer = { questionId: string; choiceId?: string; audioUrl?: string };
+export type LevelTestAnswer = { questionId: string; choiceId?: string; audioUrl?: string; textResponse?: string };
 
 export async function startLevelTestSessionAction(): Promise<void> {
   const supabase = await getServerSupabase();
@@ -59,6 +59,7 @@ export async function submitLevelTestAction(
       question_id: a.questionId,
       response_choice_id: a.choiceId ?? null,
       response_audio_url: a.audioUrl ?? null,
+      response_text: a.textResponse ?? null,
       is_correct: isCorrect,
     }];
   });

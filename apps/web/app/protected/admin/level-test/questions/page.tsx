@@ -6,9 +6,9 @@ import QuestionRow from './_client/QuestionRow';
 
 export const dynamic = 'force-dynamic';
 
-const SECTION_ORDER = ['grammar', 'vocab', 'listening', 'reading', 'speaking'];
+const SECTION_ORDER = ['grammar', 'vocab', 'listening', 'reading', 'speaking', 'writing'];
 const SECTION_LABEL: Record<string, string> = {
-  grammar: '📚 문법', vocab: '🔤 어휘', listening: '🎧 듣기', reading: '📖 읽기', speaking: '🎤 말하기',
+  grammar: '📚 문법', vocab: '🔤 어휘', listening: '🎧 듣기', reading: '📖 읽기', speaking: '🎤 말하기', writing: '✍️ 쓰기',
 };
 
 export default async function LevelTestQuestionsPage() {
@@ -16,7 +16,7 @@ export default async function LevelTestQuestionsPage() {
 
   const { data: questions } = await supabase
     .from('level_test_questions')
-    .select('id, section, order_index, prompt, choices, correct_choice_id, is_active')
+    .select('id, section, order_index, prompt, choices, correct_choice_id, is_active, track, sub_level, generated_by_ai')
     .order('section', { ascending: true })
     .order('order_index', { ascending: true });
 

@@ -11,6 +11,8 @@ const SECTION_LABEL: Record<string, string> = {
   grammar: '문법', vocab: '어휘', listening: '듣기', reading: '읽기',
 };
 
+type ReviewItem = { prompt: string; audioUrl?: string; text?: string };
+
 export default async function AdminLevelTestPage() {
   const supabase = await getServerSupabase();
   const { data: { user } } = await supabase.auth.getUser();
@@ -32,28 +34,36 @@ export default async function AdminLevelTestPage() {
   const nameById = new Map((profiles ?? []).map((p) => [p.id, p.full_name || p.name || p.email || '이름 미설정']));
 
   const sessionIds = (sessions ?? []).map((s) => s.id);
-  const { data: speakingResponses } =
+  const { data: openResponses } =
     sessionIds.length > 0
       ? await service
           .from('level_test_responses')
-          .select('session_id, question_id, response_audio_url')
+          .select('session_id, question_id, response_audio_url, response_text')
           .in('session_id', sessionIds)
-          .not('response_audio_url', 'is', null)
-      : { data: [] as { session_id: string; question_id: string; response_audio_url: string | null }[] };
+          .or('response_audio_url.not.is.null,response_text.not.is.null')
+      : { data: [] as { session_id: string; question_id: string; response_audio_url: string | null; response_text: string | null }[] };
 
-  const questionIds = [...new Set((speakingResponses ?? []).map((r) => r.question_id))];
+  const questionIds = [...new Set((openResponses ?? []).map((r) => r.question_id))];
   const { data: questions } =
     questionIds.length > 0
-      ? await service.from('level_test_questions').select('id, prompt').in('id', questionIds)
-      : { data: [] as { id: string; prompt: string }[] };
-  const promptById = new Map((questions ?? []).map((q) => [q.id, q.prompt]));
+      ? await service.from('level_test_questions').select('id, prompt, section').in('id', questionIds)
+      : { data: [] as { id: string; prompt: string; section: string }[] };
+  const questionById = new Map((questions ?? []).map((q) => [q.id, q]));
 
-  const speakingBySession = new Map<string, { prompt: string; audioUrl: string }[]>();
-  for (const r of speakingResponses ?? []) {
-    if (!r.response_audio_url) continue;
-    const list = speakingBySession.get(r.session_id) ?? [];
-    list.push({ prompt: promptById.get(r.question_id) ?? '', audioUrl: r.response_audio_url });
-    speakingBySession.set(r.session_id, list);
+  const speakingBySession = new Map<string, ReviewItem[]>();
+  const writingBySession = new Map<string, ReviewItem[]>();
+  for (const r of openResponses ?? []) {
+    const q = questionById.get(r.question_id);
+    if (!q) continue;
+    if (r.response_audio_url) {
+      const list = speakingBySession.get(r.session_id) ?? [];
+      list.push({ prompt: q.prompt, audioUrl: r.response_audio_url });
+      speakingBySession.set(r.session_id, list);
+    } else if (r.response_text) {
+      const list = writingBySession.get(r.session_id) ?? [];
+      list.push({ prompt: q.prompt, text: r.response_text });
+      writingBySession.set(r.session_id, list);
+    }
   }
 
   return (
@@ -84,6 +94,7 @@ export default async function AdminLevelTestPage() {
           {(sessions ?? []).map((s) => {
             const scores = (s.section_scores ?? {}) as Record<string, number>;
             const speakingItems = speakingBySession.get(s.id) ?? [];
+            const writingItems = writingBySession.get(s.id) ?? [];
             return (
               <div key={s.id} className="rounded-lg border bg-white shadow-sm p-4 space-y-3">
                 <div className="flex items-center justify-between">
@@ -107,7 +118,19 @@ export default async function AdminLevelTestPage() {
                     {speakingItems.map((item, idx) => (
                       <div key={idx} className="rounded-md border border-gray-100 bg-gray-50 p-2 space-y-1">
                         <p className="text-xs text-gray-600">{item.prompt}</p>
-                        <audio controls src={item.audioUrl} className="w-full h-8" />
+                        {item.audioUrl && <audio controls src={item.audioUrl} className="w-full h-8" />}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {writingItems.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-semibold text-gray-500">✍️ 쓰기 답안</p>
+                    {writingItems.map((item, idx) => (
+                      <div key={idx} className="rounded-md border border-gray-100 bg-gray-50 p-2 space-y-1">
+                        <p className="text-xs text-gray-600">{item.prompt}</p>
+                        <p className="text-xs text-gray-900 whitespace-pre-wrap">{item.text}</p>
                       </div>
                     ))}
                   </div>

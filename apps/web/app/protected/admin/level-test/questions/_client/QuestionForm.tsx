@@ -1,43 +1,85 @@
 'use client';
 
 import { useState } from 'react';
-import { addQuestionAction, type NewQuestionInput } from '../actions';
+import { addQuestionAction, generateQuestionAction, type NewQuestionInput } from '../actions';
+import { TRACK_LABEL, SUB_LEVEL_LABEL, type Track, type SubLevel, type Section } from '@/lib/level-test/proficiencyLevels';
 
-const SECTION_OPTIONS: { value: NewQuestionInput['section']; label: string }[] = [
+const SECTION_OPTIONS: { value: Section; label: string }[] = [
   { value: 'grammar', label: '📚 문법' },
   { value: 'vocab', label: '🔤 어휘' },
   { value: 'listening', label: '🎧 듣기' },
   { value: 'reading', label: '📖 읽기' },
   { value: 'speaking', label: '🎤 말하기' },
+  { value: 'writing', label: '✍️ 쓰기' },
 ];
 
+const TRACK_OPTIONS = Object.entries(TRACK_LABEL) as [Track, string][];
+const SUB_LEVEL_OPTIONS = Object.entries(SUB_LEVEL_LABEL) as [SubLevel, string][];
+
+const OPEN_RESPONSE_SECTIONS: Section[] = ['speaking', 'writing'];
+
 export default function QuestionForm() {
-  const [section, setSection] = useState<NewQuestionInput['section']>('grammar');
+  const [section, setSection] = useState<Section>('grammar');
+  const [track, setTrack] = useState<Track>('toefl');
+  const [subLevel, setSubLevel] = useState<SubLevel>('mid');
+  const [topic, setTopic] = useState('');
   const [prompt, setPrompt] = useState('');
   const [passageText, setPassageText] = useState('');
   const [audioUrl, setAudioUrl] = useState('');
   const [choices, setChoices] = useState(['', '', '', '']);
   const [correctIndex, setCorrectIndex] = useState(0);
+  const [generatedByAi, setGeneratedByAi] = useState(false);
+
+  const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
-  const isSpeaking = section === 'speaking';
+  const isOpenResponse = OPEN_RESPONSE_SECTIONS.includes(section);
+  const canGenerate = section !== 'listening';
+
+  const resetFields = () => {
+    setPrompt('');
+    setPassageText('');
+    setAudioUrl('');
+    setChoices(['', '', '', '']);
+    setCorrectIndex(0);
+    setGeneratedByAi(false);
+  };
+
+  const handleGenerate = async () => {
+    setGenerating(true);
+    setError(null);
+    setMessage(null);
+    const result = await generateQuestionAction(section, track, subLevel, topic);
+    setGenerating(false);
+    if ('error' in result) { setError(result.error); return; }
+
+    const q = result.question;
+    setPrompt(q.prompt);
+    setPassageText(q.passageText ?? '');
+    if (q.choices) {
+      setChoices([...q.choices.map((c) => c.text), '', '', '', ''].slice(0, 4));
+      setCorrectIndex(q.correctIndex ?? 0);
+    }
+    setGeneratedByAi(true);
+    setMessage('AI가 생성했습니다 — 검토 후 저장하세요.');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     setError(null);
     setMessage(null);
-    const result = await addQuestionAction({ section, prompt, passageText, audioUrl, choices, correctIndex });
+    const input: NewQuestionInput = {
+      section, prompt, passageText, audioUrl, choices, correctIndex,
+      track, subLevel, generatedByAi,
+    };
+    const result = await addQuestionAction(input);
     setSaving(false);
     if ('error' in result) { setError(result.error); return; }
     setMessage('문제가 추가되었습니다.');
-    setPrompt('');
-    setPassageText('');
-    setAudioUrl('');
-    setChoices(['', '', '', '']);
-    setCorrectIndex(0);
+    resetFields();
   };
 
   return (
@@ -49,7 +91,7 @@ export default function QuestionForm() {
           <button
             key={opt.value}
             type="button"
-            onClick={() => setSection(opt.value)}
+            onClick={() => { setSection(opt.value); resetFields(); }}
             className={[
               'rounded-full border px-3 py-1.5 text-xs font-medium transition',
               section === opt.value
@@ -62,9 +104,45 @@ export default function QuestionForm() {
         ))}
       </div>
 
+      {/* AI 생성 패널 */}
+      <div className="rounded-xl border border-indigo-200 bg-indigo-50/50 p-4 space-y-3">
+        <p className="text-xs font-bold text-indigo-600">🤖 AI로 생성 (레벨 기준표 기반)</p>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1">
+            <label className="text-[11px] text-neutral-500">트랙</label>
+            <select value={track} onChange={(e) => setTrack(e.target.value as Track)}
+              className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm bg-white outline-none focus:border-neutral-400">
+              {TRACK_OPTIONS.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
+            </select>
+          </div>
+          <div className="space-y-1">
+            <label className="text-[11px] text-neutral-500">단계</label>
+            <select value={subLevel} onChange={(e) => setSubLevel(e.target.value as SubLevel)}
+              className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm bg-white outline-none focus:border-neutral-400">
+              {SUB_LEVEL_OPTIONS.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
+            </select>
+          </div>
+        </div>
+        <input
+          type="text"
+          value={topic}
+          onChange={(e) => setTopic(e.target.value)}
+          placeholder="주제/소재 (선택, 비우면 AI가 자유롭게 선정)"
+          className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm bg-white outline-none focus:border-neutral-400"
+        />
+        <button
+          type="button"
+          onClick={handleGenerate}
+          disabled={!canGenerate || generating}
+          className="w-full rounded-lg bg-indigo-600 py-2 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+        >
+          {generating ? '생성 중…' : canGenerate ? '이 레벨로 문제 생성' : '듣기는 아직 AI 생성 미지원'}
+        </button>
+      </div>
+
       {section === 'reading' && (
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-neutral-600">지문 (선택)</label>
+          <label className="text-xs font-semibold text-neutral-600">지문</label>
           <textarea
             value={passageText}
             onChange={(e) => setPassageText(e.target.value)}
@@ -89,18 +167,18 @@ export default function QuestionForm() {
 
       <div className="space-y-1.5">
         <label className="text-xs font-semibold text-neutral-600">
-          {isSpeaking ? '말하기 프롬프트 *' : '문제 *'}
+          {isOpenResponse ? '프롬프트 *' : '문제 *'}
         </label>
         <textarea
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           rows={2}
-          placeholder={isSpeaking ? '예: 가장 기억에 남는 여행 경험을 30초 동안 영어로 설명해 보세요.' : '문제 내용'}
+          placeholder={isOpenResponse ? '예: 가장 기억에 남는 여행 경험을 30초 동안 영어로 설명해 보세요.' : '문제 내용'}
           className="w-full rounded-xl border border-neutral-200 px-4 py-2.5 text-sm outline-none focus:border-neutral-400 resize-none"
         />
       </div>
 
-      {!isSpeaking && (
+      {!isOpenResponse && (
         <div className="space-y-1.5">
           <label className="text-xs font-semibold text-neutral-600">보기 (정답에 라디오 체크)</label>
           <div className="space-y-1.5">

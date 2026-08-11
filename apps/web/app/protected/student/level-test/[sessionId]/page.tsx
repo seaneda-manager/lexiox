@@ -6,10 +6,11 @@ import TestRunner, { type PublicQuestion } from './_client/TestRunner';
 
 export const dynamic = 'force-dynamic';
 
-const SECTION_ORDER = ['grammar', 'vocab', 'listening', 'reading', 'speaking'];
+const SECTION_ORDER = ['grammar', 'vocab', 'listening', 'reading', 'speaking', 'writing'];
 const SECTION_LABEL: Record<string, string> = {
-  grammar: '📚 문법', vocab: '🔤 어휘', listening: '🎧 듣기', reading: '📖 읽기', speaking: '🎤 말하기',
+  grammar: '📚 문법', vocab: '🔤 어휘', listening: '🎧 듣기', reading: '📖 읽기', speaking: '🎤 말하기', writing: '✍️ 쓰기',
 };
+const UNSCORED_SECTIONS = ['speaking', 'writing'];
 
 type PageProps = { params: Promise<{ sessionId: string }> };
 
@@ -40,7 +41,7 @@ export default async function LevelTestSessionPage({ params }: PageProps) {
         </header>
 
         <div className="rounded-2xl border border-neutral-200 bg-white p-5 space-y-3">
-          {SECTION_ORDER.filter((s) => s !== 'speaking').map((section) => {
+          {SECTION_ORDER.filter((s) => !UNSCORED_SECTIONS.includes(s)).map((section) => {
             const pct = scores[section];
             if (pct === undefined) return null;
             return (
@@ -56,10 +57,12 @@ export default async function LevelTestSessionPage({ params }: PageProps) {
               </div>
             );
           })}
-          <div className="flex items-center gap-3 border-t border-neutral-100 pt-3">
-            <span className="w-16 flex-shrink-0 text-xs text-neutral-600">🎤 말하기</span>
-            <span className="text-xs text-neutral-400">선생님 검토 대기 중</span>
-          </div>
+          {UNSCORED_SECTIONS.map((section) => (
+            <div key={section} className="flex items-center gap-3 border-t border-neutral-100 pt-3">
+              <span className="w-16 flex-shrink-0 text-xs text-neutral-600">{SECTION_LABEL[section]}</span>
+              <span className="text-xs text-neutral-400">선생님 검토 대기 중</span>
+            </div>
+          ))}
         </div>
 
         {session.recommended_level ? (
