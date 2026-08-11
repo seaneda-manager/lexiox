@@ -108,7 +108,7 @@ export default function TopbarClient({ email: initialEmail, role }: Props) {
   }, [pathname]);
 
   return (
-    <header className="flex h-14 items-center justify-between border-b border-neutral-100 bg-white px-3 md:px-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+    <header className="flex h-14 items-center justify-between border-b border-neutral-200/70 bg-white px-3 md:px-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
       {/* 왼쪽: 로고 + breadcrumb (모바일에서 사이드바/풀스크린 버튼 숨김) */}
       <div className="flex items-center gap-1 min-w-0">
         {/* 사이드바 토글 — 데스크탑만 */}
@@ -134,10 +134,10 @@ export default function TopbarClient({ email: initialEmail, role }: Props) {
         <div className="hidden md:block mx-2 h-5 w-px bg-neutral-200" />
 
         {/* 로고 */}
-        <div className="flex items-center gap-2 shrink-0">
-          <Image src="/LEXiOX.png" alt="LEXiOX" height={36} width={120} className="h-9 w-auto" priority unoptimized />
+        <div className="flex items-center gap-2.5 shrink-0">
+          <Image src="/LEXiOX.png" alt="LEXiOX" height={40} width={133} className="h-10 w-auto" priority unoptimized />
           {role === 'admin' && (
-            <span className="rounded-md bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700">
+            <span className="rounded bg-amber-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-800">
               Admin
             </span>
           )}
