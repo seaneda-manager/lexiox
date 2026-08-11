@@ -27,7 +27,18 @@ Each question is a SEPARATE spoken utterance and needs its OWN "transcript" fiel
 - Each question: 1 spoken line (~3-7 seconds when spoken) + 4 possible responses to it
 - Answer timer per question: 15-30 seconds (set "testingSeconds" accordingly, e.g. 20)
 - ${difficultyNote}
-- Topics: Mix campus/daily life scenarios
+- **DIVERSITY CRITICAL**: Each of the ${count} questions MUST have a completely different scenario/situation. NO repetition.
+- Scenarios: Mix diverse campus life, academic, social, and practical situations. Examples:
+  * Student asking about class schedule, registration, tutoring
+  * Making plans (study group, lunch, coffee, social event)
+  * Workplace/part-time job situations
+  * Library, dorm, campus services interactions
+  * Weather/travel/commute issues
+  * Group project, lab work, presentation prep
+  * Asking for directions, recommendations, advice
+  * Disagreeing politely, making excuses, changing plans
+  * Borrowing items, returning things, solving problems
+  * Any other common campus/daily life situation — EXCEPT administrative deadlines/schedule changes (overused)
 
 For each choice: include trapType (null|word_trap|overstatement|not_mentioned)
 Example trapTypes:
@@ -81,6 +92,12 @@ Generate a complete Module 1 test with this exact structure (INTERMEDIATE diffic
 - Task 4: Academic Talk (1 passage, 4 questions)
 TOTAL: 15-18 items
 
+CRITICAL - DIVERSITY REQUIREMENTS:
+- ALL items must have varied scenarios. NO repeated situations across all 15-18 questions.
+- Task 1 (5-7 items): Each item MUST be a completely different campus/social scenario.
+- Tasks 2-4: Each must be about a DIFFERENT topic/scenario from each other and from Task 1.
+- FORBIDDEN OVERUSE: Avoid multiple items about deadlines/schedule changes. Mix with other scenarios.
+
 IMPORTANT: AVOID DUPLICATE TOPICS
 The following topics have already been used in previous tests. Do NOT use any of these topics or similar ones:
 ${existingTopics.length > 0 ? existingTopics.map(t => `- ${t}`).join('\n') : '(none yet)'}
@@ -100,10 +117,12 @@ ${CHOOSE_RESPONSE_INSTRUCTIONS('5-7', 'Difficulty: Intermediate (moderate pragma
 
 ## TASK 2: Listen to a Conversation
 - Topic: "${conversationTopic}"
-- Two speakers: Student + Staff/Professor
+- Two speakers: Student + Staff/Professor/Peer
 - Duration: 80-110 seconds (1:20-1:50), ~150-190 words
 - Exactly 3-4 questions, each with its own "testingSeconds" (35-45)
 - Difficulty: Intermediate
+- **AVOID**: Deadline/schedule change scenarios (overused in Task 1)
+- **PREFER**: Natural campus conversations about academics, social activities, practical issues
 
 **Transcript Format** (CRITICAL):
 Speaker A: "Line 1"
@@ -120,6 +139,8 @@ Speaker A: "Line 2"
 - Duration: 45-70 seconds
 - Exactly 3 questions, each with its own "testingSeconds" (35-45)
 - Single speaker, clear delivery, direct information
+- **VARIETY**: Announcements about campus events, registration deadlines, facility info, workshops, schedule changes, emergency alerts, etc.
+- **AVOID REPETITION**: Different topic from Tasks 1 & 2
 
 **Question Types**: What/Who/When (factual recall) or Purpose
 
@@ -130,6 +151,8 @@ Speaker A: "Line 2"
 - Duration: 90-120 seconds (1:30-2:00), ~220-270 words
 - Exactly 4 questions, each with its own "testingSeconds" (35-45)
 - Difficulty: Intermediate (moderate academic terminology)
+- **AVOID REPETITION**: Academic field/topic completely different from Tasks 1-3
+- Examples: Biology, History, Psychology, Environmental Science, Economics, Art History, etc.
 
 **Question Types** (mix these 4):
 1. main_idea: "What is the main topic?"
