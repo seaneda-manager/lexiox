@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import {
-  ChevronRight,
+  ChevronRight, ChevronDown,
   LayoutDashboard, BookOpen, Headphones, Mic, PenLine, BookText,
   ClipboardList, FileText, GraduationCap, Library, List, Download,
   Upload, Send, BarChart2, Home, UserPlus, CheckSquare, Users,
@@ -432,12 +432,12 @@ export default function SidebarClient({ role, program = null }: Props) {
   return (
     <div
       className={[
-        'flex flex-col bg-white transition-all duration-300 h-full',
+        'flex flex-col bg-neutral-50 transition-all duration-300 h-full',
         widthClass,
         !collapsed || !isExamRoute ? '' : '',
       ].join(' ')}
     >
-      <nav className="flex-1 overflow-y-auto py-2 text-sm">
+      <nav className="flex-1 overflow-y-auto py-3 text-sm">
         {groups.map(([section, list], idx) => {
           const open      = openSections[section] ?? true;
           const showItems = collapsed || open;
@@ -447,10 +447,10 @@ export default function SidebarClient({ role, program = null }: Props) {
           const showGroupHeader = !collapsed && groupLabel && groupLabel !== prevGroupLabel;
 
           return (
-            <div key={section} className={['', idx > 0 ? 'mt-1 border-t border-neutral-100 pt-1' : ''].join(' ')}>
+            <div key={section} className={[idx > 0 ? 'mt-1' : '', showGroupHeader ? 'pt-5' : ''].join(' ')}>
               {showGroupHeader && (
-                <div className="px-3 pt-3 pb-1">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">
+                <div className="px-4 pb-1.5">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400">
                     {groupLabel}
                   </span>
                 </div>
@@ -460,18 +460,23 @@ export default function SidebarClient({ role, program = null }: Props) {
                 type="button"
                 onClick={() => !collapsed && toggleSection(section)}
                 className={[
-                  'flex w-full items-center justify-between px-3 py-2',
-                  !collapsed ? 'hover:bg-neutral-50 rounded-lg' : 'justify-center',
+                  'flex w-full items-center justify-between px-3 py-2 mx-1',
+                  !collapsed ? 'hover:bg-neutral-200/50 rounded-lg transition-colors' : 'justify-center',
                 ].join(' ')}
+                style={!collapsed ? { width: 'calc(100% - 0.5rem)' } : undefined}
               >
                 {!collapsed ? (
                   <>
                     <span className={['text-xs font-bold tracking-wide', theme.header].join(' ')}>
                       {lang === 'en' ? (SECTION_EN[section as NavSection] ?? section) : section}
                     </span>
-                    <span className={['text-xs font-medium', theme.header, 'opacity-50'].join(' ')}>
-                      {open ? '▴' : '▾'}
-                    </span>
+                    <ChevronDown
+                      className={[
+                        'h-3.5 w-3.5 transition-transform duration-200',
+                        theme.header, 'opacity-50',
+                        open ? 'rotate-180' : '',
+                      ].join(' ')}
+                    />
                   </>
                 ) : (
                   <span className={['text-[10px] font-bold uppercase tracking-widest', theme.header].join(' ')}>
@@ -512,19 +517,22 @@ export default function SidebarClient({ role, program = null }: Props) {
 
                     const skillActive  = active && it.skill ? SKILL_ACTIVE[it.skill]  : '';
                     const skillHover   = !active && it.skill ? SKILL_HOVER[it.skill]   : '';
+                    const activeColorClasses = it.skill ? skillActive : theme.active;
                     const linkClasses = [
-                      'group flex items-center rounded-lg mx-3 py-1.5 text-sm transition-colors',
-                      'px-3',
+                      'group flex items-center rounded-lg my-0.5 py-2 text-sm transition-colors',
+                      collapsed ? 'mx-2 px-0 justify-center border-l-0' : 'mx-2 pl-[9px] pr-3 border-l-[3px] justify-between',
                       'focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200/70',
-                      collapsed ? 'justify-center' : 'justify-between',
                       active
-                        ? it.skill
-                          ? `${skillActive} font-semibold`
-                          : `${theme.active} font-semibold`
-                        : it.skill
-                          ? `text-neutral-600 ${skillHover}`
-                          : `text-neutral-600 ${theme.hover}`,
+                        ? `${activeColorClasses} font-semibold`
+                        : [
+                            'border-transparent text-neutral-600',
+                            it.skill ? skillHover : theme.hover,
+                          ].join(' '),
                     ].join(' ');
+
+                    // active일 때는 색을 따로 안 주고 Link의 text-* 색(theme.active)을 그대로 물려받는다
+                    // (lucide 아이콘은 stroke="currentColor"라 부모 text color를 그대로 따라감).
+                    const iconColorClass = 'text-neutral-500 group-hover:text-neutral-700';
 
                     return (
                       <li key={it.href}>
@@ -536,8 +544,9 @@ export default function SidebarClient({ role, program = null }: Props) {
                         >
                           {it.icon ? (
                             <it.icon className={[
-                              'shrink-0 transition-colors text-neutral-600',
-                              collapsed ? 'h-4 w-4' : 'h-3.5 w-3.5 mr-2',
+                              'shrink-0 transition-colors',
+                              active ? '' : iconColorClass,
+                              collapsed ? 'h-4 w-4' : 'h-3.5 w-3.5 mr-2.5',
                             ].join(' ')} />
                           ) : !collapsed && (
                             <span className="w-5 shrink-0" />

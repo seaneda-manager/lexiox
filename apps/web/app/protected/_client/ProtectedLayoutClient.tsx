@@ -46,15 +46,15 @@ export default function ProtectedLayoutClient({
         <TopbarClient email={email} role={role} />
       </div>
       <div className="grid grid-cols-[auto_1fr] min-h-0">
-        <aside className="hidden md:flex md:flex-col h-full min-h-0 border-r border-neutral-100">
+        <aside className="hidden md:flex md:flex-col h-full min-h-0 bg-neutral-50 border-r border-neutral-200/70">
           <div className="flex-1 min-h-0 overflow-hidden">
             <SidebarClient role={role} program={program} />
           </div>
           {role === 'student' && (
-            <div className="shrink-0 px-3 pb-1">
+            <div className="shrink-0 mx-2 mb-1">
               <Link
                 href="/student?tour=1"
-                className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs text-neutral-400 hover:bg-neutral-50 hover:text-neutral-600"
+                className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs text-neutral-400 hover:bg-neutral-200/50 hover:text-neutral-600 transition-colors"
               >
                 ❓ 가이드 다시보기
               </Link>
