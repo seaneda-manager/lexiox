@@ -56,7 +56,7 @@ The 4 "choices" must themselves read like natural spoken responses (not descript
 const RESPONSE_FORMAT_CRITICAL = `CRITICAL:
 - Escape all special characters (quotes, newlines)
 - Return ONLY JSON, no markdown or explanations
-- Each choice must have "correct" boolean (not "isCorrect")
+- **Each choice MUST have "correct" boolean — set EXACTLY ONE choice per question to "correct": true, ALL others to "correct": false (not "isCorrect")**
 - For t1 (choose_response) ONLY: each question in "questions[]" MUST have its own "transcript" field (a single spoken sentence) AND its own "testingSeconds" (15-30). Leave the t1 track-level "transcript" as an empty string and "audioSeconds" as 0 — audio is generated per-question, not per-track.
 - For all other tracks: keep ONE track-level "transcript" and "audioSeconds" (questions do NOT need their own transcript). Each question in these tracks still needs its own "testingSeconds" (35-45) — the answer timer resets to this value each time the student moves to a new question.`;
 
@@ -680,6 +680,18 @@ function extractListeningAnswers(items: any[]): string[] {
           if (correct?.id) {
             const letter = correct.id.match(/[ABCD]/);
             answers.push(letter?.[0] || 'A');
+          } else {
+            // Claude가 정답을 생성하지 못했을 때: 첫 번째를 정답으로 설정
+            console.warn('[extractListeningAnswers] No correct choice found. Defaulting first choice to correct.');
+            const firstChoice = q.choices[0];
+            if (firstChoice?.id) {
+              q.choices.forEach((c: any) => c.correct = false);
+              firstChoice.correct = true;
+              const letter = firstChoice.id.match(/[ABCD]/);
+              answers.push(letter?.[0] || 'A');
+            } else {
+              answers.push('A');
+            }
           }
         }
       });
