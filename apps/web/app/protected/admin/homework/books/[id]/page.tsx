@@ -2,8 +2,10 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getServerSupabase } from '@/lib/supabase/server';
 import AddUnitForm from './_client/AddUnitForm';
+import BulkUnitsForm from './_client/BulkUnitsForm';
 import AssignPlanForm from './_client/AssignPlanForm';
 import PlanRow from './_client/PlanRow';
+import UnitRow from './_client/UnitRow';
 
 export const dynamic = 'force-dynamic';
 
@@ -61,7 +63,10 @@ export default async function HomeworkBookDetailPage({ params }: PageProps) {
           {' / '}{book.title}
         </div>
         <h1 className="text-xl font-bold text-neutral-900">{book.title}</h1>
-        <p className="text-xs text-neutral-400 mt-0.5">유닛 {totalUnits}개</p>
+        <p className="text-xs text-neutral-400 mt-0.5">
+          유닛 {totalUnits}개
+          {totalUnits > 0 && ` · 정답 미입력 ${(units ?? []).filter((u) => ((u.answer_key_data as any)?.items?.length ?? 0) === 0).length}개`}
+        </p>
       </header>
 
       {/* 배정된 학생들 */}
@@ -98,22 +103,15 @@ export default async function HomeworkBookDetailPage({ params }: PageProps) {
           <p className="text-sm text-neutral-400">아직 등록된 유닛이 없습니다. 아래에서 추가하세요.</p>
         ) : (
           <div className="space-y-2">
-            {(units ?? []).map((u) => {
-              const itemCount = (u.answer_key_data as any)?.items?.length ?? 0;
-              return (
-                <div key={u.id} className="flex items-center justify-between rounded-lg border border-neutral-100 px-3 py-2">
-                  <span className="text-sm text-neutral-800">
-                    Unit {u.unit_index}{u.title ? ` · ${u.title}` : ''}
-                  </span>
-                  <span className="text-[11px] text-neutral-400">{itemCount}문항</span>
-                </div>
-              );
-            })}
+            {(units ?? []).map((u) => (
+              <UnitRow key={u.id} bookId={bookId} unit={u as any} />
+            ))}
           </div>
         )}
       </section>
 
-      {/* 유닛 추가 */}
+      {/* 구조 일괄 등록 + 유닛 추가 */}
+      <BulkUnitsForm bookId={bookId} nextUnitIndex={totalUnits + 1} />
       <AddUnitForm bookId={bookId} nextUnitIndex={totalUnits + 1} />
     </main>
   );
