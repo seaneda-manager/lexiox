@@ -502,6 +502,13 @@ export default function ListeningTestGeneratorClient() {
     return answers;
   };
 
+  const extractChoiceLetter = (choiceId: string): string => {
+    const match = choiceId.match(/(\d+)/);
+    if (!match) return 'A';
+    const num = parseInt(match[1], 10);
+    return String.fromCharCode(64 + num); // 1→A, 2→B, 3→C, 4→D
+  };
+
   const applyShuffledListeningAnswers = (data: any, shuffledAnswers: string[]): void => {
     let answerIndex = 0;
     const traverse = (obj: any): void => {
@@ -512,7 +519,8 @@ export default function ListeningTestGeneratorClient() {
             if (answerIndex < shuffledAnswers.length) {
               const newCorrectAnswer = shuffledAnswers[answerIndex++];
               q.choices.forEach((c: any) => {
-                c.correct = c.id.match(/[ABCD]/)?.[0] === newCorrectAnswer;
+                const choiceLetter = extractChoiceLetter(c.id);
+                c.correct = choiceLetter === newCorrectAnswer;
               });
             }
           }
