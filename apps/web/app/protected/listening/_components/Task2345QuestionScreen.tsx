@@ -10,7 +10,9 @@ import type { ScriptSegment } from "@/models/listening";
 interface Choice {
   id: string;
   text: string;
-  isCorrect: boolean;
+  /** 채점은 부모(ListeningSessionContainer)가 하고, 여기선 안 읽는다 — 필드명이
+   * "correct"인 실제 데이터와 호환되도록 optional로 둔다. */
+  isCorrect?: boolean;
 }
 
 interface Task2345QuestionScreenProps {

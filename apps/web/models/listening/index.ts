@@ -3,6 +3,7 @@
 // SSOT: Listening 타입은 여기(models/listening)에서만 import 하세요.
 // 기존 레거시 타입/스키마는 그대로 재사용
 import type { LQuestion } from "@/types/types-listening";
+import { isChoiceCorrect } from "@/lib/utils/listeningChoice";
 export * from "@/types/types-listening";
 
 /** -----------------------------
@@ -72,11 +73,22 @@ export interface LListeningTest2026 {
 // Updated TOEFL Listening 2026 — 선형(Linear) 구조 (비적응형)
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** 문항 선택지 (multi-select 대응: isCorrect 배열 위치로 판별) */
+/**
+ * 문항 선택지. 정답 필드는 "correct"가 표준이다 — updated-listening 생성기
+ * 프롬프트가 명시적으로 "Each choice must have "correct" boolean (not "isCorrect")"라고
+ * 지시하기 때문. isCorrect/is_correct는 예전 데이터 호환용 optional fallback일 뿐,
+ * 절대 정답 여부를 판별할 때 이 셋 중 하나만 읽으면 안 된다(과거에 "correct"를 놓쳐서
+ * 실제 시험이 전부 0점 처리되는 버그가 있었다 — lib/utils/listeningChoice.ts의
+ * isChoiceCorrect()를 항상 통해서 읽을 것).
+ */
 export interface LChoice2026 {
   id: string;
   text: string;
-  isCorrect: boolean;
+  correct?: boolean;
+  /** @deprecated "correct"가 표준 필드다. 예전 데이터 호환용으로만 남겨둠. */
+  isCorrect?: boolean;
+  /** @deprecated "correct"가 표준 필드다. 예전 데이터 호환용으로만 남겨둠. */
+  is_correct?: boolean;
   /** 선택지별 해석/설명 */
   explanation?: string;
 }
@@ -210,7 +222,7 @@ export interface LListeningTrack2026Extended extends LListeningTrack2026 {
  * Helpers
  * ------------------------------------*/
 
-/** 모듈 단위 점수 계산 (choices 안의 isCorrect / is_correct 둘 다 지원) */
+/** 모듈 단위 점수 계산 (choices 안의 correct / isCorrect / is_correct 다 지원 — isChoiceCorrect 참고) */
 export function computeListeningModuleScore(
   module: LListeningModule,
   answers: Record<string, string>
@@ -223,10 +235,7 @@ export function computeListeningModuleScore(
       total += 1;
       const user = answers[q.id];
 
-      const choice = (q.choices ?? []).find((c: any) => {
-        // 타입 보호를 느슨하게 해둠 (레거시 호환)
-        return c.isCorrect === true || c.is_correct === true;
-      });
+      const choice = (q.choices ?? []).find((c: any) => isChoiceCorrect(c));
 
       if (user && choice && user === (choice as any).id) {
         correct += 1;

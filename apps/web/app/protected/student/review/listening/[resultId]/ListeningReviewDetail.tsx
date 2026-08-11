@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ChevronDown, ChevronUp, Bookmark, Mic, Volume2 } from "lucide-react";
 import type { LListeningTest2026Linear, LListeningTrack2026, LQuestion2026 } from "@/models/listening";
+import { isChoiceCorrect } from "@/lib/utils/listeningChoice";
 
 type AnswerEntry = { questionId: string; choiceIndex: number; isCorrect: boolean };
 
@@ -226,11 +227,12 @@ export default function ListeningReviewDetail({ resultId, test, answers, module,
                           <div className="space-y-2">
                             {q.choices.map((choice, idx) => {
                               const isChosen = ans != null && q.choices[ans.choiceIndex]?.id === choice.id;
+                              const choiceIsCorrect = isChoiceCorrect(choice);
                               return (
                                 <div
                                   key={choice.id}
                                   className={`rounded p-2.5 space-y-1.5 ${
-                                    choice.isCorrect
+                                    choiceIsCorrect
                                       ? "bg-emerald-100 text-emerald-900"
                                       : isChosen
                                         ? "bg-rose-100 text-rose-900"
@@ -239,8 +241,8 @@ export default function ListeningReviewDetail({ resultId, test, answers, module,
                                 >
                                   <div className="text-sm font-medium">
                                     {String.fromCharCode(65 + idx)}. {choice.text}
-                                    {choice.isCorrect && <span className="ml-2 rounded bg-emerald-200 px-1.5 py-0.5 text-[10px] font-bold text-emerald-800">정답</span>}
-                                    {isChosen && !choice.isCorrect && <span className="ml-2 rounded bg-rose-200 px-1.5 py-0.5 text-[10px] font-bold text-rose-800">내 답</span>}
+                                    {choiceIsCorrect && <span className="ml-2 rounded bg-emerald-200 px-1.5 py-0.5 text-[10px] font-bold text-emerald-800">정답</span>}
+                                    {isChosen && !choiceIsCorrect && <span className="ml-2 rounded bg-rose-200 px-1.5 py-0.5 text-[10px] font-bold text-rose-800">내 답</span>}
                                   </div>
                                   {choice.explanation && (
                                     <div className="text-xs leading-relaxed opacity-90 pl-4 border-l-2 border-current">{choice.explanation}</div>

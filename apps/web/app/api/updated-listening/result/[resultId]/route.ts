@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from "next/server";
 import { getServiceRoleClient } from "@/lib/supabase/server";
+import { isChoiceCorrect } from "@/lib/utils/listeningChoice";
 
 export async function GET(
   req: Request,
@@ -119,9 +120,7 @@ export async function GET(
 
       if (item.questions) {
         for (const q of item.questions) {
-          const correctChoice = q.choices?.find(
-            (c: any) => c.isCorrect === true || c.is_correct === true
-          );
+          const correctChoice = q.choices?.find((c: any) => isChoiceCorrect(c));
           const userAnswer = userAnswers[q.id];
           const isCorrect = userAnswer === correctChoice?.id;
           const explanation = explanationMap.get(q.id);

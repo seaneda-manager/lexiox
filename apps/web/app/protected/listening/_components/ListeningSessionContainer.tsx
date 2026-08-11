@@ -9,6 +9,7 @@ import ListeningScreen from "./ListeningScreen";
 import Task2345QuestionScreen from "./Task2345QuestionScreen";
 import ModuleEndScreen from "./ModuleEndScreen";
 import type { LListeningTest2026Linear, LListeningTrack2026, LQuestion2026 } from "@/models/listening";
+import { isChoiceCorrect } from "@/lib/utils/listeningChoice";
 
 type ScreenType = "directions" | "moduleStart" | "step" | "moduleEnd" | "final";
 
@@ -82,7 +83,7 @@ export default function ListeningSessionContainer({
   const answerList = useMemo(() => Object.values(answers), [answers]);
 
   const recordAnswer = (question: LQuestion2026, choiceIndex: number) => {
-    const isCorrect = choiceIndex >= 0 && !!question.choices?.[choiceIndex]?.isCorrect;
+    const isCorrect = choiceIndex >= 0 && isChoiceCorrect(question.choices?.[choiceIndex]);
     setAnswers((prev) => ({
       ...prev,
       [question.id]: { questionId: question.id, choiceIndex, isCorrect },
