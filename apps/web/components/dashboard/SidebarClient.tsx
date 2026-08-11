@@ -17,7 +17,7 @@ type Icon = React.ComponentType<LucideProps>;
 
 type Role    = 'student' | 'teacher' | 'admin';
 type Program = 'gap' | 'toefl' | 'lexiox' | null;
-type Props   = { role: Role; program?: Program };
+type Props   = { role: Role; program?: Program; hasHiNaesin?: boolean };
 
 // ── Section type: all section keys used across roles ─────────────
 type NavSection =
@@ -181,7 +181,7 @@ const SKILL_DOT: Record<SkillColor, string> = {
 
 
 // ── Component ────────────────────────────────────────────────────
-export default function SidebarClient({ role, program = null }: Props) {
+export default function SidebarClient({ role, program = null, hasHiNaesin = false }: Props) {
   const pathnameRaw = usePathname() || '/';
   const pathname    = normalizePath(pathnameRaw);
   const { lang }    = useLang();
@@ -370,6 +370,15 @@ export default function SidebarClient({ role, program = null }: Props) {
         { section: '내 현황', href: '/student/review',     label: '복습', icon: BookOpen },
         { section: '내 현황', href: '/student/progress',   label: '진도 현황', icon: BarChart2 },
 
+        // program은 'toefl'이지만 Hi-내신 과제를 별도로 배정받은 경우 — program 필드
+        // 하나만으로는 복수 배정을 표현 못 해서, 실제 배정 데이터가 있을 때만 보여준다.
+        ...(hasHiNaesin ? [
+          { section: 'Hi-내신' as NavSection, href: '/hi-naesin',        label: 'Hi-내신 드릴', icon: PlayCircle },
+          { section: 'Hi-내신' as NavSection, href: '/hi-naesin/passages', label: 'Reading', skill: 'reading' as SkillColor },
+          { section: 'Hi-내신' as NavSection, href: '/hi-naesin/stats',  label: '학습 현황', icon: BarChart2 },
+          { section: 'Hi-내신' as NavSection, href: '/hi-naesin/review', label: '직전정리', icon: BookOpen },
+        ] : []),
+
         { section: '설정', href: '/settings', label: '설정', icon: Settings },
       ];
     }
@@ -396,9 +405,16 @@ export default function SidebarClient({ role, program = null }: Props) {
       { section: 'Updated TOEFL' as NavSection, href: '/speaking-2026/drills',   label: 'Speaking 훈련', icon: PlayCircle },
       { section: 'Updated TOEFL' as NavSection, href: '/speaking-2026/shadowing', label: '쉐도잉 게임', icon: PlayCircle },
 
+      ...(hasHiNaesin ? [
+        { section: 'Hi-내신' as NavSection, href: '/hi-naesin',        label: 'Hi-내신 드릴', icon: PlayCircle },
+        { section: 'Hi-내신' as NavSection, href: '/hi-naesin/passages', label: 'Reading', skill: 'reading' as SkillColor },
+        { section: 'Hi-내신' as NavSection, href: '/hi-naesin/stats',  label: '학습 현황', icon: BarChart2 },
+        { section: 'Hi-내신' as NavSection, href: '/hi-naesin/review', label: '직전정리', icon: BookOpen },
+      ] : []),
+
       { section: '설정', href: '/settings', label: '설정', icon: Settings },
     ];
-  }, [role, program]);
+  }, [role, program, hasHiNaesin]);
 
   // ── Group items by section (preserves insertion order) ──────
   const groups = useMemo(() => {

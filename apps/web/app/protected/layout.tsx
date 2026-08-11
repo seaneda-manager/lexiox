@@ -51,6 +51,21 @@ export default async function ProtectedLayout({ children }: { children: ReactNod
 
   const showMobileTabBar = role === 'student' && program === 'lexiox';
 
+  // program 필드 하나로는 "복수 배정"을 못 나타낸다 — 예: program이 'toefl'인 학생도
+  // Hi-내신 과제를 따로 배정받을 수 있는데, 그러면 사이드바에 Hi-내신 메뉴가 아예 안 보이는
+  // 문제가 있었다(kimseung74@lexiox.com 사례). program이 'lexiox'가 아니어도 실제
+  // hi_naesin_assignments가 있으면 사이드바에 Hi-내신 섹션을 추가로 보여준다.
+  let hasHiNaesin = false;
+  if (user && role === 'student' && program !== 'lexiox') {
+    const { data: hiNaesinRow } = await supabase
+      .from('hi_naesin_assignments')
+      .select('id')
+      .eq('student_id', user.id)
+      .limit(1)
+      .maybeSingle();
+    hasHiNaesin = !!hiNaesinRow;
+  }
+
   return (
     <LangProvider>
       <ProtectedLayoutClient
@@ -60,6 +75,7 @@ export default async function ProtectedLayout({ children }: { children: ReactNod
         avatarUrl={avatarUrl}
         fullName={fullName}
         showMobileTabBar={showMobileTabBar}
+        hasHiNaesin={hasHiNaesin}
       >
         {children}
       </ProtectedLayoutClient>

@@ -20,6 +20,7 @@ type Props = {
   avatarUrl: string | null;
   fullName: string | null;
   showMobileTabBar: boolean;
+  hasHiNaesin: boolean;
 };
 
 export default function ProtectedLayoutClient({
@@ -30,6 +31,7 @@ export default function ProtectedLayoutClient({
   avatarUrl,
   fullName,
   showMobileTabBar,
+  hasHiNaesin,
 }: Props) {
   const pathname = usePathname();
 
@@ -48,7 +50,7 @@ export default function ProtectedLayoutClient({
       <div className="grid grid-cols-[auto_1fr] min-h-0">
         <aside className="hidden md:flex md:flex-col h-full min-h-0 bg-neutral-50 border-r border-neutral-200/70">
           <div className="flex-1 min-h-0 overflow-hidden">
-            <SidebarClient role={role} program={program} />
+            <SidebarClient role={role} program={program} hasHiNaesin={hasHiNaesin} />
           </div>
           {role === 'student' && (
             <div className="shrink-0 mx-2 mb-1">
