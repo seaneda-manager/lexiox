@@ -1,7 +1,7 @@
 import { getServiceSupabase } from "@/lib/supabase/service";
 
 // student_vocab_plans와 동일한 weekdays 컨벤션: JS Date.getDay() 기준 0=일 ... 6=토
-function computeOccurrenceDates(startDateStr: string, weekdays: number[], count: number): string[] {
+export function computeOccurrenceDates(startDateStr: string, weekdays: number[], count: number): string[] {
   const dates: string[] = [];
   const weekdaySet = new Set(weekdays);
   const cursor = new Date(`${startDateStr}T00:00:00`);
@@ -106,4 +106,21 @@ export async function syncPlanAssignments(planId: string): Promise<{ created: nu
   }
 
   return { created: pendingUnits.length };
+}
+
+/**
+ * 남은 유닛 수를 기준으로 "이 교재를 언제쯤 다 끝낼지" 추정한다.
+ * 총 유닛 수(정답 미입력 포함, 등록된 커리큘럼 구조 전체)를 기준으로 계산하므로
+ * 아직 스캔 전인 유닛도 앞으로 채워질 거라고 가정한 추정치다.
+ */
+export function estimateCompletionDate(
+  remainingUnits: number,
+  weekdays: number[],
+  unitsPerSession: number,
+): string | null {
+  if (remainingUnits <= 0) return null;
+  const occurrenceCount = Math.ceil(remainingUnits / Math.max(1, unitsPerSession));
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const dates = computeOccurrenceDates(todayStr, weekdays, occurrenceCount);
+  return dates[dates.length - 1] ?? null;
 }

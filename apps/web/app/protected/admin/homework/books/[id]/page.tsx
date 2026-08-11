@@ -6,6 +6,7 @@ import BulkUnitsForm from './_client/BulkUnitsForm';
 import AssignPlanForm from './_client/AssignPlanForm';
 import PlanRow from './_client/PlanRow';
 import UnitRow from './_client/UnitRow';
+import { estimateCompletionDate } from '@/lib/homework/generatePlanAssignments';
 
 export const dynamic = 'force-dynamic';
 
@@ -76,16 +77,24 @@ export default async function HomeworkBookDetailPage({ params }: PageProps) {
           <p className="text-sm text-neutral-400">아직 배정된 학생이 없습니다.</p>
         ) : (
           <div className="space-y-2">
-            {(plans ?? []).map((p) => (
-              <PlanRow
-                key={p.id}
-                bookId={bookId}
-                plan={p}
-                studentName={studentNameById.get(p.student_id) ?? '이름 미설정'}
-                totalUnits={totalUnits}
-                generatedCount={generatedCountByPlan.get(p.id) ?? 0}
-              />
-            ))}
+            {(plans ?? []).map((p) => {
+              const generatedCount = generatedCountByPlan.get(p.id) ?? 0;
+              const remaining = Math.max(0, totalUnits - generatedCount);
+              const estimatedDate = p.is_paused
+                ? null
+                : estimateCompletionDate(remaining, p.weekdays ?? [], p.units_per_session ?? 1);
+              return (
+                <PlanRow
+                  key={p.id}
+                  bookId={bookId}
+                  plan={p}
+                  studentName={studentNameById.get(p.student_id) ?? '이름 미설정'}
+                  totalUnits={totalUnits}
+                  generatedCount={generatedCount}
+                  estimatedCompletionDate={estimatedDate}
+                />
+              );
+            })}
           </div>
         )}
       </section>
