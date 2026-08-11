@@ -15,6 +15,12 @@ type Plan = {
   start_date: string;
 };
 
+type LevelInfo = {
+  level: string | null;
+  expectedSchoolGrade: string | null;
+  expectedMockExam: string | null;
+};
+
 export default function PlanRow({
   bookId,
   plan,
@@ -22,6 +28,7 @@ export default function PlanRow({
   totalUnits,
   generatedCount,
   estimatedCompletionDate,
+  levelInfo,
 }: {
   bookId: string;
   plan: Plan;
@@ -29,10 +36,17 @@ export default function PlanRow({
   totalUnits: number;
   generatedCount: number;
   estimatedCompletionDate: string | null;
+  levelInfo?: LevelInfo;
 }) {
   const [isPending, startTransition] = useTransition();
   const weekdayLabel = (plan.weekdays ?? []).map((w) => WEEKDAY_KO[w]).join(', ');
   const isDone = totalUnits > 0 && generatedCount >= totalUnits;
+
+  const levelSummary = [
+    levelInfo?.level,
+    levelInfo?.expectedSchoolGrade && `예상 내신 ${levelInfo.expectedSchoolGrade}`,
+    levelInfo?.expectedMockExam && `모의고사 ${levelInfo.expectedMockExam}`,
+  ].filter(Boolean).join(' · ');
 
   return (
     <div className="flex items-center justify-between gap-3 rounded-lg border border-neutral-100 px-3 py-2">
@@ -42,10 +56,14 @@ export default function PlanRow({
           {weekdayLabel || '요일 미지정'} · 회당 {plan.units_per_session}유닛 · 생성됨 {generatedCount}/{totalUnits}
         </p>
         {isDone ? (
-          <p className="text-[11px] font-medium text-emerald-600">🎓 이 교재 완료</p>
+          <>
+            <p className="text-[11px] font-medium text-emerald-600">🎓 이 교재 완료</p>
+            {levelSummary && <p className="text-[11px] text-violet-600">{levelSummary}</p>}
+          </>
         ) : estimatedCompletionDate ? (
           <p className="text-[11px] text-sky-600">
             예상 완료일 {new Date(estimatedCompletionDate).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })}
+            {levelSummary && ` · 완료 시 ${levelSummary}`}
           </p>
         ) : null}
       </div>

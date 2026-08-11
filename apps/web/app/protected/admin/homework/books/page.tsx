@@ -15,7 +15,7 @@ export default async function HomeworkBooksPage() {
 
   const { data: books } = await supabase
     .from('homework_books')
-    .select('id, title, subject, total_units, is_active, created_at')
+    .select('id, title, subject, total_units, is_active, level, recommended_grade, created_at')
     .order('created_at', { ascending: false });
 
   const bookIds = (books ?? []).map((b) => b.id);
@@ -75,6 +75,12 @@ export default async function HomeworkBooksPage() {
                     )}
                     {!b.is_active && (
                       <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] text-neutral-400">비활성</span>
+                    )}
+                    {b.level && (
+                      <span className="rounded-full bg-violet-50 px-2 py-0.5 text-[11px] text-violet-600">{b.level}</span>
+                    )}
+                    {b.recommended_grade && (
+                      <span className="text-[11px] text-neutral-400">{b.recommended_grade}</span>
                     )}
                   </div>
                   <h2 className="text-sm font-semibold text-neutral-900">{b.title}</h2>

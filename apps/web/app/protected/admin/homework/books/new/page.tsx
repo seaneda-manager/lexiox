@@ -23,6 +23,10 @@ export default function NewHomeworkBookPage() {
   const router = useRouter();
   const [title, setTitle] = useState('');
   const [subject, setSubject] = useState('mixed');
+  const [level, setLevel] = useState('');
+  const [recommendedGrade, setRecommendedGrade] = useState('');
+  const [expectedSchoolGrade, setExpectedSchoolGrade] = useState('');
+  const [expectedMockExam, setExpectedMockExam] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,7 +43,16 @@ export default function NewHomeworkBookPage() {
 
       const { data: book, error: dbError } = await supabase
         .from('homework_books')
-        .insert({ title: title.trim(), subject, created_by: user.id, is_active: true })
+        .insert({
+          title: title.trim(),
+          subject,
+          level: level.trim() || null,
+          recommended_grade: recommendedGrade.trim() || null,
+          expected_school_grade: expectedSchoolGrade.trim() || null,
+          expected_mock_exam: expectedMockExam.trim() || null,
+          created_by: user.id,
+          is_active: true,
+        })
         .select('id')
         .single();
 
@@ -97,6 +110,55 @@ export default function NewHomeworkBookPage() {
             ))}
           </div>
         </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-neutral-600">레벨 (선택)</label>
+            <input
+              type="text"
+              value={level}
+              onChange={(e) => setLevel(e.target.value)}
+              placeholder="예: Level 3"
+              className="w-full rounded-xl border border-neutral-200 px-4 py-2.5 text-sm outline-none focus:border-neutral-400"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-neutral-600">권장 학년/나이 (선택)</label>
+            <input
+              type="text"
+              value={recommendedGrade}
+              onChange={(e) => setRecommendedGrade(e.target.value)}
+              placeholder="예: 중2~중3"
+              className="w-full rounded-xl border border-neutral-200 px-4 py-2.5 text-sm outline-none focus:border-neutral-400"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-neutral-600">마스터 시 예상 내신 (선택)</label>
+            <input
+              type="text"
+              value={expectedSchoolGrade}
+              onChange={(e) => setExpectedSchoolGrade(e.target.value)}
+              placeholder="예: 2~3등급"
+              className="w-full rounded-xl border border-neutral-200 px-4 py-2.5 text-sm outline-none focus:border-neutral-400"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-neutral-600">마스터 시 예상 모의고사 (선택)</label>
+            <input
+              type="text"
+              value={expectedMockExam}
+              onChange={(e) => setExpectedMockExam(e.target.value)}
+              placeholder="예: 1~2등급"
+              className="w-full rounded-xl border border-neutral-200 px-4 py-2.5 text-sm outline-none focus:border-neutral-400"
+            />
+          </div>
+        </div>
+        <p className="text-[11px] text-neutral-400">
+          예상 내신/모의고사는 실제 데이터 기반 예측이 아니라, 선생님이 경험적으로 정의하는 기준치입니다.
+        </p>
 
         {error && (
           <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">

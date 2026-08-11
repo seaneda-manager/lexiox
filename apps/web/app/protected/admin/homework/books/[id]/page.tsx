@@ -6,6 +6,7 @@ import BulkUnitsForm from './_client/BulkUnitsForm';
 import AssignPlanForm from './_client/AssignPlanForm';
 import PlanRow from './_client/PlanRow';
 import UnitRow from './_client/UnitRow';
+import BookInfoPanel from './_client/BookInfoPanel';
 import { estimateCompletionDate } from '@/lib/homework/generatePlanAssignments';
 
 export const dynamic = 'force-dynamic';
@@ -18,7 +19,7 @@ export default async function HomeworkBookDetailPage({ params }: PageProps) {
 
   const { data: book } = await supabase
     .from('homework_books')
-    .select('id, title, subject')
+    .select('id, title, subject, level, recommended_grade, expected_school_grade, expected_mock_exam')
     .eq('id', bookId)
     .maybeSingle();
   if (!book) notFound();
@@ -70,6 +71,16 @@ export default async function HomeworkBookDetailPage({ params }: PageProps) {
         </p>
       </header>
 
+      <BookInfoPanel
+        bookId={bookId}
+        info={{
+          level: book.level,
+          recommendedGrade: book.recommended_grade,
+          expectedSchoolGrade: book.expected_school_grade,
+          expectedMockExam: book.expected_mock_exam,
+        }}
+      />
+
       {/* 배정된 학생들 */}
       <section className="rounded-2xl border border-neutral-200 bg-white p-5 space-y-3">
         <h2 className="text-xs font-bold uppercase tracking-wide text-neutral-400">배정된 학생</h2>
@@ -92,6 +103,11 @@ export default async function HomeworkBookDetailPage({ params }: PageProps) {
                   totalUnits={totalUnits}
                   generatedCount={generatedCount}
                   estimatedCompletionDate={estimatedDate}
+                  levelInfo={{
+                    level: book.level,
+                    expectedSchoolGrade: book.expected_school_grade,
+                    expectedMockExam: book.expected_mock_exam,
+                  }}
                 />
               );
             })}
