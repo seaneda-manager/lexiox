@@ -640,18 +640,15 @@ export async function POST(req: Request) {
     const { answers: shuffledHard, wasShuffled: hardShuffled } = validateAndShuffleIfNeeded(hardAnswers);
     const { answers: shuffledEasy, wasShuffled: easyShuffled } = validateAndShuffleIfNeeded(easyAnswers);
 
-    if (m1Shuffled) {
-      applyShuffledListeningAnswers(module1Items, shuffledM1);
-      module1Tracks = buildTracks(module1Items, 'm1');
-    }
-    if (hardShuffled) {
-      applyShuffledListeningAnswers(hardItems, shuffledHard);
-      hardTracks = buildTracks(hardItems, 'm2h');
-    }
-    if (easyShuffled) {
-      applyShuffledListeningAnswers(easyItems, shuffledEasy);
-      easyTracks = buildTracks(easyItems, 'm2e');
-    }
+    // ✅ Always apply answers to set correct field on choices (not just when shuffled)
+    applyShuffledListeningAnswers(module1Items, m1Shuffled ? shuffledM1 : module1Answers);
+    module1Tracks = buildTracks(module1Items, 'm1');
+
+    applyShuffledListeningAnswers(hardItems, hardShuffled ? shuffledHard : hardAnswers);
+    hardTracks = buildTracks(hardItems, 'm2h');
+
+    applyShuffledListeningAnswers(easyItems, easyShuffled ? shuffledEasy : easyAnswers);
+    easyTracks = buildTracks(easyItems, 'm2e');
 
     return NextResponse.json({ ok: true, id: testId, payload: {
       ...payload,
