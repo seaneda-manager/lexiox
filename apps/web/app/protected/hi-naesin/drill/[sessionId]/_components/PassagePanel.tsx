@@ -8,6 +8,8 @@ type Props = {
   passageTranslation: string | null;
   highlightText: string | null;
   highlightType: 'sentence' | 'word' | null;
+  /** 해석/작문 문제를 푸는 중엔 번역이 곧 정답이라 토글 자체를 숨긴다 */
+  hideTranslationToggle?: boolean;
 };
 
 function HighlightedText({
@@ -64,20 +66,31 @@ function HighlightedText({
   );
 }
 
-export default function PassagePanel({ passageText, passageTranslation, highlightText, highlightType }: Props) {
+export default function PassagePanel({
+  passageText,
+  passageTranslation,
+  highlightText,
+  highlightType,
+  hideTranslationToggle = false,
+}: Props) {
   const [showTranslation, setShowTranslation] = useState(false);
+  const canShowTranslation = !hideTranslationToggle && showTranslation;
 
   return (
     <div className="flex flex-col gap-4 rounded-2xl border bg-white p-6">
       {passageTranslation && (
-        <div className="flex justify-end">
-          <button
-            type="button"
-            onClick={() => setShowTranslation((v) => !v)}
-            className="text-xs text-neutral-400 hover:text-neutral-700 transition-colors"
-          >
-            {showTranslation ? '번역 숨기기' : '번역 보기'}
-          </button>
+        <div className="flex items-center justify-end gap-2">
+          {hideTranslationToggle ? (
+            <span className="text-[11px] text-neutral-300">해석/작문 중엔 번역이 숨겨져요</span>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowTranslation((v) => !v)}
+              className="text-xs text-neutral-400 hover:text-neutral-700 transition-colors"
+            >
+              {showTranslation ? '번역 숨기기' : '번역 보기'}
+            </button>
+          )}
         </div>
       )}
 
@@ -85,7 +98,7 @@ export default function PassagePanel({ passageText, passageTranslation, highligh
         <HighlightedText text={passageText} highlight={highlightText} type={highlightType} />
       </div>
 
-      {showTranslation && passageTranslation && (
+      {canShowTranslation && passageTranslation && (
         <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-xs leading-relaxed text-blue-800">
           {passageTranslation}
         </div>

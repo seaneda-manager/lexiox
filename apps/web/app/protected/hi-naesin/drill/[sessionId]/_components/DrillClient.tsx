@@ -51,6 +51,12 @@ const DRILL_LABEL: Record<string, string> = {
   identify_categorize:  '구조 분석',
 };
 
+// 해석/작문 계열 문제를 푸는 동안엔 지문 번역을 보여주면 정답을 그대로 알려주는 셈이라
+// 번역 보기 토글 자체를 숨긴다.
+const TRANSLATION_REVEALING_TYPES = new Set([
+  'translation', 'translation_arrange', 'translation_choice', 'writing', 'writing_arrange',
+]);
+
 const DRILL_INSTRUCTION: Record<string, string> = {
   vocab:               '영어 단어의 우리말 뜻을 입력하세요.',
   translation_arrange: '한글 생각단위 조각을 순서대로 클릭해 번역을 조립하세요.',
@@ -274,6 +280,7 @@ export default function DrillClient({
             passageTranslation={passageTranslation}
             highlightText={highlightText}
             highlightType={highlightType}
+            hideTranslationToggle={TRANSLATION_REVEALING_TYPES.has(currentType)}
           />
         </div>
 
