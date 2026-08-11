@@ -261,6 +261,15 @@ export default function AdminPage() {
           ]}
         />
         <DashCard
+          title="레벨 테스트"
+          description="문법·어휘·듣기·읽기·말하기 종합 레벨 테스트 결과를 검토하고 추천 레벨을 지정합니다."
+          links={[
+            { label: '결과 검토', href: '/admin/level-test', primary: true },
+            { label: '문제은행 관리', href: '/admin/level-test/questions' },
+          ]}
+          color="border-indigo-100"
+        />
+        <DashCard
           title="결과 확인"
           description="학생별 풀이 이력과 문항별 정오답을 확인합니다."
           links={[

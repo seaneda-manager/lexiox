@@ -287,6 +287,7 @@ export default function SidebarClient({ role, program = null }: Props) {
         { section: '선생님 도구' as NavSection, href: '/admin/homework',           label: '숙제 채점',    icon: ClipboardCheck },
         { section: '선생님 도구' as NavSection, href: '/admin/homework/books',     label: '교재별 정기 숙제', icon: Library },
         { section: '선생님 도구' as NavSection, href: '/admin/deepcheck',          label: '🧠 DeepCheck 현황', icon: BookText },
+        { section: '선생님 도구' as NavSection, href: '/admin/level-test',         label: '🧭 레벨 테스트', icon: BarChart2 },
         { section: '선생님 도구' as NavSection, href: '/admin/lectures',           label: '강의 관리',    icon: PlayCircle },
         { section: '선생님 도구' as NavSection, href: '/admin/toefl/curriculum',     label: 'TOEFL 커리',     icon: PlayCircle },
         { section: '선생님 도구' as NavSection, href: '/admin/toefl/content/practice', label: 'Practice 지문', icon: PlayCircle },
@@ -335,6 +336,7 @@ export default function SidebarClient({ role, program = null }: Props) {
         { section: '숙제', href: '/student/exams',    label: '📋 예상문제', icon: CheckSquare },
         { section: '숙제', href: '/student/homework', label: '숙제 채점', icon: ClipboardCheck },
         { section: '숙제', href: '/student/deepcheck', label: '🧠 DeepCheck', icon: BookText },
+        { section: '숙제', href: '/student/level-test', label: '🧭 레벨 테스트', icon: BarChart2 },
         { section: '숙제', href: '/student/lectures', label: '🎬 강의', icon: PlayCircle },
 
         { section: '설정', href: '/student/progress', label: '포인트 히스토리', icon: BarChart2 },
@@ -362,6 +364,7 @@ export default function SidebarClient({ role, program = null }: Props) {
         { section: '내 현황', href: '/student/exams',       label: '📋 예상문제', icon: CheckSquare },
         { section: '내 현황', href: '/student/homework',   label: '숙제 채점', icon: ClipboardCheck },
         { section: '내 현황', href: '/student/deepcheck', label: '🧠 DeepCheck', icon: BookText },
+        { section: '내 현황', href: '/student/level-test', label: '🧭 레벨 테스트', icon: BarChart2 },
         { section: '내 현황', href: '/student/lectures',  label: '🎬 강의', icon: PlayCircle },
         { section: '내 현황', href: '/student/tests',      label: '시험 목록', icon: FileText },
         { section: '내 현황', href: '/student/review',     label: '복습', icon: BookOpen },
@@ -381,6 +384,7 @@ export default function SidebarClient({ role, program = null }: Props) {
       { section: '내 학습', href: '/student/progress',  label: '진도 현황', icon: BarChart2 },
       { section: '내 학습', href: '/student/homework',  label: '숙제', icon: ClipboardCheck },
       { section: '내 학습', href: '/student/deepcheck', label: '🧠 DeepCheck', icon: BookText },
+      { section: '내 학습', href: '/student/level-test', label: '🧭 레벨 테스트', icon: BarChart2 },
       { section: '내 학습', href: '/student/lectures',  label: '🎬 강의', icon: PlayCircle },
 
       { section: 'Updated TOEFL' as NavSection, href: '/updated-reading',        label: 'Reading',   icon: BookOpen },
