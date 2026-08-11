@@ -256,11 +256,12 @@ export default function DrillClient({
       <div className="flex items-center gap-3">
         <Link
           href="/hi-naesin"
-          className="flex items-center gap-1.5 rounded-lg bg-neutral-100 px-3 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-200 transition-colors shrink-0"
+          className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 transition-colors shrink-0"
         >
           ← 목록
         </Link>
-        <p className="text-sm font-medium text-neutral-600 truncate">{passageTitle}</p>
+        <div className="h-4 w-px bg-neutral-200 shrink-0" />
+        <h1 className="text-lg font-semibold text-neutral-900 truncate">{passageTitle}</h1>
       </div>
 
       {/* 2-column layout */}

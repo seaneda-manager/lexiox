@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   ChevronRight, ChevronDown,
   LayoutDashboard, BookOpen, Headphones, Mic, PenLine, BookText,
@@ -12,12 +12,15 @@ import {
   type LucideProps,
 } from 'lucide-react';
 import { useLang } from '@/contexts/LangContext';
+import { normalizeRoutePath } from '@/lib/utils/examRoute';
 
 type Icon = React.ComponentType<LucideProps>;
 
 type Role    = 'student' | 'teacher' | 'admin';
 type Program = 'gap' | 'toefl' | 'lexiox' | null;
-type Props   = { role: Role; program?: Program; hasHiNaesin?: boolean };
+// collapsed는 ProtectedLayoutClient가 소유한다 — 사이드바 하단 프로필 카드도
+// 같은 상태를 봐야 접혔을 때 서로 어긋나지 않는다.
+type Props   = { role: Role; program?: Program; hasHiNaesin?: boolean; collapsed: boolean };
 
 // ── Section type: all section keys used across roles ─────────────
 type NavSection =
@@ -91,15 +94,7 @@ const LEGACY_ITEMS = [
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────
-function normalizePath(s: string | null | undefined) {
-  if (!s) return '/';
-  let clean = s.split('?')[0];
-  if (!clean.startsWith('/')) clean = '/' + clean;
-  clean = clean.replace(/\/\([^/]+\)/g, '');
-  clean = clean.replace(/\/+$/, '');
-  if (!clean) clean = '/';
-  return clean;
-}
+const normalizePath = normalizeRoutePath;
 
 function collapsedLabel(section: string) {
   const map: Record<string, string> = {
@@ -181,12 +176,11 @@ const SKILL_DOT: Record<SkillColor, string> = {
 
 
 // ── Component ────────────────────────────────────────────────────
-export default function SidebarClient({ role, program = null, hasHiNaesin = false }: Props) {
+export default function SidebarClient({ role, program = null, hasHiNaesin = false, collapsed }: Props) {
   const pathnameRaw = usePathname() || '/';
   const pathname    = normalizePath(pathnameRaw);
   const { lang }    = useLang();
 
-  const [collapsed, setCollapsed]   = useState(false);
   const [legacyOpen, setLegacyOpen] = useState(false);
 
   // ── Initial open-section state ──────────────────────────────
@@ -223,20 +217,6 @@ export default function SidebarClient({ role, program = null, hasHiNaesin = fals
     if (cur !== '/' && tgt !== '/' && cur.endsWith(tgt)) return true;
     return false;
   };
-
-  // ── Exam-route auto-collapse ─────────────────────────────────
-  const isExamRoute = useMemo(() => {
-    const p = normalizePath(pathnameRaw);
-    const exam = /(study|test|adaptive-demo|demo)/;
-    return (
-      (/\/updated-reading\//.test(p)  && exam.test(p)) ||
-      (/\/updated-listening\//.test(p) && exam.test(p)) ||
-      (/\/speaking-2026\//.test(p) && exam.test(p)) ||
-      (/\/writing-2026\//.test(p)  && exam.test(p)) ||
-      (/\/voca\//.test(p)          && exam.test(p)) ||
-      /\/hi-naesin\/drill\//.test(p)
-    );
-  }, [pathnameRaw]);
 
   // ── Nav items: per role + per program ────────────────────────
   const items = useMemo<NavItem[]>(() => {
@@ -426,33 +406,13 @@ export default function SidebarClient({ role, program = null, hasHiNaesin = fals
     return [...map.entries()] as [string, NavItem[]][];
   }, [items]);
 
-  // ── Sidebar events ────────────────────────────────────────────
-  useEffect(() => {
-    const handler = () => setCollapsed((v) => !v);
-    document.addEventListener('toggle-sidebar', handler);
-    return () => document.removeEventListener('toggle-sidebar', handler);
-  }, []);
-
-  useEffect(() => {
-    if (isExamRoute) setCollapsed(true);
-  }, [isExamRoute]);
-
   // ── Legacy visibility: hide for program-assigned students ───
   const showLegacy = role !== 'student' || program === null;
 
-  // ── Width ─────────────────────────────────────────────────────
-  const widthClass = collapsed
-    ? isExamRoute ? 'w-0 border-0' : 'w-14'
-    : 'w-60';
-
+  // 실제 너비/숨김은 부모(ProtectedLayoutClient)의 <aside>가 결정한다 —
+  // 여기서는 collapsed prop에 따라 아이콘 전용 레이아웃으로만 전환한다.
   return (
-    <div
-      className={[
-        'flex flex-col bg-neutral-50 transition-all duration-300 h-full',
-        widthClass,
-        !collapsed || !isExamRoute ? '' : '',
-      ].join(' ')}
-    >
+    <div className="flex flex-col bg-neutral-50 h-full w-full">
       <nav className="flex-1 overflow-y-auto py-3 text-sm">
         {groups.map(([section, list], idx) => {
           const open      = openSections[section] ?? true;
