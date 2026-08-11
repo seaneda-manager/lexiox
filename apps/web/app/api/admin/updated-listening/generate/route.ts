@@ -681,13 +681,14 @@ function extractListeningAnswers(items: any[]): string[] {
             const letter = correct.id.match(/[ABCD]/);
             answers.push(letter?.[0] || 'A');
           } else {
-            // Claude가 정답을 생성하지 못했을 때: 첫 번째를 정답으로 설정
-            console.warn('[extractListeningAnswers] No correct choice found. Defaulting first choice to correct.');
-            const firstChoice = q.choices[0];
-            if (firstChoice?.id) {
+            // Claude가 정답을 생성하지 못했을 때: 무작위로 정답 선택 (A로 몰리는 현상 방지)
+            console.warn('[extractListeningAnswers] No correct choice found. Randomly selecting one as correct.');
+            const randomIdx = Math.floor(Math.random() * q.choices.length);
+            const randomChoice = q.choices[randomIdx];
+            if (randomChoice?.id) {
               q.choices.forEach((c: any) => c.correct = false);
-              firstChoice.correct = true;
-              const letter = firstChoice.id.match(/[ABCD]/);
+              randomChoice.correct = true;
+              const letter = randomChoice.id.match(/[ABCD]/);
               answers.push(letter?.[0] || 'A');
             } else {
               answers.push('A');
