@@ -46,6 +46,14 @@ Example trapTypes:
 - overstatement: Uses "Always", "Never", "Must", etc.
 - not_mentioned: Plausible but not from utterance
 
+**CRITICAL - ANSWER DISTRIBUTION**:
+Randomize which choice (c1, c2, c3, or c4) is the correct answer. Do NOT always make c1 correct.
+Examples:
+- Question 1: c2 is correct (id: "c2", "correct": true; others false)
+- Question 2: c4 is correct (id: "c4", "correct": true; others false)
+- Question 3: c1 is correct (id: "c1", "correct": true; others false)
+- etc.
+
 **Each question's format** (goes inside t1.questions[]):
 {
   "id": "q[number]",
@@ -55,12 +63,13 @@ Example trapTypes:
   "testingSeconds": 20,
   "stem": "",
   "choices": [
-    {"id": "c1", "text": "[A natural response to the spoken line]", "correct": true},
-    {"id": "c2", "text": "[Word trap response]", "correct": false},
-    {"id": "c3", "text": "[Overstatement response]", "correct": false},
-    {"id": "c4", "text": "[Not mentioned / irrelevant response]", "correct": false}
+    {"id": "c1", "text": "[response A]", "correct": false},
+    {"id": "c2", "text": "[response B]", "correct": true},
+    {"id": "c3", "text": "[response C]", "correct": false},
+    {"id": "c4", "text": "[response D]", "correct": false}
   ]
 }
+Note: In this example, c2 is correct. In other questions, make c1, c3, or c4 correct instead. RANDOMIZE.
 Leave "stem" as an empty string "" — do not write a meta-question like "What does the speaker imply?".
 The 4 "choices" must themselves read like natural spoken responses (not descriptions of responses).`;
 
