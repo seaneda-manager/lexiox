@@ -152,6 +152,73 @@ export async function selectAcademicPassageProblem(
 }
 
 /**
+ * Listening Response (1번 유형) 문제 5개 선택
+ */
+export async function selectListeningResponseProblems(
+  studentId: string | undefined,
+  difficulty: ProblemDifficulty,
+  recentTopics: Set<string>
+): Promise<string[]> {
+  const { data, error } = await supabase
+    .from('problem_bank_listening_response_2026')
+    .select('id, topic')
+    .eq('difficulty', difficulty)
+    .limit(50);
+
+  if (error) {
+    console.error('Error selecting listening response problems:', error);
+    return [];
+  }
+
+  if (!data || data.length === 0) return [];
+
+  const selected: string[] = [];
+  const tempTopics = new Set(recentTopics);
+
+  for (const row of data) {
+    if (selected.length >= 5) break;
+    if (!tempTopics.has(row.topic)) {
+      selected.push(row.id);
+      tempTopics.add(row.topic);
+    }
+  }
+
+  return selected;
+}
+
+/**
+ * Listening Track (2/3/4번 유형 - Conversation/Announcement/Lecture) 1개 선택
+ */
+export async function selectListeningTrackProblem(
+  studentId: string | undefined,
+  difficulty: ProblemDifficulty,
+  recentTopics: Set<string>
+): Promise<string | null> {
+  const trackTypes = ['conversation', 'announcement', 'lecture'];
+
+  for (const trackType of trackTypes) {
+    const { data, error } = await supabase
+      .from('problem_bank_listening_track_2026')
+      .select('id, topic')
+      .eq('difficulty', difficulty)
+      .eq('track_type', trackType)
+      .limit(50);
+
+    if (error) {
+      console.error(`Error selecting listening ${trackType} problem:`, error);
+      continue;
+    }
+
+    if (data && data.length > 0) {
+      const available = data.find(row => !recentTopics.has(row.topic));
+      if (available?.id) return available.id;
+    }
+  }
+
+  return null;
+}
+
+/**
  * Daily Task용 문제 조합 생성
  */
 export async function createProblemCombination(
@@ -163,6 +230,8 @@ export async function createProblemCombination(
   complete_words_ids: string[];
   daily_life_ids: string[];
   academic_passage_ids: string[];
+  listening_response_ids: string[];
+  listening_track_id: string | null;
 }> {
   const composition =
     require('@/lib/types/problem-bank').DAILY_TASK_COMPOSITIONS[taskType];
@@ -175,6 +244,8 @@ export async function createProblemCombination(
     complete_words_ids: [] as string[],
     daily_life_ids: [] as string[],
     academic_passage_ids: [] as string[],
+    listening_response_ids: [] as string[],
+    listening_track_id: null as string | null,
   };
 
   // Complete Words 선택 (짧은 지문 기반)
@@ -220,6 +291,30 @@ export async function createProblemCombination(
     }
   }
 
+  // Listening Response 선택 (5문제)
+  const listeningResponseIds = await selectListeningResponseProblems(studentId, difficulty, recentTopics as Set<string>);
+  result.listening_response_ids = listeningResponseIds;
+  for (const id of listeningResponseIds) {
+    const { data } = await supabase
+      .from('problem_bank_listening_response_2026')
+      .select('topic')
+      .eq('id', id)
+      .single();
+    if (data) recentTopics.add(data.topic);
+  }
+
+  // Listening Track 선택 (1개)
+  const trackId = await selectListeningTrackProblem(studentId, difficulty, recentTopics as Set<string>);
+  if (trackId) {
+    result.listening_track_id = trackId;
+    const { data } = await supabase
+      .from('problem_bank_listening_track_2026')
+      .select('topic')
+      .eq('id', trackId)
+      .single();
+    if (data) recentTopics.add(data.topic);
+  }
+
   return result;
 }
 
@@ -253,7 +348,9 @@ export async function createDailyTask(
     complete_words: problemIds.complete_words_ids.length,
     daily_life: problemIds.daily_life_ids.length,
     academic_passage: problemIds.academic_passage_ids.length,
-    total: problemIds.complete_words_ids.length + problemIds.daily_life_ids.length + problemIds.academic_passage_ids.length,
+    listening_response: problemIds.listening_response_ids.length,
+    listening_track: problemIds.listening_track_id ? 1 : 0,
+    total: problemIds.complete_words_ids.length + problemIds.daily_life_ids.length + problemIds.academic_passage_ids.length + problemIds.listening_response_ids.length + (problemIds.listening_track_id ? 1 : 0),
   });
 
   // Daily Test 생성
@@ -265,6 +362,8 @@ export async function createDailyTask(
       complete_words_ids: problemIds.complete_words_ids,
       daily_life_ids: problemIds.daily_life_ids,
       academic_passage_ids: problemIds.academic_passage_ids,
+      listening_response_ids: problemIds.listening_response_ids,
+      listening_track_id: problemIds.listening_track_id,
       student_id: cleanStudentId,
       class_id: cleanClassId,
       assigned_date: new Date().toISOString(),
@@ -284,6 +383,8 @@ export async function createDailyTask(
     complete_words_ids: data.complete_words_ids?.length ?? 0,
     daily_life_ids: data.daily_life_ids?.length ?? 0,
     academic_passage_ids: data.academic_passage_ids?.length ?? 0,
+    listening_response_ids: data.listening_response_ids?.length ?? 0,
+    listening_track_id: data.listening_track_id ? 'yes' : 'no',
   });
 
   return data;
