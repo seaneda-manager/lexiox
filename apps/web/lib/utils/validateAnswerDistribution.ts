@@ -180,6 +180,17 @@ export function shuffleAnswers(answers: string[]): string[] {
 }
 
 /**
+ * Choice ID에서 선택지 글자(A/B/C/D) 추출
+ * 예: 'c1' → 'A', 'c2' → 'B', 'c3' → 'C', 'c4' → 'D'
+ */
+export function extractChoiceLetter(choiceId: string): string {
+  const match = choiceId.match(/(\d+)/);
+  if (!match) return 'A';
+  const num = parseInt(match[1], 10);
+  return String.fromCharCode(64 + num); // 1→A, 2→B, 3→C, 4→D
+}
+
+/**
  * 워크플로우: AI가 생성한 정답 → 검증 → 패턴 있으면 셔플
  */
 export function validateAndShuffleIfNeeded(aiGeneratedAnswers: string[]): {

@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { randomUUID } from 'crypto';
 import { createClient } from '@supabase/supabase-js';
-import { validateAndShuffleIfNeeded } from '@/lib/utils/validateAnswerDistribution';
+import { validateAndShuffleIfNeeded, extractChoiceLetter } from '@/lib/utils/validateAnswerDistribution';
 import { logAnthropicUsage } from '@/lib/ai/logAnthropicUsage';
 
 // 오디오는 이 라우트에서 생성하지 않는다 (스크립트/문제만 생성).
@@ -678,8 +678,8 @@ function extractListeningAnswers(items: any[]): string[] {
         if (q.choices && Array.isArray(q.choices)) {
           const correct = q.choices.find((c: any) => c.correct);
           if (correct?.id) {
-            const letter = correct.id.match(/[ABCD]/);
-            answers.push(letter?.[0] || 'A');
+            const letter = extractChoiceLetter(correct.id);
+            answers.push(letter);
           } else {
             // Claude가 정답을 생성하지 못했을 때: 무작위로 정답 선택 (A로 몰리는 현상 방지)
             console.warn('[extractListeningAnswers] No correct choice found. Randomly selecting one as correct.');
@@ -688,8 +688,8 @@ function extractListeningAnswers(items: any[]): string[] {
             if (randomChoice?.id) {
               q.choices.forEach((c: any) => c.correct = false);
               randomChoice.correct = true;
-              const letter = randomChoice.id.match(/[ABCD]/);
-              answers.push(letter?.[0] || 'A');
+              const letter = extractChoiceLetter(randomChoice.id);
+              answers.push(letter);
             } else {
               answers.push('A');
             }
@@ -713,7 +713,8 @@ function applyShuffledListeningAnswers(items: any[], shuffledAnswers: string[]):
           if (answerIndex < shuffledAnswers.length) {
             const newCorrectAnswer = shuffledAnswers[answerIndex++];
             q.choices.forEach((c: any) => {
-              c.correct = c.id.match(/[ABCD]/)?.[0] === newCorrectAnswer;
+              const choiceLetter = extractChoiceLetter(c.id);
+              c.correct = choiceLetter === newCorrectAnswer;
             });
           }
         }
