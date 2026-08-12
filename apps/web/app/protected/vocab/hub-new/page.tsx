@@ -103,42 +103,50 @@ export default function VocabHubNewPage() {
     init();
   }, []);
 
-  // 오늘의 학습 데이터 조회
+  // 오늘의 학습 데이터 조회 함수
+  const loadTodayProgress = async () => {
+    if (!studentId || !bookId) return;
+    try {
+      const res = await fetch(
+        `/api/vocab/progress?action=today&studentId=${studentId}&bookId=${bookId}`
+      );
+      const data: ProgressData = await res.json();
+      setTodayData(data);
+    } catch (e: any) {
+      setError(e?.message ?? "진도 데이터를 불러올 수 없습니다.");
+    }
+  };
+
+  // 복습 데이터 조회 함수
+  const loadReviewData = async () => {
+    if (!studentId || !bookId) return;
+    try {
+      const res = await fetch(
+        `/api/vocab/progress?action=review&studentId=${studentId}&bookId=${bookId}`
+      );
+      const data: ReviewData = await res.json();
+      setReviewData(data);
+    } catch (e: any) {
+      setError(e?.message ?? "복습 목록을 불러올 수 없습니다.");
+    }
+  };
+
+  // 초기 로드
   useEffect(() => {
     if (!studentId || !bookId) return;
-
-    async function loadTodayProgress() {
-      try {
-        const res = await fetch(
-          `/api/vocab/progress?action=today&studentId=${studentId}&bookId=${bookId}`
-        );
-        const data: ProgressData = await res.json();
-        setTodayData(data);
-      } catch (e: any) {
-        setError(e?.message ?? "진도 데이터를 불러올 수 없습니다.");
-      }
-    }
-
     loadTodayProgress();
+    loadReviewData();
   }, [studentId, bookId]);
 
-  // 복습 데이터 조회
+  // 페이지 포커스 시 데이터 새로고침 (학습 완료 후 돌아올 때)
   useEffect(() => {
-    if (!studentId || !bookId) return;
+    const handleFocus = () => {
+      loadTodayProgress();
+      loadReviewData();
+    };
 
-    async function loadReview() {
-      try {
-        const res = await fetch(
-          `/api/vocab/progress?action=review&studentId=${studentId}&bookId=${bookId}`
-        );
-        const data: ReviewData = await res.json();
-        setReviewData(data);
-      } catch (e: any) {
-        setError(e?.message ?? "복습 목록을 불러올 수 없습니다.");
-      }
-    }
-
-    loadReview();
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
   }, [studentId, bookId]);
 
   // 오늘의 작문 문제 생성
