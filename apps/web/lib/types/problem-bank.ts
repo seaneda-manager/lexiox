@@ -7,7 +7,7 @@
 // ============================================
 
 export type ProblemDifficulty = 'easy' | 'core' | 'hard';
-export type ProblemType = 'complete_words' | 'daily_life' | 'academic_passage';
+export type ProblemType = 'complete_words' | 'daily_life' | 'academic_passage' | 'listening_response' | 'listening_track';
 export type DailyTaskType = 'light' | 'medium_1' | 'medium_2' | 'medium_3' | 'medium_4';
 export type ContextType = 'notice' | 'email' | 'social_post' | 'web_article' | 'other';
 
@@ -85,11 +85,64 @@ export type AcademicPassageProblem = {
   created_by?: string;
 };
 
+// Listening Response (한 문항 청취 문제)
+export type ListeningResponseProblem = {
+  id: string;
+  type: 'listening_response';
+  topic: string;
+  difficulty: ProblemDifficulty;
+  audioUrl?: string;
+  audio_url?: string;
+  transcript?: string;
+  question: {
+    id: string;
+    stem: string;
+    choices: Array<{
+      id: string;
+      text: string;
+      correct?: boolean;
+    }>;
+    correct?: string;
+  };
+  source_test_id?: string;
+  created_at?: string;
+  created_by?: string;
+};
+
+// Listening Track (여러 문항 청취 문제 세트)
+export type ListeningTrackProblem = {
+  id: string;
+  type: 'listening_track';
+  topic: string;
+  difficulty: ProblemDifficulty;
+  trackType?: 'conversation' | 'announcement' | 'lecture';
+  track_type?: 'conversation' | 'announcement' | 'lecture';
+  audioUrl?: string;
+  audio_url?: string;
+  transcript?: string;
+  questions: Array<{
+    id: string;
+    number?: number;
+    stem: string;
+    choices: Array<{
+      id: string;
+      text: string;
+      correct?: boolean;
+    }>;
+    correct?: string;
+  }>;
+  source_test_id?: string;
+  created_at?: string;
+  created_by?: string;
+};
+
 // Union type
 export type ProblemBankItem =
   | CompleteWordsProblem
   | DailyLifeProblem
-  | AcademicPassageProblem;
+  | AcademicPassageProblem
+  | ListeningResponseProblem
+  | ListeningTrackProblem;
 
 // ============================================
 // History Tracking
@@ -148,6 +201,8 @@ export type DailyTask = {
   complete_words_ids: string[];
   daily_life_ids: string[];
   academic_passage_ids: string[];
+  listening_response_ids?: string[];
+  listening_track_id?: string;
 
   // 대상
   student_id?: string;
@@ -172,11 +227,13 @@ export type DailyTask = {
 // Daily Task with populated problems
 export type DailyTaskWithProblems = Omit<
   DailyTask,
-  'complete_words_ids' | 'daily_life_ids' | 'academic_passage_ids'
+  'complete_words_ids' | 'daily_life_ids' | 'academic_passage_ids' | 'listening_response_ids' | 'listening_track_id'
 > & {
   complete_words: CompleteWordsProblem[];
   daily_life: DailyLifeProblem[];
   academic_passage: AcademicPassageProblem[];
+  listening_response?: ListeningResponseProblem[];
+  listening_track?: ListeningTrackProblem;
 };
 
 // ============================================

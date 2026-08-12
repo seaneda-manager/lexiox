@@ -28,10 +28,14 @@ export default function DailyTaskPlayer({ task }: DailyTaskPlayerProps) {
   // 지문 유형별로 구분되어 저장됨:
   // - complete_words: blanks 배열 (채우기형)
   // - daily_life/academic_passage: questions 배열 (객관식)
+  // - listening_response: 한 문항 청취 문제
+  // - listening_track: 여러 문항 청취 세트
   const allProblems = [
     ...(task.complete_words ?? []),
     ...(task.daily_life ?? []),
     ...(task.academic_passage ?? []),
+    ...(task.listening_response ?? []),
+    ...(task.listening_track ? [task.listening_track] : []),
   ];
 
   const currentProblem = allProblems[currentIndex];
@@ -128,24 +132,57 @@ export default function DailyTaskPlayer({ task }: DailyTaskPlayerProps) {
               {currentProblem.type === "complete_words" && "📝 빈칸 채우기"}
               {currentProblem.type === "daily_life" && "💬 일상 이해"}
               {currentProblem.type === "academic_passage" && "📚 지문 읽기"}
+              {currentProblem.type === "listening_response" && "🎧 청취 문제"}
+              {currentProblem.type === "listening_track" && "🎧 청취 세트"}
             </h2>
 
-            {/* 지문 표시 (모든 문제 유형) */}
-            {(currentProblem as any).passageHtml ? (
-              <div
-                className="text-gray-700 leading-relaxed space-y-3 [&_strong]:font-semibold [&_b]:font-semibold [&_em]:italic"
-                dangerouslySetInnerHTML={{ __html: (currentProblem as any).passageHtml }}
-              />
-            ) : (
-              currentProblem.passage && (
-                <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                  {currentProblem.passage}
-                </div>
-              )
+            {/* 청취 문제 - 오디오 플레이어 */}
+            {(currentProblem.type === "listening_response" || currentProblem.type === "listening_track") && (
+              <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                {(currentProblem as any).audioUrl ? (
+                  <audio
+                    controls
+                    className="w-full"
+                    src={(currentProblem as any).audioUrl || (currentProblem as any).audio_url}
+                  >
+                    브라우저가 오디오 재생을 지원하지 않습니다.
+                  </audio>
+                ) : (
+                  <p className="text-gray-600 text-sm">오디오 파일을 불러올 수 없습니다.</p>
+                )}
+                {(currentProblem as any).transcript && (
+                  <details className="mt-4">
+                    <summary className="cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">
+                      📄 스크립트 보기
+                    </summary>
+                    <div className="mt-2 p-3 bg-white rounded border text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
+                      {(currentProblem as any).transcript}
+                    </div>
+                  </details>
+                )}
+              </div>
+            )}
+
+            {/* 지문 표시 (Reading 문제 유형) */}
+            {currentProblem.type !== "listening_response" && currentProblem.type !== "listening_track" && (
+              <>
+                {(currentProblem as any).passageHtml ? (
+                  <div
+                    className="text-gray-700 leading-relaxed space-y-3 [&_strong]:font-semibold [&_b]:font-semibold [&_em]:italic"
+                    dangerouslySetInnerHTML={{ __html: (currentProblem as any).passageHtml }}
+                  />
+                ) : (
+                  (currentProblem as any).passage && (
+                    <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                      {(currentProblem as any).passage}
+                    </div>
+                  )
+                )}
+              </>
             )}
           </div>
 
-          {/* 객관식 문제 - Daily Life / Academic Passage */}
+          {/* 객관식 문제 - Daily Life / Academic Passage / Listening Response */}
           {currentProblem.type !== "complete_words" && (currentProblem as any).questions && (
             <div className="space-y-4 border-t pt-6">
               {(currentProblem as any).questions.map((q: any, idx: number) => (
@@ -177,6 +214,39 @@ export default function DailyTaskPlayer({ task }: DailyTaskPlayerProps) {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* 청취 응답 - Listening Response (1문항) */}
+          {currentProblem.type === "listening_response" && (currentProblem as any).question && (
+            <div className="space-y-4 border-t pt-6">
+              <div className="space-y-2">
+                <p className="font-medium text-gray-900">
+                  {(currentProblem as any).question.stem}
+                </p>
+                <div className="space-y-2">
+                  {(currentProblem as any).question.choices && (currentProblem as any).question.choices.map((choice: any, idx: number) => (
+                    <label
+                      key={choice.id}
+                      className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition-colors"
+                    >
+                      <input
+                        type="radio"
+                        name={currentProblem.id}
+                        value={choice.id}
+                        checked={answers[currentProblem.id] === choice.id}
+                        onChange={() =>
+                          handleSelectAnswer(currentProblem.id, choice.id)
+                        }
+                        className="w-4 h-4 text-blue-600"
+                      />
+                      <span className="ml-3 text-gray-700">
+                        {choice.text}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
 
