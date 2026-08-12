@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import SectionGuide from '@/app/components/SectionGuide';
+import TipsCarousel from '@/components/TipsCarousel';
 
 export default function WritingHubPage() {
 
@@ -50,22 +51,24 @@ export default function WritingHubPage() {
         </Link>
       </div>
 
-      {/* 고득점 10계명 */}
-      <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-4 space-y-2">
-        <p className="text-xs font-semibold text-indigo-700 uppercase">🏆 Writing 고득점 10계명</p>
-        <ol className="text-xs text-indigo-900 space-y-1 list-inside list-decimal">
-          <li><strong>Task 1은 무조건 만점.</strong> 주어·동사·시제 확인 후 제출하세요.</li>
-          <li><strong>Task 2 조건 3개는 무조건 다 써라.</strong> 체크리스트로 하나씩 확인하세요.</li>
-          <li><strong>이메일 인사말은 공식 형식.</strong> "Dear Professor/Housing Administration"으로 시작, "Sincerely/Best regards"로 끝내세요.</li>
-          <li><strong>Task 3 첫 문장은 주제 요약.</strong> 교수 주제 + Rachel/Mike 의견 2가지를 먼저 정리하고 나의 입장을 밝혀세요.</li>
-          <li><strong>참신한 아이디어는 버려라.</strong> Rachel이나 Mike 의견에 구체적 예시만 더하세요.</li>
-          <li><strong>단어 수는 정확히.</strong> Task 2: 100~140 단어, Task 3: 120~150 단어로 유지하세요.</li>
-          <li><strong>본문 단어는 다르게 표현.</strong> 같은 단어 반복 대신 동의어나 유사 표현을 사용하세요.</li>
-          <li><strong>짧은 문장은 연결하세요.</strong> Although, Consequently, which means 등으로 문장을 길게 만드세요.</li>
-          <li><strong>연결어를 아끼지 마라.</strong> For instance, On the other hand, Therefore 등을 적재적소에 넣으세요.</li>
-          <li><strong>마지막 30초는 검토에만 써라.</strong> 주어·동사 매칭, 3인칭 -s, 스펠링 오타를 점검하세요.</li>
-        </ol>
-      </div>
+      {/* 고득점 10계명 - 캐러셀 */}
+      <TipsCarousel
+        title="Writing 고득점 10계명"
+        emoji="🏆"
+        color="indigo"
+        tips={[
+          "Task 1은 무조건 만점. 주어·동사·시제 확인 후 제출하세요.",
+          "Task 2 조건 3개는 무조건 다 써라. 체크리스트로 하나씩 확인하세요.",
+          "이메일 인사말은 공식 형식. 'Dear Professor/Housing Administration'으로 시작, 'Sincerely/Best regards'로 끝내세요.",
+          "Task 3 첫 문장은 주제 요약. 교수 주제 + Rachel/Mike 의견 2가지를 먼저 정리하고 나의 입장을 밝혀세요.",
+          "참신한 아이디어는 버려라. Rachel이나 Mike 의견에 구체적 예시만 더하세요.",
+          "단어 수는 정확히. Task 2: 100~140 단어, Task 3: 120~150 단어로 유지하세요.",
+          "본문 단어는 다르게 표현. 같은 단어 반복 대신 동의어나 유사 표현을 사용하세요.",
+          "짧은 문장은 연결하세요. Although, Consequently, which means 등으로 문장을 길게 만드세요.",
+          "연결어를 아끼지 마라. For instance, On the other hand, Therefore 등을 적재적소에 넣으세요.",
+          "마지막 30초는 검토에만 써라. 주어·동사 매칭, 3인칭 -s, 스펠링 오타를 점검하세요.",
+        ]}
+      />
     </div>
   );
 }
