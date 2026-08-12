@@ -36,7 +36,7 @@ export default async function DailyTaskPage({ params }: { params: Params }) {
     redirect(`/student/daily-tests/${id}/review`);
   }
 
-  const { complete_words, daily_life, academic_passage } = await fetchAndFormatDailyTaskProblems(
+  const { complete_words, daily_life, academic_passage, listening_response, listening_track } = await fetchAndFormatDailyTaskProblems(
     supabase,
     task
   );
@@ -46,6 +46,8 @@ export default async function DailyTaskPage({ params }: { params: Params }) {
     complete_words,
     daily_life,
     academic_passage,
+    listening_response,
+    listening_track,
   };
 
   return (

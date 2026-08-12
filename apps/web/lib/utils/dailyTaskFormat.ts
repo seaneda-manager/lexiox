@@ -108,8 +108,52 @@ export function formatAcademicPassage(items: any[]) {
 }
 
 // task row의 *_ids를 이용해 Problem Bank에서 문제를 조회하고 정규화까지 한 번에 처리
+// Listening Response 포맷팅
+function formatListeningResponse(responses: any[]) {
+  return (responses ?? []).map((problem: any) => ({
+    id: problem.id,
+    topic: problem.topic,
+    difficulty: problem.difficulty,
+    audioUrl: problem.audio_url,
+    transcript: problem.transcript,
+    question: {
+      id: problem.question?.id || `resp-${problem.id}`,
+      stem: problem.question?.stem || "",
+      choices: (problem.question?.choices || []).map((c: any, idx: number) => ({
+        id: c.id || String.fromCharCode(97 + idx), // a, b, c, d
+        text: c.text,
+        correct: c.correct,
+      })),
+      correct: problem.question?.correct || "a",
+    },
+  }));
+}
+
+// Listening Track 포맷팅
+function formatListeningTrack(tracks: any[]) {
+  return (tracks ?? []).map((problem: any) => ({
+    id: problem.id,
+    topic: problem.topic,
+    difficulty: problem.difficulty,
+    trackType: problem.track_type, // conversation, announcement, lecture
+    audioUrl: problem.audio_url,
+    transcript: problem.transcript,
+    questions: (problem.questions || []).map((q: any) => ({
+      id: q.id,
+      number: q.number,
+      stem: q.stem || "",
+      choices: (q.choices || []).map((c: any, idx: number) => ({
+        id: c.id || String.fromCharCode(97 + idx),
+        text: c.text,
+        correct: c.correct,
+      })),
+      correct: q.correct || "a",
+    })),
+  }));
+}
+
 export async function fetchAndFormatDailyTaskProblems(supabase: any, task: any) {
-  const [{ data: completeWords }, { data: dailyLife }, { data: academic }] = await Promise.all([
+  const [{ data: completeWords }, { data: dailyLife }, { data: academic }, { data: listeningResponses }, { data: listeningTrack }] = await Promise.all([
     task.complete_words_ids && task.complete_words_ids.length > 0
       ? supabase.from("problem_bank_complete_words_2026").select("*").in("id", task.complete_words_ids)
       : Promise.resolve({ data: [] }),
@@ -119,11 +163,19 @@ export async function fetchAndFormatDailyTaskProblems(supabase: any, task: any) 
     task.academic_passage_ids && task.academic_passage_ids.length > 0
       ? supabase.from("problem_bank_academic_passage_2026").select("*").in("id", task.academic_passage_ids)
       : Promise.resolve({ data: [] }),
+    task.listening_response_ids && task.listening_response_ids.length > 0
+      ? supabase.from("problem_bank_listening_response_2026").select("*").in("id", task.listening_response_ids)
+      : Promise.resolve({ data: [] }),
+    task.listening_track_id
+      ? supabase.from("problem_bank_listening_track_2026").select("*").eq("id", task.listening_track_id)
+      : Promise.resolve({ data: [] }),
   ]);
 
   return {
     complete_words: formatCompleteWords(completeWords ?? []),
     daily_life: formatDailyLife(dailyLife ?? []),
     academic_passage: formatAcademicPassage(academic ?? []),
+    listening_response: formatListeningResponse(listeningResponses ?? []),
+    listening_track: formatListeningTrack(listeningTrack ?? []),
   };
 }
