@@ -17,6 +17,7 @@ interface FluencyMarathonProps {
     pauseCount: number;
     longPauses: number;
     score: number;
+    audioUrl?: string;
   }) => void;
 }
 
@@ -42,6 +43,7 @@ export default function FluencyMarathon({
     score: number;
     feedback: string[];
     assessment: 'excellent' | 'good' | 'fair' | 'poor';
+    audioUrl?: string | null;
   } | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -93,6 +95,26 @@ export default function FluencyMarathon({
     }
   };
 
+  const uploadAudio = async (blob: Blob): Promise<string | null> => {
+    try {
+      const formData = new FormData();
+      formData.append('file', blob);
+      formData.append('testId', 'fluency-marathon');
+      formData.append('taskId', `challenge-${currentChallengeIndex}`);
+
+      const res = await fetch('/api/speaking-2026/upload-audio', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+      return data.ok ? data.publicUrl : null;
+    } catch (error) {
+      console.error('Upload error:', error);
+      return null;
+    }
+  };
+
   const stopRecording = async () => {
     if (!mediaRecorderRef.current) return;
 
@@ -104,6 +126,9 @@ export default function FluencyMarathon({
     setTimeout(async () => {
       const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
       const arrayBuffer = await audioBlob.arrayBuffer();
+
+      // Upload audio in parallel with analysis
+      const audioUrl = await uploadAudio(audioBlob);
 
       try {
         const audioBuffer = await extractAudioBuffer(audioContextRef.current!, arrayBuffer);
@@ -187,6 +212,7 @@ export default function FluencyMarathon({
           score: Math.max(0, Math.min(100, score)),
           feedback,
           assessment,
+          audioUrl,
         };
 
         setResult(resultData);
@@ -196,6 +222,7 @@ export default function FluencyMarathon({
           pauseCount,
           longPauses: longPauseCount,
           score: resultData.score,
+          audioUrl,
         });
         setPhase('result');
       } catch (error) {
@@ -427,6 +454,22 @@ export default function FluencyMarathon({
               ))}
             </div>
           </div>
+
+          {/* Download Button */}
+          {result.audioUrl && (
+            <div className="mb-6">
+              <a
+                href={result.audioUrl}
+                download={`fluency-marathon-${currentChallengeIndex + 1}.webm`}
+                className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg transition-all duration-200 mr-3"
+              >
+                📥 Download Audio (20 days)
+              </a>
+              <p className="text-sm text-gray-500 mt-2">
+                Your recording will be automatically deleted after 20 days
+              </p>
+            </div>
+          )}
 
           {/* Next Button */}
           <button
