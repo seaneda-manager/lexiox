@@ -42,9 +42,11 @@ export async function POST(req: Request) {
     const completeWordsIds = dailyTask.complete_words_ids || [];
     const dailyLifeIds = dailyTask.daily_life_ids || [];
     const academicPassageIds = dailyTask.academic_passage_ids || [];
+    const listeningResponseIds = dailyTask.listening_response_ids || [];
+    const listeningTrackId = dailyTask.listening_track_id;
 
     // 문제들을 병렬로 조회
-    const [completeWordsData, dailyLifeData, academicPassageData] = await Promise.all([
+    const [completeWordsData, dailyLifeData, academicPassageData, listeningResponseData, listeningTrackData] = await Promise.all([
       completeWordsIds.length > 0
         ? supabase
             .from('problem_bank_complete_words_2026')
@@ -62,6 +64,18 @@ export async function POST(req: Request) {
             .from('problem_bank_academic_passage_2026')
             .select('*')
             .in('id', academicPassageIds)
+        : Promise.resolve({ data: [] }),
+      listeningResponseIds.length > 0
+        ? supabase
+            .from('problem_bank_listening_response_2026')
+            .select('*')
+            .in('id', listeningResponseIds)
+        : Promise.resolve({ data: [] }),
+      listeningTrackId
+        ? supabase
+            .from('problem_bank_listening_track_2026')
+            .select('*')
+            .eq('id', listeningTrackId)
         : Promise.resolve({ data: [] }),
     ]);
 
@@ -81,6 +95,8 @@ export async function POST(req: Request) {
         complete_words: completeWordsData.data || [],
         daily_life: dailyLifeData.data || [],
         academic_passage: academicPassageData.data || [],
+        listening_response: listeningResponseData.data || [],
+        listening_track: listeningTrackData.data?.[0] || null,
       },
     });
   } catch (err: any) {
