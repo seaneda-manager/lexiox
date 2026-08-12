@@ -48,26 +48,34 @@ alter table level_test_responses enable row level security;
 
 -- 문제은행에는 정답이 그대로 들어있으므로 학생은 절대 직접 조회할 수 없다.
 -- 학생에게 보여주는 화면은 서버 컴포넌트가 service role로 읽어 정답 필드를 제거한 뒤 내려준다.
+drop policy if exists "level_test_questions_admin_all" on level_test_questions;
 create policy "level_test_questions_admin_all"
   on level_test_questions for all
   using (exists (select 1 from public.profiles where profiles.id = auth.uid() and profiles.role = 'admin'))
   with check (exists (select 1 from public.profiles where profiles.id = auth.uid() and profiles.role = 'admin'));
 
+drop policy if exists "level_test_sessions_select_own" on level_test_sessions;
 create policy "level_test_sessions_select_own"
   on level_test_sessions for select using (auth.uid() = student_id);
+drop policy if exists "level_test_sessions_insert_own" on level_test_sessions;
 create policy "level_test_sessions_insert_own"
   on level_test_sessions for insert with check (auth.uid() = student_id);
+drop policy if exists "level_test_sessions_update_own" on level_test_sessions;
 create policy "level_test_sessions_update_own"
   on level_test_sessions for update using (auth.uid() = student_id) with check (auth.uid() = student_id);
+drop policy if exists "level_test_sessions_admin_all" on level_test_sessions;
 create policy "level_test_sessions_admin_all"
   on level_test_sessions for all
   using (exists (select 1 from public.profiles where profiles.id = auth.uid() and profiles.role = 'admin'))
   with check (exists (select 1 from public.profiles where profiles.id = auth.uid() and profiles.role = 'admin'));
 
+drop policy if exists "level_test_responses_select_own" on level_test_responses;
 create policy "level_test_responses_select_own"
   on level_test_responses for select using (auth.uid() = student_id);
+drop policy if exists "level_test_responses_insert_own" on level_test_responses;
 create policy "level_test_responses_insert_own"
   on level_test_responses for insert with check (auth.uid() = student_id);
+drop policy if exists "level_test_responses_admin_all" on level_test_responses;
 create policy "level_test_responses_admin_all"
   on level_test_responses for all
   using (exists (select 1 from public.profiles where profiles.id = auth.uid() and profiles.role = 'admin'))

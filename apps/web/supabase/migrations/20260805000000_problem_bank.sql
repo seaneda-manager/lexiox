@@ -220,18 +220,21 @@ CREATE INDEX idx_daily_tests_created ON daily_tests(created_at DESC);
 ALTER TABLE daily_tests ENABLE ROW LEVEL SECURITY;
 
 -- 학생은 자신의 Daily Tests만 조회 가능
+DROP POLICY IF EXISTS "Students can view their own daily tests" ON daily_tests;
 CREATE POLICY "Students can view their own daily tests"
   ON daily_tests
   FOR SELECT
   USING (auth.uid() = student_id);
 
 -- Admin (service_role)은 모든 Daily Tests 조회/수정 가능
+DROP POLICY IF EXISTS "Admin can manage all daily tests" ON daily_tests;
 CREATE POLICY "Admin can manage all daily tests"
   ON daily_tests
   FOR ALL
   USING (auth.role() = 'service_role');
 
 -- 생성자는 자신이 생성한 과제 수정 가능
+DROP POLICY IF EXISTS "Creators can update their daily tests" ON daily_tests;
 CREATE POLICY "Creators can update their daily tests"
   ON daily_tests
   FOR UPDATE

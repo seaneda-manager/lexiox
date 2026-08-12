@@ -16,34 +16,39 @@ CREATE TABLE IF NOT EXISTS speaking_test_responses (
   feedback TEXT,
   scored_at TIMESTAMP WITH TIME ZONE,
 
-  -- 인덱싱
-  UNIQUE(student_id, test_id),
-  INDEX idx_student_id (student_id),
-  INDEX idx_status (status)
+  -- 제약
+  CONSTRAINT unique_student_test UNIQUE(student_id, test_id)
 );
+
+-- 인덱스
+CREATE INDEX IF NOT EXISTS idx_student_id ON speaking_test_responses(student_id);
+CREATE INDEX IF NOT EXISTS idx_status ON speaking_test_responses(status);
 
 -- RLS (Row Level Security) 활성화
 ALTER TABLE speaking_test_responses ENABLE ROW LEVEL SECURITY;
 
 -- 학생은 자신의 응답만 볼 수 있음
+DROP POLICY IF EXISTS "Students can view own responses" ON speaking_test_responses;
 CREATE POLICY "Students can view own responses"
   ON speaking_test_responses
   FOR SELECT
   USING (auth.uid() = student_id);
 
 -- 학생은 자신의 응답만 생성 가능
+DROP POLICY IF EXISTS "Students can insert own responses" ON speaking_test_responses;
 CREATE POLICY "Students can insert own responses"
   ON speaking_test_responses
   FOR INSERT
   WITH CHECK (auth.uid() = student_id);
 
 -- 관리자는 모든 응답을 볼 수 있음
+DROP POLICY IF EXISTS "Admins can view all responses" ON speaking_test_responses;
 CREATE POLICY "Admins can view all responses"
   ON speaking_test_responses
   FOR SELECT
   USING (
     EXISTS (
-      SELECT 1 FROM user_roles
-      WHERE user_id = auth.uid() AND role = 'admin'
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid() AND role = 'admin'
     )
   );

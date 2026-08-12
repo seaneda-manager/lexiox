@@ -19,7 +19,9 @@ GROUP BY vs.id, vs.title, vs.description, vs.grade_band, vs.level, vs.source_lab
 
 -- Enable RLS on underlying tables
 ALTER TABLE public.vocab_sets ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "authenticated_read" ON public.vocab_sets;
 CREATE POLICY "authenticated_read" ON public.vocab_sets FOR SELECT TO authenticated USING (true);
 
 ALTER TABLE public.vocab_set_items ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "authenticated_read" ON public.vocab_set_items;
 CREATE POLICY "authenticated_read" ON public.vocab_set_items FOR SELECT TO authenticated USING (true);

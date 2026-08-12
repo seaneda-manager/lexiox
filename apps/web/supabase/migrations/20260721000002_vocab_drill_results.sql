@@ -2,7 +2,8 @@
 -- 목적: 유형별/단어별 정답률 → 강약점 분석·복습 큐·선생님 리포트
 -- 지금까지 드릴은 결과를 전혀 저장하지 않아 분석에 0으로 잡혔다.
 
-create table if not exists public.vocab_drill_results (
+drop table if exists public.vocab_drill_results cascade;
+create table public.vocab_drill_results (
   id           uuid primary key default gen_random_uuid(),
   student_id   uuid not null,                 -- auth.users.id
   set_id       uuid,

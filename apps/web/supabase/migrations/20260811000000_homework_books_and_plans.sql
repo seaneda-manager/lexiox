@@ -64,18 +64,21 @@ alter table homework_books enable row level security;
 alter table homework_book_units enable row level security;
 alter table student_homework_plans enable row level security;
 
+drop policy if exists "homework_books_admin_all" on homework_books;
 create policy "homework_books_admin_all"
   on homework_books
   for all
   using (exists (select 1 from public.profiles where profiles.id = auth.uid() and profiles.role = 'admin'))
   with check (exists (select 1 from public.profiles where profiles.id = auth.uid() and profiles.role = 'admin'));
 
+drop policy if exists "homework_book_units_admin_all" on homework_book_units;
 create policy "homework_book_units_admin_all"
   on homework_book_units
   for all
   using (exists (select 1 from public.profiles where profiles.id = auth.uid() and profiles.role = 'admin'))
   with check (exists (select 1 from public.profiles where profiles.id = auth.uid() and profiles.role = 'admin'));
 
+drop policy if exists "student_homework_plans_admin_all" on student_homework_plans;
 create policy "student_homework_plans_admin_all"
   on student_homework_plans
   for all
@@ -83,6 +86,7 @@ create policy "student_homework_plans_admin_all"
   with check (exists (select 1 from public.profiles where profiles.id = auth.uid() and profiles.role = 'admin'));
 
 -- 학생은 자기 자신의 페이스 플랜만 읽을 수 있다 (쓰기는 관리자 전용).
+drop policy if exists "student_homework_plans_select_own" on student_homework_plans;
 create policy "student_homework_plans_select_own"
   on student_homework_plans
   for select

@@ -66,6 +66,12 @@ alter table lecture_completions enable row level security;
 alter table lecture_quiz_attempts enable row level security;
 
 -- 어드민/선생님은 모두 읽기/쓰기
+drop policy if exists "admin_all_lectures" on lectures;
+drop policy if exists "admin_all_quiz_questions" on lecture_quiz_questions;
+drop policy if exists "admin_all_lecture_assignments" on lecture_assignments;
+drop policy if exists "admin_all_lecture_completions" on lecture_completions;
+drop policy if exists "admin_all_lecture_quiz_attempts" on lecture_quiz_attempts;
+
 create policy "admin_all_lectures" on lectures for all using (true) with check (true);
 create policy "admin_all_quiz_questions" on lecture_quiz_questions for all using (true) with check (true);
 create policy "admin_all_lecture_assignments" on lecture_assignments for all using (true) with check (true);

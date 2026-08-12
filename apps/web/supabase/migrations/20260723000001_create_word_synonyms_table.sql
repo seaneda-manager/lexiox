@@ -37,6 +37,7 @@ CREATE INDEX IF NOT EXISTS idx_word_synonyms_similarity_score ON word_synonyms(s
 ALTER TABLE word_synonyms ENABLE ROW LEVEL SECURITY;
 
 -- 정책: 모든 사용자가 읽을 수 있음 (공개 데이터)
+DROP POLICY IF EXISTS "Anyone can view word synonyms" ON word_synonyms;
 CREATE POLICY "Anyone can view word synonyms"
   ON word_synonyms FOR SELECT
   USING (true);

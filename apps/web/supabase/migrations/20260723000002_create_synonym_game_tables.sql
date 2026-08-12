@@ -51,15 +51,18 @@ ALTER TABLE vocab_game_results ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_vocab_game_stats ENABLE ROW LEVEL SECURITY;
 
 -- 정책: 사용자는 자신의 세션만 조회 가능
+DROP POLICY IF EXISTS "Users can view their own game sessions" ON vocab_game_sessions;
 CREATE POLICY "Users can view their own game sessions"
   ON vocab_game_sessions FOR SELECT
   USING (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "Users can insert their own game sessions" ON vocab_game_sessions;
 CREATE POLICY "Users can insert their own game sessions"
   ON vocab_game_sessions FOR INSERT
   WITH CHECK (user_id = auth.uid());
 
 -- 정책: 사용자는 자신의 결과만 조회 가능
+DROP POLICY IF EXISTS "Users can view their own game results" ON vocab_game_results;
 CREATE POLICY "Users can view their own game results"
   ON vocab_game_results FOR SELECT
   USING (
@@ -68,6 +71,7 @@ CREATE POLICY "Users can view their own game results"
     )
   );
 
+DROP POLICY IF EXISTS "Users can insert their own game results" ON vocab_game_results;
 CREATE POLICY "Users can insert their own game results"
   ON vocab_game_results FOR INSERT
   WITH CHECK (
@@ -77,14 +81,17 @@ CREATE POLICY "Users can insert their own game results"
   );
 
 -- 정책: 사용자는 자신의 통계만 조회/수정 가능
+DROP POLICY IF EXISTS "Users can view their own stats" ON user_vocab_game_stats;
 CREATE POLICY "Users can view their own stats"
   ON user_vocab_game_stats FOR SELECT
   USING (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "Users can insert their own stats" ON user_vocab_game_stats;
 CREATE POLICY "Users can insert their own stats"
   ON user_vocab_game_stats FOR INSERT
   WITH CHECK (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "Users can update their own stats" ON user_vocab_game_stats;
 CREATE POLICY "Users can update their own stats"
   ON user_vocab_game_stats FOR UPDATE
   USING (user_id = auth.uid())

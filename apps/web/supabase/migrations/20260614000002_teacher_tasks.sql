@@ -12,6 +12,11 @@ create table if not exists public.teacher_tasks (
 
 alter table public.teacher_tasks enable row level security;
 
+drop policy if exists "teacher_tasks_select_own" on public.teacher_tasks;
+drop policy if exists "teacher_tasks_insert_own" on public.teacher_tasks;
+drop policy if exists "teacher_tasks_update_own" on public.teacher_tasks;
+drop policy if exists "teacher_tasks_delete_own" on public.teacher_tasks;
+
 create policy "teacher_tasks_select_own"  on public.teacher_tasks for select  using (auth.uid() = teacher_id);
 create policy "teacher_tasks_insert_own"  on public.teacher_tasks for insert  with check (auth.uid() = teacher_id);
 create policy "teacher_tasks_update_own"  on public.teacher_tasks for update  using (auth.uid() = teacher_id) with check (auth.uid() = teacher_id);

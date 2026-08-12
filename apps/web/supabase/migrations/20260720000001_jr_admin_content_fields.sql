@@ -19,23 +19,14 @@ add column if not exists examples jsonb default '[]',
 add column if not exists exercises jsonb default '[]',
 add column if not exists textbook_mapping text;
 
--- Create/Enhance Jr. Listening Sessions
-create table if not exists jr_listening_sessions (
-  id uuid primary key default gen_random_uuid(),
-  title text not null,
-  audio_url text not null,
-  audio_transcript text,
-  korean_transcript text,
-  difficulty text not null default 'medium',
-  level int default 3,
-  textbook text,
-  listening_type text default 'conversation',
-  keywords jsonb default '[]',
-  questions jsonb default '[]',
-  textbook_mapping text,
-  created_at timestamp with time zone default now(),
-  updated_at timestamp with time zone default now()
-);
+-- Enhance Jr. Listening Sessions (already created in 20260715000001)
+alter table if exists jr_listening_sessions
+add column if not exists title text,
+add column if not exists difficulty text default 'medium',
+add column if not exists level int default 3,
+add column if not exists textbook text,
+add column if not exists listening_type text default 'conversation',
+add column if not exists keywords jsonb default '[]';
 
 -- Enhance Jr. Speaking & Writing Tasks
 alter table if exists jr_speaking_writing_tasks

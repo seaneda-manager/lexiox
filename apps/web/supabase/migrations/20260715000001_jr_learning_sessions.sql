@@ -109,7 +109,8 @@ create table if not exists jr_grammar_practice_logs (
 );
 
 -- Jr. Listening Sessions
-create table if not exists jr_listening_sessions (
+drop table if exists jr_listening_sessions cascade;
+create table jr_listening_sessions (
   id uuid primary key default gen_random_uuid(),
   student_id uuid not null references academy_students(id),
   audio_id text,
@@ -191,6 +192,9 @@ alter table jr_grammar_sessions enable row level security;
 alter table jr_listening_sessions enable row level security;
 alter table jr_speaking_writing_submissions enable row level security;
 
+drop policy if exists "Students can view their own sessions" on jr_reading_sessions;
+drop policy if exists "Students can create sessions" on jr_reading_sessions;
+drop policy if exists "Students can update their own sessions" on jr_reading_sessions;
 create policy "Students can view their own sessions" on jr_reading_sessions
   for select using (student_id = auth.uid());
 create policy "Students can create sessions" on jr_reading_sessions
@@ -198,6 +202,9 @@ create policy "Students can create sessions" on jr_reading_sessions
 create policy "Students can update their own sessions" on jr_reading_sessions
   for update using (student_id = auth.uid());
 
+drop policy if exists "Students can view their own sessions" on jr_grammar_sessions;
+drop policy if exists "Students can create sessions" on jr_grammar_sessions;
+drop policy if exists "Students can update their own sessions" on jr_grammar_sessions;
 create policy "Students can view their own sessions" on jr_grammar_sessions
   for select using (student_id = auth.uid());
 create policy "Students can create sessions" on jr_grammar_sessions
@@ -205,6 +212,9 @@ create policy "Students can create sessions" on jr_grammar_sessions
 create policy "Students can update their own sessions" on jr_grammar_sessions
   for update using (student_id = auth.uid());
 
+drop policy if exists "Students can view their own sessions" on jr_listening_sessions;
+drop policy if exists "Students can create sessions" on jr_listening_sessions;
+drop policy if exists "Students can update their own sessions" on jr_listening_sessions;
 create policy "Students can view their own sessions" on jr_listening_sessions
   for select using (student_id = auth.uid());
 create policy "Students can create sessions" on jr_listening_sessions
@@ -212,6 +222,9 @@ create policy "Students can create sessions" on jr_listening_sessions
 create policy "Students can update their own sessions" on jr_listening_sessions
   for update using (student_id = auth.uid());
 
+drop policy if exists "Students can view their own submissions" on jr_speaking_writing_submissions;
+drop policy if exists "Students can create submissions" on jr_speaking_writing_submissions;
+drop policy if exists "Students can update their own submissions" on jr_speaking_writing_submissions;
 create policy "Students can view their own submissions" on jr_speaking_writing_submissions
   for select using (student_id = auth.uid());
 create policy "Students can create submissions" on jr_speaking_writing_submissions

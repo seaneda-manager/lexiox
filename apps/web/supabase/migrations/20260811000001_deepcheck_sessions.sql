@@ -19,19 +19,23 @@ create index if not exists idx_deepcheck_sessions_student on deepcheck_sessions(
 
 alter table deepcheck_sessions enable row level security;
 
+drop policy if exists "deepcheck_sessions_select_own" on deepcheck_sessions;
 create policy "deepcheck_sessions_select_own"
   on deepcheck_sessions for select
   using (auth.uid() = student_id);
 
+drop policy if exists "deepcheck_sessions_insert_own" on deepcheck_sessions;
 create policy "deepcheck_sessions_insert_own"
   on deepcheck_sessions for insert
   with check (auth.uid() = student_id);
 
+drop policy if exists "deepcheck_sessions_update_own" on deepcheck_sessions;
 create policy "deepcheck_sessions_update_own"
   on deepcheck_sessions for update
   using (auth.uid() = student_id)
   with check (auth.uid() = student_id);
 
+drop policy if exists "deepcheck_sessions_admin_all" on deepcheck_sessions;
 create policy "deepcheck_sessions_admin_all"
   on deepcheck_sessions for all
   using (exists (select 1 from public.profiles where profiles.id = auth.uid() and profiles.role = 'admin'))

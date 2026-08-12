@@ -123,39 +123,24 @@ alter table perk_catalog          enable row level security;
 alter table perk_redemptions      enable row level security;
 alter table student_avatars       enable row level security;
 
--- ── 9. RLS 정책 (pg_policies 체크 후 EXECUTE로 생성) ──────────
-do $$
-begin
-  -- student_gamification
-  if not exists (select 1 from pg_policies where tablename = 'student_gamification' and policyname = 'student_own_gamification') then
-    execute 'create policy student_own_gamification on student_gamification for all using (auth.uid() = student_id)';
-  end if;
+-- ── 9. RLS 정책 (DROP 후 CREATE) ──────────────────────────────
+drop policy if exists "student_own_gamification" on student_gamification;
+create policy student_own_gamification on student_gamification for all using (auth.uid() = student_id);
 
-  -- student_point_ledger
-  if not exists (select 1 from pg_policies where tablename = 'student_point_ledger' and policyname = 'student_own_ledger') then
-    execute 'create policy student_own_ledger on student_point_ledger for select using (auth.uid() = student_id)';
-  end if;
+drop policy if exists "student_own_ledger" on student_point_ledger;
+create policy student_own_ledger on student_point_ledger for select using (auth.uid() = student_id);
 
-  -- daily_tasks
-  if not exists (select 1 from pg_policies where tablename = 'daily_tasks' and policyname = 'student_own_daily_task') then
-    execute 'create policy student_own_daily_task on daily_tasks for all using (auth.uid() = student_id)';
-  end if;
+drop policy if exists "student_own_daily_task" on daily_tasks;
+create policy student_own_daily_task on daily_tasks for all using (auth.uid() = student_id);
 
-  -- perk_catalog
-  if not exists (select 1 from pg_policies where tablename = 'perk_catalog' and policyname = 'perk_catalog_read') then
-    execute 'create policy perk_catalog_read on perk_catalog for select using (is_active = true)';
-  end if;
+drop policy if exists "perk_catalog_read" on perk_catalog;
+create policy perk_catalog_read on perk_catalog for select using (is_active = true);
 
-  -- perk_redemptions
-  if not exists (select 1 from pg_policies where tablename = 'perk_redemptions' and policyname = 'student_own_redemptions') then
-    execute 'create policy student_own_redemptions on perk_redemptions for all using (auth.uid() = student_id)';
-  end if;
+drop policy if exists "student_own_redemptions" on perk_redemptions;
+create policy student_own_redemptions on perk_redemptions for all using (auth.uid() = student_id);
 
-  -- student_avatars
-  if not exists (select 1 from pg_policies where tablename = 'student_avatars' and policyname = 'student_own_avatar') then
-    execute 'create policy student_own_avatar on student_avatars for all using (auth.uid() = student_id)';
-  end if;
-end $$;
+drop policy if exists "student_own_avatar" on student_avatars;
+create policy student_own_avatar on student_avatars for all using (auth.uid() = student_id);
 
 -- ── 10. 레벨 계산 함수 ───────────────────────────────────────
 create or replace function calc_level(pts integer) returns integer

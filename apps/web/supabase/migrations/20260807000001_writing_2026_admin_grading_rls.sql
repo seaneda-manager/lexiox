@@ -4,6 +4,7 @@
 -- (guardAdmin()/AdminLayout이 이미 profiles.role = 'admin'을 체크하는 것과 동일한
 -- 기준으로 SELECT/UPDATE 예외 정책을 추가)
 
+drop policy if exists "writing_2026_sessions_select_admin" on public.writing_2026_sessions;
 create policy "writing_2026_sessions_select_admin"
   on public.writing_2026_sessions
   for select
@@ -14,6 +15,7 @@ create policy "writing_2026_sessions_select_admin"
     )
   );
 
+drop policy if exists "writing_2026_sessions_update_admin" on public.writing_2026_sessions;
 create policy "writing_2026_sessions_update_admin"
   on public.writing_2026_sessions
   for update
