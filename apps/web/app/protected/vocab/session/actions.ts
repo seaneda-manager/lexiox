@@ -12,8 +12,12 @@ import { advanceVocabQueueAfterCompletionAction } from "@/app/protected/admin/vo
 export type LoadSessionWordsActionInput = {
   /** Optional: force a specific setId (debug / admin / shortcut) */
   setId?: string | null;
+  /** Optional: multiple setIds (comma-separated or array-like: "id1,id2,id3") */
+  setIds?: string | string[] | null;
   /** Optional: force a specific dayIndex for reviewing past days */
   dayIndex?: number | null;
+  /** Optional: multiple dayIndices for learning multiple days at once */
+  dayIndices?: number[] | null;
 };
 
 export type LoadSessionWordsActionResult =
@@ -512,13 +516,26 @@ export async function loadSessionWordsAction(
       }
     }
 
-    // 3) resolve setId / assignment
+    // 3) resolve setId / assignment (or multiple setIds)
     let resolvedSetId = cleanStr(input?.setId ?? "");
+    let resolvedSetIds: string[] = [];
     let assignmentId: string | null = null;
     let assignedAt: string | null = null;
     let dayIndex: number | null = null;
 
-    if (!resolvedSetId) {
+    // ✅ Parse multiple setIds if provided
+    if (input?.setIds) {
+      if (Array.isArray(input.setIds)) {
+        resolvedSetIds = input.setIds.map(cleanStr).filter((id) => isUuidLike(id));
+      } else if (typeof input.setIds === "string") {
+        resolvedSetIds = input.setIds
+          .split(/[,\s]+/)
+          .map(cleanStr)
+          .filter((id) => isUuidLike(id));
+      }
+    }
+
+    if (!resolvedSetId && resolvedSetIds.length === 0) {
       if (!academyStudentId) {
         return {
           ok: false,
@@ -612,7 +629,10 @@ export async function loadSessionWordsAction(
       diag.assignmentSource = "forcedSetId";
     }
 
-    if (!resolvedSetId) {
+    // ✅ Use multiple setIds if provided, otherwise use single resolvedSetId
+    const finalSetIds = resolvedSetIds.length > 0 ? resolvedSetIds : (resolvedSetId ? [resolvedSetId] : []);
+
+    if (finalSetIds.length === 0) {
       return {
         ok: false,
         userId,
@@ -626,42 +646,44 @@ export async function loadSessionWordsAction(
       };
     }
 
-    // 4) load word ids from vocab_set_items (SSOT)
+    // 4) load word ids from vocab_set_items (SSOT) - support multiple sets
     let wordIds: string[] = [];
     try {
-      const { data, error } = await client
-        .from("vocab_set_items")
-        .select("set_id,word_id,sort_order,order_no,created_at")
-        .eq("set_id", resolvedSetId)
-        .limit(5000);
+      const MAX_WORDS = 50; // ✅ 최대 50단어 제한
 
-      diag.steps.push({
-        kind: "loadSetWordIds",
-        table: "vocab_set_items",
-        ok: !error,
-        err: error ? toErrMsg(error) : null,
-        rows: Array.isArray(data) ? data.length : 0,
-      });
+      for (const setId of finalSetIds) {
+        if (wordIds.length >= MAX_WORDS) break; // ✅ 50개 도달하면 멈춤
 
-      if (error) {
-        return {
-          ok: false,
-          userId,
-          academyStudentId,
-          assignmentId,
-          setId: resolvedSetId,
-          assignedAt,
-          error: "SET_WORDS_LOOKUP_FAILED",
-          note: "vocab_set_items query failed.",
-          diag,
-        };
+        const { data, error } = await client
+          .from("vocab_set_items")
+          .select("set_id,word_id,sort_order,order_no,created_at")
+          .eq("set_id", setId)
+          .limit(5000);
+
+        diag.steps.push({
+          kind: "loadSetWordIds",
+          table: "vocab_set_items",
+          setId,
+          ok: !error,
+          err: error ? toErrMsg(error) : null,
+          rows: Array.isArray(data) ? data.length : 0,
+        });
+
+        if (error) continue; // ✅ 한 set이 실패해도 다음 set 계속 시도
+
+        const sorted = sortLinkRows(Array.isArray(data) ? data : []);
+        const raw = sorted.map((r: any) => cleanStr(r?.word_id)).filter(Boolean);
+        const setWordIds = raw.filter((x) => isUuidLike(x));
+
+        // ✅ 현재까지 수집한 단어 수 + 이번 set의 단어 수가 50을 넘으면, 50까지만 취함
+        const remaining = MAX_WORDS - wordIds.length;
+        wordIds.push(...setWordIds.slice(0, remaining));
       }
 
-      const sorted = sortLinkRows(Array.isArray(data) ? data : []);
-      const raw = sorted.map((r: any) => cleanStr(r?.word_id)).filter(Boolean);
-      wordIds = uniqKeepOrder(raw.filter((x) => isUuidLike(x)));
+      wordIds = uniqKeepOrder(wordIds);
       diag.linkTable = "vocab_set_items";
       diag.wordIdCount = wordIds.length;
+      diag.totalSetsQueried = finalSetIds.length;
     } catch (e) {
       diag.steps.push({ kind: "loadSetWordIds", table: "vocab_set_items", ok: false, err: toErrMsg(e) });
       return {
@@ -669,7 +691,7 @@ export async function loadSessionWordsAction(
         userId,
         academyStudentId,
         assignmentId,
-        setId: resolvedSetId,
+        setId: resolvedSetId || finalSetIds[0],
         assignedAt,
         error: "SET_WORDS_LOOKUP_FAILED",
         note: toErrMsg(e),
@@ -683,7 +705,7 @@ export async function loadSessionWordsAction(
         userId,
         academyStudentId,
         assignmentId,
-        setId: resolvedSetId,
+        setId: resolvedSetId || finalSetIds[0],
         assignedAt,
         error: "SET_HAS_0_WORDS",
         note: "vocab_set_items returned 0 uuid word ids. Check set items data.",
