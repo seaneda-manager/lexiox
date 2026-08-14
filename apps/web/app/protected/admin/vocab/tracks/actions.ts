@@ -127,39 +127,43 @@ export async function assignStudentAction(params: {
 
     const totalDays = tracks[0].total_days || 20; // Default to 20 if not specified
 
-    // Create or update all assignments for this student
+    // 🔄 동일 Track 재배정 시: 기존 배정 완전 삭제 후 새로 덮어쓰기
+    // (같은 track이 배정되었으면 이전 것은 삭제)
+    const { data: existingPlans } = await supabase
+      .from("student_vocab_plans")
+      .select("id")
+      .eq("student_id", params.studentId)
+      .eq("track_id", params.trackId);
+
+    if (existingPlans && existingPlans.length > 0) {
+      // 기존 배정 전부 삭제
+      await supabase
+        .from("student_vocab_assignments")
+        .delete()
+        .eq("student_id", params.studentId)
+        .eq("track_id", params.trackId);
+    }
+
+    // ✅ 1~totalDays 전부 배정 (1부터 시작, 이후 cursor_day_index로 관리)
     const assignmentIds: string[] = [];
     for (let dayIndex = 1; dayIndex <= totalDays; dayIndex++) {
-      const { data: existing } = await supabase
+      const { data: newAssign, error: insertErr } = await supabase
         .from("student_vocab_assignments")
+        .insert({
+          student_id: params.studentId,
+          track_id: params.trackId,
+          day_index: dayIndex,
+          status: dayIndex === startDayIndex ? "ASSIGNED" : "QUEUED",
+        } as any)
         .select("id")
-        .eq("student_id", params.studentId)
-        .eq("track_id", params.trackId)
-        .eq("day_index", dayIndex)
         .single();
 
-      if (!existing) {
-        // Create new assignment
-        const { data: newAssign, error: insertErr } = await supabase
-          .from("student_vocab_assignments")
-          .insert({
-            student_id: params.studentId,
-            track_id: params.trackId,
-            day_index: dayIndex,
-            status: "ASSIGNED",
-          } as any)
-          .select("id")
-          .single();
-
-        if (!insertErr && newAssign?.id) {
-          assignmentIds.push(newAssign.id);
-        }
-      } else {
-        assignmentIds.push(existing.id);
+      if (!insertErr && newAssign?.id) {
+        assignmentIds.push(newAssign.id);
       }
     }
 
-    // Update available_at for all assignments
+    // ✅ available_at 계산 (모든 60개 Days)
     const { data: allAssignments, error: fetchErr } = await supabase
       .from("student_vocab_assignments")
       .select("id, day_index")
@@ -186,6 +190,7 @@ export async function assignStudentAction(params: {
       }
     }
 
+    console.log(`✅ Track 배정 완료: ${totalDays}개 Days (Day ${startDayIndex}부터 시작)`);
     return { ok: true, queueSize: totalDays };
   } catch (e: any) {
     return { ok: false, error: e?.message ?? "failed" };
@@ -541,6 +546,184 @@ export async function ensureCockedQueueAdminAction(params: {
     // TODO: Implement queue cooking logic
     // For now, return success with 0 assigned
     return { ok: true, assignedCount: 0 };
+  } catch (e: any) {
+    return { ok: false, error: e?.message ?? "failed" };
+  }
+}
+
+// 학습 일시중지
+export async function pauseAssignmentAction(params: {
+  assignmentId: string;
+  pauseReason?: string;
+}) {
+  try {
+    const supabase = getServiceRoleClient();
+
+    const { error } = await supabase
+      .from("student_vocab_assignments")
+      .update({
+        status: "PAUSED",
+        paused_at: new Date().toISOString(),
+        pause_reason: params.pauseReason || "User paused",
+      } as any)
+      .eq("id", params.assignmentId);
+
+    if (error) throw new Error(error.message);
+
+    return { ok: true };
+  } catch (e: any) {
+    return { ok: false, error: e?.message ?? "failed" };
+  }
+}
+
+// 학습 재개
+export async function resumeAssignmentAction(params: {
+  assignmentId: string;
+}) {
+  try {
+    const supabase = getServiceRoleClient();
+
+    const { error } = await supabase
+      .from("student_vocab_assignments")
+      .update({
+        status: "STARTED",
+        resumed_at: new Date().toISOString(),
+      } as any)
+      .eq("id", params.assignmentId);
+
+    if (error) throw new Error(error.message);
+
+    return { ok: true };
+  } catch (e: any) {
+    return { ok: false, error: e?.message ?? "failed" };
+  }
+}
+
+// 다음 N개 Days 배정
+export async function assignMultipleDaysAction(params: {
+  studentId: string;
+  trackId: string;
+  daysCount: number;
+  startFrom?: number;
+}) {
+  try {
+    const supabase = getServiceRoleClient();
+
+    // 미완료 assignments 조회
+    const { data: incompleteAssignments, error: fetchErr } = await supabase
+      .from("student_vocab_assignments")
+      .select("day_index")
+      .eq("student_id", params.studentId)
+      .eq("track_id", params.trackId)
+      .is("completed_at", null)
+      .order("day_index", { ascending: true });
+
+    if (fetchErr) throw new Error(fetchErr.message);
+
+    let startDay = params.startFrom || 1;
+    if (!params.startFrom && incompleteAssignments && incompleteAssignments.length > 0) {
+      startDay = incompleteAssignments[0].day_index;
+    }
+
+    // 이미 배정된 Days 가져오기
+    const assignedDays = new Set(incompleteAssignments?.map(a => a.day_index) || []);
+
+    // 다음 N개 Days 배정
+    const daysToAssign: number[] = [];
+    for (let day = startDay; daysToAssign.length < params.daysCount; day++) {
+      if (!assignedDays.has(day)) {
+        daysToAssign.push(day);
+      }
+    }
+
+    if (daysToAssign.length === 0) {
+      return { ok: true, assignedCount: 0, message: "No new days to assign" };
+    }
+
+    // Plan 정보 조회
+    const { data: plan, error: planErr } = await supabase
+      .from("student_vocab_plans")
+      .select("start_date, weekdays")
+      .eq("student_id", params.studentId)
+      .eq("track_id", params.trackId)
+      .single();
+
+    if (planErr) throw new Error(planErr.message);
+
+    // 각 Day에 대해 assignment 생성 또는 업데이트
+    let assignedCount = 0;
+    for (const dayIndex of daysToAssign) {
+      // available_at 계산
+      const { data: dateResult, error: dateErr } = await supabase.rpc(
+        "calculate_available_date",
+        {
+          p_start_date: plan.start_date,
+          p_weekdays: plan.weekdays || [1, 2, 3, 4, 5],
+          p_day_index: dayIndex,
+        }
+      );
+
+      if (dateErr) continue;
+
+      const { data: existing } = await supabase
+        .from("student_vocab_assignments")
+        .select("id")
+        .eq("student_id", params.studentId)
+        .eq("track_id", params.trackId)
+        .eq("day_index", dayIndex)
+        .maybeSingle();
+
+      if (!existing) {
+        const { error: insertErr } = await supabase
+          .from("student_vocab_assignments")
+          .insert({
+            student_id: params.studentId,
+            track_id: params.trackId,
+            day_index: dayIndex,
+            status: "ASSIGNED",
+            available_at: dateResult,
+          } as any);
+
+        if (!insertErr) assignedCount++;
+      }
+    }
+
+    return { ok: true, assignedCount, daysAssigned: daysToAssign };
+  } catch (e: any) {
+    return { ok: false, error: e?.message ?? "failed" };
+  }
+}
+
+// Assignment 진행 상황 조회
+export async function getAssignmentProgressAction(params: {
+  assignmentId: string;
+}) {
+  try {
+    const supabase = getServiceRoleClient();
+
+    const { data, error } = await supabase
+      .from("student_vocab_assignments")
+      .select(
+        "id, day_index, status, started_at, paused_at, resumed_at, completed_at, total_study_time"
+      )
+      .eq("id", params.assignmentId)
+      .single();
+
+    if (error) throw new Error(error.message);
+
+    return {
+      ok: true,
+      progress: {
+        assignmentId: data.id,
+        dayIndex: data.day_index,
+        status: data.status,
+        startedAt: data.started_at,
+        pausedAt: data.paused_at,
+        resumedAt: data.resumed_at,
+        completedAt: data.completed_at,
+        totalStudyTime: data.total_study_time || 0,
+      },
+    };
   } catch (e: any) {
     return { ok: false, error: e?.message ?? "failed" };
   }

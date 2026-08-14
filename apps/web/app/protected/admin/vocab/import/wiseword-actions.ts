@@ -346,6 +346,12 @@ export async function importWisewordWordsAndCreateSetFromCsvText(
       if (ins.error) ensured.errors.push(`set_items insert failed: ${toErrMsg(ins.error)}`);
       else insertedSetItems += group.length;
     }
+
+    // 🔄 Track의 total_days 자동 계산 및 업데이트
+    if (input.track_id) {
+      await updateTrackTotalDays(admin, input.track_id);
+    }
+
     return {
       ok: true,
       setId,
@@ -427,6 +433,11 @@ export async function importWisewordWordsAndCreateSetFromJsonText(
       }
     }
 
+    // 🔄 Track의 total_days 자동 계산 및 업데이트
+    if (input.track_id) {
+      await updateTrackTotalDays(admin, input.track_id);
+    }
+
     return {
       ok: true,
       setId,
@@ -440,5 +451,42 @@ export async function importWisewordWordsAndCreateSetFromJsonText(
     };
   } catch (e: any) {
     return { ok: false, error: toErrMsg(e), diag };
+  }
+}
+
+// ✅ Track의 total_days 자동 계산 (order_index의 MAX값)
+async function updateTrackTotalDays(admin: any, trackId: string) {
+  try {
+    // 이 Track에 속한 모든 vocab_sets의 최대 order_index 구하기
+    const { data: sets, error: sErr } = await admin
+      .from("vocab_sets")
+      .select("order_index")
+      .eq("track_id", trackId)
+      .not("order_index", "is", null);
+
+    if (sErr) {
+      console.warn(`updateTrackTotalDays: select failed for track ${trackId}`, toErrMsg(sErr));
+      return;
+    }
+
+    // order_index 중 최대값 = total_days
+    const maxOrderIndex = sets && sets.length > 0
+      ? Math.max(...sets.map((s: any) => Number(s.order_index) || 0))
+      : 0;
+
+    if (maxOrderIndex > 0) {
+      const { error: uErr } = await admin
+        .from("vocab_tracks")
+        .update({ total_days: maxOrderIndex })
+        .eq("id", trackId);
+
+      if (uErr) {
+        console.warn(`updateTrackTotalDays: update failed for track ${trackId}`, toErrMsg(uErr));
+      } else {
+        console.log(`✅ Track ${trackId} total_days updated to ${maxOrderIndex}`);
+      }
+    }
+  } catch (e: any) {
+    console.error(`updateTrackTotalDays exception:`, toErrMsg(e));
   }
 }

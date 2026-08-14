@@ -15,12 +15,16 @@ import {
   getStudentVocabAssignmentsAction,
   deleteStudentTrackAssignmentAction,
   updateStudentLearningOptionAction,
+  pauseAssignmentAction,
+  resumeAssignmentAction,
+  assignMultipleDaysAction,
+  getAssignmentProgressAction,
   type StudentVocabAssignment,
 } from "../actions";
 
 type Student = { id: string; full_name: string | null; login_id: string | null; grade: string | null };
 type Track = { id: string; title: string | null; slug: string | null; total_days: number | null };
-type QueueItem = { id: string; day_index: number; status: string; available_at: string; started_at: string | null; completed_at: string | null };
+type QueueItem = { id: string; day_index: number; status: string; available_at: string; started_at: string | null; completed_at: string | null; paused_at?: string | null; resumed_at?: string | null };
 type Notice = { id: string; student_id: string; assignment_id: string; track_id: string; day_index: number; notice_type: string; status: string; created_at: string };
 
 export default function VocabAssignClient() {
@@ -42,6 +46,8 @@ export default function VocabAssignClient() {
   const [msg, setMsg] = useState("");
   const [notices, setNotices] = useState<Notice[]>([]);
   const [assignments, setAssignments] = useState<StudentVocabAssignment[]>([]);
+  const [multiDaysCount, setMultiDaysCount] = useState(2); // Multiple Days 배정 개수
+  const [pausingAssignmentId, setPausingAssignmentId] = useState(""); // 일시중지 중인 assignment
 
   const weekdayPresets: Record<string, { label: string; days: number[] }> = {
     "mon-wed": { label: "월, 수 (주 2회)", days: [1, 3] },
@@ -175,6 +181,71 @@ export default function VocabAssignClient() {
     if (res.ok) {
       setMsg("✅ 완료됨");
       loadQueue();
+    } else {
+      setMsg(`❌ ${res.error}`);
+    }
+  }
+
+  async function handlePauseAssignment(assignmentId: string) {
+    const res = await pauseAssignmentAction({
+      assignmentId,
+      pauseReason: "User paused via admin"
+    });
+    if (res.ok) {
+      setMsg("✅ 학습 일시중지됨");
+      loadQueue();
+    } else {
+      setMsg(`❌ ${res.error}`);
+    }
+  }
+
+  async function handleResumeAssignment(assignmentId: string) {
+    const res = await resumeAssignmentAction({ assignmentId });
+    if (res.ok) {
+      setMsg("✅ 학습 재개됨");
+      loadQueue();
+    } else {
+      setMsg(`❌ ${res.error}`);
+    }
+  }
+
+  async function handleAssignMultipleDays() {
+    if (!selectedStudent || !selectedTrack) {
+      setMsg("❌ 학생과 트랙을 선택하세요");
+      return;
+    }
+    if (multiDaysCount < 1) {
+      setMsg("❌ 최소 1개 이상의 Days를 선택하세요");
+      return;
+    }
+    setLoading(true);
+    const res = await assignMultipleDaysAction({
+      studentId: selectedStudent,
+      trackId: selectedTrack,
+      daysCount: multiDaysCount,
+    });
+    if (res.ok) {
+      setMsg(`✅ ${res.assignedCount}개 Days 배정 완료`);
+      loadQueue();
+    } else {
+      setMsg(`❌ ${res.error}`);
+    }
+    setLoading(false);
+  }
+
+  async function handleGetProgress(assignmentId: string) {
+    const res = await getAssignmentProgressAction({ assignmentId });
+    if (res.ok) {
+      const p = res.progress;
+      alert(`
+Day ${p.dayIndex}
+Status: ${p.status}
+Started: ${p.startedAt ? new Date(p.startedAt).toLocaleString() : "-"}
+Paused: ${p.pausedAt ? new Date(p.pausedAt).toLocaleString() : "-"}
+Resumed: ${p.resumedAt ? new Date(p.resumedAt).toLocaleString() : "-"}
+Completed: ${p.completedAt ? new Date(p.completedAt).toLocaleString() : "-"}
+Total Study Time: ${Math.round(p.totalStudyTime / 60)}분
+      `);
     } else {
       setMsg(`❌ ${res.error}`);
     }
@@ -450,6 +521,31 @@ export default function VocabAssignClient() {
             {msg}
           </div>
         )}
+
+        {/* Multiple Days 배정 섹션 */}
+        {selectedStudent && selectedTrack && (
+          <div className="border-t pt-4 mt-4">
+            <h3 className="text-sm font-bold mb-3">추가 Days 배정</h3>
+            <div className="flex gap-2">
+              <label className="text-sm font-bold">다음 N개 Days를 배정:</label>
+              <input
+                type="number"
+                min="1"
+                max="50"
+                value={multiDaysCount}
+                onChange={(e) => setMultiDaysCount(Math.max(1, Number(e.target.value)))}
+                className="w-16 border rounded px-2 py-1"
+              />
+              <button
+                onClick={handleAssignMultipleDays}
+                disabled={loading}
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-1 rounded text-sm font-bold disabled:opacity-50"
+              >
+                배정
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {assignments.length > 0 && (
@@ -592,12 +688,12 @@ export default function VocabAssignClient() {
                         {item.status}
                       </button>
                     </td>
-                    <td className="py-2 px-4 space-x-2">
+                    <td className="py-2 px-4 space-x-1 flex flex-wrap gap-1">
                       {editingId === item.id ? (
                         <>
                           <button
                             onClick={editMode === "day" ? updateDay : updateAvailableDate}
-                            className="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700"
+                            className="bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-700"
                           >
                             저장
                           </button>
@@ -606,22 +702,48 @@ export default function VocabAssignClient() {
                               setEditingId("");
                               setEditMode(null);
                             }}
-                            className="bg-gray-400 text-white px-3 py-1 rounded text-xs hover:bg-gray-500"
+                            className="bg-gray-400 text-white px-2 py-1 rounded text-xs hover:bg-gray-500"
                           >
                             취소
                           </button>
                         </>
                       ) : (
-                        <button
-                          onClick={() => {
-                            setEditingId(item.id);
-                            setEditingDay(item.day_index);
-                            setEditMode("day");
-                          }}
-                          className="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700"
-                        >
-                          Day 변경
-                        </button>
+                        <>
+                          <button
+                            onClick={() => {
+                              setEditingId(item.id);
+                              setEditingDay(item.day_index);
+                              setEditMode("day");
+                            }}
+                            className="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700"
+                          >
+                            Day
+                          </button>
+                          {item.status === "STARTED" && !item.paused_at ? (
+                            <button
+                              onClick={() => handlePauseAssignment(item.id)}
+                              className="bg-yellow-600 text-white px-2 py-1 rounded text-xs hover:bg-yellow-700"
+                              title="학습 일시중지"
+                            >
+                              ⏸ 중지
+                            </button>
+                          ) : item.status === "PAUSED" || item.paused_at ? (
+                            <button
+                              onClick={() => handleResumeAssignment(item.id)}
+                              className="bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-700"
+                              title="학습 재개"
+                            >
+                              ▶ 재개
+                            </button>
+                          ) : null}
+                          <button
+                            onClick={() => handleGetProgress(item.id)}
+                            className="bg-purple-600 text-white px-2 py-1 rounded text-xs hover:bg-purple-700"
+                            title="진행 상황 조회"
+                          >
+                            📊
+                          </button>
+                        </>
                       )}
                     </td>
                   </tr>
