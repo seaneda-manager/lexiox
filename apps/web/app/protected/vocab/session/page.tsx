@@ -1187,7 +1187,7 @@ export default function VocabSessionPage() {
 
   const spellingWords = useMemo(() => {
     if (!prescreenResult) return [];
-    return prescreenResult.knownWordIds
+    const words = prescreenResult.knownWordIds
       .map((id: string) => allWords.find((w) => w.id === id))
       .filter((w): w is SessionWord => Boolean(w))
       .map((w) => ({
@@ -1195,6 +1195,8 @@ export default function VocabSessionPage() {
         text: w.text,
         meanings_ko: w.meanings_ko,
       }));
+    // ✅ Spelling 단계에서 단어 순서 셔플
+    return shuffleArray(words);
   }, [prescreenResult, allWords]);
 
   const learningPayload: LearningWord[] = useMemo(
