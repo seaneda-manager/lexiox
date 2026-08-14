@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ChevronRight, MoreHorizontal } from 'lucide-react';
+import { VocabStudyCards } from './VocabStudyCards';
 
 type CurriculumMeta = {
   key: string;
@@ -297,30 +297,43 @@ function PostCheckupContent({ isToefl, vocaTodayCount }: any) {
 }
 
 function VocabTestContent({ vocaTodayCount, vocaPlanCount }: any) {
+  // TODO: API에서 실제 진행도 데이터 가져오기
+  const dayNumber = 1; // 예시
+  const trackId = "default-track"; // 예시
+
+  const stage1Progress = 75;
+  const stage1Complete = true;
+  const stage2Progress = 30;
+  const stage2Complete = false;
+  const testScore = undefined;
+  const testDate = undefined;
+
   return (
-    <div className="rounded-2xl border border-neutral-200 bg-white p-6">
-      <h3 className="font-semibold text-neutral-900 mb-4">단어 시험</h3>
-      <div className="space-y-3">
-        {vocaTodayCount > 0 ? (
-          <div className="flex items-center justify-between rounded-lg bg-purple-50 p-4">
-            <div>
-              <p className="font-medium text-purple-900">오늘의 단어 학습</p>
-              <p className="text-sm text-purple-700">{vocaTodayCount}개 남음</p>
-            </div>
-            <Link
-              href="/vocab/session"
-              className="rounded-lg bg-purple-500 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-600"
-            >
-              학습
-            </Link>
+    <div className="space-y-6">
+      <VocabStudyCards
+        dayNumber={dayNumber}
+        trackId={trackId}
+        stage1Progress={stage1Progress}
+        stage1Complete={stage1Complete}
+        stage2Progress={stage2Progress}
+        stage2Complete={stage2Complete}
+        testScore={testScore}
+        testDate={testDate}
+      />
+
+      {/* 통계 정보 */}
+      <div className="rounded-2xl border border-neutral-200 bg-white p-6">
+        <h3 className="font-semibold text-neutral-900 mb-4">학습 통계</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="rounded-lg bg-blue-50 p-4 text-center">
+            <p className="text-sm text-blue-600 font-medium">오늘 단어</p>
+            <p className="text-2xl font-bold text-blue-700 mt-1">{vocaTodayCount}개</p>
           </div>
-        ) : (
-          <div className="rounded-lg bg-neutral-50 p-4">
-            <p className="text-sm text-neutral-600">
-              {vocaPlanCount > 0 ? '오늘 단어 학습을 완료했습니다.' : '배정된 단어 플랜이 없습니다.'}
-            </p>
+          <div className="rounded-lg bg-purple-50 p-4 text-center">
+            <p className="text-sm text-purple-600 font-medium">전체 계획</p>
+            <p className="text-2xl font-bold text-purple-700 mt-1">{vocaPlanCount}개</p>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
@@ -344,7 +357,7 @@ function DailyTestsContent({ isToefl, examList, pendingTests }: any) {
               >
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-amber-900">{exam.title}</span>
-                  <ChevronRight className="h-4 w-4 text-amber-700" />
+                  <span className="text-amber-700">→</span>
                 </div>
               </Link>
             ))}
@@ -370,7 +383,7 @@ function ReviewContent({ readingDone, listeningDone }: any) {
             <p className="font-medium text-sky-900">Reading 복습</p>
             <p className="text-sm text-sky-700">{readingDone}회 완료</p>
           </div>
-          <ChevronRight className="h-4 w-4 text-sky-700" />
+          <span className="text-sky-700">→</span>
         </Link>
         <Link
           href="/updated-listening/study"
@@ -380,7 +393,7 @@ function ReviewContent({ readingDone, listeningDone }: any) {
             <p className="font-medium text-violet-900">Listening 복습</p>
             <p className="text-sm text-violet-700">{listeningDone}회 완료</p>
           </div>
-          <ChevronRight className="h-4 w-4 text-violet-700" />
+          <span className="text-violet-700">→</span>
         </Link>
       </div>
     </div>
