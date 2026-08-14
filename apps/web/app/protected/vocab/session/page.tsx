@@ -993,7 +993,7 @@ export default function VocabSessionPage() {
     return () => {
       cancelled = true;
     };
-  }, [supabase, shortcut.jump, shortcut.setId, shortcut.dayIndex, shortcut.n, shortcut.seed]);
+  }, [supabase, shortcut.jump, shortcut.setId, shortcut.setIds, shortcut.dayIndex, shortcut.dayIndices, shortcut.n, shortcut.seed]);
 
   /* =========================================================
      DERIVED
