@@ -749,31 +749,20 @@ export default function VocabSessionPage() {
             try {
               const progress = JSON.parse(saved);
               console.log('🔄 Resuming session from:', progress.stage);
-              // Resume from saved stage
+
+              // ✅ 완료 상태(DONE, SUMMARY)면 저장된 진행 상황 삭제 → 새로 시작
+              if (progress.stage === 'DONE' || progress.stage === 'SUMMARY') {
+                console.log('✅ Day already completed. Starting fresh.');
+                localStorage.removeItem(`vocab_progress_${setIdParam}`);
+                setStage('PRESCREEN');
+                return;
+              }
+
+              // Resume from saved stage (완료하지 않은 것만)
               if (progress.stage === 'SPELLING') {
                 setPrescreenResult(progress.prescreenResult);
                 setSpellingResult(makeEmptySpellingResult());
                 setStage('SPELLING');
-                return;
-              } else if (progress.stage === 'SUMMARY') {
-                setPrescreenResult(progress.prescreenResult);
-                setSpellingResult(progress.spellingResult || makeEmptySpellingResult());
-
-                // Calculate learning words from prescreen & spelling results
-                const base = (progress.prescreenResult?.unknownWordIds || [])
-                  .map((id: string) => allWords.find((w) => w.id === id))
-                  .filter(Boolean) as SessionWord[];
-
-                const failedArr = (progress.spellingResult?.spellingFailedIds || [])
-                  .map((id: string) => allWords.find((w) => w.id === id))
-                  .filter(Boolean) as SessionWord[];
-
-                const map = new Map<string, SessionWord>();
-                [...base, ...failedArr].forEach((w) => map.set(w.id, w));
-
-                const final = [...map.values()];
-                setLearningWords(final);
-                setStage('LEARNING_INTRO');
                 return;
               }
             } catch (e) {
