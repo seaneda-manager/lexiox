@@ -320,7 +320,9 @@ type ShortcutParams = {
   jump: string;
   only: string;
   setId: string;
+  setIds?: string;
   dayIndex: number | null;
+  dayIndices?: string;
   trackId: string;
   n: number; // dev-only
   seed: string; // dev-only
@@ -333,10 +335,13 @@ function readShortcutParams(): ShortcutParams {
   const jump = (sp.get("jump") ?? "").trim().toUpperCase();
   const only = (sp.get("only") ?? "").trim().toUpperCase();
   const setId = (sp.get("setId") ?? "").trim();
+  const setIds = (sp.get("setIds") ?? "").trim();
   const trackId = (sp.get("trackId") ?? "").trim();
 
   const dayIndexRaw = (sp.get("dayIndex") ?? "").trim();
   const dayIndex = Number.isFinite(Number(dayIndexRaw)) ? Math.max(1, Math.floor(Number(dayIndexRaw))) : null;
+
+  const dayIndices = (sp.get("dayIndices") ?? "").trim();
 
   const nRaw = (sp.get("n") ?? sp.get("limit") ?? "").trim();
   const n = Number.isFinite(Number(nRaw)) ? Math.max(0, Math.floor(Number(nRaw))) : 0;
@@ -344,7 +349,7 @@ function readShortcutParams(): ShortcutParams {
   const seed = (sp.get("seed") ?? "").trim();
   const debug = (sp.get("debug") ?? "").trim();
 
-  return { jump, only, setId, dayIndex, trackId, n, seed, debug };
+  return { jump, only, setId, setIds, dayIndex, dayIndices, trackId, n, seed, debug };
 }
 
 function canonOnlyToDrillType(raw: string): DrillType | "" {
@@ -818,7 +823,14 @@ export default function VocabSessionPage() {
 
         const res: LoadSessionWordsActionResult = await loadSessionWordsAction({
           setId: forcedSetId,
+          setIds: shortcut.setIds,
           dayIndex: shortcut.dayIndex,
+          dayIndices: shortcut.dayIndices
+            ? shortcut.dayIndices
+                .split(/[,\s]+/)
+                .map((x) => Number(x))
+                .filter(Number.isFinite)
+            : undefined,
         } as any);
 
         if (cancelled) return;

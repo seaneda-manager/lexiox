@@ -6,6 +6,7 @@ import { getStudentCurriculum, getPhaseOrder, PHASE_LABELS, PHASE_ICONS } from "
 import { PhaseCard } from "@/components/student/phases/PhaseCard";
 import Link from "next/link";
 import { PaxHomeWidget } from "@/components/avatar/PaxHomeWidget";
+import VocabTrackSelector from "@/components/student/VocabTrackSelector";
 import type { Tribe } from "@/components/avatar/PaxAvatar";
 import type { Curriculum, LearningPhase } from "@/lib/types/learning-phase";
 
@@ -360,22 +361,12 @@ export default async function StudentPage() {
 
             {/* Vocab Track */}
             {totalDayCount > 0 && (
-              <Link
-                href={
-                  nextIncompleteDay
-                    ? `/vocab/session?setId=${nextIncompleteDay.set_id}&dayIndex=${nextIncompleteDay.day_index}`
-                    : "/vocab/hub"
-                }
-                className="flex items-start justify-between rounded-lg border border-blue-200 bg-blue-50 p-4 hover:bg-blue-100"
-              >
-                <div>
-                  <p className="text-sm font-semibold text-blue-900">📚 Vocabulary Track</p>
-                  <p className="mt-1 text-xs text-blue-700">
-                    Day {(nextIncompleteDay?.day_index ?? totalDayCount) + 1}/{totalDayCount}
-                  </p>
-                </div>
-                <span className="text-sm font-semibold text-blue-600">{vocabProgress}%</span>
-              </Link>
+              <VocabTrackSelector
+                assignments={vocabAssignmentRows}
+                totalDayCount={totalDayCount}
+                vocabProgress={vocabProgress}
+                nextIncompleteDay={nextIncompleteDay}
+              />
             )}
           </main>
 
