@@ -2527,7 +2527,7 @@ export default function VocabSessionPage() {
               <button
                 className="w-full rounded-xl bg-blue-600 py-3 text-white font-bold hover:bg-blue-700 transition"
                 onClick={() => {
-                  // Clear current day's progress and go to next day
+                  // Clear current day's progress
                   if (sessionSetId) {
                     try {
                       localStorage.removeItem(`vocab_progress_${sessionSetId}`);
@@ -2535,8 +2535,41 @@ export default function VocabSessionPage() {
                       sessionStorage.removeItem(STORAGE_KEY);
                     } catch {}
                   }
-                  // Navigate without setId so server fetches next day
-                  window.location.href = "/vocab/session";
+                  // ✅ 다음 Day 조회 후 그것으로 이동
+                  (async () => {
+                    try {
+                      const sb = await createBrowserClient();
+                      const { data: user } = await sb.auth.getUser();
+                      if (!user?.id) {
+                        window.location.href = "/home";
+                        return;
+                      }
+
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const todayISO = today.toISOString().split("T")[0];
+
+                      // 다음 미완료 Day
+                      const { data: nextDay } = await sb
+                        .from("student_vocab_assignments")
+                        .select("set_id,day_index")
+                        .is("completed_at", null)
+                        .lte("available_at", todayISO)
+                        .order("day_index", { ascending: true })
+                        .limit(1)
+                        .maybeSingle();
+
+                      if (!nextDay) {
+                        window.location.href = "/home";
+                        return;
+                      }
+
+                      window.location.href = `/vocab/session?setId=${nextDay.set_id}&dayIndex=${nextDay.day_index}`;
+                    } catch (e) {
+                      console.error("Next day error:", e);
+                      window.location.href = "/home";
+                    }
+                  })();
                 }}
               >
                 다음 Day 시작 ➔
