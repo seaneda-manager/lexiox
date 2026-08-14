@@ -19,6 +19,7 @@ import {
   resumeAssignmentAction,
   assignMultipleDaysAction,
   getAssignmentProgressAction,
+  adminCompleteVocabDayAction,
   type StudentVocabAssignment,
 } from "../actions";
 
@@ -249,6 +250,31 @@ Total Study Time: ${Math.round(p.totalStudyTime / 60)}분
     } else {
       setMsg(`❌ ${res.error}`);
     }
+  }
+
+  async function handleCompleteDay(
+    assignmentId: string,
+    dayIndex: number,
+    studentId: string
+  ) {
+    if (!selectedTrack) {
+      setMsg("❌ Track를 선택하세요");
+      return;
+    }
+    setLoading(true);
+    const res = await adminCompleteVocabDayAction({
+      assignmentId,
+      studentId,
+      trackId: selectedTrack,
+      dayIndex,
+    });
+    if (res.ok) {
+      setMsg(`✅ Day ${dayIndex} 완료! 다음 Day: ${res.nextDay || "없음"}`);
+      loadQueue();
+    } else {
+      setMsg(`❌ ${res.error}`);
+    }
+    setLoading(false);
   }
 
   async function handleDeleteAssignment(studentId: string, trackId: string) {
@@ -670,7 +696,7 @@ Total Study Time: ${Math.round(p.totalStudyTime / 60)}분
                         </span>
                       )}
                     </td>
-                    <td className="py-2 px-4">
+                    <td className="py-2 px-4 space-x-2 flex items-center">
                       <button
                         onClick={() => {
                           if (item.status !== "COMPLETED") {
@@ -681,12 +707,25 @@ Total Study Time: ${Math.round(p.totalStudyTime / 60)}분
                         className={`px-2 py-1 rounded text-xs font-bold cursor-pointer transition ${
                           item.status === "COMPLETED" ? "bg-green-100 text-green-700 opacity-50 cursor-not-allowed" :
                           item.status === "ASSIGNED" ? "bg-blue-100 text-blue-700 hover:bg-blue-200" :
+                          item.status === "READY" ? "bg-green-100 text-green-700 hover:bg-green-200" :
                           "bg-gray-100 text-gray-700 hover:bg-gray-200"
                         }`}
                         title={item.status === "COMPLETED" ? "완료됨" : "클릭하여 완료 표시"}
                       >
                         {item.status}
                       </button>
+                      {item.status !== "COMPLETED" && (
+                        <button
+                          onClick={() =>
+                            handleCompleteDay(item.id, item.day_index, selectedStudent)
+                          }
+                          disabled={loading}
+                          className="bg-red-600 text-white px-2 py-1 rounded text-xs hover:bg-red-700 disabled:opacity-50"
+                          title="Day 완료 & 다음 Day 자동 배정"
+                        >
+                          ✓ 완료
+                        </button>
+                      )}
                     </td>
                     <td className="py-2 px-4 space-x-1 flex flex-wrap gap-1">
                       {editingId === item.id ? (

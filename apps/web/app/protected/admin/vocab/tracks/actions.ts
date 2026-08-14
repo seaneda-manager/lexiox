@@ -729,6 +729,47 @@ export async function getAssignmentProgressAction(params: {
   }
 }
 
+// 🎓 Admin용: Day 완료 및 자동 진행
+export async function adminCompleteVocabDayAction(params: {
+  assignmentId: string;
+  studentId: string;
+  trackId: string;
+  dayIndex: number;
+}) {
+  try {
+    const supabase = getServiceRoleClient();
+
+    // 1️⃣ 현재 Day 완료 표시
+    const { error: updateError } = await supabase
+      .from("student_vocab_assignments")
+      .update({
+        completed_at: new Date().toISOString(),
+        status: "COMPLETED",
+      } as any)
+      .eq("id", params.assignmentId)
+      .eq("student_id", params.studentId);
+
+    if (updateError) throw new Error(updateError.message);
+
+    console.log(`✅ Day ${params.dayIndex} completed for student ${params.studentId}`);
+
+    // 2️⃣ 다음 Day 자동 배정
+    const result = await advanceVocabQueueAfterCompletionAction({
+      studentId: params.studentId,
+      trackId: params.trackId,
+    });
+
+    return {
+      ok: true,
+      completed: true,
+      nextDay: result.ok ? result.nextDay : null,
+      nextAssigned: result.ok ? result.assignedCount : 0,
+    };
+  } catch (e: any) {
+    return { ok: false, error: e?.message ?? "failed" };
+  }
+}
+
 export async function advanceVocabQueueAfterCompletionAction(params: {
   studentId: string;
   trackId: string;
