@@ -750,6 +750,8 @@ export default function VocabSessionPage() {
         // ⚠️ 파라미터 있을 때만 저장된 상태 복구 (중단/재개)
         // 파라미터 없으면 → 새로 시작 (어느 Day를 해야 할지 모르므로)
         const setIdParam = shortcut.setId ? shortcut.setId : null;
+        let shouldResumeFromSaved = false;
+
         if (setIdParam && typeof window !== 'undefined') {
           const saved = localStorage.getItem(`vocab_progress_${setIdParam}`);
           if (saved) {
@@ -757,19 +759,20 @@ export default function VocabSessionPage() {
               const progress = JSON.parse(saved);
               console.log('🔄 Resuming session from:', progress.stage);
 
-              // ✅ 완료 상태(DONE, SUMMARY)면 저장된 진행 상황 삭제 → 새로 시작
+              // ✅ 완료 상태(DONE, SUMMARY)면 저장된 진행 상황 삭제 → 새로 시작 (단어 로드)
               if (progress.stage === 'DONE' || progress.stage === 'SUMMARY') {
                 console.log('✅ Day already completed. Starting fresh.');
                 localStorage.removeItem(`vocab_progress_${setIdParam}`);
-                setStage('PRESCREEN');
-                return;
+                shouldResumeFromSaved = false; // 새로 로드
               }
-
               // Resume from saved stage (완료하지 않은 것만)
-              if (progress.stage === 'SPELLING') {
+              else if (progress.stage === 'SPELLING') {
                 setPrescreenResult(progress.prescreenResult);
                 setSpellingResult(makeEmptySpellingResult());
                 setStage('SPELLING');
+                shouldResumeFromSaved = true; // 저장된 상태 사용
+                if (cancelled) return;
+                // 단어는 이미 allWords에 있으므로 로드할 필요 없음
                 return;
               }
             } catch (e) {
@@ -780,6 +783,8 @@ export default function VocabSessionPage() {
           // 파라미터 없으면 → 새로 시작
           console.log('ℹ️ No setId parameter. Starting fresh.');
         }
+
+        // shouldResumeFromSaved가 false면 계속해서 loadSessionWordsAction 호출
 
         const forcedSetId = shortcut.setId ? shortcut.setId : null;
 
