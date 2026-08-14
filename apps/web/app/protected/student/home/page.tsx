@@ -2,9 +2,12 @@ import { redirect } from "next/navigation";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { getDrillRoute } from "@/lib/student-activities/routes";
 import { markPrescriptionInProgress } from "@/lib/student-activities/prescription-actions";
+import { getStudentCurriculum, getPhaseOrder, PHASE_LABELS, PHASE_ICONS } from "@/lib/student-activities/curriculum-router";
+import { PhaseCard } from "@/components/student/phases/PhaseCard";
 import Link from "next/link";
 import { PaxHomeWidget } from "@/components/avatar/PaxHomeWidget";
 import type { Tribe } from "@/components/avatar/PaxAvatar";
+import type { Curriculum, LearningPhase } from "@/lib/types/learning-phase";
 
 export const dynamic = "force-dynamic";
 
@@ -198,10 +201,29 @@ export default async function StudentPage() {
 
   const activityRows = (activities ?? []) as StudentActivity[];
   const prescriptionRows = (prescriptions ?? []) as StudentPrescription[];
-  const vocabAssignmentRows = (vocabAssignments ?? []) as Array<{ id: string; track_id: string; day_index: number; completed_at: string | null }>;
+  const vocabAssignmentRows = (vocabAssignments ?? []) as Array<{ id: string; set_id: string; track_id: string; day_index: number; completed_at: string | null }>;
+
+  // 학생의 커리큘럼 조회
+  const academyStudentId = studentKeys[0];
+  const curriculum: Curriculum = academyStudentId
+    ? await getStudentCurriculum(supabase, academyStudentId)
+    : 'lexiox_jr';
+
+  // Phase 순서
+  const phaseOrder = getPhaseOrder(curriculum);
+
+  // Phase 상태 결정 (간단한 버전: 모두 upcoming, 첫 번째는 in_progress)
+  const phaseStatuses = new Map<LearningPhase, { completed: boolean; progress: number }>(
+    phaseOrder.map((phase, idx) => [
+      phase,
+      {
+        completed: false,
+        progress: idx === 0 ? 45 : 0,
+      },
+    ])
+  );
 
   const unsubmittedExams = (pendingExams ?? []).filter((a: any) => !a.generated_exam_responses?.[0]?.submitted_at);
-
   const current = activityRows.find((a) => a.status === "in_progress") ?? null;
   const todos = activityRows.filter((a) => a.status === "todo");
   const recent = activityRows.slice(0, 5);
@@ -212,341 +234,222 @@ export default async function StudentPage() {
   const totalDayCount = vocabAssignmentRows.length;
   const vocabProgress = totalDayCount > 0 ? Math.round((completedDayCount / totalDayCount) * 100) : 0;
 
+  // Phase 진행률 계산
+  const completedPhaseCount = Array.from(phaseStatuses.values()).filter(s => s.completed).length;
+  const overallProgress = Math.round((completedPhaseCount / phaseOrder.length) * 100);
+
   return (
-    <main className="mx-auto max-w-6xl space-y-6 px-6 py-8">
-      <PaxHomeWidget tribe={tribe} level={level} streak={streak} name={displayName} />
+    <main className="min-h-screen bg-slate-50">
+      {/* Header */}
+      <header className="border-b border-slate-200 bg-white shadow-sm">
+        <div className="mx-auto max-w-7xl px-6 py-4">
+          <PaxHomeWidget tribe={tribe} level={level} streak={streak} name={displayName} />
+        </div>
+      </header>
 
-
-      {unsubmittedExams.length > 0 && (
-        <Link href="/student/exams"
-          className="flex items-center justify-between rounded-2xl border border-amber-300 bg-amber-50 px-5 py-4 shadow-sm hover:bg-amber-100 transition">
-          <div>
-            <p className="text-sm font-bold text-amber-800">📋 미제출 시험 {unsubmittedExams.length}개</p>
-            <p className="text-xs text-amber-600 mt-0.5">선생님이 배정한 예상문제가 있습니다.</p>
-          </div>
-          <span className="rounded-full bg-amber-600 px-4 py-1.5 text-xs font-bold text-white">보기 →</span>
-        </Link>
-      )}
-
-      <section className="grid gap-4 md:grid-cols-2">
-        {/* Vocabulary Day Progress Card */}
-        {totalDayCount > 0 && (
-          <Link
-            href={nextIncompleteDay ? "/vocab/session" : "/vocab/hub"}
-            className="group rounded-3xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md"
-          >
-            <div className="space-y-4">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-600">
-                  📚 Vocabulary Track
-                </p>
-                <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950">
-                  Day {(nextIncompleteDay?.day_index ?? totalDayCount) + 1}/{totalDayCount}
-                </h2>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  {nextIncompleteDay
-                    ? `다음: Day ${(nextIncompleteDay.day_index ?? 0) + 1}을 진행하세요.`
-                    : "모든 Day를 완료했습니다! 🎉"}
-                </p>
-              </div>
+      {/* 3-Column Layout */}
+      <div className="mx-auto max-w-7xl px-6 py-8">
+        <div className="grid gap-6 lg:grid-cols-[280px_1fr_320px]">
+          {/* Left Sidebar - Navigation */}
+          <aside className="space-y-4">
+            {/* Phase Navigation */}
+            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+              <h3 className="mb-3 text-xs font-bold uppercase tracking-widest text-slate-500">
+                학습 경로
+              </h3>
               <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs font-semibold">
-                  <span className="text-slate-600">진행률</span>
-                  <span className="text-blue-600">{vocabProgress}%</span>
+                {phaseOrder.map((phase, idx) => {
+                  const status = phaseStatuses.get(phase);
+                  const isCompleted = status?.completed ?? false;
+                  const isCurrentPhase = idx === 0 && !isCompleted;
+
+                  return (
+                    <Link
+                      key={phase}
+                      href={`/student/phases/${phase}`}
+                      className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium transition ${
+                        isCurrentPhase
+                          ? 'bg-indigo-600 text-white'
+                          : isCompleted
+                            ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      }`}
+                    >
+                      <span>{PHASE_ICONS[phase]}</span>
+                      <span className="truncate">{PHASE_LABELS[phase]}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Progress Card */}
+            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+              <h3 className="mb-3 text-xs font-bold uppercase tracking-widest text-slate-500">
+                진행률
+              </h3>
+              <div className="space-y-3">
+                <div>
+                  <p className="text-2xl font-bold text-indigo-600">{overallProgress}%</p>
+                  <p className="mt-1 text-xs text-slate-500">전체 진행률</p>
                 </div>
-                <div className="h-2 w-full rounded-full bg-slate-200 overflow-hidden">
+                <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
                   <div
-                    className="h-full bg-blue-500 transition-all"
-                    style={{ width: `${vocabProgress}%` }}
+                    className="h-full bg-indigo-600 transition-all"
+                    style={{ width: `${overallProgress}%` }}
                   />
                 </div>
-                <p className="text-xs text-slate-500">
-                  {completedDayCount}/{totalDayCount} 완료
+              </div>
+            </div>
+          </aside>
+
+          {/* Main Content */}
+          <main className="space-y-6">
+            {/* Today's Tasks */}
+            <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="mb-4">
+                <h2 className="text-lg font-bold text-slate-900">📚 오늘의 학습</h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  {curriculum === 'toefl' ? 'TOEFL 2026 시험 대비' : `${curriculum.toUpperCase()} 커리큘럼`}
                 </p>
               </div>
-              <span className="inline-block rounded-full bg-blue-700 px-4 py-2 text-xs font-bold text-white transition group-hover:bg-blue-800">
-                {nextIncompleteDay ? "진행하기" : "보기"} →
-              </span>
-            </div>
-          </Link>
-        )}
 
-        <Link
-          href="/vocab/hub"
-          className="group rounded-3xl border border-violet-200 bg-gradient-to-br from-violet-50 via-white to-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-md"
-        >
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-violet-600">
-                Quick Start
-              </p>
-              <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950">
-                LEXiOX-VOCA
-              </h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                단어 Drill & Practice로 바로 들어갑니다.
-              </p>
-            </div>
-            <span className="rounded-full bg-violet-700 px-4 py-2 text-sm font-bold text-white transition group-hover:bg-violet-800">
-              시작하기
-            </span>
-          </div>
-        </Link>
+              {/* Phase Timeline */}
+              <div className="space-y-3">
+                {phaseOrder.map((phase, idx) => {
+                  const status = phaseStatuses.get(phase);
+                  const isCompleted = status?.completed ?? false;
+                  const isCurrentPhase = idx === 0 && !isCompleted;
+                  const phaseStatus = isCompleted
+                    ? 'completed'
+                    : isCurrentPhase
+                      ? 'in_progress'
+                      : 'upcoming';
 
-        <Link
-          href="/student?program=naesin"
-          className="group rounded-3xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-md"
-        >
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-600">
-                Track
-              </p>
-              <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950">
-                Lingo-X 내신
-              </h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                내신 추천 학습과 과제 흐름을 확인합니다.
-              </p>
-            </div>
-            <span className="rounded-full bg-emerald-700 px-4 py-2 text-sm font-bold text-white transition group-hover:bg-emerald-800">
-              보기
-            </span>
-          </div>
-        </Link>
-      </section>
-
-      <section className="grid gap-4 md:grid-cols-4">
-        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-xs font-semibold text-slate-500">진행 중</p>
-          <p className="mt-2 text-3xl font-bold text-slate-900">
-            {current ? 1 : 0}
-          </p>
-        </div>
-
-        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-xs font-semibold text-slate-500">해야 할 것</p>
-          <p className="mt-2 text-3xl font-bold text-slate-900">
-            {todos.length}
-          </p>
-        </div>
-
-        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-xs font-semibold text-slate-500">최근 활동</p>
-          <p className="mt-2 text-3xl font-bold text-slate-900">
-            {recent.length}
-          </p>
-        </div>
-
-        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-xs font-semibold text-slate-500">추천 학습</p>
-          <p className="mt-2 text-3xl font-bold text-slate-900">
-            {prescriptionRows.length}
-          </p>
-        </div>
-      </section>
-
-      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="mb-4">
-          <h2 className="text-lg font-bold text-slate-900">지금 하는 것</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            현재 진행 중인 가장 최근 활동입니다.
-          </p>
-        </div>
-
-        {current ? (
-          <div className="rounded-2xl border border-slate-200 p-4">
-            <div className="mb-2 flex flex-wrap items-center gap-2">
-              <span
-                className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${toneByStatus(
-                  current.status,
-                )}`}
-              >
-                {labelByStatus(current.status)}
-              </span>
-
-              {current.track ? (
-                <span className="rounded-full border border-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-600">
-                  {current.track}
-                </span>
-              ) : null}
-
-              {current.section ? (
-                <span className="rounded-full border border-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-600">
-                  {current.section}
-                </span>
-              ) : null}
-            </div>
-
-            <h3 className="text-base font-semibold text-slate-900">
-              {current.title ?? current.activity_type}
-            </h3>
-
-            {current.description ? (
-              <p className="mt-2 text-sm text-slate-500">
-                {current.description}
-              </p>
-            ) : null}
-
-            <div className="mt-3 space-y-1 text-xs text-slate-500">
-              {current.started_at ? (
-                <p>시작 {formatDateTime(current.started_at)}</p>
-              ) : null}
-              {current.created_at ? (
-                <p>생성 {formatDateTime(current.created_at)}</p>
-              ) : null}
-            </div>
-          </div>
-        ) : (
-          <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
-            진행 중인 활동이 없습니다.
-          </div>
-        )}
-      </section>
-
-      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="mb-4">
-          <h2 className="text-lg font-bold text-slate-900">추천 학습</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            약점 분석을 바탕으로 자동 생성된 드릴입니다.
-          </p>
-        </div>
-
-        {prescriptionRows.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
-            지금은 추천된 학습이 없습니다.
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {prescriptionRows.map((p) => {
-              const href = getDrillRoute(p);
-
-              return (
-                <div
-                  key={p.id}
-                  className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 md:flex-row md:items-center md:justify-between"
-                >
-                  <div className="min-w-0">
-                    <div className="mb-2 flex flex-wrap items-center gap-2">
-                      <span
-                        className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${toneByStatus(
-                          p.status,
-                        )}`}
-                      >
-                        {labelByStatus(p.status)}
-                      </span>
-
-                      <span className="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-xs font-semibold text-violet-700">
-                        {p.weak_tag}
-                      </span>
-
-                      <span className="rounded-full border border-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-600">
-                        {p.prescription_type}
-                      </span>
-                    </div>
-
-                    <p className="truncate text-base font-semibold text-slate-900">
-                      {p.title ?? p.prescription_type}
-                    </p>
-
-                    <div className="mt-2 space-y-1 text-xs text-slate-500">
-                      {p.due_at ? <p>마감 {formatDateTime(p.due_at)}</p> : null}
-                      {p.created_at ? (
-                        <p>생성 {formatDateTime(p.created_at)}</p>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  <div className="flex shrink-0 items-center">
-                    <form
-                      action={async () => {
-                        "use server";
-                        await markPrescriptionInProgress(p.id);
-                        redirect(href);
-                      }}
+                  return (
+                    <Link
+                      key={phase}
+                      href={`/student/phases/${phase}`}
+                      className="block"
                     >
-                      <button
-                        type="submit"
-                        className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
-                      >
-                        시작하기
-                      </button>
-                    </form>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
-      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="mb-4">
-          <h2 className="text-lg font-bold text-slate-900">최근 활동</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            가장 최근에 저장된 활동입니다.
-          </p>
-        </div>
-
-        {recent.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
-            아직 저장된 활동이 없습니다.
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {recent.map((activity) => (
-              <div
-                key={activity.id}
-                className="rounded-2xl border border-slate-200 p-4"
-              >
-                <div className="mb-2 flex flex-wrap items-center gap-2">
-                  <span
-                    className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${toneByStatus(
-                      activity.status,
-                    )}`}
-                  >
-                    {labelByStatus(activity.status)}
-                  </span>
-
-                  {activity.track ? (
-                    <span className="rounded-full border border-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-600">
-                      {activity.track}
-                    </span>
-                  ) : null}
-
-                  {activity.section ? (
-                    <span className="rounded-full border border-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-600">
-                      {activity.section}
-                    </span>
-                  ) : null}
-                </div>
-
-                <h3 className="text-base font-semibold text-slate-900">
-                  {activity.title ?? activity.activity_type}
-                </h3>
-
-                {activity.description ? (
-                  <p className="mt-2 text-sm text-slate-500">
-                    {activity.description}
-                  </p>
-                ) : null}
-
-                <div className="mt-3 space-y-1 text-xs text-slate-500">
-                  {activity.started_at ? (
-                    <p>시작 {formatDateTime(activity.started_at)}</p>
-                  ) : null}
-                  {activity.completed_at ? (
-                    <p>완료 {formatDateTime(activity.completed_at)}</p>
-                  ) : null}
-                  {activity.created_at ? (
-                    <p>생성 {formatDateTime(activity.created_at)}</p>
-                  ) : null}
-                </div>
+                      <PhaseCard
+                        phase={phase}
+                        status={phaseStatus}
+                        order={idx + 1}
+                        progress={status?.progress ?? 0}
+                      />
+                    </Link>
+                  );
+                })}
               </div>
-            ))}
-          </div>
-        )}
-      </section>
+            </section>
+
+            {/* Alerts */}
+            {unsubmittedExams.length > 0 && (
+              <Link
+                href="/student/exams"
+                className="flex items-center justify-between rounded-lg border-2 border-amber-300 bg-amber-50 px-5 py-4 hover:bg-amber-100"
+              >
+                <div>
+                  <p className="text-sm font-bold text-amber-900">📋 미제출 시험</p>
+                  <p className="mt-0.5 text-xs text-amber-700">{unsubmittedExams.length}개 있습니다</p>
+                </div>
+                <span className="text-sm font-semibold text-amber-600">→</span>
+              </Link>
+            )}
+
+            {/* Vocab Track */}
+            {totalDayCount > 0 && (
+              <Link
+                href={
+                  nextIncompleteDay
+                    ? `/vocab/session?setId=${nextIncompleteDay.set_id}&dayIndex=${nextIncompleteDay.day_index}`
+                    : "/vocab/hub"
+                }
+                className="flex items-start justify-between rounded-lg border border-blue-200 bg-blue-50 p-4 hover:bg-blue-100"
+              >
+                <div>
+                  <p className="text-sm font-semibold text-blue-900">📚 Vocabulary Track</p>
+                  <p className="mt-1 text-xs text-blue-700">
+                    Day {(nextIncompleteDay?.day_index ?? totalDayCount) + 1}/{totalDayCount}
+                  </p>
+                </div>
+                <span className="text-sm font-semibold text-blue-600">{vocabProgress}%</span>
+              </Link>
+            )}
+          </main>
+
+          {/* Right Sidebar */}
+          <aside className="space-y-4">
+            {/* Calendar */}
+            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+              <h3 className="mb-3 text-xs font-bold uppercase tracking-widest text-slate-500">
+                📅 이번 주
+              </h3>
+              <div className="grid grid-cols-7 gap-1 text-center">
+                {['월', '화', '수', '목', '금', '토', '일'].map(day => (
+                  <div key={day} className="py-1 text-xs font-semibold text-slate-600">
+                    {day}
+                  </div>
+                ))}
+                {[1, 2, 3, 4, 5, 6, 7].map(day => (
+                  <div
+                    key={day}
+                    className={`rounded py-2 text-xs font-medium ${
+                      day === 4
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-slate-100 text-slate-700'
+                    }`}
+                  >
+                    {day}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Stats */}
+            <div className="space-y-3">
+              <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+                <p className="mb-1 text-xs font-semibold text-slate-500">진행 중</p>
+                <p className="text-2xl font-bold text-slate-900">{current ? 1 : 0}</p>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+                <p className="mb-1 text-xs font-semibold text-slate-500">할 일</p>
+                <p className="text-2xl font-bold text-slate-900">{todos.length}</p>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+                <p className="mb-1 text-xs font-semibold text-slate-500">완료</p>
+                <p className="text-2xl font-bold text-emerald-600">
+                  {activityRows.filter(a => a.status === 'done').length}
+                </p>
+              </div>
+            </div>
+
+            {/* Recent Activity */}
+            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+              <h3 className="mb-3 text-xs font-bold uppercase tracking-widest text-slate-500">
+                📋 최근
+              </h3>
+              <div className="space-y-2 text-xs">
+                {recent.slice(0, 3).map(activity => (
+                  <div key={activity.id} className="border-l-2 border-slate-300 py-1 pl-2">
+                    <p className="truncate font-medium text-slate-700">
+                      {activity.title ?? activity.activity_type}
+                    </p>
+                    <p className="text-slate-500">
+                      {activity.completed_at
+                        ? '완료'
+                        : activity.started_at
+                          ? '진행중'
+                          : '대기'}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
     </main>
   );
 }
