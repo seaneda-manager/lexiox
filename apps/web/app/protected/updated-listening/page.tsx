@@ -1,6 +1,7 @@
 // apps/web/app/(protected)/updated-listening/page.tsx
 import Link from 'next/link';
 import SectionGuide from '@/app/components/SectionGuide';
+import TipsCarousel from '@/components/TipsCarousel';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,22 +53,24 @@ export default function Listening2026Home() {
         </Link>
       </div>
 
-      {/* 고득점 10계명 */}
-      <div className="rounded-lg border border-violet-200 bg-violet-50 p-4 space-y-2">
-        <p className="text-xs font-semibold text-violet-700 uppercase">🏆 Listening 고득점 10계명</p>
-        <ol className="text-xs text-violet-900 space-y-1 list-inside list-decimal">
-          <li><strong>Module 1 정답률 최소 60%를 넘어 Harder Module 2를 오픈하라.</strong> 첫 30문항 집중력이 최종 점수 상한선을 결정합니다.</li>
-          <li><strong>Choose a Response 유형은 화자의 숨은 뉘앙스를 조준하라.</strong> 어조, 반어법, 공감, 완곡한 거절 등 맥락적 의도를 파악하세요.</li>
-          <li><strong>지문이 짧아진 만큼 Note-taking의 양을 절반으로 압축하라.</strong> 핵심 명사와 동사(Signal Words)만 최소한으로 메모하세요.</li>
-          <li><strong>인과관계 역전 트랩(Causality Inversion)을 소거하라.</strong> "A가 B의 원인"이 "B가 A의 원인"으로 왜곡되는 함정을 체크하세요.</li>
-          <li><strong>귀에 웅장하게 꽂힌 키워드일수록 어휘 일치 트랩을 의심하라.</strong> 강조 용어는 본문 단어가 아니라 로직으로 검증하세요.</li>
-          <li><strong>범위 초과 오류(Scope Error) 유도 단어를 검출하라.</strong> All, Every, Never, Only 같은 절대적 한정사는 과장의 신호입니다.</li>
-          <li><strong>Signal Words(But, However, Therefore) 직후는 머릿속에 장기 홀딩하라.</strong> 시그널 직후 정보는 최소 1분 이상 뇌 버퍼에 유지하세요.</li>
-          <li><strong>Announcement 유형은 진짜 목적과 대상(Target Audience)에 집중하라.</strong> 지엽적 일정보다 공지의 핵심 목적과 수혜자를 파악하세요.</li>
-          <li><strong>본문 단어가 동의어(Paraphrasing)로 치환된 선택지가 정답이다.</strong> 다른 어휘나 세련된 구문으로 의미를 똑같이 전달한 것을 찾으세요.</li>
-          <li><strong>뒤로 가기는 없다, 한 문제에 Lock이 걸리면 미련 없이 전진하라.</strong> Forward-Only 아키텍처에서 과거 문제 반추는 뇌 낭비입니다.</li>
-        </ol>
-      </div>
+      {/* 고득점 10계명 - 캐러셀 */}
+      <TipsCarousel
+        title="Listening 고득점 10계명"
+        emoji="🏆"
+        color="violet"
+        tips={[
+          "Module 1 정답률 최소 60%를 넘어 Harder Module 2를 오픈하라. 첫 30문항 집중력이 최종 점수 상한선을 결정합니다.",
+          "Choose a Response 유형은 화자의 숨은 뉘앙스를 조준하라. 어조, 반어법, 공감, 완곡한 거절 등 맥락적 의도를 파악하세요.",
+          "지문이 짧아진 만큼 Note-taking의 양을 절반으로 압축하라. 핵심 명사와 동사(Signal Words)만 최소한으로 메모하세요.",
+          "인과관계 역전 트랩(Causality Inversion)을 소거하라. 'A가 B의 원인'이 'B가 A의 원인'으로 왜곡되는 함정을 체크하세요.",
+          "귀에 웅장하게 꽂힌 키워드일수록 어휘 일치 트랩을 의심하라. 강조 용어는 본문 단어가 아니라 로직으로 검증하세요.",
+          "범위 초과 오류(Scope Error) 유도 단어를 검출하라. All, Every, Never, Only 같은 절대적 한정사는 과장의 신호입니다.",
+          "Signal Words(But, However, Therefore) 직후는 머릿속에 장기 홀딩하라. 시그널 직후 정보는 최소 1분 이상 뇌 버퍼에 유지하세요.",
+          "Announcement 유형은 진짜 목적과 대상(Target Audience)에 집중하라. 지엽적 일정보다 공지의 핵심 목적과 수혜자를 파악하세요.",
+          "본문 단어가 동의어(Paraphrasing)로 치환된 선택지가 정답이다. 다른 어휘나 세련된 구문으로 의미를 똑같이 전달한 것을 찾으세요.",
+          "뒤로 가기는 없다, 한 문제에 Lock이 걸리면 미련 없이 전진하라. Forward-Only 아키텍처에서 과거 문제 반추는 뇌 낭비입니다.",
+        ]}
+      />
     </div>
   );
 }

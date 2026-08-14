@@ -23,6 +23,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.0.0",
+    "resend": "^6.19.0",
     "wavesurfer.js": "^7.12.11",
     "xlsx": "^0.18.5",
     "zod": "^4.1.13",

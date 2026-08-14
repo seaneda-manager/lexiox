@@ -85,7 +85,7 @@ export default function TipsCarousel({
       </div>
 
       {/* 네비게이션 */}
-      <div className="flex items-center justify-between pt-4">
+      <div className="flex items-center justify-center gap-4 pt-4">
         <button
           onClick={handlePrev}
           className={`${colors.button} text-white p-2 rounded-lg transition-colors`}

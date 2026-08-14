@@ -54,7 +54,7 @@ export default function DailyTaskManagerClient({
   recentTasks: DailyTask[];
   students: Student[];
 }) {
-  const [activeTab, setActiveTab] = useState<'create' | 'list'>('create');
+  const [activeTab, setActiveTab] = useState<'create' | 'list' | 'notify'>('create');
   const [formData, setFormData] = useState({
     taskType: 'light' as TaskType,
     difficulty: 'core' as Difficulty,
@@ -70,6 +70,16 @@ export default function DailyTaskManagerClient({
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [notifyLoading, setNotifyLoading] = useState<string | null>(null);
+  const [notifyForm, setNotifyForm] = useState({
+    selectedStudents: [] as string[],
+    notificationType: 'daily-task' as 'daily-task' | 'homework' | 'custom',
+    problemCount: 4,
+    category: 'Daily Task',
+    deadline: '',
+    includeParents: true,
+  });
+  const [notifyDropdownOpen, setNotifyDropdownOpen] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -170,6 +180,54 @@ export default function DailyTaskManagerClient({
     }
   };
 
+  const handleSendBulkNotification = async () => {
+    if (notifyForm.selectedStudents.length === 0) {
+      setMessage({ type: 'error', text: '❌ 최소 1명의 학생을 선택해주세요' });
+      return;
+    }
+
+    setNotifyLoading('bulk');
+    try {
+      const res = await fetch('/api/notify/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: notifyForm.notificationType,
+          studentIds: notifyForm.selectedStudents,
+          includeParents: notifyForm.includeParents,
+          data: {
+            problemCount: notifyForm.problemCount,
+            category: notifyForm.category,
+            deadline: notifyForm.deadline || undefined,
+          },
+        }),
+      });
+
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error ?? 'Failed to send notification');
+
+      setMessage({
+        type: 'success',
+        text: `✅ ${data.count}명에게 이메일이 발송되었습니다`,
+      });
+
+      // 폼 초기화
+      setNotifyForm({
+        selectedStudents: [],
+        notificationType: 'daily-task',
+        problemCount: 4,
+        category: 'Daily Task',
+        deadline: '',
+        includeParents: true,
+      });
+      setNotifyDropdownOpen(false);
+    } catch (e: any) {
+      setMessage({ type: 'error', text: `❌ ${e.message}` });
+    } finally {
+      setNotifyLoading(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* 탭 */}
@@ -193,6 +251,16 @@ export default function DailyTaskManagerClient({
           }`}
         >
           📋 최근 과제 ({recentTasks.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('notify')}
+          className={`px-4 py-3 text-sm font-medium border-b-2 transition ${
+            activeTab === 'notify'
+              ? 'border-blue-600 text-blue-600'
+              : 'border-transparent text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          📧 공지 발송
         </button>
       </div>
 
@@ -507,6 +575,206 @@ export default function DailyTaskManagerClient({
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* 공지 발송 탭 */}
+      {activeTab === 'notify' && (
+        <div className="rounded-lg border bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-gray-900 mb-6">📧 공지 발송</h2>
+
+          <div className="space-y-6">
+            {/* 공지 유형 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-3">공지 유형</label>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                {[
+                  { id: 'daily-task' as const, label: '📝 Daily Task', desc: '일일 학습 과제 배정' },
+                  { id: 'homework' as const, label: '📖 숙제', desc: '숙제 배정' },
+                  { id: 'custom' as const, label: '💬 일반 공지', desc: '자유로운 메시지' },
+                ].map((type) => (
+                  <button
+                    key={type.id}
+                    onClick={() => setNotifyForm({ ...notifyForm, notificationType: type.id })}
+                    className={`p-4 rounded-lg border-2 transition text-left ${
+                      notifyForm.notificationType === type.id
+                        ? 'border-blue-600 bg-blue-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <p className="font-medium text-gray-900">{type.label}</p>
+                    <p className="text-xs text-gray-600 mt-1">{type.desc}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 학생 선택 */}
+            <div className="relative">
+              <label className="block text-sm font-medium text-gray-700 mb-2">👥 학생 선택</label>
+              <button
+                type="button"
+                onClick={() => setNotifyDropdownOpen(!notifyDropdownOpen)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-left bg-white hover:bg-gray-50 transition"
+              >
+                {notifyForm.selectedStudents.length === 0
+                  ? '학생을 선택해주세요...'
+                  : `${notifyForm.selectedStudents.length}명 선택됨`}
+              </button>
+
+              {notifyDropdownOpen && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-64 overflow-y-auto">
+                  {students.length === 0 ? (
+                    <div className="p-3 text-sm text-gray-600">학생 정보를 불러올 수 없습니다</div>
+                  ) : (
+                    students.map((student) => (
+                      <label
+                        key={student.id}
+                        className="flex items-center px-3 py-2 hover:bg-blue-50 cursor-pointer border-b last:border-b-0"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={notifyForm.selectedStudents.includes(student.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setNotifyForm({
+                                ...notifyForm,
+                                selectedStudents: [...notifyForm.selectedStudents, student.id],
+                              });
+                            } else {
+                              setNotifyForm({
+                                ...notifyForm,
+                                selectedStudents: notifyForm.selectedStudents.filter(
+                                  (id) => id !== student.id
+                                ),
+                              });
+                            }
+                          }}
+                          className="w-4 h-4 text-blue-600 rounded"
+                        />
+                        <div className="ml-3">
+                          <p className="text-sm font-medium text-gray-900">{student.name}</p>
+                          <p className="text-xs text-gray-500">{student.email}</p>
+                        </div>
+                      </label>
+                    ))
+                  )}
+                </div>
+              )}
+
+              {notifyForm.selectedStudents.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {notifyForm.selectedStudents.map((studentId) => {
+                    const student = students.find((s) => s.id === studentId);
+                    return (
+                      <span
+                        key={studentId}
+                        className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded"
+                      >
+                        {student?.name}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setNotifyForm({
+                              ...notifyForm,
+                              selectedStudents: notifyForm.selectedStudents.filter(
+                                (id) => id !== studentId
+                              ),
+                            })
+                          }
+                          className="text-blue-600 hover:text-blue-900"
+                        >
+                          ✕
+                        </button>
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Daily Task 옵션 */}
+            {notifyForm.notificationType === 'daily-task' && (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">문제 수</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="20"
+                    value={notifyForm.problemCount}
+                    onChange={(e) =>
+                      setNotifyForm({ ...notifyForm, problemCount: parseInt(e.target.value) })
+                    }
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">카테고리</label>
+                  <input
+                    type="text"
+                    value={notifyForm.category}
+                    onChange={(e) =>
+                      setNotifyForm({ ...notifyForm, category: e.target.value })
+                    }
+                    placeholder="예: Reading Comprehension"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">기한 (선택사항)</label>
+                  <input
+                    type="date"
+                    value={notifyForm.deadline}
+                    onChange={(e) =>
+                      setNotifyForm({ ...notifyForm, deadline: e.target.value })
+                    }
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* 메시지 */}
+            {message && (
+              <div
+                className={`rounded-lg p-4 text-sm ${
+                  message.type === 'success'
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    : 'bg-rose-50 text-rose-700 border border-rose-200'
+                }`}
+              >
+                {message.text}
+              </div>
+            )}
+
+            {/* 학부모 포함 옵션 */}
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={notifyForm.includeParents}
+                  onChange={(e) =>
+                    setNotifyForm({ ...notifyForm, includeParents: e.target.checked })
+                  }
+                  className="w-4 h-4 text-blue-600 rounded"
+                />
+                <div>
+                  <p className="text-sm font-medium text-blue-900">👨‍👩‍👧 학부모에게도 발송</p>
+                  <p className="text-xs text-blue-700">입력된 학부모 이메일로 함께 발송합니다</p>
+                </div>
+              </label>
+            </div>
+
+            {/* 발송 버튼 */}
+            <button
+              onClick={handleSendBulkNotification}
+              disabled={notifyLoading === 'bulk' || notifyForm.selectedStudents.length === 0}
+              className="w-full rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50"
+            >
+              {notifyLoading === 'bulk' ? '⏳ 발송 중…' : '📧 공지 발송'}
+            </button>
+          </div>
         </div>
       )}
 
