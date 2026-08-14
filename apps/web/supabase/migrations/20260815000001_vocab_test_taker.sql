@@ -17,6 +17,9 @@ create table if not exists vocab_test_configs (
   -- 문제 배열 방식: grouped | random
   arrangement       text not null default 'random' check (arrangement in ('grouped', 'random')),
 
+  -- 학습 완료 확인 스킵 (true이면 학습 없이 시험 가능)
+  skip_learning_check boolean not null default false,
+
   created_at        timestamptz not null default now(),
   updated_at        timestamptz not null default now()
 );

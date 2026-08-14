@@ -49,19 +49,30 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 2. 학습 완료 상태 확인
-    const learningComplete = await checkLearningCompletion(
-      admin,
-      user.id,
-      track_id,
-      day_number
-    );
+    // 2. Admin 설정에서 학습 확인 스킵 여부 확인
+    const { data: config } = await admin
+      .from("vocab_test_configs")
+      .select("skip_learning_check")
+      .eq("scope", "global")
+      .single();
 
-    if (!learningComplete.ok) {
-      return NextResponse.json(
-        { error: learningComplete.error },
-        { status: 403 }
+    const skipLearningCheck = config?.skip_learning_check ?? false;
+
+    // 학습 완료 상태 확인 (skip_learning_check가 false일 때만)
+    if (!skipLearningCheck) {
+      const learningComplete = await checkLearningCompletion(
+        admin,
+        user.id,
+        track_id,
+        day_number
       );
+
+      if (!learningComplete.ok) {
+        return NextResponse.json(
+          { error: learningComplete.error },
+          { status: 403 }
+        );
+      }
     }
 
     // 3. Day의 단어 목록 가져오기 (vocab_set_items 사용)
