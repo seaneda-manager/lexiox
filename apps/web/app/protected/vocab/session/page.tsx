@@ -742,6 +742,8 @@ export default function VocabSessionPage() {
         const id = user?.id;
 
         // Check for saved session progress
+        // ⚠️ 파라미터 있을 때만 저장된 상태 복구 (중단/재개)
+        // 파라미터 없으면 → 새로 시작 (어느 Day를 해야 할지 모르므로)
         const setIdParam = shortcut.setId ? shortcut.setId : null;
         if (setIdParam && typeof window !== 'undefined') {
           const saved = localStorage.getItem(`vocab_progress_${setIdParam}`);
@@ -769,6 +771,9 @@ export default function VocabSessionPage() {
               console.warn('Failed to resume session:', e);
             }
           }
+        } else {
+          // 파라미터 없으면 → 새로 시작
+          console.log('ℹ️ No setId parameter. Starting fresh.');
         }
 
         const forcedSetId = shortcut.setId ? shortcut.setId : null;
