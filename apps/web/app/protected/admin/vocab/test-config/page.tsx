@@ -31,17 +31,27 @@ export default function VocabTestConfigPage() {
   const updateConfig = async (id: string, field: string, value: any) => {
     try {
       setSaving(true);
+      console.log("Updating config:", { id, field, value });
+
       const response = await fetch("/api/admin/vocab/test-config", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, field, value }),
       });
 
-      if (!response.ok) throw new Error("Failed to update config");
+      const data = await response.json();
+      console.log("API Response:", data);
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to update config");
+      }
+
+      console.log("Config updated successfully");
       await loadConfigs();
     } catch (err) {
       console.error("Failed to update config:", err);
       setError(err instanceof Error ? err.message : "알 수 없는 오류");
+      alert(`오류: ${err instanceof Error ? err.message : "알 수 없는 오류"}`);
     } finally {
       setSaving(false);
     }
