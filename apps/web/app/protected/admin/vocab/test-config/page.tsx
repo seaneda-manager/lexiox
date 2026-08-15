@@ -57,8 +57,46 @@ export default function VocabTestConfigPage() {
     }
   };
 
+  const createDefaultConfig = async () => {
+    try {
+      setSaving(true);
+      const response = await fetch("/api/admin/vocab/test-config/create", {
+        method: "POST",
+      });
+
+      if (!response.ok) throw new Error("Failed to create config");
+      await loadConfigs();
+    } catch (err) {
+      console.error("Failed to create config:", err);
+      alert(err instanceof Error ? err.message : "설정 생성 실패");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) {
     return <div className="p-6 text-center">로드 중...</div>;
+  }
+
+  if (configs.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+            <p className="text-gray-900 font-medium mb-4">
+              🔧 설정이 없습니다. 기본 설정을 생성하세요.
+            </p>
+            <button
+              onClick={createDefaultConfig}
+              disabled={saving}
+              className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition disabled:opacity-50"
+            >
+              기본 설정 생성
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

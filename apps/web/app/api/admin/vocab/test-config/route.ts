@@ -32,6 +32,34 @@ export async function GET() {
 }
 
 /**
+ * POST /api/admin/vocab/test-config/create
+ * 기본 설정 생성
+ */
+export async function POST() {
+  try {
+    const { data, error } = await admin
+      .from("vocab_test_configs")
+      .insert({
+        scope: "global",
+        coverage_ratio: 70,
+        arrangement: "random",
+        skip_learning_check: false,
+      })
+      .select();
+
+    if (error) throw error;
+
+    return NextResponse.json(data);
+  } catch (error) {
+    console.error("Failed to create config:", error);
+    return NextResponse.json(
+      { error: "Failed to create config" },
+      { status: 500 }
+    );
+  }
+}
+
+/**
  * PUT /api/admin/vocab/test-config
  * Admin용 시험 설정 업데이트
  */
