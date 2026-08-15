@@ -127,6 +127,19 @@ export async function assignStudentAction(params: {
 
     const totalDays = tracks[0].total_days || 20; // Default to 20 if not specified
 
+    // day_index → set_id 매핑 (vocab_sets.track_id + order_index)
+    const { data: setRows, error: setsErr } = await supabase
+      .from("vocab_sets")
+      .select("id, order_index")
+      .eq("track_id", params.trackId);
+
+    if (setsErr) throw new Error(setsErr.message);
+
+    const setIdByDayIndex = new Map<number, string>();
+    for (const row of (setRows as any[]) ?? []) {
+      if (typeof row.order_index === "number") setIdByDayIndex.set(row.order_index, row.id);
+    }
+
     // 🔄 동일 Track 재배정 시: 기존 배정 완전 삭제 후 새로 덮어쓰기
     // (같은 track이 배정되었으면 이전 것은 삭제)
     const { data: existingPlans } = await supabase
@@ -145,22 +158,38 @@ export async function assignStudentAction(params: {
     }
 
     // ✅ 1~totalDays 전부 배정 (1부터 시작, 이후 cursor_day_index로 관리)
+    // vocab_assignment_status enum에는 QUEUED가 없어 전부 ASSIGNED로 저장 (기존 데이터 컨벤션과 동일)
     const assignmentIds: string[] = [];
+    const failedDays: number[] = [];
     for (let dayIndex = 1; dayIndex <= totalDays; dayIndex++) {
+      const setId = setIdByDayIndex.get(dayIndex);
+      if (!setId) {
+        failedDays.push(dayIndex);
+        continue;
+      }
+
       const { data: newAssign, error: insertErr } = await supabase
         .from("student_vocab_assignments")
         .insert({
           student_id: params.studentId,
           track_id: params.trackId,
+          set_id: setId,
           day_index: dayIndex,
-          status: dayIndex === startDayIndex ? "ASSIGNED" : "QUEUED",
+          status: "ASSIGNED",
         } as any)
         .select("id")
         .single();
 
       if (!insertErr && newAssign?.id) {
         assignmentIds.push(newAssign.id);
+      } else if (insertErr) {
+        console.error(`❌ assignStudentAction insert failed (day ${dayIndex}):`, insertErr.message);
+        failedDays.push(dayIndex);
       }
+    }
+
+    if (failedDays.length > 0) {
+      console.error(`⚠️ assignStudentAction: ${failedDays.length}/${totalDays} days failed to assign (no matching vocab_sets or insert error):`, failedDays);
     }
 
     // ✅ available_at 계산 (모든 60개 Days)
@@ -190,8 +219,8 @@ export async function assignStudentAction(params: {
       }
     }
 
-    console.log(`✅ Track 배정 완료: ${totalDays}개 Days (Day ${startDayIndex}부터 시작)`);
-    return { ok: true, queueSize: totalDays };
+    console.log(`✅ Track 배정 완료: ${assignmentIds.length}/${totalDays}개 Days 배정됨 (Day ${startDayIndex}부터 시작)`);
+    return { ok: true, queueSize: assignmentIds.length, failedDays };
   } catch (e: any) {
     return { ok: false, error: e?.message ?? "failed" };
   }

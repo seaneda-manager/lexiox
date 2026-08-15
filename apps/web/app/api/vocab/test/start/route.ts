@@ -49,6 +49,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // 1.5. academy_students.id 확인 (student_vocab_assignments 등은 auth uid가 아니라 이 id를 씀)
+    const { data: studentRow } = await admin
+      .from("academy_students")
+      .select("id")
+      .or(`user_id.eq.${user.id},auth_user_id.eq.${user.id},profile_id.eq.${user.id}`)
+      .maybeSingle();
+
+    const studentId = studentRow?.id ?? user.id;
+
     // 2. Admin 설정에서 학습 확인 스킵 여부 확인
     const { data: config } = await admin
       .from("vocab_test_configs")
@@ -62,7 +71,7 @@ export async function POST(req: NextRequest) {
     if (!skipLearningCheck) {
       const learningComplete = await checkLearningCompletion(
         admin,
-        user.id,
+        studentId,
         track_id,
         day_number
       );
@@ -76,26 +85,28 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. Day의 단어 목록 가져오기
-    // Step 1: vocab_track_sets에서 set_id 찾기
-    const { data: dayTrackSet, error: dayTrackSetError } = await admin
-      .from("vocab_track_sets")
+    // Step 1: student_vocab_assignments에서 set_id 찾기
+    const { data: dayAssignment, error: dayAssignmentError } = await admin
+      .from("student_vocab_assignments")
       .select("set_id")
+      .eq("student_id", studentId)
       .eq("track_id", track_id)
-      .eq("day_index", day_number - 1)
+      .eq("day_index", day_number)
       .single();
 
-    if (dayTrackSetError || !dayTrackSet) {
+    if (dayAssignmentError || !dayAssignment) {
       return NextResponse.json(
         { error: "No day set found for this track" },
         { status: 404 }
       );
     }
 
-    // Step 2: vocab_set_words에서 word_id들 찾기
+    // Step 2: vocab_set_items에서 word_id들 찾기
     const { data: dayWords, error: wordsError } = await admin
-      .from("vocab_set_words")
+      .from("vocab_set_items")
       .select("word_id")
-      .eq("set_id", dayTrackSet.set_id);
+      .eq("set_id", dayAssignment.set_id)
+      .order("sort_order", { ascending: true });
 
     if (wordsError || !dayWords || dayWords.length === 0) {
       return NextResponse.json(
@@ -111,7 +122,7 @@ export async function POST(req: NextRequest) {
     if (use_wrong_only) {
       const wrongCheckResult = await checkWrongOnlyOption(
         admin,
-        user.id,
+        studentId,
         track_id,
         day_number,
         total_words_count
@@ -136,13 +147,6 @@ export async function POST(req: NextRequest) {
       Math.ceil((total_words_count * coverage_ratio) / 100),
       Math.min(wordIds.length, dayWords.length)
     );
-
-    // 6. 학생 정보 조회 (class_id)
-    const { data: studentData } = await admin
-      .from("academy_students")
-      .select("id")
-      .eq("user_id", user.id)
-      .single();
 
     // 7. 시험 세션 생성
     const { data: session, error: sessionError } = await admin
@@ -196,7 +200,7 @@ export async function POST(req: NextRequest) {
 
 async function checkLearningCompletion(
   admin: any,
-  userId: string,
+  studentId: string,
   trackId: string,
   dayNumber: number
 ): Promise<{ ok: boolean; error?: string }> {
@@ -204,13 +208,13 @@ async function checkLearningCompletion(
   // Stage: "know"(PreScreen), 2(Spelling), 1(Learning), "speed"(Speed), "memorize"(Memorization)
 
   const requiredStages = ["know", 1, 2, "speed", "memorize"];
-  const dayIndexMap = dayNumber - 1; // day_number는 1부터 시작, day_index는 0부터
+  const dayIndexMap = dayNumber; // student_vocab_assignments.day_index는 day_number와 동일하게 1부터 시작
 
   for (const stage of requiredStages) {
     const { data: assignment } = await admin
       .from("student_vocab_assignments")
       .select("completed_at")
-      .eq("student_id", userId)
+      .eq("student_id", studentId)
       .eq("track_id", trackId)
       .eq("day_index", dayIndexMap)
       .eq("stage", stage)
@@ -226,7 +230,7 @@ async function checkLearningCompletion(
 
 async function checkWrongOnlyOption(
   admin: any,
-  userId: string,
+  studentId: string,
   trackId: string,
   dayNumber: number,
   totalWordsCount: number
@@ -240,7 +244,7 @@ async function checkWrongOnlyOption(
   const { data: attempts } = await admin
     .from("vocab_learning_attempts")
     .select("wrong_word_ids")
-    .eq("student_id", userId)
+    .eq("student_id", studentId)
     .eq("stage", "know")
     .order("attempted_at", { ascending: false })
     .limit(1)
@@ -305,8 +309,8 @@ async function generateQuestions(
 
     // 1. 단어 상세 정보 조회
     const { data: words } = await admin
-      .from("voca_words")
-      .select("id, word, meaning_kr, meaning_en, synonyms_en_simple")
+      .from("words")
+      .select("id, text, meanings_ko, meanings_en_simple, synonyms_en_simple")
       .in("id", wordIds);
 
     if (!words || words.length === 0) {
@@ -319,9 +323,9 @@ async function generateQuestions(
         w.id,
         {
           id: w.id,
-          text: w.word,
-          meanings_ko: w.meaning_kr ? [w.meaning_kr] : [],
-          meanings_en: w.meaning_en ? [w.meaning_en] : [],
+          text: w.text,
+          meanings_ko: w.meanings_ko || [],
+          meanings_en: w.meanings_en_simple || [],
           synonyms: w.synonyms_en_simple || [],
           audio_url: null,
         },
