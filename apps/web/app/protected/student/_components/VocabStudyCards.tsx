@@ -12,6 +12,7 @@ interface VocabStudyCardsProps {
   stage2Complete: boolean;
   testScore?: number;
   testDate?: string;
+  skipLearningCheck?: boolean;
 }
 
 export function VocabStudyCards({
@@ -23,12 +24,13 @@ export function VocabStudyCards({
   stage2Complete,
   testScore,
   testDate,
+  skipLearningCheck = false,
 }: VocabStudyCardsProps) {
   // Stage 2는 Stage 1이 완료되어야 활성화
   const stage2Active = stage1Complete;
 
-  // 시험은 두 단계 모두 완료되어야 활성화
-  const testActive = stage1Complete && stage2Complete;
+  // 시험은 두 단계 모두 완료되어야 활성화 (또는 skip_learning_check가 true)
+  const testActive = skipLearningCheck || (stage1Complete && stage2Complete);
 
   return (
     <div className="space-y-4">

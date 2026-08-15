@@ -170,7 +170,7 @@ export function DashboardLayout({
                 <PostCheckupContent isToefl={isToefl} vocaTodayCount={vocaTodayCount} />
               )}
               {currentPhase === 'vocabTest' && (
-                <VocabTestContent vocaTodayCount={vocaTodayCount} vocaPlanCount={vocaPlanCount} />
+                <VocabTestContent vocaTodayCount={vocaTodayCount} vocaPlanCount={vocaPlanCount} userId={userId} />
               )}
               {currentPhase === 'dailyTests' && (
                 <DailyTestsContent isToefl={isToefl} examList={examList} pendingTests={pendingTests} />
@@ -296,7 +296,26 @@ function PostCheckupContent({ isToefl, vocaTodayCount }: any) {
   );
 }
 
-function VocabTestContent({ vocaTodayCount, vocaPlanCount }: any) {
+function VocabTestContent({ vocaTodayCount, vocaPlanCount, userId }: any) {
+  const [skipLearningCheck, setSkipLearningCheck] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // skip_learning_check 설정 가져오기
+    fetch("/api/admin/vocab/test-config")
+      .then((r) => r.json())
+      .then((configs) => {
+        const globalConfig = configs.find((c: any) => c.scope === "global");
+        setSkipLearningCheck(globalConfig?.skip_learning_check ?? false);
+      })
+      .catch(() => {
+        // API 오류 무시, 기본값 사용
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
+
   // TODO: API에서 실제 진행도 데이터 가져오기
   const dayNumber = 1; // 예시
   const trackId = "default-track"; // 예시
@@ -307,6 +326,10 @@ function VocabTestContent({ vocaTodayCount, vocaPlanCount }: any) {
   const stage2Complete = false;
   const testScore = undefined;
   const testDate = undefined;
+
+  if (loading) {
+    return <div className="text-center py-6 text-gray-600">로드 중...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -319,6 +342,7 @@ function VocabTestContent({ vocaTodayCount, vocaPlanCount }: any) {
         stage2Complete={stage2Complete}
         testScore={testScore}
         testDate={testDate}
+        skipLearningCheck={skipLearningCheck}
       />
 
       {/* 통계 정보 */}
