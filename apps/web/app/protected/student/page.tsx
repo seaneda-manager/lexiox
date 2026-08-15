@@ -194,6 +194,7 @@ export default async function StudentPage() {
   // ── 어휘 데이터 ────────────────────────────────────────────
   let vocaTodayCount = 0;
   let vocaPlanCount = 0;
+  let firstVocaTrackId: string | null = null;
 
   if (academyStudentId) {
     const todayISO = (() => {
@@ -208,6 +209,7 @@ export default async function StudentPage() {
       .eq("is_enabled", true);
 
     vocaPlanCount = (vocaPlans ?? []).length;
+    firstVocaTrackId = (vocaPlans?.[0] as any)?.track_id ?? null;
 
     if (vocaPlanCount > 0) {
       const trackIds = (vocaPlans ?? []).map((p: any) => p.track_id);
@@ -290,6 +292,7 @@ export default async function StudentPage() {
       gamification={gamification}
       vocaTodayCount={vocaTodayCount}
       vocaPlanCount={vocaPlanCount}
+      firstVocaTrackId={firstVocaTrackId}
       isToefl={isToefl}
       readingDone={readingDone}
       listeningDone={listeningDone}

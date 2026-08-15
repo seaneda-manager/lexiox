@@ -33,6 +33,7 @@ export function DashboardLayout({
   gamification,
   vocaTodayCount,
   vocaPlanCount,
+  firstVocaTrackId,
   isToefl,
   readingDone,
   listeningDone,
@@ -170,7 +171,7 @@ export function DashboardLayout({
                 <PostCheckupContent isToefl={isToefl} vocaTodayCount={vocaTodayCount} />
               )}
               {currentPhase === 'vocabTest' && (
-                <VocabTestContent vocaTodayCount={vocaTodayCount} vocaPlanCount={vocaPlanCount} userId={userId} />
+                <VocabTestContent vocaTodayCount={vocaTodayCount} vocaPlanCount={vocaPlanCount} userId={userId} trackId={firstVocaTrackId} />
               )}
               {currentPhase === 'dailyTests' && (
                 <DailyTestsContent isToefl={isToefl} examList={examList} pendingTests={pendingTests} />
@@ -296,7 +297,7 @@ function PostCheckupContent({ isToefl, vocaTodayCount }: any) {
   );
 }
 
-function VocabTestContent({ vocaTodayCount, vocaPlanCount, userId }: any) {
+function VocabTestContent({ vocaTodayCount, vocaPlanCount, userId, trackId }: any) {
   const [skipLearningCheck, setSkipLearningCheck] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -318,7 +319,7 @@ function VocabTestContent({ vocaTodayCount, vocaPlanCount, userId }: any) {
 
   // TODO: API에서 실제 진행도 데이터 가져오기
   const dayNumber = 1; // 예시
-  const trackId = "default-track"; // 예시
+  const actualTrackId = trackId || "default-track"; // 학생의 첫 번째 track 또는 기본값
 
   const stage1Progress = 75;
   const stage1Complete = true;
@@ -335,7 +336,7 @@ function VocabTestContent({ vocaTodayCount, vocaPlanCount, userId }: any) {
     <div className="space-y-6">
       <VocabStudyCards
         dayNumber={dayNumber}
-        trackId={trackId}
+        trackId={actualTrackId}
         stage1Progress={stage1Progress}
         stage1Complete={stage1Complete}
         stage2Progress={stage2Progress}
