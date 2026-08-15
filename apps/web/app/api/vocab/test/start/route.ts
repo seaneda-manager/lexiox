@@ -76,26 +76,26 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. Day의 단어 목록 가져오기
-    // Step 1: vocab_sets에서 set_id 찾기
-    const { data: daySet, error: daySetError } = await admin
-      .from("vocab_sets")
-      .select("id")
+    // Step 1: vocab_track_sets에서 set_id 찾기
+    const { data: dayTrackSet, error: dayTrackSetError } = await admin
+      .from("vocab_track_sets")
+      .select("set_id")
       .eq("track_id", track_id)
-      .eq("order_index", day_number)
+      .eq("day_index", day_number - 1)
       .single();
 
-    if (daySetError || !daySet) {
+    if (dayTrackSetError || !dayTrackSet) {
       return NextResponse.json(
         { error: "No day set found for this track" },
         { status: 404 }
       );
     }
 
-    // Step 2: vocab_set_items에서 word_id들 찾기
+    // Step 2: vocab_set_words에서 word_id들 찾기
     const { data: dayWords, error: wordsError } = await admin
-      .from("vocab_set_items")
+      .from("vocab_set_words")
       .select("word_id")
-      .eq("set_id", daySet.id);
+      .eq("set_id", dayTrackSet.set_id);
 
     if (wordsError || !dayWords || dayWords.length === 0) {
       return NextResponse.json(
