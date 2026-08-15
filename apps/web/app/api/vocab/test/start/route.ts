@@ -305,8 +305,8 @@ async function generateQuestions(
 
     // 1. 단어 상세 정보 조회
     const { data: words } = await admin
-      .from("vocab_words")
-      .select("id, text, meanings_ko, meanings_en, synonyms, audio_url")
+      .from("voca_words")
+      .select("id, word, meaning_kr, meaning_en, synonyms_en_simple")
       .in("id", wordIds);
 
     if (!words || words.length === 0) {
@@ -319,11 +319,11 @@ async function generateQuestions(
         w.id,
         {
           id: w.id,
-          text: w.text,
-          meanings_ko: w.meanings_ko || [],
-          meanings_en: w.meanings_en || [],
-          synonyms: w.synonyms || [],
-          audio_url: w.audio_url || null,
+          text: w.word,
+          meanings_ko: w.meaning_kr ? [w.meaning_kr] : [],
+          meanings_en: w.meaning_en ? [w.meaning_en] : [],
+          synonyms: w.synonyms_en_simple || [],
+          audio_url: null,
         },
       ])
     );
