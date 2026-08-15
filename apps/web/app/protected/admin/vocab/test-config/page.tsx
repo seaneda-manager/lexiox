@@ -16,9 +16,11 @@ export default function VocabTestConfigPage() {
     try {
       setLoading(true);
       setError(null);
+      console.log("Loading configs...");
       const response = await fetch("/api/admin/vocab/test-config");
       if (!response.ok) throw new Error("Failed to load configs");
       const data = await response.json();
+      console.log("Loaded configs:", data);
       setConfigs(data || []);
     } catch (err) {
       console.error("Failed to load configs:", err);
