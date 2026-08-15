@@ -1,17 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
 
 export default function VocabTestConfigPage() {
   const [configs, setConfigs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadConfigs();
@@ -20,15 +15,14 @@ export default function VocabTestConfigPage() {
   const loadConfigs = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("vocab_test_configs")
-        .select("*")
-        .order("scope");
-
-      if (error) throw error;
+      setError(null);
+      const response = await fetch("/api/admin/vocab/test-config");
+      if (!response.ok) throw new Error("Failed to load configs");
+      const data = await response.json();
       setConfigs(data || []);
-    } catch (error) {
-      console.error("Failed to load configs:", error);
+    } catch (err) {
+      console.error("Failed to load configs:", err);
+      setError(err instanceof Error ? err.message : "알 수 없는 오류");
     } finally {
       setLoading(false);
     }
@@ -37,15 +31,17 @@ export default function VocabTestConfigPage() {
   const updateConfig = async (id: string, field: string, value: any) => {
     try {
       setSaving(true);
-      const { error } = await supabase
-        .from("vocab_test_configs")
-        .update({ [field]: value, updated_at: new Date().toISOString() })
-        .eq("id", id);
+      const response = await fetch("/api/admin/vocab/test-config", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, field, value }),
+      });
 
-      if (error) throw error;
+      if (!response.ok) throw new Error("Failed to update config");
       await loadConfigs();
-    } catch (error) {
-      console.error("Failed to update config:", error);
+    } catch (err) {
+      console.error("Failed to update config:", err);
+      setError(err instanceof Error ? err.message : "알 수 없는 오류");
     } finally {
       setSaving(false);
     }
@@ -58,6 +54,12 @@ export default function VocabTestConfigPage() {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-4xl mx-auto">
+        {/* 에러 메시지 */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <p className="text-sm text-red-900">❌ {error}</p>
+          </div>
+        )}
         {/* 제목 */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">단어 시험 설정</h1>
