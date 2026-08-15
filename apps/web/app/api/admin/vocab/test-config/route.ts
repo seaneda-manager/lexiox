@@ -33,14 +33,17 @@ export async function GET() {
 
 /**
  * POST /api/admin/vocab/test-config/create
- * 기본 설정 생성
+ * 범위별 설정 생성
  */
-export async function POST() {
+export async function POST(req: NextRequest) {
   try {
+    const { scope, scope_id } = await req.json();
+
     const { data, error } = await admin
       .from("vocab_test_configs")
       .insert({
-        scope: "global",
+        scope,
+        scope_id,
         coverage_ratio: 70,
         arrangement: "random",
         skip_learning_check: false,
