@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * POST /api/vocab/test/start
- * 시험 세션 시작 및 문제 생성
+ * 시험 세션 시작 및 문제 생성 (v2)
  */
 export async function POST(req: NextRequest) {
   try {
