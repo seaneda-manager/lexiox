@@ -49,7 +49,20 @@ export default function VocabTestConfigPage() {
       }
 
       console.log("Config updated successfully");
-      await loadConfigs();
+
+      // UI에서 즉시 업데이트
+      setConfigs(prevConfigs =>
+        prevConfigs.map(c =>
+          c.id === id ? { ...c, [field]: value, updated_at: new Date().toISOString() } : c
+        )
+      );
+
+      console.log("About to reload configs...");
+      // 약간의 지연 후 다시 로드
+      setTimeout(() => {
+        console.log("Reloading configs after delay");
+        loadConfigs();
+      }, 500);
     } catch (err) {
       console.error("Failed to update config:", err);
       setError(err instanceof Error ? err.message : "알 수 없는 오류");
