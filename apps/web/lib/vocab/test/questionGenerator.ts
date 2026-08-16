@@ -64,13 +64,12 @@ export async function generateTestQuestions(
     const meanings = wordData.meanings_ko || [];
     if (meanings.length >= 2) {
       // 다의어: 객관식. 오답은 같은 품사군(어미 패턴)의 다른 단어 뜻에서만 뽑는다
-      const correctMeaning = meanings[0];
-      const posClass = guessPosClass(correctMeaning);
+      const posClass = guessPosClass(meanings[0]);
       const distractorPool = meaningPool
         .filter(m => m.wordId !== wordId && m.posClass === posClass)
         .map(m => m.text);
       const distractors = sampleRandom(distractorPool, 3);
-      const options = buildMultipleChoice(correctMeaning, distractors);
+      const options = buildMultipleChoice(buildCorrectMeaningText(meanings), distractors);
 
       byType.word_to_meaning.push({
         id: nextId(),
@@ -179,13 +178,12 @@ export async function generateTestQuestions(
     //     학습 단계(VocabSessionLearningStage 등)에서 이미 쓰는 것과 같은
     //     window.speechSynthesis 방식이라 모든 단어에 항상 생성 가능하다.
     if (meanings.length > 0) {
-      const correctMeaning = meanings[0];
-      const posClass = guessPosClass(correctMeaning);
+      const posClass = guessPosClass(meanings[0]);
       const distractorPool = meaningPool
         .filter(m => m.wordId !== wordId && m.posClass === posClass)
         .map(m => m.text);
       const distractors = sampleRandom(distractorPool, 3);
-      const meaningOptions = buildMultipleChoice(correctMeaning, distractors);
+      const meaningOptions = buildMultipleChoice(buildCorrectMeaningText(meanings), distractors);
 
       byType.listening.push({
         id: nextId(),
@@ -274,6 +272,20 @@ function buildMultipleChoice(
     text: choice.text,
     is_correct: choice.is_correct,
   }));
+}
+
+/**
+ * 다의어 객관식의 "정답" 선택지 텍스트를 만든다. 뜻 하나만 보여주면 학생이 배운 다른 뜻과
+ * 안 맞아 보여 헷갈릴 수 있으므로, 길이가 허락하면 뜻을 최대 2개까지 " / "로 이어붙인다.
+ */
+const MAX_OPTION_TEXT_LEN = 30;
+
+function buildCorrectMeaningText(meanings: string[]): string {
+  if (meanings.length === 0) return "";
+  if (meanings.length === 1) return meanings[0];
+
+  const combined = `${meanings[0]} / ${meanings[1]}`;
+  return combined.length <= MAX_OPTION_TEXT_LEN ? combined : meanings[0];
 }
 
 /**
