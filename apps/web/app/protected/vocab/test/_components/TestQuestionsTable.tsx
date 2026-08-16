@@ -15,20 +15,11 @@ const questionTypeLabel: Record<string, string> = {
   listening: "듣기",
 };
 
-// meaning_to_word / listening 문제는 word_text가 곧 정답이므로,
-// 풀기 전에는 목록에서 스펠링을 노출하지 않는다. 푼 뒤에는 복습용으로 보여준다.
+// 같은 단어가 word_to_meaning(스펠링 노출)과 meaning_to_word(스펠링이 정답)로
+// 동시에 목록에 걸리므로, 개별 항목만 마스킹해서는 다른 항목에서 스펠링이 새는 걸 막을 수 없다.
+// 풀기 전에는 어떤 유형이든 단어/뜻 내용을 아예 보여주지 않고, 푼 뒤에만 복습용으로 노출한다.
 function getListLabel(q: VocabTestQuestion): string {
-  const isAnswered = q.is_correct !== null;
-  const revealsAnswer =
-    q.question_type === "meaning_to_word" || q.question_type === "listening";
-
-  if (!revealsAnswer || isAnswered) {
-    return q.word_text;
-  }
-
-  return q.question_type === "meaning_to_word"
-    ? q.meaning_ko?.[0] || "???"
-    : "🔊 듣기 문제";
+  return q.is_correct !== null ? q.word_text : "문제";
 }
 
 export default function TestQuestionsTable({
