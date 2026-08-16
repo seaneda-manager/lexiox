@@ -4,6 +4,20 @@ import { useEffect, useRef, useState } from "react";
 import type { VocabTestQuestion } from "@/models/vocab/test.types";
 import { hintsAllowed, basePointsFor, MAX_HINT_LEVEL } from "@/lib/vocab/test/scoring";
 
+// 저장된 오디오 파일 없이, 학습 단계(VocabSessionLearningStage 등)와 동일한
+// 브라우저 내장 TTS로 발음을 재생한다.
+function speakWord(text: string) {
+  try {
+    if (!("speechSynthesis" in window)) return;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "en-US";
+    utterance.rate = 0.8;
+    window.speechSynthesis.speak(utterance);
+  } catch (err) {
+    console.error("Speech synthesis error:", err);
+  }
+}
+
 export interface TestQuestionPanelProps {
   question: VocabTestQuestion;
   questionNumber: number;
@@ -66,6 +80,14 @@ export default function TestQuestionPanel({
   useEffect(() => {
     if (isTypedInput && !isAnswered) {
       inputRef.current?.focus();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 듣기 문제로 넘어오면 자동으로 한 번 발음을 재생
+  useEffect(() => {
+    if (question.question_type === "listening" && !isAnswered) {
+      speakWord(question.word_text);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -138,12 +160,16 @@ export default function TestQuestionPanel({
           </div>
         )}
 
-        {question.question_type === "listening" && question.audio_url && (
+        {question.question_type === "listening" && (
           <div className="text-center">
-            <audio controls className="w-full mb-4">
-              <source src={question.audio_url} type="audio/mp3" />
-            </audio>
-            <p className="text-sm text-gray-600">위 오디오를 들으신 후 뜻을 선택하세요</p>
+            <button
+              type="button"
+              onClick={() => speakWord(question.word_text)}
+              className="inline-flex items-center gap-2 px-5 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-full transition mb-3"
+            >
+              🔊 다시 듣기
+            </button>
+            <p className="text-sm text-gray-600">위 발음을 들으신 후 뜻을 선택하세요</p>
           </div>
         )}
 

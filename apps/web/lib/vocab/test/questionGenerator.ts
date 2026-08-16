@@ -162,13 +162,17 @@ export async function generateTestQuestions(
       });
     }
 
-    // (4) 듣기 (객관식) - 오디오 URL이 있을 경우
-    if (wordData.audio_url) {
-      const meaningOptions = buildMultipleChoice(
-        wordData.meanings_ko?.[0] || "",
-        wordData.meanings_ko?.slice(1) || [],
-        true
-      );
+    // (4) 듣기 (객관식) - 저장된 오디오 파일 없이 브라우저 TTS(word_text)로 재생.
+    //     학습 단계(VocabSessionLearningStage 등)에서 이미 쓰는 것과 같은
+    //     window.speechSynthesis 방식이라 모든 단어에 항상 생성 가능하다.
+    if (meanings.length > 0) {
+      const correctMeaning = meanings[0];
+      const posClass = guessPosClass(correctMeaning);
+      const distractorPool = meaningPool
+        .filter(m => m.wordId !== wordId && m.posClass === posClass)
+        .map(m => m.text);
+      const distractors = sampleRandom(distractorPool, 3);
+      const meaningOptions = buildMultipleChoice(correctMeaning, distractors);
 
       byType.listening.push({
         id: nextId(),
@@ -180,7 +184,7 @@ export async function generateTestQuestions(
         options: meaningOptions,
         correct_answer: meaningOptions.find(o => o.is_correct)?.id || "",
         meaning_ko: null,
-        audio_url: wordData.audio_url,
+        audio_url: null,
         hint_level: 0,
         student_answer: null,
         is_correct: null,
