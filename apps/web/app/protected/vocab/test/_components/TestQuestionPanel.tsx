@@ -35,6 +35,7 @@ export default function TestQuestionPanel({
 }: TestQuestionPanelProps) {
   const [answer, setAnswer] = useState(question.student_answer || "");
   const primaryButtonRef = useRef<HTMLButtonElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const isAnswered = question.is_correct !== null;
   const isLast = questionNumber === totalQuestions;
@@ -59,6 +60,15 @@ export default function TestQuestionPanel({
       primaryButtonRef.current?.focus();
     }
   }, [isAnswered]);
+
+  // 새 문제(주관식)로 넘어오면 클릭 없이 바로 타이핑할 수 있도록 입력창에 자동 포커스
+  // (컴포넌트가 question.id로 key가 걸려 매번 새로 마운트되므로 마운트 시 1회만 실행됨)
+  useEffect(() => {
+    if (isTypedInput && !isAnswered) {
+      inputRef.current?.focus();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6 space-y-6">
@@ -194,6 +204,7 @@ export default function TestQuestionPanel({
       {isTypedInput && (
         <div className="space-y-3">
           <input
+            ref={inputRef}
             type="text"
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}

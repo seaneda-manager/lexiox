@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import type { VocabTestQuestion } from "@/models/vocab/test.types";
 
 export interface TestQuestionsTableProps {
@@ -15,11 +16,22 @@ const questionTypeLabel: Record<string, string> = {
   listening: "듣기",
 };
 
-// 같은 단어가 word_to_meaning(스펠링 노출)과 meaning_to_word(스펠링이 정답)로
-// 동시에 목록에 걸리므로, 개별 항목만 마스킹해서는 다른 항목에서 스펠링이 새는 걸 막을 수 없다.
-// 풀기 전에는 어떤 유형이든 단어/뜻 내용을 아예 보여주지 않고, 푼 뒤에만 복습용으로 노출한다.
-function getListLabel(q: VocabTestQuestion): string {
-  return q.is_correct !== null ? q.word_text : "문제";
+// 같은 단어가 word_to_meaning/meaning_to_word/synonym/listening 여러 문제로 동시에
+// 목록에 걸려 있어서, 한 유형(예: 단어→뜻)에서 스펠링을 노출하면 아직 안 푼 다른 유형
+// (뜻→단어 등)의 정답이 새어나간다. 그래서 개별적으로 공개하는 대신, 한 유형(섹션) 전체가
+// 다 풀리면 그 섹션을 목록에서 통째로 치운다 — 안 보이면 샐 일도 없고 목록도 정리된다.
+function computeFullyClearedTypes(questions: VocabTestQuestion[]): Set<string> {
+  const byType = new Map<string, VocabTestQuestion[]>();
+  for (const q of questions) {
+    const list = byType.get(q.question_type) ?? [];
+    list.push(q);
+    byType.set(q.question_type, list);
+  }
+  const cleared = new Set<string>();
+  for (const [type, qs] of byType) {
+    if (qs.every(q => q.is_correct !== null)) cleared.add(type);
+  }
+  return cleared;
 }
 
 export default function TestQuestionsTable({
@@ -27,6 +39,15 @@ export default function TestQuestionsTable({
   selectedIdx,
   onSelect,
 }: TestQuestionsTableProps) {
+  const fullyClearedTypes = useMemo(
+    () => computeFullyClearedTypes(questions),
+    [questions]
+  );
+
+  const visibleRows = questions
+    .map((q, idx) => ({ q, idx }))
+    .filter(({ q, idx }) => idx === selectedIdx || !fullyClearedTypes.has(q.question_type));
+
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
       <div className="sticky top-0 bg-gray-100 px-4 py-3 border-b">
@@ -37,7 +58,7 @@ export default function TestQuestionsTable({
       </div>
 
       <div className="divide-y max-h-[calc(100vh-180px)] overflow-y-auto">
-        {questions.map((q, idx) => (
+        {visibleRows.map(({ q, idx }) => (
           <button
             key={q.id}
             onClick={() => onSelect(idx)}
@@ -50,7 +71,7 @@ export default function TestQuestionsTable({
             <div className="flex items-center justify-between gap-2">
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium text-gray-900">
-                  {idx + 1}. {getListLabel(q)}
+                  {idx + 1}. 문제
                 </div>
                 <div className="text-xs text-gray-500 mt-1">
                   {questionTypeLabel[q.question_type] || q.question_type}

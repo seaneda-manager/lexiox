@@ -10,6 +10,18 @@ export interface TestResultsScreenProps {
   onHome: () => void;
 }
 
+const questionTypeLabel: Record<string, string> = {
+  word_to_meaning: "단어→뜻",
+  meaning_to_word: "뜻→단어",
+  synonym: "동의어",
+  listening: "듣기",
+};
+
+function readableAnswer(q: VocabTestQuestion, raw: string | null): string {
+  if (!raw) return "(답변 없음)";
+  return q.options?.find((o) => o.id === raw)?.text ?? raw;
+}
+
 export default function TestResultsScreen({
   results,
   questions,
@@ -75,17 +87,18 @@ export default function TestResultsScreen({
                   <div>
                     <p className="font-medium text-gray-900">
                       {idx + 1}. {q.word_text}
+                      <span className="ml-2 text-xs font-normal text-gray-500">
+                        ({questionTypeLabel[q.question_type] || q.question_type})
+                      </span>
                     </p>
                     <p className="text-sm text-gray-600 mt-1">
-                      내 답: {q.student_answer}
+                      내 답: {readableAnswer(q, q.student_answer)}
                     </p>
                   </div>
                 </div>
-                {q.correct_answer && (
-                  <p className="text-sm text-green-600">
-                    정답: {q.correct_answer}
-                  </p>
-                )}
+                <p className="text-sm text-green-600">
+                  정답: {readableAnswer(q, q.correct_answer)}
+                </p>
               </div>
             ))}
           </div>
