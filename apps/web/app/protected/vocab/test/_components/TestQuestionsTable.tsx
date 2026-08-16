@@ -15,6 +15,22 @@ const questionTypeLabel: Record<string, string> = {
   listening: "듣기",
 };
 
+// meaning_to_word / listening 문제는 word_text가 곧 정답이므로,
+// 풀기 전에는 목록에서 스펠링을 노출하지 않는다. 푼 뒤에는 복습용으로 보여준다.
+function getListLabel(q: VocabTestQuestion): string {
+  const isAnswered = q.is_correct !== null;
+  const revealsAnswer =
+    q.question_type === "meaning_to_word" || q.question_type === "listening";
+
+  if (!revealsAnswer || isAnswered) {
+    return q.word_text;
+  }
+
+  return q.question_type === "meaning_to_word"
+    ? q.meaning_ko?.[0] || "???"
+    : "🔊 듣기 문제";
+}
+
 export default function TestQuestionsTable({
   questions,
   selectedIdx,
@@ -43,7 +59,7 @@ export default function TestQuestionsTable({
             <div className="flex items-center justify-between gap-2">
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium text-gray-900">
-                  {idx + 1}. {q.word_text}
+                  {idx + 1}. {getListLabel(q)}
                 </div>
                 <div className="text-xs text-gray-500 mt-1">
                   {questionTypeLabel[q.question_type] || q.question_type}

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import type { TestSubmitResponse, VocabTestQuestion } from "@/models/vocab/test.types";
 
 export interface TestResultsScreenProps {
@@ -34,16 +35,27 @@ export default function TestResultsScreen({
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-8">
       {/* 성적 표시 */}
-      <div className={`${getScoreBg(results.score)} rounded-xl p-12 text-center max-w-md w-full`}>
-        <p className="text-gray-600 text-sm mb-2">시험 완료</p>
-        <div className={`text-5xl font-bold ${getScoreColor(results.score)} mb-2`}>
-          {results.score}점
+      <div className={`${getScoreBg(results.score)} rounded-xl p-8 max-w-md w-full`}>
+        <p className="text-gray-600 text-sm mb-4 text-center">시험 완료</p>
+        <div className="grid grid-cols-2 gap-4 text-center">
+          <div>
+            <p className="text-xs text-gray-500 mb-1">점수</p>
+            <div className={`text-3xl font-bold ${getScoreColor(results.score)}`}>
+              {results.total_points}점
+            </div>
+            <p className="text-xs text-gray-500 mt-1">{results.max_points}점 만점</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500 mb-1">맞은 단어 수</p>
+            <div className="text-3xl font-bold text-gray-800">
+              {results.correct_count} / {results.total_count}
+            </div>
+            <p className="text-xs text-gray-500 mt-1">정답률 {results.score}%</p>
+          </div>
         </div>
-        <p className="text-gray-600">
-          {results.correct_count} / {results.total_count} 정답
-        </p>
-        <p className="text-sm text-gray-500 mt-2">
-          소요 시간: {Math.floor(results.duration_seconds / 60)}분 {results.duration_seconds % 60}초
+        <p className="text-sm text-gray-500 mt-4 text-center">
+          최고 연속 🔥{results.best_streak} · 힌트 {results.hints_used}회 · 소요 시간{" "}
+          {Math.floor(results.duration_seconds / 60)}분 {results.duration_seconds % 60}초
         </p>
       </div>
 
@@ -81,19 +93,27 @@ export default function TestResultsScreen({
       )}
 
       {/* 액션 버튼 */}
-      <div className="flex gap-4 w-full max-w-md">
-        <button
-          onClick={onHome}
-          className="flex-1 px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg transition"
+      <div className="flex flex-col gap-3 w-full max-w-md">
+        <div className="flex gap-4">
+          <button
+            onClick={onHome}
+            className="flex-1 px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg transition"
+          >
+            홈으로
+          </button>
+          <button
+            onClick={onRetry}
+            className="flex-1 px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition"
+          >
+            다시 풀기
+          </button>
+        </div>
+        <Link
+          href="/vocab/scoreboard"
+          className="w-full text-center px-6 py-3 bg-amber-100 hover:bg-amber-200 text-amber-800 font-semibold rounded-lg transition"
         >
-          홈으로
-        </button>
-        <button
-          onClick={onRetry}
-          className="flex-1 px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition"
-        >
-          다시 풀기
-        </button>
+          🏆 랭킹 보기
+        </Link>
       </div>
     </div>
   );

@@ -11,6 +11,8 @@ interface Config {
   coverage_ratio: number;
   arrangement: string;
   skip_learning_check: boolean;
+  hints_enabled: boolean;
+  max_hint_level: number;
 }
 
 export default function VocabTestConfigPage() {
@@ -180,6 +182,8 @@ export default function VocabTestConfigPage() {
             onSkipUpdate={(configId, value) => updateConfig(configId, "skip_learning_check", value)}
             onCoverageUpdate={(configId, value) => updateConfig(configId, "coverage_ratio", value)}
             onArrangementUpdate={(configId, value) => updateConfig(configId, "arrangement", value)}
+            onHintsEnabledUpdate={(configId, value) => updateConfig(configId, "hints_enabled", value)}
+            onMaxHintLevelUpdate={(configId, value) => updateConfig(configId, "max_hint_level", value)}
           />
         )}
 
@@ -252,6 +256,12 @@ export default function VocabTestConfigPage() {
                     onArrangementUpdate={(value) =>
                       updateConfig(config.id, "arrangement", value)
                     }
+                    onHintsEnabledUpdate={() =>
+                      updateConfig(config.id, "hints_enabled", !config.hints_enabled)
+                    }
+                    onMaxHintLevelUpdate={(value) =>
+                      updateConfig(config.id, "max_hint_level", value)
+                    }
                   />
                 </div>
               ))
@@ -272,6 +282,8 @@ function ConfigSection({
   onSkipUpdate,
   onCoverageUpdate,
   onArrangementUpdate,
+  onHintsEnabledUpdate,
+  onMaxHintLevelUpdate,
 }: any) {
   if (!config) {
     return (
@@ -299,6 +311,8 @@ function ConfigSection({
         onSkipUpdate={() => onSkipUpdate(config.id, !config.skip_learning_check)}
         onCoverageUpdate={(value) => onCoverageUpdate(config.id, value)}
         onArrangementUpdate={(value) => onArrangementUpdate(config.id, value)}
+        onHintsEnabledUpdate={() => onHintsEnabledUpdate(config.id, !config.hints_enabled)}
+        onMaxHintLevelUpdate={(value) => onMaxHintLevelUpdate(config.id, value)}
       />
     </div>
   );
@@ -330,12 +344,21 @@ function ClassConfigSection({ className, classId, config, onUpdate, onCreate }: 
         onSkipUpdate={() => onUpdate(config.id, "skip_learning_check", !config.skip_learning_check)}
         onCoverageUpdate={(value) => onUpdate(config.id, "coverage_ratio", value)}
         onArrangementUpdate={(value) => onUpdate(config.id, "arrangement", value)}
+        onHintsEnabledUpdate={() => onUpdate(config.id, "hints_enabled", !config.hints_enabled)}
+        onMaxHintLevelUpdate={(value) => onUpdate(config.id, "max_hint_level", value)}
       />
     </div>
   );
 }
 
-function ConfigControls({ config, onSkipUpdate, onCoverageUpdate, onArrangementUpdate }: any) {
+function ConfigControls({
+  config,
+  onSkipUpdate,
+  onCoverageUpdate,
+  onArrangementUpdate,
+  onHintsEnabledUpdate,
+  onMaxHintLevelUpdate,
+}: any) {
   return (
     <div className="space-y-4">
       {/* 학습 확인 스킵 */}
@@ -385,6 +408,39 @@ function ConfigControls({ config, onSkipUpdate, onCoverageUpdate, onArrangementU
           <option value="random">무작위</option>
         </select>
       </div>
+
+      {/* 힌트 사용 */}
+      <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+        <div>
+          <p className="font-medium text-gray-900">힌트 사용</p>
+          <p className="text-xs text-gray-600 mt-1">주관식 문제에서 힌트 버튼(점수 차감) 노출 여부</p>
+        </div>
+        <button
+          onClick={onHintsEnabledUpdate}
+          className={`px-4 py-2 rounded-lg font-medium transition ${
+            config.hints_enabled
+              ? "bg-amber-500 hover:bg-amber-600 text-white"
+              : "bg-gray-300 hover:bg-gray-400 text-gray-900"
+          }`}
+        >
+          {config.hints_enabled ? "✓ 사용" : "비활성"}
+        </button>
+      </div>
+
+      {config.hints_enabled && (
+        <div className="p-3 bg-gray-50 rounded-lg">
+          <p className="font-medium text-gray-900 mb-2">문제당 최대 힌트 횟수: {config.max_hint_level}회</p>
+          <select
+            value={config.max_hint_level}
+            onChange={(e) => onMaxHintLevelUpdate(parseInt(e.target.value))}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+          >
+            <option value={0}>0회 (사용 안 함)</option>
+            <option value={1}>1회 (첫 글자만)</option>
+            <option value={2}>2회 (첫 글자 → 앞 3글자)</option>
+          </select>
+        </div>
+      )}
     </div>
   );
 }

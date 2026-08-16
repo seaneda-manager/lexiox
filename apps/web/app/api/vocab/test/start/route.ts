@@ -148,12 +148,21 @@ export async function POST(req: NextRequest) {
       Math.min(wordIds.length, dayWords.length)
     );
 
+    // 6.5. Class ID 조회 (academy_class_students.student_id는 auth uid를 참조함)
+    const { data: membership } = await admin
+      .from("academy_class_students")
+      .select("class_id")
+      .eq("student_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
     // 7. 시험 세션 생성
     const { data: session, error: sessionError } = await admin
       .from("vocab_test_sessions")
       .insert({
         student_id: user.id,
-        class_id: "",
+        class_id: membership?.class_id ?? "",
         track_id,
         day_number,
         total_words_count,
@@ -280,7 +289,7 @@ async function getTestConfig(admin: any, userId: string): Promise<{
     .single();
 
   let coverage_ratio = global_config?.coverage_ratio ?? 70;
-  let arrangement = global_config?.arrangement ?? "random";
+  let arrangement = global_config?.arrangement ?? "grouped";
 
   // 2. Student 개별 설정 오버라이드
   const { data: student_config } = await admin

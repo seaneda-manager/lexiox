@@ -24,6 +24,10 @@ export default function VocabTestPage() {
   const [selectedQuestionIdx, setSelectedQuestionIdx] = useState(0);
   const [results, setResults] = useState<TestSubmitResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [streak, setStreak] = useState(0);
+  const [bestStreak, setBestStreak] = useState(0);
+  const [sessionPoints, setSessionPoints] = useState(0);
+  const [hintReveals, setHintReveals] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!trackId || !dayNumber) {
@@ -54,6 +58,10 @@ export default function VocabTestPage() {
       setSessionId(data.session_id);
       setQuestions(data.questions);
       setSelectedQuestionIdx(0);
+      setStreak(0);
+      setBestStreak(0);
+      setSessionPoints(0);
+      setHintReveals({});
       setState("testing");
     } catch (err: any) {
       setError(err.message || "Failed to start test");
@@ -82,11 +90,41 @@ export default function VocabTestPage() {
           ...newQuestions[questionIdx],
           student_answer: answer,
           is_correct: answerResult.is_correct,
+          points_earned: answerResult.points_earned,
+          streak_bonus: answerResult.streak_bonus,
         };
         return newQuestions;
       });
+      setStreak(answerResult.current_streak);
+      setBestStreak(answerResult.best_streak);
+      setSessionPoints(answerResult.session_total_points);
     } catch (err: any) {
       console.error("Answer submit error:", err);
+    }
+  };
+
+  const handleUseHint = async (questionIdx: number) => {
+    if (!sessionId || !questions[questionIdx]) return;
+    const question = questions[questionIdx];
+    try {
+      const response = await fetch("/api/vocab/test/hint", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: sessionId, question_id: question.id }),
+      });
+      if (!response.ok) throw new Error("Failed to use hint");
+      const hintResult = await response.json();
+      setQuestions(prev => {
+        const newQuestions = [...prev];
+        newQuestions[questionIdx] = {
+          ...newQuestions[questionIdx],
+          hint_level: hintResult.hint_level,
+        };
+        return newQuestions;
+      });
+      setHintReveals(prev => ({ ...prev, [question.id]: hintResult.reveal }));
+    } catch (err: any) {
+      console.error("Hint error:", err);
     }
   };
 
@@ -148,7 +186,12 @@ export default function VocabTestPage() {
                   question={questions[selectedQuestionIdx]}
                   questionNumber={selectedQuestionIdx + 1}
                   totalQuestions={questions.length}
+                  sessionPoints={sessionPoints}
+                  correctCount={questions.filter(q => q.is_correct === true).length}
+                  streak={streak}
+                  hintReveal={hintReveals[questions[selectedQuestionIdx].id]}
                   onAnswerSubmit={(answer) => handleSubmitAnswer(selectedQuestionIdx, answer)}
+                  onUseHint={() => handleUseHint(selectedQuestionIdx)}
                   onSubmitTest={handleSubmitTest}
                   onNext={() => setSelectedQuestionIdx(Math.min(selectedQuestionIdx + 1, questions.length - 1))}
                   onPrev={() => setSelectedQuestionIdx(Math.max(selectedQuestionIdx - 1, 0))}

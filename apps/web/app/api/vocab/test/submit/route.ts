@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import { type TestSubmitRequest, type TestSubmitResponse } from "@/models/vocab/test.types";
 import { NextRequest, NextResponse } from "next/server";
+import { POINTS_BASE } from "@/lib/vocab/test/scoring";
 
 /**
  * POST /api/vocab/test/submit
@@ -63,6 +64,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // 이미 채점된 세션이면 재채점/재지급 없이 저장된 결과만 반환
+    if (session.status === "graded") {
+      return NextResponse.json({
+        session_id,
+        score: session.score,
+        correct_count: session.correct_count,
+        total_count: session.total_count,
+        duration_seconds: session.duration_seconds,
+        total_points: session.total_points,
+        max_points: session.max_points,
+        best_streak: session.best_streak,
+        hints_used: session.hints_used,
+      } as TestSubmitResponse);
+    }
+
     // 2. 모든 문제 조회
     const { data: questions } = await admin
       .from("vocab_test_questions")
@@ -80,6 +96,8 @@ export async function POST(req: NextRequest) {
     const totalCount = questions.length;
     const correctCount = questions.filter(q => q.is_correct === true).length;
     const score = Math.round((correctCount / totalCount) * 100);
+    const totalPoints = questions.reduce((sum, q) => sum + (q.points_earned ?? 0), 0);
+    const maxPoints = totalCount * POINTS_BASE;
     const duration_seconds = Math.floor(
       (Date.now() - new Date(session.started_at).getTime()) / 1000
     );
@@ -93,6 +111,8 @@ export async function POST(req: NextRequest) {
         score,
         correct_count: correctCount,
         total_count: totalCount,
+        total_points: totalPoints,
+        max_points: maxPoints,
         duration_seconds,
         submitted_at: nowISO,
       })
@@ -107,7 +127,12 @@ export async function POST(req: NextRequest) {
     }
 
     // 5. Gamification: 포인트 지급
-    await awardTestPoints(admin, user.id, score, correctCount, totalCount);
+    await awardTestPoints(admin, user.id, session_id, correctCount, totalCount, {
+      total_points: totalPoints,
+      max_points: maxPoints,
+      best_streak: session.best_streak,
+      hints_used: session.hints_used,
+    });
 
     return NextResponse.json({
       session_id,
@@ -115,6 +140,10 @@ export async function POST(req: NextRequest) {
       correct_count: correctCount,
       total_count: totalCount,
       duration_seconds,
+      total_points: totalPoints,
+      max_points: maxPoints,
+      best_streak: session.best_streak ?? 0,
+      hints_used: session.hints_used ?? 0,
     } as TestSubmitResponse);
   } catch (error) {
     console.error("Test submit error:", error);
@@ -131,21 +160,23 @@ export async function POST(req: NextRequest) {
 async function awardTestPoints(
   admin: any,
   userId: string,
-  score: number,
+  sessionId: string,
   correctCount: number,
-  totalCount: number
+  totalCount: number,
+  meta: { total_points: number; max_points: number; best_streak: number; hints_used: number }
 ) {
   try {
     const { awardPoints } = await import("@/lib/gamification/awardPoints");
 
-    // 보너스: 100점이면 +5, 아니면 0
-    const bonus = score === 100 ? 5 : 0;
+    // 보너스: 만점(모두 정답)이면 +5, 아니면 0
+    const bonus = totalCount > 0 && correctCount === totalCount ? 5 : 0;
 
     await awardPoints({
       studentId: userId,
       ruleId: "vocab_exam",
       bonus,
-      metadata: { score, correct: correctCount, total: totalCount },
+      sourceRef: sessionId,
+      metadata: { correct: correctCount, total: totalCount, ...meta },
     });
   } catch (error) {
     console.warn("Failed to award test points:", error);

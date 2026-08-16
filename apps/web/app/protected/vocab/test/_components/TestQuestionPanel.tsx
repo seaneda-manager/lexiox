@@ -2,12 +2,18 @@
 
 import { useState } from "react";
 import type { VocabTestQuestion } from "@/models/vocab/test.types";
+import { hintsAllowed, basePointsFor, MAX_HINT_LEVEL } from "@/lib/vocab/test/scoring";
 
 export interface TestQuestionPanelProps {
   question: VocabTestQuestion;
   questionNumber: number;
   totalQuestions: number;
+  sessionPoints: number;
+  correctCount: number;
+  streak: number;
+  hintReveal?: string;
   onAnswerSubmit: (answer: string) => void;
+  onUseHint: () => void;
   onSubmitTest: () => void;
   onNext: () => void;
   onPrev: () => void;
@@ -17,7 +23,12 @@ export default function TestQuestionPanel({
   question,
   questionNumber,
   totalQuestions,
+  sessionPoints,
+  correctCount,
+  streak,
+  hintReveal,
   onAnswerSubmit,
+  onUseHint,
   onSubmitTest,
   onNext,
   onPrev,
@@ -27,6 +38,8 @@ export default function TestQuestionPanel({
   const isAnswered = question.is_correct !== null;
   const isLast = questionNumber === totalQuestions;
   const isFirst = questionNumber === 1;
+  const canHint = hintsAllowed(question.question_type);
+  const hintLevel = question.hint_level ?? 0;
 
   const handleSubmitAnswer = () => {
     if (answer.trim()) {
@@ -36,16 +49,29 @@ export default function TestQuestionPanel({
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6 space-y-6">
-      {/* 진행률 */}
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-gray-600">
-          문제 {questionNumber} / {totalQuestions}
-        </span>
-        <div className="w-48 h-2 bg-gray-200 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-blue-500 transition-all"
-            style={{ width: `${(questionNumber / totalQuestions) * 100}%` }}
-          />
+      {/* 진행률 + 점수/연속정답 */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium text-gray-600">
+            문제 {questionNumber} / {totalQuestions}
+          </span>
+          <div className="w-48 h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-blue-500 transition-all"
+              style={{ width: `${(questionNumber / totalQuestions) * 100}%` }}
+            />
+          </div>
+        </div>
+        <div className="flex items-center gap-4 text-sm">
+          <span className="font-semibold text-blue-700">점수 {sessionPoints}점</span>
+          <span className="font-semibold text-gray-700">
+            맞은 단어 {correctCount} / {totalQuestions}
+          </span>
+          {streak >= 2 && (
+            <span className="font-semibold text-orange-600 animate-pulse">
+              🔥 연속 {streak}
+            </span>
+          )}
         </div>
       </div>
 
@@ -109,7 +135,8 @@ export default function TestQuestionPanel({
                     setAnswer(option.id);
                     onAnswerSubmit(option.id);
                   }}
-                  className={`p-3 text-left rounded-lg border-2 transition ${
+                  disabled={isAnswered}
+                  className={`p-3 text-left rounded-lg border-2 transition disabled:cursor-not-allowed ${
                     answer === option.id
                       ? "border-blue-500 bg-blue-50"
                       : "border-gray-200 hover:border-gray-300"
@@ -131,6 +158,27 @@ export default function TestQuestionPanel({
         )}
       </div>
 
+      {/* 힌트 (주관식만) */}
+      {!isAnswered && canHint && (
+        <div className="space-y-2">
+          <button
+            onClick={onUseHint}
+            disabled={hintLevel >= MAX_HINT_LEVEL}
+            className="text-sm font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 disabled:bg-gray-100 disabled:text-gray-400 border border-amber-200 disabled:border-gray-200 rounded-lg px-3 py-1.5 transition"
+          >
+            💡 힌트 ({hintLevel}/{MAX_HINT_LEVEL})
+            {hintLevel < MAX_HINT_LEVEL && (
+              <span className="ml-1 text-xs font-normal">
+                — 사용 시 정답 배점 {basePointsFor(hintLevel + 1)}점
+              </span>
+            )}
+          </button>
+          {hintReveal && (
+            <p className="font-mono text-lg tracking-widest text-amber-800">{hintReveal}</p>
+          )}
+        </div>
+      )}
+
       {/* 주관식 입력 */}
       {(question.question_type === "word_to_meaning" ||
         question.question_type === "meaning_to_word") && (
@@ -147,21 +195,6 @@ export default function TestQuestionPanel({
             className="w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:border-blue-500 disabled:bg-gray-100"
           />
 
-          {isAnswered && (
-            <div
-              className={`p-3 rounded-lg text-sm font-medium ${
-                question.is_correct
-                  ? "bg-green-100 text-green-700"
-                  : "bg-red-100 text-red-700"
-              }`}
-            >
-              {question.is_correct ? "✓ 정답입니다!" : "✕ 틀렸습니다"}
-              {!question.is_correct && question.correct_answer && (
-                <div className="mt-1 text-xs">정답: {question.correct_answer}</div>
-              )}
-            </div>
-          )}
-
           {!isAnswered && (
             <button
               onClick={handleSubmitAnswer}
@@ -170,6 +203,35 @@ export default function TestQuestionPanel({
             >
               답변 제출
             </button>
+          )}
+        </div>
+      )}
+
+      {/* 채점 결과 (주관식 + 객관식 공통) */}
+      {isAnswered && (
+        <div
+          className={`p-3 rounded-lg text-sm font-medium ${
+            question.is_correct
+              ? "bg-green-100 text-green-700"
+              : "bg-red-100 text-red-700"
+          }`}
+        >
+          {question.is_correct ? (
+            <>
+              ✓ 정답! +{question.points_earned ?? 0}점
+              {(question.streak_bonus ?? 0) > 0 && (
+                <div className="mt-1 text-xs font-normal">
+                  기본 {(question.points_earned ?? 0) - (question.streak_bonus ?? 0)}점 · 연속 보너스 +{question.streak_bonus}점
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              ✕ 오답 (0점)
+              {question.correct_answer && (
+                <div className="mt-1 text-xs">정답: {question.correct_answer}</div>
+              )}
+            </>
           )}
         </div>
       )}

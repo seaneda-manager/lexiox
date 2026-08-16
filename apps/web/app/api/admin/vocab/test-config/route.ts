@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
         scope,
         scope_id,
         coverage_ratio: 70,
-        arrangement: "random",
+        arrangement: "grouped",
         skip_learning_check: false,
       })
       .select();

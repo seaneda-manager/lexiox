@@ -42,9 +42,17 @@ export type VocabTestSession = {
   use_wrong_only: boolean; // "틀린 것만 보기" 옵션 사용 여부
 
   status: TestSessionStatus;
-  score: number | null; // 0-100
+  score: number | null; // 0-100 (정답률, 그대로 유지)
   correct_count: number | null;
   total_count: number | null;
+
+  // 포인트 기반 점수 (힌트 차감 + 연속정답 보너스 반영)
+  total_points: number;
+  max_points: number | null;
+  current_streak: number;
+  best_streak: number;
+  answered_count: number;
+  hints_used: number;
 
   duration_seconds: number | null;
 
@@ -94,9 +102,18 @@ export type VocabTestQuestion = {
   // 오디오 URL (listening)
   audio_url: string | null;
 
+  // 힌트 (0~2회 사용, 주관식만 해당)
+  hint_level: number;
+
   // 학생 답변
   student_answer: string | null;
   is_correct: boolean | null;
+
+  // 채점 결과 (포인트)
+  points_earned: number | null; // null = 미채점
+  points_max: number;
+  streak_before: number | null;
+  streak_bonus: number;
 
   created_at: string;
 };
@@ -126,6 +143,24 @@ export type AnswerSubmitRequest = {
 export type AnswerSubmitResponse = {
   question_id: string;
   is_correct: boolean;
+  base_points: number;
+  streak_bonus: number;
+  points_earned: number;
+  current_streak: number;
+  best_streak: number;
+  session_total_points: number;
+};
+
+export type HintRequest = {
+  session_id: string;
+  question_id: string;
+};
+
+export type HintResponse = {
+  question_id: string;
+  hint_level: 1 | 2;
+  reveal: string;
+  points_if_correct: number;
 };
 
 export type TestSubmitRequest = {
@@ -134,10 +169,14 @@ export type TestSubmitRequest = {
 
 export type TestSubmitResponse = {
   session_id: string;
-  score: number;
+  score: number; // 정답률 0-100
   correct_count: number;
   total_count: number;
   duration_seconds: number;
+  total_points: number;
+  max_points: number;
+  best_streak: number;
+  hints_used: number;
 };
 
 // ─────────────────────────────────────────────────────

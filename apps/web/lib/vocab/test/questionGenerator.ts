@@ -1,4 +1,5 @@
 import { type VocabTestQuestion, type QuestionType } from "@/models/vocab/test.types";
+import { POINTS_BASE } from "./scoring";
 
 export type WordData = {
   id: string;
@@ -24,24 +25,27 @@ export async function generateTestQuestions(
   wordDataMap: Map<string, WordData>,
   arrangement: "grouped" | "random"
 ): Promise<VocabTestQuestion[]> {
-  const questions: VocabTestQuestion[] = [];
   let questionNumber = 1;
+  const nextId = () => `q-${sessionId}-${questionNumber++}`;
 
-  // 1. 각 단어별로 문제 유형 결정
+  // 1. 유형별 버킷에 각 단어의 문제를 채운다
+  //    (word_to_meaning 전부, meaning_to_word 전부, synonym 전부, listening 전부)
+  const byType: Record<QuestionType, VocabTestQuestion[]> = {
+    word_to_meaning: [],
+    meaning_to_word: [],
+    synonym: [],
+    listening: [],
+  };
+
   for (const wordId of wordIds) {
     const wordData = wordDataMap.get(wordId);
     if (!wordData) continue;
 
-    // 기본 문제 유형: word_to_meaning, meaning_to_word
-    // 그 다음: synonym (동의어 있으면), listening (오디오 있으면)
-
-    const questionsForWord: VocabTestQuestion[] = [];
-
     // (1) 단어 → 뜻 (주관식)
-    questionsForWord.push({
-      id: `q-${sessionId}-${questionNumber}`,
+    byType.word_to_meaning.push({
+      id: nextId(),
       session_id: sessionId,
-      question_number: questionNumber++,
+      question_number: 0,
       word_id: wordId,
       word_text: wordData.text,
       question_type: "word_to_meaning",
@@ -49,16 +53,21 @@ export async function generateTestQuestions(
       correct_answer: wordData.meanings_ko?.[0] || "",
       meaning_ko: wordData.meanings_ko || [],
       audio_url: null,
+      hint_level: 0,
       student_answer: null,
       is_correct: null,
+      points_earned: null,
+      points_max: POINTS_BASE,
+      streak_before: null,
+      streak_bonus: 0,
       created_at: new Date().toISOString(),
     });
 
     // (2) 뜻 → 단어 (주관식)
-    questionsForWord.push({
-      id: `q-${sessionId}-${questionNumber}`,
+    byType.meaning_to_word.push({
+      id: nextId(),
       session_id: sessionId,
-      question_number: questionNumber++,
+      question_number: 0,
       word_id: wordId,
       word_text: wordData.text,
       question_type: "meaning_to_word",
@@ -66,8 +75,13 @@ export async function generateTestQuestions(
       correct_answer: wordData.text,
       meaning_ko: wordData.meanings_ko || [],
       audio_url: null,
+      hint_level: 0,
       student_answer: null,
       is_correct: null,
+      points_earned: null,
+      points_max: POINTS_BASE,
+      streak_before: null,
+      streak_bonus: 0,
       created_at: new Date().toISOString(),
     });
 
@@ -78,10 +92,10 @@ export async function generateTestQuestions(
         wordData.synonyms
       );
 
-      questionsForWord.push({
-        id: `q-${sessionId}-${questionNumber}`,
+      byType.synonym.push({
+        id: nextId(),
         session_id: sessionId,
-        question_number: questionNumber++,
+        question_number: 0,
         word_id: wordId,
         word_text: wordData.text,
         question_type: "synonym",
@@ -89,8 +103,13 @@ export async function generateTestQuestions(
         correct_answer: options.find(o => o.is_correct)?.id || "",
         meaning_ko: null,
         audio_url: null,
+        hint_level: 0,
         student_answer: null,
         is_correct: null,
+        points_earned: null,
+        points_max: POINTS_BASE,
+        streak_before: null,
+        streak_bonus: 0,
         created_at: new Date().toISOString(),
       });
     }
@@ -103,10 +122,10 @@ export async function generateTestQuestions(
         true
       );
 
-      questionsForWord.push({
-        id: `q-${sessionId}-${questionNumber}`,
+      byType.listening.push({
+        id: nextId(),
         session_id: sessionId,
-        question_number: questionNumber++,
+        question_number: 0,
         word_id: wordId,
         word_text: wordData.text,
         question_type: "listening",
@@ -114,20 +133,38 @@ export async function generateTestQuestions(
         correct_answer: meaningOptions.find(o => o.is_correct)?.id || "",
         meaning_ko: null,
         audio_url: wordData.audio_url,
+        hint_level: 0,
         student_answer: null,
         is_correct: null,
+        points_earned: null,
+        points_max: POINTS_BASE,
+        streak_before: null,
+        streak_bonus: 0,
         created_at: new Date().toISOString(),
       });
     }
-
-    questions.push(...questionsForWord);
   }
 
   // 2. 배열 방식에 따라 정렬
+  let questions: VocabTestQuestion[];
+
   if (arrangement === "random") {
+    // 모든 유형을 한 풀에 섞는다
+    questions = [
+      ...byType.word_to_meaning,
+      ...byType.meaning_to_word,
+      ...byType.synonym,
+      ...byType.listening,
+    ];
     shuffleArray(questions);
   } else {
-    // grouped: 이미 유형별로 그룹핑되어 있음
+    // grouped: 유형별 블록으로 이어붙인다 (블록 내부는 단어 순서 그대로)
+    questions = [
+      ...byType.word_to_meaning,
+      ...byType.meaning_to_word,
+      ...byType.synonym,
+      ...byType.listening,
+    ];
   }
 
   // 3. question_number 재정렬
