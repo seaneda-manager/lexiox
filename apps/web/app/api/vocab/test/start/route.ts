@@ -58,34 +58,8 @@ export async function POST(req: NextRequest) {
 
     const studentId = studentRow?.id ?? user.id;
 
-    // 2. Admin 설정에서 학습 확인 스킵 여부 확인
-    const { data: config } = await admin
-      .from("vocab_test_configs")
-      .select("skip_learning_check")
-      .eq("scope", "global")
-      .single();
-
-    const skipLearningCheck = config?.skip_learning_check ?? false;
-
-    // 학습 완료 상태 확인 (skip_learning_check가 false일 때만)
-    if (!skipLearningCheck) {
-      const learningComplete = await checkLearningCompletion(
-        admin,
-        studentId,
-        track_id,
-        day_number
-      );
-
-      if (!learningComplete.ok) {
-        return NextResponse.json(
-          { error: learningComplete.error },
-          { status: 403 }
-        );
-      }
-    }
-
-    // 3. Day의 단어 목록 가져오기
-    // Step 1: student_vocab_assignments에서 set_id 찾기
+    // 2. Day의 단어 목록 가져오기
+    // Step 1: student_vocab_assignments에서 set_id 찾기 (학습 완료 확인에도 필요해서 먼저 조회)
     const { data: dayAssignment, error: dayAssignmentError } = await admin
       .from("student_vocab_assignments")
       .select("set_id")
@@ -99,6 +73,31 @@ export async function POST(req: NextRequest) {
         { error: "No day set found for this track" },
         { status: 404 }
       );
+    }
+
+    // 3. Admin 설정에서 학습 확인 스킵 여부 확인
+    const { data: config } = await admin
+      .from("vocab_test_configs")
+      .select("skip_learning_check")
+      .eq("scope", "global")
+      .single();
+
+    const skipLearningCheck = config?.skip_learning_check ?? false;
+
+    // 학습 완료 상태 확인 (skip_learning_check가 false일 때만)
+    if (!skipLearningCheck) {
+      const learningComplete = await checkLearningCompletion(
+        admin,
+        studentId,
+        dayAssignment.set_id
+      );
+
+      if (!learningComplete.ok) {
+        return NextResponse.json(
+          { error: learningComplete.error },
+          { status: 403 }
+        );
+      }
     }
 
     // Step 2: vocab_set_items에서 word_id들 찾기
@@ -210,28 +209,27 @@ export async function POST(req: NextRequest) {
 async function checkLearningCompletion(
   admin: any,
   studentId: string,
-  trackId: string,
-  dayNumber: number
+  setId: string
 ): Promise<{ ok: boolean; error?: string }> {
-  // 각 Stage별 assignment 확인. student_vocab_assignments.stage는 정수(1~3)이고
-  // 1=PreScreen(know), 2=Spelling, 3=Speed 순으로 진행되며(app/protected/vocab/session/actions.ts
-  // saveVocabAttemptAction의 stage 전이 로직 참고), 각 단계 완료 시 다음 stage 행이 생성된다.
-  // "깜지(memorize)"는 이 테이블에 별도로 기록되지 않으므로 체크 대상에서 제외.
-  // (이전 코드는 문자열 "know"/"speed"/"memorize"를 정수 stage 컬럼과 비교해 항상 실패했음)
-  const requiredStages = [1, 2, 3];
-  const dayIndexMap = dayNumber; // student_vocab_assignments.day_index는 day_number와 동일하게 1부터 시작
+  // student_vocab_assignments.stage/completed_at은 실제 학습 화면(app/vocab/session)에서
+  // assignmentId가 항상 null로 전달되는 버그 때문에 사실상 절대 갱신되지 않는다
+  // (student_vocab_assignments 테이블 전수 조사: 전부 stage=1). 반면 vocab_learning_attempts는
+  // saveVocabAttemptAction이 매 단계 무조건 기록하는 테이블이라 실제로 신뢰할 수 있는 진행
+  // 기록이다. know/spelling 단계는 passed 필드를 항상 undefined로 남기므로(speed만 채움),
+  // "그 단계 시도 기록이 존재하는지"로 완료 여부를 판단한다.
+  const requiredStages = ["know", "spelling", "speed"];
 
   for (const stage of requiredStages) {
-    const { data: assignment } = await admin
-      .from("student_vocab_assignments")
-      .select("completed_at")
+    const { data: attempt } = await admin
+      .from("vocab_learning_attempts")
+      .select("id")
       .eq("student_id", studentId)
-      .eq("track_id", trackId)
-      .eq("day_index", dayIndexMap)
+      .eq("set_id", setId)
       .eq("stage", stage)
-      .single();
+      .limit(1)
+      .maybeSingle();
 
-    if (!assignment?.completed_at) {
+    if (!attempt) {
       return { ok: false, error: `Stage ${stage} not completed` };
     }
   }
