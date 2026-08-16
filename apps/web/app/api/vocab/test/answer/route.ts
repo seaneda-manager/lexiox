@@ -94,7 +94,14 @@ export async function POST(req: NextRequest) {
 
     let is_correct = false;
 
-    if (question.question_type === "word_to_meaning" || question.question_type === "meaning_to_word") {
+    if (question.question_type === "word_to_meaning") {
+      // 다의어: meaning_ko에 저장된 뜻 중 하나만 맞아도 정답 처리
+      const acceptable: string[] =
+        Array.isArray(question.meaning_ko) && question.meaning_ko.length > 0
+          ? question.meaning_ko
+          : [question.correct_answer];
+      is_correct = scoreShortAnswer(answer, acceptable);
+    } else if (question.question_type === "meaning_to_word") {
       is_correct = scoreShortAnswer(answer, question.correct_answer);
     } else if (question.question_type === "synonym" || question.question_type === "listening") {
       is_correct = scoreMultipleChoice(answer, question.correct_answer, question.options);

@@ -230,8 +230,12 @@ export default function TestQuestionPanel({
           ) : (
             <>
               ✕ 오답 (0점)
-              {question.correct_answer && (
-                <div className="mt-1 text-xs">정답: {question.correct_answer}</div>
+              {question.question_type === "word_to_meaning" && question.meaning_ko?.length ? (
+                <div className="mt-1 text-xs">정답: {question.meaning_ko.join(" / ")}</div>
+              ) : (
+                question.correct_answer && (
+                  <div className="mt-1 text-xs">정답: {question.correct_answer}</div>
+                )
               )}
             </>
           )}

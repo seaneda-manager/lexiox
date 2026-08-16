@@ -227,18 +227,19 @@ function shuffleArray<T>(array: T[]): void {
 
 /**
  * 주관식 답변 채점
+ * correct_answer가 배열이면(다의어 뜻 등) 그중 하나만 일치해도 정답 처리
  */
 export function scoreShortAnswer(
   student_answer: string | null,
-  correct_answer: string
+  correct_answer: string | string[]
 ): boolean {
   if (!student_answer) return false;
 
   // 공백 제거 및 소문자 비교
   const normalized_student = student_answer.trim().toLowerCase();
-  const normalized_correct = correct_answer.trim().toLowerCase();
+  const acceptable = Array.isArray(correct_answer) ? correct_answer : [correct_answer];
 
-  return normalized_student === normalized_correct;
+  return acceptable.some(a => normalized_student === a.trim().toLowerCase());
 }
 
 /**
