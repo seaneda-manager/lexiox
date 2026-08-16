@@ -297,18 +297,22 @@ function shuffleArray<T>(array: T[]): void {
 /**
  * 주관식 답변 채점
  * correct_answer가 배열이면(다의어 뜻 등) 그중 하나만 일치해도 정답 처리
+ * ignoreSpacing: true면 내부 띄어쓰기 차이를 무시 (한글 뜻 채점용).
+ *   영단어(meaning_to_word)는 "go over"처럼 띄어쓰기 자체가 스펠링의 일부이므로 기본값(false) 유지.
  */
 export function scoreShortAnswer(
   student_answer: string | null,
-  correct_answer: string | string[]
+  correct_answer: string | string[],
+  ignoreSpacing: boolean = false
 ): boolean {
   if (!student_answer) return false;
 
-  // 공백 제거 및 소문자 비교
-  const normalized_student = student_answer.trim().toLowerCase();
+  const normalize = (s: string) =>
+    (ignoreSpacing ? s.replace(/\s+/g, "") : s.trim()).toLowerCase();
+  const normalized_student = normalize(student_answer);
   const acceptable = Array.isArray(correct_answer) ? correct_answer : [correct_answer];
 
-  return acceptable.some(a => normalized_student === a.trim().toLowerCase());
+  return acceptable.some(a => normalized_student === normalize(a));
 }
 
 /**

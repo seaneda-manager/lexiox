@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
         Array.isArray(question.meaning_ko) && question.meaning_ko.length > 0
           ? question.meaning_ko
           : [question.correct_answer];
-      is_correct = scoreShortAnswer(answer, acceptable);
+      is_correct = scoreShortAnswer(answer, acceptable, /* ignoreSpacing */ true);
     } else if (question.question_type === "meaning_to_word") {
       is_correct = scoreShortAnswer(answer, question.correct_answer);
     } else if (question.question_type === "synonym" || question.question_type === "listening") {
