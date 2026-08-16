@@ -39,11 +39,13 @@ export default function TestQuestionPanel({
   const isAnswered = question.is_correct !== null;
   const isLast = questionNumber === totalQuestions;
   const isFirst = questionNumber === 1;
-  const canHint = hintsAllowed(question.question_type);
+  const hasOptions = !!question.options && question.options.length > 0;
+  const canHint = hintsAllowed(question.question_type) && !hasOptions;
   const hintLevel = question.hint_level ?? 0;
-  const isSubjective =
-    question.question_type === "word_to_meaning" ||
-    question.question_type === "meaning_to_word";
+  const isTypedInput =
+    !hasOptions &&
+    (question.question_type === "word_to_meaning" ||
+      question.question_type === "meaning_to_word");
 
   const handleSubmitAnswer = () => {
     if (answer.trim()) {
@@ -89,7 +91,8 @@ export default function TestQuestionPanel({
       {/* 문제 제목 */}
       <div className="space-y-2">
         <h2 className="text-lg font-semibold text-gray-900">
-          {question.question_type === "word_to_meaning" && "단어의 뜻을 입력하세요"}
+          {question.question_type === "word_to_meaning" &&
+            (hasOptions ? "단어의 뜻을 고르세요" : "단어의 뜻을 입력하세요")}
           {question.question_type === "meaning_to_word" && "뜻에 맞는 단어를 입력하세요"}
           {question.question_type === "synonym" && "가장 가까운 의미의 단어를 선택하세요"}
           {question.question_type === "listening" && "들으신 내용의 뜻을 선택하세요"}
@@ -118,54 +121,51 @@ export default function TestQuestionPanel({
           </div>
         )}
 
-        {(question.question_type === "synonym" ||
-          question.question_type === "listening") && (
-          <>
-            {question.question_type === "synonym" && (
-              <div className="text-center">
-                <p className="text-sm text-gray-600 mb-2">단어</p>
-                <p className="text-2xl font-bold text-blue-600">{question.word_text}</p>
-              </div>
-            )}
+        {question.question_type === "synonym" && (
+          <div className="text-center">
+            <p className="text-sm text-gray-600 mb-2">단어</p>
+            <p className="text-2xl font-bold text-blue-600">{question.word_text}</p>
+          </div>
+        )}
 
-            {question.question_type === "listening" && question.audio_url && (
-              <div className="text-center">
-                <audio controls className="w-full mb-4">
-                  <source src={question.audio_url} type="audio/mp3" />
-                </audio>
-                <p className="text-sm text-gray-600">위 오디오를 들으신 후 뜻을 선택하세요</p>
-              </div>
-            )}
+        {question.question_type === "listening" && question.audio_url && (
+          <div className="text-center">
+            <audio controls className="w-full mb-4">
+              <source src={question.audio_url} type="audio/mp3" />
+            </audio>
+            <p className="text-sm text-gray-600">위 오디오를 들으신 후 뜻을 선택하세요</p>
+          </div>
+        )}
 
-            {/* 객관식 선택지 */}
-            <div className="grid grid-cols-1 gap-3 mt-4">
-              {question.options?.map((option) => (
-                <button
-                  key={option.id}
-                  onClick={() => {
-                    setAnswer(option.id);
-                    onAnswerSubmit(option.id);
-                  }}
-                  disabled={isAnswered}
-                  className={`p-3 text-left rounded-lg border-2 transition disabled:cursor-not-allowed ${
-                    answer === option.id
-                      ? "border-blue-500 bg-blue-50"
-                      : "border-gray-200 hover:border-gray-300"
-                  } ${
-                    isAnswered && option.is_correct
-                      ? "border-green-500 bg-green-50"
-                      : ""
-                  } ${
-                    isAnswered && answer === option.id && !option.is_correct
-                      ? "border-red-500 bg-red-50"
-                      : ""
-                  }`}
-                >
-                  <div className="font-medium text-gray-900">{option.text}</div>
-                </button>
-              ))}
-            </div>
-          </>
+        {/* 객관식 선택지 (synonym/listening 및 다의어 word_to_meaning) */}
+        {hasOptions && (
+          <div className="grid grid-cols-1 gap-3 mt-4">
+            {question.options?.map((option) => (
+              <button
+                key={option.id}
+                onClick={() => {
+                  setAnswer(option.id);
+                  onAnswerSubmit(option.id);
+                }}
+                disabled={isAnswered}
+                className={`p-3 text-left rounded-lg border-2 transition disabled:cursor-not-allowed ${
+                  answer === option.id
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-gray-200 hover:border-gray-300"
+                } ${
+                  isAnswered && option.is_correct
+                    ? "border-green-500 bg-green-50"
+                    : ""
+                } ${
+                  isAnswered && answer === option.id && !option.is_correct
+                    ? "border-red-500 bg-red-50"
+                    : ""
+                }`}
+              >
+                <div className="font-medium text-gray-900">{option.text}</div>
+              </button>
+            ))}
+          </div>
         )}
       </div>
 
@@ -191,8 +191,7 @@ export default function TestQuestionPanel({
       )}
 
       {/* 주관식 입력 */}
-      {(question.question_type === "word_to_meaning" ||
-        question.question_type === "meaning_to_word") && (
+      {isTypedInput && (
         <div className="space-y-3">
           <input
             type="text"
@@ -230,13 +229,15 @@ export default function TestQuestionPanel({
           ) : (
             <>
               ✕ 오답 (0점)
-              {question.question_type === "word_to_meaning" && question.meaning_ko?.length ? (
-                <div className="mt-1 text-xs">정답: {question.meaning_ko.join(" / ")}</div>
-              ) : (
-                question.correct_answer && (
-                  <div className="mt-1 text-xs">정답: {question.correct_answer}</div>
-                )
-              )}
+              {/* 객관식은 정답 선택지가 이미 초록색으로 표시되므로 별도 텍스트 불필요 */}
+              {!hasOptions &&
+                (question.question_type === "word_to_meaning" && question.meaning_ko?.length ? (
+                  <div className="mt-1 text-xs">정답: {question.meaning_ko.join(" / ")}</div>
+                ) : (
+                  question.correct_answer && (
+                    <div className="mt-1 text-xs">정답: {question.correct_answer}</div>
+                  )
+                ))}
             </>
           )}
         </div>
@@ -261,7 +262,7 @@ export default function TestQuestionPanel({
                 ? onSubmitTest
                 : onNext
           }
-          disabled={!isAnswered && (isSubjective ? !answer.trim() : true)}
+          disabled={!isAnswered && (isTypedInput ? !answer.trim() : true)}
           className={`flex-1 px-4 py-2 text-white font-semibold rounded-lg transition disabled:bg-gray-300 ${
             isAnswered
               ? isLast

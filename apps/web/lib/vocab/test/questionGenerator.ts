@@ -14,7 +14,8 @@ export type WordData = {
  * 시험 문제 생성
  *
  * 문제 유형:
- * - word_to_meaning (주관식): 단어 → 뜻
+ * - word_to_meaning: 단어 → 뜻. 뜻이 1개면 주관식, 2개 이상(다의어)이면 객관식
+ *   (자유 입력으로는 정답이 여러 개라 정확히 맞추기 어렵고 패러프레이즈도 판정 불가하므로)
  * - meaning_to_word (주관식): 뜻 → 단어
  * - synonym (객관식): 동의어 선택
  * - listening (객관식): 오디오 들고 뜻 선택
@@ -41,31 +42,74 @@ export async function generateTestQuestions(
   const shuffledWordIds = [...wordIds];
   shuffleArray(shuffledWordIds);
 
+  // 다의어 객관식용 오답 풀: 이 시험에 포함된 모든 단어의 뜻을 (단어ID, 품사군)과 함께 모아둔다
+  const meaningPool: Array<{ wordId: string; text: string; posClass: PosClass }> = [];
+  for (const wordId of shuffledWordIds) {
+    const wordData = wordDataMap.get(wordId);
+    for (const m of wordData?.meanings_ko || []) {
+      meaningPool.push({ wordId, text: m, posClass: guessPosClass(m) });
+    }
+  }
+
   for (const wordId of shuffledWordIds) {
     const wordData = wordDataMap.get(wordId);
     if (!wordData) continue;
 
-    // (1) 단어 → 뜻 (주관식)
-    byType.word_to_meaning.push({
-      id: nextId(),
-      session_id: sessionId,
-      question_number: 0,
-      word_id: wordId,
-      word_text: wordData.text,
-      question_type: "word_to_meaning",
-      options: null,
-      correct_answer: wordData.meanings_ko?.[0] || "",
-      meaning_ko: wordData.meanings_ko || [],
-      audio_url: null,
-      hint_level: 0,
-      student_answer: null,
-      is_correct: null,
-      points_earned: null,
-      points_max: POINTS_BASE,
-      streak_before: null,
-      streak_bonus: 0,
-      created_at: new Date().toISOString(),
-    });
+    // (1) 단어 → 뜻
+    const meanings = wordData.meanings_ko || [];
+    if (meanings.length >= 2) {
+      // 다의어: 객관식. 오답은 같은 품사군(어미 패턴)의 다른 단어 뜻에서만 뽑는다
+      const correctMeaning = meanings[0];
+      const posClass = guessPosClass(correctMeaning);
+      const distractorPool = meaningPool
+        .filter(m => m.wordId !== wordId && m.posClass === posClass)
+        .map(m => m.text);
+      const distractors = sampleRandom(distractorPool, 3);
+      const options = buildMultipleChoice(correctMeaning, distractors);
+
+      byType.word_to_meaning.push({
+        id: nextId(),
+        session_id: sessionId,
+        question_number: 0,
+        word_id: wordId,
+        word_text: wordData.text,
+        question_type: "word_to_meaning",
+        options,
+        correct_answer: options.find(o => o.is_correct)?.id || "",
+        meaning_ko: meanings,
+        audio_url: null,
+        hint_level: 0,
+        student_answer: null,
+        is_correct: null,
+        points_earned: null,
+        points_max: POINTS_BASE,
+        streak_before: null,
+        streak_bonus: 0,
+        created_at: new Date().toISOString(),
+      });
+    } else {
+      // 뜻이 1개뿐: 주관식 (암기 확인)
+      byType.word_to_meaning.push({
+        id: nextId(),
+        session_id: sessionId,
+        question_number: 0,
+        word_id: wordId,
+        word_text: wordData.text,
+        question_type: "word_to_meaning",
+        options: null,
+        correct_answer: meanings[0] || "",
+        meaning_ko: meanings,
+        audio_url: null,
+        hint_level: 0,
+        student_answer: null,
+        is_correct: null,
+        points_earned: null,
+        points_max: POINTS_BASE,
+        streak_before: null,
+        streak_bonus: 0,
+        created_at: new Date().toISOString(),
+      });
+    }
 
     // (2) 뜻 → 단어 (주관식)
     byType.meaning_to_word.push({
@@ -213,6 +257,31 @@ function buildMultipleChoice(
     text: choice.text,
     is_correct: choice.is_correct,
   }));
+}
+
+/**
+ * 뜻 문자열의 대략적인 품사군 추정 (오답 선택지가 어미만 보고 티나지 않도록 필터링하는 용도).
+ * 실제 품사 태깅 데이터가 없어 어미 패턴으로만 추정하는 휴리스틱 — 완벽하지 않지만
+ * "관형사형 vs 서술형 vs 명사"의 가장 눈에 띄는 차이는 걸러낸다.
+ */
+type PosClass = "attributive" | "predicate" | "noun";
+
+function guessPosClass(meaning: string): PosClass {
+  const m = meaning.trim();
+  // 관형사형 어미 (형용사적으로 명사를 꾸미는 형태): ~한/~는/~은/~인/~된/~진/~적인/~스러운/~로운/~같은
+  if (/(적인|스러운|로운|같은|하는|한|된|진|는|은|인)$/.test(m)) return "attributive";
+  // 서술형 (동사/형용사 기본형): ~다로 끝남
+  if (/다$/.test(m)) return "predicate";
+  return "noun";
+}
+
+/**
+ * 배열에서 중복 없이 n개 무작위 추출
+ */
+function sampleRandom<T>(pool: T[], n: number): T[] {
+  const copy = [...pool];
+  shuffleArray(copy);
+  return copy.slice(0, n);
 }
 
 /**

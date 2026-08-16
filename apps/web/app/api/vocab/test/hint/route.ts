@@ -86,7 +86,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!hintsAllowed(question.question_type)) {
+    if (!hintsAllowed(question.question_type) || question.options) {
+      // options가 있으면 객관식(다의어 등)이라 힌트 대상이 아님
       return NextResponse.json(
         { error: "hints_not_available" },
         { status: 400 }

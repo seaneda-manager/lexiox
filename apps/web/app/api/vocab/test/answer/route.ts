@@ -94,8 +94,11 @@ export async function POST(req: NextRequest) {
 
     let is_correct = false;
 
-    if (question.question_type === "word_to_meaning") {
-      // 다의어: meaning_ko에 저장된 뜻 중 하나만 맞아도 정답 처리
+    if (question.question_type === "word_to_meaning" && question.options) {
+      // 다의어 객관식: 정답 옵션 id와 일치하는지 확인
+      is_correct = scoreMultipleChoice(answer, question.correct_answer, question.options);
+    } else if (question.question_type === "word_to_meaning") {
+      // 뜻이 1개뿐인 주관식: meaning_ko에 저장된 뜻 중 하나만 맞아도 정답 처리
       const acceptable: string[] =
         Array.isArray(question.meaning_ko) && question.meaning_ko.length > 0
           ? question.meaning_ko
