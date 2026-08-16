@@ -51,6 +51,11 @@ export async function generateTestQuestions(
     }
   }
 
+  // 동의어 문제 오답 풀: 이 시험에 포함된 다른 단어들의 스펠링
+  const wordTextPool: Array<{ wordId: string; text: string }> = shuffledWordIds
+    .map(id => ({ wordId: id, text: wordDataMap.get(id)?.text }))
+    .filter((w): w is { wordId: string; text: string } => !!w.text);
+
   for (const wordId of shuffledWordIds) {
     const wordData = wordDataMap.get(wordId);
     if (!wordData) continue;
@@ -134,11 +139,19 @@ export async function generateTestQuestions(
     });
 
     // (3) 동의어 (객관식) - 동의어 데이터가 있을 경우
+    // 정답은 실제 동의어(다른 단어), 오답은 이 시험의 다른 단어 스펠링 중에서 뽑는다.
+    // (예전엔 정답을 단어 자기 자신으로, 진짜 동의어를 오답으로 넣는 버그가 있었음)
     if (wordData.synonyms && wordData.synonyms.length > 0) {
-      const options = buildMultipleChoice(
-        wordData.text,
-        wordData.synonyms
-      );
+      const correctSynonym = wordData.synonyms[0];
+      const distractorPool = wordTextPool
+        .filter(w =>
+          w.wordId !== wordId &&
+          w.text !== wordData.text &&
+          !wordData.synonyms!.includes(w.text)
+        )
+        .map(w => w.text);
+      const distractors = sampleRandom(distractorPool, 3);
+      const options = buildMultipleChoice(correctSynonym, distractors);
 
       byType.synonym.push({
         id: nextId(),
