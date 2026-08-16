@@ -192,7 +192,8 @@ export default function TestQuestionPanel({
             }}
             placeholder="답변을 입력하세요"
             disabled={isAnswered}
-            className="w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:border-blue-500 disabled:bg-gray-100"
+            autoComplete="off"
+            className="w-full px-4 py-3 border-2 rounded-lg text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-blue-500 disabled:bg-gray-100"
           />
 
           {!isAnswered && (

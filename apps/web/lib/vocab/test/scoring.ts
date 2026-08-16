@@ -62,10 +62,19 @@ export function scoreAnswer(i: {
   };
 }
 
+// "~하는" 류 placeholder 접두사는 그 자체로는 힌트 정보가 없으므로 한 덩어리로 취급한다
+const PLACEHOLDER_PREFIX = /^~(하는|하기|하다|하지|하며|하고|한|할)/;
+
+function leadingChunkLength(correctAnswer: string): number {
+  const m = correctAnswer.match(PLACEHOLDER_PREFIX);
+  return m ? m[0].length : 0;
+}
+
 /**
  * 힌트 공개 문자열 생성.
  * - meaning_to_word: 정답(영단어) 앞 1자 / 3자 그대로 공개
  * - word_to_meaning: 정답(한글 뜻) 앞 1자 / 3자 공개하되, 뜻 길이의 절반을 넘지 않도록 제한
+ *   단, "~하는"류 placeholder로 시작하면 그 덩어리 전체를 1단계 힌트로, 이후 2글자를 2단계 힌트로 공개
  * 공개되지 않은 나머지 글자는 '·'로 마스킹 (단어 길이는 드러남)
  */
 export function hintReveal(
@@ -73,7 +82,11 @@ export function hintReveal(
   correctAnswer: string,
   hintLevel: 1 | 2
 ): string {
-  const rawLen = hintLevel === 1 ? 1 : 3;
+  const chunkLen = leadingChunkLength(correctAnswer);
+  const rawLen =
+    chunkLen > 0
+      ? (hintLevel === 1 ? chunkLen : chunkLen + 2)
+      : (hintLevel === 1 ? 1 : 3);
   const revealLen =
     questionType === "word_to_meaning"
       ? Math.min(rawLen, Math.ceil(correctAnswer.length / 2))

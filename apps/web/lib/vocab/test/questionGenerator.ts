@@ -37,7 +37,11 @@ export async function generateTestQuestions(
     listening: [],
   };
 
-  for (const wordId of wordIds) {
+  // 매 시험마다 단어 순서를 섞는다 (grouped여도 블록 내부 단어 순서는 매번 달라야 함)
+  const shuffledWordIds = [...wordIds];
+  shuffleArray(shuffledWordIds);
+
+  for (const wordId of shuffledWordIds) {
     const wordData = wordDataMap.get(wordId);
     if (!wordData) continue;
 
