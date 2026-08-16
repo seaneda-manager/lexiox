@@ -149,10 +149,14 @@ export default function VocabTestPage() {
   if (error) {
     return (
       <FocusModeWrapper className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <p className="text-red-500 text-lg">{error}</p>
-          <button onClick={() => router.back()} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded">
-            뒤로 가기
+        <div className="text-center space-y-2">
+          <p className="text-gray-700 text-lg">시험 정보를 찾을 수 없습니다.</p>
+          <p className="text-gray-500 text-sm">단어 학습 화면에서 시험을 다시 시작해주세요.</p>
+          <button
+            onClick={() => router.push("/vocab/hub-new")}
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
+          >
+            단어 학습으로 이동
           </button>
         </div>
       </FocusModeWrapper>

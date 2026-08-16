@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { ScoreboardMetric, ScoreboardPeriod, ScoreboardResponse } from "@/models/vocab/scoreboard.types";
 
 const PERIOD_LABEL: Record<ScoreboardPeriod, string> = {
@@ -27,6 +27,7 @@ const METRIC_UNIT: Record<ScoreboardMetric, string> = {
 const MEDALS = ["🥇", "🥈", "🥉"];
 
 export default function ScoreboardClient() {
+  const router = useRouter();
   const [period, setPeriod] = useState<ScoreboardPeriod>("weekly");
   const [metric, setMetric] = useState<ScoreboardMetric>("points");
   const [data, setData] = useState<ScoreboardResponse | null>(null);
@@ -64,9 +65,13 @@ export default function ScoreboardClient() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">🏆 Score Board</h1>
-        <Link href="/vocab/test" className="text-sm text-blue-600 hover:underline">
-          ← 시험으로 돌아가기
-        </Link>
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="text-sm text-blue-600 hover:underline"
+        >
+          ← 돌아가기
+        </button>
       </div>
 
       {/* 기간 선택 */}
