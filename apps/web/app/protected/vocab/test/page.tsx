@@ -6,7 +6,6 @@ import type { VocabTestQuestion, TestSubmitResponse } from "@/models/vocab/test.
 import FocusModeWrapper from "@/components/common/FocusModeWrapper";
 import StageBackground from "@/components/common/StageBackground";
 import MascotLayer from "@/components/common/MascotLayer";
-import TestQuestionsTable from "./_components/TestQuestionsTable";
 import TestQuestionPanel from "./_components/TestQuestionPanel";
 import TestResultsScreen from "./_components/TestResultsScreen";
 import TestStartScreen from "./_components/TestStartScreen";
@@ -176,33 +175,24 @@ export default function VocabTestPage() {
           />
         )}
         {state === "testing" && sessionId && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-1 h-[calc(100vh-200px)] overflow-y-auto">
-              <TestQuestionsTable
-                questions={questions}
-                selectedIdx={selectedQuestionIdx}
-                onSelect={setSelectedQuestionIdx}
+          <div className="max-w-2xl mx-auto">
+            {questions[selectedQuestionIdx] && (
+              <TestQuestionPanel
+                key={questions[selectedQuestionIdx].id}
+                question={questions[selectedQuestionIdx]}
+                questionNumber={selectedQuestionIdx + 1}
+                totalQuestions={questions.length}
+                sessionPoints={sessionPoints}
+                correctCount={questions.filter(q => q.is_correct === true).length}
+                streak={streak}
+                hintReveal={hintReveals[questions[selectedQuestionIdx].id]}
+                onAnswerSubmit={(answer) => handleSubmitAnswer(selectedQuestionIdx, answer)}
+                onUseHint={() => handleUseHint(selectedQuestionIdx)}
+                onSubmitTest={handleSubmitTest}
+                onNext={() => setSelectedQuestionIdx(Math.min(selectedQuestionIdx + 1, questions.length - 1))}
+                onPrev={() => setSelectedQuestionIdx(Math.max(selectedQuestionIdx - 1, 0))}
               />
-            </div>
-            <div className="lg:col-span-2">
-              {questions[selectedQuestionIdx] && (
-                <TestQuestionPanel
-                  key={questions[selectedQuestionIdx].id}
-                  question={questions[selectedQuestionIdx]}
-                  questionNumber={selectedQuestionIdx + 1}
-                  totalQuestions={questions.length}
-                  sessionPoints={sessionPoints}
-                  correctCount={questions.filter(q => q.is_correct === true).length}
-                  streak={streak}
-                  hintReveal={hintReveals[questions[selectedQuestionIdx].id]}
-                  onAnswerSubmit={(answer) => handleSubmitAnswer(selectedQuestionIdx, answer)}
-                  onUseHint={() => handleUseHint(selectedQuestionIdx)}
-                  onSubmitTest={handleSubmitTest}
-                  onNext={() => setSelectedQuestionIdx(Math.min(selectedQuestionIdx + 1, questions.length - 1))}
-                  onPrev={() => setSelectedQuestionIdx(Math.max(selectedQuestionIdx - 1, 0))}
-                />
-              )}
-            </div>
+            )}
           </div>
         )}
         {state === "results" && results && (
