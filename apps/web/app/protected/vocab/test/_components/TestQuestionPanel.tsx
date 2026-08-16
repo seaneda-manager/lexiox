@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { VocabTestQuestion } from "@/models/vocab/test.types";
 import { hintsAllowed, basePointsFor, MAX_HINT_LEVEL } from "@/lib/vocab/test/scoring";
 
@@ -34,18 +34,29 @@ export default function TestQuestionPanel({
   onPrev,
 }: TestQuestionPanelProps) {
   const [answer, setAnswer] = useState(question.student_answer || "");
+  const primaryButtonRef = useRef<HTMLButtonElement>(null);
 
   const isAnswered = question.is_correct !== null;
   const isLast = questionNumber === totalQuestions;
   const isFirst = questionNumber === 1;
   const canHint = hintsAllowed(question.question_type);
   const hintLevel = question.hint_level ?? 0;
+  const isSubjective =
+    question.question_type === "word_to_meaning" ||
+    question.question_type === "meaning_to_word";
 
   const handleSubmitAnswer = () => {
     if (answer.trim()) {
       onAnswerSubmit(answer);
     }
   };
+
+  // 답변이 채점되면 기본 버튼(다음/시험 제출)에 포커스를 줘서 Enter로 바로 넘어갈 수 있게 함
+  useEffect(() => {
+    if (isAnswered) {
+      primaryButtonRef.current?.focus();
+    }
+  }, [isAnswered]);
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6 space-y-6">
@@ -169,7 +180,7 @@ export default function TestQuestionPanel({
             💡 힌트 ({hintLevel}/{MAX_HINT_LEVEL})
             {hintLevel < MAX_HINT_LEVEL && (
               <span className="ml-1 text-xs font-normal">
-                — 사용 시 정답 배점 {basePointsFor(hintLevel + 1)}점
+                — 만점 {basePointsFor(0)}점, 지금 쓰면 {basePointsFor(hintLevel + 1)}점
               </span>
             )}
           </button>
@@ -195,16 +206,6 @@ export default function TestQuestionPanel({
             autoComplete="off"
             className="w-full px-4 py-3 border-2 rounded-lg text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-blue-500 disabled:bg-gray-100"
           />
-
-          {!isAnswered && (
-            <button
-              onClick={handleSubmitAnswer}
-              disabled={!answer.trim()}
-              className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white font-semibold py-2 rounded-lg transition"
-            >
-              답변 제출
-            </button>
-          )}
         </div>
       )}
 
@@ -247,21 +248,26 @@ export default function TestQuestionPanel({
           ← 이전
         </button>
 
-        {isLast ? (
-          <button
-            onClick={onSubmitTest}
-            className="flex-1 px-4 py-2 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg transition"
-          >
-            시험 제출
-          </button>
-        ) : (
-          <button
-            onClick={onNext}
-            className="flex-1 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition"
-          >
-            다음 →
-          </button>
-        )}
+        <button
+          ref={primaryButtonRef}
+          onClick={
+            !isAnswered
+              ? handleSubmitAnswer
+              : isLast
+                ? onSubmitTest
+                : onNext
+          }
+          disabled={!isAnswered && (isSubjective ? !answer.trim() : true)}
+          className={`flex-1 px-4 py-2 text-white font-semibold rounded-lg transition disabled:bg-gray-300 ${
+            isAnswered
+              ? isLast
+                ? "bg-green-500 hover:bg-green-600"
+                : "bg-blue-500 hover:bg-blue-600"
+              : "bg-blue-500 hover:bg-blue-600"
+          }`}
+        >
+          {!isAnswered ? "답변 제출" : isLast ? "시험 제출" : "다음 →"}
+        </button>
       </div>
     </div>
   );

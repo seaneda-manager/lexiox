@@ -183,6 +183,7 @@ export default function VocabTestPage() {
             <div className="lg:col-span-2">
               {questions[selectedQuestionIdx] && (
                 <TestQuestionPanel
+                  key={questions[selectedQuestionIdx].id}
                   question={questions[selectedQuestionIdx]}
                   questionNumber={selectedQuestionIdx + 1}
                   totalQuestions={questions.length}
