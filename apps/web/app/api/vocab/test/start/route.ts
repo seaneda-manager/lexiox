@@ -213,10 +213,12 @@ async function checkLearningCompletion(
   trackId: string,
   dayNumber: number
 ): Promise<{ ok: boolean; error?: string }> {
-  // 각 Stage별 assignment 확인
-  // Stage: "know"(PreScreen), 2(Spelling), 1(Learning), "speed"(Speed), "memorize"(Memorization)
-
-  const requiredStages = ["know", 1, 2, "speed", "memorize"];
+  // 각 Stage별 assignment 확인. student_vocab_assignments.stage는 정수(1~3)이고
+  // 1=PreScreen(know), 2=Spelling, 3=Speed 순으로 진행되며(app/protected/vocab/session/actions.ts
+  // saveVocabAttemptAction의 stage 전이 로직 참고), 각 단계 완료 시 다음 stage 행이 생성된다.
+  // "깜지(memorize)"는 이 테이블에 별도로 기록되지 않으므로 체크 대상에서 제외.
+  // (이전 코드는 문자열 "know"/"speed"/"memorize"를 정수 stage 컬럼과 비교해 항상 실패했음)
+  const requiredStages = [1, 2, 3];
   const dayIndexMap = dayNumber; // student_vocab_assignments.day_index는 day_number와 동일하게 1부터 시작
 
   for (const stage of requiredStages) {
