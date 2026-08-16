@@ -319,12 +319,29 @@ async function generateQuestions(
     // 1. 단어 상세 정보 조회
     const { data: words } = await admin
       .from("words")
-      .select("id, text, meanings_ko, meanings_en_simple, synonyms_en_simple")
+      .select("id, text, meanings_ko, meanings_en_simple")
       .in("id", wordIds);
 
     if (!words || words.length === 0) {
       console.error("No words found for question generation");
       return [];
+    }
+
+    // 1.5. 동의어 조회 (words.synonyms_en_simple은 항상 비어있어 실제 데이터가 있는
+    // word_synonyms 테이블에서 가져온다 - 동의어 게임(synonym-game)과 같은 소스)
+    const { data: synonymRows } = await admin
+      .from("word_synonyms")
+      .select("word_id, synonym:words!word_synonyms_synonym_word_id_fkey(text)")
+      .in("word_id", wordIds)
+      .eq("tier", 1);
+
+    const synonymsByWordId = new Map<string, string[]>();
+    for (const row of synonymRows || []) {
+      const text = (row as any).synonym?.text;
+      if (!text) continue;
+      const list = synonymsByWordId.get(row.word_id) ?? [];
+      list.push(text);
+      synonymsByWordId.set(row.word_id, list);
     }
 
     const wordDataMap = new Map(
@@ -335,7 +352,7 @@ async function generateQuestions(
           text: w.text,
           meanings_ko: w.meanings_ko || [],
           meanings_en: w.meanings_en_simple || [],
-          synonyms: w.synonyms_en_simple || [],
+          synonyms: synonymsByWordId.get(w.id) || [],
           audio_url: null,
         },
       ])
