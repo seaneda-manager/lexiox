@@ -372,7 +372,10 @@ export default function ProgressClient({ tracks }: { tracks: TrackSummary[] }) {
                               onChange={(e) => setSkipDay(parseInt(e.target.value))}
                               className="rounded px-2 py-1 text-xs border"
                             >
-                              {Array.from({ length: r.totalDays }, (_, i) => i + 1).map((day) => (
+                              {Array.from(
+                                { length: r.totalDays - r.startDayIndex + 1 },
+                                (_, i) => r.startDayIndex + i,
+                              ).map((day) => (
                                 <option key={day} value={day}>Day {day}</option>
                               ))}
                             </select>

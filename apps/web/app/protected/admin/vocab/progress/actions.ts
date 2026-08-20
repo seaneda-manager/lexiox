@@ -22,6 +22,7 @@ export type StudentProgress = {
   loginId: string | null;
   startDate: string;
   cursorDay: number;
+  startDayIndex: number;
   totalDays: number;
   completedDays: number;
   inProgressDays: number;
@@ -132,6 +133,7 @@ export async function listStudentProgressForTrackAction(params: {
         loginId: String(student?.login_id ?? ""),
         startDate: String(plan.start_date ?? ""),
         cursorDay: Number(plan.cursor_day_index ?? plan.start_day_index ?? 1),
+        startDayIndex: Number(plan.start_day_index ?? 1),
         totalDays,
         completedDays,
         inProgressDays,
