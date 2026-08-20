@@ -49,6 +49,8 @@ export default function VocabAssignClient() {
   const [assignments, setAssignments] = useState<StudentVocabAssignment[]>([]);
   const [multiDaysCount, setMultiDaysCount] = useState(2); // Multiple Days 배정 개수
   const [pausingAssignmentId, setPausingAssignmentId] = useState(""); // 일시중지 중인 assignment
+  const [assignmentsPage, setAssignmentsPage] = useState(1);
+  const ASSIGNMENTS_PAGE_SIZE = 10;
 
   const weekdayPresets: Record<string, { label: string; days: number[] }> = {
     "mon-wed": { label: "월, 수 (주 2회)", days: [1, 3] },
@@ -87,6 +89,11 @@ export default function VocabAssignClient() {
     }
     load();
   }, []);
+
+  useEffect(() => {
+    const totalPages = Math.max(1, Math.ceil(assignments.length / ASSIGNMENTS_PAGE_SIZE));
+    if (assignmentsPage > totalPages) setAssignmentsPage(totalPages);
+  }, [assignments, assignmentsPage]);
 
   async function loadNotices() {
     if (!selectedStudent) return;
@@ -576,7 +583,9 @@ Total Study Time: ${Math.round(p.totalStudyTime / 60)}분
 
       {assignments.length > 0 && (
         <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-bold mb-4">배정 현황</h2>
+          <h2 className="text-xl font-bold mb-4">
+            배정 현황 (학생 {new Set(assignments.map((a) => a.student_id)).size}명 · {assignments.length}건)
+          </h2>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -589,7 +598,12 @@ Total Study Time: ${Math.round(p.totalStudyTime / 60)}분
                 </tr>
               </thead>
               <tbody>
-                {assignments.map((assign) => (
+                {assignments
+                  .slice(
+                    (assignmentsPage - 1) * ASSIGNMENTS_PAGE_SIZE,
+                    assignmentsPage * ASSIGNMENTS_PAGE_SIZE,
+                  )
+                  .map((assign) => (
                   <tr key={`${assign.student_id}_${assign.track_id}`} className="border-b hover:bg-gray-50">
                     <td className="py-2 px-4 font-bold">{assign.student_name}</td>
                     <td className="py-2 px-4">{assign.track_title}</td>
@@ -644,6 +658,45 @@ Total Study Time: ${Math.round(p.totalStudyTime / 60)}분
               </tbody>
             </table>
           </div>
+
+          {assignments.length > ASSIGNMENTS_PAGE_SIZE && (
+            <div className="flex items-center justify-center gap-1 mt-4">
+              <button
+                onClick={() => setAssignmentsPage((p) => Math.max(1, p - 1))}
+                disabled={assignmentsPage === 1}
+                className="px-3 py-1 rounded text-xs font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                이전
+              </button>
+              {Array.from(
+                { length: Math.ceil(assignments.length / ASSIGNMENTS_PAGE_SIZE) },
+                (_, i) => i + 1,
+              ).map((pageNum) => (
+                <button
+                  key={pageNum}
+                  onClick={() => setAssignmentsPage(pageNum)}
+                  className={`w-8 h-8 rounded text-xs font-bold transition ${
+                    assignmentsPage === pageNum
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              ))}
+              <button
+                onClick={() =>
+                  setAssignmentsPage((p) =>
+                    Math.min(Math.ceil(assignments.length / ASSIGNMENTS_PAGE_SIZE), p + 1),
+                  )
+                }
+                disabled={assignmentsPage === Math.ceil(assignments.length / ASSIGNMENTS_PAGE_SIZE)}
+                className="px-3 py-1 rounded text-xs font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                다음
+              </button>
+            </div>
+          )}
         </div>
       )}
 
