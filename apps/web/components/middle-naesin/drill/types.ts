@@ -1,4 +1,10 @@
-import type { MiddleDrillData, MiddleDrillSentence, MiddleDrillVocabItem } from '@/models/middle-naesin/drill';
+import type {
+  MiddleDrillData,
+  MiddleDrillSentence,
+  MiddleDrillVocabItem,
+  SentenceStructure,
+  MiddleGrammarPattern,
+} from '@/models/middle-naesin/drill';
 import type { MiddleNaesinContent } from '@/models/middle-naesin';
 
 // ── Sentence parser ──────────────────────────────────────────────
@@ -134,6 +140,77 @@ export function buildDrillData(
     contentId: target.id,
     contentTitle: target.title,
     sentences,
+    vocab: parseVocab(contents),
+  };
+}
+
+// ── Section-based builder (본문/대화문을 동시에, 4섹션 드릴용) ──────
+
+type SentenceAnnotations = {
+  structureAnswer?: SentenceStructure;
+  grammarAnswers?: MiddleGrammarPattern[];
+};
+
+function readAnnotation(content: MiddleNaesinContent, localIndex: number): SentenceAnnotations {
+  const extra = content.extra_data as { sentenceAnnotations?: Record<number, SentenceAnnotations> } | null;
+  return extra?.sentenceAnnotations?.[localIndex] ?? {};
+}
+
+export type MiddleNaesinDrillSection = {
+  contentIds: string[];
+  contentTitle: string | null;
+  sentences: MiddleDrillSentence[];
+};
+
+export type MiddleNaesinDrillSections = {
+  unitId: string;
+  mainText: MiddleNaesinDrillSection | null;
+  dialogue: MiddleNaesinDrillSection | null;
+  vocab: MiddleDrillVocabItem[];
+};
+
+function buildSectionForType(
+  contents: MiddleNaesinContent[],
+  contentType: 'main_text' | 'dialogue',
+): MiddleNaesinDrillSection | null {
+  const items = contents.filter((c) => c.content_type === contentType);
+  if (items.length === 0) return null;
+
+  const sentences: MiddleDrillSentence[] = [];
+  for (const item of items) {
+    const enSentences = splitSentences(item.body_text ?? '');
+    const koSentences = splitSentences(item.translation_ko ?? '');
+
+    enSentences.forEach((en, localIndex) => {
+      const blank = pickBlankWord(en);
+      const ann = readAnnotation(item, localIndex);
+      sentences.push({
+        index: sentences.length, // 섹션 전체에서 유일한 순번 (여러 콘텐츠를 이어붙임)
+        en,
+        ko: koSentences[localIndex] ?? null,
+        fillBlankWord: blank?.word ?? '',
+        fillBlankTemplate: blank?.template ?? en,
+        structureAnswer: ann.structureAnswer,
+        grammarAnswers: ann.grammarAnswers,
+      });
+    });
+  }
+
+  return {
+    contentIds: items.map((c) => c.id),
+    contentTitle: items.length === 1 ? items[0].title : null,
+    sentences,
+  };
+}
+
+export function buildDrillSections(
+  unitId: string,
+  contents: MiddleNaesinContent[],
+): MiddleNaesinDrillSections {
+  return {
+    unitId,
+    mainText: buildSectionForType(contents, 'main_text'),
+    dialogue: buildSectionForType(contents, 'dialogue'),
     vocab: parseVocab(contents),
   };
 }

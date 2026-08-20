@@ -2,19 +2,19 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getServerSupabase } from '@/lib/supabase/server';
 import { gradeLabel, type MiddleNaesinUnit, type MiddleNaesinContent } from '@/models/middle-naesin';
-import { buildDrillData } from '@/components/middle-naesin/drill/types';
-import MiddleNaesinDrillShell from '@/components/middle-naesin/drill/MiddleNaesinDrillShell';
+import { buildDrillSections } from '@/components/middle-naesin/drill/types';
+import MiddleNaesinDrillSections from '@/components/middle-naesin/drill/MiddleNaesinDrillSections';
 
 export const dynamic = 'force-dynamic';
 
 type Props = {
   params: Promise<{ unitId: string }>;
-  searchParams: Promise<{ contentId?: string }>;
+  searchParams: Promise<{ section?: string; drill?: string }>;
 };
 
 export default async function MiddleNaesinAdminDrillPage({ params, searchParams }: Props) {
   const { unitId } = await params;
-  const { contentId } = await searchParams;
+  const { section, drill } = await searchParams;
   const supabase = await getServerSupabase();
 
   const [{ data: unit, error: unitErr }, { data: contents }] = await Promise.all([
@@ -32,7 +32,7 @@ export default async function MiddleNaesinAdminDrillPage({ params, searchParams 
   const u = unit as MiddleNaesinUnit;
   const items = (contents ?? []) as MiddleNaesinContent[];
 
-  const drillData = buildDrillData(unitId, items, contentId);
+  const drillData = buildDrillSections(unitId, items);
 
   const unitTitle = [
     u.publisher,
@@ -43,11 +43,6 @@ export default async function MiddleNaesinAdminDrillPage({ params, searchParams 
   ]
     .filter(Boolean)
     .join(' · ');
-
-  // Content picker (when multiple drillable contents exist)
-  const drillableContents = items.filter(
-    (c) => c.content_type === 'main_text' || c.content_type === 'dialogue',
-  );
 
   return (
     <main className="mx-auto max-w-5xl space-y-6 px-4 py-6">
@@ -75,37 +70,13 @@ export default async function MiddleNaesinAdminDrillPage({ params, searchParams 
         </div>
       </header>
 
-      {/* Content selector */}
-      {drillableContents.length > 1 && (
-        <div className="flex flex-wrap gap-2 rounded-2xl border bg-white p-4">
-          <span className="self-center text-sm text-neutral-500">드릴할 지문:</span>
-          {drillableContents.map((c) => (
-            <Link
-              key={c.id}
-              href={`/admin/middle-naesin/units/${unitId}/drill?contentId=${c.id}`}
-              className={[
-                'rounded-xl border px-3 py-1.5 text-sm transition',
-                c.id === (contentId ?? drillableContents[0]?.id)
-                  ? 'border-sky-300 bg-sky-50 text-sky-700 font-semibold'
-                  : 'text-neutral-600 hover:bg-neutral-50',
-              ].join(' ')}
-            >
-              {c.title ?? c.content_type}
-            </Link>
-          ))}
-        </div>
-      )}
-
-      {drillData ? (
-        <MiddleNaesinDrillShell drillData={drillData} unitTitle={unitTitle} />
-      ) : (
-        <div className="rounded-2xl border border-dashed p-12 text-center text-sm text-neutral-400">
-          드릴할 지문(본문/대화문)이 없습니다.{' '}
-          <Link href={`/admin/middle-naesin/units/${unitId}`} className="underline">
-            에디터에서 본문을 추가하세요.
-          </Link>
-        </div>
-      )}
+      <MiddleNaesinDrillSections
+        unitId={unitId}
+        unitTitle={unitTitle}
+        drillData={drillData}
+        section={section}
+        drill={drill}
+      />
     </main>
   );
 }
