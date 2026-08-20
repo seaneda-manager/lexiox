@@ -1273,38 +1273,41 @@ export async function getVocabSessionProgressAction(
   setId: string
 ): Promise<VocabSessionProgressData | null> {
   try {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
-      { cookies: { getAll: () => cookieStore.getAll() } }
-    );
+    const authed = await createAuthedServerClient();
+    const admin = createAdminClient();
+    const client = admin ?? authed;
 
-    const { data: userData } = await supabase.auth.getUser();
+    const { data: userData } = await authed.auth.getUser();
     const userId = userData?.user?.id;
     if (!userId) return null;
 
-    // RPC 호출로 진행 상황 조회
-    const { data, error } = await supabase.rpc("get_vocab_session_progress", {
-      p_student_id: userId,
-      p_set_id: setId,
-    });
+    const academyStudentId = await resolveAcademyStudentId(client, userId);
+    if (!academyStudentId) return null;
+
+    // 서버(session_state 컬럼)에 저장된 진행 상황 조회.
+    // 기기/브라우저를 바꾸거나 캐시를 지워도 여기서 이어할 수 있다.
+    const { data, error } = await client
+      .from("student_vocab_assignments")
+      .select("session_state")
+      .eq("student_id", academyStudentId)
+      .eq("set_id", setId)
+      .maybeSingle();
 
     if (error) {
       console.error("getVocabSessionProgressAction error:", error);
       return null;
     }
 
-    if (!data || data.length === 0) return null;
+    const state = data?.session_state as any;
+    if (!state) return null;
 
-    const row = data[0];
     return {
-      id: row.id,
-      currentStage: row.current_stage,
-      currentWordIndex: row.current_word_index,
-      prescreenResult: row.prescreen_result,
-      spellingResult: row.spelling_result,
-      learningData: row.learning_data,
+      id: setId,
+      currentStage: state.currentStage,
+      currentWordIndex: state.currentWordIndex ?? 0,
+      prescreenResult: state.prescreenResult,
+      spellingResult: state.spellingResult,
+      learningData: state.learningData,
     };
   } catch (e: any) {
     console.error("getVocabSessionProgressAction exception:", toErrMsg(e));
@@ -1322,38 +1325,39 @@ export async function saveVocabSessionProgressAction(input: {
   sessionCompleted?: boolean;
 }): Promise<{ ok: boolean; id?: string }> {
   try {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
-      { cookies: { getAll: () => cookieStore.getAll() } }
-    );
+    const authed = await createAuthedServerClient();
+    const admin = createAdminClient();
+    const client = admin ?? authed;
 
-    const { data: userData } = await supabase.auth.getUser();
+    const { data: userData } = await authed.auth.getUser();
     const userId = userData?.user?.id;
     if (!userId) return { ok: false };
 
-    // RPC 호출로 진행 상황 저장/업데이트
-    const { data, error } = await supabase.rpc(
-      "upsert_vocab_session_progress",
-      {
-        p_student_id: userId,
-        p_set_id: input.setId,
-        p_current_stage: input.currentStage,
-        p_current_word_index: input.currentWordIndex,
-        p_prescreen_result: input.prescreenResult,
-        p_spelling_result: input.spellingResult,
-        p_learning_data: input.learningData,
-        p_session_completed: input.sessionCompleted || false,
-      }
-    );
+    const academyStudentId = await resolveAcademyStudentId(client, userId);
+    if (!academyStudentId) return { ok: false };
+
+    const sessionState = input.sessionCompleted
+      ? null // Day 완료 시 이어할 상태를 지운다 (다음 시도는 새로 시작)
+      : {
+          currentStage: input.currentStage,
+          currentWordIndex: input.currentWordIndex,
+          prescreenResult: input.prescreenResult,
+          spellingResult: input.spellingResult,
+          learningData: input.learningData,
+        };
+
+    const { error } = await client
+      .from("student_vocab_assignments")
+      .update({ session_state: sessionState })
+      .eq("student_id", academyStudentId)
+      .eq("set_id", input.setId);
 
     if (error) {
       console.error("saveVocabSessionProgressAction error:", error);
       return { ok: false };
     }
 
-    return { ok: true, id: data };
+    return { ok: true, id: input.setId };
   } catch (e: any) {
     console.error("saveVocabSessionProgressAction exception:", toErrMsg(e));
     return { ok: false };

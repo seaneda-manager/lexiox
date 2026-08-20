@@ -752,11 +752,35 @@ export default function VocabSessionPage() {
         const setIdParam = shortcut.setId ? shortcut.setId : null;
         let shouldResumeFromSaved = false;
 
-        if (setIdParam && typeof window !== 'undefined') {
-          const saved = localStorage.getItem(`vocab_progress_${setIdParam}`);
-          if (saved) {
+        if (setIdParam) {
+          // 서버(기기/캐시 삭제에도 유지)를 먼저 확인하고, 없으면 localStorage로 폴백한다.
+          let progress: { stage: string; prescreenResult?: any; spellingResult?: any } | null = null;
+          try {
+            const serverProgress = await getVocabSessionProgressAction(setIdParam);
+            if (serverProgress?.currentStage) {
+              progress = {
+                stage: serverProgress.currentStage,
+                prescreenResult: serverProgress.prescreenResult,
+                spellingResult: serverProgress.spellingResult,
+              };
+            }
+          } catch (e) {
+            console.warn('Failed to load server session progress:', e);
+          }
+
+          if (!progress && typeof window !== 'undefined') {
+            const saved = localStorage.getItem(`vocab_progress_${setIdParam}`);
+            if (saved) {
+              try {
+                progress = JSON.parse(saved);
+              } catch (e) {
+                console.warn('Failed to parse local session progress:', e);
+              }
+            }
+          }
+
+          if (progress) {
             try {
-              const progress = JSON.parse(saved);
               console.log('🔄 Resuming session from:', progress.stage);
 
               // ✅ 완료 상태(DONE, SUMMARY)면 저장된 진행 상황 삭제 → 새로 시작 (단어 로드)
