@@ -2,22 +2,24 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getServerSupabase } from '@/lib/supabase/server';
 import { gradeLabel, type MiddleNaesinUnit, type MiddleNaesinContent } from '@/models/middle-naesin';
-import { buildDrillData } from '@/components/middle-naesin/drill/types';
-import MiddleNaesinDrillShell from '@/components/middle-naesin/drill/MiddleNaesinDrillShell';
+import { buildDrillSections } from '@/components/middle-naesin/drill/types';
+import MiddleNaesinDrillSections from '@/components/middle-naesin/drill/MiddleNaesinDrillSections';
 
 export const dynamic = 'force-dynamic';
 
 type Props = {
   params: Promise<{ unitId: string }>;
-  searchParams: Promise<{ contentId?: string }>;
+  searchParams: Promise<{ section?: string; drill?: string }>;
 };
 
 export default async function MiddleNaesinStudentDrillPage({ params, searchParams }: Props) {
   const { unitId } = await params;
-  const { contentId } = await searchParams;
+  const { section, drill } = await searchParams;
   const supabase = await getServerSupabase();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) notFound();
 
-  const [{ data: unit, error: unitErr }, { data: contents }] = await Promise.all([
+  const [{ data: unit, error: unitErr }, { data: contents }, { data: assignment }] = await Promise.all([
     supabase.from('middle_naesin_units').select('*').eq('id', unitId).single(),
     supabase
       .from('middle_naesin_contents')
@@ -25,9 +27,16 @@ export default async function MiddleNaesinStudentDrillPage({ params, searchParam
       .eq('unit_id', unitId)
       .order('sort_order')
       .order('content_type'),
+    supabase
+      .from('middle_naesin_assignments')
+      .select('id')
+      .eq('unit_id', unitId)
+      .eq('student_id', user.id)
+      .maybeSingle(),
   ]);
 
   if (unitErr || !unit) notFound();
+  if (!assignment) notFound();
 
   const u = unit as MiddleNaesinUnit;
   const items = (contents ?? []) as MiddleNaesinContent[];
@@ -35,7 +44,7 @@ export default async function MiddleNaesinStudentDrillPage({ params, searchParam
   // Only show published units to students
   if (!u.is_published) notFound();
 
-  const drillData = buildDrillData(unitId, items, contentId);
+  const drillData = buildDrillSections(unitId, items);
 
   const unitTitle = [
     u.publisher,
@@ -46,10 +55,6 @@ export default async function MiddleNaesinStudentDrillPage({ params, searchParam
   ]
     .filter(Boolean)
     .join(' · ');
-
-  const drillableContents = items.filter(
-    (c) => c.content_type === 'main_text' || c.content_type === 'dialogue',
-  );
 
   return (
     <main className="mx-auto max-w-5xl space-y-6 px-4 py-6">
@@ -68,33 +73,14 @@ export default async function MiddleNaesinStudentDrillPage({ params, searchParam
         </Link>
       </header>
 
-      {drillableContents.length > 1 && (
-        <div className="flex flex-wrap gap-2 rounded-2xl border bg-white p-4">
-          <span className="self-center text-sm text-neutral-500">지문 선택:</span>
-          {drillableContents.map((c) => (
-            <Link
-              key={c.id}
-              href={`/naesin/middle/${unitId}/drill?contentId=${c.id}`}
-              className={[
-                'rounded-xl border px-3 py-1.5 text-sm transition',
-                c.id === (contentId ?? drillableContents[0]?.id)
-                  ? 'border-sky-300 bg-sky-50 text-sky-700 font-semibold'
-                  : 'text-neutral-600 hover:bg-neutral-50',
-              ].join(' ')}
-            >
-              {c.title ?? c.content_type}
-            </Link>
-          ))}
-        </div>
-      )}
-
-      {drillData ? (
-        <MiddleNaesinDrillShell drillData={drillData} unitTitle={unitTitle} />
-      ) : (
-        <div className="rounded-2xl border border-dashed p-12 text-center text-sm text-neutral-400">
-          아직 학습 자료가 준비되지 않았습니다.
-        </div>
-      )}
+      <MiddleNaesinDrillSections
+        unitId={unitId}
+        unitTitle={unitTitle}
+        drillData={drillData}
+        section={section}
+        drill={drill}
+        basePath={`/naesin/middle/${unitId}/drill`}
+      />
     </main>
   );
 }

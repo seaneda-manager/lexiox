@@ -32,15 +32,20 @@ type Props = {
   drillData: DrillSections;
   section?: string;
   drill?: string;
+  basePath?: string;
 };
 
-function baseHref(unitId: string) {
-  return `/admin/middle-naesin/units/${unitId}/drill`;
-}
-
-export default function MiddleNaesinDrillSections({ unitId, unitTitle, drillData, section, drill }: Props) {
+export default function MiddleNaesinDrillSections({
+  unitId,
+  unitTitle,
+  drillData,
+  section,
+  drill,
+  basePath = `/admin/middle-naesin/units/${unitId}/drill`,
+}: Props) {
   const activeSection = (section as SectionId | undefined) ?? null;
   const activeDrill = (drill as DrillId | undefined) ?? null;
+  const baseHref = () => basePath;
 
   // ── 최상위: 4섹션 카드 ──────────────────────────────────────────
   if (!activeSection) {
@@ -62,7 +67,7 @@ export default function MiddleNaesinDrillSections({ unitId, unitTitle, drillData
           {cards.map((c) => (
             <Link
               key={c.id}
-              href={c.ready ? `${baseHref(unitId)}?section=${c.id}` : '#'}
+              href={c.ready ? `${baseHref()}?section=${c.id}` : '#'}
               aria-disabled={!c.ready}
               className={[
                 'rounded-2xl border p-6 transition',
@@ -83,7 +88,7 @@ export default function MiddleNaesinDrillSections({ unitId, unitTitle, drillData
   }
 
   const backToSections = (
-    <Link href={baseHref(unitId)} className="text-sm text-neutral-500 hover:text-neutral-800">
+    <Link href={baseHref()} className="text-sm text-neutral-500 hover:text-neutral-800">
       ← 섹션으로
     </Link>
   );
@@ -136,7 +141,7 @@ export default function MiddleNaesinDrillSections({ unitId, unitTitle, drillData
           {TEXT_SECTION_DRILLS.map((d) => (
             <Link
               key={d.id}
-              href={`${baseHref(unitId)}?section=${activeSection}&drill=${d.id}`}
+              href={`${baseHref()}?section=${activeSection}&drill=${d.id}`}
               className="rounded-2xl border bg-white p-5 text-center font-medium hover:border-sky-300 hover:bg-sky-50/50"
             >
               {d.label}
@@ -152,7 +157,7 @@ export default function MiddleNaesinDrillSections({ unitId, unitTitle, drillData
       <div className="flex items-center justify-between">
         {backToSections}
         <Link
-          href={`${baseHref(unitId)}?section=${activeSection}`}
+          href={`${baseHref()}?section=${activeSection}`}
           className="text-sm text-neutral-500 hover:text-neutral-800"
         >
           드릴 선택으로 →

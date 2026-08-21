@@ -8,15 +8,38 @@ import {
 } from '@/models/middle-naesin';
 import type { MiddleNaesinUnit, MiddleNaesinContent } from '@/models/middle-naesin';
 import { upsertContentAction } from '../../actions';
+import { assignUnitAction, removeAssignmentAction } from './assign-actions';
 import { DeleteContentButton } from './_components/DeleteContentButton';
 
 export const dynamic = 'force-dynamic';
 
-export default async function UnitDetailPage({ params }: { params: Promise<{ unitId: string }> }) {
+type Assignment = {
+  id: string;
+  student_id: string;
+  due_at: string | null;
+  note: string | null;
+  assigned_at: string;
+};
+
+type Student = { id: string; full_name: string | null; email: string | null };
+
+export default async function UnitDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ unitId: string }>;
+  searchParams: Promise<{ tab?: string }>;
+}) {
   const { unitId } = await params;
+  const { tab = 'content' } = await searchParams;
   const supabase = await getServerSupabase();
 
-  const [{ data: unit, error: unitErr }, { data: contents }] = await Promise.all([
+  const [
+    { data: unit, error: unitErr },
+    { data: contents },
+    { data: assignmentsData },
+    { data: studentsData },
+  ] = await Promise.all([
     supabase.from('middle_naesin_units').select('*').eq('id', unitId).single(),
     supabase
       .from('middle_naesin_contents')
@@ -24,14 +47,28 @@ export default async function UnitDetailPage({ params }: { params: Promise<{ uni
       .eq('unit_id', unitId)
       .order('sort_order')
       .order('content_type'),
+    supabase
+      .from('middle_naesin_assignments')
+      .select('id, student_id, due_at, note, assigned_at')
+      .eq('unit_id', unitId)
+      .order('assigned_at', { ascending: false }),
+    supabase.from('profiles').select('id, full_name, email').eq('role', 'student').order('full_name'),
   ]);
 
   if (unitErr || !unit) return <div className="p-8 text-red-600">단원을 찾을 수 없습니다.</div>;
 
   const u = unit as MiddleNaesinUnit;
   const items = (contents ?? []) as MiddleNaesinContent[];
+  const assignments = (assignmentsData ?? []) as Assignment[];
+  const students = (studentsData ?? []) as Student[];
+  const studentMap = new Map(students.map((s) => [s.id, s]));
 
   const existingTypes = new Set(items.map((c) => c.content_type));
+
+  const tabs = [
+    { key: 'content', label: '콘텐츠' },
+    { key: 'assign',  label: `배정 (${assignments.length})` },
+  ];
 
   return (
     <main className="mx-auto max-w-4xl space-y-8 px-6 py-8">
@@ -68,7 +105,26 @@ export default async function UnitDetailPage({ params }: { params: Promise<{ uni
         </div>
       </header>
 
-      {/* 콘텐츠 타입별 섹션 */}
+      {/* 탭 */}
+      <nav className="flex gap-1 border-b">
+        {tabs.map((t) => (
+          <Link
+            key={t.key}
+            href={`/admin/middle-naesin/units/${unitId}?tab=${t.key}`}
+            className={[
+              'px-4 py-2 text-sm font-medium border-b-2 -mb-px',
+              tab === t.key
+                ? 'border-neutral-900 text-neutral-900'
+                : 'border-transparent text-neutral-500 hover:text-neutral-700',
+            ].join(' ')}
+          >
+            {t.label}
+          </Link>
+        ))}
+      </nav>
+
+      {/* ── 탭: 콘텐츠 ── */}
+      {tab === 'content' && (
       <div className="space-y-6">
         {MIDDLE_NAESIN_CONTENT_TYPES.map((type) => {
           const typeItems = items.filter((c) => c.content_type === type);
@@ -117,6 +173,104 @@ export default async function UnitDetailPage({ params }: { params: Promise<{ uni
           );
         })}
       </div>
+      )}
+
+      {/* ── 탭: 배정 ── */}
+      {tab === 'assign' && (
+        <div className="space-y-5">
+          {/* 현재 배정 목록 */}
+          <section className="rounded-2xl border bg-white p-5 space-y-3">
+            <h2 className="text-sm font-semibold text-neutral-900">
+              현재 배정 학생 ({assignments.length}명)
+            </h2>
+            {assignments.length === 0 ? (
+              <p className="text-sm text-neutral-400">아직 배정된 학생이 없습니다.</p>
+            ) : (
+              <div className="divide-y rounded-xl border overflow-hidden">
+                {assignments.map((a) => {
+                  const stu = studentMap.get(a.student_id);
+                  return (
+                    <div key={a.id} className="flex items-center justify-between px-4 py-3 hover:bg-neutral-50">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-neutral-800 truncate">
+                          {stu?.full_name ?? stu?.email ?? a.student_id.slice(0, 8)}
+                        </p>
+                        <p className="text-xs text-neutral-400">
+                          {a.due_at && `마감 ${new Date(a.due_at).toLocaleDateString('ko-KR')}`}
+                          {a.note && ` · ${a.note}`}
+                        </p>
+                      </div>
+                      <form action={removeAssignmentAction.bind(null, unitId, a.id)}>
+                        <button
+                          type="submit"
+                          className="ml-4 shrink-0 rounded-lg border border-red-200 px-3 py-1 text-xs text-red-500 hover:bg-red-50"
+                        >
+                          취소
+                        </button>
+                      </form>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+
+          {/* 새 배정 */}
+          <section className="rounded-2xl border bg-white p-5 space-y-4">
+            <h2 className="text-sm font-semibold text-neutral-900">학생 배정</h2>
+            {students.length === 0 ? (
+              <p className="text-sm text-neutral-400">등록된 학생이 없습니다.</p>
+            ) : (
+              <form action={assignUnitAction.bind(null, unitId)} className="space-y-4">
+                <div className="space-y-1">
+                  <label className="block text-xs font-medium text-neutral-600">학생 선택 (복수 가능)</label>
+                  <div className="max-h-52 overflow-y-auto rounded-xl border divide-y">
+                    {students.map((s) => {
+                      const alreadyAssigned = assignments.some((a) => a.student_id === s.id);
+                      return (
+                        <label key={s.id} className="flex cursor-pointer items-center gap-3 px-4 py-2.5 hover:bg-neutral-50 select-none">
+                          <input type="checkbox" name="student_ids" value={s.id} defaultChecked={alreadyAssigned} className="rounded" />
+                          <span className="flex-1 text-sm text-neutral-800">
+                            {s.full_name ?? s.email ?? s.id.slice(0, 8)}
+                          </span>
+                          {alreadyAssigned && (
+                            <span className="text-xs text-emerald-600">배정됨</span>
+                          )}
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-xs font-medium text-neutral-600">마감일 (선택)</label>
+                  <input
+                    type="date"
+                    name="due_at"
+                    className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-xs font-medium text-neutral-600">메모 (선택)</label>
+                  <input
+                    name="note"
+                    placeholder="예: 3단원 복습, 시험 전 필수"
+                    className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="rounded-xl bg-neutral-900 px-6 py-2 text-sm font-semibold text-white hover:bg-neutral-800"
+                >
+                  배정
+                </button>
+              </form>
+            )}
+          </section>
+        </div>
+      )}
     </main>
   );
 }

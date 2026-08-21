@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import { getServerSupabase } from '@/lib/supabase/server';
 import { gradeLabel, type MiddleNaesinUnit } from '@/models/middle-naesin';
 
@@ -6,10 +7,35 @@ export const dynamic = 'force-dynamic';
 
 export default async function MiddleNaesinStudentPage() {
   const supabase = await getServerSupabase();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) notFound();
+
+  const { data: assignments } = await supabase
+    .from('middle_naesin_assignments')
+    .select('unit_id')
+    .eq('student_id', user.id);
+
+  const assignedIds = [...new Set((assignments ?? []).map((a) => a.unit_id as string))];
+
+  if (assignedIds.length === 0) {
+    return (
+      <main className="mx-auto max-w-3xl space-y-8 px-4 py-8">
+        <header>
+          <div className="text-xs uppercase tracking-wide text-neutral-400">중학 내신</div>
+          <h1 className="mt-1 text-2xl font-semibold text-neutral-900">단원 드릴</h1>
+        </header>
+        <div className="rounded-2xl border border-dashed p-12 text-center space-y-2">
+          <p className="text-sm text-neutral-400">배정된 단원이 없습니다.</p>
+          <p className="text-xs text-neutral-300">선생님이 단원을 배정하면 여기에 나타납니다.</p>
+        </div>
+      </main>
+    );
+  }
 
   const { data: units } = await supabase
     .from('middle_naesin_units')
     .select('*')
+    .in('id', assignedIds)
     .eq('is_published', true)
     .order('grade')
     .order('semester')
