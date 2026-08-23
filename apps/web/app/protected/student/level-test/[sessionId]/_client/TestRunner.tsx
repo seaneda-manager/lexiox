@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AudioRecorder from '@/components/common/AudioRecorder';
-import { submitLevelTestAction, type LevelTestAnswer } from '../../actions';
+import { submitStageAction, type LevelTestAnswer } from '../../actions';
 
 export type PublicQuestion = {
   id: string;
@@ -30,10 +30,12 @@ export default function TestRunner({
   sessionId,
   questionsBySection,
   sectionOrder,
+  isFinalStage,
 }: {
   sessionId: string;
   questionsBySection: Record<string, PublicQuestion[]>;
   sectionOrder: string[];
+  isFinalStage: boolean;
 }) {
   const router = useRouter();
   const [sectionIdx, setSectionIdx] = useState(0);
@@ -96,7 +98,7 @@ export default function TestRunner({
       audioUrl: a.audioUrl,
       textResponse: a.textResponse,
     }));
-    const result = await submitLevelTestAction(sessionId, allAnswers);
+    const result = await submitStageAction(sessionId, allAnswers);
     setSubmitting(false);
     if ('error' in result) { setError(result.error); return; }
     router.refresh();
@@ -194,7 +196,7 @@ export default function TestRunner({
           disabled={submitting}
           className="w-full rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
         >
-          {submitting ? '제출 중…' : '테스트 제출하기'}
+          {submitting ? '제출 중…' : isFinalStage ? '테스트 제출하기' : '다음 단계로 →'}
         </button>
       ) : (
         <button

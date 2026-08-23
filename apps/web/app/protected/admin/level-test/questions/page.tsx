@@ -16,7 +16,7 @@ export default async function LevelTestQuestionsPage() {
 
   const { data: questions } = await supabase
     .from('level_test_questions')
-    .select('id, section, order_index, prompt, choices, correct_choice_id, is_active, track, sub_level, generated_by_ai')
+    .select('id, section, order_index, prompt, choices, correct_choice_id, is_active, track, sub_level, generated_by_ai, audio_url, topic_label')
     .order('section', { ascending: true })
     .order('order_index', { ascending: true });
 

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getServerSupabase } from '@/lib/supabase/server';
 import { getServiceSupabase } from '@/lib/supabase/service';
+import { stage2PoolLevel } from '@/lib/level-test/adaptiveEngine';
 import TestRunner, { type PublicQuestion } from './_client/TestRunner';
 
 export const dynamic = 'force-dynamic';
@@ -81,11 +82,20 @@ export default async function LevelTestSessionPage({ params }: PageProps) {
   }
 
   // ── 진행 중: 문제은행을 service role로 읽고 정답 필드는 절대 클라이언트로 보내지 않는다 ──
+  // stage 1은 앵커(mid) 난이도로 라우팅, stage 2는 stage1 정답률에 따라 갈린 branch의 풀(high/low)만 응시.
+  // speaking/writing은 난이도 분기와 무관하므로 stage 1에서만 1회 제시한다.
   const service = getServiceSupabase();
+  const stage: 1 | 2 = session.stage === 2 ? 2 : 1;
+  const subLevelPool = stage === 1 ? 'mid' : stage2PoolLevel((session.branch as 'HARD' | 'EASY') ?? 'EASY');
+  const sectionsForStage = stage === 1 ? SECTION_ORDER : SECTION_ORDER.filter((s) => !UNSCORED_SECTIONS.includes(s));
+
   const { data: questions } = await service
     .from('level_test_questions')
     .select('id, section, order_index, prompt, passage_text, audio_url, choices')
     .eq('is_active', true)
+    .eq('track', session.track)
+    .eq('sub_level', subLevelPool)
+    .in('section', sectionsForStage)
     .order('order_index', { ascending: true });
 
   const questionsBySection: Record<string, PublicQuestion[]> = {};
@@ -100,6 +110,8 @@ export default async function LevelTestSessionPage({ params }: PageProps) {
       <main className="mx-auto max-w-lg space-y-6 pb-12">
         <div className="rounded-2xl border border-dashed p-12 text-center text-sm text-neutral-400">
           아직 등록된 레벨 테스트 문제가 없습니다.
+          <br />
+          (트랙: {session.track ?? '미지정'} · {stage}단계)
         </div>
       </main>
     );
@@ -111,10 +123,10 @@ export default async function LevelTestSessionPage({ params }: PageProps) {
         <div className="text-xs text-neutral-400 mb-1">
           <Link href="/student/level-test" className="hover:underline">레벨 테스트</Link>
         </div>
-        <h1 className="text-xl font-bold text-neutral-900">레벨 테스트</h1>
+        <h1 className="text-xl font-bold text-neutral-900">레벨 테스트 · {stage}단계 {stage === 1 ? '(라우팅)' : ''}</h1>
       </header>
 
-      <TestRunner sessionId={sessionId} questionsBySection={questionsBySection} sectionOrder={sectionOrder} />
+      <TestRunner key={stage} sessionId={sessionId} questionsBySection={questionsBySection} sectionOrder={sectionOrder} isFinalStage={stage === 2} />
     </main>
   );
 }

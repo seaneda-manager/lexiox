@@ -1,3 +1,7 @@
+'use client';
+
+import { useState } from "react";
+import { ChevronDown } from "lucide-react";
 import MarkReviewedButton from "./MarkReviewedButton";
 
 const DRILL_TYPE_LABEL: Record<string, string> = {
@@ -21,6 +25,7 @@ export type WrongAnswerRow = {
   drillType: string;
   payload: Record<string, unknown>;
   passageTitle: string | null;
+  studentId?: string;
   studentName?: string;
 };
 
@@ -116,14 +121,13 @@ function getDisplayFields(row: WrongAnswerRow): { prompt: string; correctAnswer:
   }
 }
 
+// toLocaleDateString('ko-KR', ...)는 서버(Node ICU)와 브라우저의 오전/오후·AM/PM 표기가
+// 달라서 하이드레이션 에러가 났다 — Date getter로 직접 포맷해 서버/클라이언트 출력을 항상 동일하게 만든다.
 function formatDate(dateStr: string | null) {
   if (!dateStr) return "N/A";
-  return new Date(dateStr).toLocaleDateString("ko-KR", {
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const d = new Date(dateStr);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getMonth() + 1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 export default function WrongAnswerCard({
@@ -133,44 +137,58 @@ export default function WrongAnswerCard({
   row: WrongAnswerRow;
   revalidateTargetPath: string;
 }) {
+  const [expanded, setExpanded] = useState(false);
   const { prompt, correctAnswer, studentAnswer } = getDisplayFields(row);
 
   return (
-    <div className="rounded-lg border border-rose-100 bg-white p-4 shadow-sm space-y-2">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1 space-y-1">
-          <div className="flex flex-wrap items-center gap-2 text-[11px] text-gray-400">
-            {row.studentName && <span className="font-semibold text-gray-600">{row.studentName}</span>}
-            <span className="rounded-full bg-gray-100 px-2 py-0.5 font-medium text-gray-500">
-              {DRILL_TYPE_LABEL[row.drillType] ?? row.drillType}
-            </span>
-            {row.passageTitle && <span className="truncate">{row.passageTitle}</span>}
-            <span>{formatDate(row.created_at)}</span>
-          </div>
-          {prompt && <p className="text-sm font-medium text-gray-900">{prompt}</p>}
-        </div>
+    <div className="rounded-lg border border-rose-100 bg-white shadow-sm">
+      {/* 한 줄 요약 — 클릭하면 아래에 상세(학생답/정답/AI피드백)가 펼쳐진다 */}
+      <div className="flex items-center gap-2 px-4 py-2.5">
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className="flex min-w-0 flex-1 items-center gap-2 text-left"
+        >
+          <ChevronDown className={`h-3.5 w-3.5 flex-shrink-0 text-gray-400 transition-transform ${expanded ? "rotate-180" : ""}`} />
+          <span className="flex-shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-500">
+            {DRILL_TYPE_LABEL[row.drillType] ?? row.drillType}
+          </span>
+          <span className="min-w-0 flex-1 truncate text-sm text-gray-900">
+            {prompt || "(문항 정보 없음)"}
+          </span>
+          <span className="hidden flex-shrink-0 max-w-[30%] truncate text-xs text-gray-400 sm:inline">
+            {studentAnswer}{correctAnswer ? ` → ${correctAnswer}` : ""}
+          </span>
+          <span className="flex-shrink-0 text-[11px] text-gray-400">{formatDate(row.created_at)}</span>
+        </button>
         <MarkReviewedButton responseId={row.id} revalidateTargetPath={revalidateTargetPath} />
       </div>
 
-      <div className="grid gap-2 sm:grid-cols-2">
-        <div className="rounded-md border border-rose-100 bg-rose-50 px-3 py-2">
-          <p className="text-[10px] font-semibold text-rose-500">학생 답</p>
-          <p className="text-sm text-rose-800 break-words">{studentAnswer}</p>
-        </div>
-        {correctAnswer && (
-          <div className="rounded-md border border-emerald-100 bg-emerald-50 px-3 py-2">
-            <p className="text-[10px] font-semibold text-emerald-600">정답</p>
-            <p className="text-sm text-emerald-800 break-words">{correctAnswer}</p>
-          </div>
-        )}
-      </div>
+      {expanded && (
+        <div className="space-y-2 border-t border-rose-50 px-4 py-3">
+          {row.passageTitle && <p className="text-[11px] text-gray-400 truncate">{row.passageTitle}</p>}
 
-      {row.feedback_text && (
-        <div className="rounded-md border border-gray-100 bg-gray-50 px-3 py-2">
-          <p className="text-[10px] font-semibold text-gray-500">
-            AI 피드백{row.score_pct != null ? ` · ${row.score_pct}점` : ""}
-          </p>
-          <p className="text-xs text-gray-700">{row.feedback_text}</p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <div className="rounded-md border border-rose-100 bg-rose-50 px-3 py-2">
+              <p className="text-[10px] font-semibold text-rose-500">학생 답</p>
+              <p className="text-sm text-rose-800 break-words">{studentAnswer}</p>
+            </div>
+            {correctAnswer && (
+              <div className="rounded-md border border-emerald-100 bg-emerald-50 px-3 py-2">
+                <p className="text-[10px] font-semibold text-emerald-600">정답</p>
+                <p className="text-sm text-emerald-800 break-words">{correctAnswer}</p>
+              </div>
+            )}
+          </div>
+
+          {row.feedback_text && (
+            <div className="rounded-md border border-gray-100 bg-gray-50 px-3 py-2">
+              <p className="text-[10px] font-semibold text-gray-500">
+                AI 피드백{row.score_pct != null ? ` · ${row.score_pct}점` : ""}
+              </p>
+              <p className="text-xs text-gray-700">{row.feedback_text}</p>
+            </div>
+          )}
         </div>
       )}
     </div>

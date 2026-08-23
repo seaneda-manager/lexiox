@@ -2,12 +2,15 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getServerSupabase } from '@/lib/supabase/server';
 import { startLevelTestSessionAction } from './actions';
+import { TRACK_LABEL, type Track } from '@/lib/level-test/proficiencyLevels';
 
 export const dynamic = 'force-dynamic';
 
 const SECTION_LABEL: Record<string, string> = {
   grammar: '문법', vocab: '어휘', listening: '듣기', reading: '읽기',
 };
+
+const TRACKS: Track[] = ['jr', 'middle', 'high', 'toefl'];
 
 export default async function LevelTestListPage() {
   const supabase = await getServerSupabase();
@@ -39,14 +42,21 @@ export default async function LevelTestListPage() {
           진행 중인 테스트 이어하기 →
         </Link>
       ) : (
-        <form action={startLevelTestSessionAction}>
-          <button
-            type="submit"
-            className="w-full rounded-2xl bg-neutral-900 py-3 text-sm font-semibold text-white hover:bg-neutral-800"
-          >
-            + 새 레벨 테스트 시작
-          </button>
-        </form>
+        <div className="space-y-2">
+          <p className="text-xs font-semibold text-neutral-500">트랙을 선택해 새 레벨 테스트를 시작하세요</p>
+          <div className="grid grid-cols-2 gap-2">
+            {TRACKS.map((track) => (
+              <form key={track} action={startLevelTestSessionAction.bind(null, track)}>
+                <button
+                  type="submit"
+                  className="w-full rounded-2xl border border-neutral-200 bg-white py-4 text-sm font-semibold text-neutral-900 hover:border-neutral-900 hover:bg-neutral-900 hover:text-white transition"
+                >
+                  {TRACK_LABEL[track]}
+                </button>
+              </form>
+            ))}
+          </div>
+        </div>
       )}
 
       {(sessions ?? []).filter((s) => s.status === 'completed').length > 0 && (

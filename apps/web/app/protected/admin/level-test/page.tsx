@@ -4,6 +4,7 @@ import { getServiceSupabase } from '@/lib/supabase/service';
 import { redirect } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import ReviewPanel from './_client/ReviewPanel';
+import { TRACK_LABEL, subLevelLabel, type Track, type SubLevel } from '@/lib/level-test/proficiencyLevels';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,7 +22,7 @@ export default async function AdminLevelTestPage() {
   const service = getServiceSupabase();
   const { data: sessions } = await service
     .from('level_test_sessions')
-    .select('id, student_id, status, section_scores, recommended_level, teacher_notes, completed_at')
+    .select('id, student_id, status, section_scores, recommended_level, recommended_sub_level, track, teacher_notes, completed_at')
     .eq('status', 'completed')
     .order('completed_at', { ascending: false })
     .limit(50);
@@ -98,7 +99,15 @@ export default async function AdminLevelTestPage() {
             return (
               <div key={s.id} className="rounded-lg border bg-white shadow-sm p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-gray-900">{nameById.get(s.student_id)}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-gray-900">{nameById.get(s.student_id)}</span>
+                    {s.track && (
+                      <span className="rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-semibold text-violet-600">
+                        {TRACK_LABEL[s.track as Track]}
+                        {s.recommended_sub_level ? ` · ${subLevelLabel(s.track as Track, s.recommended_sub_level as SubLevel)} (자동)` : ''}
+                      </span>
+                    )}
+                  </div>
                   <span className="text-[11px] text-gray-400">
                     {s.completed_at && new Date(s.completed_at).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
                   </span>

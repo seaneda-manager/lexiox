@@ -16,6 +16,7 @@ export type NewQuestionInput = {
   track?: Track | null;
   subLevel?: SubLevel | null;
   generatedByAi?: boolean;
+  topicLabel?: string | null;
 };
 
 const CHOICE_IDS = ['a', 'b', 'c', 'd', 'e'];
@@ -61,6 +62,7 @@ export async function addQuestionAction(
     track: input.track ?? null,
     sub_level: input.subLevel ?? null,
     generated_by_ai: input.generatedByAi ?? false,
+    topic_label: input.topicLabel?.trim() || null,
     is_active: true,
     created_by: user.id,
   });
@@ -86,12 +88,19 @@ export async function generateQuestionAction(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: '로그인이 필요합니다.' };
 
-  if (section === 'listening') {
-    return { error: '듣기는 오디오 생성이 아직 연동되지 않아 AI 생성을 지원하지 않습니다. 수동으로 추가해 주세요.' };
-  }
-
   try {
-    const question = await generateLevelTestQuestion(section, track, subLevel, topic);
+    const service = getServiceSupabase();
+    const { data: existing } = await service
+      .from('level_test_questions')
+      .select('topic_label')
+      .eq('track', track)
+      .eq('section', section)
+      .not('topic_label', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(30);
+    const avoidTopics = [...new Set((existing ?? []).map((q) => q.topic_label as string))];
+
+    const question = await generateLevelTestQuestion(section, track, subLevel, topic, avoidTopics);
     return { ok: true, question };
   } catch (e: any) {
     return { error: e?.message ?? 'AI 생성 중 오류가 발생했습니다.' };

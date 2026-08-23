@@ -2,7 +2,7 @@
 
 import { useTransition } from 'react';
 import { toggleQuestionActiveAction } from '../actions';
-import { TRACK_LABEL, SUB_LEVEL_LABEL, type Track, type SubLevel } from '@/lib/level-test/proficiencyLevels';
+import { TRACK_LABEL, subLevelLabel, type Track, type SubLevel } from '@/lib/level-test/proficiencyLevels';
 
 type Question = {
   id: string;
@@ -13,6 +13,8 @@ type Question = {
   track?: Track | null;
   sub_level?: SubLevel | null;
   generated_by_ai?: boolean;
+  audio_url?: string | null;
+  topic_label?: string | null;
 };
 
 export default function QuestionRow({ question }: { question: Question }) {
@@ -25,14 +27,18 @@ export default function QuestionRow({ question }: { question: Question }) {
         <div className="flex flex-wrap items-center gap-1 mb-1">
           {question.track && (
             <span className="rounded-full bg-violet-50 px-1.5 py-0.5 text-[10px] text-violet-600">
-              {TRACK_LABEL[question.track]}{question.sub_level ? ` ${SUB_LEVEL_LABEL[question.sub_level]}` : ''}
+              {TRACK_LABEL[question.track]}{question.sub_level ? ` ${subLevelLabel(question.track, question.sub_level)}` : ''}
             </span>
           )}
           {question.generated_by_ai && (
             <span className="rounded-full bg-indigo-50 px-1.5 py-0.5 text-[10px] text-indigo-500">🤖 AI</span>
           )}
+          {question.topic_label && (
+            <span className="rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] text-amber-600">🏷️ {question.topic_label}</span>
+          )}
         </div>
         <p className="text-sm text-neutral-800">{question.prompt}</p>
+        {question.audio_url && <audio controls src={question.audio_url} className="h-8 mt-1 max-w-full" />}
         {correctText && <p className="text-[11px] text-emerald-600 mt-0.5">정답: {correctText}</p>}
       </div>
       <button

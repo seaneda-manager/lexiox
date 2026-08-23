@@ -1,4 +1,5 @@
-// 레벨 테스트 12단계 기준표: 4트랙(Jr./중등/고등/토플) × 3단계(하/중/상)
+// 레벨 테스트 기준표: 4트랙(Jr./중등/고등/토플). Jr./중등/고등은 초급/중급/고급 3단계,
+// 토플만 초급/중급/고급/최고급 4단계(TRACK_LEVELS 참고).
 //
 // 출처:
 // - 토플 트랙: ETS 공식 "Performance Descriptors for the TOEFL iBT Test" (2024)를 그대로 기반.
@@ -11,8 +12,17 @@
 // 이 표는 AI 문제 생성 프롬프트에 그대로 주입되는 "레벨 정의"로 쓰인다.
 
 export type Track = "jr" | "middle" | "high" | "toefl";
-export type SubLevel = "low" | "mid" | "high";
+export type SubLevel = "low" | "mid" | "high" | "highest";
 export type Section = "grammar" | "vocab" | "listening" | "reading" | "speaking" | "writing";
+
+// 트랙별로 실제 쓰이는 단계 목록. jr/middle/high는 3단계, toefl만 4단계.
+// 적응형 엔진(adaptiveEngine.ts)이 이 배열을 기준으로 분기한다.
+export const TRACK_LEVELS: Record<Track, SubLevel[]> = {
+  jr: ["low", "mid", "high"],
+  middle: ["low", "mid", "high"],
+  high: ["low", "mid", "high"],
+  toefl: ["low", "mid", "high", "highest"],
+};
 
 export const TRACK_LABEL: Record<Track, string> = {
   jr: "Jr. (초1~6)",
@@ -21,14 +31,24 @@ export const TRACK_LABEL: Record<Track, string> = {
   toefl: "TOEFL",
 };
 
-export const SUB_LEVEL_LABEL: Record<SubLevel, string> = {
-  low: "하",
-  mid: "중",
-  high: "상",
+// 모든 트랙이 초급/중급/고급 공통 라벨을 쓰고, toefl만 최고급이 추가된다
+// (jr/middle/high는 TRACK_LEVELS상 'highest'를 쓰지 않으므로 노출되지 않음).
+const SUB_LEVEL_LABEL_MAP: Record<SubLevel, string> = {
+  low: "초급",
+  mid: "중급",
+  high: "고급",
+  highest: "최고급",
 };
 
+export function subLevelLabel(_track: Track, subLevel: SubLevel): string {
+  return SUB_LEVEL_LABEL_MAP[subLevel];
+}
+
+// 기존 호출부 호환용.
+export const SUB_LEVEL_LABEL = SUB_LEVEL_LABEL_MAP;
+
 export function levelLabel(track: Track, subLevel: SubLevel): string {
-  return `${TRACK_LABEL[track]} - ${SUB_LEVEL_LABEL[subLevel]}`;
+  return `${TRACK_LABEL[track]} - ${subLevelLabel(track, subLevel)}`;
 }
 
 type SectionDescriptors = Record<Section, string>;
@@ -65,6 +85,18 @@ const TOEFL_HIGH: SectionDescriptors = {
   writing: "학술/비학술 주제 모두 명확하고 자신 있게 서술. 여러 출처 정보를 통합해 정합성 있게 제시, 논쟁적 주제에 대한 근거 있는 의견 개진.",
   grammar: "복잡한 문법 구조(비교급, 가정법, 도치, 다중 종속절)를 정확하고 유연하게 구사.",
   vocab: "저빈도 학술 어휘, 뉘앙스 있는 다의어까지 폭넓고 정확하게 구사.",
+};
+
+// TOEFL 최고급 — ETS 공식 기술서(Advanced/C1~C2)에는 없는 자체 확장 구간.
+// 상위권 학생 변별을 위해 학원 자체적으로 TOEFL_HIGH(Advanced) 위에 얹은 단계이며,
+// ETS 출처가 아니라 TOEFL_HIGH 대비 "만점권 변별"을 목표로 직접 작성함.
+const TOEFL_HIGHEST: SectionDescriptors = {
+  reading: "TOEFL 만점권 지문(밀도 높은 학술 논증, 반어·함축, 저자의 숨은 의도)까지 빠르고 정확하게 처리. 어휘·구문이 전혀 장애가 되지 않음.",
+  listening: "빠른 속도·비격식 표현이 섞인 강의·대화에서도 뉘앙스, 화자 간 미묘한 입장 차이까지 놓치지 않음.",
+  speaking: "원어민에 준하는 유창성과 자연스러운 억양으로 추상적·논쟁적 주제를 즉흥적으로도 정교하게 논증.",
+  writing: "대학원 수준의 논증적 글쓰기 — 정교한 문장 다양성, 세밀한 근거 통합, 어색함 없는 자연스러운 학술 문체.",
+  grammar: "복잡한 문법을 실수 없이 자유자재로 구사, 문체적 선택(강조, 도치 등)까지 의도적으로 활용.",
+  vocab: "전문·저빈도 어휘와 관용표현까지 정확하고 자연스럽게 구사.",
 };
 
 // Jr.(초1~6) — 단어/짧은 문장 → 간단한 단락 수준. 시각 자료·반복에 의존.
@@ -164,6 +196,7 @@ export const LEVEL_TABLE: LevelEntry[] = [
   { track: "toefl", subLevel: "low", cefr: "B1 (TOEFL Low-Intermediate)", descriptors: TOEFL_LOW },
   { track: "toefl", subLevel: "mid", cefr: "B2 (TOEFL High-Intermediate)", descriptors: TOEFL_MID },
   { track: "toefl", subLevel: "high", cefr: "C1~C2 (TOEFL Advanced)", descriptors: TOEFL_HIGH },
+  { track: "toefl", subLevel: "highest", cefr: "C2+ (자체 확장 — 만점권 변별)", descriptors: TOEFL_HIGHEST },
 ];
 
 export function getLevelEntry(track: Track, subLevel: SubLevel): LevelEntry {
