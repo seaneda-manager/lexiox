@@ -8,7 +8,7 @@ import {
   LayoutDashboard, BookOpen, Headphones, Mic, PenLine, BookText,
   ClipboardList, FileText, GraduationCap, Library, List, Download,
   Upload, Send, BarChart2, Home, UserPlus, CheckSquare, Users,
-  ClipboardCheck, PlayCircle, Gift, ShieldCheck, Globe, Settings,
+  ClipboardCheck, PlayCircle, Gift, ShieldCheck, Globe, Settings, Calendar,
   type LucideProps,
 } from 'lucide-react';
 import { useLang } from '@/contexts/LangContext';
@@ -298,6 +298,7 @@ export default function SidebarClient({ role, program = null, hasHiNaesin = fals
     if (program === 'lexiox') {
       return [
         { section: '내 현황', href: '/student/home', label: '홈', icon: Home },
+        { section: '내 현황', href: '/student/schedule', label: '스케줄', icon: Calendar },
 
         { section: 'Hi-내신', href: '/hi-naesin',        label: 'Hi-내신 드릴', icon: PlayCircle },
         { section: 'Hi-내신', href: '/hi-naesin/passages', label: 'Reading', skill: 'reading' as SkillColor },
@@ -329,6 +330,7 @@ export default function SidebarClient({ role, program = null, hasHiNaesin = fals
     if (program === 'toefl' || program === 'gap') {
       return [
         { section: '내 현황', href: '/student/home', label: '홈', icon: Home },
+        { section: '내 현황', href: '/student/schedule', label: '스케줄', icon: Calendar },
 
         { section: '학습', href: '/updated-reading',        label: 'Reading',   icon: BookOpen },
         { section: '학습', href: '/updated-listening',      label: 'Listening', icon: Headphones },

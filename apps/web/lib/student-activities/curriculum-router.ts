@@ -176,34 +176,49 @@ export function getCurrentPhase(
 }
 
 /**
- * 학생의 커리큘럼을 조회 (academy_students 테이블에서)
+ * 학생의 커리큘럼을 조회.
+ *
+ * academy_students.curriculum 컬럼을 읽던 예전 구현은 그 컬럼이 실제 DB에 존재하지 않아
+ * 항상 조용히 실패하고 'lexiox_jr'로 폴백하고 있었다(2026-08-23 발견) — 즉 이 함수를 쓰는
+ * /student/home의 Phase 타임라인은 프로그램에 관계없이 항상 LEXiOX 주니어 순서로 나오고 있었음.
+ *
+ * 대신 실제 존재하는 컬럼(profiles.program, academy_students.grade_band)으로 유도한다 —
+ * app/protected/student/page.tsx의 deriveCurriculum()과 동일한 grade_band 매핑을 재사용해서
+ * 두 곳이 서로 다른 기준으로 갈라지지 않게 한다. hi_naesin은 아직 profile 레벨에서 안정적으로
+ * 구분할 방법이 없어 이 함수에서는 반환하지 않는다 — 지금은 PHASE_ORDER상 lexiox_*와 배열이
+ * 동일해서 기능적 차이는 없다.
  */
 export async function getStudentCurriculum(
   supabase: SupabaseClient<any, 'public', any>,
   studentId: string
 ): Promise<Curriculum> {
   try {
-    const { data, error } = await supabase
+    const { data: student, error } = await supabase
       .from('academy_students')
-      .select('curriculum')
+      .select('grade_band, auth_user_id')
       .eq('id', studentId)
       .maybeSingle();
 
-    if (error) {
+    if (error || !student) {
       console.error('Failed to fetch student curriculum:', error);
       return 'lexiox_jr';
     }
 
-    const curriculum = data?.curriculum as string | null;
-    if (!curriculum) return 'lexiox_jr';
-
-    const normalized = curriculum.toLowerCase().replace(/[-_]/g, '_');
-    const validCurriculums: Curriculum[] = ['toefl', 'lexiox_jr', 'lexiox_middle', 'lexiox_high', 'hi_naesin'];
-
-    if (validCurriculums.includes(normalized as Curriculum)) {
-      return normalized as Curriculum;
+    let program: string | null = null;
+    if (student.auth_user_id) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('program')
+        .eq('id', student.auth_user_id)
+        .maybeSingle();
+      program = (profile as any)?.program ?? null;
     }
 
+    if (program === 'toefl' || program === 'gap') return 'toefl';
+
+    const gradeBand = student.grade_band as string | null;
+    if (gradeBand === 'K10_12' || gradeBand === 'POST_K12') return 'lexiox_high';
+    if (gradeBand === 'K7_9') return 'lexiox_middle';
     return 'lexiox_jr';
   } catch (error) {
     console.error('Error in getStudentCurriculum:', error);

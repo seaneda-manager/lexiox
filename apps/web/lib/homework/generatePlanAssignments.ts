@@ -50,11 +50,20 @@ export async function syncPlanAssignments(planId: string): Promise<{ created: nu
     .order("unit_index", { ascending: true });
   if (!units || units.length === 0) return { created: 0 };
 
+  const currentRepeat = plan.current_repeat_number ?? 1;
+  const targetRepeat = plan.target_repeat_count ?? 1;
+
   const { data: existingRows } = await service
     .from("photo_homework")
-    .select("unit_index")
+    .select("unit_index, repeat_number")
     .eq("plan_id", planId);
-  const existingUnitIndexes = new Set((existingRows ?? []).map((r) => r.unit_index));
+  // 같은 unit_index라도 회차(repeat_number)가 다르면 별개 취급 — 그래야 회독이 진행될 때
+  // 이미 1회독에서 만든 unit 1을 "이미 있다"고 착각해서 2회독의 unit 1을 건너뛰지 않는다.
+  const existingUnitIndexes = new Set(
+    (existingRows ?? [])
+      .filter((r) => (r.repeat_number ?? 1) === currentRepeat)
+      .map((r) => r.unit_index),
+  );
 
   // 커리큘럼 구조만 먼저 등록해두고 정답은 나중에 채워 넣을 수 있으므로(스캔 전 단계),
   // 정답이 아직 없는 유닛은 생성 대상에서 제외한다 — 나중에 채워지면 다음 sync 때 잡힌다.
@@ -69,12 +78,13 @@ export async function syncPlanAssignments(planId: string): Promise<{ created: nu
     const occurrenceCount = Math.ceil(pendingUnits.length / unitsPerSession);
     const occurrenceDates = computeOccurrenceDates(plan.start_date, plan.weekdays ?? [], occurrenceCount);
 
+    const repeatSuffix = currentRepeat > 1 ? ` (${currentRepeat}회독)` : "";
     const rows: Record<string, unknown>[] = [];
     pendingUnits.forEach((unit, idx) => {
       const occurrenceIdx = Math.floor(idx / unitsPerSession);
       const dueDate = occurrenceDates[occurrenceIdx];
       rows.push({
-        title: `${book.title}${unit.title ? ` - ${unit.title}` : ` - Unit ${unit.unit_index}`}`,
+        title: `${book.title}${unit.title ? ` - ${unit.title}` : ` - Unit ${unit.unit_index}`}${repeatSuffix}`,
         subject: book.subject,
         answer_key_data: unit.answer_key_data,
         due_at: dueDate ? new Date(`${dueDate}T23:59:59`).toISOString() : null,
@@ -84,6 +94,7 @@ export async function syncPlanAssignments(planId: string): Promise<{ created: nu
         book_id: plan.book_id,
         unit_index: unit.unit_index,
         plan_id: plan.id,
+        repeat_number: currentRepeat,
       });
     });
 
@@ -98,10 +109,25 @@ export async function syncPlanAssignments(planId: string): Promise<{ created: nu
     (u) => !justGeneratedIds.has(u.id) && !existingUnitIndexes.has(u.unit_index),
   );
   if (relevantUnits.length > 0) {
-    const newCursor =
-      stillPending.length > 0
-        ? Math.min(...stillPending.map((u) => u.unit_index))
-        : Math.max(...relevantUnits.map((u) => u.unit_index)) + 1;
+    const bookFullyCoveredThisLap = stillPending.length === 0;
+    const newCursor = bookFullyCoveredThisLap
+      ? Math.max(...relevantUnits.map((u) => u.unit_index)) + 1
+      : Math.min(...stillPending.map((u) => u.unit_index));
+
+    // 이번 회차 유닛을 전부 다 냈고 목표 회독 수가 남아있으면, 커서를 1로 되돌리고
+    // 다음 회차로 넘어가서 그 자리에서 바로 이어서 생성한다 — 이 함수는 교재에 유닛이
+    // 추가되거나 플랜이 갱신될 때만 다시 불리기 때문에, 여기서 안 이어가면 다음 회차는
+    // 아무 계기 없이는 영원히 시작되지 않는다.
+    if (bookFullyCoveredThisLap && currentRepeat < targetRepeat) {
+      await service
+        .from("student_homework_plans")
+        .update({ cursor_unit_index: 1, current_repeat_number: currentRepeat + 1 })
+        .eq("id", planId);
+      const nextLapResult = await syncPlanAssignments(planId);
+      if ("error" in nextLapResult) return nextLapResult;
+      return { created: pendingUnits.length + nextLapResult.created };
+    }
+
     await service.from("student_homework_plans").update({ cursor_unit_index: newCursor }).eq("id", planId);
   }
 

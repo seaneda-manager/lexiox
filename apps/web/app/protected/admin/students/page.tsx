@@ -319,6 +319,7 @@ async function updateAcademyStudentAction(formData: FormData) {
   const memo = cleanNullableText(formData.get("memo"));
   const notes = cleanNullableText(formData.get("notes"));
   const level = parseLevel(cleanNullableText(formData.get("level")));
+  const classDays = formData.getAll("class_days").map((v) => String(v));
 
   if (!studentId) {
     redirect(
@@ -418,6 +419,7 @@ async function updateAcademyStudentAction(formData: FormData) {
       parent_phone: parentPhone,
       memo,
       notes,
+      class_days: classDays,
     };
 
     const { error: dbError } = await supabase
@@ -612,7 +614,7 @@ export default async function AdminStudentsPage({
   const { data, error, count } = await supabase
     .from("academy_students")
     .select(
-      "id, full_name, display_name, email, login_id, school, grade, level, phone, parent_phone, memo, notes, is_active, deactivated_at, deactivated_reason, must_change_password, auth_user_id, profile_id, created_at, updated_at",
+      "id, full_name, display_name, email, login_id, school, grade, level, phone, parent_phone, memo, notes, is_active, deactivated_at, deactivated_reason, must_change_password, auth_user_id, profile_id, created_at, updated_at, class_days",
       { count: "exact" }
     )
     .order("updated_at", { ascending: false })
@@ -846,6 +848,21 @@ export default async function AdminStudentsPage({
               />
             </div>
 
+            <CheckboxGroupField
+              label="수업 요일"
+              name="class_days"
+              defaultValues={(editingRow.class_days as string[] | null) ?? []}
+              options={[
+                { value: "mon", label: "월" },
+                { value: "tue", label: "화" },
+                { value: "wed", label: "수" },
+                { value: "thu", label: "목" },
+                { value: "fri", label: "금" },
+                { value: "sat", label: "토" },
+                { value: "sun", label: "일" },
+              ]}
+            />
+
             <div className="grid gap-4 md:grid-cols-2">
               <TextAreaField
                 label="메모"
@@ -1049,6 +1066,12 @@ export default async function AdminStudentsPage({
                             분석
                           </Link>
                           <Link
+                            href={`/admin/students/${encodeURIComponent(id)}/schedule`}
+                            className="inline-flex rounded-xl border px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+                          >
+                            스케줄
+                          </Link>
+                          <Link
                             href={`/admin/students?edit=${encodeURIComponent(id)}`}
                             className="inline-flex rounded-xl border px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50"
                           >
@@ -1180,6 +1203,42 @@ function SelectField({
         ))}
       </select>
     </label>
+  );
+}
+
+function CheckboxGroupField({
+  label,
+  name,
+  defaultValues,
+  options,
+}: {
+  label: string;
+  name: string;
+  defaultValues: string[];
+  options: { value: string; label: string }[];
+}) {
+  const checkedSet = new Set(defaultValues.map((v) => v.toLowerCase()));
+  return (
+    <fieldset className="space-y-1.5">
+      <legend className="text-sm font-medium text-neutral-800">{label}</legend>
+      <div className="flex flex-wrap gap-3">
+        {options.map((option) => (
+          <label
+            key={`${name}-${option.value}`}
+            className="flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-sm text-neutral-700 has-[:checked]:border-neutral-900 has-[:checked]:bg-neutral-50"
+          >
+            <input
+              type="checkbox"
+              name={name}
+              value={option.value}
+              defaultChecked={checkedSet.has(option.value)}
+              className="h-3.5 w-3.5"
+            />
+            {option.label}
+          </label>
+        ))}
+      </div>
+    </fieldset>
   );
 }
 

@@ -43,6 +43,18 @@ const TASK_COLOR: Record<string, string> = {
   academic_passage: "bg-violet-100 text-violet-700",
 };
 
+type ReviewItemResult = {
+  itemId: string;
+  label: string;
+  taskKind: string;
+  total: number;
+  correct: number;
+  details: { isRight: boolean; [k: string]: any }[];
+  problems: string[];
+};
+type ReviewPersonaResult = { results: ReviewItemResult[]; overallProblems: string[] };
+type ReviewReport = { beginner: ReviewPersonaResult; advanced: ReviewPersonaResult };
+
 function getGroupItems(test: RReadingTest2026, key: GroupKey): RReadingItem[] {
   if (key === "module1") return test.modules?.[0]?.items ?? [];
   if (key === "hard") return test.stage2Pool?.hard?.items ?? [];
@@ -491,6 +503,36 @@ export default function ReadingTestGeneratorClient() {
     [test]
   );
 
+  // ── AI 학생 리뷰 (초급/고급 시뮬레이션) ─────────────────────
+  const [reviewReport, setReviewReport] = useState<ReviewReport | null>(null);
+  const [reviewing, setReviewing] = useState(false);
+
+  const handleReview = useCallback(async () => {
+    if (!test) return;
+    setReviewing(true);
+    setError(null);
+    setReviewReport(null);
+    try {
+      const allItems = [
+        ...getGroupItems(test, "module1"),
+        ...getGroupItems(test, "hard"),
+        ...getGroupItems(test, "easy"),
+      ];
+      const res = await fetch("/api/admin/updated-reading/review-quality", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: allItems }),
+      });
+      const data = await safeJson(res);
+      if (!data.ok) throw new Error(data.error ?? "리뷰 실패");
+      setReviewReport(data.report as ReviewReport);
+    } catch (e: any) {
+      setError(`AI 리뷰 실패: ${e.message}`);
+    } finally {
+      setReviewing(false);
+    }
+  }, [test]);
+
   // ── Save (draft) ────────────────────────────────────────────
   const handleSave = useCallback(async () => {
     if (!test) return;
@@ -811,6 +853,83 @@ export default function ReadingTestGeneratorClient() {
           {renderGroup("module1", "📘 Module 1 (공통 Routing, 20~33문항 가변)", "bg-violet-50")}
           {renderGroup("hard", "🔴 Module 2 - Upper (15문항: CW+Academic)", "bg-amber-50")}
           {renderGroup("easy", "🟢 Module 2 - Lower (15문항: CW+Daily Life)", "bg-blue-50")}
+
+          {/* AI 학생 리뷰 — 초급/고급 학생이 실제로 풀어보고 문제점을 리포트로 알려줌 */}
+          <div className="rounded-xl border border-indigo-200 bg-indigo-50/40 p-4 shadow-sm space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-indigo-900">🧑‍🎓 AI 학생 리뷰</p>
+                <p className="text-xs text-indigo-500 mt-0.5">
+                  초급/고급(최고급 아님) 학생 역할로 Claude가 실제로 풀어보고, 애매한 빈칸·오답 시비 등 문제점을 찾아줍니다.
+                </p>
+              </div>
+              <button
+                onClick={handleReview}
+                disabled={reviewing}
+                className="shrink-0 rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+              >
+                {reviewing ? "리뷰 중… (1~2분)" : reviewReport ? "다시 리뷰" : "AI 리뷰 실행"}
+              </button>
+            </div>
+
+            {reviewReport && (
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                {(["beginner", "advanced"] as const).map((persona) => {
+                  const p = reviewReport[persona];
+                  const totalCorrect = p.results.reduce((s, r) => s + r.correct, 0);
+                  const totalCount = p.results.reduce((s, r) => s + r.total, 0);
+                  return (
+                    <div key={persona} className="rounded-lg border border-indigo-100 bg-white p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-indigo-700">
+                          {persona === "beginner" ? "🐣 초급 학생" : "🎓 고급 학생"}
+                        </span>
+                        <span className="text-[11px] text-gray-500">
+                          정답률 {totalCount > 0 ? Math.round((totalCorrect / totalCount) * 100) : 0}% ({totalCorrect}/{totalCount})
+                        </span>
+                      </div>
+
+                      {p.overallProblems.length > 0 && (
+                        <div className="rounded bg-rose-50 border border-rose-200 px-2 py-1.5 text-[11px] text-rose-700 space-y-0.5">
+                          {p.overallProblems.map((msg, i) => <p key={i}>⚠️ {msg}</p>)}
+                        </div>
+                      )}
+
+                      <div className="space-y-1.5 max-h-64 overflow-y-auto">
+                        {p.results.map((r) => {
+                          const hasIssue = r.correct < r.total || r.problems.length > 0;
+                          if (!hasIssue) {
+                            return (
+                              <div key={r.itemId} className="text-[11px] text-emerald-600">
+                                ✅ {r.label} — {r.correct}/{r.total} 정답, 문제점 없음
+                              </div>
+                            );
+                          }
+                          return (
+                            <div key={r.itemId} className="rounded border border-amber-200 bg-amber-50 px-2 py-1.5 text-[11px] space-y-1">
+                              <p className="font-medium text-amber-800">
+                                {r.label} — {r.correct}/{r.total} 정답
+                              </p>
+                              {r.details.filter((d) => !d.isRight).map((d, i) => (
+                                <p key={i} className="text-amber-700">
+                                  {"order" in d
+                                    ? `빈칸 ${d.order}: 학생 답 "${d.guess}" ≠ 정답 "${d.correct}"`
+                                    : `문제 ${d.question}: 학생 선택 ${d.picked} ≠ 정답 ${d.correct}`}
+                                </p>
+                              ))}
+                              {r.problems.map((msg, i) => (
+                                <p key={i} className="text-rose-700">🗨️ {msg}</p>
+                              ))}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
 
           {/* Actions — 저장 즉시 배정 가능한 상태가 됩니다. 별도 Lock 단계 없음.
               배정이 하나라도 생기면 이후 저장은 서버에서 자동으로 막힙니다. */}

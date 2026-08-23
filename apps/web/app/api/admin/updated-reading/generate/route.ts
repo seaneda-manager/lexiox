@@ -7,6 +7,7 @@ import { createClient } from '@supabase/supabase-js';
 import { validateAndShuffleIfNeeded } from '@/lib/utils/validateAnswerDistribution';
 import { extractReadingTestToBank } from '@/lib/utils/problemBankExtract';
 import { logAnthropicUsage } from '@/lib/ai/logAnthropicUsage';
+import { findBlankCountIssues } from '@/lib/utils/ensureCompleteWordsBlanks';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
@@ -246,22 +247,40 @@ Return ONLY this JSON structure (NO markdown, NO explanations, NO extra text):
   }]
 }`;
 
-    const message = await client.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 12000,
-      messages: [{ role: 'user', content: prompt }],
-    });
-    void logAnthropicUsage('admin/updated-reading/generate:module1', 'claude-sonnet-4-6', message.usage);
+    // complete_words는 반드시 blanks 10개 — 지켜지지 않으면 최대 3번까지 재시도.
+    let payload: any = null;
+    let blankIssues: string[] = [];
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      const retryNote =
+        attempt > 1
+          ? `\n\n⚠️ 이전 응답이 검증에 실패했습니다: ${blankIssues.join('; ')}\ncomplete_words 항목은 반드시 "blanks" 배열에 정확히 10개의 항목이 있어야 합니다. 응답하기 전에 반드시 개수를 세어 확인하세요.`
+          : '';
 
-    const raw = (message.content[0] as any).text as string;
-    const jsonStart = raw.indexOf('{');
-    const jsonEnd = raw.lastIndexOf('}');
+      const message = await client.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 12000,
+        messages: [{ role: 'user', content: prompt + retryNote }],
+      });
+      void logAnthropicUsage('admin/updated-reading/generate:module1', 'claude-sonnet-4-6', message.usage);
 
-    if (jsonStart === -1 || jsonEnd === -1) {
-      throw new Error('No JSON found in Claude response');
+      const raw = (message.content[0] as any).text as string;
+      const jsonStart = raw.indexOf('{');
+      const jsonEnd = raw.lastIndexOf('}');
+      if (jsonStart === -1 || jsonEnd === -1) {
+        throw new Error('No JSON found in Claude response');
+      }
+
+      payload = JSON.parse(raw.slice(jsonStart, jsonEnd + 1));
+      blankIssues = findBlankCountIssues(payload);
+      if (blankIssues.length === 0) break;
     }
 
-    let payload = JSON.parse(raw.slice(jsonStart, jsonEnd + 1));
+    if (blankIssues.length > 0) {
+      return NextResponse.json(
+        { ok: false, error: `Complete Words 빈칸 개수 검증 실패 (3회 재시도 후): ${blankIssues.join('; ')}` },
+        { status: 500 }
+      );
+    }
 
     // ✅ 정답 분포 검증 및 셔플
     const answers = extractAnswers(payload);
@@ -467,22 +486,40 @@ Return ONLY this JSON structure (NO markdown, NO explanations):
   }
 }`;
 
-    const message = await client.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 12000,
-      messages: [{ role: 'user', content: prompt }],
-    });
-    void logAnthropicUsage('admin/updated-reading/generate:module2', 'claude-sonnet-4-6', message.usage);
+    // complete_words는 반드시 blanks 10개 — 지켜지지 않으면 최대 3번까지 재시도.
+    let module2Data: any = null;
+    let blankIssues: string[] = [];
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      const retryNote =
+        attempt > 1
+          ? `\n\n⚠️ 이전 응답이 검증에 실패했습니다: ${blankIssues.join('; ')}\ncomplete_words 항목은 반드시 "blanks" 배열에 정확히 10개의 항목이 있어야 합니다. 응답하기 전에 반드시 개수를 세어 확인하세요.`
+          : '';
 
-    const raw = (message.content[0] as any).text as string;
-    const jsonStart = raw.indexOf('{');
-    const jsonEnd = raw.lastIndexOf('}');
+      const message = await client.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 12000,
+        messages: [{ role: 'user', content: prompt + retryNote }],
+      });
+      void logAnthropicUsage('admin/updated-reading/generate:module2', 'claude-sonnet-4-6', message.usage);
 
-    if (jsonStart === -1 || jsonEnd === -1) {
-      throw new Error('No JSON found in Claude response');
+      const raw = (message.content[0] as any).text as string;
+      const jsonStart = raw.indexOf('{');
+      const jsonEnd = raw.lastIndexOf('}');
+      if (jsonStart === -1 || jsonEnd === -1) {
+        throw new Error('No JSON found in Claude response');
+      }
+
+      module2Data = JSON.parse(raw.slice(jsonStart, jsonEnd + 1));
+      blankIssues = findBlankCountIssues(module2Data);
+      if (blankIssues.length === 0) break;
     }
 
-    let module2Data = JSON.parse(raw.slice(jsonStart, jsonEnd + 1));
+    if (blankIssues.length > 0) {
+      return NextResponse.json(
+        { ok: false, error: `Complete Words 빈칸 개수 검증 실패 (3회 재시도 후): ${blankIssues.join('; ')}` },
+        { status: 500 }
+      );
+    }
 
     // ✅ 정답 분포 검증 및 셔플 (hard와 easy 모두)
     const hardAnswers = extractAnswers(module2Data.stage2Pool.hard);

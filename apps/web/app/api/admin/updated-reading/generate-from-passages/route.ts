@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { randomUUID } from "crypto";
+import { findBlankCountIssues } from "@/lib/utils/ensureCompleteWordsBlanks";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -82,19 +83,46 @@ Return ONLY valid JSON, no markdown fences. "items" must have exactly ${items.le
   ]
 }`;
 
-    const message = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 8000,
-      messages: [{ role: "user", content: prompt }],
-    });
+    // complete_words는 반드시 blanks 10개 — Claude가 가끔 이걸 안 지켜서(예: 1개만 만들고 끝냄)
+    // 검증 없이 그대로 저장되던 게 버그였음. 최대 3번까지 재시도.
+    let parsed: { items: any[] } | null = null;
+    let lastIssues: string[] = [];
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      const retryNote =
+        attempt > 1
+          ? `\n\n⚠️ 이전 응답이 검증에 실패했습니다: ${lastIssues.join("; ")}\ncomplete_words 항목은 반드시 "blanks" 배열에 정확히 10개의 항목이 있어야 합니다. 응답하기 전에 반드시 개수를 세어 확인하세요.`
+          : "";
 
-    const raw = (message.content[0] as any).text as string;
-    const jsonStart = raw.indexOf("{");
-    const jsonEnd = raw.lastIndexOf("}");
-    const parsed = JSON.parse(raw.slice(jsonStart, jsonEnd + 1)) as { items: any[] };
+      const message = await client.messages.create({
+        model: "claude-sonnet-4-6",
+        max_tokens: 8000,
+        messages: [{ role: "user", content: prompt + retryNote }],
+      });
 
-    if (!Array.isArray(parsed.items) || parsed.items.length !== items.length) {
-      return NextResponse.json({ ok: false, error: "모델이 예상과 다른 개수의 항목을 반환했습니다." }, { status: 500 });
+      const raw = (message.content[0] as any).text as string;
+      const jsonStart = raw.indexOf("{");
+      const jsonEnd = raw.lastIndexOf("}");
+      const candidate = JSON.parse(raw.slice(jsonStart, jsonEnd + 1)) as { items: any[] };
+
+      if (!Array.isArray(candidate.items) || candidate.items.length !== items.length) {
+        lastIssues = ["모델이 예상과 다른 개수의 항목을 반환했습니다."];
+        parsed = null;
+        continue;
+      }
+
+      parsed = candidate;
+      lastIssues = findBlankCountIssues(candidate.items);
+      if (lastIssues.length === 0) break;
+    }
+
+    if (!parsed) {
+      return NextResponse.json({ ok: false, error: "모델이 예상과 다른 개수의 항목을 반환했습니다 (3회 재시도 실패)." }, { status: 500 });
+    }
+    if (lastIssues.length > 0) {
+      return NextResponse.json(
+        { ok: false, error: `Complete Words 빈칸 개수 검증 실패 (3회 재시도 후): ${lastIssues.join("; ")}` },
+        { status: 500 }
+      );
     }
 
     // Merge: 사용자가 붙여넣은 지문(원문 그대로) + Claude가 생성한 blanks/questions

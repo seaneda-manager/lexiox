@@ -38,21 +38,25 @@ export default async function HomeworkBookDetailPage({ params }: PageProps) {
 
   const { data: plans } = await supabase
     .from('student_homework_plans')
-    .select('id, student_id, weekdays, units_per_session, cursor_unit_index, is_paused, start_date')
+    .select('id, student_id, weekdays, units_per_session, cursor_unit_index, is_paused, start_date, target_repeat_count, current_repeat_number')
     .eq('book_id', bookId);
 
   const studentNameById = new Map(
     (students ?? []).map((s) => [s.id, s.full_name || s.name || s.email || '이름 미설정']),
   );
 
+  // 회독 단위로 진행률을 봐야 해서 plan_id만이 아니라 repeat_number까지 같이 센다 —
+  // 안 그러면 1회독 끝나고 2회독으로 넘어간 순간 (totalUnits*2개 생성됨) >= totalUnits라서
+  // "완료"로 잘못 표시된다.
   const { data: generatedCounts } = await supabase
     .from('photo_homework')
-    .select('plan_id')
+    .select('plan_id, repeat_number')
     .eq('book_id', bookId);
-  const generatedCountByPlan = new Map<string, number>();
+  const generatedCountByPlanLap = new Map<string, number>();
   for (const r of generatedCounts ?? []) {
     if (!r.plan_id) continue;
-    generatedCountByPlan.set(r.plan_id, (generatedCountByPlan.get(r.plan_id) ?? 0) + 1);
+    const key = `${r.plan_id}:${r.repeat_number ?? 1}`;
+    generatedCountByPlanLap.set(key, (generatedCountByPlanLap.get(key) ?? 0) + 1);
   }
 
   const totalUnits = units?.length ?? 0;
@@ -89,8 +93,12 @@ export default async function HomeworkBookDetailPage({ params }: PageProps) {
         ) : (
           <div className="space-y-2">
             {(plans ?? []).map((p) => {
-              const generatedCount = generatedCountByPlan.get(p.id) ?? 0;
-              const remaining = Math.max(0, totalUnits - generatedCount);
+              const targetRepeatCount = p.target_repeat_count ?? 1;
+              const currentRepeatNumber = p.current_repeat_number ?? 1;
+              const generatedCount = generatedCountByPlanLap.get(`${p.id}:${currentRepeatNumber}`) ?? 0;
+              const remainingThisLap = Math.max(0, totalUnits - generatedCount);
+              const remainingLaps = Math.max(0, targetRepeatCount - currentRepeatNumber);
+              const remaining = remainingThisLap + totalUnits * remainingLaps;
               const estimatedDate = p.is_paused
                 ? null
                 : estimateCompletionDate(remaining, p.weekdays ?? [], p.units_per_session ?? 1);
@@ -102,6 +110,8 @@ export default async function HomeworkBookDetailPage({ params }: PageProps) {
                   studentName={studentNameById.get(p.student_id) ?? '이름 미설정'}
                   totalUnits={totalUnits}
                   generatedCount={generatedCount}
+                  targetRepeatCount={targetRepeatCount}
+                  currentRepeatNumber={currentRepeatNumber}
                   estimatedCompletionDate={estimatedDate}
                   levelInfo={{
                     level: book.level,

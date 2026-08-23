@@ -118,6 +118,7 @@ export async function createPlanAction(
   weekdays: number[],
   unitsPerSession: number,
   startDate: string,
+  targetRepeatCount: number,
 ): Promise<{ ok: true; created: number } | { error: string }> {
   const supabase = await getServerSupabase();
   const { data: { user } } = await supabase.auth.getUser();
@@ -136,6 +137,7 @@ export async function createPlanAction(
         start_date: startDate,
         weekdays,
         units_per_session: unitsPerSession,
+        target_repeat_count: Math.max(1, targetRepeatCount || 1),
         is_enabled: true,
         is_paused: false,
         created_by: user.id,
@@ -157,6 +159,16 @@ export async function togglePlanAction(planId: string, bookId: string, isPaused:
   const service = getServiceSupabase();
   await service.from('student_homework_plans').update({ is_paused: isPaused }).eq('id', planId);
   revalidatePath(`/admin/homework/books/${bookId}`);
+}
+
+// 회독을 다 채운 플랜은 유닛 추가/수정 없이는 다음 회차가 시작될 계기가 없어서,
+// 관리자가 수동으로 다시 동기화를 트리거할 수 있게 해준다.
+export async function resyncPlanAction(planId: string, bookId: string): Promise<{ ok: true; created: number } | { error: string }> {
+  const result = await syncPlanAssignments(planId);
+  if ('error' in result) return { error: result.error };
+
+  revalidatePath(`/admin/homework/books/${bookId}`);
+  return { ok: true, created: result.created };
 }
 
 export type BookLevelInfo = {
