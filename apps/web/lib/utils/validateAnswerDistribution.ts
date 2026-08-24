@@ -191,6 +191,59 @@ export function extractChoiceLetter(choiceId: string): string {
 }
 
 /**
+ * 정답 분포 쏠림의 진짜 원인과 고친 이유 (2026-08-24):
+ *
+ * validateAndShuffleIfNeeded()는 AAAA나 ABCDABCD 같은 "구조적 패턴"만 잡는다.
+ * "그냥 전체적으로 B/C가 많고 A/D가 적은" 통계적 쏠림(LLM이 객관식 정답을 만들 때
+ * 중간 선택지를 더 선호하는 경향)은 패턴이 아니라서 안 잡히고 그대로 통과된다.
+ *
+ * 게다가 설령 패턴이 잡혀서 shuffleAnswers()가 돌아가도, 그건 "이미 생성된 정답 글자들의
+ * 묶음"에서 어느 문제가 어느 글자를 갖는지만 재배열하는 것이다 — 즉 원래 분포가
+ * {A:2, B:9, C:8, D:1}이었다면 순서를 아무리 섞어도 총합 2/9/8/1은 그대로라 쏠림이
+ * 절대 안 고쳐진다.
+ *
+ * 진짜 해법: 패턴 감지에 기대지 말고, 매 문제마다 4개 보기(choices) 배열 자체를
+ * 무조건 무작위로 섞는다 — 정답 텍스트와 isCorrect를 같이 옮기므로 정답 내용은
+ * 그대로 유지되면서 어느 자리(A/B/C/D)에 놓이는지만 매 문제 독립적으로 랜덤해진다.
+ * 문제 수가 많아지면 자연스럽게 각 글자가 대략 25%씩 나오게 된다.
+ */
+export function shuffleChoices<T extends { id: string; text: string; isCorrect?: boolean }>(choices: T[]): T[] {
+  if (!Array.isArray(choices) || choices.length === 0) return choices;
+  const ids = choices.map((c) => c.id);
+  const shuffled = [...choices];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  // id는 원래 자리 순서(A,B,C,D 등)를 그대로 유지 — 텍스트+정답여부만 자리를 옮긴다.
+  return shuffled.map((c, i) => ({ ...c, id: ids[i] }));
+}
+
+/** payload(중첩 객체 또는 items 배열) 안의 모든 문제의 choices를 전부 무작위로 섞는다. */
+export function shuffleAllChoicesInPayload(payload: unknown): void {
+  function walk(obj: any): void {
+    if (!obj || typeof obj !== "object") return;
+    if (Array.isArray(obj.questions)) {
+      obj.questions.forEach((q: any) => {
+        if (Array.isArray(q.choices)) q.choices = shuffleChoices(q.choices);
+      });
+    }
+    if (Array.isArray(obj.items)) obj.items.forEach(walk);
+    if (Array.isArray(obj.modules)) obj.modules.forEach(walk);
+    if (obj.stage2Pool) {
+      if (obj.stage2Pool.hard) walk(obj.stage2Pool.hard);
+      if (obj.stage2Pool.easy) walk(obj.stage2Pool.easy);
+    }
+  }
+
+  if (Array.isArray(payload)) {
+    payload.forEach(walk);
+  } else {
+    walk(payload);
+  }
+}
+
+/**
  * 워크플로우: AI가 생성한 정답 → 검증 → 패턴 있으면 셔플
  */
 export function validateAndShuffleIfNeeded(aiGeneratedAnswers: string[]): {

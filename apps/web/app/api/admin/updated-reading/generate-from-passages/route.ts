@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { randomUUID } from "crypto";
 import { findBlankCountIssues } from "@/lib/utils/ensureCompleteWordsBlanks";
+import { shuffleAllChoicesInPayload } from "@/lib/utils/validateAnswerDistribution";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -160,6 +161,9 @@ Return ONLY valid JSON, no markdown fences. "items" must have exactly ${items.le
         questions: gen.questions ?? [],
       };
     });
+
+    // ✅ 정답 위치 무작위화 — 매 문제 choices를 무조건 섞어서 A/B/C/D 쏠림 방지
+    shuffleAllChoicesInPayload(merged);
 
     return NextResponse.json({ ok: true, items: merged });
   } catch (err: any) {

@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { randomUUID } from 'crypto';
 import { createClient } from '@supabase/supabase-js';
-import { validateAndShuffleIfNeeded } from '@/lib/utils/validateAnswerDistribution';
+import { shuffleAllChoicesInPayload } from '@/lib/utils/validateAnswerDistribution';
 import { extractReadingTestToBank } from '@/lib/utils/problemBankExtract';
 import { logAnthropicUsage } from '@/lib/ai/logAnthropicUsage';
 import { findBlankCountIssues } from '@/lib/utils/ensureCompleteWordsBlanks';
@@ -285,13 +285,10 @@ Return ONLY this JSON structure (NO markdown, NO explanations, NO extra text):
       );
     }
 
-    // ✅ 정답 분포 검증 및 셔플
-    const answers = extractAnswers(payload);
-    const { answers: shuffledAnswers, wasShuffled } = validateAndShuffleIfNeeded(answers);
-
-    if (wasShuffled) {
-      payload = applyShuffledAnswers(payload, shuffledAnswers);
-    }
+    // ✅ 정답 위치 무작위화 — 패턴 감지에 기대지 않고 매 문제 choices를 무조건 섞는다
+    // (validateAndShuffleIfNeeded는 AAAA 같은 구조적 패턴만 잡고, 통계적 쏠림(B/C 편중)은
+    // 원래 정답 글자 묶음 자체를 안 바꾸니 셔플해도 못 고침 — shuffleAllChoicesInPayload로 교체)
+    shuffleAllChoicesInPayload(payload);
 
     const id = randomUUID();
     payload.meta.id = id;
@@ -300,7 +297,6 @@ Return ONLY this JSON structure (NO markdown, NO explanations, NO extra text):
       daily_life: [dailyLifeTopic1, dailyLifeTopic2].concat(dailyLifeTopic3 ? [dailyLifeTopic3] : []),
       academic: [academicTopicM1],
     };
-    payload.meta.answerShuffled = wasShuffled;
 
     // ✅ Problem Bank에 저장 (비동기)
     extractReadingTestToBank(payload, id).catch((err) => {
@@ -525,22 +521,14 @@ Return ONLY this JSON structure (NO markdown, NO explanations):
       );
     }
 
-    // ✅ 정답 분포 검증 및 셔플 (hard와 easy 모두)
-    const hardAnswers = extractAnswers(module2Data.stage2Pool.hard);
-    const easyAnswers = extractAnswers(module2Data.stage2Pool.easy);
-
-    const { answers: shuffledHard, wasShuffled: hardShuffled } = validateAndShuffleIfNeeded(hardAnswers);
-    const { answers: shuffledEasy, wasShuffled: easyShuffled } = validateAndShuffleIfNeeded(easyAnswers);
-
-    if (hardShuffled) module2Data.stage2Pool.hard = applyShuffledAnswers(module2Data.stage2Pool.hard, shuffledHard);
-    if (easyShuffled) module2Data.stage2Pool.easy = applyShuffledAnswers(module2Data.stage2Pool.easy, shuffledEasy);
+    // ✅ 정답 위치 무작위화 (hard와 easy 모두) — 매 문제 choices를 무조건 섞는다
+    shuffleAllChoicesInPayload(module2Data.stage2Pool.hard);
+    shuffleAllChoicesInPayload(module2Data.stage2Pool.easy);
 
     const id = randomUUID();
     module2Data.meta = {
       id,
       moduleType: 'module2',
-      answerShuffledHard: hardShuffled,
-      answerShuffledEasy: easyShuffled,
     };
 
     // ✅ Problem Bank에 저장 (비동기)
@@ -555,76 +543,3 @@ Return ONLY this JSON structure (NO markdown, NO explanations):
   }
 }
 
-// ✅ 헬퍼 함수: 정답 추출
-function extractAnswers(data: any): string[] {
-  const answers: string[] = [];
-
-  function traverse(obj: any): void {
-    if (!obj) return;
-
-    if (obj.questions && Array.isArray(obj.questions)) {
-      obj.questions.forEach((q: any) => {
-        if (q.choices && Array.isArray(q.choices)) {
-          const correct = q.choices.find((c: any) => c.isCorrect);
-          if (correct?.id) {
-            // id에서 A, B, C, D 추출
-            const letter = correct.id.match(/[ABCD]/);
-            answers.push(letter?.[0] || 'A');
-          }
-        }
-      });
-    }
-
-    if (obj.items && Array.isArray(obj.items)) {
-      obj.items.forEach((item: any) => {
-        traverse(item);
-      });
-    }
-
-    if (obj.modules && Array.isArray(obj.modules)) {
-      obj.modules.forEach((mod: any) => {
-        traverse(mod);
-      });
-    }
-  }
-
-  traverse(data);
-  return answers;
-}
-
-// ✅ 헬퍼 함수: 셔플된 정답 적용
-function applyShuffledAnswers(data: any, shuffledAnswers: string[]): any {
-  let answerIndex = 0;
-
-  function traverse(obj: any): void {
-    if (!obj) return;
-
-    if (obj.questions && Array.isArray(obj.questions)) {
-      obj.questions.forEach((q: any) => {
-        if (q.choices && Array.isArray(q.choices)) {
-          if (answerIndex < shuffledAnswers.length) {
-            const newCorrectAnswer = shuffledAnswers[answerIndex++];
-            q.choices.forEach((c: any) => {
-              c.isCorrect = c.id.match(/[ABCD]/)?.[0] === newCorrectAnswer;
-            });
-          }
-        }
-      });
-    }
-
-    if (obj.items && Array.isArray(obj.items)) {
-      obj.items.forEach((item: any) => {
-        traverse(item);
-      });
-    }
-
-    if (obj.modules && Array.isArray(obj.modules)) {
-      obj.modules.forEach((mod: any) => {
-        traverse(mod);
-      });
-    }
-  }
-
-  traverse(data);
-  return data;
-}
