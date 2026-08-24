@@ -172,12 +172,15 @@ COMPLETE WORDS RULES (CRITICAL):
 - Content words (70%): Noun > Verb > Adjective > Adverb
 - Function words (30%): is, the, from, to, by, in
 - No duplicates
-- Prefix visibility rules:
-  * 2-3 letters: show 1 (is → i_)
-  * 4-6 letters: show 2-3 (from → fr__, people → peo___)
-  * 7-9 letters: show 3 (record → rec___)
-  * 10+ letters: show 3-4 (However → How____)
+- Prefix visibility rules (this only decides how many letters of "visible" to keep — it does NOT affect how the blank is marked in paragraphHtml, see below):
+  * 2-3 letters: show 1 (is → visible "i", hidden "s")
+  * 4-6 letters: show 2-3 (from → visible "fr", hidden "om")
+  * 7-9 letters: show 3 (record → visible "rec", hidden "ord")
+  * 10+ letters: show 3-4 (However → visible "How", hidden "ever")
 - Blanks placed only at word end (show prefix, hide suffix)
+- paragraphHtml blank marking (CRITICAL — the renderer depends on this exact format):
+  In paragraphHtml, write each blank as the "visible" prefix immediately followed by EXACTLY two underscore characters "__" — nothing else. No HTML tags, no data attributes, no bracketed numbers, and the number of underscores must always be exactly 2 regardless of how many letters are hidden.
+  Example: if visible="peo" and hidden="ple", write "peo__" in paragraphHtml (NOT "peo___", NOT "<span data-order='1'>peo<span class='hidden'>ple</span></span>", NOT "peo__ [1]").
 
 Return ONLY this JSON structure (NO markdown, NO explanations, NO extra text):
 {
@@ -192,7 +195,7 @@ Return ONLY this JSON structure (NO markdown, NO explanations, NO extra text):
         "stage": 1,
         "difficulty": "core",
         "passage": "Plain text paragraph with blanks...",
-        "paragraphHtml": "<p>HTML version with blanks...</p>",
+        "paragraphHtml": "<p>His inv__ allowed kno__ to spr__ rap__ across the region, making things far che__ and more acc__.</p>",
         "blanks": [
           {"order": 1, "word": "people", "visible": "peo", "hidden": "ple", "correctToken": "ple", "partOfSpeech": "noun"},
           {"order": 2, "word": "place", "visible": "pla", "hidden": "ce", "correctToken": "ce", "partOfSpeech": "noun"},
@@ -387,8 +390,9 @@ COMPLETE WORDS RULES (BOTH hard & easy branches):
 - Max 5 blanks per sentence
 - Content words 70%, Function words 30%
 - No duplicates
-- Prefix visibility: 2-3 chars→1, 4-6→2-3, 7-9→3, 10+→3-4
-- Example: people→peo___, from→fr___, is→i_
+- Prefix visibility: 2-3 chars→1, 4-6→2-3, 7-9→3, 10+→3-4 (this only decides the "visible" field length, not the blank marking)
+- paragraphHtml blank marking (CRITICAL — the renderer depends on this exact format): write each blank as the "visible" prefix immediately followed by EXACTLY two underscore characters "__" — nothing else. No HTML tags, no data attributes, no bracketed numbers, and always exactly 2 underscores regardless of hidden length.
+  Example: visible="peo" hidden="ple" → write "peo__" in paragraphHtml (NOT "peo___", NOT any HTML span/attribute, NOT "peo__ [1]").
 
 Return ONLY this JSON structure (NO markdown, NO explanations):
 {
@@ -404,7 +408,7 @@ Return ONLY this JSON structure (NO markdown, NO explanations):
           "stage": 2,
           "difficulty": "hard",
           "passage": "Plain text paragraph...",
-          "paragraphHtml": "<p>...</p>",
+          "paragraphHtml": "<p>His inv__ allowed kno__ to spr__ rap__ across the region, making things far che__ and more acc__.</p>",
           "blanks": [
             {"order": 1, "word": "people", "visible": "peo", "hidden": "ple", "correctToken": "ple", "partOfSpeech": "noun"},
             {"order": 2, "word": "place", "visible": "pla", "hidden": "ce", "correctToken": "ce", "partOfSpeech": "noun"},
@@ -449,7 +453,7 @@ Return ONLY this JSON structure (NO markdown, NO explanations):
           "stage": 2,
           "difficulty": "easy",
           "passage": "Plain text paragraph...",
-          "paragraphHtml": "<p>...</p>",
+          "paragraphHtml": "<p>His inv__ allowed kno__ to spr__ rap__ across the region, making things far che__ and more acc__.</p>",
           "blanks": [
             {"order": 1, "word": "people", "visible": "peo", "hidden": "ple", "correctToken": "ple", "partOfSpeech": "noun"},
             {"order": 2, "word": "place", "visible": "pla", "hidden": "ce", "correctToken": "ce", "partOfSpeech": "noun"},
