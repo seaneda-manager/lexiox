@@ -1433,15 +1433,15 @@ export default function VocabSessionPage() {
       }
     }
 
-    // 불합격(70% 미만) + 틀린 단어 있으면 → 틀린 것만 재도전
-    if (acc < 0.7 && wrong.length > 0) {
+    // 불합격(70% 미만) + 틀린 단어 있고 + 아직 재도전 안 했으면 → 딱 한 번만 재도전
+    if (acc < 0.7 && wrong.length > 0 && speedTry < 2) {
       setSpeedWrongIds(wrong);
       setSpeedTry((n) => n + 1);
       return;
     }
 
-    // 통과(70% 이상) + 틀린 단어 있으면 → 깜지로 복습
-    if (acc >= 0.7 && wrong.length > 0) {
+    // 틀린 단어 있으면(통과했거나, 재도전까지 마쳤으면) → 깜지로 복습하고 끝
+    if (wrong.length > 0) {
       setSpeedWrongIds(wrong);
       setCurrentFlashcardIndex(0);
       setFlashcardPoints(0);
