@@ -112,6 +112,63 @@ function generateHomeworkEmail(
   };
 }
 
+function generateHomeworkGradingEmail(
+  teacherName: string,
+  studentName: string,
+  homeworkTitle: string,
+  subjectLabel: string,
+  scorePct: number,
+  correctCount: number,
+  totalCount: number,
+  feedback: string,
+  homeworkId: string
+): EmailTemplate {
+  const scoreColor = scorePct >= 80 ? '#059669' : scorePct >= 50 ? '#d97706' : '#dc2626';
+  return {
+    subject: `📷 [${studentName}] 숙제 채점 결과: ${homeworkTitle} (${scorePct}%)`,
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+        <div style="background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%); padding: 30px; border-radius: 12px 12px 0 0; color: white;">
+          <h1 style="margin: 0; font-size: 24px;">숙제 채점 완료</h1>
+          <p style="margin: 8px 0 0 0; opacity: 0.9;">학생이 숙제 사진을 제출했습니다</p>
+        </div>
+
+        <div style="padding: 30px; background: #f9fafb; border: 1px solid #e5e7eb; border-top: none;">
+          <p style="margin: 0 0 20px 0;">안녕하세요 <strong>${teacherName}</strong>님,</p>
+
+          <p style="margin: 0 0 20px 0;"><strong>${studentName}</strong> 학생이 숙제를 제출하여 AI가 자동 채점했습니다.</p>
+
+          <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid ${scoreColor}; margin: 20px 0;">
+            <div style="margin: 10px 0;">
+              <span style="color: #6b7280; font-size: 14px;">📝 숙제</span>
+              <p style="margin: 5px 0 0 0; font-size: 18px; font-weight: 600;">${homeworkTitle}</p>
+              <p style="margin: 2px 0 0 0; font-size: 13px; color: #6b7280;">${subjectLabel}</p>
+            </div>
+            <div style="margin: 10px 0;">
+              <span style="color: #6b7280; font-size: 14px;">📊 점수</span>
+              <p style="margin: 5px 0 0 0; font-size: 24px; font-weight: 700; color: ${scoreColor};">${scorePct}% <span style="font-size: 14px; font-weight: 400; color: #6b7280;">(${correctCount}/${totalCount})</span></p>
+            </div>
+            <div style="margin: 10px 0;">
+              <span style="color: #6b7280; font-size: 14px;">💬 AI 총평</span>
+              <p style="margin: 5px 0 0 0; font-size: 15px;">${feedback}</p>
+            </div>
+          </div>
+
+          <a href="${APP_URL}/protected/admin/homework/${homeworkId}" style="display: inline-block; background: #0891b2; color: white; padding: 12px 30px; border-radius: 6px; text-decoration: none; font-weight: 600; margin: 20px 0;">
+            상세 결과 확인하기
+          </a>
+
+          <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
+
+          <p style="margin: 0; font-size: 12px; color: #9ca3af;">
+            이 메일은 자동으로 발송되었습니다. 문의사항이 있으시면 support@toefl-platform.com으로 연락주세요.
+          </p>
+        </div>
+      </div>
+    `,
+  };
+}
+
 function generateCustomEmail(studentName: string, title: string, message: string): EmailTemplate {
   return {
     subject: title,
@@ -161,6 +218,18 @@ function getEmailTemplate(
         studentName,
         data.homeworkTitle || '새로운 숙제',
         data.bookName
+      );
+    case 'homework-grading':
+      return generateHomeworkGradingEmail(
+        studentName, // recipient name (teacher) — param kept generic across templates
+        data.studentName || '학생',
+        data.homeworkTitle || '숙제',
+        data.subjectLabel || '영어 숙제',
+        data.scorePct ?? 0,
+        data.correctCount ?? 0,
+        data.totalCount ?? 0,
+        data.feedback || '',
+        data.homeworkId || ''
       );
     case 'custom':
       return generateCustomEmail(studentName, data.title || '알림', data.message || '');

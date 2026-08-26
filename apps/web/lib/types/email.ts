@@ -1,4 +1,4 @@
-export type EmailNotificationType = 'daily-task' | 'homework' | 'test' | 'custom';
+export type EmailNotificationType = 'daily-task' | 'homework' | 'homework-grading' | 'test' | 'custom';
 
 export interface EmailNotificationPayload {
   type: EmailNotificationType;

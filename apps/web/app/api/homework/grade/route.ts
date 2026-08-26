@@ -6,7 +6,9 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { getServerSupabase } from '@/lib/supabase/server';
+import { getServiceSupabase } from '@/lib/supabase/service';
 import { awardPoints } from '@/lib/gamification/awardPoints';
+import { sendBulkEmails } from '@/lib/utils/emailService';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -196,6 +198,42 @@ ${answerKeyText}
       sourceRef: homeworkId,
       metadata:  { score_pct: result.score_pct, correct: result.correct_count, total: result.total_count },
     });
+
+    // 선생님/관리자에게 채점 결과 이메일 전송 (fire-and-forget, 실패해도 응답엔 영향 없음)
+    void (async () => {
+      try {
+        const { data: studentProfile } = await supabase
+          .from('profiles')
+          .select('full_name, email')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        const service = getServiceSupabase();
+        const { data: teachers } = await service
+          .from('profiles')
+          .select('email, full_name')
+          .in('role', ['teacher', 'admin']);
+
+        const recipients = (teachers || [])
+          .filter((t: any): t is { email: string; full_name: string | null } => !!t.email)
+          .map((t: any) => ({ name: t.full_name || '선생님', email: t.email }));
+
+        if (recipients.length > 0) {
+          await sendBulkEmails(recipients, 'homework-grading', {
+            studentName:   studentProfile?.full_name || studentProfile?.email || '학생',
+            homeworkTitle: homework.title,
+            subjectLabel:  subjectHint,
+            scorePct:      result.score_pct,
+            correctCount:  result.correct_count,
+            totalCount:    result.total_count,
+            feedback:      result.overall_feedback,
+            homeworkId,
+          });
+        }
+      } catch (e) {
+        console.error('[homework/grade] teacher notify failed', e);
+      }
+    })();
 
     return NextResponse.json({ ok: true, result });
   } catch (err) {
