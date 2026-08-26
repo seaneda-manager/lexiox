@@ -159,11 +159,29 @@ export async function assignStudentAction(params: {
 
     // ✅ 1~totalDays 전부 배정 (1부터 시작, 이후 cursor_day_index로 관리)
     // vocab_assignment_status enum에는 QUEUED가 없어 전부 ASSIGNED로 저장 (기존 데이터 컨벤션과 동일)
+    // ⚠️ available_at은 student_vocab_assignments의 NOT NULL 컬럼이라 insert 시점에 반드시 같이 넣어야 함
+    // (예전엔 insert 후 별도 update로 채웠는데, 그 사이 컬럼이 NOT NULL로 바뀌면서 insert 자체가 매번 실패해
+    //  배정이 전부 조용히 0건으로 끝나던 버그가 있었음 — 2026-08-26 발견)
     const assignmentIds: string[] = [];
     const failedDays: number[] = [];
     for (let dayIndex = 1; dayIndex <= totalDays; dayIndex++) {
       const setId = setIdByDayIndex.get(dayIndex);
       if (!setId) {
+        failedDays.push(dayIndex);
+        continue;
+      }
+
+      const { data: availableAt, error: calcErr } = await supabase.rpc(
+        "calculate_available_date",
+        {
+          p_start_date: startDate,
+          p_weekdays: weekdaysToUse,
+          p_day_index: dayIndex,
+        }
+      );
+
+      if (calcErr || !availableAt) {
+        console.error(`❌ assignStudentAction available_at calc failed (day ${dayIndex}):`, calcErr?.message);
         failedDays.push(dayIndex);
         continue;
       }
@@ -176,6 +194,7 @@ export async function assignStudentAction(params: {
           set_id: setId,
           day_index: dayIndex,
           status: "ASSIGNED",
+          available_at: availableAt,
         } as any)
         .select("id")
         .single();
@@ -190,33 +209,6 @@ export async function assignStudentAction(params: {
 
     if (failedDays.length > 0) {
       console.error(`⚠️ assignStudentAction: ${failedDays.length}/${totalDays} days failed to assign (no matching vocab_sets or insert error):`, failedDays);
-    }
-
-    // ✅ available_at 계산 (모든 60개 Days)
-    const { data: allAssignments, error: fetchErr } = await supabase
-      .from("student_vocab_assignments")
-      .select("id, day_index")
-      .eq("student_id", params.studentId)
-      .eq("track_id", params.trackId);
-
-    if (fetchErr) throw new Error(fetchErr.message);
-
-    for (const assignment of allAssignments || []) {
-      const { data: newDate, error: calcErr } = await supabase.rpc(
-        "calculate_available_date",
-        {
-          p_start_date: startDate,
-          p_weekdays: weekdaysToUse,
-          p_day_index: assignment.day_index,
-        }
-      );
-
-      if (!calcErr && newDate) {
-        await supabase
-          .from("student_vocab_assignments")
-          .update({ available_at: newDate } as any)
-          .eq("id", assignment.id);
-      }
     }
 
     console.log(`✅ Track 배정 완료: ${assignmentIds.length}/${totalDays}개 Days 배정됨 (Day ${startDayIndex}부터 시작)`);
