@@ -7,6 +7,10 @@
     {
       "path": "/api/speaking-2026/cleanup-old-audio",
       "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/cron/exam-mode-check",
+      "schedule": "0 0 * * *"
     }
   ]
 }

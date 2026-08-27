@@ -169,6 +169,60 @@ function generateHomeworkGradingEmail(
   };
 }
 
+function generateExamModeNoticeEmail(
+  teacherName: string,
+  schoolName: string,
+  examTypeLabel: string,
+  prepStartDate: string,
+  examStartDate: string,
+  examEndDate: string,
+  periodId: string
+): EmailTemplate {
+  return {
+    subject: `📅 [${schoolName}] ${examTypeLabel} 준비기간 3일 후 시작 — 레귤러 스케줄 자동 홀드 예정`,
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+        <div style="background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%); padding: 30px; border-radius: 12px 12px 0 0; color: white;">
+          <h1 style="margin: 0; font-size: 24px;">시험 준비기간 예고</h1>
+          <p style="margin: 8px 0 0 0; opacity: 0.9;">별도 조치가 없으면 자동으로 진행됩니다</p>
+        </div>
+
+        <div style="padding: 30px; background: #f9fafb; border: 1px solid #e5e7eb; border-top: none;">
+          <p style="margin: 0 0 20px 0;">안녕하세요 <strong>${teacherName}</strong>님,</p>
+
+          <p style="margin: 0 0 20px 0;"><strong>${schoolName}</strong>의 <strong>${examTypeLabel}</strong> 준비기간이 <strong>3일 후</strong> 시작됩니다.</p>
+
+          <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #7c3aed; margin: 20px 0;">
+            <div style="margin: 10px 0;">
+              <span style="color: #6b7280; font-size: 14px;">📌 준비기간 시작</span>
+              <p style="margin: 5px 0 0 0; font-size: 18px; font-weight: 600; color: #7c3aed;">${prepStartDate}</p>
+            </div>
+            <div style="margin: 10px 0;">
+              <span style="color: #6b7280; font-size: 14px;">🗓️ 시험 기간</span>
+              <p style="margin: 5px 0 0 0; font-size: 16px; font-weight: 500;">${examStartDate} ~ ${examEndDate}</p>
+            </div>
+          </div>
+
+          <p style="margin: 0 0 20px 0;">
+            준비기간이 시작되면 이 학교 학생들의 단어·숙제 레귤러 스케줄이 <strong>자동으로 홀드</strong>됩니다.
+            별도로 취소하지 않으면 예정대로 진행되고, 홀드가 필요 없으면 관리자 화면에서 취소할 수 있습니다.
+          </p>
+
+          <a href="${APP_URL}/protected/admin/exam-mode" style="display: inline-block; background: #7c3aed; color: white; padding: 12px 30px; border-radius: 6px; text-decoration: none; font-weight: 600; margin: 20px 0;">
+            확인 / 취소하러 가기
+          </a>
+
+          <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
+
+          <p style="margin: 0; font-size: 12px; color: #9ca3af;">
+            이 메일은 자동으로 발송되었습니다. 문의사항이 있으시면 support@toefl-platform.com으로 연락주세요.
+          </p>
+        </div>
+      </div>
+    `,
+  };
+}
+
 function generateCustomEmail(studentName: string, title: string, message: string): EmailTemplate {
   return {
     subject: title,
@@ -230,6 +284,16 @@ function getEmailTemplate(
         data.totalCount ?? 0,
         data.feedback || '',
         data.homeworkId || ''
+      );
+    case 'exam-mode-notice':
+      return generateExamModeNoticeEmail(
+        studentName, // recipient name (teacher)
+        data.schoolName || '학교',
+        data.examTypeLabel || '시험',
+        data.prepStartDate || '',
+        data.examStartDate || '',
+        data.examEndDate || '',
+        data.periodId || ''
       );
     case 'custom':
       return generateCustomEmail(studentName, data.title || '알림', data.message || '');
