@@ -165,7 +165,7 @@ async function createAcademyStudentAction(formData: FormData) {
   const email = cleanNullableText(formData.get("email"));
   const password = cleanNullableText(formData.get("password"));
   const loginId = cleanNullableText(formData.get("login_id"));
-  const school = cleanNullableText(formData.get("school"));
+  const schoolId = cleanNullableText(formData.get("school_id"));
   const grade = cleanNullableText(formData.get("grade"));
   const phone = cleanNullableText(formData.get("phone"));
   const parentPhone = cleanNullableText(formData.get("parent_phone"));
@@ -179,6 +179,14 @@ async function createAcademyStudentAction(formData: FormData) {
         error: sanitizeRedirectMessage("학생 이름(full_name)은 필수입니다."),
       })
     );
+  }
+
+  // school_id 선택 시 학교명을 school(레거시 표시용 텍스트)에도 미러링 —
+  // 기존 화면들(목록 컬럼, 배정 피커 라벨 등)이 아직 school 텍스트를 그대로 읽고 있어서.
+  let school: string | null = null;
+  if (schoolId) {
+    const { data: schoolRow } = await supabase.from("schools").select("name").eq("id", schoolId).maybeSingle();
+    school = asString((schoolRow as Record<string, unknown> | null)?.name) ?? null;
   }
 
   const wantsAuthAccount = !!email || !!password;
@@ -252,6 +260,7 @@ async function createAcademyStudentAction(formData: FormData) {
       email,
       login_id: loginId,
       school,
+      school_id: schoolId,
       grade,
       level,
       phone,
@@ -312,7 +321,7 @@ async function updateAcademyStudentAction(formData: FormData) {
   const displayName = cleanNullableText(formData.get("display_name")) || fullName;
   const email = cleanNullableText(formData.get("email"));
   const loginId = cleanNullableText(formData.get("login_id"));
-  const school = cleanNullableText(formData.get("school"));
+  const schoolId = cleanNullableText(formData.get("school_id"));
   const grade = cleanNullableText(formData.get("grade"));
   const phone = cleanNullableText(formData.get("phone"));
   const parentPhone = cleanNullableText(formData.get("parent_phone"));
@@ -320,6 +329,13 @@ async function updateAcademyStudentAction(formData: FormData) {
   const notes = cleanNullableText(formData.get("notes"));
   const level = parseLevel(cleanNullableText(formData.get("level")));
   const classDays = formData.getAll("class_days").map((v) => String(v));
+
+  // school_id 선택 시 학교명을 school(레거시 표시용 텍스트)에도 미러링
+  let school: string | null = null;
+  if (schoolId) {
+    const { data: schoolRow } = await supabase.from("schools").select("name").eq("id", schoolId).maybeSingle();
+    school = asString((schoolRow as Record<string, unknown> | null)?.name) ?? null;
+  }
 
   if (!studentId) {
     redirect(
@@ -413,6 +429,7 @@ async function updateAcademyStudentAction(formData: FormData) {
       email,
       login_id: loginId,
       school,
+      school_id: schoolId,
       grade,
       level,
       phone,
@@ -614,12 +631,24 @@ export default async function AdminStudentsPage({
   const { data, error, count } = await supabase
     .from("academy_students")
     .select(
-      "id, full_name, display_name, email, login_id, school, grade, level, phone, parent_phone, memo, notes, is_active, deactivated_at, deactivated_reason, must_change_password, auth_user_id, profile_id, created_at, updated_at, class_days",
+      "id, full_name, display_name, email, login_id, school, school_id, grade, level, phone, parent_phone, memo, notes, is_active, deactivated_at, deactivated_reason, must_change_password, auth_user_id, profile_id, created_at, updated_at, class_days",
       { count: "exact" }
     )
     .order("updated_at", { ascending: false })
     .range(from, to)
     .limit(PAGE_SIZE);
+
+  const { data: schoolsData } = await supabase
+    .from("schools")
+    .select("id, name")
+    .order("name", { ascending: true });
+  const schoolOptions = [
+    { value: "", label: "선택 안 함" },
+    ...((schoolsData ?? []) as { id: string; name: string }[]).map((s) => ({
+      value: s.id,
+      label: s.name,
+    })),
+  ];
 
   const rows = (data ?? []) as Record<string, unknown>[];
   const totalCount = count ?? 0;
@@ -729,7 +758,7 @@ export default async function AdminStudentsPage({
                 { value: "advanced", label: "Advanced" },
               ]}
             />
-            <TextField label="학교" name="school" placeholder="예: 송도고" />
+            <SelectField label="학교" name="school_id" defaultValue="" options={schoolOptions} />
             <TextField label="학년" name="grade" placeholder="예: 고1" />
             <TextField label="로그인 이메일" name="email" placeholder="예: student@x.com" />
             <TextField
@@ -816,10 +845,11 @@ export default async function AdminStudentsPage({
                   { value: "advanced", label: "Advanced" },
                 ]}
               />
-              <TextField
+              <SelectField
                 label="학교"
-                name="school"
-                defaultValue={asString(editingRow.school) ?? ""}
+                name="school_id"
+                defaultValue={asString(editingRow.school_id) ?? ""}
+                options={schoolOptions}
               />
               <TextField
                 label="학년"
