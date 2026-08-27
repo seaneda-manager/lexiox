@@ -75,9 +75,8 @@ export default async function MiddleNaesinStudentPage() {
 
           <div className="grid gap-3 sm:grid-cols-2">
             {gradeUnits.map((u) => (
-              <Link
+              <div
                 key={u.id}
-                href={`/naesin/middle/${u.id}/drill`}
                 className="group rounded-2xl border bg-white p-5 transition hover:border-sky-200 hover:shadow-sm"
               >
                 <div className="text-xs text-neutral-400">
@@ -92,8 +91,15 @@ export default async function MiddleNaesinStudentPage() {
                 {u.school_name && (
                   <div className="mt-0.5 text-xs text-neutral-400">{u.school_name}</div>
                 )}
-                <div className="mt-3 text-xs font-medium text-sky-500">드릴 시작 →</div>
-              </Link>
+                <div className="mt-3 flex gap-3">
+                  <Link href={`/naesin/middle/${u.id}/drill`} className="text-xs font-medium text-sky-500 hover:underline">
+                    드릴 시작 →
+                  </Link>
+                  <Link href={`/naesin/middle/${u.id}/readiness`} className="text-xs font-medium text-violet-600 hover:underline">
+                    시험대비 진행 →
+                  </Link>
+                </div>
+              </div>
             ))}
           </div>
         </section>

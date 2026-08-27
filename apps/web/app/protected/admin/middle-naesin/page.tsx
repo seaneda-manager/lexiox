@@ -52,6 +52,22 @@ export default async function MiddleNaesinHubPage() {
             </p>
           </div>
         </Link>
+
+        <Link
+          href="/admin/middle-naesin/readiness"
+          className="group flex flex-col gap-3 rounded-2xl border bg-white p-6 shadow-sm hover:border-neutral-400 hover:shadow-md transition"
+        >
+          <span className="text-2xl">✅</span>
+          <div>
+            <div className="font-semibold text-neutral-900">시험대비 Readiness</div>
+            <p className="mt-1 text-xs text-neutral-500">
+              학생별 수행→check→test 진행 현황(sub요소 단위)을 확인합니다.
+            </p>
+          </div>
+          <div className="mt-auto pt-2 text-xs font-medium text-neutral-900 group-hover:underline">
+            현황 보기 →
+          </div>
+        </Link>
       </div>
     </main>
   );

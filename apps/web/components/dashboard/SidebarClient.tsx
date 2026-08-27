@@ -8,7 +8,7 @@ import {
   LayoutDashboard, BookOpen, Headphones, Mic, PenLine, BookText,
   ClipboardList, FileText, GraduationCap, Library, List, Download,
   Upload, Send, BarChart2, Home, UserPlus, CheckSquare, Users,
-  ClipboardCheck, PlayCircle, Gift, ShieldCheck, Globe, Settings, Calendar,
+  ClipboardCheck, PlayCircle, Gift, ShieldCheck, Globe, Settings, Calendar, School,
   type LucideProps,
 } from 'lucide-react';
 import { useLang } from '@/contexts/LangContext';
@@ -261,6 +261,8 @@ export default function SidebarClient({ role, program = null, hasHiNaesin = fals
 
         { section: '선생님 도구' as NavSection, href: '/teacher/home',             label: '선생님 홈',    icon: Home },
         { section: '선생님 도구' as NavSection, href: '/admin/students',           label: '학생 추가/관리', icon: UserPlus },
+        { section: '선생님 도구' as NavSection, href: '/admin/schools',            label: '학교 관리',    icon: School },
+        { section: '선생님 도구' as NavSection, href: '/admin/exam-mode',          label: '시험모드 현황', icon: Calendar },
         { section: '선생님 도구' as NavSection, href: '/teacher/tasks',            label: '할 일 관리',   icon: CheckSquare },
         { section: '선생님 도구' as NavSection, href: '/teacher/students',         label: '학생 현황',    icon: Users },
         { section: '선생님 도구' as NavSection, href: '/teacher/reports/students', label: '활동 리포트',  icon: BarChart2 },
