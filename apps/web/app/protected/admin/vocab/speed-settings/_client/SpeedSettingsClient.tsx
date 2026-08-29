@@ -2,10 +2,13 @@
 
 import React, { useEffect, useState } from "react";
 
+type SpeedMode = "full" | "simple";
+
 type TrackWithSpeed = {
   id: string;
   name: string;
   speedTimeoutSeconds: number;
+  speedMode: SpeedMode;
 };
 
 export default function SpeedSettingsClient() {
@@ -28,7 +31,12 @@ export default function SpeedSettingsClient() {
         }
 
         const data = await res.json();
-        setTracks(data.tracks || []);
+        setTracks(
+          (data.tracks || []).map((t: any) => ({
+            ...t,
+            speedMode: t.speedMode === "simple" ? "simple" : "full",
+          }))
+        );
       } catch (err) {
         setError(err instanceof Error ? err.message : "Unknown error");
       } finally {
@@ -72,6 +80,39 @@ export default function SpeedSettingsClient() {
       );
 
       setSuccess(`트랙 "${tracks.find((t) => t.id === trackId)?.name}"의 타이머가 ${newSeconds}초로 설정되었습니다`);
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unknown error");
+    } finally {
+      setUpdating(null);
+    }
+  }
+
+  // Speed 버전 업데이트 (full / simple)
+  async function handleModeUpdate(trackId: string, newMode: SpeedMode) {
+    try {
+      setUpdating(trackId);
+      setError(null);
+      setSuccess(null);
+
+      const res = await fetch("/api/vocab/speed-settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ trackId, speedMode: newMode }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to update speed mode");
+      }
+
+      setTracks((prev) =>
+        prev.map((t) => (t.id === trackId ? { ...t, speedMode: newMode } : t))
+      );
+
+      const label = newMode === "simple" ? "간략 (Simple)" : "정식 (Full)";
+      setSuccess(
+        `트랙 "${tracks.find((t) => t.id === trackId)?.name}"의 Speed 버전이 ${label}(으)로 설정되었습니다`
+      );
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
@@ -153,6 +194,43 @@ export default function SpeedSettingsClient() {
               💡 학생이 이 트랙의 Speed Challenge를 풀 때 타이머가{" "}
               <span className="font-semibold">{track.speedTimeoutSeconds}초</span>로
               설정됩니다
+            </div>
+
+            <div className="border-t pt-3 space-y-2">
+              <div className="text-sm font-bold text-slate-800">Speed 버전</div>
+              <div className="flex gap-2">
+                {([
+                  { mode: "full" as SpeedMode, label: "정식 (Full)" },
+                  { mode: "simple" as SpeedMode, label: "간략 (Simple)" },
+                ]).map(({ mode, label }) => (
+                  <button
+                    key={mode}
+                    onClick={() => handleModeUpdate(track.id, mode)}
+                    disabled={updating === track.id}
+                    className={[
+                      "px-3 py-2 text-sm font-semibold rounded-lg transition-colors",
+                      track.speedMode === mode
+                        ? "bg-emerald-600 text-white shadow"
+                        : "bg-slate-100 text-slate-700 hover:bg-slate-200 disabled:opacity-50",
+                    ].join(" ")}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <div className="text-xs text-slate-500 px-3 py-2 bg-slate-50 rounded-lg">
+                {track.speedMode === "simple" ? (
+                  <>
+                    🟢 <span className="font-semibold">간략</span>: 모든 단어를 단어→뜻 /
+                    뜻→스펠링 각 1회만 물어보고, 오답 재도전 없이 바로 깜지로 넘어갑니다
+                  </>
+                ) : (
+                  <>
+                    🔵 <span className="font-semibold">정식</span>: 70% 통과 기준 +
+                    틀린 단어 재도전(최대 1회) 후 깜지 복습
+                  </>
+                )}
+              </div>
             </div>
           </div>
         ))}

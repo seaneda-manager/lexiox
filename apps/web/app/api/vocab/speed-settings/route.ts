@@ -54,19 +54,41 @@ export async function GET(req: Request) {
 export async function PATCH(req: Request) {
   try {
     const body = await req.json();
-    const { trackId, speedTimeoutSeconds } = body;
+    const { trackId, speedTimeoutSeconds, speedMode } = body;
 
     // 유효성 검사
-    if (!trackId || typeof speedTimeoutSeconds !== "number") {
+    if (!trackId) {
       return NextResponse.json(
-        { error: "trackId and speedTimeoutSeconds are required" },
+        { error: "trackId is required" },
         { status: 400 }
       );
     }
 
-    if (speedTimeoutSeconds < 2 || speedTimeoutSeconds > 30) {
+    const patch: Record<string, any> = {};
+
+    if (speedTimeoutSeconds !== undefined) {
+      if (typeof speedTimeoutSeconds !== "number" || speedTimeoutSeconds < 2 || speedTimeoutSeconds > 30) {
+        return NextResponse.json(
+          { error: "speedTimeoutSeconds must be a number between 2 and 30" },
+          { status: 400 }
+        );
+      }
+      patch.speed_timeout_seconds = speedTimeoutSeconds;
+    }
+
+    if (speedMode !== undefined) {
+      if (speedMode !== "full" && speedMode !== "simple") {
+        return NextResponse.json(
+          { error: "speedMode must be 'full' or 'simple'" },
+          { status: 400 }
+        );
+      }
+      patch.speed_mode = speedMode;
+    }
+
+    if (Object.keys(patch).length === 0) {
       return NextResponse.json(
-        { error: "speedTimeoutSeconds must be between 2 and 30" },
+        { error: "speedTimeoutSeconds or speedMode is required" },
         { status: 400 }
       );
     }
@@ -76,10 +98,12 @@ export async function PATCH(req: Request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("vocab_tracks")
-      .update({ speed_timeout_seconds: speedTimeoutSeconds })
-      .eq("id", trackId);
+      .update(patch)
+      .eq("id", trackId)
+      .select("id, speed_timeout_seconds, speed_mode")
+      .maybeSingle();
 
     if (error) {
       console.error("Speed settings PATCH error:", error);
@@ -89,7 +113,10 @@ export async function PATCH(req: Request) {
       );
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json(
+      { success: true, row: data ?? null },
+      { headers: { "Cache-Control": "no-store" } }
+    );
   } catch (err) {
     console.error("Speed settings route error:", err);
     return NextResponse.json(

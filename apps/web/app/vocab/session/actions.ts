@@ -30,6 +30,7 @@ export type LoadSessionWordsActionResult =
       dayIndex?: number;
       totalDays?: number;
       speedTimeoutSeconds?: number;
+      speedMode?: "full" | "simple";
 
       wordFormsByWordId?: Record<string, WordFormRowLike>;
       wordExamplesByWordId?: Record<string, any>;
@@ -836,6 +837,9 @@ export async function loadSessionWordsAction(
     let trackTitle: string | null = null;
     let totalDays: number | null = null;
     let speedTimeoutSeconds: number | null = null;
+    // Speed 버전: 학생값(student_vocab_plans) 우선, 없으면 Track 기본값(vocab_tracks), 그것도 없으면 'simple'
+    let trackSpeedMode: "full" | "simple" = "simple";
+    let studentSpeedMode: "full" | "simple" | null = null;
 
     {
       try {
@@ -862,7 +866,21 @@ export async function loadSessionWordsAction(
             speedTimeoutSeconds = typeof trackData.speed_timeout_seconds === "number" ? trackData.speed_timeout_seconds : 15;
           }
 
-          // student_vocab_plans에서 cursor_day_index 조회
+          // Track 기본 speed_mode (방어적 조회 — 미마이그레이션 DB에서도 위 값들이 안 깨지도록)
+          try {
+            const { data: modeRow } = await client
+              .from("vocab_tracks")
+              .select("speed_mode")
+              .eq("id", trackId)
+              .maybeSingle();
+            if (modeRow && (modeRow as any).speed_mode === "full") {
+              trackSpeedMode = "full";
+            }
+          } catch {
+            // 컬럼 없음 → 'simple' 유지
+          }
+
+          // student_vocab_plans에서 cursor_day_index + 학생별 speed_mode 조회
           if (academyStudentId) {
             try {
               const { data: planData } = await client
@@ -877,6 +895,19 @@ export async function loadSessionWordsAction(
               }
             } catch (e) {
               // 이 쿼리 실패는 무시 (trackTitle/totalDays는 이미 있음)
+            }
+
+            try {
+              const { data: planMode } = await client
+                .from("student_vocab_plans")
+                .select("speed_mode")
+                .eq("student_id", academyStudentId)
+                .eq("track_id", trackId)
+                .maybeSingle();
+              const v = planMode && (planMode as any).speed_mode;
+              if (v === "full" || v === "simple") studentSpeedMode = v;
+            } catch {
+              // 컬럼 없음 → null 유지 (Track 기본값 사용)
             }
           }
         }
@@ -900,6 +931,7 @@ export async function loadSessionWordsAction(
       wordExamplesByWordId,
       wordCollocationsByWordId,
       speedTimeoutSeconds: speedTimeoutSeconds ?? 15,
+      speedMode: studentSpeedMode ?? trackSpeedMode,
       note: input?.setId ? "loaded via forced setId" : `loaded via ${diag.assignmentSource}`,
       diag,
     };

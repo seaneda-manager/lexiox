@@ -29,6 +29,8 @@ export type StudentProgress = {
   isPaused: boolean;
   lastCompletedDate: string | null;
   nextAvailableDate: string | null;
+  /** Speed 버전 학생별 오버라이드. null이면 Track 기본값(trackSpeedMode)을 따름 */
+  speedMode: "full" | "simple" | null;
 };
 
 export async function listVocabTracksForProgressAction(): Promise<
@@ -50,7 +52,10 @@ export async function listVocabTracksForProgressAction(): Promise<
 
 export async function listStudentProgressForTrackAction(params: {
   trackId: string;
-}): Promise<{ ok: true; rows: StudentProgress[]; todayISO: string } | { ok: false; error: string }> {
+}): Promise<
+  | { ok: true; rows: StudentProgress[]; todayISO: string; trackSpeedMode: "full" | "simple" }
+  | { ok: false; error: string }
+> {
   try {
     const supabase = await getServerSupabase();
     const trackId = params.trackId.trim();
@@ -77,9 +82,39 @@ export async function listStudentProgressForTrackAction(params: {
     const plans = (plansRes.data ?? []) as any[];
     const totalDays = Number((trackRes.data as any)?.total_days ?? 0);
 
-    if (plans.length === 0) return { ok: true, rows: [], todayISO };
+    // Track 기본 speed_mode (방어적 — 미마이그레이션 DB에서도 화면이 안 깨지도록). 기본 'simple'.
+    let trackSpeedMode: "full" | "simple" = "simple";
+    try {
+      const { data: tsm } = await supabase
+        .from("vocab_tracks")
+        .select("speed_mode")
+        .eq("id", trackId)
+        .maybeSingle();
+      if ((tsm as any)?.speed_mode === "full") trackSpeedMode = "full";
+    } catch {
+      /* 컬럼 없음 → 'simple' */
+    }
+
+    if (plans.length === 0) return { ok: true, rows: [], todayISO, trackSpeedMode };
 
     const studentIds = plans.map((p: any) => String(p.student_id));
+
+    // 학생별 speed_mode 오버라이드 (별도·방어적 조회)
+    const speedModeByStudent: Record<string, "full" | "simple" | null> = {};
+    try {
+      const { data: smRows } = await supabase
+        .from("student_vocab_plans")
+        .select("student_id, speed_mode")
+        .eq("track_id", trackId)
+        .in("student_id", studentIds);
+      for (const r of smRows ?? []) {
+        const v = (r as any).speed_mode;
+        speedModeByStudent[String((r as any).student_id)] =
+          v === "full" || v === "simple" ? v : null;
+      }
+    } catch {
+      /* 컬럼 없음 → 전부 null(=Track 기본값) */
+    }
 
     const [studentsRes, assignmentsRes] = await Promise.all([
       supabase
@@ -140,6 +175,7 @@ export async function listStudentProgressForTrackAction(params: {
         isPaused: Boolean(plan.is_paused),
         lastCompletedDate,
         nextAvailableDate,
+        speedMode: speedModeByStudent[sid] ?? null,
       };
     });
 
@@ -149,7 +185,38 @@ export async function listStudentProgressForTrackAction(params: {
       return a.name.localeCompare(b.name);
     });
 
-    return { ok: true, rows, todayISO };
+    return { ok: true, rows, todayISO, trackSpeedMode };
+  } catch (e: any) {
+    return { ok: false, error: e?.message ?? "failed" };
+  }
+}
+
+/**
+ * 학생 1명의 Speed 버전 오버라이드 설정.
+ * mode = null 이면 오버라이드 해제(= Track 기본값을 따름).
+ */
+export async function setStudentVocabSpeedModeAction(params: {
+  studentId: string;
+  trackId: string;
+  mode: "full" | "simple" | null;
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    const supabase = await getServerSupabase();
+    const studentId = String(params.studentId ?? "").trim();
+    const trackId = String(params.trackId ?? "").trim();
+    if (!studentId || !trackId) return { ok: false, error: "studentId와 trackId가 필요합니다" };
+    if (params.mode !== null && params.mode !== "full" && params.mode !== "simple") {
+      return { ok: false, error: "mode는 'full' | 'simple' | null 이어야 합니다" };
+    }
+
+    const { error } = await supabase
+      .from("student_vocab_plans")
+      .update({ speed_mode: params.mode })
+      .eq("student_id", studentId)
+      .eq("track_id", trackId);
+
+    if (error) return { ok: false, error: error.message };
+    return { ok: true };
   } catch (e: any) {
     return { ok: false, error: e?.message ?? "failed" };
   }

@@ -70,6 +70,14 @@ export default function VocabHubNewPage() {
   const [reviewData, setReviewData] = useState<ReviewData | null>(null);
   const [activeTab, setActiveTab] = useState<"today" | "review" | "games">("today");
 
+  // 단어 시험 자격 (해당 Day 학습을 깜지까지 완료해야 학원에서 시험 가능)
+  const [testEligibility, setTestEligibility] = useState<{
+    dayComplete: boolean;
+    testTaken: boolean;
+    score: number | null;
+    day: number | null;
+  } | null>(null);
+
   // 오늘의 문장 상태
   const [sentenceIdx, setSentenceIdx] = useState(0);
   const [userInput, setUserInput] = useState("");
@@ -117,6 +125,29 @@ export default function VocabHubNewPage() {
     }
   };
 
+  // 단어 시험 자격 조회
+  const loadTestEligibility = async () => {
+    if (!bookId) return;
+    try {
+      const res = await fetch(
+        `/api/vocab/test/eligibility?track_id=${encodeURIComponent(bookId)}`,
+        { cache: "no-store" }
+      );
+      if (!res.ok) return;
+      const d = await res.json();
+      if (d?.ok) {
+        setTestEligibility({
+          dayComplete: !!d.dayComplete,
+          testTaken: !!d.testTaken,
+          score: typeof d.score === "number" ? d.score : null,
+          day: typeof d.day === "number" ? d.day : null,
+        });
+      }
+    } catch {
+      /* non-fatal */
+    }
+  };
+
   // 복습 데이터 조회 함수
   const loadReviewData = async () => {
     if (!studentId || !bookId) return;
@@ -136,6 +167,7 @@ export default function VocabHubNewPage() {
     if (!studentId || !bookId) return;
     loadTodayProgress();
     loadReviewData();
+    loadTestEligibility();
   }, [studentId, bookId]);
 
   // 페이지 포커스 시 데이터 새로고침 (학습 완료 후 돌아올 때)
@@ -143,6 +175,7 @@ export default function VocabHubNewPage() {
     const handleFocus = () => {
       loadTodayProgress();
       loadReviewData();
+      loadTestEligibility();
     };
 
     window.addEventListener("focus", handleFocus);
@@ -362,6 +395,30 @@ export default function VocabHubNewPage() {
                       학습 시작
                     </button>
                   </div>
+
+                  {/* 단어 시험 안내 + 자격 상태 */}
+                  <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
+                    <p className="text-sm text-amber-900">
+                      📌 <span className="font-semibold">숙제인 단어 학습(깜지까지)을 완료해야만 학원에서 단어 시험을 볼 수 있습니다.</span>
+                    </p>
+                    {testEligibility && (
+                      <div className="mt-3">
+                        {testEligibility.testTaken ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-800">
+                            ✓ 단어 시험 완료{testEligibility.score != null ? ` · ${testEligibility.score}점` : ""}
+                          </span>
+                        ) : testEligibility.dayComplete ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
+                            ● 학습 완료 · 학원에서 단어 시험 응시 가능
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-gray-200 px-3 py-1 text-xs font-semibold text-gray-600">
+                            🔒 학습 미완료 · 단어 시험 잠김
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* 오늘의 문장 섹션 */}
@@ -369,6 +426,12 @@ export default function VocabHubNewPage() {
                   <div className="rounded-2xl border-2 border-rose-200 bg-gradient-to-br from-rose-50 to-rose-100 p-6 mb-6">
                     <h2 className="text-2xl font-bold text-slate-900">✍️ 오늘의 문장</h2>
                     <p className="mt-1 text-slate-600">학습한 단어를 포함한 어려운 문장을 해석해보세요</p>
+                    <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1 text-sm font-semibold text-rose-700">
+                      🎁 문장을 모두 완료하면 <span className="font-bold">+15 포인트</span>
+                    </div>
+                    <p className="mt-2 text-xs text-slate-500">
+                      포인트는 레벨업에 쓰이고, 학원별 보상(상점·교재·간식 등) 교환에도 사용돼요.
+                    </p>
                   </div>
 
                   <div className="bg-white rounded-lg shadow p-6">
@@ -436,6 +499,12 @@ export default function VocabHubNewPage() {
                   <div className="rounded-2xl border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-amber-100 p-6 mb-6">
                     <h2 className="text-2xl font-bold text-slate-900">📝 오늘의 작문</h2>
                     <p className="mt-1 text-slate-600">한글 해석과 단어 힌트를 보고 영문 문장을 완성하세요</p>
+                    <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1 text-sm font-semibold text-amber-700">
+                      🎁 작문을 모두 완료하면 <span className="font-bold">+20 포인트</span>
+                    </div>
+                    <p className="mt-2 text-xs text-slate-500">
+                      포인트는 레벨업에 쓰이고, 학원별 보상(상점·교재·간식 등) 교환에도 사용돼요.
+                    </p>
                   </div>
 
                   <div className="bg-white rounded-lg shadow p-6">

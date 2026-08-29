@@ -41,6 +41,7 @@ export default function SynonymGameClient({ words }: Props) {
   const [isCorrect, setIsCorrect] = useState(false);
   const [loading, setLoading] = useState(true);
   const [gameOver, setGameOver] = useState(false);
+  const [dataError, setDataError] = useState<string | null>(null);
   const [results, setResults] = useState<any[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [questionCount, setQuestionCount] = useState(0);
@@ -53,6 +54,7 @@ export default function SynonymGameClient({ words }: Props) {
 
   const loadSynonymsAndStart = async () => {
     setLoading(true);
+    setDataError(null);
     console.log("🎮 Synonym game loading started with", words.length, "words");
 
     try {
@@ -91,6 +93,15 @@ export default function SynonymGameClient({ words }: Props) {
 
       console.log(`📊 Words with synonyms: ${wordsWithSynonyms.length} / ${updatedWords.length}`);
 
+      // 보기(정답 1 + 오답 3)를 만들려면 최소 4개는 필요
+      if (wordsWithSynonyms.length < 4) {
+        setDataError(
+          "이 트랙에 동의어 데이터가 부족해 게임을 시작할 수 없어요. 관리자에게 문의해 주세요."
+        );
+        setLoading(false);
+        return;
+      }
+
       setGameWords(wordsWithSynonyms);
 
       // 정답 단어와 오답 후보용 모든 단어 생성
@@ -106,7 +117,7 @@ export default function SynonymGameClient({ words }: Props) {
       loadNextQuestion(wordsWithSynonyms, allWordsForGame);
     } catch (error) {
       console.error("💥 Error loading synonyms:", error);
-      setGameOver(true);
+      setDataError("동의어 데이터를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.");
       setLoading(false);
     }
   };
@@ -119,6 +130,8 @@ export default function SynonymGameClient({ words }: Props) {
 
     if (wordsForSelection.length === 0) {
       console.log("⏸️ No words available");
+      setDataError("게임을 만들 단어가 없어요. 관리자에게 문의해 주세요.");
+      setLoading(false);
       return;
     }
 
@@ -126,6 +139,7 @@ export default function SynonymGameClient({ words }: Props) {
     if (questionCount >= QUESTIONS_PER_ROUND) {
       console.log(`✅ Game completed! ${questionCount}/${QUESTIONS_PER_ROUND} questions answered`);
       setGameOver(true);
+      setLoading(false);
       return;
     }
 
@@ -145,7 +159,13 @@ export default function SynonymGameClient({ words }: Props) {
 
     if (!newQuestion) {
       console.error("❌ Failed to generate question after 10 attempts");
-      setGameOver(true);
+      // 이미 몇 문제라도 풀었으면 게임 종료 화면, 아니면 데이터 부족 안내
+      if (questionCount > 0) {
+        setGameOver(true);
+      } else {
+        setDataError("보기를 만들 동의어가 부족해요. 관리자에게 문의해 주세요.");
+      }
+      setLoading(false);
       return;
     }
 
@@ -202,6 +222,31 @@ export default function SynonymGameClient({ words }: Props) {
       setIsSaving(false);
     }
   };
+
+  if (dataError) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 p-4">
+        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md text-center">
+          <div className="text-4xl mb-3">😵</div>
+          <h2 className="text-lg font-bold text-gray-900 mb-2">게임을 시작할 수 없어요</h2>
+          <p className="text-sm text-gray-600 mb-6">{dataError}</p>
+          <button
+            onClick={() => {
+              setStats(INITIAL_STATS);
+              setResults([]);
+              setGameOver(false);
+              setQuestionCount(0);
+              loadSynonymsAndStart();
+            }}
+            className="w-full bg-purple-600 text-white py-2 rounded-lg font-semibold hover:bg-purple-700"
+          >
+            <RotateCcw className="w-4 h-4 inline mr-2" />
+            다시 시도
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

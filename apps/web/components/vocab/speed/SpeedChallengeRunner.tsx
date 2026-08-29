@@ -11,6 +11,8 @@ type Props = {
   onFinish: (result: SpeedAttemptResult) => void;
   secondsPerQuestion?: number;
   minPassAccuracy?: number;
+  /** 간략 Speed: 통과 기준/재도전 없이 1회만 진행 (UI 문구만 조정) */
+  simplified?: boolean;
 };
 
 function norm(s: unknown): string {
@@ -36,6 +38,7 @@ export default function SpeedChallengeRunner({
   onFinish,
   secondsPerQuestion = 15,
   minPassAccuracy = 0.7,
+  simplified = false,
 }: Props) {
   // 🔍 DEBUG: secondsPerQuestion 값 확인
   console.log("🎯 SpeedChallengeRunner received secondsPerQuestion:", secondsPerQuestion);
@@ -208,9 +211,13 @@ export default function SpeedChallengeRunner({
     </div>
   );
 
-  const hint = `Correct: ${correctCount} • Accuracy (so far): ${Math.round(
-    accuracySoFar * 100
-  )}% • Pass ≥ ${Math.round(minPassAccuracy * 100)}%`;
+  const hint = simplified
+    ? `Correct: ${correctCount} • Accuracy (so far): ${Math.round(
+        accuracySoFar * 100
+      )}% • 1회만 진행돼요`
+    : `Correct: ${correctCount} • Accuracy (so far): ${Math.round(
+        accuracySoFar * 100
+      )}% • Pass ≥ ${Math.round(minPassAccuracy * 100)}%`;
 
   return (
     <div className="h-full w-full">

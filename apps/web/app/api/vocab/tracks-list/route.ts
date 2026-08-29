@@ -10,10 +10,27 @@ export async function GET(req: Request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    const { data, error } = await supabase
-      .from("vocab_tracks")
-      .select("id, title, speed_timeout_seconds")
-      .order("title", { ascending: true });
+    // speed_mode 포함해 조회. 미마이그레이션 DB면 컬럼 없이 재시도.
+    let data: any[] | null = null;
+    let error: { message: string } | null = null;
+
+    {
+      const res = await supabase
+        .from("vocab_tracks")
+        .select("id, title, speed_timeout_seconds, speed_mode")
+        .order("title", { ascending: true });
+      data = res.data as any[] | null;
+      error = res.error;
+    }
+
+    if (error) {
+      const res = await supabase
+        .from("vocab_tracks")
+        .select("id, title, speed_timeout_seconds")
+        .order("title", { ascending: true });
+      data = res.data as any[] | null;
+      error = res.error;
+    }
 
     if (error) {
       console.error("Tracks list GET error:", error);
@@ -27,9 +44,10 @@ export async function GET(req: Request) {
       id: t.id,
       name: t.title || t.id,
       speedTimeoutSeconds: t.speed_timeout_seconds ?? 15,
+      speedMode: t.speed_mode === "full" ? "full" : "simple",
     }));
 
-    return NextResponse.json({ tracks });
+    return NextResponse.json({ tracks }, { headers: { "Cache-Control": "no-store" } });
   } catch (err) {
     console.error("Tracks list route error:", err);
     return NextResponse.json(

@@ -645,6 +645,8 @@ export default function VocabSessionPage() {
   const [dayIndex, setDayIndex] = useState<number | null>(null);
   const [totalDays, setTotalDays] = useState<number | null>(null);
   const [speedTimeoutSeconds, setSpeedTimeoutSeconds] = useState<number>(15);
+  // 'full' = 정식 Speed(70% 통과 게이트 + 오답 재도전), 'simple' = 간략 Speed(1회 후 바로 깜지)
+  const [speedMode, setSpeedMode] = useState<"full" | "simple">("simple");
 
   // ✅ 2 Days Review: 지난 2일 약한 단어들
   const [recentWeakWords, setRecentWeakWords] = useState<SessionWord[]>([]);
@@ -852,11 +854,13 @@ export default function VocabSessionPage() {
         const di = (res as any).dayIndex ?? null;
         const td = (res as any).totalDays ?? null;
         const sts = (res as any).speedTimeoutSeconds ?? 6;
-        console.log("🔍 API Response:", { trackTitle: tt, dayIndex: di, totalDays: td, speedTimeoutSeconds: sts, res });
+        const sm = (res as any).speedMode === "full" ? "full" : "simple";
+        console.log("🔍 API Response:", { trackTitle: tt, dayIndex: di, totalDays: td, speedTimeoutSeconds: sts, speedMode: sm, res });
         setTrackTitle(tt);
         setDayIndex(di);
         setTotalDays(td);
         setSpeedTimeoutSeconds(sts);
+        setSpeedMode(sm);
         setLoadError(null);
 
         setDebugInfo({
@@ -1433,6 +1437,19 @@ export default function VocabSessionPage() {
       }
     }
 
+    // 간략 Speed: 모든 문항을 1회만 물어보고, 오답 재도전/통과 게이트 없이 바로 깜지로.
+    if (speedMode === "simple") {
+      if (wrong.length > 0) {
+        setSpeedWrongIds(wrong);
+        setCurrentFlashcardIndex(0);
+        setFlashcardPoints(0);
+        setStage("FLASHCARD_REVIEW");
+        return;
+      }
+      await finishDay();
+      return;
+    }
+
     // 불합격(70% 미만) + 틀린 단어 있고 + 아직 재도전 안 했으면 → 딱 한 번만 재도전
     if (acc < 0.7 && wrong.length > 0 && speedTry < 2) {
       setSpeedWrongIds(wrong);
@@ -1945,6 +1962,7 @@ export default function VocabSessionPage() {
             tryIndex={speedTry}
             secondsPerQuestion={speedTimeoutSeconds}
             minPassAccuracy={0.7}
+            simplified={speedMode === "simple"}
             onFinish={handleSpeedFinish}
           />
         </CardWrap>
@@ -1987,6 +2005,7 @@ export default function VocabSessionPage() {
             tryIndex={speedTry}
             secondsPerQuestion={speedTimeoutSeconds}
             minPassAccuracy={0.7}
+            simplified={speedMode === "simple"}
             onFinish={handleSpeedFinish}
           />
         </CardWrap>
@@ -2024,6 +2043,7 @@ export default function VocabSessionPage() {
             tryIndex={speedTry}
             secondsPerQuestion={speedTimeoutSeconds}
             minPassAccuracy={0.7}
+            simplified={speedMode === "simple"}
             onFinish={handleSpeedFinish}
           />
         </CardWrap>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { VocabStudyCards } from './VocabStudyCards';
+import { VocabTestCard } from './VocabTestCard';
 
 type CurriculumMeta = {
   key: string;
@@ -298,53 +298,85 @@ function PostCheckupContent({ isToefl, vocaTodayCount }: any) {
 }
 
 function VocabTestContent({ vocaTodayCount, vocaPlanCount, userId, trackId }: any) {
-  const [skipLearningCheck, setSkipLearningCheck] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [elig, setElig] = useState<{
+    day: number | null;
+    dayComplete: boolean;
+    testTaken: boolean;
+    score: number | null;
+    testDate: string | null;
+  } | null>(null);
 
   useEffect(() => {
-    // skip_learning_check 설정 가져오기
-    fetch("/api/admin/vocab/test-config")
-      .then((r) => r.json())
-      .then((configs) => {
-        const globalConfig = configs.find((c: any) => c.scope === "global");
-        setSkipLearningCheck(globalConfig?.skip_learning_check ?? false);
+    if (!trackId) {
+      setLoading(false);
+      return;
+    }
+    fetch(`/api/vocab/test/eligibility?track_id=${encodeURIComponent(trackId)}`, {
+      cache: "no-store",
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.ok) {
+          setElig({
+            day: typeof d.day === "number" ? d.day : null,
+            dayComplete: !!d.dayComplete,
+            testTaken: !!d.testTaken,
+            score: typeof d.score === "number" ? d.score : null,
+            testDate: d.testDate ?? null,
+          });
+        }
       })
-      .catch(() => {
-        // API 오류 무시, 기본값 사용
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, []);
-
-  // TODO: API에서 실제 진행도 데이터 가져오기
-  const dayNumber = 1; // 예시
-  const actualTrackId = trackId || "default-track"; // 학생의 첫 번째 track 또는 기본값
-
-  const stage1Progress = 75;
-  const stage1Complete = true;
-  const stage2Progress = 30;
-  const stage2Complete = false;
-  const testScore = undefined;
-  const testDate = undefined;
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [trackId]);
 
   if (loading) {
     return <div className="text-center py-6 text-gray-600">로드 중...</div>;
   }
 
+  if (!trackId) {
+    return (
+      <div className="rounded-2xl border border-neutral-200 bg-white p-6 text-center text-neutral-600">
+        배정된 단어 트랙이 없습니다. 담당 선생님에게 문의하세요.
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <VocabStudyCards
-        dayNumber={dayNumber}
-        trackId={actualTrackId}
-        stage1Progress={stage1Progress}
-        stage1Complete={stage1Complete}
-        stage2Progress={stage2Progress}
-        stage2Complete={stage2Complete}
-        testScore={testScore}
-        testDate={testDate}
-        skipLearningCheck={skipLearningCheck}
+      {/* 1) 단어 학습 (사이드바 "단어 학습"과 동일 진입점) */}
+      <div className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100 p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-bold text-blue-900">단어 학습 (숙제)</h3>
+            <p className="text-sm text-blue-700">
+              PreScreen → 스펠링 → 학습 → Speed → 깜지
+            </p>
+          </div>
+          <div className="text-3xl">📚</div>
+        </div>
+        <Link
+          href="/vocab/hub-new"
+          className="mt-4 block w-full rounded-lg bg-blue-600 py-2 text-center font-semibold text-white hover:bg-blue-700"
+        >
+          단어 학습하기 →
+        </Link>
+      </div>
+
+      {/* 2) 단어 시험 (학습 완료 시 활성화, 학원에서 응시) */}
+      <VocabTestCard
+        dayNumber={elig?.day ?? 0}
+        trackId={trackId}
+        isActive={!!elig?.dayComplete && elig?.day != null}
+        testScore={elig?.testTaken ? elig?.score ?? undefined : undefined}
+        testDate={elig?.testDate ?? undefined}
       />
+      {!(elig?.dayComplete && elig?.day != null) && (
+        <p className="-mt-3 px-1 text-xs text-neutral-500">
+          📌 단어 학습(깜지까지)을 완료해야 학원에서 단어 시험을 볼 수 있습니다.
+        </p>
+      )}
 
       {/* 통계 정보 */}
       <div className="rounded-2xl border border-neutral-200 bg-white p-6">

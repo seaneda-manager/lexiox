@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
     // Step 1: student_vocab_assignments에서 set_id 찾기 (학습 완료 확인에도 필요해서 먼저 조회)
     const { data: dayAssignment, error: dayAssignmentError } = await admin
       .from("student_vocab_assignments")
-      .select("set_id")
+      .select("id, set_id, completed_at")
       .eq("student_id", studentId)
       .eq("track_id", track_id)
       .eq("day_index", day_number)
@@ -85,7 +85,10 @@ export async function POST(req: NextRequest) {
     const skipLearningCheck = config?.skip_learning_check ?? false;
 
     // 학습 완료 상태 확인 (skip_learning_check가 false일 때만)
-    if (!skipLearningCheck) {
+    // 권위 신호: 해당 Day assignment.completed_at (깜지까지 끝내면 completeVocabDayAction이 기록).
+    // 구데이터/누락 대비로 vocab_learning_attempts(know/spelling/speed) 폴백도 유지.
+    const dayFullyCompleted = (dayAssignment as any).completed_at != null;
+    if (!skipLearningCheck && !dayFullyCompleted) {
       const learningComplete = await checkLearningCompletion(
         admin,
         studentId,

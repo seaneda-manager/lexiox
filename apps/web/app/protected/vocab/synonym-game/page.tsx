@@ -6,12 +6,11 @@ import SynonymGameClient from "@/components/vocab/SynonymGameClient";
 export const dynamic = "force-dynamic";
 
 export default async function SynonymGamePage() {
-  // TODO: 테스트 후 인증 체크 복구
-  // const authSupabase = await getServerSupabase();
-  // const { data: { user } } = await authSupabase.auth.getUser();
-  // if (!user) {
-  //   redirect("/");
-  // }
+  const authSupabase = await getServerSupabase();
+  const { data: { user } } = await authSupabase.auth.getUser();
+  if (!user) {
+    redirect("/");
+  }
 
   // Service Role Client (RLS 우회)
   const supabase = createClient(
@@ -19,24 +18,47 @@ export default async function SynonymGamePage() {
     process.env.SUPABASE_SERVICE_ROLE_KEY || ""
   );
 
-  // 전체 단어 DB에서 로드
-  const { data: words, error: wordsError } = await supabase
-    .from("words")
-    .select(`
-      id,
-      text,
-      pos,
-      difficulty,
-      is_function_word,
-      meanings_ko,
-      meanings_en_simple,
-      examples_easy,
-      examples_normal,
-      created_at,
-      updated_at
-    `)
-    .order("created_at", { ascending: false })
-    .limit(1000); // 1,000개 로드
+  // 동의어(tier 1)를 가진 단어만 대상으로 로드한다.
+  // 예전엔 최신순 words 1000개를 그대로 넘겨서, 그 표본에 동의어 보유 단어가 하나도
+  // 없으면 클라이언트가 무한 로딩에 빠졌다.
+  const { data: synRows } = await supabase
+    .from("word_synonyms")
+    .select("word_id")
+    .eq("tier", 1)
+    .limit(20000);
+
+  const synonymWordIds = Array.from(
+    new Set((synRows ?? []).map((r: any) => r.word_id).filter(Boolean))
+  );
+
+  let words: any[] | null = null;
+  let wordsError: { message: string } | null = null;
+
+  if (synonymWordIds.length > 0) {
+    const res = await supabase
+      .from("words")
+      .select(`
+        id, text, pos, difficulty, is_function_word,
+        meanings_ko, meanings_en_simple, examples_easy, examples_normal,
+        created_at, updated_at
+      `)
+      .in("id", synonymWordIds.slice(0, 1000));
+    words = res.data;
+    wordsError = res.error;
+  } else {
+    // 폴백: 동의어 테이블이 비어있으면 기존 방식
+    const res = await supabase
+      .from("words")
+      .select(`
+        id, text, pos, difficulty, is_function_word,
+        meanings_ko, meanings_en_simple, examples_easy, examples_normal,
+        created_at, updated_at
+      `)
+      .order("created_at", { ascending: false })
+      .limit(1000);
+    words = res.data;
+    wordsError = res.error;
+  }
 
   if (wordsError) {
     console.error("DB Error:", wordsError);

@@ -3,7 +3,11 @@
 
 import React, { useState, useMemo } from "react";
 import type { TrackSummary, StudentProgress, DayDetail } from "../actions";
-import { listStudentProgressForTrackAction, getStudentVocabDetailAction } from "../actions";
+import {
+  listStudentProgressForTrackAction,
+  getStudentVocabDetailAction,
+  setStudentVocabSpeedModeAction,
+} from "../actions";
 import { skipVocabDaysAction } from "../skip-day-action";
 
 type SortKey = "name" | "grade" | "completed" | "cursor" | "last";
@@ -122,6 +126,8 @@ export default function ProgressClient({ tracks }: { tracks: TrackSummary[] }) {
   const [nameFilter, setNameFilter] = useState<string>("");
   const [skippingStudentId, setSkippingStudentId] = useState<string | null>(null);
   const [skipDay, setSkipDay] = useState<number>(1);
+  const [trackSpeedMode, setTrackSpeedMode] = useState<"full" | "simple">("full");
+  const [savingSpeedId, setSavingSpeedId] = useState<string | null>(null);
 
   // 학생별 상세 (한 번 불러온 건 캐시해서 다시 펼칠 때 재요청하지 않는다)
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -172,6 +178,25 @@ export default function ProgressClient({ tracks }: { tracks: TrackSummary[] }) {
     }
   }
 
+  async function handleSetSpeedMode(studentId: string, mode: "full" | "simple" | null) {
+    if (!trackId) return;
+    setSavingSpeedId(studentId);
+    try {
+      const res = await setStudentVocabSpeedModeAction({ studentId, trackId, mode });
+      if ("error" in res) {
+        alert("오류: " + res.error);
+        return;
+      }
+      setRows((prev) =>
+        prev.map((r) => (r.studentId === studentId ? { ...r, speedMode: mode } : r)),
+      );
+    } catch (e) {
+      alert("오류 발생");
+    } finally {
+      setSavingSpeedId(null);
+    }
+  }
+
   async function loadProgress() {
     if (!trackId) return;
     setLoading(true);
@@ -182,6 +207,7 @@ export default function ProgressClient({ tracks }: { tracks: TrackSummary[] }) {
       if ("error" in res) { setError(res.error); return; }
       setRows(res.rows);
       setTodayISO(res.todayISO);
+      setTrackSpeedMode(res.trackSpeedMode ?? "full");
       setLoaded(true);
     } finally {
       setLoading(false);
@@ -323,6 +349,9 @@ export default function ProgressClient({ tracks }: { tracks: TrackSummary[] }) {
                     <th className="py-2 pr-4 text-left text-xs font-bold text-slate-500">진도율</th>
                     <SortTh k="last" label="마지막 완료" />
                     <th className="py-2 pr-4 text-left text-xs font-bold text-slate-500">Skip</th>
+                    <th className="py-2 pr-4 text-left text-xs font-bold text-slate-500">
+                      Speed <span className="font-normal text-slate-400">(자동={trackSpeedMode === "simple" ? "간략" : "정식"})</span>
+                    </th>
                     <th className="py-2 text-left text-xs font-bold text-slate-500">상태</th>
                   </tr>
                 </thead>
@@ -401,6 +430,32 @@ export default function ProgressClient({ tracks }: { tracks: TrackSummary[] }) {
                           </button>
                         )}
                       </td>
+                      <td className="py-2.5 pr-4">
+                        <div className="flex gap-1">
+                          {([
+                            { val: null, label: "자동" },
+                            { val: "full" as const, label: "정식" },
+                            { val: "simple" as const, label: "간략" },
+                          ]).map(({ val, label }) => {
+                            const active = r.speedMode === val;
+                            return (
+                              <button
+                                key={label}
+                                disabled={savingSpeedId === r.studentId}
+                                onClick={() => handleSetSpeedMode(r.studentId, val)}
+                                className={[
+                                  "rounded px-2 py-1 text-xs font-semibold transition-colors disabled:opacity-40",
+                                  active
+                                    ? "bg-emerald-600 text-white"
+                                    : "bg-slate-100 text-slate-600 hover:bg-slate-200",
+                                ].join(" ")}
+                              >
+                                {label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </td>
                       <td className="py-2.5">
                         {r.isPaused ? (
                           <span className="rounded-full px-2 py-0.5 text-xs font-bold bg-amber-50 text-amber-700">정지</span>
@@ -416,7 +471,7 @@ export default function ProgressClient({ tracks }: { tracks: TrackSummary[] }) {
 
                     {expandedId === r.studentId && (
                       <tr className="border-b bg-slate-50/60">
-                        <td colSpan={9} className="p-0">
+                        <td colSpan={10} className="p-0">
                           <StudentDetail
                             days={detailMap[r.studentId] ?? []}
                             loading={detailLoading === r.studentId}
