@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from "next/server";
-import { getServerSupabase } from "@/lib/supabase/server";
+import { getServerSupabase, getServiceRoleClient } from "@/lib/supabase/server";
 
 export async function POST(req: Request) {
   try {
@@ -12,7 +12,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "id, label_ko, label_en 필수" }, { status: 400 });
     }
 
-    const supabase = await getServerSupabase();
+    // 로그인 확인 후 service-role로 write (grammar_2026_units는 RLS select-only 정책)
+    const authed = await getServerSupabase();
+    const { data: { user } } = await authed.auth.getUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const supabase = getServiceRoleClient();
     const { error } = await supabase.from("grammar_2026_units").insert({
       id, label_ko, label_en,
       description: description ?? null,

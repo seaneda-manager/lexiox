@@ -1,13 +1,17 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from "next/server";
-import { getServerSupabase } from "@/lib/supabase/server";
+import { getServerSupabase, getServiceRoleClient } from "@/lib/supabase/server";
 
 export async function PUT(req: Request, { params }: { params: Promise<{ unitId: string }> }) {
   try {
     const { unitId } = await params;
     const { segments } = await req.json();
-    const supabase = await getServerSupabase();
+
+    const authed = await getServerSupabase();
+    const { data: { user } } = await authed.auth.getUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const supabase = getServiceRoleClient();
 
     // 기존 세그먼트 전체 삭제 후 재삽입 (순서 보장)
     const { error: delError } = await supabase

@@ -31,6 +31,40 @@ export default function GrammarUnitEditorClient({ data }: { data: GrammarUnitFul
   const [status,    setStatus]    = useState(data.unit.status);
   const [toggling,  setToggling]  = useState(false);
 
+  // 유닛 메타 (slug 제외 전부 수정 가능)
+  const [meta, setMeta] = useState({
+    label_ko: data.unit.label_ko ?? "",
+    label_en: data.unit.label_en ?? "",
+    description: data.unit.description ?? "",
+    level: data.unit.level,
+    order_index: data.unit.order_index ?? 1,
+  });
+  const [metaOpen, setMetaOpen] = useState(false);
+  const [metaSaving, setMetaSaving] = useState(false);
+
+  const handleSaveMeta = async () => {
+    setMetaSaving(true);
+    try {
+      const res = await fetch(`/api/grammar-2026/unit/${data.unit.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          label_ko: meta.label_ko,
+          label_en: meta.label_en,
+          description: meta.description,
+          level: meta.level,
+          order_index: Number(meta.order_index) || 1,
+        }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      alert("유닛 정보 저장 완료");
+    } catch (e: any) {
+      alert("저장 실패: " + (e?.message ?? e));
+    } finally {
+      setMetaSaving(false);
+    }
+  };
+
   const handleToggleStatus = async () => {
     const next = status === "published" ? "draft" : "published";
     setToggling(true);
@@ -116,6 +150,71 @@ export default function GrammarUnitEditorClient({ data }: { data: GrammarUnitFul
           >
             {saving ? "저장 중..." : "전체 저장"}
           </button>
+        </div>
+
+        {/* 유닛 정보 (slug 제외 수정 가능) */}
+        <div className="border-b bg-white px-3 py-2 shrink-0">
+          <button
+            onClick={() => setMetaOpen((v) => !v)}
+            className="flex w-full items-center justify-between text-[11px] font-medium text-gray-500 hover:text-gray-700"
+          >
+            <span>
+              유닛 정보 · <span className="font-mono text-gray-400">{data.unit.id}</span> · 순서 {meta.order_index}
+            </span>
+            <span>{metaOpen ? "▲" : "▼ 편집"}</span>
+          </button>
+          {metaOpen && (
+            <div className="mt-2 space-y-2">
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  value={meta.label_ko}
+                  onChange={(e) => setMeta({ ...meta, label_ko: e.target.value })}
+                  placeholder="한국어 이름"
+                  className="rounded border px-2 py-1 text-xs"
+                />
+                <input
+                  value={meta.label_en}
+                  onChange={(e) => setMeta({ ...meta, label_en: e.target.value })}
+                  placeholder="영어 이름"
+                  className="rounded border px-2 py-1 text-xs"
+                />
+              </div>
+              <input
+                value={meta.description}
+                onChange={(e) => setMeta({ ...meta, description: e.target.value })}
+                placeholder="설명 (교재 매핑 메모 등)"
+                className="w-full rounded border px-2 py-1 text-xs"
+              />
+              <div className="flex items-center gap-2">
+                <select
+                  value={meta.level}
+                  onChange={(e) => setMeta({ ...meta, level: e.target.value as typeof meta.level })}
+                  className="rounded border px-2 py-1 text-xs"
+                >
+                  <option value="all">전체</option>
+                  <option value="ms">중등</option>
+                  <option value="hs">고등</option>
+                  <option value="toefl">TOEFL</option>
+                </select>
+                <label className="text-[11px] text-gray-500">순서</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={meta.order_index}
+                  onChange={(e) => setMeta({ ...meta, order_index: Number(e.target.value) })}
+                  className="w-16 rounded border px-2 py-1 text-xs"
+                />
+                <button
+                  onClick={handleSaveMeta}
+                  disabled={metaSaving}
+                  className="ml-auto rounded bg-indigo-600 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-40"
+                >
+                  {metaSaving ? "저장 중…" : "정보 저장"}
+                </button>
+              </div>
+              <p className="text-[10px] text-gray-400">슬러그(ID)는 변경 불가. 순서는 목록 정렬 순서입니다.</p>
+            </div>
+          )}
         </div>
 
         {/* 에디터 본문 (스크롤) */}
