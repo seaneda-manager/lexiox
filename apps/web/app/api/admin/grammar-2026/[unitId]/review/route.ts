@@ -64,7 +64,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ unitId:
     const { data: unit } = await db.from("grammar_2026_units").select("*").eq("id", unitId).single();
     if (!unit) return NextResponse.json({ ok: false, error: "유닛을 찾을 수 없습니다." }, { status: 404 });
 
-    const parsed = await callClaudeJson("admin/grammar-2026/review", buildPrompt(unit, segments, drills), 24000);
+    const parsed = await callClaudeJson("admin/grammar-2026/review", buildPrompt(unit, segments, drills), 16000);
 
     const issues = Array.isArray(parsed?.issues)
       ? parsed.issues

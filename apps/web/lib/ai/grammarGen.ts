@@ -155,7 +155,11 @@ export async function insertDroppingMissing(
   for (let i = 0; i <= maxDrops; i++) {
     const { error } = await db.from(table).insert(current);
     if (!error) return { error: null, dropped };
-    const m = /column "?([a-z_]+)"? .*does not exist/i.exec(error.message || "");
+    const msg = error.message || "";
+    // Postgres: column "x" ... does not exist  |  PostgREST: Could not find the 'x' column ... in the schema cache
+    const m =
+      /column ["']?([a-z_]+)["']? .*does not exist/i.exec(msg) ||
+      /could not find the ["']([a-z_]+)["'] column/i.exec(msg);
     const col = m?.[1];
     if (!col || dropped.includes(col)) return { error, dropped };
     dropped.push(col);

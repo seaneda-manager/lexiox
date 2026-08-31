@@ -1,7 +1,11 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import { getServerSupabase, getServiceRoleClient } from "@/lib/supabase/server";
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const asUuid = (v: any) => (typeof v === "string" && UUID_RE.test(v) ? v : randomUUID());
 
 export async function PUT(req: Request, { params }: { params: Promise<{ unitId: string }> }) {
   try {
@@ -21,7 +25,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ unitId: 
 
     if (items.length > 0) {
       const rows = items.map((it: any) => ({
-        id: it.id,
+        id: asUuid(it.id),
         unit_id: unitId,
         order_index: it.order_index,
         skill: it.skill,

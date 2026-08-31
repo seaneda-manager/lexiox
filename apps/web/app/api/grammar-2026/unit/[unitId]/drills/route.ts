@@ -1,7 +1,12 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import { getServerSupabase, getServiceRoleClient } from "@/lib/supabase/server";
+import { insertDroppingMissing } from "@/lib/ai/grammarGen";
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const asUuid = (v: any) => (typeof v === "string" && UUID_RE.test(v) ? v : randomUUID());
 
 export async function PUT(req: Request, { params }: { params: Promise<{ unitId: string }> }) {
   try {
@@ -20,9 +25,8 @@ export async function PUT(req: Request, { params }: { params: Promise<{ unitId: 
     if (delError) throw new Error(delError.message);
 
     if (drills.length > 0) {
-      const hasSource = drills.some((d: any) => d.source);
       const rows = drills.map((d: any) => ({
-        id: d.id,
+        id: asUuid(d.id),
         unit_id: unitId,
         order_index: d.order_index,
         type: d.type,
@@ -31,11 +35,10 @@ export async function PUT(req: Request, { params }: { params: Promise<{ unitId: 
         distractors: d.distractors,
         grammar_labels: d.grammar_labels,
         audio_url: d.audio_url ?? null,
-        ...(hasSource ? { source: d.source === "manual" ? "manual" : "ai" } : {}),
+        source: d.source === "manual" ? "manual" : "ai",
       }));
-      const { error: insError } = await supabase
-        .from("grammar_2026_drills")
-        .insert(rows);
+      // source 등 미마이그레이션 컬럼이 있어도 안 깨지게
+      const { error: insError } = await insertDroppingMissing(supabase, "grammar_2026_drills", rows);
       if (insError) throw new Error(insError.message);
     }
 

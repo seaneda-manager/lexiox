@@ -1,7 +1,12 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import { getServerSupabase, getServiceRoleClient } from "@/lib/supabase/server";
+import { insertDroppingMissing } from "@/lib/ai/grammarGen";
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const asUuid = (v: any) => (typeof v === "string" && UUID_RE.test(v) ? v : randomUUID());
 
 export async function PUT(req: Request, { params }: { params: Promise<{ unitId: string }> }) {
   try {
@@ -21,22 +26,18 @@ export async function PUT(req: Request, { params }: { params: Promise<{ unitId: 
     if (delError) throw new Error(delError.message);
 
     if (segments.length > 0) {
-      // narration/audio_url/source는 마이그레이션(20260829000003·4) 적용 후에만 존재.
-      // 하나라도 값이 있을 때만 컬럼 포함 → 미적용 DB에서도 기존 저장이 안 깨진다.
-      const hasLecture = segments.some((s: any) => s.narration || s.audio_url);
-      const hasSource = segments.some((s: any) => s.source);
       const rows = segments.map((s: any) => ({
-        id: s.id,
+        id: asUuid(s.id),
         unit_id: unitId,
         order_index: s.order_index,
         type: s.type,
         content: s.content,
-        ...(hasLecture ? { narration: s.narration ?? null, audio_url: s.audio_url ?? null } : {}),
-        ...(hasSource ? { source: s.source === "manual" ? "manual" : "ai" } : {}),
+        narration: s.narration ?? null,
+        audio_url: s.audio_url ?? null,
+        source: s.source === "manual" ? "manual" : "ai",
       }));
-      const { error: insError } = await supabase
-        .from("grammar_2026_explanation_segments")
-        .insert(rows);
+      // narration/audio_url/source 등 미마이그레이션 컬럼이 있어도 안 깨지게 (있는 만큼만 저장)
+      const { error: insError } = await insertDroppingMissing(supabase, "grammar_2026_explanation_segments", rows);
       if (insError) throw new Error(insError.message);
     }
 
