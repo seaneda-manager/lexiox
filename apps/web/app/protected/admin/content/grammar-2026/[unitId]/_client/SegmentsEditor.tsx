@@ -14,6 +14,7 @@ const TYPE_LABELS: Record<ExplanationSegmentType, string> = {
   animation: "애니메이션 (미지원)",
   blank: "빈칸",
   video: "📹 강의 영상",
+  board: "🖊 판서",
 };
 
 const TYPE_COLORS: Record<ExplanationSegmentType, string> = {
@@ -21,12 +22,44 @@ const TYPE_COLORS: Record<ExplanationSegmentType, string> = {
   animation: "bg-blue-100 text-blue-700",
   blank:     "bg-amber-100 text-amber-700",
   video:     "bg-indigo-100 text-indigo-700",
+  board:     "bg-emerald-100 text-emerald-700",
 };
 
 export default function SegmentsEditor({ unitId, segments, onChange }: Props) {
   const [adding, setAdding] = useState(false);
   const [newType, setNewType] = useState<ExplanationSegmentType>("video");
   const [editingId, setEditingId] = useState<string | null>(null);
+
+  // AI 강의 생성 (판서 + 음성)
+  const [genOpen, setGenOpen] = useState(false);
+  const [genVoiceId, setGenVoiceId] = useState("");
+  const [generating, setGenerating] = useState(false);
+  const [genMsg, setGenMsg] = useState<string | null>(null);
+
+  const handleGenerateLecture = async () => {
+    if (!confirm("기존 설명 세그먼트를 AI가 만든 강의(판서 + 음성)로 교체합니다. 계속할까요?")) return;
+    setGenerating(true);
+    setGenMsg(null);
+    try {
+      const res = await fetch(`/api/admin/grammar-2026/${unitId}/generate-lecture`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ voiceId: genVoiceId.trim() || undefined }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || "생성 실패");
+      onChange(data.segments ?? []);
+      setGenMsg(
+        `✅ 세그먼트 ${data.segmentCount}개 · 음성 ${data.audioCount}개 생성 (voice: ${data.voiceId})` +
+          (data.failures?.length ? ` · 음성 실패 ${data.failures.length}개` : "")
+      );
+      setGenOpen(false);
+    } catch (e: any) {
+      setGenMsg("❌ " + (e?.message ?? "오류"));
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   const update = (next: ExplanationSegment[]) => onChange(next);
 
@@ -70,6 +103,43 @@ export default function SegmentsEditor({ unitId, segments, onChange }: Props) {
       {/* 안내 */}
       <div className="rounded-lg bg-indigo-50 border border-indigo-100 px-3 py-2 text-[11px] text-indigo-700">
         📹 <strong>영상 모드</strong>: 강의 영상 업로드 후 빈칸 타임스탬프를 지정하면 해당 시점에 자동 일시정지됩니다.
+      </div>
+
+      {/* AI 강의 생성 (판서 + 음성) */}
+      <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 space-y-2">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setGenOpen((v) => !v)}
+            disabled={generating}
+            className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-40"
+          >
+            {generating ? "생성 중… (1~2분)" : "🎬 AI 강의 생성 (판서 + 음성)"}
+          </button>
+          <span className="text-[10px] text-emerald-700">
+            유닛 콘텐츠로 판서·내레이션·음성을 자동 생성해 설명 세그먼트를 교체합니다.
+          </span>
+        </div>
+        {genOpen && (
+          <div className="space-y-2 rounded-md bg-white/70 p-2">
+            <label className="block text-[10px] text-gray-500">
+              ElevenLabs Voice ID (선택 — 비우면 스톡 기본, 한/영 모두 읽는 multilingual 권장)
+            </label>
+            <input
+              value={genVoiceId}
+              onChange={(e) => setGenVoiceId(e.target.value)}
+              placeholder="예: 21m00Tcm4TlvDq8ikWAM"
+              className="w-full rounded border px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-400"
+            />
+            <button
+              onClick={handleGenerateLecture}
+              disabled={generating}
+              className="rounded bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-40"
+            >
+              생성 시작
+            </button>
+          </div>
+        )}
+        {genMsg && <p className="text-[11px] text-gray-700">{genMsg}</p>}
       </div>
 
       {segments.map((seg, i) => (

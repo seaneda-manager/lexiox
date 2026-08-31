@@ -13,7 +13,7 @@ export type GrammarUnit = {
 
 // --- 설명 세그먼트 ---
 
-export type ExplanationSegmentType = "text" | "animation" | "blank" | "video";
+export type ExplanationSegmentType = "text" | "animation" | "blank" | "video" | "board";
 
 export type TextSegmentContent = { text: string };
 export type AnimationSegmentContent = { key: string; duration_ms: number };
@@ -21,6 +21,18 @@ export type BlankSegmentContent = {
   prompt: string;
   answer: string;
   hint_ko?: string;
+};
+
+// 판서(칠판) 세그먼트: 라인별 타이핑 + 강조 마크
+export type BoardEmphasisKind = "highlight" | "circle" | "underline";
+export type BoardLine = {
+  text: string;
+  // from/to = text 내 문자 인덱스 [from, to)
+  emphasis?: Array<{ from: number; to: number; kind: BoardEmphasisKind }>;
+};
+export type BoardSegmentContent = {
+  title?: string;
+  lines: BoardLine[];
 };
 
 export type PausePoint = {
@@ -41,7 +53,16 @@ export type ExplanationSegment = {
   unit_id: string;
   order_index: number;
   type: ExplanationSegmentType;
-  content: TextSegmentContent | AnimationSegmentContent | BlankSegmentContent;
+  content:
+    | TextSegmentContent
+    | AnimationSegmentContent
+    | BlankSegmentContent
+    | BoardSegmentContent
+    | VideoSegmentContent;
+  /** AI 강의: TTS로 읽을 내레이션 스크립트 (한국어 설명 + 영어 예문) */
+  narration?: string | null;
+  /** narration의 ElevenLabs TTS 결과 URL */
+  audio_url?: string | null;
 };
 
 // --- 드릴 문제 ---
