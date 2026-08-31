@@ -36,6 +36,31 @@ export default function SegmentsEditor({ unitId, segments, onChange }: Props) {
   const [generating, setGenerating] = useState(false);
   const [genMsg, setGenMsg] = useState<string | null>(null);
 
+  // AI 설명 생성 (음성 없이)
+  const [expGen, setExpGen] = useState(false);
+  const [expMsg, setExpMsg] = useState<string | null>(null);
+
+  const handleGenerateExplanation = async () => {
+    const manualCount = segments.filter((s) => s.source === "manual").length;
+    if (!confirm(`AI가 설명/예문/빈칸 세그먼트 초안을 생성해 채웁니다.${manualCount ? ` (🔒 유지 ${manualCount}개는 보존)` : ""}`)) return;
+    setExpGen(true);
+    setExpMsg(null);
+    try {
+      const res = await fetch(`/api/admin/grammar-2026/${unitId}/generate-explanation`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || "생성 실패");
+      onChange(data.segments ?? []);
+      setExpMsg(`✅ 세그먼트 ${data.segmentCount}개 (유지 ${data.keptManual}개)`);
+    } catch (e: any) {
+      setExpMsg("❌ " + (e?.message ?? "오류"));
+    } finally {
+      setExpGen(false);
+    }
+  };
+
+  const toggleSource = (id: string) =>
+    onChange(segments.map((s) => (s.id === id ? { ...s, source: s.source === "manual" ? "ai" : "manual" } : s)));
+
   const handleGenerateLecture = async () => {
     if (!confirm("기존 설명 세그먼트를 AI가 만든 강의(판서 + 음성)로 교체합니다. 계속할까요?")) return;
     setGenerating(true);
@@ -67,7 +92,8 @@ export default function SegmentsEditor({ unitId, segments, onChange }: Props) {
 
   const handleAdd = () => {
     const id = `seg-${Date.now()}`;
-    const base = { id, unit_id: unitId, order_index: segments.length + 1 };
+    // 관리자가 직접 추가한 세그먼트는 manual → AI 재생성 시 보존
+    const base = { id, unit_id: unitId, order_index: segments.length + 1, source: "manual" as const };
     let content: any;
     if (newType === "text")       content = { text: "" };
     else if (newType === "blank") content = { prompt: "", answer: "", hint_ko: "" };
@@ -100,9 +126,21 @@ export default function SegmentsEditor({ unitId, segments, onChange }: Props) {
 
   return (
     <div className="space-y-3">
-      {/* 안내 */}
-      <div className="rounded-lg bg-indigo-50 border border-indigo-100 px-3 py-2 text-[11px] text-indigo-700">
-        📹 <strong>영상 모드</strong>: 강의 영상 업로드 후 빈칸 타임스탬프를 지정하면 해당 시점에 자동 일시정지됩니다.
+      {/* AI 설명 생성 (음성 없이) */}
+      <div className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-2.5 space-y-1.5">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleGenerateExplanation}
+            disabled={expGen}
+            className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-700 disabled:opacity-40"
+          >
+            {expGen ? "생성 중…" : "🪄 AI 설명 생성"}
+          </button>
+          <span className="text-[10px] text-violet-700">
+            주제·레벨·관리자 메모로 설명 / 예문 / 빈칸 팝업퀴즈 초안 생성. 🔒 유지 표시한 세그먼트는 보존.
+          </span>
+        </div>
+        {expMsg && <p className="text-[11px] text-gray-700">{expMsg}</p>}
       </div>
 
       {/* AI 강의 생성 (판서 + 음성) */}
@@ -150,6 +188,17 @@ export default function SegmentsEditor({ unitId, segments, onChange }: Props) {
             <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${TYPE_COLORS[seg.type as ExplanationSegmentType] ?? "bg-gray-100 text-gray-500"}`}>
               {TYPE_LABELS[seg.type as ExplanationSegmentType] ?? seg.type}
             </span>
+            <button
+              onClick={() => toggleSource(seg.id)}
+              title="관리자가 유지할 세그먼트로 잠그면 AI 재생성 시 보존됩니다"
+              className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                seg.source === "manual"
+                  ? "bg-blue-100 text-blue-700"
+                  : "bg-gray-100 text-gray-400 hover:bg-gray-200"
+              }`}
+            >
+              {seg.source === "manual" ? "🔒 유지" : "AI"}
+            </button>
             <div className="ml-auto flex items-center gap-0.5">
               <button onClick={() => handleMoveUp(i)} disabled={i === 0}
                 className="p-1 text-gray-300 hover:text-gray-600 disabled:opacity-20 text-xs">↑</button>

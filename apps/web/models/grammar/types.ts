@@ -6,10 +6,15 @@ export type GrammarUnit = {
   label_ko: string;
   label_en: string;
   description?: string;
+  /** 관리자/선생님 자유기술 메모 (교재 매핑, 강조점 등). AI가 건드리지 않음 */
+  admin_note?: string | null;
   level: GrammarLevel;
   order_index: number;
   status: GrammarUnitStatus;
 };
+
+/** 'ai' = AI 생성분(재생성 시 교체) · 'manual' = 관리자가 만들거나 잠근 것(보존) */
+export type ContentSource = "ai" | "manual";
 
 // --- 설명 세그먼트 ---
 
@@ -63,6 +68,8 @@ export type ExplanationSegment = {
   narration?: string | null;
   /** narration의 ElevenLabs TTS 결과 URL */
   audio_url?: string | null;
+  /** 'ai' | 'manual' — manual은 AI 재생성 시 보존 */
+  source?: ContentSource;
 };
 
 // --- 드릴 문제 ---
@@ -91,6 +98,7 @@ export type GrammarDrill = {
   distractors: string[];
   grammar_labels: GrammarLabel[];  // 정답 1개 + 오답 3개
   audio_url?: string;
+  source?: ContentSource;
 };
 
 // 이중 레이어 응답 결과

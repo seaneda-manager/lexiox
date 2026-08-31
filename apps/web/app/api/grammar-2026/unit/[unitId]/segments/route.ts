@@ -21,9 +21,10 @@ export async function PUT(req: Request, { params }: { params: Promise<{ unitId: 
     if (delError) throw new Error(delError.message);
 
     if (segments.length > 0) {
-      // narration/audio_url은 AI 강의 마이그레이션(20260829000003) 적용 후에만 존재.
-      // 세그먼트 중 하나라도 값이 있을 때만 컬럼을 포함해, 미적용 DB에서도 기존 저장이 안 깨지게 한다.
+      // narration/audio_url/source는 마이그레이션(20260829000003·4) 적용 후에만 존재.
+      // 하나라도 값이 있을 때만 컬럼 포함 → 미적용 DB에서도 기존 저장이 안 깨진다.
       const hasLecture = segments.some((s: any) => s.narration || s.audio_url);
+      const hasSource = segments.some((s: any) => s.source);
       const rows = segments.map((s: any) => ({
         id: s.id,
         unit_id: unitId,
@@ -31,6 +32,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ unitId: 
         type: s.type,
         content: s.content,
         ...(hasLecture ? { narration: s.narration ?? null, audio_url: s.audio_url ?? null } : {}),
+        ...(hasSource ? { source: s.source === "manual" ? "manual" : "ai" } : {}),
       }));
       const { error: insError } = await supabase
         .from("grammar_2026_explanation_segments")

@@ -36,11 +36,82 @@ export default function GrammarUnitEditorClient({ data }: { data: GrammarUnitFul
     label_ko: data.unit.label_ko ?? "",
     label_en: data.unit.label_en ?? "",
     description: data.unit.description ?? "",
+    admin_note: data.unit.admin_note ?? "",
     level: data.unit.level,
     order_index: data.unit.order_index ?? 1,
   });
   const [metaOpen, setMetaOpen] = useState(false);
   const [metaSaving, setMetaSaving] = useState(false);
+
+  // AI 감수
+  const [reviewing, setReviewing] = useState(false);
+  const [review, setReview] = useState<
+    | { issues: { target: string; severity: string; note: string }[]; revised: { segments?: any[]; drills?: any[] } }
+    | null
+  >(null);
+
+  const handleReview = async () => {
+    setReviewing(true);
+    setReview(null);
+    try {
+      const res = await fetch(`/api/admin/grammar-2026/${data.unit.id}/review`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ segments, drills }),
+      });
+      const d = await res.json();
+      if (!res.ok || !d.ok) throw new Error(d.error || "감수 실패");
+      setReview({ issues: d.issues ?? [], revised: d.revised ?? {} });
+    } catch (e: any) {
+      alert("AI 감수 실패: " + (e?.message ?? e));
+    } finally {
+      setReviewing(false);
+    }
+  };
+
+  const applyRevised = () => {
+    if (!review) return;
+    if (review.revised.segments) {
+      // manual 세그먼트는 유지, revised(ai)를 뒤에
+      const manual = segments.filter((s) => s.source === "manual");
+      const revised = review.revised.segments.map((s: any, i: number) => ({
+        id: `seg-${Date.now()}-${i}`,
+        unit_id: data.unit.id,
+        order_index: manual.length + i,
+        type: s.type,
+        content: s.content,
+        narration: s.narration ?? null,
+        audio_url: null,
+        source: "ai" as const,
+      }));
+      setSegments([
+        ...manual.map((s, i) => ({ ...s, order_index: i })),
+        ...(revised as ExplanationSegment[]),
+      ]);
+    }
+    if (review.revised.drills) {
+      setDrills(
+        review.revised.drills.map((d: any, i: number) => ({
+          id: `drill-${Date.now()}-${i}`,
+          unit_id: data.unit.id,
+          order_index: i,
+          type: d.type,
+          sentence: d.sentence,
+          answer: d.answer,
+          distractors: d.distractors,
+          grammar_labels: (d.grammar_labels ?? []).map((l: any, li: number) => ({
+            id: `drill-${Date.now()}-${i}-${li}`,
+            label_ko: l.label_ko ?? "",
+            label_en: l.label_en ?? "",
+            is_correct: !!l.is_correct,
+          })),
+          source: "ai" as const,
+        })) as GrammarDrill[],
+      );
+    }
+    setReview(null);
+    alert("반영됨. '전체 저장'을 눌러 확정하세요.");
+  };
 
   const handleSaveMeta = async () => {
     setMetaSaving(true);
@@ -52,6 +123,7 @@ export default function GrammarUnitEditorClient({ data }: { data: GrammarUnitFul
           label_ko: meta.label_ko,
           label_en: meta.label_en,
           description: meta.description,
+          admin_note: meta.admin_note,
           level: meta.level,
           order_index: Number(meta.order_index) || 1,
         }),
@@ -134,6 +206,13 @@ export default function GrammarUnitEditorClient({ data }: { data: GrammarUnitFul
             ))}
           </div>
           <button
+            onClick={handleReview}
+            disabled={reviewing}
+            className="mb-1 px-3 py-1.5 text-xs font-medium rounded-lg transition shrink-0 disabled:opacity-40 bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100"
+          >
+            {reviewing ? "감수 중…" : "🔍 AI 감수"}
+          </button>
+          <button
             onClick={handleToggleStatus}
             disabled={toggling}
             className={`mb-1 px-3 py-1.5 text-xs font-medium rounded-lg transition shrink-0 disabled:opacity-40
@@ -151,6 +230,38 @@ export default function GrammarUnitEditorClient({ data }: { data: GrammarUnitFul
             {saving ? "저장 중..." : "전체 저장"}
           </button>
         </div>
+
+        {/* AI 감수 리포트 */}
+        {review && (
+          <div className="border-b bg-amber-50/60 px-3 py-2 shrink-0 max-h-52 overflow-y-auto">
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] font-bold text-amber-800">AI 감수 결과 · 문제점 {review.issues.length}개</p>
+              <button onClick={() => setReview(null)} className="text-[11px] text-gray-400 hover:text-gray-600">닫기</button>
+            </div>
+            {review.issues.length === 0 ? (
+              <p className="mt-1 text-[11px] text-emerald-700">지적사항 없음 ✓</p>
+            ) : (
+              <ul className="mt-1 space-y-1">
+                {review.issues.map((it, i) => (
+                  <li key={i} className="text-[11px] text-gray-700">
+                    <span className={`mr-1 font-bold ${it.severity === "high" ? "text-red-600" : it.severity === "med" ? "text-amber-600" : "text-gray-400"}`}>
+                      [{it.target}]
+                    </span>
+                    {it.note}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {(review.revised.segments || review.revised.drills) && (
+              <button
+                onClick={applyRevised}
+                className="mt-2 rounded bg-amber-600 px-3 py-1 text-[11px] font-semibold text-white hover:bg-amber-700"
+              >
+                수정본 이대로 반영 ({review.revised.segments ? "설명" : ""}{review.revised.segments && review.revised.drills ? "+" : ""}{review.revised.drills ? "드릴" : ""})
+              </button>
+            )}
+          </div>
+        )}
 
         {/* 유닛 정보 (slug 제외 수정 가능) */}
         <div className="border-b bg-white px-3 py-2 shrink-0">
@@ -182,9 +293,21 @@ export default function GrammarUnitEditorClient({ data }: { data: GrammarUnitFul
               <input
                 value={meta.description}
                 onChange={(e) => setMeta({ ...meta, description: e.target.value })}
-                placeholder="설명 (교재 매핑 메모 등)"
+                placeholder="설명 (짧게)"
                 className="w-full rounded border px-2 py-1 text-xs"
               />
+              <div>
+                <label className="text-[10px] font-medium text-gray-500">
+                  관리자 메모 (교재 매핑·강조점 등. AI가 안 건드림 · 강의 끝에 표시)
+                </label>
+                <textarea
+                  value={meta.admin_note}
+                  onChange={(e) => setMeta({ ...meta, admin_note: e.target.value })}
+                  rows={2}
+                  placeholder="예: 동아(윤정미) 중2-1 5과. 목적격 관계대명사 that 생략 꼭 강조."
+                  className="w-full rounded border px-2 py-1 text-xs resize-none"
+                />
+              </div>
               <div className="flex items-center gap-2">
                 <select
                   value={meta.level}

@@ -20,6 +20,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ unitId: 
     if (delError) throw new Error(delError.message);
 
     if (drills.length > 0) {
+      const hasSource = drills.some((d: any) => d.source);
       const rows = drills.map((d: any) => ({
         id: d.id,
         unit_id: unitId,
@@ -30,6 +31,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ unitId: 
         distractors: d.distractors,
         grammar_labels: d.grammar_labels,
         audio_url: d.audio_url ?? null,
+        ...(hasSource ? { source: d.source === "manual" ? "manual" : "ai" } : {}),
       }));
       const { error: insError } = await supabase
         .from("grammar_2026_drills")

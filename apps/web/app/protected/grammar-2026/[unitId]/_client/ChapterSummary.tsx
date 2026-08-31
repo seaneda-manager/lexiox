@@ -71,6 +71,14 @@ export default function ChapterSummary({ unit, segments, responses }: Props) {
         </button>
       </div>
 
+      {/* 선생님 한마디 (관리자 메모) */}
+      {unit.admin_note && unit.admin_note.trim() && (
+        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-100">
+          <p className="text-xs font-semibold text-amber-700 mb-1">✏️ 선생님 한마디</p>
+          <p className="text-sm text-amber-900 leading-relaxed whitespace-pre-wrap">{unit.admin_note}</p>
+        </div>
+      )}
+
       {/* 취약 항목 */}
       {responses.some((r) => !r.answer_correct || r.label_correct === false) && (
         <div className="p-4 rounded-xl bg-orange-50 border border-orange-100">

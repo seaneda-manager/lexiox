@@ -26,8 +26,70 @@ const EMPTY_LABELS: GrammarLabel[] = [
 
 export default function DrillsEditor({ unitId, drills, onChange }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [seed, setSeed] = useState("");
+  const [seedCount, setSeedCount] = useState(4);
+  const [genning, setGenning] = useState(false);
+  const [genMsg, setGenMsg] = useState<string | null>(null);
+  const [completingId, setCompletingId] = useState<string | null>(null);
 
   const update = (next: GrammarDrill[]) => onChange(next);
+
+  const toRow = (d: any, i: number): GrammarDrill => {
+    const id = `drill-${Date.now()}-${i}`;
+    return {
+      id, unit_id: unitId, order_index: drills.length + i + 1,
+      type: d.type ?? "fill", sentence: d.sentence ?? "", answer: d.answer ?? "",
+      distractors: (d.distractors ?? ["", "", ""]).slice(0, 3),
+      grammar_labels: (d.grammar_labels ?? EMPTY_LABELS).map((l: any, li: number) => ({
+        id: `${id}-${li}`, label_ko: l.label_ko ?? "", label_en: l.label_en ?? "", is_correct: !!l.is_correct,
+      })),
+      source: "ai",
+    };
+  };
+
+  const handleGenerate = async () => {
+    if (!seed.trim()) { setGenMsg("문장/포인트/유형을 입력하세요."); return; }
+    setGenning(true); setGenMsg(null);
+    try {
+      const res = await fetch(`/api/admin/grammar-2026/${unitId}/generate-drills`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ seed: seed.trim(), count: seedCount }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || "생성 실패");
+      const rows = (data.drills ?? []).map((d: any, i: number) => toRow(d, i));
+      update([...drills, ...rows]);
+      setGenMsg(`✅ 드릴 ${rows.length}개 생성`);
+      setSeed("");
+    } catch (e: any) {
+      setGenMsg("❌ " + (e?.message ?? "오류"));
+    } finally { setGenning(false); }
+  };
+
+  const handleComplete = async (drill: GrammarDrill) => {
+    if (!drill.sentence.trim()) { alert("문장을 먼저 입력하세요."); return; }
+    setCompletingId(drill.id);
+    try {
+      const res = await fetch(`/api/admin/grammar-2026/${unitId}/generate-drills`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ partial: { type: drill.type, sentence: drill.sentence, answer: drill.answer } }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok || !data.drills?.[0]) throw new Error(data.error || "완성 실패");
+      const g = data.drills[0];
+      update(drills.map((d) => d.id !== drill.id ? d : {
+        ...d,
+        answer: g.answer ?? d.answer,
+        distractors: (g.distractors ?? d.distractors).slice(0, 3),
+        grammar_labels: (g.grammar_labels ?? d.grammar_labels).map((l: any, li: number) => ({
+          id: `${d.id}-${li}`, label_ko: l.label_ko ?? "", label_en: l.label_en ?? "", is_correct: !!l.is_correct,
+        })),
+        source: "ai",
+      }));
+    } catch (e: any) {
+      alert("AI 완성 실패: " + (e?.message ?? e));
+    } finally { setCompletingId(null); }
+  };
 
   const handleAdd = () => {
     const id = `drill-${Date.now()}`;
@@ -36,6 +98,7 @@ export default function DrillsEditor({ unitId, drills, onChange }: Props) {
       type: "fill", sentence: "", answer: "",
       distractors: ["", "", ""],
       grammar_labels: EMPTY_LABELS.map((l) => ({ ...l, id: `${id}-${l.id}` })),
+      source: "manual",
     };
     update([...drills, newDrill]);
     setEditingId(id);
@@ -52,8 +115,34 @@ export default function DrillsEditor({ unitId, drills, onChange }: Props) {
 
   return (
     <div className="space-y-3">
+      {/* AI 드릴 생성 (admin 씨드) */}
+      <div className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-2.5 space-y-2">
+        <p className="text-[11px] font-semibold text-violet-800">🪄 AI 드릴 생성 — 재료를 정하면 AI가 문제화</p>
+        <textarea
+          value={seed}
+          onChange={(e) => setSeed(e.target.value)}
+          rows={3}
+          placeholder={"문장 목록 / 문법 포인트 / 원하는 유형을 적으세요.\n예:\nThe book (that) I borrowed was interesting.\nThe man whom you met is my uncle.\n→ fill 유형, 목적격 관계대명사 that/whom 생략"}
+          className="w-full rounded border px-2 py-1.5 text-xs resize-none focus:outline-none focus:ring-1 focus:ring-violet-400"
+        />
+        <div className="flex items-center gap-2">
+          <label className="text-[10px] text-gray-500">개수</label>
+          <input type="number" min={1} max={12} value={seedCount}
+            onChange={(e) => setSeedCount(Number(e.target.value))}
+            className="w-14 rounded border px-2 py-1 text-xs" />
+          <button
+            onClick={handleGenerate}
+            disabled={genning}
+            className="ml-auto rounded bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-700 disabled:opacity-40"
+          >
+            {genning ? "생성 중…" : "드릴 생성"}
+          </button>
+        </div>
+        {genMsg && <p className="text-[11px] text-gray-700">{genMsg}</p>}
+      </div>
+
       <p className="text-[11px] text-gray-400">
-        각 드릴에 정답 레이블 1개 + 오답 레이블 3개를 설정하세요.
+        각 드릴에 정답 레이블 1개 + 오답 레이블 3개를 설정하세요. 문장·유형만 넣고 "AI 완성"으로 나머지를 채울 수 있습니다.
       </p>
 
       {drills.map((drill, i) => (
@@ -64,9 +153,16 @@ export default function DrillsEditor({ unitId, drills, onChange }: Props) {
             <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">
               {DRILL_TYPES.find((t) => t.value === drill.type)?.label ?? drill.type}
             </span>
+            <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${drill.source === "manual" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-400"}`}>
+              {drill.source === "manual" ? "관리자" : "AI"}
+            </span>
             <p className="flex-1 text-xs text-gray-500 truncate min-w-0">
               {drill.sentence || <span className="text-gray-300 italic">문장 없음</span>}
             </p>
+            <button onClick={() => handleComplete(drill)} disabled={completingId === drill.id}
+              className="px-2 py-1 text-[11px] text-violet-500 hover:text-violet-700 shrink-0 disabled:opacity-40">
+              {completingId === drill.id ? "완성 중…" : "AI 완성"}
+            </button>
             <button onClick={() => setEditingId(editingId === drill.id ? null : drill.id)}
               className="px-2 py-1 text-[11px] text-indigo-500 hover:text-indigo-700 shrink-0">
               {editingId === drill.id ? "접기" : "편집"}
