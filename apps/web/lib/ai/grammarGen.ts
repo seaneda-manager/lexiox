@@ -178,7 +178,9 @@ export function existingSegmentsBlock(segments: any[]): string {
 
 // ── 드릴 ────────────────────────────────────────────────────
 
-const DRILL_TYPES = ["judgment", "fill", "reorder", "correction", "listen_judge"] as const;
+// DrillRunner가 제대로 렌더하는 유형만 (fill=빈칸 선택, judgment=정오판단).
+// reorder/correction은 answer가 전체 문장이라 보기에 정답이 통째로 노출됨 → 생성에서 제외.
+const DRILL_TYPES = ["judgment", "fill"] as const;
 
 export type GenDrill = {
   type: string;
@@ -193,9 +195,19 @@ export function sanitizeDrills(parsed: any): GenDrill[] {
   const out: GenDrill[] = [];
   for (const d of arr) {
     const type = DRILL_TYPES.includes(d?.type) ? d.type : "fill";
-    const sentence = String(d?.sentence ?? "").trim();
+    let sentence = String(d?.sentence ?? "").trim();
     const answer = String(d?.answer ?? "").trim();
     if (!sentence || !answer) continue;
+
+    if (type === "fill") {
+      // 빈칸이 없으면 정답 단어를 ___ 로 치환 시도. 그래도 없으면 버림(정답 노출 방지).
+      if (!sentence.includes("___")) {
+        const re = new RegExp(`\\b${answer.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
+        if (re.test(sentence)) sentence = sentence.replace(re, "___");
+        else continue;
+      }
+    }
+    if (type === "judgment" && !["correct", "incorrect"].includes(answer.toLowerCase())) continue;
 
     const ansNorm = answer.toLowerCase();
     let distractors = (Array.isArray(d?.distractors) ? d.distractors : [])

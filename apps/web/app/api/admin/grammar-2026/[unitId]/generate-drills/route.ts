@@ -14,18 +14,22 @@ function unitContext(unit: any, segs: any[]): string {
 ${existingSegmentsBlock(segs)}`;
 }
 
-const DRILL_SPEC = `각 드릴은 grammar_2026_drills 행:
-- type: judgment(정오판단) | fill(빈칸선택) | reorder(어순배열) | correction(오류교정)
-- sentence: 문제 문장 (fill이면 빈칸을 ___ 로)
-- answer: 정답 (fill=들어갈 말, judgment="correct"/"incorrect", correction=고친 문장)
-- distractors: 오답 3개 (fill/correction용, judgment면 [])
+const DRILL_SPEC = `각 드릴은 grammar_2026_drills 행. **type은 반드시 fill 또는 judgment 둘 중 하나** (reorder/correction 금지):
+- **fill (빈칸 선택)**: sentence에 정답 위치를 정확히 "___"로 표시 (정답 단어를 문장에 절대 넣지 말 것).
+  answer=빈칸에 들어갈 말. distractors=그럴듯한 오답 3개 (같은 품사/범주, 정답과 안 겹치게).
+- **judgment (정오 판단)**: sentence는 완전한 문장. answer는 "correct" 또는 "incorrect" 만.
+  distractors=[] (빈 배열).
 - grammar_labels: 정확히 4개 = 정답 문법개념 레이블 1개(is_correct:true) + 그럴듯한 오답 레이블 3개(false).
-  각 레이블은 { label_ko, label_en, is_correct }. 정답 레이블은 이 유닛의 문법 개념.
+  각 { label_ko, label_en, is_correct }. 정답 레이블은 이 유닛의 문법 개념.
 
 출력은 이 JSON만:
-{ "drills": [ { "type":"fill", "sentence":"...", "answer":"...", "distractors":["","",""],
-  "grammar_labels":[{"label_ko":"목적격 관계대명사","label_en":"Objective Relative Pronoun","is_correct":true},
-  {"label_ko":"...","label_en":"...","is_correct":false}, ...] } ] }`;
+{ "drills": [
+  { "type":"fill", "sentence":"The book ___ I read was good.", "answer":"that", "distractors":["who","whom","what"],
+    "grammar_labels":[{"label_ko":"목적격 관계대명사","label_en":"Objective Relative Pronoun","is_correct":true},
+    {"label_ko":"주격 관계대명사","label_en":"Subjective RP","is_correct":false}, ...] },
+  { "type":"judgment", "sentence":"The man who I met was kind.", "answer":"correct", "distractors":[],
+    "grammar_labels":[ ... ] }
+] }`;
 
 export async function POST(req: Request, { params }: { params: Promise<{ unitId: string }> }) {
   try {

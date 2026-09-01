@@ -9,12 +9,10 @@ type Props = {
   onChange: (drills: GrammarDrill[]) => void;
 };
 
+// DrillRunner가 제대로 렌더하는 유형만. correction/reorder는 정답이 통째로 보기에 노출돼서 제외.
 const DRILL_TYPES: { value: DrillType; label: string }[] = [
   { value: "fill",         label: "빈칸 선택" },
   { value: "judgment",     label: "정오 판단" },
-  { value: "correction",   label: "오류 교정" },
-  { value: "reorder",      label: "어순 배열" },
-  { value: "listen_judge", label: "듣기 판단" },
 ];
 
 const EMPTY_LABELS: GrammarLabel[] = [

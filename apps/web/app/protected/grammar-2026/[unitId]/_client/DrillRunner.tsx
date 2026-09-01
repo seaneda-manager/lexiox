@@ -10,9 +10,16 @@ type Props = {
   onDone: (responses: GrammarStudentResponse[]) => void;
 };
 
-export default function DrillRunner({ drills, onDone }: Props) {
+export default function DrillRunner({ drills: rawDrills, onDone }: Props) {
   const [index, setIndex] = useState(0);
   const [responses, setResponses] = useState<GrammarStudentResponse[]>([]);
+
+  // DrillRunner는 fill(빈칸 있음) / judgment 만 제대로 렌더한다. 나머지·깨진 건 걸러낸다.
+  const drills = rawDrills.filter((d) => {
+    if (d.type === "judgment") return true;
+    if (d.type === "fill") return typeof d.sentence === "string" && d.sentence.includes("___");
+    return false;
+  });
 
   if (drills.length === 0) {
     return (
