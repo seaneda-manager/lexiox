@@ -2,6 +2,7 @@ import Link from "next/link";
 import { PlusCircle, BookOpen } from "lucide-react";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { MOCK_GRAMMAR_UNITS_LIST } from "@/models/grammar/mock";
+import DeleteUnitButton from "./_client/DeleteUnitButton";
 
 export const dynamic = "force-dynamic";
 
@@ -110,11 +111,12 @@ export default async function GrammarAdminListPage() {
                       {unit.status === "published" ? "Published" : "Draft"}
                     </span>
                   </div>
-                  <div className="flex justify-end">
+                  <div className="flex justify-end gap-1.5">
                     <Link href={`/admin/content/grammar-2026/${unit.id}`}
                       className="inline-flex items-center rounded-lg border border-indigo-200 bg-white px-2.5 py-1.5 text-[11px] font-medium text-indigo-700 hover:border-indigo-400 hover:bg-indigo-50">
                       편집
                     </Link>
+                    <DeleteUnitButton unitId={unit.id} label={unit.label_ko} />
                   </div>
                 </div>
               ))}

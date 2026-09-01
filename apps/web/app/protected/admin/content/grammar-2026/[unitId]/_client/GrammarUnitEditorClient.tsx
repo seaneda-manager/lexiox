@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import type {
   GrammarUnitFull,
   ExplanationSegment,
@@ -21,7 +22,23 @@ const TABS: { key: Tab; label: string }[] = [
 ];
 
 export default function GrammarUnitEditorClient({ data }: { data: GrammarUnitFull }) {
+  const router = useRouter();
   const [tab, setTab] = useState<Tab>("segments");
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteUnit = async () => {
+    if (!confirm(`유닛 "${data.unit.label_ko}"을(를) 삭제합니다.\n설명·드릴·Stylistic·학생 진행기록까지 전부 삭제되고 되돌릴 수 없습니다.\n계속할까요?`)) return;
+    if (!confirm("정말 삭제합니까? (마지막 확인)")) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/grammar-2026/unit/${data.unit.id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error(await res.text());
+      router.push("/admin/content/grammar-2026");
+    } catch (e: any) {
+      alert("삭제 실패: " + (e?.message ?? e));
+      setDeleting(false);
+    }
+  };
 
   // 통합 state — 에디터 변경사항이 실시간으로 미리보기에 반영됨
   const [segments,  setSegments]  = useState<ExplanationSegment[]>(data.segments);
@@ -336,6 +353,16 @@ export default function GrammarUnitEditorClient({ data }: { data: GrammarUnitFul
                 </button>
               </div>
               <p className="text-[10px] text-gray-400">슬러그(ID)는 변경 불가. 순서는 목록 정렬 순서입니다.</p>
+
+              <div className="mt-2 border-t pt-2">
+                <button
+                  onClick={handleDeleteUnit}
+                  disabled={deleting}
+                  className="rounded border border-red-200 bg-red-50 px-3 py-1 text-[11px] font-medium text-red-600 hover:bg-red-100 disabled:opacity-40"
+                >
+                  {deleting ? "삭제 중…" : "🗑 유닛 삭제 (published 포함)"}
+                </button>
+              </div>
             </div>
           )}
         </div>
