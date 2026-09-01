@@ -124,11 +124,11 @@ export default function ExplanationPlayer({ segments, onDone }: Props) {
           <SegmentDisplay key={s.id} segment={s} muted />
         ))}
 
-        {/* 현재 세그먼트 */}
+        {/* 현재 세그먼트 — key로 세그먼트마다 강제 리마운트 (blank state·board 애니메이션 누수 방지) */}
         {seg.type === "blank" ? (
-          <BlankFillChallenge content={seg.content as BlankSegmentContent} onDone={handleBlankDone} />
+          <BlankFillChallenge key={seg.id} content={seg.content as BlankSegmentContent} onDone={handleBlankDone} />
         ) : (
-          <SegmentDisplay segment={seg} muted={false} animateBoardMs={audioMs} />
+          <SegmentDisplay key={seg.id} segment={seg} muted={false} animateBoardMs={audioMs} />
         )}
       </div>
 
