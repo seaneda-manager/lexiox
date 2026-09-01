@@ -27,7 +27,10 @@ ${existingSegmentsBlock(manualSegs)}
 - "text": 짧은 설명/전환/요약 문단. content = { "text": "한국어 짧은 문장" }
 - "board": 칠판 판서(영어 예문/공식). content = { "title"?: "소제목", "lines": [{ "text": "영어 문장 등", "emphasis"?: [{ "from": 문자시작index, "to": 문자끝index, "kind": "highlight"|"circle"|"underline" }] }] }
   - 강조할 핵심 부분(관계사/어미/연결어 등)에 정확한 문자 인덱스로 emphasis.
-- "blank": 학생이 직접 채우는 팝업 퀴즈. content = { "prompt": "___ 가 들어간 문장(설명 확인용)", "answer": "정답", "hint_ko"?: "힌트" }
+- "blank": 학생이 직접 채우는 팝업 퀴즈. content = { "prompt": "___ 가 들어간 문장", "answer": "정답", "hint_ko"?: "힌트" }
+  - ⚠️ prompt 문장에는 정답 단어가 절대 들어가면 안 됨 (정답 자리는 ___ 하나만).
+  - ⚠️ **board에서 이미 보여준 예문을 blank로 재사용 금지.** 학생이 처음 보는 새 문장으로 출제.
+  - 정답이 명백히 노출되는 문맥(바로 앞 board가 같은 구조를 answer와 함께 보여준 경우 등) 회피.
 
 ## narration (모든 세그먼트, 필수)
 강사가 그 세그먼트를 설명하는 말. 한국어로 자연스럽게. 영어 예문·표현은 그대로 영어로. 1~4문장.

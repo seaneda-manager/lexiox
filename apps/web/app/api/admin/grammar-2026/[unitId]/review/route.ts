@@ -23,6 +23,10 @@ function buildPrompt(unit: any, segments: any[], drills: any[]): string {
 (A) 경력 많은 영어 문법 **검수자** — 설명이 문법적으로 정확한지, 예문이 자연스러운 원어민 영어이고 해당 문법을 실제로 보여주는지, 빠진 핵심 포인트가 없는지, board 세그먼트의 emphasis(강조 문자범위)가 엉뚱한 자리를 가리키지 않는지, 레벨(${unit.level}) 대비 난이도가 적절한지.
 (B) 이 레벨의 **표준~하위권 학생** — blank 세그먼트와 드릴을 정답을 모른 채 실제로 풀어봄. 문맥·설명만으로 정답이 유일하게 확정되는지, 오답 보기가 부당하게 정답처럼 보이지 않는지.
 
+특히 확인:
+- blank/drill의 sentence 안에 정답 단어가 들어가 있지 않은지 (정답 자리는 ___ 하나만).
+- **바로 앞 board/text 세그먼트가 그 blank의 답을 이미 보여주지 않았는지** (같은 예문을 답과 함께 판서한 뒤 그대로 빈칸퀴즈로 내는 것 = 정답 사전 노출, high 심각도). → revised에서 blank 문장을 학생이 처음 보는 새 문장으로 교체.
+
 ## 유닛
 ${unit.label_ko} (${unit.label_en}) · 레벨 ${unit.level}
 관리자 메모: ${unit.admin_note ?? "(없음)"}

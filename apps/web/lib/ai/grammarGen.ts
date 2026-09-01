@@ -126,12 +126,20 @@ export function sanitizeSegments(parsed: any): LectureSegment[] {
         });
       }
     } else if (seg?.type === "blank" && seg?.content?.prompt && seg?.content?.answer) {
+      let prompt = String(seg.content.prompt);
+      const answer = String(seg.content.answer);
+      if (!prompt.includes("___")) {
+        // 빈칸 없이 정답이 문장에 들어가 있으면 정답 단어를 ___ 로. 못 찾으면 이 blank는 버림.
+        const re = new RegExp(`\\b${answer.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
+        if (re.test(prompt)) prompt = prompt.replace(re, "___");
+        else continue;
+      }
       out.push({
         type: "blank",
         narration,
         content: {
-          prompt: String(seg.content.prompt),
-          answer: String(seg.content.answer),
+          prompt,
+          answer,
           hint_ko: seg.content.hint_ko ? String(seg.content.hint_ko) : undefined,
         },
       });
