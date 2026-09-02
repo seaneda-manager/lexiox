@@ -231,6 +231,7 @@ export default function SidebarClient({ role, program = null, hasHiNaesin = fals
         { section: 'Updated TOEFL' as NavSection, href: '/admin/content/updated-listening', label: 'Listening', icon: Headphones },
         { section: 'Updated TOEFL' as NavSection, href: '/admin/content/updated-writing',   label: 'Writing',   icon: PenLine },
         { section: 'Updated TOEFL' as NavSection, href: '/admin/content/grammar-2026',      label: 'Grammar',   icon: BookText },
+        { section: 'Updated TOEFL' as NavSection, href: '/admin/grammar-quiz',              label: '문법 퀴즈 뱅크', icon: CheckSquare },
         { section: 'Updated TOEFL' as NavSection, href: '/admin/problem-bank',              label: 'Problem Bank', icon: Library },
         { section: 'Updated TOEFL' as NavSection, href: '/admin/daily-tests',               label: 'Daily Tests', icon: CheckSquare },
 
@@ -310,9 +311,9 @@ export default function SidebarClient({ role, program = null, hasHiNaesin = fals
         { section: '내신' as NavSection, href: '/naesin/middle', label: '중학 내신 드릴', icon: ClipboardList },
 
         { section: 'Jr.' as NavSection, href: '/jr/drill', label: 'Jr. 드릴', icon: PlayCircle },
+        { section: 'Jr.' as NavSection, href: '/jr',       label: 'Jr. 문법·학습', icon: BookText },
 
         { section: '학습', href: '/updated-listening/study', label: 'Listening', skill: 'listening' as SkillColor },
-        { section: '학습', href: '/grammar-2026',          label: 'Grammar', icon: BookText },
 
         { section: '어휘', href: '/vocab/hub-new', label: '단어 학습', icon: Library },
 

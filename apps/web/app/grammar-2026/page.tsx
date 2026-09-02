@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { MOCK_GRAMMAR_UNITS_LIST } from "@/models/grammar/mock";
 import SectionGuide from "@/app/components/SectionGuide";
@@ -10,6 +11,21 @@ const LEVEL_LABEL: Record<string, string> = {
 export const dynamic = "force-dynamic";
 
 export default async function Grammar2026Page() {
+  // grammar-2026(LEXiOX-Gram / AI 강의 카탈로그)는 TOEFL·GAP 학생 전용.
+  // LEXiOX 학생의 문법은 JR 문법(배정 기반)으로 제공 → /jr 로 보냄.
+  {
+    const authClient = await getServerSupabase();
+    const { data: { user: authUser } } = await authClient.auth.getUser();
+    if (authUser) {
+      const { data: prof } = await authClient
+        .from("profiles")
+        .select("program")
+        .eq("id", authUser.id)
+        .maybeSingle();
+      if (prof?.program === "lexiox") redirect("/jr");
+    }
+  }
+
   let units: { id: string; label_ko: string; label_en: string; level: string; order_index: number; status: string }[] = MOCK_GRAMMAR_UNITS_LIST;
   let completedUnitIds: Set<string> = new Set();
 

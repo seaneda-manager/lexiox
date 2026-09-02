@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { MOCK_GRAMMAR_UNIT } from "@/models/grammar/mock";
 import type { GrammarUnitFull } from "@/models/grammar/types";
@@ -12,6 +12,20 @@ export default async function GrammarUnitPage({
   params: Promise<{ unitId: string }>;
 }) {
   const { unitId } = await params;
+
+  // grammar-2026는 TOEFL·GAP 전용. LEXiOX 학생은 JR 문법(배정 기반)으로.
+  {
+    const authClient = await getServerSupabase();
+    const { data: { user: authUser } } = await authClient.auth.getUser();
+    if (authUser) {
+      const { data: prof } = await authClient
+        .from("profiles")
+        .select("program")
+        .eq("id", authUser.id)
+        .maybeSingle();
+      if (prof?.program === "lexiox") redirect("/jr");
+    }
+  }
 
   let data: GrammarUnitFull | null = null;
 
