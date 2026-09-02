@@ -179,6 +179,74 @@ export async function insertDroppingMissing(
   return { error: { message: `insert failed after dropping ${dropped.join(",")}` }, dropped };
 }
 
+// ── 퀴즈 뱅크 문항 ──────────────────────────────────────────
+
+export type GenQuizItem = {
+  stem: string;
+  item_type: "fill" | "judgment";
+  answer: string;
+  distractors: string[];
+  vocab_level: number; // 1~5
+  explanation?: string;
+};
+
+/**
+ * AI 응답 → 퀴즈 문항 배열. sanitizeDrills 와 같은 방어 로직.
+ * fill: stem 에 ___ 강제(정답 단어 치환, 못하면 버림). judgment: answer correct|incorrect.
+ * vocab_level 1~5 clamp(기본 3).
+ */
+export function sanitizeQuizItems(parsed: any): GenQuizItem[] {
+  const arr = Array.isArray(parsed?.items)
+    ? parsed.items
+    : Array.isArray(parsed?.drills)
+      ? parsed.drills
+      : [];
+  const out: GenQuizItem[] = [];
+  for (const d of arr) {
+    const item_type = d?.item_type === "judgment" || d?.type === "judgment" ? "judgment" : "fill";
+    let stem = String(d?.stem ?? d?.sentence ?? "").trim();
+    const answer = String(d?.answer ?? "").trim();
+    if (!stem || !answer) continue;
+
+    if (item_type === "fill") {
+      if (!stem.includes("___")) {
+        const re = new RegExp(`\\b${answer.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
+        if (re.test(stem)) stem = stem.replace(re, "___");
+        else continue;
+      }
+    }
+    if (item_type === "judgment" && !["correct", "incorrect"].includes(answer.toLowerCase())) continue;
+
+    const ansNorm = answer.toLowerCase();
+    const distractors =
+      item_type === "judgment"
+        ? []
+        : (Array.isArray(d?.distractors) ? d.distractors : [])
+            .map((x: any) => String(x ?? "").trim())
+            .filter(Boolean)
+            .filter((x: string) => x.toLowerCase() !== ansNorm)
+            .filter(
+              (x: string, i: number, a: string[]) =>
+                a.findIndex((y) => y.toLowerCase() === x.toLowerCase()) === i,
+            )
+            .slice(0, 3);
+
+    let vocab_level = Number(d?.vocab_level);
+    if (!Number.isFinite(vocab_level)) vocab_level = 3;
+    vocab_level = Math.min(5, Math.max(1, Math.round(vocab_level)));
+
+    out.push({
+      stem,
+      item_type,
+      answer: item_type === "judgment" ? answer.toLowerCase() : answer,
+      distractors,
+      vocab_level,
+      explanation: d?.explanation ? String(d.explanation).trim() : undefined,
+    });
+  }
+  return out;
+}
+
 export function existingSegmentsBlock(segments: any[]): string {
   if (!segments || segments.length === 0) return "(없음)";
   return segments.map((s) => `- [${s.type}] ${JSON.stringify(s.content)}`).join("\n");
