@@ -7,6 +7,8 @@ import ProgramTabs, { type ProgramTab } from "./_client/ProgramTabs";
 import WrongAnswerCard, { type WrongAnswerRow } from "@/components/admin/hi-naesin/WrongAnswerCard";
 import WeaknessSummary from "@/components/admin/hi-naesin/WeaknessSummary";
 import { summarizeWeaknesses } from "@/lib/hi-naesin/weaknessCategories";
+import AssignmentCalendar from "@/components/assignments/AssignmentCalendar";
+import { getStudentAssignmentCalendar, toIsoDate } from "@/lib/assignments/studentAssignmentCalendar";
 
 export const dynamic = "force-dynamic";
 
@@ -196,6 +198,21 @@ export default async function StudentDetailDashboard({ params }: PageProps) {
     });
 
   const academyStudentId = await resolveAcademyStudentId(supabase, studentId);
+
+  // ── 날짜별 배정 캘린더 (현재 월 그리드 범위) ──────────────────
+  const _now = new Date();
+  const calYm = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, "0")}`;
+  const _first = new Date(_now.getFullYear(), _now.getMonth(), 1);
+  const _gs = new Date(_first);
+  _gs.setDate(_gs.getDate() - _first.getDay());
+  const _ge = new Date(_gs);
+  _ge.setDate(_ge.getDate() + 41);
+  const assignmentItems = await getStudentAssignmentCalendar({
+    authUserId: studentId,
+    academyStudentId,
+    fromIso: toIsoDate(_gs),
+    toIso: toIsoDate(_ge),
+  });
   let vocabPlans: { trackTitle: string; cursorDayIndex: number; totalDays: number; isEnabled: boolean; isPaused: boolean }[] = [];
   // Junior 커리큘럼 활동 신호. 아직 jr_reading_sessions 외 테이블은 실제 DB에 없어 이것만 확인한다.
   let jrReadingSessionCount = 0;
@@ -577,6 +594,18 @@ export default async function StudentDetailDashboard({ params }: PageProps) {
   );
 
   const tabs: (ProgramTab | null)[] = [
+    {
+      id: "calendar",
+      label: "🗓 날짜별 배정",
+      content: (
+        <AssignmentCalendar
+          initialItems={assignmentItems}
+          initialMonth={calYm}
+          authId={studentId}
+          academyId={academyStudentId ?? undefined}
+        />
+      ),
+    },
     hasToeflActivity ? { id: "toefl", label: "🎯 TOEFL", content: toeflContent } : null,
     hasNaesinActivity
       ? {

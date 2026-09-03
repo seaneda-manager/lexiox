@@ -261,6 +261,7 @@ export default function SidebarClient({ role, program = null, hasHiNaesin = fals
         { section: '어휘관리' as NavSection, href: '/admin/vocab/speed-settings', label: 'Speed 타이머',  icon: Settings },
 
         { section: '선생님 도구' as NavSection, href: '/teacher/home',             label: '선생님 홈',    icon: Home },
+        { section: '선생님 도구' as NavSection, href: '/teacher/homework-calendar', label: '배정 캘린더',  icon: Calendar },
         { section: '선생님 도구' as NavSection, href: '/admin/students',           label: '학생 추가/관리', icon: UserPlus },
         { section: '선생님 도구' as NavSection, href: '/admin/schools',            label: '학교 관리',    icon: School },
         { section: '선생님 도구' as NavSection, href: '/admin/exam-mode',          label: '시험모드 현황', icon: Calendar },
@@ -290,6 +291,7 @@ export default function SidebarClient({ role, program = null, hasHiNaesin = fals
         { section: '콘텐츠',  href: '/teacher/speaking-drills', label: 'Speaking 훈련', icon: PlayCircle },
 
         { section: '학생 관리', href: '/teacher/home',     label: '선생님 홈', icon: Home },
+        { section: '학생 관리', href: '/teacher/homework-calendar', label: '배정 캘린더', icon: Calendar },
         { section: '학생 관리', href: '/teacher/tasks',    label: '할 일 관리', icon: CheckSquare },
         { section: '학생 관리', href: '/teacher/students', label: '학생 현황', icon: Users },
 
