@@ -178,6 +178,33 @@ export function generateExamPrep(
   return blocks;
 }
 
+/**
+ * 수행평가(당일 제출형) 준비 블록.
+ * 회독 프리셋이 안 맞으므로 D-3 ~ D-1 각 날에 "수행평가 준비" 블록 1개씩만 (집).
+ * prep_start_date 는 무시하고 시험 시작일 기준으로 역산한다.
+ */
+export function generatePerformancePrep(exam: ExamInput): GeneratedBlock[] {
+  const subjectLabel = exam.subjects.find((s) => s.trim().length > 0) ?? null;
+  const out: GeneratedBlock[] = [];
+  for (let d = 3; d >= 1; d--) {
+    const date = addDays(exam.start_date, -d);
+    out.push({
+      student_id: exam.student_id,
+      block_date: date,
+      zone: "home",
+      start_time: null,
+      end_time: null,
+      kind: "test_prep",
+      subject: subjectLabel ?? "",
+      exam_id: exam.id,
+      title: subjectLabel ? `${subjectLabel} · 수행평가 준비` : `${exam.title} 준비`,
+      note: `${exam.title} · D-${d}`,
+      source: "preset",
+    });
+  }
+  return out;
+}
+
 // 시험기간 각 날짜: 마무리 점검 1블록 (집)
 function examWeekBlocks(
   exam: ExamInput,

@@ -1,7 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { EXAM_TYPE_LABEL, SUBJECT_CHIPS, type StudentExam } from "@/lib/planner/types";
+import {
+  EXAM_SOURCE_LABEL,
+  EXAM_TYPE_LABEL,
+  SUBJECT_CHIPS,
+  type StudentExam,
+} from "@/lib/planner/types";
 import { PRESET_LIST } from "@/lib/planner/presets";
 
 export default function ExamPanel({
@@ -113,7 +118,14 @@ function ExamRow({
     <div className="rounded-2xl border border-neutral-200 bg-white p-3">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="truncate text-sm font-bold text-neutral-800">{exam.title}</p>
+          <div className="flex items-center gap-1.5">
+            <p className="truncate text-sm font-bold text-neutral-800">{exam.title}</p>
+            {exam.source !== "student" && (
+              <span className="shrink-0 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-medium text-emerald-700">
+                {EXAM_SOURCE_LABEL[exam.source]}
+              </span>
+            )}
+          </div>
           <p className="text-[11px] text-neutral-400">
             {EXAM_TYPE_LABEL[exam.exam_type]} · {exam.start_date}
             {exam.end_date !== exam.start_date && ` ~ ${exam.end_date}`}
@@ -165,31 +177,41 @@ function ExamRow({
             )}
           </div>
 
-          <div>
-            <p className="mb-1 text-[11px] font-semibold text-neutral-500">
-              공부 스케줄 자동 생성
-            </p>
-            <p className="mb-1.5 text-[10px] text-neutral-400">
-              준비기간에 맞춰 과목별 회독·문제풀이·마무리 블록을 캘린더에 채워줘요. 다시
-              누르면 완료 안 한 블록만 새로 만듭니다.
-            </p>
-            {exam.subjects.length === 0 ? (
-              <p className="text-[10px] text-rose-500">먼저 시험 과목을 선택하세요.</p>
-            ) : (
-              <div className="flex flex-wrap gap-1.5">
-                {PRESET_LIST.map((p) => (
-                  <button
-                    key={p.key}
-                    onClick={() => onGenerate(p.key)}
-                    disabled={busy}
-                    className="rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-blue-700 disabled:opacity-40"
-                  >
-                    {p.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          {exam.exam_type === "performance" ? (
+            <div>
+              <p className="mb-1 text-[11px] font-semibold text-neutral-500">준비 블록</p>
+              <p className="text-[10px] text-neutral-400">
+                수행평가는 회독 계획 대신 D-3 ~ D-1에 &ldquo;준비&rdquo; 블록이 자동으로 잡혀요.
+                캘린더에서 시간·내용을 직접 조정하세요.
+              </p>
+            </div>
+          ) : (
+            <div>
+              <p className="mb-1 text-[11px] font-semibold text-neutral-500">
+                공부 스케줄 자동 생성
+              </p>
+              <p className="mb-1.5 text-[10px] text-neutral-400">
+                준비기간에 맞춰 과목별 회독·문제풀이·마무리 블록을 캘린더에 채워줘요. 다시
+                누르면 완료 안 한 블록만 새로 만듭니다.
+              </p>
+              {exam.subjects.length === 0 ? (
+                <p className="text-[10px] text-rose-500">먼저 시험 과목을 선택하세요.</p>
+              ) : (
+                <div className="flex flex-wrap gap-1.5">
+                  {PRESET_LIST.map((p) => (
+                    <button
+                      key={p.key}
+                      onClick={() => onGenerate(p.key)}
+                      disabled={busy}
+                      className="rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-blue-700 disabled:opacity-40"
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {exam.source === "student" && (
             <button

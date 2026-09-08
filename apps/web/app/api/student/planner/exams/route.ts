@@ -5,7 +5,11 @@ import { NextResponse } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getServiceSupabase } from "@/lib/supabase/service";
 import { getPlannerStudentContext, type PlannerStudentContext } from "@/lib/planner/studentContext";
-import { generateExamPrep, type RoutineSlot } from "@/lib/planner/generateExamPrep";
+import {
+  generateExamPrep,
+  generatePerformancePrep,
+  type RoutineSlot,
+} from "@/lib/planner/generateExamPrep";
 import { isPresetKey } from "@/lib/planner/presets";
 
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
@@ -214,19 +218,22 @@ export async function POST(req: Request) {
         ? body.prep_start_date
         : addDaysIso(startDate, -28);
 
+    const safeType = [
+      "naesin_midterm",
+      "naesin_final",
+      "mock",
+      "toefl",
+      "performance",
+      "other",
+    ].includes(examType)
+      ? examType
+      : "other";
+
     const { data, error } = await db
       .from("student_exams")
       .insert({
         student_id: ctx.academyId,
-        exam_type: [
-          "naesin_midterm",
-          "naesin_final",
-          "mock",
-          "toefl",
-          "other",
-        ].includes(examType)
-          ? examType
-          : "other",
+        exam_type: safeType,
         title,
         subjects,
         start_date: startDate,
@@ -238,6 +245,18 @@ export async function POST(req: Request) {
       .select(EXAM_SELECT)
       .single();
     if (error) throw error;
+
+    // 수행평가는 회독 프리셋이 안 맞으므로 D-3 준비 블록을 바로 깔아준다
+    if (safeType === "performance" && data) {
+      const d = data as { id: string; title: string; subjects: string[]; start_date: string; end_date: string; prep_start_date: string };
+      const generated = generatePerformancePrep({ ...d, student_id: ctx.academyId });
+      if (generated.length > 0) {
+        await db
+          .from("student_day_blocks")
+          .insert(generated.map((g) => ({ ...g, created_by: ctx.authId })))
+          .then(({ error: e }) => e && console.warn("performance prep insert", e.message));
+      }
+    }
     return NextResponse.json({ ok: true, exam: data });
   } catch (e) {
     console.error("STUDENT PLANNER EXAMS POST", e);

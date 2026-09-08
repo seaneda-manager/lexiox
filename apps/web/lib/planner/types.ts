@@ -40,24 +40,48 @@ export type LessonLog = {
   homework_note: string | null;
 };
 
+export type ExamType =
+  | "naesin_midterm"
+  | "naesin_final"
+  | "mock"
+  | "toefl"
+  | "performance"
+  | "other";
+
+export type ExamSource =
+  | "student"
+  | "school_period"
+  | "assignment"
+  | "naesin_schedule"
+  | "teacher";
+
 export type StudentExam = {
   id: string;
-  exam_type: "naesin_midterm" | "naesin_final" | "mock" | "toefl" | "other";
+  exam_type: ExamType;
   title: string;
   subjects: string[];
   start_date: string;
   end_date: string;
   prep_start_date: string;
   preset_key: string | null;
-  source: "student" | "school_period" | "assignment" | "naesin_schedule";
+  source: ExamSource;
 };
 
-export const EXAM_TYPE_LABEL: Record<StudentExam["exam_type"], string> = {
+export const EXAM_TYPE_LABEL: Record<ExamType, string> = {
   naesin_midterm: "내신 중간고사",
   naesin_final: "내신 기말고사",
   mock: "모의고사",
   toefl: "TOEFL",
+  performance: "수행평가",
   other: "기타 시험",
+};
+
+export const EXAM_SOURCE_LABEL: Record<ExamSource, string> = {
+  student: "직접 등록",
+  school_period: "학교 시험기간",
+  assignment: "모의고사 배정",
+  naesin_schedule: "내신 일정",
+  teacher: "선생님 지정",
 };
 
 export const ZONE_LABEL: Record<PlannerZone, string> = {
