@@ -214,12 +214,10 @@ async function checkLearningCompletion(
   studentId: string,
   setId: string
 ): Promise<{ ok: boolean; error?: string }> {
-  // student_vocab_assignments.stage/completed_at은 실제 학습 화면(app/vocab/session)에서
-  // assignmentId가 항상 null로 전달되는 버그 때문에 사실상 절대 갱신되지 않는다
-  // (student_vocab_assignments 테이블 전수 조사: 전부 stage=1). 반면 vocab_learning_attempts는
-  // saveVocabAttemptAction이 매 단계 무조건 기록하는 테이블이라 실제로 신뢰할 수 있는 진행
-  // 기록이다. know/spelling 단계는 passed 필드를 항상 undefined로 남기므로(speed만 채움),
-  // "그 단계 시도 기록이 존재하는지"로 완료 여부를 판단한다.
+  // 권위 신호는 completeVocabDayAction 이 찍는 student_vocab_assignments.completed_at.
+  // 다만 구데이터/누락 대비로 vocab_learning_attempts 폴백도 둔다 —
+  // saveVocabAttemptAction 이 매 단계(know/spelling/speed) 무조건 기록하므로,
+  // "그 단계 시도 기록이 존재하는지"로 학습 진행 여부를 가늠할 수 있다.
   const requiredStages = ["know", "spelling", "speed"];
 
   for (const stage of requiredStages) {
