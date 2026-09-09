@@ -380,11 +380,16 @@ export default function VocabHubNewPage() {
                 </div>
 
                 <div className="border-t pt-6">
-                  <p className="text-gray-600 mb-4">다음 학습</p>
+                  <p className="text-gray-600 mb-4">
+                    다음 학습 <span className="text-xs text-gray-400">· 집에서 하는 단어 숙제</span>
+                  </p>
                   <div className="bg-blue-50 rounded-lg p-6">
-                    <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                    <h3 className="text-2xl font-bold text-gray-900 mb-1">
                       Day {todayData.nextChapter.dayNumber}
                     </h3>
+                    <p className="mb-4 text-xs text-gray-500">
+                      PreScreen → 스펠링 → 학습 → Speed → 깜지까지 끝내야 완료
+                    </p>
                     <button
                       onClick={() => {
                         // 기존 Voca 세션으로 이동
@@ -402,7 +407,7 @@ export default function VocabHubNewPage() {
                       📌 <span className="font-semibold">숙제인 단어 학습(깜지까지)을 완료해야만 학원에서 단어 시험을 볼 수 있습니다.</span>
                     </p>
                     {testEligibility && (
-                      <div className="mt-3">
+                      <div className="mt-3 space-y-3">
                         {testEligibility.testTaken ? (
                           <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-800">
                             ✓ 단어 시험 완료{testEligibility.score != null ? ` · ${testEligibility.score}점` : ""}
@@ -415,6 +420,18 @@ export default function VocabHubNewPage() {
                           <span className="inline-flex items-center gap-1 rounded-full bg-gray-200 px-3 py-1 text-xs font-semibold text-gray-600">
                             🔒 학습 미완료 · 단어 시험 잠김
                           </span>
+                        )}
+                        {testEligibility.dayComplete && !testEligibility.testTaken && (
+                          <button
+                            onClick={() => {
+                              window.location.href = testEligibility.day
+                                ? `/vocab/test?track_id=${bookId}&day=${testEligibility.day}`
+                                : "/vocab/test";
+                            }}
+                            className="block w-full rounded-lg border border-amber-300 bg-white py-2 text-center text-sm font-semibold text-amber-800 hover:bg-amber-100"
+                          >
+                            단어 시험 보러 가기 →
+                          </button>
                         )}
                       </div>
                     )}

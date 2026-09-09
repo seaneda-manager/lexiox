@@ -13,9 +13,14 @@ import TestStartScreen from "./_components/TestStartScreen";
 export default function VocabTestPage() {
   const router = useRouter();
   const params = useSearchParams();
-  const trackId = params.get("track_id");
-  const dayNumber = params.get("day");
+  const urlTrackId = params.get("track_id");
+  const urlDay = params.get("day");
   const useWrongOnly = params.get("wrong_only") === "true";
+
+  // track/day 는 URL 파라미터가 있으면 그걸 쓰고,
+  // 없으면(사이드바 "단어 시험" 등 맨링크 진입) 학생 프로필+eligibility 로 해석한다.
+  const [trackId, setTrackId] = useState<string | null>(urlTrackId);
+  const [dayNumber, setDayNumber] = useState<string | null>(urlDay);
 
   const [state, setState] = useState<"loading" | "start" | "testing" | "results">("loading");
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -23,18 +28,64 @@ export default function VocabTestPage() {
   const [selectedQuestionIdx, setSelectedQuestionIdx] = useState(0);
   const [results, setResults] = useState<TestSubmitResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // "시험은 있는데 아직 학습을 안 끝냈다" 같은 안내 (에러와 구분)
+  const [notReady, setNotReady] = useState<string | null>(null);
   const [streak, setStreak] = useState(0);
   const [bestStreak, setBestStreak] = useState(0);
   const [sessionPoints, setSessionPoints] = useState(0);
   const [hintReveals, setHintReveals] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (!trackId || !dayNumber) {
-      setError("Missing track_id or day parameter");
+    let cancelled = false;
+
+    if (urlTrackId && urlDay) {
+      setTrackId(urlTrackId);
+      setDayNumber(urlDay);
+      setState("start");
       return;
     }
-    setState("start");
-  }, [trackId, dayNumber]);
+
+    // 맨링크 진입: 현재 배정된 트랙 + 가장 최근 완료 Day 로 해석
+    (async () => {
+      try {
+        const profRes = await fetch("/api/student/profile");
+        const prof = profRes.ok ? await profRes.json() : null;
+        const bookId: string | undefined = prof?.bookId;
+        if (!bookId) {
+          if (!cancelled) setError("배정된 단어 트랙이 없습니다. 담당 선생님에게 문의하세요.");
+          return;
+        }
+
+        const eligRes = await fetch(
+          `/api/vocab/test/eligibility?track_id=${encodeURIComponent(bookId)}`,
+          { cache: "no-store" },
+        );
+        const elig = eligRes.ok ? await eligRes.json() : null;
+        if (cancelled) return;
+
+        if (!elig?.ok || elig.day == null) {
+          setNotReady("아직 완료한 단어 학습 Day가 없어요. 먼저 단어 학습(깜지까지)을 끝내주세요.");
+          return;
+        }
+        if (!elig.dayComplete) {
+          setNotReady(
+            `Day ${elig.day} 단어 학습을 아직 다 못 끝냈어요. 깜지까지 완료해야 시험을 볼 수 있어요.`,
+          );
+          return;
+        }
+
+        setTrackId(bookId);
+        setDayNumber(String(elig.day));
+        setState("start");
+      } catch {
+        if (!cancelled) setError("시험 정보를 불러오지 못했어요.");
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [urlTrackId, urlDay]);
 
   const handleStartTest = async () => {
     if (!trackId || !dayNumber) return;
@@ -145,12 +196,30 @@ export default function VocabTestPage() {
     }
   };
 
+  if (notReady) {
+    return (
+      <FocusModeWrapper className="flex items-center justify-center min-h-screen">
+        <div className="max-w-sm text-center space-y-3">
+          <div className="text-4xl">📝</div>
+          <p className="text-gray-800 text-lg font-bold">아직 시험을 볼 수 없어요</p>
+          <p className="text-gray-500 text-sm">{notReady}</p>
+          <button
+            onClick={() => router.push("/vocab/hub-new")}
+            className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold"
+          >
+            단어 학습하러 가기
+          </button>
+        </div>
+      </FocusModeWrapper>
+    );
+  }
+
   if (error) {
     return (
       <FocusModeWrapper className="flex items-center justify-center min-h-screen">
         <div className="text-center space-y-2">
           <p className="text-gray-700 text-lg">시험 정보를 찾을 수 없습니다.</p>
-          <p className="text-gray-500 text-sm">단어 학습 화면에서 시험을 다시 시작해주세요.</p>
+          <p className="text-gray-500 text-sm">{error}</p>
           <button
             onClick={() => router.push("/vocab/hub-new")}
             className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"

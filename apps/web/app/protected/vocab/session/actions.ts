@@ -7,7 +7,6 @@ import { createClient } from "@supabase/supabase-js";
 
 import type { SessionWord, VocabExample, VocabCollocation } from "@/models/vocab/SessionWord";
 import type { WordFormRowLike } from "@/lib/vocab/drill/buildBlockDrillTasksV1";
-import { advanceVocabQueueAfterCompletionAction } from "@/app/protected/admin/vocab/tracks/actions";
 
 export type LoadSessionWordsActionInput = {
   /** Optional: force a specific setId (debug / admin / shortcut) */
@@ -1075,21 +1074,34 @@ export async function completeVocabDayAction(input: {
       /* non-fatal */
     }
 
-    // 다음 Day 오픈 — finishDay()에서 여기로 오는 시점이 하루 학습의 진짜
-    // 끝이므로(Stage 1 Speed 등 중간 체크포인트에서는 더 이상 열지 않는다),
-    // 여기서만 다음 Day의 Stage 1을 배정하고 cursor를 전진시킨다.
-    // 실패해도 완료 자체는 성공 처리(non-fatal).
+    // 진도(cursor) 전진 — finishDay()에서 여기로 오는 시점이 하루 학습의 진짜 끝.
+    // 전체 코스가 이미 배정돼 있으므로 새 assignment 를 insert 할 필요 없이
+    // student_vocab_plans.cursor_day_index 만 max(cursor, 완료Day+1) 로 올린다.
+    // (기존 advanceVocabQueueAfterCompletionAction 은 이미 존재하는 assignment 를
+    //  다시 insert 하려다 UNIQUE 제약에 걸리는 불안정한 경로였다.)
     let nextOpened = 0;
     try {
-      console.log('[COMPLETE] Opening next day:', { student: academyStudentId, track: cleanStr(row.track_id) });
-      const advance = await advanceVocabQueueAfterCompletionAction({
-        studentId: academyStudentId,
-        trackId: cleanStr(row.track_id),
-      });
-      nextOpened = advance.ok && !("completed" in advance && advance.completed) ? 1 : 0;
-      console.log('[COMPLETE] ✅ Next day result:', advance);
+      const completedDay = typeof row.day_index === "number" ? row.day_index : null;
+      const { data: plan } = await client
+        .from("student_vocab_plans")
+        .select("id, cursor_day_index")
+        .eq("student_id", academyStudentId)
+        .eq("track_id", cleanStr(row.track_id))
+        .maybeSingle();
+
+      if (plan?.id && completedDay != null) {
+        const curCursor = Number((plan as any).cursor_day_index) || 1;
+        const nextDay = Math.max(curCursor, completedDay + 1);
+        if (nextDay !== curCursor) {
+          await client
+            .from("student_vocab_plans")
+            .update({ cursor_day_index: nextDay, updated_at: nowISO })
+            .eq("id", (plan as any).id);
+          nextOpened = 1;
+        }
+      }
     } catch (e) {
-      console.error('[COMPLETE] ❌ Next day failed:', toErrMsg(e));
+      console.warn('[COMPLETE] cursor advance failed (non-fatal):', toErrMsg(e));
     }
 
     return {
@@ -1193,71 +1205,12 @@ export async function saveVocabAttemptAction(
       console.warn("saveVocabAttemptAction: insert failed", toErrMsg(attemptError));
     }
 
-    // 2. assignmentId가 있으면 student_vocab_assignments의 completed_at 업데이트
-    if (input.assignmentId) {
-      const { error: assignmentError } = await client
-        .from("student_vocab_assignments")
-        .update({ completed_at: nowISO })
-        .eq("id", input.assignmentId);
-
-      if (assignmentError) {
-        console.warn("saveVocabAttemptAction: assignment update failed", toErrMsg(assignmentError));
-      }
-
-      // 3. Stage별 진행 로직
-      try {
-        const { data: asg } = await client
-          .from("student_vocab_assignments")
-          .select("student_id, track_id, set_id, day_index")
-          .eq("id", input.assignmentId)
-          .maybeSingle();
-
-        const nextStudentId = cleanStr((asg as any)?.student_id);
-        const nextTrackId = cleanStr((asg as any)?.track_id);
-        const setId = cleanStr((asg as any)?.set_id);
-        const dayIndex = Number((asg as any)?.day_index ?? 0);
-
-        if (!nextStudentId || !nextTrackId) return;
-
-        // PreScreen(know) 완료 → Spelling(Stage 2) 자동 배정
-        if (input.stage === "know") {
-          await client
-            .from("student_vocab_assignments")
-            .insert({
-              student_id: nextStudentId,
-              set_id: setId,
-              track_id: nextTrackId,
-              day_index: dayIndex,
-              stage: 2,
-              available_at: nowISO.split("T")[0],
-            });
-          return;
-        }
-
-        // Spelling(Stage 2) 완료 → Speed(Stage 3) 자동 배정
-        if (input.stage === "spelling") {
-          await client
-            .from("student_vocab_assignments")
-            .insert({
-              student_id: nextStudentId,
-              set_id: setId,
-              track_id: nextTrackId,
-              day_index: dayIndex,
-              stage: 3,
-              available_at: nowISO.split("T")[0],
-            });
-          return;
-        }
-
-        // "다음 Day로 진행"은 여기서 하지 않는다. UI에는 Speed 체크가 여러 번
-        // 있다(Stage 1 Speed, Stage 1 Speed 재도전, Stage 2 Speed) — 전부 이
-        // 함수를 stage:"speed"로 호출하므로, 여기서 다음 Day를 열면 하루 학습
-        // 중에 큐가 여러 번 전진해 Day를 건너뛰게 된다. 실제 "하루 완료"는
-        // finishDay()가 명시적으로 호출하는 completeVocabDayAction에서만 연다.
-      } catch (e: any) {
-        console.warn("saveVocabAttemptAction: stage progression failed", toErrMsg(e));
-      }
-    }
+    // 2. 이 단계 저장은 진행 기록만 남긴다. Day "완료"(completed_at)와 커서 전진은
+    //    깜지 끝에서 finishDay()가 호출하는 completeVocabDayAction 한 곳에서만 한다.
+    //    - 예전엔 여기서 매 단계마다 assignment.completed_at 을 찍어, prescreen 만
+    //      해도 그 Day 가 완료로 처리되고 학원 단어 시험이 열려버리는 버그가 있었다.
+    //    - stage=2/3 자동배정도 UNIQUE(student_id,track_id,day_index) 제약에 매번
+    //      걸려 조용히 실패하던 죽은 코드라 제거했다.
 
     // 4. 포인트 적립
     // point_rules는 auth user id를 student_id로 쓴다 (academy_students.id가 아니다).
