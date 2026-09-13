@@ -3,6 +3,7 @@ import SentenceSprintsPlay from '../../_components/games/SentenceSprintsPlay';
 import ArcheryPlay from '../../_components/games/ArcheryPlay';
 import InferencePlay from '../../_components/games/InferencePlay';
 import ReadingBlankFillPlay from '../../_components/games/ReadingBlankFillPlay';
+import TypingMemorizePlay from '../../_components/games/TypingMemorizePlay';
 
 async function GamePlayContent({
   gameId,
@@ -19,6 +20,8 @@ async function GamePlayContent({
         return <InferencePlay />;
       case 'reading_blank_fill':
         return <ReadingBlankFillPlay />;
+      case 'typing_memorize':
+        return <TypingMemorizePlay />;
       default:
         return <div>Unknown game</div>;
     }

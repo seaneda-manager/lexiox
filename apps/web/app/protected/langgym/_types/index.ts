@@ -1,7 +1,7 @@
 // 게임 상태
 export type GameStatus = 'playing' | 'paused' | 'completed' | 'failed' | 'ready';
 export type FeedbackAnimation = 'success' | 'fail' | 'neutral';
-export type GameType = 'sentence_sprints' | 'archery' | 'inference' | 'reading_blank_fill';
+export type GameType = 'sentence_sprints' | 'archery' | 'inference' | 'reading_blank_fill' | 'typing_memorize';
 
 // 게임 세션 정보
 export interface GameState {

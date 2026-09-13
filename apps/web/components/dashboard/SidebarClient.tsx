@@ -8,7 +8,7 @@ import {
   LayoutDashboard, BookOpen, Headphones, Mic, PenLine, BookText,
   ClipboardList, FileText, GraduationCap, Library, List, Download,
   Upload, Send, BarChart2, Home, UserPlus, CheckSquare, Users,
-  ClipboardCheck, PlayCircle, Gift, ShieldCheck, Globe, Settings, Calendar, School,
+  ClipboardCheck, PlayCircle, Gift, ShieldCheck, Globe, Settings, Calendar, School, Gamepad2,
   type LucideProps,
 } from 'lucide-react';
 import { useLang } from '@/contexts/LangContext';
@@ -320,6 +320,7 @@ export default function SidebarClient({ role, program = null, hasHiNaesin = fals
         { section: 'Jr.' as NavSection, href: '/jr',       label: 'Jr. 문법·학습', icon: BookText },
 
         { section: '학습', href: '/updated-listening/study', label: 'Listening', skill: 'listening' as SkillColor },
+        { section: '학습', href: '/langgym', label: 'LXGym', icon: Gamepad2 },
 
         { section: '어휘', href: '/vocab/hub-new', label: '단어 학습', icon: Library },
         { section: '어휘', href: '/vocab/test', label: '단어 시험', icon: FileText },
@@ -350,8 +351,9 @@ export default function SidebarClient({ role, program = null, hasHiNaesin = fals
         { section: '학습', href: '/vocab/hub-new',              label: '단어 학습', icon: Library },
         { section: '학습', href: '/vocab/test',                 label: '단어 시험', icon: FileText },
         { section: '학습', href: '/grammar-2026',           label: 'Lexiox Gram', icon: BookText },
-        { section: '학습', href: '/speaking-2026/drills',   label: 'LXGym', icon: PlayCircle },
+        { section: '학습', href: '/speaking-2026/drills',   label: 'Speaking 훈련', icon: PlayCircle },
         { section: '학습', href: '/speaking-2026/shadowing', label: '쉐도잉 게임', icon: PlayCircle },
+        { section: '학습', href: '/langgym',                label: 'LXGym', icon: Gamepad2 },
 
         { section: '내 현황', href: '/student',            label: '대시보드', icon: LayoutDashboard },
         { section: '내 현황', href: '/student/exams',       label: '예상문제', icon: CheckSquare },
@@ -398,6 +400,7 @@ export default function SidebarClient({ role, program = null, hasHiNaesin = fals
       { section: 'Updated TOEFL' as NavSection, href: '/grammar-2026',           label: 'Lexiox Gram', icon: BookText },
       { section: 'Updated TOEFL' as NavSection, href: '/speaking-2026/drills',   label: 'Speaking 훈련', icon: PlayCircle },
       { section: 'Updated TOEFL' as NavSection, href: '/speaking-2026/shadowing', label: '쉐도잉 게임', icon: PlayCircle },
+      { section: 'Updated TOEFL' as NavSection, href: '/langgym',                label: 'LXGym', icon: Gamepad2 },
 
       ...(hasHiNaesin ? [
         { section: 'Hi-내신' as NavSection, href: '/hi-naesin',        label: 'Hi-내신 드릴', icon: PlayCircle },

@@ -41,6 +41,16 @@ export const GAMES: Record<string, GameMetadata> = {
     estimatedDuration: 6,
     featured: true,
   },
+  typing_memorize: {
+    id: 'typing_memorize',
+    title: '타자 암기 스피드 훈련',
+    description: '단어·지문·스크립트를 타이핑하며 속도와 정확도를 훈련하고 암기하세요',
+    emoji: '⌨️',
+    phase: 1,
+    difficulty: 'medium',
+    estimatedDuration: 8,
+    featured: true,
+  },
   // Phase 2 게임들 (향후 구현)
   bubble_pop: {
     id: 'bubble_pop',
@@ -115,7 +125,7 @@ export const GAMES: Record<string, GameMetadata> = {
   },
 };
 
-export const PHASE_1_GAMES = ['sentence_sprints', 'archery', 'inference', 'reading_blank_fill'];
+export const PHASE_1_GAMES = ['sentence_sprints', 'archery', 'inference', 'reading_blank_fill', 'typing_memorize'];
 export const PHASE_2_GAMES = ['bubble_pop', 'read_recall', 'mad_libs'];
 export const PHASE_3_GAMES = ['storytelling', 'scavenger_hunt', 'picture_word', 'story_creator'];
 

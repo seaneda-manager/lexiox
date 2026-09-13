@@ -29,6 +29,7 @@ const APP_PREFIXES = [
   "/writing-2026",
   "/grammar-2026",
   "/toefl-2026",
+  "/langgym",
   "/dev",
   // ── 기타 앱 영역 ────────────────────────────────────────
   "/toefl",
@@ -39,6 +40,10 @@ const APP_PREFIXES = [
 
 function isAppRoute(pathname: string) {
   if (pathname === "/") return true; // 랜딩 페이지는 자체 헤더 포함
+  // /protected/* 는 정의상 전부 앱 영역이다 (ProtectedLayout이 자체 header를 그림) —
+  // 미들웨어 rewrite를 거치지 않고 내부 경로로 직접 들어와도(예: 옛 북마크) 이중 헤더가
+  // 나지 않도록 접두사 목록과 별개로 항상 앱 영역으로 취급한다.
+  if (pathname === "/protected" || pathname.startsWith("/protected/")) return true;
   return APP_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"));
 }
 

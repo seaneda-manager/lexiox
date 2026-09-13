@@ -45,6 +45,8 @@ export function middleware(req: NextRequest) {
     pathname === "/vocab" ||
     pathname.startsWith("/workout/") ||
     pathname === "/workout" ||
+    pathname.startsWith("/langgym/") ||
+    pathname === "/langgym" ||
     pathname.startsWith("/speaking-2026") ||
     pathname.startsWith("/listening-2026") ||
     pathname.startsWith("/reading-2026") ||

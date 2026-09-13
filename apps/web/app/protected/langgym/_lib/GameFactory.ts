@@ -3,6 +3,7 @@ import { SentenceSprintsGame } from './games/SentenceSprintsGame';
 import { ArcheryGame } from './games/ArcheryGame';
 import { InferenceGame } from './games/InferenceGame';
 import { ReadingBlankFillGame } from './games/ReadingBlankFillGame';
+import { TypingMemorizeGame } from './games/TypingMemorizeGame';
 import type { GameType } from '../_types';
 
 export class GameFactory {
@@ -16,6 +17,8 @@ export class GameFactory {
         return new InferenceGame(userId, gameId);
       case 'reading_blank_fill':
         return new ReadingBlankFillGame(userId, gameId);
+      case 'typing_memorize':
+        return new TypingMemorizeGame(userId, gameId);
       default:
         throw new Error(`Unknown game type: ${gameType}`);
     }
