@@ -18,6 +18,16 @@ import {
 import type { RevealMode, TypingUnit } from '@/lib/typing/types';
 import TypingCanvas from '@/components/typing/TypingCanvas';
 import TypingStatsBar from '@/components/typing/TypingStatsBar';
+import RetryChallenge from '@/components/typing/RetryChallenge';
+
+function speak(text: string) {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window) || !text) return;
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = 'en-US';
+  utter.rate = 0.95;
+  window.speechSynthesis.speak(utter);
+}
 
 type Stage = 'setup' | 'loading' | 'playing' | 'complete';
 type ContentSourceChoice = 'vocab' | 'content' | 'completed';
@@ -40,6 +50,10 @@ export default function TypingMemorizePlay() {
   const [shuffled, setShuffled] = useState(false);
   const [strict, setStrict] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [ttsEnabled, setTtsEnabled] = useState(true);
+  const [hintVisible, setHintVisible] = useState(false);
+  const [retryActive, setRetryActive] = useState(false);
+  const [retryResult, setRetryResult] = useState<{ completedCount: number; total: number } | null>(null);
 
   const gameRef = useRef<TypingMemorizeGame | null>(null);
   const sessionRef = useRef<TypingSession | null>(null);
@@ -53,6 +67,9 @@ export default function TypingMemorizePlay() {
 
   const handleStart = async () => {
     setError(null);
+    setHintVisible(false);
+    setRetryActive(false);
+    setRetryResult(null);
     setStage('loading');
     try {
       const supabase = createBrowserClient();
@@ -105,6 +122,7 @@ export default function TypingMemorizePlay() {
       session.start();
       sessionRef.current = session;
 
+      if (ttsEnabled) speak(session.getCurrentTargetText());
       setStage('playing');
     } catch (e) {
       console.error(e);
@@ -136,10 +154,14 @@ export default function TypingMemorizePlay() {
         setStage('complete');
         return;
       }
+
+      if (ttsEnabled) speak(session.getCurrentTargetText());
     }
 
     rerender();
   };
+
+  const handleEscape = () => setStage('setup');
 
   if (stage === 'setup' || stage === 'loading') {
     return (
@@ -238,6 +260,10 @@ export default function TypingMemorizePlay() {
                 <input type="checkbox" checked={strict} onChange={(e) => setStrict(e.target.checked)} />
                 Strict 모드 (오타 시 진행 차단)
               </label>
+              <label className="flex items-center gap-2 text-sm text-gray-700">
+                <input type="checkbox" checked={ttsEnabled} onChange={(e) => setTtsEnabled(e.target.checked)} />
+                🔊 발음 자동 재생
+              </label>
             </div>
           </div>
 
@@ -261,13 +287,14 @@ export default function TypingMemorizePlay() {
 
   if (stage === 'complete') {
     const summary = gameRef.current?.getSessionMetrics();
+    const bestCombo = sessionRef.current?.getCombo().best ?? 0;
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-100 flex items-center justify-center p-8">
         <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
           <div className="text-6xl mb-4">🎉</div>
           <h2 className="text-3xl font-bold text-gray-800 mb-4">훈련 완료!</h2>
 
-          <div className="grid grid-cols-2 gap-4 mb-6 text-left">
+          <div className="grid grid-cols-3 gap-3 mb-6 text-left">
             <div className="bg-orange-50 p-4 rounded-lg">
               <p className="text-xs text-gray-600">평균 WPM</p>
               <p className="text-2xl font-bold text-orange-600">{summary?.wpm ?? 0}</p>
@@ -275,6 +302,10 @@ export default function TypingMemorizePlay() {
             <div className="bg-emerald-50 p-4 rounded-lg">
               <p className="text-xs text-gray-600">정확도</p>
               <p className="text-2xl font-bold text-emerald-600">{summary?.accuracy ?? 0}%</p>
+            </div>
+            <div className="bg-purple-50 p-4 rounded-lg">
+              <p className="text-xs text-gray-600">최고 콤보</p>
+              <p className="text-2xl font-bold text-purple-600">{bestCombo}</p>
             </div>
           </div>
 
@@ -288,6 +319,33 @@ export default function TypingMemorizePlay() {
                   </span>
                 ))}
               </div>
+            </div>
+          )}
+
+          {summary && summary.errorWords.length > 0 && !retryActive && !retryResult && (
+            <button
+              onClick={() => setRetryActive(true)}
+              className="w-full mb-4 bg-purple-600 text-white font-semibold py-2.5 rounded-lg hover:bg-purple-700 transition-all text-sm"
+            >
+              🔁 오타 단어 다시 치기 (15초 챌린지)
+            </button>
+          )}
+
+          {retryActive && summary && (
+            <div className="mb-6 p-4 bg-purple-50 rounded-lg">
+              <RetryChallenge
+                words={summary.errorWords}
+                onFinish={(result) => {
+                  setRetryActive(false);
+                  setRetryResult(result);
+                }}
+              />
+            </div>
+          )}
+
+          {retryResult && (
+            <div className="mb-6 p-3 bg-purple-50 rounded-lg text-sm text-purple-800 font-medium">
+              {retryResult.completedCount}/{retryResult.total} 단어 재도전 완료!
             </div>
           )}
 
@@ -308,39 +366,85 @@ export default function TypingMemorizePlay() {
 
   const progress = session.getProgress();
   const metrics = session.getLiveMetrics();
+  const combo = session.getCombo();
+  const translation = session.getCurrentTranslation();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-orange-100 p-8">
-      <div className="max-w-3xl mx-auto space-y-6">
-        <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-gray-800">타자 암기 스피드 훈련</h2>
-          <button
-            onClick={() => setStage('setup')}
-            className="text-sm text-gray-500 hover:text-gray-700"
-          >
-            설정으로 돌아가기
-          </button>
+      <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-6">
+        <div className="space-y-6 min-w-0">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold text-gray-800">타자 암기 스피드 훈련</h2>
+            <button
+              onClick={handleEscape}
+              className="text-sm text-gray-500 hover:text-gray-700"
+            >
+              설정으로 돌아가기 (Esc)
+            </button>
+          </div>
+
+          <TypingStatsBar
+            metrics={metrics}
+            strict={strict}
+            onToggleStrict={() => {
+              setStrict((v) => {
+                const next = !v;
+                session.setStrict(next);
+                return next;
+              });
+            }}
+            progress={progress}
+          />
+
+          <TypingCanvas
+            chars={session.getRenderChars()}
+            translationKo={translation}
+            showTranslation={revealMode === 'blind'}
+            onKey={handleKey}
+            onEscape={handleEscape}
+            fever={combo.fever}
+          />
         </div>
 
-        <TypingStatsBar
-          metrics={metrics}
-          strict={strict}
-          onToggleStrict={() => {
-            setStrict((v) => {
-              const next = !v;
-              session.setStrict(next);
-              return next;
-            });
-          }}
-          progress={progress}
-        />
+        <div className="space-y-4">
+          <div className={`rounded-xl p-4 text-center transition-colors ${combo.fever ? 'bg-orange-500 text-white shadow-lg' : 'bg-white shadow'}`}>
+            <p className={`text-xs ${combo.fever ? 'text-orange-100' : 'text-gray-500'}`}>
+              {combo.fever ? '🔥 피버 타임!' : '콤보'}
+            </p>
+            <p className="text-3xl font-bold">{combo.current}</p>
+            <p className={`text-xs mt-1 ${combo.fever ? 'text-orange-100' : 'text-gray-400'}`}>최고 {combo.best}</p>
+          </div>
 
-        <TypingCanvas
-          chars={session.getRenderChars()}
-          translationKo={session.getCurrentTranslation()}
-          showTranslation={revealMode === 'blind'}
-          onKey={handleKey}
-        />
+          {revealMode !== 'blind' && (
+            <div className="bg-white rounded-xl shadow p-4">
+              <button
+                onClick={() => setHintVisible((v) => !v)}
+                className="w-full text-left text-sm font-semibold text-gray-700 flex items-center justify-between"
+              >
+                💡 힌트 {hintVisible ? '숨기기' : '보기'}
+                <span className="text-gray-400">{hintVisible ? '▲' : '▼'}</span>
+              </button>
+              {hintVisible && (
+                <p className="mt-2 text-sm text-indigo-900 bg-indigo-50 rounded-lg p-2">
+                  {translation || '이 콘텐츠엔 힌트(번역)가 없습니다.'}
+                </p>
+              )}
+            </div>
+          )}
+
+          <div className="bg-white rounded-xl shadow p-4 space-y-2">
+            <button
+              onClick={() => speak(session.getCurrentTargetText())}
+              className="w-full text-sm font-semibold text-gray-700 flex items-center justify-center gap-2 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50"
+            >
+              🔊 다시 듣기
+            </button>
+            <label className="flex items-center gap-2 text-xs text-gray-600 justify-center">
+              <input type="checkbox" checked={ttsEnabled} onChange={(e) => setTtsEnabled(e.target.checked)} />
+              자동 재생
+            </label>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -9,7 +9,9 @@ type Props = {
   translationKo?: string | null;
   showTranslation?: boolean;
   onKey: (key: string) => void;
+  onEscape?: () => void;
   autoFocus?: boolean;
+  fever?: boolean;
 };
 
 const STATE_CLASS: Record<RenderChar['state'], string> = {
@@ -19,7 +21,7 @@ const STATE_CLASS: Record<RenderChar['state'], string> = {
   current: 'text-gray-800',
 };
 
-export default function TypingCanvas({ chars, translationKo, showTranslation, onKey, autoFocus = true }: Props) {
+export default function TypingCanvas({ chars, translationKo, showTranslation, onKey, onEscape, autoFocus = true, fever = false }: Props) {
   const boxRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -27,6 +29,11 @@ export default function TypingCanvas({ chars, translationKo, showTranslation, on
   }, [autoFocus]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      onEscape?.();
+      return;
+    }
     if (e.key === 'Backspace') {
       e.preventDefault();
       onKey('Backspace');
@@ -50,7 +57,11 @@ export default function TypingCanvas({ chars, translationKo, showTranslation, on
         ref={boxRef}
         tabIndex={0}
         onKeyDown={handleKeyDown}
-        className="min-h-[120px] rounded-xl border-2 border-gray-200 bg-white p-5 font-mono text-xl leading-relaxed tracking-wide focus:outline-none focus:border-orange-400 whitespace-pre-wrap break-words"
+        className={`min-h-[120px] rounded-xl border-2 bg-white p-5 font-mono text-xl leading-relaxed tracking-wide focus:outline-none whitespace-pre-wrap break-words transition-shadow ${
+          fever
+            ? 'border-orange-400 shadow-[0_0_0_4px_rgba(251,146,60,0.35)] animate-pulse'
+            : 'border-gray-200 focus:border-orange-400'
+        }`}
       >
         {chars.map((c, i) => (
           <span
@@ -62,7 +73,7 @@ export default function TypingCanvas({ chars, translationKo, showTranslation, on
         ))}
       </div>
 
-      <p className="text-xs text-gray-500">클릭 후 바로 타이핑하세요 · Backspace로 정정</p>
+      <p className="text-xs text-gray-500">클릭 후 바로 타이핑하세요 · Backspace로 정정 · Esc로 설정 복귀</p>
     </div>
   );
 }

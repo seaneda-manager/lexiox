@@ -41,6 +41,17 @@ export type TypingMetrics = {
   elapsedMs: number;
   /** Words the student hesitated on (typing latency well above session median). */
   weakWords: string[];
+  /** Words that had at least one mistyped character. */
+  errorWords: string[];
+};
+
+export type ComboState = {
+  /** Consecutive words typed with zero errors, right now. */
+  current: number;
+  /** Best combo streak reached this session. */
+  best: number;
+  /** True once `current` crosses the fever threshold. */
+  fever: boolean;
 };
 
 export type UnitResult = {

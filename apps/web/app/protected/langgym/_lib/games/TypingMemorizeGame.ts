@@ -45,7 +45,7 @@ export class TypingMemorizeGame extends GameBase {
   getSessionMetrics(): TypingMetrics {
     const n = this.unitResults.length;
     if (n === 0) {
-      return { wpm: 0, rawWpm: 0, accuracy: 0, errorCount: 0, elapsedMs: 0, weakWords: [] };
+      return { wpm: 0, rawWpm: 0, accuracy: 0, errorCount: 0, elapsedMs: 0, weakWords: [], errorWords: [] };
     }
     const sum = (fn: (r: UnitResult) => number) => this.unitResults.reduce((s, r) => s + fn(r), 0);
     return {
@@ -55,6 +55,7 @@ export class TypingMemorizeGame extends GameBase {
       errorCount: sum((r) => r.metrics.errorCount),
       elapsedMs: sum((r) => r.metrics.elapsedMs),
       weakWords: Array.from(new Set(this.unitResults.flatMap((r) => r.metrics.weakWords))).slice(0, 20),
+      errorWords: Array.from(new Set(this.unitResults.flatMap((r) => r.metrics.errorWords))).slice(0, 20),
     };
   }
 

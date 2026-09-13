@@ -5,6 +5,7 @@
 
 import type {
   CharState,
+  ComboState,
   RevealMode,
   TypingMetrics,
   TypingSessionConfig,
@@ -50,6 +51,7 @@ function shuffle<T>(arr: T[]): T[] {
 
 const WEAK_WORD_PACE_MULTIPLIER = 1.6;
 const MIN_WORD_LEN_FOR_PACE = 3;
+const FEVER_THRESHOLD = 10;
 
 export class TypingSession {
   private config: TypingSessionConfig;
@@ -69,6 +71,10 @@ export class TypingSession {
   private errorCount = 0;
   private wordPaces: WordPace[] = [];
   private completedUnits: UnitResult[] = [];
+  private errorWordsSet: Set<string> = new Set();
+  private currentWordHadError = false;
+  private comboCurrent = 0;
+  private comboBest = 0;
 
   constructor(config: TypingSessionConfig) {
     this.config = config;
@@ -90,6 +96,7 @@ export class TypingSession {
     this.hasPendingError = false;
     this.wordSpans = computeWordSpans(text);
     this.wordEnterTime = new Map();
+    this.currentWordHadError = false;
   }
 
   start(): void {
@@ -184,6 +191,7 @@ export class TypingSession {
     const wordIdx = this.wordSpans.findIndex((s) => this.cursor >= s.start && this.cursor < s.end);
     if (wordIdx >= 0 && !this.wordEnterTime.has(wordIdx)) {
       this.wordEnterTime.set(wordIdx, Date.now());
+      this.currentWordHadError = false;
     }
 
     const expected = target[this.cursor];
@@ -204,10 +212,21 @@ export class TypingSession {
           const durationMs = Date.now() - enteredAt;
           this.wordPaces.push({ word: span.text, msPerChar: durationMs / span.text.length });
         }
+        if (this.currentWordHadError) {
+          this.comboCurrent = 0;
+        } else {
+          this.comboCurrent++;
+          this.comboBest = Math.max(this.comboBest, this.comboCurrent);
+        }
       }
     } else {
       this.errorCount++;
       this.charStates[this.cursor] = 'incorrect';
+      this.comboCurrent = 0;
+      if (wordIdx >= 0) {
+        this.currentWordHadError = true;
+        this.errorWordsSet.add(this.wordSpans[wordIdx].text);
+      }
       if (this.config.strict) {
         this.hasPendingError = true;
       } else {
@@ -255,6 +274,16 @@ export class TypingSession {
       errorCount: this.errorCount,
       elapsedMs,
       weakWords: this.computeWeakWords(),
+      errorWords: Array.from(this.errorWordsSet).slice(0, 20),
+    };
+  }
+
+  /** Consecutive clean-word streak, for combo/fever-time UI. */
+  getCombo(): ComboState {
+    return {
+      current: this.comboCurrent,
+      best: this.comboBest,
+      fever: this.comboCurrent >= FEVER_THRESHOLD,
     };
   }
 
