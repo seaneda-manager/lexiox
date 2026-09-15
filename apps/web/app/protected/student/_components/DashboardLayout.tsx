@@ -50,6 +50,7 @@ export function DashboardLayout({
   naesinDonePassages,
   homeworkItems,
   moduleProgress,
+  examReadiness,
 }: any) {
   const [currentPhase, setCurrentPhase] = useState<Phase>('postCheckup');
   const [mounted, setMounted] = useState(false);
@@ -205,6 +206,33 @@ export function DashboardLayout({
                 </div>
               </div>
             </div>
+
+            {/* 시험 준비도 */}
+            {Array.isArray(examReadiness) && examReadiness.length > 0 && (
+              <div className="rounded-2xl border border-neutral-200 bg-white p-4 mb-4">
+                <p className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-3">시험 준비도</p>
+                <div className="space-y-3">
+                  {examReadiness.map((r: any) => (
+                    <div key={`${r.examId}-${r.subject}`}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-medium text-neutral-700">
+                          {r.subject} <span className="text-neutral-400">· {r.examTitle} D-{r.dDay}</span>
+                        </span>
+                        <span className="text-xs font-bold text-neutral-700">{r.readinessPct}%</span>
+                      </div>
+                      <div className="h-1.5 w-full rounded-full bg-neutral-100">
+                        <div
+                          className={`h-1.5 rounded-full ${
+                            r.readinessPct >= 80 ? 'bg-emerald-500' : r.readinessPct >= 40 ? 'bg-amber-400' : 'bg-rose-400'
+                          }`}
+                          style={{ width: `${Math.min(100, r.readinessPct)}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* 스킬 진행 */}
             <div className="rounded-2xl border border-neutral-200 bg-white p-4 mb-4">

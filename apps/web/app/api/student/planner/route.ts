@@ -18,7 +18,14 @@ const BLOCK_FIELDS = [
   "exam_id",
   "title",
   "note",
+  "concept_done",
+  "practice_done",
+  "assessment_done",
+  "weakness_note",
 ] as const;
+
+const BLOCK_SELECT =
+  "id, block_date, zone, start_time, end_time, kind, subject, exam_id, title, note, source, done, done_at, concept_done, practice_done, assessment_done, weakness_note";
 
 function pickBlockFields(body: Record<string, unknown>) {
   const out: Record<string, unknown> = {};
@@ -47,7 +54,7 @@ export async function GET(req: Request) {
       db
         .from("student_day_blocks")
         .select(
-          "id, block_date, zone, start_time, end_time, kind, subject, exam_id, title, note, source, done, done_at",
+          BLOCK_SELECT,
         )
         .eq("student_id", ctx.academyId)
         .gte("block_date", from)
@@ -136,7 +143,7 @@ export async function POST(req: Request) {
       .from("student_day_blocks")
       .insert({ ...fields, student_id: ctx.academyId, source: "student", created_by: ctx.authId })
       .select(
-        "id, block_date, zone, start_time, end_time, kind, subject, exam_id, title, note, source, done, done_at",
+        BLOCK_SELECT,
       )
       .single();
     if (error) throw error;
@@ -173,7 +180,7 @@ export async function PATCH(req: Request) {
       .eq("id", id)
       .eq("student_id", ctx.academyId) // 소유권 강제
       .select(
-        "id, block_date, zone, start_time, end_time, kind, subject, exam_id, title, note, source, done, done_at",
+        BLOCK_SELECT,
       )
       .maybeSingle();
     if (error) throw error;

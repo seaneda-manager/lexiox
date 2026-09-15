@@ -4,10 +4,24 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { getServerSupabase } from '@/lib/supabase/server';
+import { getStudentAssignmentCalendar } from '@/lib/assignments/studentAssignmentCalendar';
+import { ASSIGNMENT_KIND_LABEL, type AssignmentKind } from '@/lib/assignments/types';
+import { getSubjectReadiness, getRecentWeaknessNotes } from '@/lib/planner/readiness';
 import CopyLinkButton from './_components/CopyLinkButton';
 import PrintButton from './_components/PrintButton';
 
 export const dynamic = 'force-dynamic';
+
+const OTHER_KINDS: AssignmentKind[] = ['homework', 'daily_test', 'toefl_section', 'toefl_group', 'jr'];
+const DONE_STATUSES = new Set(['completed', 'graded', 'submitted']);
+
+function pad(n: number) {
+  return String(n).padStart(2, '0');
+}
+
+function toDateOnly(d: Date) {
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
 
 function getWeekRange(weeksAgo = 0) {
   const now = new Date();
@@ -21,6 +35,8 @@ function getWeekRange(weeksAgo = 0) {
   return {
     from: monday.toISOString(),
     to:   sunday.toISOString(),
+    fromDate: toDateOnly(monday),
+    toDate: toDateOnly(sunday),
     label: `${monday.getMonth() + 1}월 ${monday.getDate()}일 ~ ${sunday.getMonth() + 1}월 ${sunday.getDate()}일`,
   };
 }
@@ -136,6 +152,21 @@ export default async function ParentReportPage({ params, searchParams }: Props) 
         .gte('completed_at', range.from)
         .lte('completed_at', range.to)
     : { data: [] };
+
+  // ── 숙제·시험·Jr. (기존에 빠져있던 종류들) ────────────────
+  const allAssignments = await getStudentAssignmentCalendar({
+    authUserId: authId,
+    academyStudentId: studentId,
+    fromIso: range.fromDate,
+    toIso: range.toDate,
+  }).catch(() => []);
+  const otherAssignments = allAssignments.filter((a) => OTHER_KINDS.includes(a.kind));
+
+  // ── 시험 준비도 + 약점 메모 (학생 계획 체크인) ─────────────
+  const examReadiness = await getSubjectReadiness(supabase, studentId).catch(() => []);
+  const weaknessNotes = (await getRecentWeaknessNotes(supabase, studentId).catch(() => [])).filter(
+    (n) => n.blockDate >= range.fromDate && n.blockDate <= range.toDate,
+  );
 
   // ── 요일별 학습 현황 ──────────────────────────────────────
   const DAY_KO = ['일', '월', '화', '수', '목', '금', '토'];
@@ -331,6 +362,71 @@ export default async function ParentReportPage({ params, searchParams }: Props) 
             <section className="px-6 py-5">
               <h2 className="text-xs font-bold uppercase tracking-wide text-neutral-400 mb-2">✏️ 그래머</h2>
               <p className="text-sm text-neutral-700">이번 주 <strong>{grammarUnits}유닛</strong> 완료</p>
+            </section>
+          )}
+
+          {/* 숙제·시험·Jr. */}
+          {otherAssignments.length > 0 && (
+            <section className="px-6 py-5">
+              <h2 className="text-xs font-bold uppercase tracking-wide text-neutral-400 mb-3">📋 숙제 · 시험 · Jr.</h2>
+              <ul className="space-y-1.5">
+                {otherAssignments.map((a) => (
+                  <li key={`${a.kind}:${a.id}`} className="flex items-center gap-2 text-sm">
+                    <span className={`shrink-0 font-bold ${DONE_STATUSES.has(a.status) ? 'text-emerald-500' : 'text-neutral-300'}`}>
+                      {DONE_STATUSES.has(a.status) ? '✓' : '○'}
+                    </span>
+                    <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-medium text-neutral-500">
+                      {ASSIGNMENT_KIND_LABEL[a.kind]}
+                    </span>
+                    <span className="text-neutral-700">{a.title}</span>
+                    {typeof a.scorePct === 'number' && (
+                      <span className="ml-auto shrink-0 text-xs font-semibold text-neutral-500">{a.scorePct}%</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {/* 시험 준비도 */}
+          {examReadiness.length > 0 && (
+            <section className="px-6 py-5">
+              <h2 className="text-xs font-bold uppercase tracking-wide text-neutral-400 mb-3">🎯 시험 준비도</h2>
+              <div className="space-y-2">
+                {examReadiness.map((r) => (
+                  <div key={`${r.examId}-${r.subject}`}>
+                    <div className="flex items-center justify-between text-sm mb-1">
+                      <span className="font-medium text-neutral-700">
+                        {r.subject} <span className="text-neutral-400 text-xs">· {r.examTitle} D-{r.dDay}</span>
+                      </span>
+                      <span className="font-bold text-sm text-neutral-700">{r.readinessPct}%</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-neutral-100">
+                      <div
+                        className={`h-2 rounded-full ${
+                          r.readinessPct >= 80 ? 'bg-emerald-400' : r.readinessPct >= 40 ? 'bg-amber-400' : 'bg-rose-400'
+                        }`}
+                        style={{ width: `${Math.min(100, r.readinessPct)}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* 약점 메모 (학생 계획 체크인) */}
+          {weaknessNotes.length > 0 && (
+            <section className="px-6 py-5">
+              <h2 className="text-xs font-bold uppercase tracking-wide text-neutral-400 mb-3">💭 이번 주 약점 메모</h2>
+              <div className="space-y-1.5">
+                {weaknessNotes.map((n, i) => (
+                  <div key={i} className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                    <span className="font-medium">{n.subject ?? n.title}</span>
+                    <p className="mt-0.5 text-amber-700">{n.note}</p>
+                  </div>
+                ))}
+              </div>
             </section>
           )}
 

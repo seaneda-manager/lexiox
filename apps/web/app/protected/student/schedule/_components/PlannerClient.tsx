@@ -5,6 +5,7 @@ import {
   BLOCK_KIND_META,
   EXAM_TYPE_LABEL,
   SLOT_KIND_LABEL,
+  STUDY_TYPE_KINDS,
   ZONE_EMOJI,
   ZONE_LABEL,
   hhmm,
@@ -548,6 +549,8 @@ function LessonRow({ lesson }: { lesson: LessonLog }) {
   );
 }
 
+const CHECKIN_KIND_SET = new Set<string>(STUDY_TYPE_KINDS as readonly string[]);
+
 function BlockRow({
   block,
   onToggle,
@@ -560,7 +563,10 @@ function BlockRow({
   onDelete: () => void;
 }) {
   const [editing, setEditing] = useState(false);
+  const [noteOpen, setNoteOpen] = useState(!!block.weakness_note);
+  const [noteDraft, setNoteDraft] = useState(block.weakness_note ?? "");
   const meta = BLOCK_KIND_META[block.kind] ?? { label: block.kind, color: "bg-neutral-100 text-neutral-600" };
+  const isCheckin = CHECKIN_KIND_SET.has(block.kind) && !!block.subject;
 
   if (editing) {
     return (
@@ -576,55 +582,107 @@ function BlockRow({
   }
 
   return (
-    <div className="flex items-start gap-2 rounded-lg border border-neutral-100 px-2.5 py-1.5">
-      <button
-        onClick={onToggle}
-        className={`mt-0.5 h-4 w-4 shrink-0 rounded border ${
-          block.done ? "border-emerald-500 bg-emerald-500 text-white" : "border-neutral-300"
-        }`}
-        aria-label="완료"
-      >
-        {block.done ? "✓" : ""}
-      </button>
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-1.5">
-          {block.start_time && (
-            <span className="text-[11px] font-semibold text-neutral-500">
-              {hhmm(block.start_time)}
-              {block.end_time && `–${hhmm(block.end_time)}`}
+    <div className="rounded-lg border border-neutral-100 px-2.5 py-1.5">
+      <div className="flex items-start gap-2">
+        {isCheckin ? (
+          <div className="mt-0.5 flex shrink-0 gap-0.5">
+            {(
+              [
+                ["concept_done", "개"],
+                ["practice_done", "연"],
+                ["assessment_done", "평"],
+              ] as const
+            ).map(([field, label]) => (
+              <button
+                key={field}
+                onClick={() => onEdit({ [field]: !block[field] })}
+                title={field === "concept_done" ? "개념" : field === "practice_done" ? "연습" : "평가"}
+                className={`h-5 w-5 rounded text-[10px] font-bold ${
+                  block[field]
+                    ? "border border-emerald-500 bg-emerald-500 text-white"
+                    : "border border-neutral-300 text-neutral-400"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <button
+            onClick={onToggle}
+            className={`mt-0.5 h-4 w-4 shrink-0 rounded border ${
+              block.done ? "border-emerald-500 bg-emerald-500 text-white" : "border-neutral-300"
+            }`}
+            aria-label="완료"
+          >
+            {block.done ? "✓" : ""}
+          </button>
+        )}
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-1.5">
+            {block.start_time && (
+              <span className="text-[11px] font-semibold text-neutral-500">
+                {hhmm(block.start_time)}
+                {block.end_time && `–${hhmm(block.end_time)}`}
+              </span>
+            )}
+            <span className={`rounded px-1.5 py-0.5 text-[9px] font-medium ${meta.color}`}>
+              {meta.label}
             </span>
-          )}
-          <span className={`rounded px-1.5 py-0.5 text-[9px] font-medium ${meta.color}`}>
-            {meta.label}
-          </span>
-          {block.subject && (
-            <span className="text-[10px] text-neutral-400">{block.subject}</span>
-          )}
-          {block.source === "preset" && (
-            <span className="text-[9px] text-amber-500">자동생성</span>
+            {block.subject && (
+              <span className="text-[10px] text-neutral-400">{block.subject}</span>
+            )}
+            {block.source === "preset" && (
+              <span className="text-[9px] text-amber-500">자동생성</span>
+            )}
+          </div>
+          <p
+            className={`truncate text-sm ${block.done ? "text-neutral-300 line-through" : "text-neutral-800"}`}
+          >
+            {block.title}
+          </p>
+          {block.note && <p className="truncate text-[10px] text-neutral-400">{block.note}</p>}
+        </div>
+        <div className="flex shrink-0 gap-1">
+          <button
+            onClick={() => setEditing(true)}
+            className="rounded px-1.5 py-0.5 text-[10px] text-neutral-400 hover:bg-neutral-50"
+          >
+            수정
+          </button>
+          <button
+            onClick={onDelete}
+            className="rounded px-1.5 py-0.5 text-[10px] text-rose-400 hover:bg-rose-50"
+          >
+            삭제
+          </button>
+        </div>
+      </div>
+
+      {isCheckin && (
+        <div className="mt-1 pl-[52px]">
+          {noteOpen ? (
+            <input
+              value={noteDraft}
+              onChange={(e) => setNoteDraft(e.target.value)}
+              onBlur={() => {
+                if (noteDraft !== (block.weakness_note ?? "")) {
+                  onEdit({ weakness_note: noteDraft.trim() || null });
+                }
+              }}
+              placeholder="약점 메모 (예: 이차함수 그래프 헷갈림)"
+              className="w-full rounded border border-amber-200 bg-amber-50/50 px-2 py-1 text-[11px] text-amber-800 placeholder:text-amber-400"
+            />
+          ) : (
+            <button
+              onClick={() => setNoteOpen(true)}
+              className="text-[10px] text-neutral-400 hover:text-amber-600"
+            >
+              + 약점 메모
+            </button>
           )}
         </div>
-        <p
-          className={`truncate text-sm ${block.done ? "text-neutral-300 line-through" : "text-neutral-800"}`}
-        >
-          {block.title}
-        </p>
-        {block.note && <p className="truncate text-[10px] text-neutral-400">{block.note}</p>}
-      </div>
-      <div className="flex shrink-0 gap-1">
-        <button
-          onClick={() => setEditing(true)}
-          className="rounded px-1.5 py-0.5 text-[10px] text-neutral-400 hover:bg-neutral-50"
-        >
-          수정
-        </button>
-        <button
-          onClick={onDelete}
-          className="rounded px-1.5 py-0.5 text-[10px] text-rose-400 hover:bg-rose-50"
-        >
-          삭제
-        </button>
-      </div>
+      )}
     </div>
   );
 }

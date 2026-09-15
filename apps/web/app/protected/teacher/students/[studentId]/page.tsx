@@ -12,6 +12,7 @@ import {
   CalendarDays,
 } from "lucide-react";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { getSubjectReadiness, getRecentWeaknessNotes } from "@/lib/planner/readiness";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -156,6 +157,27 @@ export default async function TeacherStudentDetailPage({ params }: PageProps) {
 
   const hasAnyResult = reading.length + listening.length + speaking.length + writing.length > 0;
 
+  // 5) 시험 준비도 + 약점 메모 (academy_students.id 해석 — profiles.id와 다를 수 있음)
+  let academyStudentId: string | null = null;
+  for (const col of ["id", "auth_user_id", "user_id", "profile_id"] as const) {
+    const { data } = await supabase
+      .from("academy_students")
+      .select("id")
+      .eq(col as string, studentId)
+      .maybeSingle();
+    if (data?.id) {
+      academyStudentId = String(data.id);
+      break;
+    }
+  }
+
+  const examReadiness = academyStudentId
+    ? await getSubjectReadiness(supabase, academyStudentId).catch(() => [])
+    : [];
+  const weaknessNotes = academyStudentId
+    ? await getRecentWeaknessNotes(supabase, academyStudentId).catch(() => [])
+    : [];
+
   return (
     <main className="mx-auto max-w-6xl space-y-6 px-4 py-6">
       {/* 상단 헤더 */}
@@ -279,17 +301,56 @@ export default async function TeacherStudentDetailPage({ params }: PageProps) {
         </ResultSection>
       </div>
 
-      {/* 약점 & 메모 — 아직 별도 테이블 없음 */}
+      {/* 시험 준비도 + 학생 계획 체크인 약점 메모 */}
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-xl border bg-white p-4 shadow-sm">
-          <h2 className="flex items-center gap-2 text-sm font-semibold text-gray-800">
-            <BarChart2 className="h-4 w-4 text-emerald-600" />
-            약점 요약 (Coming Soon)
-          </h2>
-          <div className="mt-2 rounded-lg border border-dashed bg-gray-50 p-3 text-[11px] text-gray-600">
-            영역별 약점 자동 분석은 아직 준비 중입니다. 위 시험 기록의 상세보기에서 문항별 정오답을 확인할 수
-            있습니다.
+          <div className="flex items-center justify-between">
+            <h2 className="flex items-center gap-2 text-sm font-semibold text-gray-800">
+              <BarChart2 className="h-4 w-4 text-emerald-600" />
+              약점 요약
+            </h2>
+            {academyStudentId && (
+              <Link href={`/teacher/students/${studentId}/plan`} className="text-[11px] text-emerald-600 hover:underline">
+                계획표 보기 →
+              </Link>
+            )}
           </div>
+          {!academyStudentId ? (
+            <div className="mt-2 rounded-lg border border-dashed bg-gray-50 p-3 text-[11px] text-gray-600">
+              학원 학생 프로필을 찾지 못해 계획 체크인 데이터를 불러올 수 없습니다.
+            </div>
+          ) : (
+            <div className="mt-2 space-y-3">
+              {examReadiness.length > 0 && (
+                <div className="space-y-1.5">
+                  {examReadiness.map((r) => (
+                    <div key={`${r.examId}-${r.subject}`} className="flex items-center justify-between text-[11px]">
+                      <span className="text-gray-700">
+                        {r.subject} <span className="text-gray-400">· {r.examTitle} D-{r.dDay}</span>
+                      </span>
+                      <span className={`rounded px-1.5 py-0.5 font-semibold ${scoreColor(r.readinessPct)}`}>
+                        {r.readinessPct}% 준비됨
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {weaknessNotes.length === 0 ? (
+                <div className="rounded-lg border border-dashed bg-gray-50 p-3 text-[11px] text-gray-600">
+                  아직 학생이 계획 체크인에 남긴 약점 메모가 없습니다.
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  {weaknessNotes.map((n, i) => (
+                    <div key={i} className="rounded-lg bg-amber-50 px-2.5 py-1.5 text-[11px] text-amber-800">
+                      <span className="font-medium">{fmtDate(n.blockDate)}{n.subject ? ` · ${n.subject}` : ""}</span>
+                      <p className="mt-0.5 text-amber-700">{n.note}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="rounded-xl border bg-white p-4 shadow-sm">

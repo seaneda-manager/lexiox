@@ -26,6 +26,10 @@ export type DayBlock = {
   source: "student" | "preset" | "teacher";
   done: boolean;
   done_at: string | null;
+  concept_done: boolean;
+  practice_done: boolean;
+  assessment_done: boolean;
+  weakness_note: string | null;
 };
 
 export type LessonLog = {
@@ -121,6 +125,9 @@ export const SLOT_KIND_LABEL: Record<string, string> = {
 
 export const HOME_BLOCK_KINDS = ["study", "homework", "review", "meal", "rest", "memo"] as const;
 export const SCHOOL_BLOCK_KINDS = ["study", "review", "test_prep", "memo"] as const;
+
+// 계획 체크인(개념/연습/평가 서브체크)이 의미 있는 블록 종류 — 식사/휴식/메모/수업엔 안 씀
+export const STUDY_TYPE_KINDS = ["study", "homework", "review", "test_prep"] as const;
 
 export const SUBJECT_CHIPS = ["국어", "영어", "수학", "과학(과탐)", "사회(사탐)", "한국사"];
 

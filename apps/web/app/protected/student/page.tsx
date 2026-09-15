@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { DashboardLayout } from "@/app/protected/student/_components/DashboardLayout";
+import { getSubjectReadiness } from "@/lib/planner/readiness";
 
 export const dynamic = "force-dynamic";
 
@@ -274,6 +275,10 @@ export default async function StudentPage() {
     return MAP[d.toLowerCase()] === todayDow;
   }) ?? false;
 
+  const examReadiness = academyStudentId
+    ? await getSubjectReadiness(supabase, academyStudentId).catch(() => [])
+    : [];
+
   const moduleProgress = [
     { name: 'Speaking', progress: speakingDone > 0 ? 60 : 0, color: 'rose' },
     { name: 'Listening', progress: listeningDone > 0 ? 45 : 0, color: 'sky' },
@@ -309,6 +314,7 @@ export default async function StudentPage() {
       naesinDonePassages={0}
       homeworkItems={[]}
       moduleProgress={moduleProgress}
+      examReadiness={examReadiness}
     />
   );
 }

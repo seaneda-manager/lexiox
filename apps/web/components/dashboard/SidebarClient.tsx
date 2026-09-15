@@ -298,6 +298,7 @@ export default function SidebarClient({ role, program = null, hasHiNaesin = fals
         { section: '학생 관리', href: '/teacher/exam-schedule', label: '시험 배정', icon: ClipboardList },
         { section: '학생 관리', href: '/teacher/tasks',    label: '할 일 관리', icon: CheckSquare },
         { section: '학생 관리', href: '/teacher/students', label: '학생 현황', icon: Users },
+        { section: '학생 관리', href: '/teacher/reports/assignments', label: '배정 과제 현황', icon: BarChart2 },
 
         { section: '설정', href: '/settings', label: '설정', icon: Settings },
       ];
