@@ -73,7 +73,7 @@ export function DashboardLayout({
       <div className="mx-auto max-w-7xl px-4 py-6">
         <div className="grid grid-cols-12 gap-6">
           {/* ── 좌측 사이드바 (20%) ────────────────────────────────── */}
-          <aside className="col-span-12 md:col-span-2.5">
+          <aside className="col-span-12 md:col-span-3">
             {/* 프로필 카드 */}
             <div className="rounded-2xl border border-neutral-200 bg-white p-4 mb-4">
               <div className="flex items-center gap-3 mb-3">
@@ -191,7 +191,7 @@ export function DashboardLayout({
           </main>
 
           {/* ── 우측 통계 (30%) ────────────────────────────────────── */}
-          <aside className="col-span-12 md:col-span-3.5">
+          <aside className="col-span-12 md:col-span-3">
             {/* 시험 준비도 — 스크롤 없이 바로 보이도록 맨 위에 배치 */}
             {Array.isArray(examReadiness) && examReadiness.length > 0 && (
               <div className="rounded-2xl border border-neutral-200 bg-white p-4 mb-4">
