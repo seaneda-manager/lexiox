@@ -142,7 +142,11 @@ export function DashboardLayout({
                 <div className="grid grid-cols-2 gap-2">
                   <div className="rounded-lg bg-amber-50 px-2 py-2 text-center">
                     <p className="text-[10px] text-amber-600 font-medium">포인트</p>
-                    <p className="text-sm font-bold text-amber-700">{(gamification.total_points / 1000).toFixed(1)}K</p>
+                    <p className="text-sm font-bold text-amber-700">
+                      {gamification.total_points >= 1000
+                        ? `${(gamification.total_points / 1000).toFixed(1)}K`
+                        : `${gamification.total_points}P`}
+                    </p>
                   </div>
                   <div className="rounded-lg bg-indigo-50 px-2 py-2 text-center">
                     <p className="text-[10px] text-indigo-600 font-medium">레벨</p>
@@ -188,26 +192,7 @@ export function DashboardLayout({
 
           {/* ── 우측 통계 (30%) ────────────────────────────────────── */}
           <aside className="col-span-12 md:col-span-3.5">
-            {/* 오늘의 학습 요약 */}
-            <div className="rounded-2xl border border-neutral-200 bg-white p-4 mb-4">
-              <p className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-3">오늘의 학습</p>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-neutral-600">단어 학습</span>
-                  <span className={`text-sm font-bold ${vocaTodayCount > 0 ? 'text-amber-600' : 'text-neutral-400'}`}>
-                    {vocaTodayCount > 0 ? `${vocaTodayCount}개` : '없음'}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-neutral-600">테스트</span>
-                  <span className={`text-sm font-bold ${pendingTests > 0 ? 'text-rose-600' : 'text-neutral-400'}`}>
-                    {pendingTests > 0 ? `${pendingTests}개 남음` : '완료'}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* 시험 준비도 */}
+            {/* 시험 준비도 — 스크롤 없이 바로 보이도록 맨 위에 배치 */}
             {Array.isArray(examReadiness) && examReadiness.length > 0 && (
               <div className="rounded-2xl border border-neutral-200 bg-white p-4 mb-4">
                 <p className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-3">시험 준비도</p>
@@ -233,6 +218,25 @@ export function DashboardLayout({
                 </div>
               </div>
             )}
+
+            {/* 오늘의 학습 요약 */}
+            <div className="rounded-2xl border border-neutral-200 bg-white p-4 mb-4">
+              <p className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-3">오늘의 학습</p>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-neutral-600">단어 학습</span>
+                  <span className={`text-sm font-bold ${vocaTodayCount > 0 ? 'text-amber-600' : 'text-neutral-400'}`}>
+                    {vocaTodayCount > 0 ? `${vocaTodayCount}개` : '없음'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-neutral-600">테스트</span>
+                  <span className={`text-sm font-bold ${pendingTests > 0 ? 'text-rose-600' : 'text-neutral-400'}`}>
+                    {pendingTests > 0 ? `${pendingTests}개 남음` : '완료'}
+                  </span>
+                </div>
+              </div>
+            </div>
 
             {/* 스킬 진행 */}
             <div className="rounded-2xl border border-neutral-200 bg-white p-4 mb-4">
