@@ -1,6 +1,7 @@
 // apps/web/app/api/admin/set-role/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabaseServer";
+import { getServiceSupabase } from "@/lib/supabase/service";
 
 export async function POST(req: NextRequest) {
   const supabase = await getSupabaseServer();
@@ -24,7 +25,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "userId and role required" }, { status: 400 });
   }
 
-  const { error } = await supabase.rpc("admin_set_role", { p_user: userId, p_role: role });
+  // admin 확인은 위에서 완료. admin_set_role은 service role 전용 (anon/authenticated EXECUTE 회수됨)
+  const { error } = await getServiceSupabase().rpc("admin_set_role", { p_user: userId, p_role: role });
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
 
   return NextResponse.json({ ok: true });

@@ -1,4 +1,4 @@
-import { getServerSupabase } from '@/lib/supabase/server';
+import { getServiceSupabase } from '@/lib/supabase/service';
 
 export type AwardPointsInput = {
   studentId:  string;
@@ -17,7 +17,8 @@ export type AwardPointsResult = {
 
 export async function awardPoints(input: AwardPointsInput): Promise<AwardPointsResult | null> {
   try {
-    const supabase = await getServerSupabase();
+    // award_points는 호출자 검증이 없어 service role로만 실행한다 (anon/authenticated EXECUTE 회수됨)
+    const supabase = getServiceSupabase();
 
     // 현재 레벨 기억
     const { data: before } = await supabase

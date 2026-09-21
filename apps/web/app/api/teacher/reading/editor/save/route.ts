@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { getServiceSupabase } from "@/lib/supabase/service";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -91,7 +92,9 @@ export async function POST(req: NextRequest) {
 
   // 권장: 트랜잭션 RPC 호출
   // 1순위: order_no 포함 버전
-  let rpc = await g.supabase.rpc("save_reading_passage_full_with_order", {
+  // 함수는 service role 전용 (teacher/admin 확인은 guard에서 완료)
+  const db = getServiceSupabase();
+  let rpc = await db.rpc("save_reading_passage_full_with_order", {
     p_model: payload as any,
   });
 
@@ -102,7 +105,7 @@ export async function POST(req: NextRequest) {
       rpc.error.message
     )
   ) {
-    rpc = await g.supabase.rpc("save_reading_passage_full", {
+    rpc = await db.rpc("save_reading_passage_full", {
       p_model: payload as any,
     });
   }

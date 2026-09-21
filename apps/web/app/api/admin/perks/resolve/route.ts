@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { getServerSupabase } from '@/lib/supabase/server';
+import { getServiceSupabase } from '@/lib/supabase/service';
 
 export async function POST(req: Request) {
   try {
@@ -50,7 +51,8 @@ export async function POST(req: Request) {
         .maybeSingle();
 
       if (redemption) {
-        await supabase.rpc('award_points', {
+        // award_points는 service role 전용 (admin 확인은 위에서 완료)
+        await getServiceSupabase().rpc('award_points', {
           p_student_id: redemption.student_id,
           p_rule_id:    'homework_submit', // ledger 기록용 임시 룰 (환불)
           p_bonus:      redemption.points_spent,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { getServiceSupabase } from "@/lib/supabase/service";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -87,14 +88,16 @@ export async function POST(req: NextRequest) {
   }
 
   // RPC with order_no (fallback to legacy)
-  let r = await g.supabase.rpc("save_reading_passage_full_with_order", {
+  // 함수는 service role 전용 (admin 확인은 guardAdmin에서 완료)
+  const db = getServiceSupabase();
+  let r = await db.rpc("save_reading_passage_full_with_order", {
     p_model: parsed.data.passage as any,
   });
   if (
     r.error &&
     /does not exist|unknown function|undefined function/i.test(r.error.message)
   ) {
-    r = await g.supabase.rpc("save_reading_passage_full", {
+    r = await db.rpc("save_reading_passage_full", {
       p_model: parsed.data.passage as any,
     });
   }
