@@ -33,6 +33,7 @@ import {
   updateEnabledDrillTypesAction,
 } from './assign-actions';
 import { startHiNaesinDrillSessionAction } from '@/app/protected/hi-naesin/passages/actions';
+import ConfirmSubmitButton from '@/components/admin/hi-naesin/ConfirmSubmitButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -106,6 +107,23 @@ export default async function HiNaesinPassageEditPage({
   }>;
   const students = (studentsData ?? []) as Array<{ id: string; full_name: string | null; email: string | null }>;
   const studentMap = new Map(students.map((s) => [s.id, s]));
+
+  // 재생성 버튼용 확인 문구: 이미 만들어진 드릴이 있을 때만 (첫 생성은 묻지 않음)
+  const regenConfirm = (types: string[]): string | undefined => {
+    const existing = drills.filter((d) => types.includes(d.drill_type));
+    if (existing.length === 0) return undefined;
+    const published = existing.filter((d) => d.is_published).length;
+    let msg = `이미 생성된 드릴 ${existing.length}개(공개 ${published}개)가 새 문제로 교체됩니다.
+수동 수정 내용과 공개 상태가 초기화됩니다.`;
+    if (assignments.length > 0) {
+      msg += `
+
+이 지문은 ${assignments.length}건 배정되어 있어, 풀이 중인 학생의 문제가 바뀔 수 있습니다.`;
+    }
+    return `${msg}
+
+계속할까요?`;
+  };
 
   const tabs = [
     { key: 'passage',   label: '지문 정보' },
@@ -327,45 +345,45 @@ export default async function HiNaesinPassageEditPage({
 
             {sentences.length > 0 && (
               <form action={generateDrillsFromSentencesAction.bind(null, id)}>
-                <button
-                  type="submit"
+                <ConfirmSubmitButton
+                  message={regenConfirm(['fill_blank', 'vocab'])}
                   className="rounded-xl border border-emerald-300 bg-emerald-50 px-5 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-100"
                 >
                   2단계: 빈칸/단어 생성
-                </button>
+                </ConfirmSubmitButton>
               </form>
             )}
 
             {sentences.length > 0 && (
               <form action={generateGrammarDrillsAction.bind(null, id)}>
-                <button
-                  type="submit"
+                <ConfirmSubmitButton
+                  message={regenConfirm(['grammar_choice'])}
                   className="rounded-xl border border-violet-300 bg-violet-50 px-5 py-2 text-sm font-semibold text-violet-700 hover:bg-violet-100"
                 >
                   3단계: AI 문법/연결어 생성
-                </button>
+                </ConfirmSubmitButton>
               </form>
             )}
 
             {sentences.length > 0 && (
               <form action={generateThoughtUnitDrillsAction.bind(null, id)}>
-                <button
-                  type="submit"
+                <ConfirmSubmitButton
+                  message={regenConfirm(['translation', 'translation_arrange', 'translation_choice', 'writing', 'writing_arrange'])}
                   className="rounded-xl border border-sky-300 bg-sky-50 px-5 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-100"
                 >
                   4단계: AI 해석/작문 생성 (중요도 판정 + 생각단위 배열)
-                </button>
+                </ConfirmSubmitButton>
               </form>
             )}
 
             {sentences.length > 0 && (
               <form action={generateStructureDrillsAction.bind(null, id)}>
-                <button
-                  type="submit"
+                <ConfirmSubmitButton
+                  message={regenConfirm(['identify_categorize'])}
                   className="rounded-xl border border-indigo-300 bg-indigo-50 px-5 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100"
                 >
                   5단계: AI 구조분석(지칭추론) 생성
-                </button>
+                </ConfirmSubmitButton>
               </form>
             )}
 
