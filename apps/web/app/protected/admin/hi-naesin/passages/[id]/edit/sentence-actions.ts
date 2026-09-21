@@ -96,7 +96,7 @@ export async function updateSentencePairAction(
   return { ok: true };
 }
 
-// ── 2단계: 확인된 문장 쌍으로 기본 Drill 자동 생성 (번역/작문/빈칸/단어) ──
+// ── 2단계: 확인된 문장 쌍으로 기본 Drill 자동 생성 (빈칸/단어) ──
 
 export async function generateDrillsFromSentencesAction(
   passageId: string,
@@ -115,12 +115,12 @@ export async function generateDrillsFromSentencesAction(
   }
 
   // 기존 자동생성 드릴 삭제 (service role: RLS DELETE 정책 무관하게 삭제)
-  // translation/writing은 4단계(generateThoughtUnitDrillsAction)에서 중요도 기반으로 생성하므로 여기서 제외
+  // translation/writing은 4단계(generateThoughtUnitDrillsAction), grammar_choice는 3단계에서 생성하므로 여기서 제외
   await adminDb
     .from('hi_naesin_drills')
     .delete()
     .eq('passage_id', passageId)
-    .in('drill_type', ['fill_blank', 'grammar_choice', 'vocab']);
+    .in('drill_type', ['fill_blank', 'vocab']);
 
   const fillBlankDrills: object[] = [];
 

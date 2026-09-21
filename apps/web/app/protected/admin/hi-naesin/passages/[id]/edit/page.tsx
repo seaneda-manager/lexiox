@@ -331,7 +331,7 @@ export default async function HiNaesinPassageEditPage({
                   type="submit"
                   className="rounded-xl border border-emerald-300 bg-emerald-50 px-5 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-100"
                 >
-                  2단계: 해석/작문/빈칸/단어 생성
+                  2단계: 빈칸/단어 생성
                 </button>
               </form>
             )}
@@ -353,7 +353,7 @@ export default async function HiNaesinPassageEditPage({
                   type="submit"
                   className="rounded-xl border border-sky-300 bg-sky-50 px-5 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-100"
                 >
-                  4단계: AI 생각단위 배열 생성
+                  4단계: AI 해석/작문 생성 (중요도 판정 + 생각단위 배열)
                 </button>
               </form>
             )}
@@ -377,7 +377,7 @@ export default async function HiNaesinPassageEditPage({
           </section>
 
           <p className="text-xs text-neutral-500 px-1">
-            매칭이 틀린 경우 한국어 칸을 직접 수정하세요. 수정 후 2단계 실행하면 반영됩니다.
+            매칭이 틀린 경우 한국어 칸을 직접 수정하세요. 수정 후 2단계(빈칸)·4단계(해석/작문)를 다시 실행하면 반영됩니다.
           </p>
 
           {/* 문장 쌍 목록 */}

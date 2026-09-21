@@ -46,35 +46,37 @@ type RawItem = {
   explanation?: string;
 };
 
-export async function generateThoughtUnitDrills(
-  sentences: Array<{ sentenceEn: string; sentenceKo: string }>,
-): Promise<ThoughtUnitOk | ThoughtUnitFail> {
-  if (sentences.length === 0) return { ok: true, results: [] };
+// 응답 토큰 초과 방지 (생각단위 분리는 문법 문제보다 출력이 큼) → 10문장씩 나눠 호출
+const BATCH_SIZE = 10;
 
-  // 최대 10개 문장으로 제한 → 응답 토큰 초과 방지 (생각단위 분리는 문법 문제보다 출력이 큼)
-  const capped = sentences.slice(0, 10);
+type Sentence = { sentenceEn: string; sentenceKo: string };
 
-  try {
-    const client = getClient();
+function buildPrompt(all: Sentence[], start: number, end: number): string {
+  const sentenceList = all
+    .map((s, i) => `[${i}] EN: ${s.sentenceEn}\n    KO: ${s.sentenceKo}`)
+    .join('\n');
 
-    const sentenceList = capped
-      .map((s, i) => `[${i}] EN: ${s.sentenceEn}\n    KO: ${s.sentenceKo}`)
-      .join('\n');
+  return `You are a veteran Korean 내신 English teacher who also writes school exam questions (출제위원). You are preparing a layered translation/composition drill for beginner-to-intermediate students.
 
-    const msg = await client.messages.create({
-      model: 'claude-haiku-4-5',
-      max_tokens: 8000,
-      messages: [
-        {
-          role: 'user',
-          content: `You are a Korean 내신 English teacher preparing a layered translation/composition drill.
-
-Passage sentences:
+Full passage (for context — read it all before judging):
 ${sentenceList}
 
-For EACH sentence, do THREE things:
+Produce output ONLY for sentences [${start}] to [${end - 1}] (inclusive). Use the sentenceIndex shown above.
 
-1. Rate "importance" as one of: "low" (짧고 쉬운 문장, 복습만 필요), "medium" (해석 확인이 필요하지만 짧거나 크게 어렵지 않은 문장), "high" (내신에서 중요하거나 구조가 복잡해 완전히 자유 해석/작문 연습이 필요한 문장).
+For EACH of those sentences, do THREE things:
+
+1. Rate "importance". The purpose is: which sentences must a beginner/intermediate student translate and write out by hand AT LEAST ONCE to really improve? Judge as an experienced exam writer AND as a teacher who knows what makes students grow.
+
+   "high" = the student must personally translate and compose this sentence once. Choose a sentence as high if ANY of these hold:
+     a) An exam writer would likely turn it into a 서술형 해석/영작 item or a sentence-structure question: it contains a core grammar structure such as a relative clause, participial phrase / 분사구문, varied to-infinitive uses, 도치/강조, 가정법, 비교 구문, 수동/완료 structures, or several clauses/pronouns whose relations must be worked out.
+     b) It carries the topic sentence, main claim, conclusion, or a 전환 (however / but / in fact) that the passage turns on.
+     c) Beginner/intermediate students commonly mistranslate or misorder it (polysemous word, modifier far from its head noun, long subject before the verb) AND doing it themselves would clearly teach them something.
+   A sentence is NOT high if it is so long or dense that an intermediate student could not realistically write it from scratch — rate it "medium" instead (it is still tested with a 3-choice item).
+
+   "medium" = worth a translation check but not a must-write: moderately complex or informative, meaning is clear, less likely to be tested as 서술형.
+   "low" = short and easy, simple listing/example/detail sentences, repetition of an earlier point — review only.
+
+   Distribution target across the sentences you output: about 40% "high", about 35% "medium", at most 25% "low". If there are 5 or more sentences, at least 2 must be "high"; never rate everything "medium" or everything "low". Prefer promoting to "high" the sentences that best match criteria (a)-(c).
 
 2. Split the sentence into 3-5 "생각단위" (thought units / meaningful chunks) that align between English and Korean, in the CORRECT reading order. "koChunks" and "enChunks" must have the SAME number of chunks, each koChunks[i] corresponding to enChunks[i] in meaning.
 
@@ -88,10 +90,10 @@ CRITICAL rules:
 - Chunks must be short phrases (2-6 words each), not single words and not the whole sentence.
 - If a sentence is too short to meaningfully split (fewer than ~6 words), set "skip": true instead.
 
-Output ONLY a valid JSON array — no markdown fences, no extra text:
+Output ONLY a valid JSON array — no markdown fences, no extra text. The example below shows one "medium" item; "high" and "low" items omit choiceOptions/explanation:
 [
   {
-    "sentenceIndex": 0,
+    "sentenceIndex": ${start},
     "skip": false,
     "importance": "medium",
     "koChunks": ["과학자들은", "운동이 건강을 개선한다는 것을", "발견했다"],
@@ -103,33 +105,59 @@ Output ONLY a valid JSON array — no markdown fences, no extra text:
     ],
     "explanation": "improves의 주어는 exercise이므로 '운동이 건강을 개선한다'가 맞습니다."
   }
-]`,
-        },
-      ],
+]`;
+}
+
+async function generateBatch(
+  client: Anthropic,
+  all: Sentence[],
+  start: number,
+  end: number,
+): Promise<Array<{ sentenceIndex: number; result: ThoughtUnitResult }>> {
+  const msg = await client.messages.create({
+    model: 'claude-haiku-4-5',
+    max_tokens: 8000,
+    messages: [{ role: 'user', content: buildPrompt(all, start, end) }],
+  });
+
+  const text =
+    msg.content[0].type === 'text' ? msg.content[0].text.trim() : '';
+
+  return parseJsonArray<RawItem>(text)
+    .filter((item) => !item.skip && item.sentenceIndex >= start && item.sentenceIndex < end)
+    .filter((item) => (item.koChunks?.length ?? 0) >= 2 && item.koChunks?.length === item.enChunks?.length)
+    .map((item) => {
+      const importance: Importance = item.importance ?? 'medium';
+      const koChunks = (item.koChunks ?? []).map((text, i) => ({ id: `k${i}`, text }));
+      const enChunks = (item.enChunks ?? []).map((text, i) => ({ id: `k${i}`, text }));
+
+      const result: ThoughtUnitResult = { importance, koChunks, enChunks };
+      if (importance === 'medium' && item.choiceOptions && item.choiceOptions.length === 3) {
+        result.choiceOptions = item.choiceOptions;
+        result.explanation = item.explanation;
+      }
+      return { sentenceIndex: item.sentenceIndex, result };
     });
+}
 
-    const text =
-      msg.content[0].type === 'text' ? msg.content[0].text.trim() : '';
+export async function generateThoughtUnitDrills(
+  sentences: Sentence[],
+): Promise<ThoughtUnitOk | ThoughtUnitFail> {
+  if (sentences.length === 0) return { ok: true, results: [] };
 
-    const items = parseJsonArray<RawItem>(text);
+  try {
+    const client = getClient();
 
-    const results = items
-      .filter((item) => !item.skip && item.sentenceIndex < capped.length)
-      .filter((item) => (item.koChunks?.length ?? 0) >= 2 && item.koChunks?.length === item.enChunks?.length)
-      .map((item) => {
-        const importance: Importance = item.importance ?? 'medium';
-        const koChunks = (item.koChunks ?? []).map((text, i) => ({ id: `k${i}`, text }));
-        const enChunks = (item.enChunks ?? []).map((text, i) => ({ id: `k${i}`, text }));
+    const batches: Array<[number, number]> = [];
+    for (let start = 0; start < sentences.length; start += BATCH_SIZE) {
+      batches.push([start, Math.min(start + BATCH_SIZE, sentences.length)]);
+    }
 
-        const result: ThoughtUnitResult = { importance, koChunks, enChunks };
-        if (importance === 'medium' && item.choiceOptions && item.choiceOptions.length === 3) {
-          result.choiceOptions = item.choiceOptions;
-          result.explanation = item.explanation;
-        }
-        return { sentenceIndex: item.sentenceIndex, result };
-      });
+    const perBatch = await Promise.all(
+      batches.map(([start, end]) => generateBatch(client, sentences, start, end)),
+    );
 
-    return { ok: true, results };
+    return { ok: true, results: perBatch.flat() };
   } catch (e) {
     console.error('[generateThoughtUnitDrills] error:', e);
     return { ok: false, error: e instanceof Error ? e.message : String(e), results: [] };
