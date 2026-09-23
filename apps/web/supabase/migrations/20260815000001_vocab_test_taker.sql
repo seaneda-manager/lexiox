@@ -116,20 +116,20 @@ create policy "students_can_read_own_questions" on vocab_test_questions
     )
   );
 
--- RLS Policy: Admin/Superadmin은 전체 조회
+-- RLS Policy: Admin/Teacher는 전체 조회
 create policy "admins_can_read_all_sessions" on vocab_test_sessions
   for select using (
     exists (
-      select 1 from user_roles
-      where user_id = auth.uid() and role in ('admin', 'superadmin')
+      select 1 from public.profiles
+      where profiles.id = auth.uid() and profiles.role in ('admin', 'teacher')
     )
   );
 
 create policy "admins_can_insert_sessions" on vocab_test_sessions
   for insert with check (
     exists (
-      select 1 from user_roles
-      where user_id = auth.uid() and role in ('admin', 'superadmin')
+      select 1 from public.profiles
+      where profiles.id = auth.uid() and profiles.role in ('admin', 'teacher')
     )
   );
 
