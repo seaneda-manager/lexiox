@@ -13,13 +13,17 @@ import {
   detectGrammarHints,
   countWords,
   parseVocabAnnotations,
+  matchVocabToSentence,
 } from '@/lib/hi-naesin/sentence-splitter';
 import {
   generateGrammarQuestions,
   generateConnectiveQuestions,
 } from '@/lib/hi-naesin/grammar-generator';
 import { generateThoughtUnitDrills } from '@/lib/hi-naesin/thought-unit-generator';
-import { generateReferenceQuestions } from '@/lib/hi-naesin/structure-generator';
+import {
+  generateReferenceQuestions,
+  generateStructureSvoQuestions,
+} from '@/lib/hi-naesin/structure-generator';
 
 type Ok<T extends object = object> = { ok: true } & T;
 type Fail = { ok: false; error: string };
@@ -238,6 +242,16 @@ export async function generateThoughtUnitDrillsAction(
     .eq('passage_id', passageId)
     .in('drill_type', ['translation', 'translation_arrange', 'translation_choice', 'writing', 'writing_arrange']);
 
+  // 해석 문제 기본 힌트(단어 뜻)용 — 지문 어휘 주석 재사용, 별도 AI 호출 없음
+  const { data: passageForVocab } = await adminDb
+    .from('hi_naesin_passages')
+    .select('passage_text')
+    .eq('id', passageId)
+    .single();
+  const vocabItems = passageForVocab?.passage_text
+    ? parseVocabAnnotations(passageForVocab.passage_text)
+    : [];
+
   const sentenceInputs = sentences
     .filter((s) => s.sentence_en)
     .map((s) => ({ sentenceEn: s.sentence_en, sentenceKo: s.sentence_ko ?? '' }));
@@ -302,7 +316,12 @@ export async function generateThoughtUnitDrillsAction(
         passage_id:   passageId,
         drill_type:   'translation',
         order_index:  sentenceIndex,
-        payload:      { sentenceEn, answerKo: sentenceKo ?? '' },
+        payload: {
+          sentenceEn,
+          answerKo: sentenceKo ?? '',
+          thoughtGroups: result.enChunks.map((c) => c.text),
+          vocabHints: matchVocabToSentence(vocabItems, sentenceEn),
+        },
         is_published: false,
       });
 
@@ -508,6 +527,64 @@ export async function generateStructureDrillsAction(
 
   revalidate(passageId);
   redirect(`/admin/hi-naesin/passages/${passageId}/edit?tab=drill&ok=structure&s=${count}`);
+}
+
+// ── 문장 성분(SVOC) + 수식어 매칭 Drill 생성 ──────────────────
+
+export async function generateStructureSvoDrillsAction(
+  passageId: string,
+): Promise<void> {
+  const supabase = await getServerSupabase();
+  const adminDb  = getServiceSupabase(); // RLS 우회 — admin 쓰기 전용
+
+  const { data: sentences, error: sErr } = await supabase
+    .from('hi_naesin_passage_sentences')
+    .select('sentence_en')
+    .eq('passage_id', passageId)
+    .order('order_index');
+
+  if (sErr || !sentences || sentences.length === 0) {
+    redirect(`/admin/hi-naesin/passages/${passageId}/edit?tab=sentences&err=no_sentences`);
+  }
+
+  // 기존 structure_svo 삭제
+  await adminDb
+    .from('hi_naesin_drills')
+    .delete()
+    .eq('passage_id', passageId)
+    .eq('drill_type', 'structure_svo');
+
+  const sentenceInputs = (sentences ?? [])
+    .filter((s) => s.sentence_en)
+    .map((s) => ({ sentenceEn: s.sentence_en as string }));
+
+  const sResult = await generateStructureSvoQuestions(sentenceInputs);
+
+  if ('error' in sResult) {
+    redirect(
+      `/admin/hi-naesin/passages/${passageId}/edit?tab=drill&err=${encodeURIComponent('AI 오류 (문장성분): ' + sResult.error)}`,
+    );
+  }
+
+  const rows = sResult.results.map(({ orderIndex, payload }) => ({
+    passage_id:   passageId,
+    drill_type:   'structure_svo',
+    order_index:  orderIndex,
+    payload,
+    is_published: false,
+  }));
+
+  let count = 0;
+  if (rows.length > 0) {
+    const { error: iErr } = await adminDb.from('hi_naesin_drills').insert(rows);
+    if (iErr) {
+      redirect(`/admin/hi-naesin/passages/${passageId}/edit?tab=drill&err=structure_svo_insert:${encodeURIComponent(iErr.message)}`);
+    }
+    count = rows.length;
+  }
+
+  revalidate(passageId);
+  redirect(`/admin/hi-naesin/passages/${passageId}/edit?tab=drill&ok=structure_svo&sv=${count}`);
 }
 
 // 지문 배열 변형문제 자동 생성 (4등분)

@@ -64,6 +64,7 @@ const TYPE_COLOR: Record<HiNaesinDrillType, string> = {
   grammar_choice:          'bg-amber-50 border-amber-200 text-amber-800',
   vocab:                   'bg-rose-50 border-rose-200 text-rose-800',
   identify_categorize:     'bg-indigo-50 border-indigo-200 text-indigo-800',
+  structure_svo:           'bg-violet-100 border-violet-300 text-violet-900',
 };
 
 function Badge({ type }: { type: string }) {

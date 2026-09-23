@@ -11,6 +11,7 @@ export const HI_NAESIN_DRILL_TYPES = [
   'grammar_choice',
   'vocab',
   'identify_categorize',
+  'structure_svo',
 ] as const;
 export type HiNaesinDrillType = (typeof HI_NAESIN_DRILL_TYPES)[number];
 
@@ -19,6 +20,8 @@ export type HiNaesinDrillType = (typeof HI_NAESIN_DRILL_TYPES)[number];
 export type TranslationPayload = {
   sentenceEn: string;
   answerKo: string;
+  thoughtGroups?: string[];                              // 생각단위(영어 청크) 순서대로 — 기본 노출
+  vocabHints?: Array<{ word: string; meaningKo: string }>; // 문장 속 핵심 단어 뜻 — 기본 노출
 };
 
 export type TranslationArrangePayload = {
@@ -118,6 +121,51 @@ export type ICResponse = {
   cats: (string | null)[];         // targets 순서에 맞춘 학생 선택 카테고리 key
 };
 
+// ── 문장 성분(5형식) + 수식어 분석 엔진 ──────────
+// 학생이 문장에서 범위를 드래그/클릭으로 선택하고 S/V/O/C 또는 수식어 유형을 태깅한다.
+// 정답키가 즉시 클라이언트에서 검증되므로(맞을 때까지 재시도) is_correct 는 항상 true,
+// score_pct 만 재시도 횟수에 따라 감점된다.
+
+export type StructureFieldAnswer = {
+  accepted: string[]; // 정답으로 인정하는 텍스트(대소문자/구두점 무시 비교)
+};
+
+export type ModifierSubtype =
+  | 'adjective_word'
+  | 'adverb_word'
+  | 'prepositional_phrase'
+  | 'infinitive_phrase'
+  | 'participial_phrase'
+  | 'participial_construction'
+  | 'relative_clause'
+  | 'adverb_clause'
+  | 'other';
+
+export type ModifierTargetType =
+  | 'head_noun'
+  | 'verb_phrase'
+  | 'adjective'
+  | 'adverb'
+  | 'main_clause'
+  | 'sentence';
+
+export type StructureModifierAnswer = {
+  span: string;
+  subtype: ModifierSubtype;
+  targetType: ModifierTargetType;
+  target: string; // head_noun/verb_phrase/adjective/adverb는 문장 속 단어, main_clause/sentence는 라벨
+};
+
+export type StructureSvoPayload = {
+  sentence: string;
+  pattern?: string; // 표시용, e.g. '3형식 (S V O)'
+  subject?: StructureFieldAnswer;
+  verb?: StructureFieldAnswer;
+  object?: StructureFieldAnswer;
+  complement?: StructureFieldAnswer;
+  modifiers?: StructureModifierAnswer[];
+};
+
 // ── 통합 타입 ────────────────────────────
 
 export type DrillPayloadMap = {
@@ -131,6 +179,7 @@ export type DrillPayloadMap = {
   grammar_choice:       GrammarChoicePayload;
   vocab:                VocabPayload;
   identify_categorize:  IdentifyCategorizePayload;
+  structure_svo:        StructureSvoPayload;
 };
 
 export type HiNaesinDrill<T extends HiNaesinDrillType = HiNaesinDrillType> = {
@@ -167,5 +216,6 @@ export function drillTypeLabel(t: HiNaesinDrillType): string {
     case 'grammar_choice':        return '문법 고르기';
     case 'vocab':                 return '단어';
     case 'identify_categorize':   return '구조 분석';
+    case 'structure_svo':         return '문장 성분';
   }
 }

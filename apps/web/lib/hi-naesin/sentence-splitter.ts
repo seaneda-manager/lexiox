@@ -230,6 +230,18 @@ export function parseVocabAnnotations(text: string): Array<{ word: string; meani
   return results;
 }
 
+/** 어휘 주석 중 해당 문장에 등장하는 단어만 골라 반환 (첫 단어 기준 word-boundary 매칭) */
+export function matchVocabToSentence(
+  vocabItems: Array<{ word: string; meaningKo: string }>,
+  sentenceEn: string,
+): Array<{ word: string; meaningKo: string }> {
+  return vocabItems.filter(({ word }) => {
+    const firstWord = word.split(' ')[0].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    if (!firstWord) return false;
+    return new RegExp(`\\b${firstWord}\\b`, 'i').test(sentenceEn);
+  });
+}
+
 // 단어 수 계산
 export function countWords(sentence: string): number {
   return sentence.trim().split(/\s+/).filter(Boolean).length;

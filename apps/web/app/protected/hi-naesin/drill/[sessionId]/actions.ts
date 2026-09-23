@@ -36,6 +36,13 @@ function gradeIdentifyCategorize(
   return { isCorrect: ok === targets.length, scorePct };
 }
 
+// ── 문장 성분(SVOC) 채점 — 정답이 나올 때까지 재시도하는 방식이므로
+// 제출이 가능해진 시점엔 이미 전부 맞은 상태. 재시도 횟수만큼 감점한다.
+function gradeStructureSvo(mistakeCount: number): { isCorrect: boolean; scorePct: number } {
+  const scorePct = Math.max(40, 100 - mistakeCount * 15);
+  return { isCorrect: true, scorePct };
+}
+
 // ── 드릴 답변 제출 ────────────────────────────────────────
 // type  = 현재 블록 타입 (translation | fill_blank | writing | grammar_choice)
 // step  = 블록 내 인덱스 (0-based)
@@ -86,6 +93,12 @@ export async function submitDrillAnswerAction(
     const depth = parseInt((fd.get('ic_depth') as string) ?? '1', 10) || 1;
     const targetsJson = (fd.get('ic_targets') as string) ?? '[]';
     const g = gradeIdentifyCategorize(targetsJson, depth, responseChoice);
+    isCorrect = g.isCorrect;
+    scorePct  = g.scorePct;
+
+  } else if (drillType === 'structure_svo') {
+    const mistakeCount = parseInt((fd.get('mistake_count') as string) ?? '0', 10) || 0;
+    const g = gradeStructureSvo(mistakeCount);
     isCorrect = g.isCorrect;
     scorePct  = g.scorePct;
   }
@@ -232,6 +245,12 @@ export async function submitAnswerClientAction(
     const depth = parseInt((fd.get('ic_depth') as string) ?? '1', 10) || 1;
     const targetsJson = (fd.get('ic_targets') as string) ?? '[]';
     const g = gradeIdentifyCategorize(targetsJson, depth, responseChoice);
+    isCorrect = g.isCorrect;
+    scorePct  = g.scorePct;
+
+  } else if (drillType === 'structure_svo') {
+    const mistakeCount = parseInt((fd.get('mistake_count') as string) ?? '0', 10) || 0;
+    const g = gradeStructureSvo(mistakeCount);
     isCorrect = g.isCorrect;
     scorePct  = g.scorePct;
   }

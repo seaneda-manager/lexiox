@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useRef, useState, useTransition } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import WritingHintReveal from '../WritingHintReveal';
@@ -34,7 +34,7 @@ type ResponseRow = {
 type TypeInfo = { total: number; done: number; firstUnanswered: number };
 
 const TYPE_ORDER = [
-  'vocab', 'identify_categorize', 'translation_arrange', 'translation', 'translation_choice',
+  'vocab', 'identify_categorize', 'structure_svo', 'translation_arrange', 'translation', 'translation_choice',
   'fill_blank', 'writing_arrange', 'writing', 'grammar_choice',
 ] as const;
 
@@ -49,6 +49,7 @@ const DRILL_LABEL: Record<string, string> = {
   summary:              '요약',
   grammar_choice:       '문법',
   identify_categorize:  '구조 분석',
+  structure_svo:        '문장 성분',
 };
 
 // 해석/작문 계열 문제를 푸는 동안엔 지문 번역을 보여주면 정답을 그대로 알려주는 셈이라
@@ -68,6 +69,7 @@ const DRILL_INSTRUCTION: Record<string, string> = {
   summary:              '지문 내용을 바탕으로 요약문의 빈칸을 채우세요.',
   grammar_choice:       '빈칸에 알맞은 답을 고르거나 연결어를 선택하세요.',
   identify_categorize:  '문장에서 해당 구간을 선택하고, 필요하면 유형을 고르세요.',
+  structure_svo:        '문장을 드래그해서 주어/동사/목적어/보어와 수식어를 찾아 표시하세요.',
 };
 
 // ─────────────────────────────────────────────────────────
@@ -254,6 +256,9 @@ export default function DrillClient({
   } else if (currentType === 'identify_categorize') {
     highlightText = (p as { sentence?: string }).sentence ?? null;
     highlightType = 'sentence';
+  } else if (currentType === 'structure_svo') {
+    highlightText = (p as { sentence?: string }).sentence ?? null;
+    highlightType = 'sentence';
   }
 
   return (
@@ -426,6 +431,19 @@ export default function DrillClient({
                 nextType={nextType}
               />
             )}
+            {currentType === 'structure_svo' && (
+              <StructureSvoDrill
+                key={drill.id}
+                drill={drill}
+                response={response}
+                isAnswered={isAnswered}
+                onSubmit={handleSubmit}
+                onNext={goNext}
+                step={currentStep}
+                typeTotal={typeTotal}
+                nextType={nextType}
+              />
+            )}
           </div>
 
           {/* 자기 채점 */}
@@ -512,13 +530,30 @@ function TranslationDrill({
   isAnswered: boolean;
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => Promise<void>;
 }) {
-  const p = drill.payload as { sentenceEn: string; answerKo: string };
+  const p = drill.payload as {
+    sentenceEn: string;
+    answerKo: string;
+    thoughtGroups?: string[];
+    vocabHints?: Array<{ word: string; meaningKo: string }>;
+  };
   const [submitting, setSubmitting] = useState(false);
   return (
     <>
       <div className="rounded-xl bg-neutral-50 p-4 text-sm leading-relaxed text-neutral-800">
         {p.sentenceEn}
       </div>
+      {!!p.thoughtGroups?.length && (
+        <div className="rounded-xl border border-violet-100 bg-violet-50 px-4 py-2 text-xs leading-relaxed text-violet-700">
+          <span className="font-semibold">생각단위 · </span>
+          {p.thoughtGroups.join('  /  ')}
+        </div>
+      )}
+      {!!p.vocabHints?.length && (
+        <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-2 text-xs leading-relaxed text-blue-700">
+          <span className="font-semibold">단어 뜻 · </span>
+          {p.vocabHints.map((v) => `${v.word}(${v.meaningKo})`).join(',  ')}
+        </div>
+      )}
       {!isAnswered ? (
         <form onSubmit={async (e) => { setSubmitting(true); await onSubmit(e); setSubmitting(false); }}>
           <input type="hidden" name="drill_type"  value="translation" />
@@ -1267,6 +1302,499 @@ function IdentifyCategorizeDrill({
           <button type="button" onClick={resetSpan} className="rounded-xl border px-4 py-2.5 text-sm text-neutral-500 hover:bg-neutral-50">다시</button>
         </div>
       )}
+    </>
+  );
+}
+
+// ─────────────────────────────────────────────────────────
+// 문장 성분(SVOC) + 수식어 매칭
+// ─────────────────────────────────────────────────────────
+
+type SvoFieldAnswer = { accepted: string[] };
+type SvoModifierSubtype =
+  | 'adjective_word' | 'adverb_word' | 'prepositional_phrase' | 'infinitive_phrase'
+  | 'participial_phrase' | 'participial_construction' | 'relative_clause' | 'adverb_clause' | 'other';
+type SvoModifierTargetType = 'head_noun' | 'verb_phrase' | 'adjective' | 'adverb' | 'main_clause' | 'sentence';
+type SvoModifierAnswer = { span: string; subtype: SvoModifierSubtype; targetType: SvoModifierTargetType; target: string };
+type StructureSvoPayload = {
+  sentence: string;
+  pattern?: string;
+  subject?: SvoFieldAnswer;
+  verb?: SvoFieldAnswer;
+  object?: SvoFieldAnswer;
+  complement?: SvoFieldAnswer;
+  modifiers?: SvoModifierAnswer[];
+};
+
+const SVO_MODIFIER_SUBTYPE_BUTTONS: SvoModifierSubtype[] = [
+  'adjective_word', 'adverb_word', 'prepositional_phrase', 'infinitive_phrase',
+  'participial_phrase', 'participial_construction', 'relative_clause', 'adverb_clause', 'other',
+];
+
+const SVO_MODIFIER_SUBTYPE_LABEL: Record<SvoModifierSubtype, string> = {
+  adjective_word: '형용사', adverb_word: '부사', prepositional_phrase: '전치사구',
+  infinitive_phrase: 'to부정사구', participial_phrase: '분사구', participial_construction: '분사구문',
+  relative_clause: '형용사절', adverb_clause: '부사절', other: '기타',
+};
+
+const SVO_MODIFIER_TARGET_LABEL: Record<SvoModifierTargetType, string> = {
+  head_noun: '명사(head noun)', verb_phrase: '서술부(verb phrase)', adjective: '형용사', adverb: '부사',
+  main_clause: '주절(main clause)', sentence: '문장 전체(sentence)',
+};
+
+const SVO_MODIFIER_ALLOWED_TARGETS: Record<SvoModifierSubtype, SvoModifierTargetType[]> = {
+  adjective_word: ['head_noun'],
+  adverb_word: ['verb_phrase', 'adjective', 'adverb', 'main_clause', 'sentence'],
+  prepositional_phrase: ['head_noun', 'verb_phrase', 'adjective', 'adverb', 'main_clause'],
+  infinitive_phrase: ['head_noun', 'verb_phrase', 'adjective'],
+  participial_phrase: ['head_noun'],
+  participial_construction: ['main_clause', 'sentence', 'verb_phrase'],
+  relative_clause: ['head_noun'],
+  adverb_clause: ['main_clause', 'sentence', 'verb_phrase'],
+  other: ['head_noun', 'verb_phrase', 'adjective', 'adverb', 'main_clause', 'sentence'],
+};
+
+function svoNormalize(v: string) {
+  return v.toLowerCase().replace(/[^\w\s'-]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function svoTargetNeedsClick(t: SvoModifierTargetType) {
+  return t !== 'main_clause' && t !== 'sentence';
+}
+
+type SvoTokenItem =
+  | { kind: 'space'; text: string }
+  | { kind: 'punct'; text: string }
+  | { kind: 'word'; text: string; wordIndex: number };
+
+function svoTokenize(sentence: string): SvoTokenItem[] {
+  const raw = sentence.match(/[A-Za-z]+(?:['-][A-Za-z]+)*|\d+|\s+|[^\sA-Za-z\d]/g) ?? [];
+  let wordIndex = 0;
+  const result: SvoTokenItem[] = [];
+  for (const text of raw) {
+    if (/^\s+$/.test(text)) { result.push({ kind: 'space', text }); continue; }
+    if (/^[A-Za-z]+(?:['-][A-Za-z]+)*$/.test(text)) {
+      result.push({ kind: 'word', text, wordIndex });
+      wordIndex += 1;
+      continue;
+    }
+    result.push({ kind: 'punct', text });
+  }
+  return result;
+}
+
+type SvoFieldName = 'subject' | 'verb' | 'object' | 'complement';
+type SvoValidation = { state: 'idle' | 'correct' | 'wrong'; message: string };
+
+const SVO_FIELD_BUTTON_LABEL: Record<SvoFieldName, string> = {
+  subject: 'Subject (S)', verb: 'Verb (V)', object: 'Object (O)', complement: 'Complement (C)',
+};
+
+function StructureSvoDrill({
+  drill, response, isAnswered, onSubmit, onNext, step, typeTotal, nextType,
+}: {
+  drill: DrillRow;
+  response: ResponseRow | null;
+  isAnswered: boolean;
+  onSubmit: (e: React.FormEvent<HTMLFormElement>) => Promise<void>;
+  onNext: () => void;
+  step: number;
+  typeTotal: number;
+  nextType: string | null;
+}) {
+  const p = drill.payload as unknown as StructureSvoPayload;
+  const requiredModifiers = useMemo(() => p.modifiers ?? [], [p.modifiers]);
+
+  const tokens = useMemo(() => svoTokenize(p.sentence), [p.sentence]);
+  const wordTokens = useMemo(
+    () => tokens.filter((t): t is Extract<SvoTokenItem, { kind: 'word' }> => t.kind === 'word'),
+    [tokens],
+  );
+
+  const [selectionAnchor, setSelectionAnchor] = useState<number | null>(null);
+  const [selectionFocus, setSelectionFocus] = useState<number | null>(null);
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [pendingModifier, setPendingModifier] = useState<{
+    spanText: string;
+    subtype: SvoModifierSubtype;
+    targetType: SvoModifierTargetType | null;
+  } | null>(null);
+
+  const [fields, setFields] = useState<Record<SvoFieldName, string | null>>({
+    subject: null, verb: null, object: null, complement: null,
+  });
+  const [modifierLinks, setModifierLinks] = useState<Array<{ span: string; subtypeLabel: string; target: string }>>([]);
+  const [feedback, setFeedback] = useState<Record<SvoFieldName | 'modifier', SvoValidation>>({
+    subject: { state: 'idle', message: '' },
+    verb: { state: 'idle', message: '' },
+    object: { state: 'idle', message: '' },
+    complement: { state: 'idle', message: '' },
+    modifier: { state: 'idle', message: '' },
+  });
+  const [mistakeCount, setMistakeCount] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    function stop() { setIsSelecting(false); }
+    window.addEventListener('pointerup', stop);
+    return () => window.removeEventListener('pointerup', stop);
+  }, []);
+
+  const selectedRange = useMemo(() => {
+    if (selectionAnchor == null || selectionFocus == null) return null;
+    return { start: Math.min(selectionAnchor, selectionFocus), end: Math.max(selectionAnchor, selectionFocus) };
+  }, [selectionAnchor, selectionFocus]);
+
+  const selectedWords = useMemo(
+    () => (selectedRange ? wordTokens.slice(selectedRange.start, selectedRange.end + 1) : []),
+    [selectedRange, wordTokens],
+  );
+  const selectedText = selectedWords.map((w) => w.text).join(' ').trim();
+
+  function clearSelection() {
+    setSelectionAnchor(null);
+    setSelectionFocus(null);
+    setIsSelecting(false);
+  }
+
+  // 정답 payload에 실제로 존재하는 성분만 요구 (문장에 목적어/보어가 없으면 생략)
+  const requiredFields = (['subject', 'verb', 'object', 'complement'] as SvoFieldName[])
+    .filter((f) => (p[f]?.accepted?.length ?? 0) > 0);
+
+  const fieldsDoneCount = requiredFields.filter((f) => fields[f] != null).length;
+  const allDone = fieldsDoneCount === requiredFields.length && modifierLinks.length >= requiredModifiers.length;
+
+  function tryField(field: SvoFieldName) {
+    if (!selectedText) return;
+    const answer = p[field];
+    if (!answer?.accepted?.length) {
+      setFeedback((prev) => ({ ...prev, [field]: { state: 'wrong', message: '이 문장엔 해당 성분이 없습니다.' } }));
+      setMistakeCount((c) => c + 1);
+      return;
+    }
+    const norm = svoNormalize(selectedText);
+    const ok = answer.accepted.some((a) => svoNormalize(a) === norm);
+    if (ok) {
+      setFields((prev) => ({ ...prev, [field]: selectedText }));
+      setFeedback((prev) => ({ ...prev, [field]: { state: 'correct', message: '정답' } }));
+      clearSelection();
+    } else {
+      setFeedback((prev) => ({ ...prev, [field]: { state: 'wrong', message: '다시 선택해보세요.' } }));
+      setMistakeCount((c) => c + 1);
+    }
+  }
+
+  function beginModifier(subtype: SvoModifierSubtype) {
+    if (!selectedText) return;
+    setPendingModifier({ spanText: selectedText, subtype, targetType: null });
+    setFeedback((prev) => ({ ...prev, modifier: { state: 'idle', message: '' } }));
+  }
+
+  function finalizeModifier(targetType: SvoModifierTargetType, targetText: string) {
+    if (!pendingModifier) return;
+    const spanNorm = svoNormalize(pendingModifier.spanText);
+    const match = requiredModifiers.find((m) => svoNormalize(m.span) === spanNorm);
+
+    if (!match) {
+      setFeedback((prev) => ({ ...prev, modifier: { state: 'wrong', message: '이 범위는 수식어 정답 목록에 없습니다.' } }));
+      setMistakeCount((c) => c + 1);
+      setPendingModifier(null);
+      return;
+    }
+
+    if (match.subtype !== pendingModifier.subtype) {
+      setFeedback((prev) => ({
+        ...prev,
+        modifier: {
+          state: 'wrong',
+          message: `이 구문은 ${SVO_MODIFIER_SUBTYPE_LABEL[pendingModifier.subtype]}이 아니라 ${SVO_MODIFIER_SUBTYPE_LABEL[match.subtype]}입니다.`,
+        },
+      }));
+      setMistakeCount((c) => c + 1);
+      setPendingModifier(null);
+      return;
+    }
+
+    const targetOk = match.targetType === targetType
+      && (!svoTargetNeedsClick(targetType) || svoNormalize(match.target) === svoNormalize(targetText));
+
+    if (!targetOk) {
+      setFeedback((prev) => ({
+        ...prev,
+        modifier: { state: 'wrong', message: `수식 대상이 정확하지 않습니다. (정답: ${match.target})` },
+      }));
+      setMistakeCount((c) => c + 1);
+      return; // targetType은 유지한 채 다시 클릭할 기회를 준다
+    }
+
+    setModifierLinks((prev) => [
+      ...prev,
+      { span: match.span, subtypeLabel: SVO_MODIFIER_SUBTYPE_LABEL[match.subtype], target: match.target },
+    ]);
+    setFeedback((prev) => ({ ...prev, modifier: { state: 'correct', message: '정답' } }));
+    setPendingModifier(null);
+    clearSelection();
+  }
+
+  function handleWordPointerDown(wordIndex: number, wordText: string) {
+    if (pendingModifier) {
+      if (!pendingModifier.targetType) return;
+      if (svoTargetNeedsClick(pendingModifier.targetType)) finalizeModifier(pendingModifier.targetType, wordText);
+      return;
+    }
+    setSelectionAnchor(wordIndex);
+    setSelectionFocus(wordIndex);
+    setIsSelecting(true);
+  }
+
+  function handleWordPointerEnter(wordIndex: number) {
+    if (!isSelecting || pendingModifier) return;
+    setSelectionFocus(wordIndex);
+  }
+
+  if (isAnswered) {
+    return (
+      <>
+        <div className="rounded-xl bg-neutral-50 p-4 text-sm leading-relaxed text-neutral-800">{p.sentence}</div>
+        {p.pattern && (
+          <span className="inline-flex items-center rounded-full bg-violet-100 px-3 py-0.5 text-xs font-semibold text-violet-700">
+            {p.pattern}
+          </span>
+        )}
+        <div className="flex flex-wrap gap-2 text-sm">
+          {p.subject?.accepted?.[0] && <span className="rounded-lg bg-blue-50 px-2 py-1 text-blue-700">S · {p.subject.accepted[0]}</span>}
+          {p.verb?.accepted?.[0] && <span className="rounded-lg bg-emerald-50 px-2 py-1 text-emerald-700">V · {p.verb.accepted[0]}</span>}
+          {p.object?.accepted?.[0] && <span className="rounded-lg bg-orange-50 px-2 py-1 text-orange-700">O · {p.object.accepted[0]}</span>}
+          {p.complement?.accepted?.[0] && <span className="rounded-lg bg-amber-50 px-2 py-1 text-amber-700">C · {p.complement.accepted[0]}</span>}
+        </div>
+        {requiredModifiers.length > 0 && (
+          <div className="space-y-1.5">
+            {requiredModifiers.map((m, i) => (
+              <div key={i} className="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-xs text-neutral-600">
+                <span className="font-semibold text-violet-700">[{SVO_MODIFIER_SUBTYPE_LABEL[m.subtype]}]</span> {m.span}
+                {' → '}<span className="text-neutral-500">{m.target}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        <ScoreBadge scorePct={response?.score_pct ?? null} isCorrect={response?.is_correct ?? null} />
+        <button
+          type="button"
+          onClick={onNext}
+          className="w-full rounded-xl bg-neutral-900 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800"
+        >
+          {step + 1 >= typeTotal
+            ? nextType ? `다음 블록: ${DRILL_LABEL[nextType]} →` : '결과 보기 →'
+            : '다음 →'}
+        </button>
+      </>
+    );
+  }
+
+  return (
+    <>
+      {p.pattern && (
+        <span className="inline-flex items-center rounded-full bg-violet-100 px-3 py-0.5 text-xs font-semibold text-violet-700">
+          {p.pattern}
+        </span>
+      )}
+
+      <div className="rounded-xl border bg-white p-4">
+        <div className="flex flex-wrap items-center gap-x-1 gap-y-2 text-sm leading-8 text-neutral-900">
+          {tokens.map((token, index) => {
+            if (token.kind === 'space') return <span key={`s-${index}`}>{token.text}</span>;
+            if (token.kind === 'punct') return <span key={`p-${index}`} className="px-[1px]">{token.text}</span>;
+
+            const isSelected = selectedRange != null
+              && token.wordIndex >= selectedRange.start
+              && token.wordIndex <= selectedRange.end;
+
+            return (
+              <button
+                key={`w-${index}`}
+                type="button"
+                onPointerDown={() => handleWordPointerDown(token.wordIndex, token.text)}
+                onPointerEnter={() => handleWordPointerEnter(token.wordIndex)}
+                className={`rounded-md px-1.5 py-0.5 transition select-none ${
+                  isSelected ? 'ring-2 ring-violet-400 bg-violet-100 text-violet-900' : 'hover:bg-neutral-100'
+                }`}
+              >
+                {token.text}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {selectedText && !pendingModifier && (
+        <div className="rounded-xl border border-violet-200 bg-violet-50 p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-sm font-semibold text-violet-900">선택 범위: {selectedText}</div>
+            <button
+              type="button"
+              onClick={clearSelection}
+              className="rounded-lg border border-violet-200 bg-white px-3 py-1.5 text-xs text-violet-700 hover:bg-violet-100"
+            >
+              해제
+            </button>
+          </div>
+
+          <div className="mt-3">
+            <div className="text-xs font-semibold text-neutral-700">문장 성분</div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {(['subject', 'verb', 'object', 'complement'] as SvoFieldName[]).map((f) => (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => tryField(f)}
+                  className="rounded-full border bg-white px-3 py-1.5 text-xs font-medium text-neutral-800 hover:bg-neutral-100"
+                >
+                  {SVO_FIELD_BUTTON_LABEL[f]}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-3">
+            <div className="text-xs font-semibold text-neutral-700">수식어 유형</div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {SVO_MODIFIER_SUBTYPE_BUTTONS.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => beginModifier(s)}
+                  className="rounded-full border bg-white px-3 py-1.5 text-xs font-medium text-neutral-800 hover:bg-neutral-100"
+                >
+                  {SVO_MODIFIER_SUBTYPE_LABEL[s]}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {pendingModifier && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+          <div className="text-sm font-semibold text-amber-900">
+            [{SVO_MODIFIER_SUBTYPE_LABEL[pendingModifier.subtype]}] {pendingModifier.spanText}
+          </div>
+
+          {!pendingModifier.targetType ? (
+            <>
+              <div className="mt-1 text-sm text-amber-800">수식 대상 종류를 먼저 고르세요.</div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {SVO_MODIFIER_ALLOWED_TARGETS[pendingModifier.subtype].map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setPendingModifier((prev) => (prev ? { ...prev, targetType: t } : prev))}
+                    className="rounded-full border border-amber-300 bg-white px-3 py-1 text-xs font-medium text-amber-800 hover:bg-amber-100"
+                  >
+                    {SVO_MODIFIER_TARGET_LABEL[t]}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setPendingModifier(null)}
+                  className="rounded-full border border-amber-300 bg-white px-3 py-1 text-xs font-medium text-amber-800 hover:bg-amber-100"
+                >
+                  취소
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="mt-1 text-sm text-amber-800">
+                {svoTargetNeedsClick(pendingModifier.targetType)
+                  ? `${SVO_MODIFIER_TARGET_LABEL[pendingModifier.targetType]}에 해당하는 단어를 문장에서 클릭하세요.`
+                  : '아래 버튼을 눌러 확정하세요.'}
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {!svoTargetNeedsClick(pendingModifier.targetType) && (
+                  <button
+                    type="button"
+                    onClick={() => finalizeModifier(pendingModifier.targetType!, SVO_MODIFIER_TARGET_LABEL[pendingModifier.targetType!])}
+                    className="rounded-full border border-amber-300 bg-white px-3 py-1 text-xs font-medium text-amber-800 hover:bg-amber-100"
+                  >
+                    {SVO_MODIFIER_TARGET_LABEL[pendingModifier.targetType]}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setPendingModifier((prev) => (prev ? { ...prev, targetType: null } : prev))}
+                  className="rounded-full border border-amber-300 bg-white px-3 py-1 text-xs font-medium text-amber-800 hover:bg-amber-100"
+                >
+                  대상 다시 선택
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPendingModifier(null)}
+                  className="rounded-full border border-amber-300 bg-white px-3 py-1 text-xs font-medium text-amber-800 hover:bg-amber-100"
+                >
+                  취소
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {feedback.modifier.state === 'wrong' && (
+        <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+          {feedback.modifier.message}
+        </div>
+      )}
+
+      <div className="grid gap-2 md:grid-cols-2">
+        {requiredFields.map((f) => (
+          <div
+            key={f}
+            className={`rounded-xl border px-3 py-2 text-sm ${
+              fields[f] ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-neutral-200 bg-neutral-50 text-neutral-400'
+            }`}
+          >
+            <span className="text-xs font-semibold uppercase">{f}</span>
+            <div>{fields[f] ?? '아직 선택 안 함'}</div>
+            {feedback[f].state === 'wrong' && (
+              <div className="mt-1 text-xs text-rose-600">{feedback[f].message}</div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {requiredModifiers.length > 0 && (
+        <div className="rounded-xl border bg-neutral-50 p-3">
+          <div className="text-xs font-semibold text-neutral-700">
+            수식어 연결 ({modifierLinks.length}/{requiredModifiers.length})
+          </div>
+          <div className="mt-2 space-y-1.5">
+            {modifierLinks.length === 0 ? (
+              <div className="rounded-lg border border-dashed bg-white px-2 py-2 text-xs text-neutral-400">
+                아직 연결된 수식어가 없습니다.
+              </div>
+            ) : (
+              modifierLinks.map((l, i) => (
+                <div key={i} className="rounded-lg border bg-white px-2 py-1.5 text-xs text-neutral-700">
+                  [{l.subtypeLabel}] {l.span} → {l.target}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
+      <form onSubmit={async (e) => { setSubmitting(true); await onSubmit(e); setSubmitting(false); }}>
+        <input type="hidden" name="drill_type" value="structure_svo" />
+        <input type="hidden" name="mistake_count" value={String(mistakeCount)} />
+        <input type="hidden" name="response_choice" value={JSON.stringify({ fields, modifiers: modifierLinks })} />
+        <button
+          type="submit"
+          disabled={!allDone || submitting}
+          className="w-full rounded-xl bg-neutral-900 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800 disabled:opacity-40"
+        >
+          {submitting ? '채점 중...' : allDone ? '제출' : `남은 항목 ${requiredFields.length + requiredModifiers.length - (fieldsDoneCount + modifierLinks.length)}개`}
+        </button>
+      </form>
     </>
   );
 }

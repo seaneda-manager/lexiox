@@ -1,9 +1,15 @@
 // lib/hi-naesin/structure-generator.ts
 // Claude Haiku 로 identify→categorize 구조분석 드릴 자동 생성.
 // 1차: 지칭추론(reference) — 문장 내 대명사/지시어가 가리키는 대상을 찾고 유형을 분류.
+// 2차: 문장 성분(SVOC) + 수식어-피수식어 매칭 드릴 자동 생성.
 
 import Anthropic from '@anthropic-ai/sdk';
-import type { IdentifyCategorizePayload } from '@/models/hi-naesin/drill';
+import type {
+  IdentifyCategorizePayload,
+  ModifierSubtype,
+  ModifierTargetType,
+  StructureSvoPayload,
+} from '@/models/hi-naesin/drill';
 
 type StructResult = Array<{ orderIndex: number; payload: IdentifyCategorizePayload }>;
 type StructOk   = { ok: true;  results: StructResult };
@@ -164,6 +170,189 @@ Output ONLY a valid JSON array — no markdown fences:
     return { ok: true, results };
   } catch (e) {
     console.error('[generateReferenceQuestions] error:', e);
+    return { ok: false, error: e instanceof Error ? e.message : String(e), results: [] };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// 2차: 문장 성분(SVOC) + 수식어-피수식어 매칭 드릴 생성
+// ─────────────────────────────────────────────────────────────
+
+type StructSvoResult = Array<{ orderIndex: number; payload: StructureSvoPayload }>;
+type StructSvoOk   = { ok: true;  results: StructSvoResult };
+type StructSvoFail = { ok: false; error: string; results: [] };
+
+const MODIFIER_SUBTYPE_KEYS = new Set<ModifierSubtype>([
+  'adjective_word', 'adverb_word', 'prepositional_phrase', 'infinitive_phrase',
+  'participial_phrase', 'participial_construction', 'relative_clause', 'adverb_clause', 'other',
+]);
+
+const MODIFIER_TARGET_KEYS = new Set<ModifierTargetType>([
+  'head_noun', 'verb_phrase', 'adjective', 'adverb', 'main_clause', 'sentence',
+]);
+
+const MODIFIER_TARGET_LABEL: Record<ModifierTargetType, string> = {
+  head_noun: '명사(head noun)',
+  verb_phrase: '서술부(verb phrase)',
+  adjective: '형용사',
+  adverb: '부사',
+  main_clause: '주절(main clause)',
+  sentence: '문장 전체(sentence)',
+};
+
+function targetNeedsClick(t: ModifierTargetType): boolean {
+  return t !== 'main_clause' && t !== 'sentence';
+}
+
+type RawStructureItem = {
+  sentenceIndex: number;
+  skip?: boolean;
+  sentence: string;
+  pattern?: string;
+  subject?: string;
+  verb?: string;
+  object?: string;
+  complement?: string;
+  modifiers?: Array<{
+    span: string;
+    subtype: string;
+    targetType: string;
+    target?: string;
+  }>;
+};
+
+export async function generateStructureSvoQuestions(
+  sentences: Array<{ sentenceEn: string }>,
+): Promise<StructSvoOk | StructSvoFail> {
+  const capped = sentences.filter((s) => s.sentenceEn).slice(0, 12);
+  if (capped.length === 0) return { ok: true, results: [] };
+
+  try {
+    const client = getClient();
+    const sentenceList = capped.map((s, i) => `[${i}] ${s.sentenceEn}`).join('\n');
+
+    const msg = await client.messages.create({
+      model: 'claude-haiku-4-5',
+      max_tokens: 8000,
+      messages: [
+        {
+          role: 'user',
+          content: `You are a Korean 내신/수능 English teacher creating 문장 성분(5형식) + 수식어 분석 drills for high school students.
+
+Passage sentences:
+${sentenceList}
+
+For EACH sentence, analyze its MAIN clause (ignore embedded subordinate clauses when tagging S/V/O/C — tag only the main clause's own subject/verb/object/complement) and return:
+
+1. "subject": the exact main-clause subject text as it appears in the sentence (a noun phrase, gerund phrase, or "It"/"that-clause" if it's a genuine subject — but if the subject is trivial like a single pronoun "It" acting as 가주어, still tag it as subject; do not skip).
+2. "verb": the exact main verb (include auxiliary + main verb together, e.g. "has been shown", "lowers"). For linking verbs also include here.
+3. "object": the exact direct object, ONLY if the sentence has one (3rd/4th/5th 형식). Omit the field entirely if there is no object.
+4. "complement": the exact subject complement or object complement, ONLY if present (2nd/5th 형식). Omit if absent.
+5. "pattern": one of "1형식 (S V)", "2형식 (S V C)", "3형식 (S V O)", "4형식 (S V IO DO)", "5형식 (S V O C)" — pick whichever best matches this sentence's main clause.
+6. "modifiers": an array of the sentence's meaningful modifying phrases/clauses (skip trivial single articles/determiners). For EACH modifier provide:
+   - "span": the exact modifier text as it appears in the sentence.
+   - "subtype": EXACTLY one of:
+       "adjective_word"           = single adjective modifying a noun
+       "adverb_word"              = single adverb
+       "prepositional_phrase"     = prepositional phrase (on/in/with/for/because of ...)
+       "infinitive_phrase"        = to-infinitive phrase
+       "participial_phrase"       = -ing/-ed phrase modifying a noun (reduced relative clause)
+       "participial_construction" = -ing/-ed phrase modifying the whole clause (분사구문, usually at sentence start or set off by commas)
+       "relative_clause"          = who/which/that/whose clause modifying a noun
+       "adverb_clause"            = because/although/while/if/when + clause modifying the whole sentence
+       "other"                    = anything else worth noting
+   - "targetType": what kind of thing this modifier attaches to — EXACTLY one of "head_noun", "verb_phrase", "adjective", "adverb", "main_clause", "sentence".
+       (adjective_word/participial_phrase/relative_clause -> almost always "head_noun";
+        adverb_clause/participial_construction -> "main_clause" or "sentence";
+        adverb_word/prepositional_phrase/infinitive_phrase -> can target head_noun, verb_phrase, adjective, adverb, or main_clause depending on what it modifies.)
+   - "target": if targetType is "head_noun", "verb_phrase", "adjective", or "adverb" — the EXACT single word or short phrase (as it appears in the sentence) being modified. If targetType is "main_clause" or "sentence", omit this field (or leave empty).
+
+CRITICAL rules:
+- Every "subject"/"verb"/"object"/"complement"/modifier "span"/modifier "target" value MUST be an EXACT substring of "sentence" (student will click the words). Do not paraphrase or normalize.
+- If a sentence is too complex/ambiguous to tag confidently, set "skip": true for it.
+- Keep modifiers to the 2-4 most pedagogically useful ones per sentence (don't tag every single word).
+
+Output ONLY a valid JSON array — no markdown fences:
+[
+  {
+    "sentenceIndex": 0,
+    "skip": false,
+    "sentence": "Implementing digital minimalism lowers stress and anxiety while enhancing focus on daily tasks.",
+    "subject": "Implementing digital minimalism",
+    "verb": "lowers",
+    "object": "stress and anxiety",
+    "pattern": "3형식 (S V O)",
+    "modifiers": [
+      { "span": "while enhancing focus on daily tasks", "subtype": "adverb_clause", "targetType": "main_clause" },
+      { "span": "on daily tasks", "subtype": "prepositional_phrase", "targetType": "head_noun", "target": "focus" }
+    ]
+  }
+]`,
+        },
+      ],
+    });
+
+    const text = msg.content[0].type === 'text' ? msg.content[0].text.trim() : '';
+    const items = parseJsonArray<RawStructureItem>(text);
+
+    const results: StructSvoResult = [];
+
+    for (const it of items) {
+      if (it.skip || !it.sentence || it.sentenceIndex >= capped.length) continue;
+
+      const mkField = (value: string | undefined) => {
+        if (!value || !containsSpan(it.sentence, value)) return undefined;
+        return { accepted: [value] };
+      };
+
+      const subject = mkField(it.subject);
+      const verb = mkField(it.verb);
+      if (!subject || !verb) continue; // 주어/동사는 필수
+
+      const object = mkField(it.object);
+      const complement = mkField(it.complement);
+
+      const modifiers = (it.modifiers ?? [])
+        .filter((m): m is Required<Pick<typeof m, 'span' | 'subtype' | 'targetType'>> & typeof m =>
+          !!m.span &&
+          containsSpan(it.sentence, m.span) &&
+          MODIFIER_SUBTYPE_KEYS.has(m.subtype as ModifierSubtype) &&
+          MODIFIER_TARGET_KEYS.has(m.targetType as ModifierTargetType),
+        )
+        .map((m) => {
+          const targetType = m.targetType as ModifierTargetType;
+          const needsClick = targetNeedsClick(targetType);
+          const target = needsClick
+            ? (m.target && containsSpan(it.sentence, m.target) ? m.target : null)
+            : MODIFIER_TARGET_LABEL[targetType];
+          return target
+            ? {
+                span: m.span,
+                subtype: m.subtype as ModifierSubtype,
+                targetType,
+                target,
+              }
+            : null;
+        })
+        .filter((m): m is NonNullable<typeof m> => m !== null);
+
+      results.push({
+        orderIndex: it.sentenceIndex,
+        payload: {
+          sentence: it.sentence,
+          pattern: it.pattern,
+          subject,
+          verb,
+          object,
+          complement,
+          modifiers,
+        },
+      });
+    }
+
+    return { ok: true, results };
+  } catch (e) {
+    console.error('[generateStructureSvoQuestions] error:', e);
     return { ok: false, error: e instanceof Error ? e.message : String(e), results: [] };
   }
 }

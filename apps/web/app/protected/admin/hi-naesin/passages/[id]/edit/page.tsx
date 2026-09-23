@@ -26,6 +26,7 @@ import {
   generateGrammarDrillsAction,
   generateThoughtUnitDrillsAction,
   generateStructureDrillsAction,
+  generateStructureSvoDrillsAction,
 } from './sentence-actions';
 import {
   assignPassageAction,
@@ -113,16 +114,11 @@ export default async function HiNaesinPassageEditPage({
     const existing = drills.filter((d) => types.includes(d.drill_type));
     if (existing.length === 0) return undefined;
     const published = existing.filter((d) => d.is_published).length;
-    let msg = `이미 생성된 드릴 ${existing.length}개(공개 ${published}개)가 새 문제로 교체됩니다.
-수동 수정 내용과 공개 상태가 초기화됩니다.`;
+    let msg = `이미 생성된 드릴 ${existing.length}개(공개 ${published}개)가 새 문제로 교체됩니다.\n수동 수정 내용과 공개 상태가 초기화됩니다.`;
     if (assignments.length > 0) {
-      msg += `
-
-이 지문은 ${assignments.length}건 배정되어 있어, 풀이 중인 학생의 문제가 바뀔 수 있습니다.`;
+      msg += `\n\n이 지문은 ${assignments.length}건 배정되어 있어, 풀이 중인 학생의 문제가 바뀔 수 있습니다.`;
     }
-    return `${msg}
-
-계속할까요?`;
+    return `${msg}\n\n계속할까요?`;
   };
 
   const tabs = [
@@ -383,6 +379,17 @@ export default async function HiNaesinPassageEditPage({
                   className="rounded-xl border border-indigo-300 bg-indigo-50 px-5 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100"
                 >
                   5단계: AI 구조분석(지칭추론) 생성
+                </ConfirmSubmitButton>
+              </form>
+            )}
+
+            {sentences.length > 0 && (
+              <form action={generateStructureSvoDrillsAction.bind(null, id)}>
+                <ConfirmSubmitButton
+                  message={regenConfirm(['structure_svo'])}
+                  className="rounded-xl border border-violet-300 bg-violet-50 px-5 py-2 text-sm font-semibold text-violet-700 hover:bg-violet-100"
+                >
+                  6단계: AI 문장성분(5형식+수식어) 생성
                 </ConfirmSubmitButton>
               </form>
             )}
@@ -1072,6 +1079,39 @@ function DrillPreview({ drill }: { drill: { drill_type: string; order_index: num
             {t.anchor ? <span className="text-neutral-400">“{String(t.anchor)}” → </span> : null}
             <span className="font-semibold text-emerald-700">{String(t.span ?? '')}</span>
             {t.category ? <span className="ml-1 text-indigo-600">[{String(t.category)}]</span> : null}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (drill.drill_type === 'structure_svo') {
+    const modifiers = Array.isArray(p.modifiers) ? (p.modifiers as Array<Record<string, unknown>>) : [];
+    const field = (key: string) => {
+      const f = p[key] as { accepted?: string[] } | undefined;
+      return f?.accepted?.[0];
+    };
+    return (
+      <div className="flex-1 space-y-1.5 min-w-0">
+        <div className="flex items-center gap-2">
+          {idx}
+          {p.pattern ? (
+            <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-700">
+              {String(p.pattern)}
+            </span>
+          ) : null}
+        </div>
+        <p className="text-sm font-medium text-neutral-800">{String(p.sentence ?? '')}</p>
+        <div className="flex flex-wrap gap-1 text-xs">
+          {field('subject') && <span className="rounded bg-blue-50 px-1.5 py-0.5 text-blue-700">S: {field('subject')}</span>}
+          {field('verb') && <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-emerald-700">V: {field('verb')}</span>}
+          {field('object') && <span className="rounded bg-orange-50 px-1.5 py-0.5 text-orange-700">O: {field('object')}</span>}
+          {field('complement') && <span className="rounded bg-amber-50 px-1.5 py-0.5 text-amber-700">C: {field('complement')}</span>}
+        </div>
+        {modifiers.map((m, i) => (
+          <div key={i} className="rounded-lg border border-neutral-200 px-2 py-1 text-xs text-neutral-600">
+            <span className="font-semibold text-violet-700">[{String(m.subtype)}]</span>{' '}
+            {String(m.span ?? '')} → <span className="text-neutral-500">{String(m.target ?? m.targetType ?? '')}</span>
           </div>
         ))}
       </div>
