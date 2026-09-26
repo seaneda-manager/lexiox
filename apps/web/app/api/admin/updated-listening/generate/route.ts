@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { randomUUID } from 'crypto';
 import { createClient } from '@supabase/supabase-js';
-import { validateAndShuffleIfNeeded, extractChoiceLetter } from '@/lib/utils/validateAnswerDistribution';
+import { shuffleAllChoicesInPayload } from '@/lib/utils/validateAnswerDistribution';
 import { logAnthropicUsage } from '@/lib/ai/logAnthropicUsage';
 
 // 오디오는 이 라우트에서 생성하지 않는다 (스크립트/문제만 생성).
@@ -611,6 +611,17 @@ export async function POST(req: Request) {
 
     const testId = randomUUID();
 
+    // ✅ 정답 위치 무작위화 — 패턴 감지 방식(validateAndShuffleIfNeeded)은 "전체적으로
+    // 특정 선택지에 쏠리는" 통계적 편중을 못 잡고, 잡히더라도 이미 생성된 정답 글자
+    // 묶음 안에서 재배열만 해서 쏠림 자체는 못 고쳤다(lib/utils/validateAnswerDistribution.ts
+    // 참고). 매 문제의 choices 배열 자체를 무조건 섞는 방식으로 교체.
+    ensureCorrectChoiceExists(module1Items);
+    ensureCorrectChoiceExists(hardItems);
+    ensureCorrectChoiceExists(easyItems);
+    shuffleAllChoicesInPayload(module1Items);
+    shuffleAllChoicesInPayload(hardItems);
+    shuffleAllChoicesInPayload(easyItems);
+
     // 오디오는 여기서 생성하지 않는다. 스크립트/문제만 만들고, admin이 edit 페이지에서
     // 내용을 검토한 뒤 트랙별로 "🎧 음성생성" 버튼을 눌러 개별 생성하도록 한다.
     // (모든 오디오 관련 로직은 generate-audio 엔드포인트 한 곳에만 있도록 유지)
@@ -663,91 +674,25 @@ export async function POST(req: Request) {
       }
     };
 
-    // ✅ 정답 분포 검증 및 셔플 (module1, hard, easy 모두)
-    const module1Answers = extractListeningAnswers(module1Items);
-    const hardAnswers = extractListeningAnswers(hardItems);
-    const easyAnswers = extractListeningAnswers(easyItems);
-
-    const { answers: shuffledM1, wasShuffled: m1Shuffled } = validateAndShuffleIfNeeded(module1Answers);
-    const { answers: shuffledHard, wasShuffled: hardShuffled } = validateAndShuffleIfNeeded(hardAnswers);
-    const { answers: shuffledEasy, wasShuffled: easyShuffled } = validateAndShuffleIfNeeded(easyAnswers);
-
-    // ✅ Always apply answers to set correct field on choices (not just when shuffled)
-    applyShuffledListeningAnswers(module1Items, m1Shuffled ? shuffledM1 : module1Answers);
-    module1Tracks = buildTracks(module1Items, 'm1');
-
-    applyShuffledListeningAnswers(hardItems, hardShuffled ? shuffledHard : hardAnswers);
-    hardTracks = buildTracks(hardItems, 'm2h');
-
-    applyShuffledListeningAnswers(easyItems, easyShuffled ? shuffledEasy : easyAnswers);
-    easyTracks = buildTracks(easyItems, 'm2e');
-
-    return NextResponse.json({ ok: true, id: testId, payload: {
-      ...payload,
-      meta: {
-        ...payload.meta,
-        answerShuffledM1: m1Shuffled,
-        answerShuffledHard: hardShuffled,
-        answerShuffledEasy: easyShuffled,
-      }
-    } });
+    return NextResponse.json({ ok: true, id: testId, payload });
   } catch (err: any) {
     console.error('LISTENING GENERATE ERROR', err);
     return NextResponse.json({ ok: false, error: err?.message ?? 'Unknown error' }, { status: 500 });
   }
 }
 
-// ✅ 헬퍼 함수: Listening 정답 추출
-function extractListeningAnswers(items: any[]): string[] {
-  const answers: string[] = [];
-
+// ✅ Claude가 정답을 하나도 표시 안 한 문제가 있으면(드묾) 무작위로 하나를 정답 처리한다.
+// 분포를 맞추는 로직(shuffleAllChoicesInPayload)과는 별개의 안전장치 — 그건 이미 있는
+// 정답을 어디에 놓을지 섞는 것뿐이라,애초에 정답 표시가 없는 문제는 못 고친다.
+function ensureCorrectChoiceExists(items: any[]): void {
   items.forEach((item: any) => {
-    if (item.questions && Array.isArray(item.questions)) {
-      item.questions.forEach((q: any) => {
-        if (q.choices && Array.isArray(q.choices)) {
-          const correct = q.choices.find((c: any) => c.correct);
-          if (correct?.id) {
-            const letter = extractChoiceLetter(correct.id);
-            answers.push(letter);
-          } else {
-            // Claude가 정답을 생성하지 못했을 때: 무작위로 정답 선택 (A로 몰리는 현상 방지)
-            console.warn('[extractListeningAnswers] No correct choice found. Randomly selecting one as correct.');
-            const randomIdx = Math.floor(Math.random() * q.choices.length);
-            const randomChoice = q.choices[randomIdx];
-            if (randomChoice?.id) {
-              q.choices.forEach((c: any) => c.correct = false);
-              randomChoice.correct = true;
-              const letter = extractChoiceLetter(randomChoice.id);
-              answers.push(letter);
-            } else {
-              answers.push('A');
-            }
-          }
-        }
-      });
-    }
-  });
-
-  return answers;
-}
-
-// ✅ 헬퍼 함수: 셔플된 정답 적용 (Listening)
-function applyShuffledListeningAnswers(items: any[], shuffledAnswers: string[]): void {
-  let answerIndex = 0;
-
-  items.forEach((item: any) => {
-    if (item.questions && Array.isArray(item.questions)) {
-      item.questions.forEach((q: any) => {
-        if (q.choices && Array.isArray(q.choices)) {
-          if (answerIndex < shuffledAnswers.length) {
-            const newCorrectAnswer = shuffledAnswers[answerIndex++];
-            q.choices.forEach((c: any) => {
-              const choiceLetter = extractChoiceLetter(c.id);
-              c.correct = choiceLetter === newCorrectAnswer;
-            });
-          }
-        }
-      });
-    }
+    if (!Array.isArray(item.questions)) return;
+    item.questions.forEach((q: any) => {
+      if (!Array.isArray(q.choices) || q.choices.length === 0) return;
+      if (q.choices.some((c: any) => c.correct)) return;
+      console.warn('[ensureCorrectChoiceExists] No correct choice found. Randomly selecting one as correct.');
+      const idx = Math.floor(Math.random() * q.choices.length);
+      q.choices.forEach((c: any, i: number) => { c.correct = i === idx; });
+    });
   });
 }

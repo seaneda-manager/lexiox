@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { randomUUID } from "crypto";
+import { shuffleAllChoicesInPayload } from "@/lib/utils/validateAnswerDistribution";
 
 export const runtime = "nodejs";
 export const maxDuration = 180;
@@ -203,6 +204,9 @@ export async function POST(req: Request) {
     pushScripted("conversation", conversations);
     pushScripted("announcement", announcements);
     pushScripted("academic_lecture", lectures);
+
+    // ✅ 정답 위치 무작위화 — 매 문제 choices를 무조건 섞어서 특정 선택지 쏠림 방지
+    shuffleAllChoicesInPayload(items);
 
     return NextResponse.json({ ok: true, part, items });
   } catch (err: any) {

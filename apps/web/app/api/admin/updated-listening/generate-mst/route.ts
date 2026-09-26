@@ -6,6 +6,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { ElevenLabsClient } from "elevenlabs";
 import { createClient } from "@supabase/supabase-js";
 import { randomUUID } from "crypto";
+import { shuffleAllChoicesInPayload } from "@/lib/utils/validateAnswerDistribution";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -177,6 +178,9 @@ export async function POST(req: Request) {
         })),
       })),
     }));
+
+    // ✅ 정답 위치 무작위화 — 매 문제 choices를 무조건 섞어서 특정 선택지 쏠림 방지
+    shuffleAllChoicesInPayload(items);
 
     // Generate audio for each item
     console.log(`[Audio] Generating ${part} audio for ${items.length} items...`);
