@@ -247,8 +247,11 @@ For EACH sentence, analyze its MAIN clause (ignore embedded subordinate clauses 
 1. "subject": the exact main-clause subject text as it appears in the sentence (a noun phrase, gerund phrase, or "It"/"that-clause" if it's a genuine subject — but if the subject is trivial like a single pronoun "It" acting as 가주어, still tag it as subject; do not skip).
 2. "verb": the exact main verb (include auxiliary + main verb together, e.g. "has been shown", "lowers"). For linking verbs also include here.
 3. "object": the exact direct object, ONLY if the sentence has one (3rd/4th/5th 형식). Omit the field entirely if there is no object.
-4. "complement": the exact subject complement or object complement, ONLY if present (2nd/5th 형식). Omit if absent.
-5. "pattern": one of "1형식 (S V)", "2형식 (S V C)", "3형식 (S V O)", "4형식 (S V IO DO)", "5형식 (S V O C)" — pick whichever best matches this sentence's main clause.
+4. "complement": the exact subject complement or object complement, ONLY if present (2nd/5th 형식). A complement MUST be a noun phrase or adjective (phrase) that describes/renames the subject or object.
+   A location/manner/time ADVERB (here, there, everywhere, well, fast, yesterday, ...) is NEVER a complement, even right after "be" —
+   "The book is here" / "Messages are everywhere" are 1형식 (S V), with the adverb tagged as a modifier (subtype "adverb_word", targetType "verb_phrase"), NOT as complement/2형식.
+   Omit "complement" entirely if there is no genuine noun/adjective complement.
+5. "pattern": one of "1형식 (S V)", "2형식 (S V C)", "3형식 (S V O)", "4형식 (S V IO DO)", "5형식 (S V O C)" — pick whichever best matches this sentence's main clause. Do not pick 2형식/5형식 unless "complement" is a real noun/adjective (see rule 4).
 6. "modifiers": an array of the sentence's meaningful modifying phrases/clauses (skip trivial single articles/determiners). For EACH modifier provide:
    - "span": the exact modifier text as it appears in the sentence.
    - "subtype": EXACTLY one of:

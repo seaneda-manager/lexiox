@@ -1591,12 +1591,29 @@ function StructureSvoDrill({
     );
   }
 
+  const remainingModifierTypes = useMemo(() => {
+    const linkedSpans = new Set(modifierLinks.map((l) => svoNormalize(l.span)));
+    const remaining = requiredModifiers.filter((m) => !linkedSpans.has(svoNormalize(m.span)));
+    const counts = new Map<string, number>();
+    for (const m of remaining) {
+      const label = SVO_MODIFIER_SUBTYPE_LABEL[m.subtype];
+      counts.set(label, (counts.get(label) ?? 0) + 1);
+    }
+    return Array.from(counts.entries());
+  }, [requiredModifiers, modifierLinks]);
+
   return (
     <>
       {p.pattern && (
         <span className="inline-flex items-center rounded-full bg-violet-100 px-3 py-0.5 text-xs font-semibold text-violet-700">
           {p.pattern}
         </span>
+      )}
+
+      {requiredModifiers.length > 0 && (
+        <p className="text-xs text-neutral-400">
+          관사(a, the)·소유격 한정사(my, our 등)는 수식어로 세지 않아요. 형용사/부사 단어·구·절 단위의 의미 있는 수식어만 찾으면 됩니다.
+        </p>
       )}
 
       <div className="rounded-xl border bg-white p-4">
@@ -1767,6 +1784,11 @@ function StructureSvoDrill({
           <div className="text-xs font-semibold text-neutral-700">
             수식어 연결 ({modifierLinks.length}/{requiredModifiers.length})
           </div>
+          {remainingModifierTypes.length > 0 && (
+            <div className="mt-1 text-xs text-neutral-500">
+              남은 수식어 유형 · {remainingModifierTypes.map(([label, n]) => `${label} ${n}개`).join(', ')}
+            </div>
+          )}
           <div className="mt-2 space-y-1.5">
             {modifierLinks.length === 0 ? (
               <div className="rounded-lg border border-dashed bg-white px-2 py-2 text-xs text-neutral-400">
