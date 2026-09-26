@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import ListeningTestLayout2026, { ListeningHeaderLabel, ListeningSubHeaderLabel } from "@/components/listening/ListeningTestLayout2026";
 import VolumeControl from "@/components/listening/VolumeControl";
+import PlaybackRateControl from "@/components/listening/PlaybackRateControl";
 import SpeakerVisual from "@/components/listening/SpeakerVisual";
 import StudyAudioPlayer from "./StudyAudioPlayer";
 import type { ScriptSegment } from "@/models/listening";
@@ -33,6 +34,8 @@ interface Task1QuestionScreenProps {
   scriptSegments?: ScriptSegment[];
   volume: number;
   onVolumeChange: (volume: number) => void;
+  playbackRate?: number;
+  onPlaybackRateChange?: (rate: number) => void;
 }
 
 const nextButtonStyle: React.CSSProperties = {
@@ -64,6 +67,8 @@ export default function Task1QuestionScreen({
   scriptSegments,
   volume,
   onVolumeChange,
+  playbackRate = 1,
+  onPlaybackRateChange,
 }: Task1QuestionScreenProps) {
   const isStudy = mode === "study";
   const [selectedChoiceIndex, setSelectedChoiceIndex] = useState<number | null>(initialChoiceIndex);
@@ -93,6 +98,7 @@ export default function Task1QuestionScreen({
     if (isStudy) return;
     if (audioRef.current && !audioHasPlayed) {
       audioRef.current.volume = volume / 100;
+      audioRef.current.playbackRate = playbackRate;
       audioRef.current.play().catch((err) => {
         console.error("Audio playback error:", err);
         setIsAudioPlaying(false);
@@ -106,6 +112,11 @@ export default function Task1QuestionScreen({
   useEffect(() => {
     if (audioRef.current) audioRef.current.volume = volume / 100;
   }, [volume]);
+
+  // 헤더에서 속도를 바꾸면 재생 중인 오디오에도 즉시 반영
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.playbackRate = playbackRate;
+  }, [playbackRate]);
 
   const formatTime = (seconds: number) => {
     return `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
@@ -132,6 +143,9 @@ export default function Task1QuestionScreen({
       headerRight={
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <VolumeControl volume={volume} onVolumeChange={onVolumeChange} />
+          {!isStudy && onPlaybackRateChange && (
+            <PlaybackRateControl rate={playbackRate} onRateChange={onPlaybackRateChange} />
+          )}
           {canAdvance && (
             <button onClick={handleNext} style={nextButtonStyle}>
               Next &gt;

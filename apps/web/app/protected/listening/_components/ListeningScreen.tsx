@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import ListeningTestLayout2026, { ListeningHeaderLabel, ListeningSubHeaderLabel } from "@/components/listening/ListeningTestLayout2026";
 import VolumeControl from "@/components/listening/VolumeControl";
+import PlaybackRateControl from "@/components/listening/PlaybackRateControl";
 import SpeakerVisual from "@/components/listening/SpeakerVisual";
 import StudyAudioPlayer from "./StudyAudioPlayer";
 import type { ScriptSegment } from "@/models/listening";
@@ -22,6 +23,8 @@ interface ListeningScreenProps {
   onBack?: () => void;
   volume: number;
   onVolumeChange: (volume: number) => void;
+  playbackRate?: number;
+  onPlaybackRateChange?: (rate: number) => void;
 }
 
 function getHeading(taskKind: ListeningScreenProps["taskKind"], title: string) {
@@ -63,6 +66,8 @@ export default function ListeningScreen({
   onBack,
   volume,
   onVolumeChange,
+  playbackRate = 1,
+  onPlaybackRateChange,
 }: ListeningScreenProps) {
   const isStudy = mode === "study";
   const [isPlaying, setIsPlaying] = useState(true);
@@ -73,6 +78,7 @@ export default function ListeningScreen({
     if (isStudy) return;
     if (audioRef.current) {
       audioRef.current.volume = volume / 100;
+      audioRef.current.playbackRate = playbackRate;
       audioRef.current.play().catch((err) => {
         console.error("Audio playback error:", err);
         setIsPlaying(false);
@@ -86,6 +92,11 @@ export default function ListeningScreen({
     if (audioRef.current) audioRef.current.volume = volume / 100;
   }, [volume]);
 
+  // 헤더에서 속도를 바꾸면 재생 중인 오디오에도 즉시 반영
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.playbackRate = playbackRate;
+  }, [playbackRate]);
+
   const handleAudioEnd = () => {
     setIsPlaying(false);
     onAudioEnd();
@@ -97,6 +108,9 @@ export default function ListeningScreen({
       headerRight={
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <VolumeControl volume={volume} onVolumeChange={onVolumeChange} />
+          {!isStudy && onPlaybackRateChange && (
+            <PlaybackRateControl rate={playbackRate} onRateChange={onPlaybackRateChange} />
+          )}
           {isStudy && (
             <button onClick={onAudioEnd} style={nextButtonStyle}>
               Next &gt;

@@ -32,11 +32,18 @@ export default function StudyAudioPlayer({
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [showScript, setShowScript] = useState(false);
+  const [rate, setRate] = useState(1);
 
   useEffect(() => {
     if (!autoPlay) return;
+    if (audioRef.current) audioRef.current.playbackRate = rate;
     audioRef.current?.play().catch(() => setIsPlaying(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoPlay, audioUrl]);
+
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.playbackRate = rate;
+  }, [rate]);
 
   const togglePlay = () => {
     const el = audioRef.current;
@@ -123,6 +130,18 @@ export default function StudyAudioPlayer({
         >
           TEXT
         </button>
+        <select
+          value={rate}
+          onChange={(e) => setRate(Number(e.target.value))}
+          aria-label="재생 속도"
+          className="rounded-lg border border-gray-300 px-2 py-2 text-xs font-medium text-gray-700"
+        >
+          {[0.75, 0.85, 1, 1.1, 1.25].map((r) => (
+            <option key={r} value={r}>
+              {r}x
+            </option>
+          ))}
+        </select>
       </div>
 
       {showScript && (

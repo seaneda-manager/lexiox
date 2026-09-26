@@ -21,6 +21,12 @@ export interface LListeningTestMeta {
   label: string;
   examEra: ExamEra;
   source?: string | null;
+  /** 'toefl'(기본) | 'jr' — 중학 레벨 세트는 'jr' */
+  program?: "toefl" | "jr";
+  /** 중학 학년 (program: 'jr'일 때만 사용) */
+  grade?: "ms1" | "ms2" | "ms3";
+  /** 학년 내 난이도 3단계 (program: 'jr'일 때만 사용) */
+  level?: "low" | "mid" | "high";
 }
 
 /** 2026 Listening에서 지원할 Task 타입 (레거시 포함) */
@@ -110,6 +116,8 @@ export interface LQuestion2026 {
   audioUrl?: string;
   /** 문항별 답변 제한 시간(초). 오디오 재생 중에는 감소하지 않고, 문제 활성화 시점부터 카운트다운 (Task1: 15-30초, 그 외: 35-45초) */
   testingSeconds?: number;
+  /** 표(도표) 불일치 찾기 문항용 — 선택지 위에 렌더링할 표 */
+  tableData?: { headers: string[]; rows: string[][] };
 }
 
 /** 세트 하나 (오디오 1개 + 문항 N개) */
@@ -128,6 +136,10 @@ export interface LListeningTrack2026 {
   questions: LQuestion2026[];
   /** 문제 풀이 전체 제한 시간(초) — 기본 300 */
   testingSeconds?: number;
+  /** 노트테이킹 드릴용 모범 노트 (퍼블리시 단계에서 생성) */
+  modelNotes?: string[];
+  /** 즉시회상 리텐션 테스트용 문항 (퍼블리시 단계에서 생성, 재청취 없이 바로 답함) */
+  recallQuestion?: { stem: string; choices: LChoice2026[] };
 }
 
 /** Updated TOEFL Listening 선형 시험 (Module 1 + Adaptive Stage 2) */

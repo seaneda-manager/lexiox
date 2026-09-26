@@ -59,6 +59,7 @@ export default function ListeningSessionContainer({
   const isStudy = mode === "study";
   // 실제 ETS는 전용 볼륨 조절 화면이 없다 — 헤더의 Volume 버튼으로 시험 내내 조절한다.
   const [volume, setVolume] = useState(70);
+  const [playbackRate, setPlaybackRate] = useState(1);
   const [screen, setScreen] = useState<ScreenType>("directions");
   const [module, setModule] = useState<1 | 2>(1);
   const [difficulty, setDifficulty] = useState<"hard" | "easy">("hard");
@@ -147,12 +148,17 @@ export default function ListeningSessionContainer({
     }
   };
 
+  // 중학(jr) 세트처럼 stage2Pool이 없는 단일 모듈 시험은 Module 1 종료 즉시 최종 화면으로 간다.
+  // (stage2Pool이 없는데 Module 2로 넘기면 module2Tracks가 빈 배열이라 화면이 멈춘다.)
+  const hasStage2 = !!testData.stage2Pool;
+
   const handleModuleEndNext = async () => {
     const totalQuestions = answerList.length;
     const correctCount = answerList.filter((a) => a.isCorrect).length;
-    await saveModuleResult(correctCount, totalQuestions, module === 2);
+    const isFinalModule = module === 2 || !hasStage2;
+    await saveModuleResult(correctCount, totalQuestions, isFinalModule);
 
-    if (module === 1) {
+    if (module === 1 && hasStage2) {
       const cutScore = testData.stage2Pool?.cutScore ?? 0.7;
       const percentage = totalQuestions > 0 ? correctCount / totalQuestions : 0;
       const nextDifficulty = percentage >= cutScore ? "hard" : "easy";
@@ -210,6 +216,8 @@ export default function ListeningSessionContainer({
             onBack={backHandler}
             volume={volume}
             onVolumeChange={setVolume}
+            playbackRate={playbackRate}
+            onPlaybackRateChange={setPlaybackRate}
           />
         );
       }
@@ -236,6 +244,8 @@ export default function ListeningSessionContainer({
             transcript={question.transcript}
             volume={volume}
             onVolumeChange={setVolume}
+            playbackRate={playbackRate}
+            onPlaybackRateChange={setPlaybackRate}
           />
         );
       }
@@ -258,6 +268,7 @@ export default function ListeningSessionContainer({
           illustrationUrl={track.illustrationUrl}
           transcript={track.transcript}
           scriptSegments={(track as any).scriptSegments}
+          tableData={(question as any).tableData}
           volume={volume}
           onVolumeChange={setVolume}
         />

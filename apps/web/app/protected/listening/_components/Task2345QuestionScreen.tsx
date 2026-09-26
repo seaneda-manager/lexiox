@@ -34,6 +34,8 @@ interface Task2345QuestionScreenProps {
   illustrationUrl?: string;
   transcript?: string;
   scriptSegments?: ScriptSegment[];
+  /** 표(도표) 불일치 찾기 문항용 — 있으면 질문 위에 렌더링 */
+  tableData?: { headers: string[]; rows: string[][] };
   volume: number;
   onVolumeChange: (volume: number) => void;
 }
@@ -67,6 +69,7 @@ export default function Task2345QuestionScreen({
   illustrationUrl,
   transcript,
   scriptSegments,
+  tableData,
   volume,
   onVolumeChange,
 }: Task2345QuestionScreenProps) {
@@ -136,6 +139,31 @@ export default function Task2345QuestionScreen({
 
         {/* 우: 질문 + 선택지 */}
         <div style={{ flex: 1 }}>
+          {tableData && (
+            <table style={{ borderCollapse: "collapse", marginBottom: 16, fontSize: 13 }}>
+              <thead>
+                <tr>
+                  {tableData.headers.map((h, i) => (
+                    <th key={i} style={{ border: "1px solid #D0D5DD", padding: "6px 10px", background: "#F5F7FA", textAlign: "left", fontWeight: 700 }}>
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {tableData.rows.map((row, ri) => (
+                  <tr key={ri}>
+                    {row.map((cell, ci) => (
+                      <td key={ci} style={{ border: "1px solid #D0D5DD", padding: "6px 10px" }}>
+                        {cell}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+
           <p style={{ fontSize: 16, fontWeight: 700, color: "#111", marginBottom: 20, lineHeight: 1.5 }}>
             {question}
           </p>
