@@ -8,7 +8,7 @@ import {
   LayoutDashboard, BookOpen, Headphones, Mic, PenLine, BookText,
   ClipboardList, FileText, GraduationCap, Library, List, Download,
   Upload, Send, BarChart2, Home, UserPlus, CheckSquare, Users,
-  ClipboardCheck, PlayCircle, Gift, ShieldCheck, Globe, Settings, Calendar, School, Gamepad2,
+  ClipboardCheck, PlayCircle, Gift, ShieldCheck, Globe, Settings, Calendar, School, Gamepad2, History,
   type LucideProps,
 } from 'lucide-react';
 import { useLang } from '@/contexts/LangContext';
@@ -280,6 +280,7 @@ export default function SidebarClient({ role, program = null, hasHiNaesin = fals
 
         { section: '시스템' as NavSection, href: '/admin/perks',    label: 'Perk 관리',  icon: Gift },
         { section: '시스템' as NavSection, href: '/admin/users',    label: '사용자/권한', icon: ShieldCheck },
+        { section: '시스템' as NavSection, href: '/admin/login-history', label: '로그인 기록', icon: History },
         { section: '시스템' as NavSection, href: '/admin/landing',  label: '랜딩 페이지', icon: Globe },
         { section: '시스템' as NavSection, href: '/admin/settings', label: '설정',       icon: Settings },
       ];

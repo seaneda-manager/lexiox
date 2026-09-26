@@ -2,7 +2,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 
 export type ActionState = {
@@ -114,8 +114,26 @@ export async function signInWithPassword(
     return { ok: false, error: "Email and password are required." };
 
   const supabase = await getSupabaseActionClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return { ok: false, error: sanitizeAuthError(error.message) };
+
+  if (data.user) {
+    try {
+      const h = await headers();
+      const ip =
+        h.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+        h.get("x-real-ip") ||
+        null;
+      await supabase.from("login_history").insert({
+        user_id: data.user.id,
+        email: data.user.email ?? email,
+        ip_address: ip,
+        user_agent: h.get("user-agent"),
+      });
+    } catch (logErr) {
+      console.error("[login_history] insert failed:", logErr);
+    }
+  }
 
   const nextRaw =
     (formDataOrCreds instanceof FormData
