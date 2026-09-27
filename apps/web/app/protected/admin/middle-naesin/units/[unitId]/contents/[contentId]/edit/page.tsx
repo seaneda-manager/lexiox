@@ -91,7 +91,8 @@ export default async function EditContentPage({
           {isVocab && (
             <div className="space-y-1">
               <label className="block text-xs font-medium text-neutral-500">
-                영영 단어 목록 (한 줄에 하나: word | definition | example)
+                영영 단어 목록 — "word | definition | example" 한 줄 형식, 또는 "word: definition" 줄 다음
+                "(한글 뜻)" 괄호 줄 형식 둘 다 지원
               </label>
               <textarea
                 name="body_text"

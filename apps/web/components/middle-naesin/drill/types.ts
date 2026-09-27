@@ -20,11 +20,12 @@ function splitSentences(text: string): string[] {
     const next = cleaned[i + 1];
 
     if ((ch === '.' || ch === '?' || ch === '!') && (next === ' ' || next === undefined || next === '"')) {
-      // Skip abbreviations: single capital letter or ≤2-char word before period
+      // Skip abbreviations: single capital letter or ≤2-char English word before period.
+      // Restricted to A-Z tokens so short Korean words (네, 돼, 했다 등) aren't mistaken for abbreviations.
       if (ch === '.') {
         const words = buf.trim().split(/\s+/);
-        const prev = words[words.length - 2] ?? '';
-        if (prev.length <= 2 || /^(Mr|Mrs|Ms|Dr|St|vs|etc|e\.g|i\.e)$/i.test(prev.replace('.', ''))) {
+        const prev = (words[words.length - 2] ?? '').replace('.', '');
+        if (/^[A-Za-z]{1,2}$/.test(prev) || /^(Mr|Mrs|Ms|Dr|St|vs|etc|e\.g|i\.e)$/i.test(prev)) {
           continue;
         }
       }
@@ -85,18 +86,37 @@ function parseVocab(contents: MiddleNaesinContent[]): MiddleDrillVocabItem[] {
   let idx = 0;
 
   for (const content of vocabContents) {
-    const lines = (content.body_text ?? '').split('\n').filter(Boolean);
-    for (const line of lines) {
-      const parts = line.split('|').map((s) => s.trim());
-      const word = parts[0];
-      const definition = parts[1];
-      if (!word || !definition) continue;
-      items.push({
-        index: idx++,
-        word,
-        definition,
-        example: parts[2] ?? null,
-      });
+    const lines = (content.body_text ?? '')
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter(Boolean);
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+
+      // Format A: "word | definition | example" (한 줄, 파이프 구분)
+      if (line.includes('|')) {
+        const parts = line.split('|').map((s) => s.trim());
+        const word = parts[0];
+        const definition = parts[1];
+        if (!word || !definition) continue;
+        items.push({ index: idx++, word, definition, example: parts[2] ?? null });
+        continue;
+      }
+
+      // Format B: "word: definition" 줄 + 다음 줄 "(뜻/설명)" 괄호줄
+      const colonMatch = line.match(/^([^:]{1,40}):\s*(.+)$/);
+      if (colonMatch) {
+        const word = colonMatch[1].trim();
+        const definition = colonMatch[2].trim();
+        const next = lines[i + 1];
+        let example: string | null = null;
+        if (next && next.startsWith('(') && next.endsWith(')')) {
+          example = next.slice(1, -1).trim();
+          i++; // 괄호줄 소비
+        }
+        items.push({ index: idx++, word, definition, example });
+      }
     }
   }
 
