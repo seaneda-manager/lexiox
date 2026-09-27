@@ -278,6 +278,7 @@ export default async function UnitDetailPage({
 function ContentAddForm({ unitId, contentType }: { unitId: string; contentType: string }) {
   const isVocab = contentType === 'vocab_en_en';
   const isVocabKo = contentType === 'vocab_ko';
+  const isGrammar = contentType === 'grammar_point';
   const isPastExam = contentType === 'past_exam';
 
   return (
@@ -296,13 +297,14 @@ function ContentAddForm({ unitId, contentType }: { unitId: string; contentType: 
             contentType === 'more_reading' ? '예: Reading Plus' :
             contentType === 'vocab_en_en'  ? '예: Unit 3 Vocabulary' :
             contentType === 'vocab_ko'     ? '예: Unit 3 단어' :
+            contentType === 'grammar_point' ? '예: 현재완료 (have/has + p.p.)' :
             '예: 2024년 1학기 기말'
           }
           className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-neutral-200 bg-white"
         />
       </div>
 
-      {!isVocab && !isVocabKo && !isPastExam && (
+      {!isVocab && !isVocabKo && !isGrammar && !isPastExam && (
         <>
           <div className="space-y-1">
             <label className="block text-xs font-medium text-neutral-500">
@@ -353,6 +355,40 @@ function ContentAddForm({ unitId, contentType }: { unitId: string; contentType: 
             className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-neutral-200 bg-white resize-y font-mono"
           />
         </div>
+      )}
+
+      {isGrammar && (
+        <>
+          <div className="space-y-1">
+            <label className="block text-xs font-medium text-neutral-500">영어 설명/규칙 + 예문</label>
+            <textarea
+              name="body_text"
+              rows={5}
+              placeholder={"We use the present perfect (have/has + p.p.) for an action that happened at an unspecified time before now.\nEx) I have visited Paris twice."}
+              className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-neutral-200 bg-white resize-y font-mono"
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="block text-xs font-medium text-neutral-500">한글 설명</label>
+            <textarea
+              name="translation_ko"
+              rows={3}
+              placeholder="현재완료는 과거에 시작된 일이 현재까지 영향을 미치거나, 막연한 과거의 경험을 나타낼 때 씁니다."
+              className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-neutral-200 bg-white resize-y"
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="block text-xs font-medium text-neutral-500">
+              간단 퀴즈 (선택, 한 줄에 하나: 질문 | 보기1 | 보기2 | 보기3 | 정답번호)
+            </label>
+            <textarea
+              name="quiz_raw"
+              rows={4}
+              placeholder={"I ___ this movie before. | have seen | has seen | seeing | 1\nShe ___ to Japan twice. | has gone | have go | going | 1"}
+              className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-neutral-200 bg-white resize-y font-mono"
+            />
+          </div>
+        </>
       )}
 
       {isPastExam && (

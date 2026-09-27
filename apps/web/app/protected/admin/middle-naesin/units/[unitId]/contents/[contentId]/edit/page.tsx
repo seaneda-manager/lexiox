@@ -27,7 +27,9 @@ export default async function EditContentPage({
   const c = data as MiddleNaesinContent;
   const isVocab = c.content_type === 'vocab_en_en';
   const isVocabKo = c.content_type === 'vocab_ko';
+  const isGrammar = c.content_type === 'grammar_point';
   const isPastExam = c.content_type === 'past_exam';
+  const grammarExtra = c.extra_data as { quizRaw?: string } | null;
 
   return (
     <main className="mx-auto max-w-2xl space-y-6 px-6 py-8">
@@ -62,7 +64,7 @@ export default async function EditContentPage({
             />
           </div>
 
-          {!isVocab && !isVocabKo && !isPastExam && (
+          {!isVocab && !isVocabKo && !isGrammar && !isPastExam && (
             <>
               <div className="space-y-1">
                 <label className="block text-xs font-medium text-neutral-500">
@@ -116,6 +118,40 @@ export default async function EditContentPage({
                 className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-neutral-200 resize-y font-mono"
               />
             </div>
+          )}
+
+          {isGrammar && (
+            <>
+              <div className="space-y-1">
+                <label className="block text-xs font-medium text-neutral-500">영어 설명/규칙 + 예문</label>
+                <textarea
+                  name="body_text"
+                  rows={6}
+                  defaultValue={c.body_text ?? ''}
+                  className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-neutral-200 resize-y font-mono"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="block text-xs font-medium text-neutral-500">한글 설명</label>
+                <textarea
+                  name="translation_ko"
+                  rows={4}
+                  defaultValue={c.translation_ko ?? ''}
+                  className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-neutral-200 resize-y"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="block text-xs font-medium text-neutral-500">
+                  간단 퀴즈 (선택, 한 줄에 하나: 질문 | 보기1 | 보기2 | 보기3 | 정답번호)
+                </label>
+                <textarea
+                  name="quiz_raw"
+                  rows={5}
+                  defaultValue={grammarExtra?.quizRaw ?? ''}
+                  className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-neutral-200 resize-y font-mono"
+                />
+              </div>
+            </>
           )}
 
           {isPastExam && (

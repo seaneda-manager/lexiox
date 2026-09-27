@@ -53,16 +53,22 @@ export async function toggleUnitPublishedAction(formData: FormData) {
 
 export async function upsertContentAction(formData: FormData) {
   const supabase = await getServerSupabase();
-  const id       = formData.get('id') as string | null;
-  const unit_id  = formData.get('unit_id') as string;
-  const payload  = {
+  const id           = formData.get('id') as string | null;
+  const unit_id      = formData.get('unit_id') as string;
+  const content_type = formData.get('content_type') as string;
+  const payload: Record<string, unknown> = {
     unit_id,
-    content_type:   formData.get('content_type') as string,
+    content_type,
     title:          formData.get('title') as string || null,
     body_text:      formData.get('body_text') as string || null,
     translation_ko: formData.get('translation_ko') as string || null,
     sort_order:     Number(formData.get('sort_order') ?? 0),
   };
+
+  // 문법 포인트의 간단 퀴즈 원문은 extra_data에 저장 (다른 타입의 extra_data는 건드리지 않음)
+  if (content_type === 'grammar_point') {
+    payload.extra_data = { quizRaw: (formData.get('quiz_raw') as string) || '' };
+  }
 
   if (id) {
     const { error } = await supabase.from('middle_naesin_contents').update(payload).eq('id', id);

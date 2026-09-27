@@ -234,11 +234,26 @@ export type MiddleNaesinDrillSection = {
   sentences: MiddleDrillSentence[];
 };
 
+export type MiddleGrammarQuizItem = {
+  prompt: string;
+  choices: string[];
+  answerIndex: number;
+};
+
+export type MiddleGrammarPoint = {
+  id: string;
+  title: string;
+  explanationEn: string | null;
+  explanationKo: string | null;
+  quiz: MiddleGrammarQuizItem[];
+};
+
 export type MiddleNaesinDrillSections = {
   unitId: string;
   mainText: MiddleNaesinDrillSection | null;
   dialogue: MiddleNaesinDrillSection | null;
   vocab: MiddleDrillVocabItem[];
+  grammar: MiddleGrammarPoint[];
 };
 
 function buildSectionForType(
@@ -275,6 +290,44 @@ function buildSectionForType(
   };
 }
 
+// ── 문법 포인트 파서 ───────────────────────────────────────────────
+
+// "질문 | 보기1 | 보기2 | 보기3 | 정답번호(1부터)" 한 줄씩
+function parseGrammarQuiz(raw: string | undefined): MiddleGrammarQuizItem[] {
+  if (!raw) return [];
+  const lines = raw.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  const items: MiddleGrammarQuizItem[] = [];
+
+  for (const line of lines) {
+    const parts = line.split('|').map((s) => s.trim());
+    if (parts.length < 3) continue;
+    const prompt = parts[0];
+    const answerNum = Number(parts[parts.length - 1]);
+    if (!prompt || !Number.isFinite(answerNum)) continue;
+    const choices = parts.slice(1, parts.length - 1).filter(Boolean);
+    const answerIndex = answerNum - 1;
+    if (choices.length < 2 || answerIndex < 0 || answerIndex >= choices.length) continue;
+    items.push({ prompt, choices, answerIndex });
+  }
+
+  return items;
+}
+
+function buildGrammarPoints(contents: MiddleNaesinContent[]): MiddleGrammarPoint[] {
+  return contents
+    .filter((c) => c.content_type === 'grammar_point')
+    .map((c) => {
+      const extra = c.extra_data as { quizRaw?: string } | null;
+      return {
+        id: c.id,
+        title: c.title ?? '문법 포인트',
+        explanationEn: c.body_text,
+        explanationKo: c.translation_ko,
+        quiz: parseGrammarQuiz(extra?.quizRaw),
+      };
+    });
+}
+
 export function buildDrillSections(
   unitId: string,
   contents: MiddleNaesinContent[],
@@ -284,6 +337,7 @@ export function buildDrillSections(
     mainText: buildSectionForType(contents, 'main_text'),
     dialogue: buildSectionForType(contents, 'dialogue'),
     vocab: parseVocab(contents),
+    grammar: buildGrammarPoints(contents),
   };
 }
 

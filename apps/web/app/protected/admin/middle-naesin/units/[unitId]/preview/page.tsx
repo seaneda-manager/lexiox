@@ -3,6 +3,9 @@ import { getServerSupabase } from '@/lib/supabase/server';
 import { gradeLabel, contentTypeLabel, contentTypeColor } from '@/models/middle-naesin';
 import type { MiddleNaesinUnit, MiddleNaesinContent, MiddleNaesinContentType } from '@/models/middle-naesin';
 import { confirmUnitAction } from '../../../actions';
+import { buildDrillSections } from '@/components/middle-naesin/drill/types';
+import type { MiddleDrillVocabItem } from '@/models/middle-naesin/drill';
+import type { MiddleGrammarPoint } from '@/components/middle-naesin/drill/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,8 +27,11 @@ export default async function UnitPreviewPage({ params }: { params: Promise<{ un
 
   const u = unit as MiddleNaesinUnit;
   const items = (contents ?? []) as MiddleNaesinContent[];
+  const drillData = buildDrillSections(unitId, items);
 
-  const typeOrder: MiddleNaesinContentType[] = ['main_text', 'dialogue', 'more_reading', 'vocab_en_en', 'past_exam'];
+  const typeOrder: MiddleNaesinContentType[] = [
+    'main_text', 'dialogue', 'more_reading', 'vocab_en_en', 'vocab_ko', 'grammar_point', 'past_exam',
+  ];
 
   return (
     <main className="mx-auto max-w-3xl space-y-8 px-6 py-8">
@@ -81,17 +87,19 @@ export default async function UnitPreviewPage({ params }: { params: Promise<{ un
               <div className="h-px flex-1 bg-neutral-100" />
             </div>
 
-            {typeItems.map((item) => (
-              <div key={item.id}>
-                {type === 'vocab_en_en' ? (
-                  <VocabPreview item={item} />
-                ) : type === 'past_exam' ? (
-                  <PastExamPreview item={item} />
-                ) : (
-                  <PassagePreview item={item} />
-                )}
-              </div>
-            ))}
+            {type === 'vocab_en_en' || type === 'vocab_ko' ? (
+              <VocabPreview
+                words={drillData.vocab.filter((v) => v.kind === (type === 'vocab_en_en' ? 'en_en' : 'ko'))}
+              />
+            ) : type === 'grammar_point' ? (
+              <GrammarPreview points={drillData.grammar} />
+            ) : (
+              typeItems.map((item) => (
+                <div key={item.id}>
+                  {type === 'past_exam' ? <PastExamPreview item={item} /> : <PassagePreview item={item} />}
+                </div>
+              ))
+            )}
           </section>
         );
       })}
@@ -150,26 +158,15 @@ function PassagePreview({ item }: { item: MiddleNaesinContent }) {
   );
 }
 
-function VocabPreview({ item }: { item: MiddleNaesinContent }) {
-  const lines = (item.body_text ?? '').split('\n').filter(Boolean);
-  const words = lines.map((line) => {
-    const parts = line.split('|').map((s) => s.trim());
-    return { word: parts[0], def: parts[1], example: parts[2] };
-  });
-
+function VocabPreview({ words }: { words: MiddleDrillVocabItem[] }) {
   return (
     <div className="rounded-2xl border bg-white overflow-hidden">
-      {item.title && (
-        <div className="border-b bg-neutral-50 px-5 py-3 text-sm font-semibold text-neutral-700">
-          {item.title}
-        </div>
-      )}
       <div className="divide-y">
-        {words.map((w, i) => (
-          <div key={i} className="px-5 py-3 grid sm:grid-cols-[160px_1fr] gap-2">
+        {words.map((w) => (
+          <div key={w.index} className="px-5 py-3 grid sm:grid-cols-[160px_1fr] gap-2">
             <span className="text-sm font-semibold text-neutral-900">{w.word}</span>
             <div>
-              <p className="text-sm text-neutral-700">{w.def}</p>
+              <p className="text-sm text-neutral-700">{w.definition}</p>
               {w.example && (
                 <p className="mt-0.5 text-xs italic text-neutral-400">{w.example}</p>
               )}
@@ -180,6 +177,34 @@ function VocabPreview({ item }: { item: MiddleNaesinContent }) {
           <div className="px-5 py-4 text-sm text-neutral-400">단어 없음</div>
         )}
       </div>
+    </div>
+  );
+}
+
+function GrammarPreview({ points }: { points: MiddleGrammarPoint[] }) {
+  if (points.length === 0) {
+    return <div className="rounded-2xl border bg-white px-5 py-4 text-sm text-neutral-400">문법 포인트 없음</div>;
+  }
+
+  return (
+    <div className="space-y-3">
+      {points.map((point) => (
+        <div key={point.id} className="rounded-2xl border bg-white p-5 space-y-2">
+          <div className="text-sm font-semibold text-neutral-900">{point.title}</div>
+          {point.explanationEn && (
+            <p className="whitespace-pre-wrap text-sm leading-relaxed text-neutral-800">{point.explanationEn}</p>
+          )}
+          {point.explanationKo && (
+            <details className="rounded-xl border bg-neutral-50 p-3">
+              <summary className="cursor-pointer text-xs font-medium text-neutral-500">한글 설명 보기</summary>
+              <p className="mt-2 whitespace-pre-wrap text-xs leading-relaxed text-neutral-600">{point.explanationKo}</p>
+            </details>
+          )}
+          {point.quiz.length > 0 && (
+            <p className="text-xs text-neutral-400">퀴즈 {point.quiz.length}문항</p>
+          )}
+        </div>
+      ))}
     </div>
   );
 }

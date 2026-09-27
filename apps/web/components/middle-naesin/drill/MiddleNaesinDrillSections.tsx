@@ -10,6 +10,7 @@ import StructureAnalysisStage from '@/components/middle-naesin/drill/stages/Stru
 import GrammarLabelStage from '@/components/middle-naesin/drill/stages/GrammarLabelStage';
 import VocabStage from '@/components/middle-naesin/drill/stages/VocabStage';
 import VocabTestStage from '@/components/middle-naesin/drill/stages/VocabTestStage';
+import GrammarStage from '@/components/middle-naesin/drill/stages/GrammarStage';
 
 type SectionId = 'vocab' | 'dialogue' | 'grammar' | 'main_text';
 type DrillId = 'translation' | 'composition' | 'grammar_analysis';
@@ -54,7 +55,7 @@ export default function MiddleNaesinDrillSections({
     const cards: { id: SectionId; count: number; ready: boolean }[] = [
       { id: 'vocab', count: drillData.vocab.length, ready: drillData.vocab.length > 0 },
       { id: 'dialogue', count: drillData.dialogue?.sentences.length ?? 0, ready: !!drillData.dialogue },
-      { id: 'grammar', count: 0, ready: false },
+      { id: 'grammar', count: drillData.grammar.length, ready: drillData.grammar.length > 0 },
       { id: 'main_text', count: drillData.mainText?.sentences.length ?? 0, ready: !!drillData.mainText },
     ];
 
@@ -138,14 +139,12 @@ export default function MiddleNaesinDrillSections({
     );
   }
 
-  // ── 문법 섹션 (Phase 4 예정, 지금은 준비중) ───────────────────
+  // ── 문법 섹션 (설명 + 간단 퀴즈) ───────────────────────────────
   if (activeSection === 'grammar') {
     return (
       <div className="space-y-4">
         {backToSections}
-        <div className="rounded-2xl border border-dashed p-12 text-center text-sm text-neutral-400">
-          문법 섹션은 준비 중입니다.
-        </div>
+        <GrammarStage points={drillData.grammar} />
       </div>
     );
   }
