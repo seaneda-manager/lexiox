@@ -9,9 +9,11 @@ import CompositionStage from '@/components/middle-naesin/drill/stages/Compositio
 import StructureAnalysisStage from '@/components/middle-naesin/drill/stages/StructureAnalysisStage';
 import GrammarLabelStage from '@/components/middle-naesin/drill/stages/GrammarLabelStage';
 import VocabStage from '@/components/middle-naesin/drill/stages/VocabStage';
+import VocabTestStage from '@/components/middle-naesin/drill/stages/VocabTestStage';
 
 type SectionId = 'vocab' | 'dialogue' | 'grammar' | 'main_text';
 type DrillId = 'translation' | 'composition' | 'grammar_analysis';
+type VocabDrillId = 'check' | 'test';
 
 const SECTION_LABEL: Record<SectionId, string> = {
   vocab: '단어',
@@ -93,12 +95,45 @@ export default function MiddleNaesinDrillSections({
     </Link>
   );
 
-  // ── 단어 섹션 (Phase 1: 기존 VocabStage만) ────────────────────
+  // ── 단어 섹션 (단어 확인 / 단어 시험) ────────────────────────
   if (activeSection === 'vocab') {
+    const vocabDrill = (drill as VocabDrillId | undefined) ?? null;
+
+    if (!vocabDrill) {
+      return (
+        <div className="space-y-4">
+          {backToSections}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Link
+              href={`${baseHref()}?section=vocab&drill=check`}
+              className="rounded-2xl border bg-white p-5 text-center font-medium hover:border-sky-300 hover:bg-sky-50/50"
+            >
+              단어 확인
+            </Link>
+            <Link
+              href={`${baseHref()}?section=vocab&drill=test`}
+              className="rounded-2xl border bg-white p-5 text-center font-medium hover:border-sky-300 hover:bg-sky-50/50"
+            >
+              단어 시험 (영한/한영)
+            </Link>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="space-y-4">
-        {backToSections}
-        <VocabStage vocab={drillData.vocab} />
+        <div className="flex items-center justify-between">
+          {backToSections}
+          <Link
+            href={`${baseHref()}?section=vocab`}
+            className="text-sm text-neutral-500 hover:text-neutral-800"
+          >
+            드릴 선택으로 →
+          </Link>
+        </div>
+        {vocabDrill === 'check' && <VocabStage vocab={drillData.vocab} />}
+        {vocabDrill === 'test' && <VocabTestStage vocab={drillData.vocab} />}
       </div>
     );
   }

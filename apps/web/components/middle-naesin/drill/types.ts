@@ -84,12 +84,23 @@ function pickBlankWord(sentence: string): { word: string; template: string } | n
 
 // ── Vocab parser ─────────────────────────────────────────────────
 
+// vocab_en_en의 example 괄호 안 "한글 설명 / 한글 뜻" 뒷부분을 영한·한영 시험용 뜻으로 추출
+function extractKoGlossFromExample(example: string | null): string | null {
+  if (!example) return null;
+  const idx = example.lastIndexOf('/');
+  if (idx === -1) return null;
+  const gloss = example.slice(idx + 1).trim();
+  return gloss || null;
+}
+
 function parseVocab(contents: MiddleNaesinContent[]): MiddleDrillVocabItem[] {
-  const vocabContents = contents.filter((c) => c.content_type === 'vocab_en_en');
   const items: MiddleDrillVocabItem[] = [];
   let idx = 0;
 
-  for (const content of vocabContents) {
+  // ── 영영 단어 (vocab_en_en): "word | definition | example" 또는
+  //    "word: definition" 줄 + 다음 줄 "(뜻/설명)" 괄호줄 ──
+  const enEnContents = contents.filter((c) => c.content_type === 'vocab_en_en');
+  for (const content of enEnContents) {
     const lines = (content.body_text ?? '')
       .split(/\r?\n/)
       .map((l) => l.trim())
@@ -98,17 +109,23 @@ function parseVocab(contents: MiddleNaesinContent[]): MiddleDrillVocabItem[] {
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
 
-      // Format A: "word | definition | example" (한 줄, 파이프 구분)
       if (line.includes('|')) {
         const parts = line.split('|').map((s) => s.trim());
         const word = parts[0];
         const definition = parts[1];
         if (!word || !definition) continue;
-        items.push({ index: idx++, word, definition, example: parts[2] ?? null });
+        const example = parts[2] ?? null;
+        items.push({
+          index: idx++,
+          word,
+          definition,
+          example,
+          koGloss: extractKoGlossFromExample(example),
+          kind: 'en_en',
+        });
         continue;
       }
 
-      // Format B: "word: definition" 줄 + 다음 줄 "(뜻/설명)" 괄호줄
       const colonMatch = line.match(/^([^:]{1,40}):\s*(.+)$/);
       if (colonMatch) {
         const word = colonMatch[1].trim();
@@ -119,8 +136,39 @@ function parseVocab(contents: MiddleNaesinContent[]): MiddleDrillVocabItem[] {
           example = next.slice(1, -1).trim();
           i++; // 괄호줄 소비
         }
-        items.push({ index: idx++, word, definition, example });
+        items.push({
+          index: idx++,
+          word,
+          definition,
+          example,
+          koGloss: extractKoGlossFromExample(example),
+          kind: 'en_en',
+        });
       }
+    }
+  }
+
+  // ── 단어 (한글 뜻) (vocab_ko): "word: 뜻" 또는 "word | 뜻" 한 줄 ──
+  const koContents = contents.filter((c) => c.content_type === 'vocab_ko');
+  for (const content of koContents) {
+    const lines = (content.body_text ?? '')
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter(Boolean);
+
+    for (const line of lines) {
+      const parts = line.split(/[:|]/).map((s) => s.trim());
+      const word = parts[0];
+      const meaning = parts[1];
+      if (!word || !meaning) continue;
+      items.push({
+        index: idx++,
+        word,
+        definition: meaning,
+        example: parts[2] ?? null,
+        koGloss: meaning,
+        kind: 'ko',
+      });
     }
   }
 

@@ -6,6 +6,7 @@ export const MIDDLE_NAESIN_CONTENT_TYPES = [
   'dialogue',
   'more_reading',
   'vocab_en_en',
+  'vocab_ko',
   'past_exam',
 ] as const;
 export type MiddleNaesinContentType = (typeof MIDDLE_NAESIN_CONTENT_TYPES)[number];
@@ -50,6 +51,7 @@ export function contentTypeLabel(t: MiddleNaesinContentType): string {
     case 'dialogue':     return '대화문';
     case 'more_reading': return 'More Reading';
     case 'vocab_en_en':  return '영영 단어';
+    case 'vocab_ko':     return '단어 (한글 뜻)';
     case 'past_exam':    return '기출문제 분석';
   }
 }
@@ -60,6 +62,7 @@ export function contentTypeColor(t: MiddleNaesinContentType): string {
     case 'dialogue':     return 'bg-emerald-50 text-emerald-700 border-emerald-200';
     case 'more_reading': return 'bg-violet-50 text-violet-700 border-violet-200';
     case 'vocab_en_en':  return 'bg-amber-50 text-amber-700 border-amber-200';
+    case 'vocab_ko':     return 'bg-teal-50 text-teal-700 border-teal-200';
     case 'past_exam':    return 'bg-rose-50 text-rose-700 border-rose-200';
   }
 }

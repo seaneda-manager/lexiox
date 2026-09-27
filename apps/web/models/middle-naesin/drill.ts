@@ -88,6 +88,10 @@ export type MiddleDrillVocabItem = {
   word: string;
   definition: string;
   example: string | null;
+  // 영한/한영 단어 시험용 한글 뜻. vocab_ko 콘텐츠는 definition 자체가 한글 뜻이고,
+  // vocab_en_en 콘텐츠는 example 괄호 안의 "... / 한글 뜻" 뒷부분에서 추출한다.
+  koGloss: string | null;
+  kind: 'en_en' | 'ko';
 };
 
 export type MiddleDrillData = {

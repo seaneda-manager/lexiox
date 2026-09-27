@@ -277,6 +277,7 @@ export default async function UnitDetailPage({
 
 function ContentAddForm({ unitId, contentType }: { unitId: string; contentType: string }) {
   const isVocab = contentType === 'vocab_en_en';
+  const isVocabKo = contentType === 'vocab_ko';
   const isPastExam = contentType === 'past_exam';
 
   return (
@@ -294,13 +295,14 @@ function ContentAddForm({ unitId, contentType }: { unitId: string; contentType: 
             contentType === 'dialogue'     ? '예: Scene A' :
             contentType === 'more_reading' ? '예: Reading Plus' :
             contentType === 'vocab_en_en'  ? '예: Unit 3 Vocabulary' :
+            contentType === 'vocab_ko'     ? '예: Unit 3 단어' :
             '예: 2024년 1학기 기말'
           }
           className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-neutral-200 bg-white"
         />
       </div>
 
-      {!isVocab && !isPastExam && (
+      {!isVocab && !isVocabKo && !isPastExam && (
         <>
           <div className="space-y-1">
             <label className="block text-xs font-medium text-neutral-500">
@@ -334,6 +336,20 @@ function ContentAddForm({ unitId, contentType }: { unitId: string; contentType: 
             name="body_text"
             rows={8}
             placeholder={"curious | eager to know or learn something | She was curious about the new student.\nfrightened | feeling fear | He was frightened by the loud noise."}
+            className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-neutral-200 bg-white resize-y font-mono"
+          />
+        </div>
+      )}
+
+      {isVocabKo && (
+        <div className="space-y-1">
+          <label className="block text-xs font-medium text-neutral-500">
+            단어 목록 (한 줄에 하나: word: 한글 뜻)
+          </label>
+          <textarea
+            name="body_text"
+            rows={8}
+            placeholder={"curious: 호기심 많은\nfrightened: 겁먹은"}
             className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-neutral-200 bg-white resize-y font-mono"
           />
         </div>

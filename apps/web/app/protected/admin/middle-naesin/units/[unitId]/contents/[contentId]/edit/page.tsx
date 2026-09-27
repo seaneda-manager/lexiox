@@ -26,6 +26,7 @@ export default async function EditContentPage({
 
   const c = data as MiddleNaesinContent;
   const isVocab = c.content_type === 'vocab_en_en';
+  const isVocabKo = c.content_type === 'vocab_ko';
   const isPastExam = c.content_type === 'past_exam';
 
   return (
@@ -61,7 +62,7 @@ export default async function EditContentPage({
             />
           </div>
 
-          {!isVocab && !isPastExam && (
+          {!isVocab && !isVocabKo && !isPastExam && (
             <>
               <div className="space-y-1">
                 <label className="block text-xs font-medium text-neutral-500">
@@ -93,6 +94,20 @@ export default async function EditContentPage({
               <label className="block text-xs font-medium text-neutral-500">
                 영영 단어 목록 — "word | definition | example" 한 줄 형식, 또는 "word: definition" 줄 다음
                 "(한글 뜻)" 괄호 줄 형식 둘 다 지원
+              </label>
+              <textarea
+                name="body_text"
+                rows={10}
+                defaultValue={c.body_text ?? ''}
+                className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-neutral-200 resize-y font-mono"
+              />
+            </div>
+          )}
+
+          {isVocabKo && (
+            <div className="space-y-1">
+              <label className="block text-xs font-medium text-neutral-500">
+                단어 목록 (한 줄에 하나: word: 한글 뜻)
               </label>
               <textarea
                 name="body_text"
