@@ -379,12 +379,34 @@ function ContentAddForm({ unitId, contentType }: { unitId: string; contentType: 
           </div>
           <div className="space-y-1">
             <label className="block text-xs font-medium text-neutral-500">
-              간단 퀴즈 (선택, 한 줄에 하나: 질문 | 보기1 | 보기2 | 보기3 | 정답번호)
+              Drill 문제 (반복 연습, 선택 · 한 줄에 하나: 질문 | 보기1 | 보기2 | 보기3 | 정답번호)
             </label>
             <textarea
-              name="quiz_raw"
-              rows={4}
-              placeholder={"I ___ this movie before. | have seen | has seen | seeing | 1\nShe ___ to Japan twice. | has gone | have go | going | 1"}
+              name="quiz_drill_raw"
+              rows={3}
+              placeholder={"I ___ this movie before. | have seen | has seen | seeing | 1"}
+              className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-neutral-200 bg-white resize-y font-mono"
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="block text-xs font-medium text-neutral-500">
+              Practice 문제 (응용, 선택 · 같은 형식)
+            </label>
+            <textarea
+              name="quiz_practice_raw"
+              rows={3}
+              placeholder={"She ___ to Japan twice. | has gone | have go | going | 1"}
+              className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-neutral-200 bg-white resize-y font-mono"
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="block text-xs font-medium text-neutral-500">
+              Test 문제 (평가, 선택 · 같은 형식)
+            </label>
+            <textarea
+              name="quiz_test_raw"
+              rows={3}
+              placeholder={"By the time we arrived, the movie ___. | had started | has started | starts | 1"}
               className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-neutral-200 bg-white resize-y font-mono"
             />
           </div>

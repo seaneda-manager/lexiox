@@ -200,8 +200,10 @@ function GrammarPreview({ points }: { points: MiddleGrammarPoint[] }) {
               <p className="mt-2 whitespace-pre-wrap text-xs leading-relaxed text-neutral-600">{point.explanationKo}</p>
             </details>
           )}
-          {point.quiz.length > 0 && (
-            <p className="text-xs text-neutral-400">퀴즈 {point.quiz.length}문항</p>
+          {(point.quiz.drill.length + point.quiz.practice.length + point.quiz.test.length) > 0 && (
+            <p className="text-xs text-neutral-400">
+              Drill {point.quiz.drill.length} · Practice {point.quiz.practice.length} · Test {point.quiz.test.length}
+            </p>
           )}
         </div>
       ))}

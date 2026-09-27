@@ -29,7 +29,11 @@ export default async function EditContentPage({
   const isVocabKo = c.content_type === 'vocab_ko';
   const isGrammar = c.content_type === 'grammar_point';
   const isPastExam = c.content_type === 'past_exam';
-  const grammarExtra = c.extra_data as { quizRaw?: string } | null;
+  const grammarExtraRaw = (c.extra_data as { quizRaw?: string | { drill?: string; practice?: string; test?: string } } | null)?.quizRaw;
+  const grammarQuizByStage =
+    typeof grammarExtraRaw === 'string'
+      ? { drill: '', practice: grammarExtraRaw, test: '' }
+      : { drill: grammarExtraRaw?.drill ?? '', practice: grammarExtraRaw?.practice ?? '', test: grammarExtraRaw?.test ?? '' };
 
   return (
     <main className="mx-auto max-w-2xl space-y-6 px-6 py-8">
@@ -142,12 +146,30 @@ export default async function EditContentPage({
               </div>
               <div className="space-y-1">
                 <label className="block text-xs font-medium text-neutral-500">
-                  간단 퀴즈 (선택, 한 줄에 하나: 질문 | 보기1 | 보기2 | 보기3 | 정답번호)
+                  Drill 문제 (반복 연습, 선택 · 한 줄에 하나: 질문 | 보기1 | 보기2 | 보기3 | 정답번호)
                 </label>
                 <textarea
-                  name="quiz_raw"
-                  rows={5}
-                  defaultValue={grammarExtra?.quizRaw ?? ''}
+                  name="quiz_drill_raw"
+                  rows={4}
+                  defaultValue={grammarQuizByStage.drill}
+                  className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-neutral-200 resize-y font-mono"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="block text-xs font-medium text-neutral-500">Practice 문제 (응용, 선택 · 같은 형식)</label>
+                <textarea
+                  name="quiz_practice_raw"
+                  rows={4}
+                  defaultValue={grammarQuizByStage.practice}
+                  className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-neutral-200 resize-y font-mono"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="block text-xs font-medium text-neutral-500">Test 문제 (평가, 선택 · 같은 형식)</label>
+                <textarea
+                  name="quiz_test_raw"
+                  rows={4}
+                  defaultValue={grammarQuizByStage.test}
                   className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-neutral-200 resize-y font-mono"
                 />
               </div>

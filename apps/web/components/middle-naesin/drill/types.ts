@@ -240,12 +240,16 @@ export type MiddleGrammarQuizItem = {
   answerIndex: number;
 };
 
+// 문법 문제는 Drill(반복 연습) → Practice(응용) → Test(평가) 순으로 단계별 진행
+export const MIDDLE_GRAMMAR_STAGES = ['drill', 'practice', 'test'] as const;
+export type MiddleGrammarStageId = (typeof MIDDLE_GRAMMAR_STAGES)[number];
+
 export type MiddleGrammarPoint = {
   id: string;
   title: string;
   explanationEn: string | null;
   explanationKo: string | null;
-  quiz: MiddleGrammarQuizItem[];
+  quiz: Record<MiddleGrammarStageId, MiddleGrammarQuizItem[]>;
 };
 
 export type MiddleNaesinDrillSections = {
@@ -313,17 +317,30 @@ function parseGrammarQuiz(raw: string | undefined): MiddleGrammarQuizItem[] {
   return items;
 }
 
+type GrammarQuizRawByStage = Partial<Record<MiddleGrammarStageId, string>>;
+
+// 구버전 데이터(quizRaw가 단일 문자열)는 practice 단계로 취급
+function readGrammarQuizRawByStage(extra: unknown): GrammarQuizRawByStage {
+  const raw = (extra as { quizRaw?: string | GrammarQuizRawByStage } | null)?.quizRaw;
+  if (typeof raw === 'string') return { practice: raw };
+  return raw ?? {};
+}
+
 function buildGrammarPoints(contents: MiddleNaesinContent[]): MiddleGrammarPoint[] {
   return contents
     .filter((c) => c.content_type === 'grammar_point')
     .map((c) => {
-      const extra = c.extra_data as { quizRaw?: string } | null;
+      const rawByStage = readGrammarQuizRawByStage(c.extra_data);
       return {
         id: c.id,
         title: c.title ?? '문법 포인트',
         explanationEn: c.body_text,
         explanationKo: c.translation_ko,
-        quiz: parseGrammarQuiz(extra?.quizRaw),
+        quiz: {
+          drill: parseGrammarQuiz(rawByStage.drill),
+          practice: parseGrammarQuiz(rawByStage.practice),
+          test: parseGrammarQuiz(rawByStage.test),
+        },
       };
     });
 }

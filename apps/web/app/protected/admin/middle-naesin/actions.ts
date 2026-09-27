@@ -65,9 +65,16 @@ export async function upsertContentAction(formData: FormData) {
     sort_order:     Number(formData.get('sort_order') ?? 0),
   };
 
-  // 문법 포인트의 간단 퀴즈 원문은 extra_data에 저장 (다른 타입의 extra_data는 건드리지 않음)
+  // 문법 포인트의 단계별(Drill/Practice/Test) 퀴즈 원문은 extra_data에 저장
+  // (다른 타입의 extra_data는 건드리지 않음)
   if (content_type === 'grammar_point') {
-    payload.extra_data = { quizRaw: (formData.get('quiz_raw') as string) || '' };
+    payload.extra_data = {
+      quizRaw: {
+        drill:    (formData.get('quiz_drill_raw') as string) || '',
+        practice: (formData.get('quiz_practice_raw') as string) || '',
+        test:     (formData.get('quiz_test_raw') as string) || '',
+      },
+    };
   }
 
   if (id) {
