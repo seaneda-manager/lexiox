@@ -20,12 +20,16 @@ function splitSentences(text: string): string[] {
     const next = cleaned[i + 1];
 
     if ((ch === '.' || ch === '?' || ch === '!') && (next === ' ' || next === undefined || next === '"')) {
-      // Skip abbreviations: single capital letter or ≤2-char English word before period.
-      // Restricted to A-Z tokens so short Korean words (네, 돼, 했다 등) aren't mistaken for abbreviations.
+      // Skip abbreviations: the word the period is attached to (e.g. "Mr." "Dr.") is
+      // a single capital letter or ≤2-char English token. Restricted to A-Z tokens so
+      // short Korean words (네, 돼, 했다 등) aren't mistaken for abbreviations, and taken
+      // from the LAST word (the one ending in the period), not the word before it —
+      // otherwise any sentence ending after a short word like "in"/"at"/"to" (very
+      // common) got wrongly treated as an abbreviation and merged with the next one.
       if (ch === '.') {
         const words = buf.trim().split(/\s+/);
-        const prev = (words[words.length - 2] ?? '').replace('.', '');
-        if (/^[A-Za-z]{1,2}$/.test(prev) || /^(Mr|Mrs|Ms|Dr|St|vs|etc|e\.g|i\.e)$/i.test(prev)) {
+        const lastWord = (words[words.length - 1] ?? '').replace(/\.$/, '');
+        if (/^[A-Za-z]{1,2}$/.test(lastWord) || /^(Mr|Mrs|Ms|Dr|St|vs|etc|e\.g|i\.e)$/i.test(lastWord)) {
           continue;
         }
       }
