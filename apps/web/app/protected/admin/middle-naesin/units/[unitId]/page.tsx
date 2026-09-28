@@ -379,12 +379,12 @@ function ContentAddForm({ unitId, contentType }: { unitId: string; contentType: 
           </div>
           <div className="space-y-1">
             <label className="block text-xs font-medium text-neutral-500">
-              Drill 문제 (반복 연습, 선택 · 한 줄에 하나: 질문 | 보기1 | 보기2 | 보기3 | 정답번호)
+              Drill 문제 (반복 연습, 선택 · 한 줄에 하나: 질문 | 보기1 | 보기2 | 보기3 | 정답번호 | 해설(선택))
             </label>
             <textarea
               name="quiz_drill_raw"
               rows={3}
-              placeholder={"I ___ this movie before. | have seen | has seen | seeing | 1"}
+              placeholder={"I ___ this movie before. | have seen | has seen | seeing | 1 | have/has + p.p.는 현재완료 형태입니다."}
               className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-neutral-200 bg-white resize-y font-mono"
             />
           </div>

@@ -241,6 +241,7 @@ export default function SidebarClient({ role, program = null, hasHiNaesin = fals
         { section: '내신관리' as NavSection, href: '/admin/naesin',              label: '고등 드릴 관리', icon: ClipboardList },
         { section: '내신관리' as NavSection, href: '/admin/hi-naesin/passages',  label: '고등 지문',      icon: FileText },
         { section: '내신관리' as NavSection, href: '/admin/middle-naesin/units', label: '중학 단원·드릴', icon: GraduationCap },
+        { section: '내신관리' as NavSection, href: '/admin/middle-naesin/drill-results', label: '중학 드릴 결과', icon: BarChart2 },
         { section: '내신관리' as NavSection, href: '/admin/hi-naesin/wrong-answers', label: '오답 검토', icon: ClipboardCheck },
 
         { section: 'Jr.' as NavSection, href: '/admin/jr/content/generate',              label: 'AI 콘텐츠 생성', icon: Mic },
@@ -300,6 +301,7 @@ export default function SidebarClient({ role, program = null, hasHiNaesin = fals
         { section: '학생 관리', href: '/teacher/tasks',    label: '할 일 관리', icon: CheckSquare },
         { section: '학생 관리', href: '/teacher/students', label: '학생 현황', icon: Users },
         { section: '학생 관리', href: '/teacher/reports/assignments', label: '배정 과제 현황', icon: BarChart2 },
+        { section: '학생 관리', href: '/teacher/middle-naesin-drill-results', label: '중학내신 드릴 결과', icon: BarChart2 },
 
         { section: '설정', href: '/settings', label: '설정', icon: Settings },
       ];

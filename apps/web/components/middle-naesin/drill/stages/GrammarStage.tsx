@@ -7,9 +7,12 @@ import {
   type MiddleGrammarQuizItem,
   type MiddleGrammarStageId,
 } from '@/components/middle-naesin/drill/types';
+import SaveResultButton from '@/components/middle-naesin/drill/SaveResultButton';
+import type { MiddleNaesinDrillDetailItem } from '@/lib/middle-naesin/drill-results';
 
 type Props = {
   points: MiddleGrammarPoint[];
+  unitId?: string;
 };
 
 const STAGE_LABEL: Record<MiddleGrammarStageId, string> = {
@@ -18,7 +21,7 @@ const STAGE_LABEL: Record<MiddleGrammarStageId, string> = {
   test: 'Test',
 };
 
-export default function GrammarStage({ points }: Props) {
+export default function GrammarStage({ points, unitId }: Props) {
   if (points.length === 0) {
     return (
       <div className="rounded-2xl border bg-white p-8 text-center text-sm text-neutral-400">
@@ -30,13 +33,13 @@ export default function GrammarStage({ points }: Props) {
   return (
     <div className="space-y-5">
       {points.map((point) => (
-        <GrammarPointCard key={point.id} point={point} />
+        <GrammarPointCard key={point.id} point={point} unitId={unitId} />
       ))}
     </div>
   );
 }
 
-function GrammarPointCard({ point }: { point: MiddleGrammarPoint }) {
+function GrammarPointCard({ point, unitId }: { point: MiddleGrammarPoint; unitId?: string }) {
   const [revealed, setRevealed] = useState(false);
   const [answers, setAnswers] = useState<Record<MiddleGrammarStageId, Record<number, number>>>({
     drill: {},
@@ -67,11 +70,40 @@ function GrammarPointCard({ point }: { point: MiddleGrammarPoint }) {
     setAnswers((prev) => ({ ...prev, [stage]: {} }));
   };
 
-  const hasAnyQuiz = MIDDLE_GRAMMAR_STAGES.some((s) => point.quiz[s].length > 0);
+  const scoredStages = MIDDLE_GRAMMAR_STAGES.filter((s) => point.quiz[s].length > 0);
+  const hasAnyQuiz = scoredStages.length > 0;
+  const stagesPassedCount = scoredStages.filter((s) => isPassed(s)).length;
+
+  const detail: MiddleNaesinDrillDetailItem[] = scoredStages.flatMap((stage) =>
+    point.quiz[stage].map((q, qIdx) => {
+      const selected = answers[stage][qIdx];
+      const isCorrect = selected === q.answerIndex;
+      return {
+        prompt: `[${STAGE_LABEL[stage]}] ${q.prompt}`,
+        yourAnswer: selected !== undefined ? q.choices[selected] : '(미응답)',
+        correctAnswer: q.choices[q.answerIndex],
+        isCorrect,
+        explanation: q.explanation,
+      };
+    }),
+  );
 
   return (
     <div className="rounded-2xl border bg-white p-5 space-y-4">
-      <h3 className="text-base font-semibold text-neutral-900">{point.title}</h3>
+      <div className="flex items-start justify-between gap-3">
+        <h3 className="text-base font-semibold text-neutral-900">{point.title}</h3>
+        {unitId && hasAnyQuiz && (
+          <SaveResultButton
+            unitId={unitId}
+            drillType="grammar_point"
+            refId={point.id}
+            score={stagesPassedCount}
+            total={scoredStages.length}
+            detail={detail}
+            label={`결과 저장 (${stagesPassedCount}/${scoredStages.length}단계)`}
+          />
+        )}
+      </div>
 
       {point.explanationEn && (
         <p className="whitespace-pre-wrap text-sm leading-relaxed text-neutral-800">
@@ -217,9 +249,16 @@ function GrammarQuizBlock({
               })}
             </div>
             {isChecked && (
-              <p className={['text-xs font-semibold', selected === q.answerIndex ? 'text-emerald-600' : 'text-rose-600'].join(' ')}>
-                {selected === q.answerIndex ? '✓ 정답' : `✗ 오답 · 정답: ${q.choices[q.answerIndex]}`}
-              </p>
+              <>
+                <p className={['text-xs font-semibold', selected === q.answerIndex ? 'text-emerald-600' : 'text-rose-600'].join(' ')}>
+                  {selected === q.answerIndex ? '✓ 정답' : `✗ 오답 · 정답: ${q.choices[q.answerIndex]}`}
+                </p>
+                {q.explanation && (
+                  <p className="rounded-lg bg-sky-50 px-3 py-2 text-xs leading-relaxed text-sky-800">
+                    💡 {q.explanation}
+                  </p>
+                )}
+              </>
             )}
           </div>
         );

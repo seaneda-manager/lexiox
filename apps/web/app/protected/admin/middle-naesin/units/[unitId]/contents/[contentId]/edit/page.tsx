@@ -146,7 +146,7 @@ export default async function EditContentPage({
               </div>
               <div className="space-y-1">
                 <label className="block text-xs font-medium text-neutral-500">
-                  Drill 문제 (반복 연습, 선택 · 한 줄에 하나: 질문 | 보기1 | 보기2 | 보기3 | 정답번호)
+                  Drill 문제 (반복 연습, 선택 · 한 줄에 하나: 질문 | 보기1 | 보기2 | 보기3 | 정답번호 | 해설(선택))
                 </label>
                 <textarea
                   name="quiz_drill_raw"

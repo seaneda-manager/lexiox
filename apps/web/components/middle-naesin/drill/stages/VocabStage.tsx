@@ -2,12 +2,14 @@
 
 import { useState } from 'react';
 import type { MiddleDrillVocabItem } from '@/models/middle-naesin/drill';
+import SaveResultButton from '@/components/middle-naesin/drill/SaveResultButton';
 
 type Props = {
   vocab: MiddleDrillVocabItem[];
+  unitId?: string;
 };
 
-export default function VocabStage({ vocab }: Props) {
+export default function VocabStage({ vocab, unitId }: Props) {
   const [revealed, setRevealed] = useState<Set<number>>(new Set());
 
   if (vocab.length === 0) {
@@ -34,15 +36,26 @@ export default function VocabStage({ vocab }: Props) {
     <div className="space-y-4">
       <div className="flex items-center justify-between rounded-2xl border bg-white px-5 py-3">
         <span className="text-sm font-semibold text-neutral-700">
-          단어 확인 · {vocab.length}개
+          단어 확인 · {revealed.size}/{vocab.length}개 확인
         </span>
-        <button
-          type="button"
-          onClick={allRevealed ? hideAll : revealAll}
-          className="rounded-lg border px-3 py-1.5 text-xs text-neutral-500 hover:bg-neutral-50"
-        >
-          {allRevealed ? '전체 숨기기' : '전체 보기'}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={allRevealed ? hideAll : revealAll}
+            className="rounded-lg border px-3 py-1.5 text-xs text-neutral-500 hover:bg-neutral-50"
+          >
+            {allRevealed ? '전체 숨기기' : '전체 보기'}
+          </button>
+          {unitId && (
+            <SaveResultButton
+              unitId={unitId}
+              drillType="vocab_check"
+              score={revealed.size}
+              total={vocab.length}
+              label={`학습 기록 저장 (${revealed.size}/${vocab.length})`}
+            />
+          )}
+        </div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">

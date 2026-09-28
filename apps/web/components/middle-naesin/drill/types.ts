@@ -260,6 +260,7 @@ export type MiddleGrammarQuizItem = {
   prompt: string;
   choices: string[];
   answerIndex: number;
+  explanation?: string;
 };
 
 // 문법 문제는 Drill(반복 연습) → Practice(응용) → Test(평가) 순으로 단계별 진행
@@ -318,7 +319,7 @@ function buildSectionForType(
 
 // ── 문법 포인트 파서 ───────────────────────────────────────────────
 
-// "질문 | 보기1 | 보기2 | 보기3 | 정답번호(1부터)" 한 줄씩
+// "질문 | 보기1 | 보기2 | 보기3 | 정답번호(1부터)" 한 줄씩, 마지막에 "| 해설" 추가 가능
 function parseGrammarQuiz(raw: string | undefined): MiddleGrammarQuizItem[] {
   if (!raw) return [];
   const lines = raw.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
@@ -326,14 +327,25 @@ function parseGrammarQuiz(raw: string | undefined): MiddleGrammarQuizItem[] {
 
   for (const line of lines) {
     const parts = line.split('|').map((s) => s.trim());
-    if (parts.length < 3) continue;
+    if (parts.length < 4) continue;
     const prompt = parts[0];
-    const answerNum = Number(parts[parts.length - 1]);
-    if (!prompt || !Number.isFinite(answerNum)) continue;
-    const choices = parts.slice(1, parts.length - 1).filter(Boolean);
+    if (!prompt) continue;
+
+    // 마지막 필드가 숫자가 아니고 그 앞 필드가 숫자면, 마지막을 해설로 취급
+    let answerFieldIdx = parts.length - 1;
+    let explanation: string | undefined;
+    const lastIsNumeric = Number.isFinite(Number(parts[answerFieldIdx]));
+    if (!lastIsNumeric && parts.length >= 5 && Number.isFinite(Number(parts[parts.length - 2]))) {
+      explanation = parts[parts.length - 1] || undefined;
+      answerFieldIdx = parts.length - 2;
+    }
+
+    const answerNum = Number(parts[answerFieldIdx]);
+    if (!Number.isFinite(answerNum)) continue;
+    const choices = parts.slice(1, answerFieldIdx).filter(Boolean);
     const answerIndex = answerNum - 1;
     if (choices.length < 2 || answerIndex < 0 || answerIndex >= choices.length) continue;
-    items.push({ prompt, choices, answerIndex });
+    items.push({ prompt, choices, answerIndex, explanation });
   }
 
   return items;

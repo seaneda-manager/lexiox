@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { MiddleDrillVocabItem } from '@/models/middle-naesin/drill';
+import { saveMiddleNaesinDrillResultAction } from '@/lib/middle-naesin/drill-results';
 
 type Props = {
   vocab: MiddleDrillVocabItem[];
+  unitId?: string;
 };
 
 const REPS_PER_WORD = 5;
@@ -18,7 +20,7 @@ function shuffle<T>(items: T[]): T[] {
   return result;
 }
 
-export default function VocabCramStage({ vocab }: Props) {
+export default function VocabCramStage({ vocab, unitId }: Props) {
   // 단어(word) : 영영 뜻 고르기(전체 리스트에서) : 한글 뜻 확인, 단어당 5회 반복
   const words = useMemo(
     () => vocab.filter((v) => v.kind === 'en_en' && !!v.definition && !!v.koGloss),
@@ -49,6 +51,20 @@ export default function VocabCramStage({ vocab }: Props) {
     setRep(1);
   };
 
+  const isDone = words.length > 0 && wordIdx >= words.length;
+  const savedRef = useRef(false);
+
+  useEffect(() => {
+    if (!isDone || !unitId || savedRef.current) return;
+    savedRef.current = true;
+    saveMiddleNaesinDrillResultAction({
+      unitId,
+      drillType: 'vocab_cram',
+      score: words.length,
+      total: words.length,
+    });
+  }, [isDone, unitId, words.length]);
+
   if (words.length === 0) {
     return (
       <div className="rounded-2xl border bg-white p-8 text-center text-sm text-neutral-400">
@@ -57,8 +73,6 @@ export default function VocabCramStage({ vocab }: Props) {
     );
   }
 
-  const isDone = wordIdx >= words.length;
-
   if (isDone) {
     return (
       <div className="rounded-2xl border bg-white p-10 text-center space-y-4">
@@ -66,9 +80,10 @@ export default function VocabCramStage({ vocab }: Props) {
         <div className="text-lg font-semibold text-neutral-900">
           {words.length}개 단어 · 단어당 {REPS_PER_WORD}회 반복 깜지 완료!
         </div>
+        {unitId && <p className="text-xs text-emerald-600">✓ 결과가 저장되었어요</p>}
         <button
           type="button"
-          onClick={restart}
+          onClick={() => { savedRef.current = false; restart(); }}
           className="rounded-xl bg-neutral-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800"
         >
           처음부터 다시

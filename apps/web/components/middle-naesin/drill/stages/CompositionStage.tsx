@@ -2,6 +2,8 @@
 
 import { useRef, useState } from 'react';
 import type { MiddleDrillSentence } from '@/models/middle-naesin/drill';
+import SaveResultButton from '@/components/middle-naesin/drill/SaveResultButton';
+import type { MiddleNaesinDrillDetailItem } from '@/lib/middle-naesin/drill-results';
 
 type ItemState = {
   input: string;
@@ -12,6 +14,7 @@ type ItemState = {
 
 type Props = {
   sentences: MiddleDrillSentence[];
+  unitId?: string;
 };
 
 function roughMatch(input: string, reference: string): boolean {
@@ -31,7 +34,7 @@ function normalizeExact(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim();
 }
 
-export default function CompositionStage({ sentences }: Props) {
+export default function CompositionStage({ sentences, unitId }: Props) {
   const drillable = sentences.filter((s) => s.ko);
   const [states, setStates] = useState<ItemState[]>(
     drillable.map(() => ({ input: '', revealed: false, retype: '', retypeChecked: false })),
@@ -85,12 +88,28 @@ export default function CompositionStage({ sentences }: Props) {
   };
 
   const passedCount = drillable.filter((_, idx) => isPassed(idx)).length;
+  const detail: MiddleNaesinDrillDetailItem[] = drillable.map((sentence, idx) => {
+    const passed = isPassed(idx);
+    const st = states[idx];
+    return {
+      prompt: sentence.ko ?? '',
+      yourAnswer: st.retypeChecked ? st.retype : st.input,
+      correctAnswer: sentence.en,
+      isCorrect: passed,
+      explanation: passed && !isFirstTryCorrect(idx) ? '모범 답안 재입력으로 완료함' : undefined,
+    };
+  });
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between rounded-2xl border bg-white px-5 py-3 text-sm text-neutral-500">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-white px-5 py-3 text-sm text-neutral-500">
         <span>한국어를 보고 영어 문장을 작문하세요. 틀리면 모범 답안을 그대로 다시 입력해야 다음 문장으로 넘어갑니다.</span>
-        <span className="shrink-0 font-semibold text-neutral-700">{passedCount}/{drillable.length}</span>
+        <div className="flex shrink-0 items-center gap-3">
+          <span className="font-semibold text-neutral-700">{passedCount}/{drillable.length}</span>
+          {unitId && (
+            <SaveResultButton unitId={unitId} drillType="composition" score={passedCount} total={drillable.length} detail={detail} />
+          )}
+        </div>
       </div>
 
       {drillable.map((sentence, idx) => {

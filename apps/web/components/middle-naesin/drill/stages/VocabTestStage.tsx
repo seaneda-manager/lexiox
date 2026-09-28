@@ -2,12 +2,21 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import type { MiddleDrillVocabItem } from '@/models/middle-naesin/drill';
+import SaveResultButton from '@/components/middle-naesin/drill/SaveResultButton';
+import type { MiddleNaesinDrillDetailItem, MiddleNaesinDrillType } from '@/lib/middle-naesin/drill-results';
 
 type Props = {
   vocab: MiddleDrillVocabItem[];
+  unitId?: string;
 };
 
 type TestMode = 'en_en' | 'en_to_ko' | 'ko_to_en';
+
+const MODE_DRILL_TYPE: Record<TestMode, MiddleNaesinDrillType> = {
+  en_en: 'vocab_test_en_en',
+  en_to_ko: 'vocab_test_en_to_ko',
+  ko_to_en: 'vocab_test_ko_to_en',
+};
 
 type TextItemState = {
   input: string;
@@ -52,7 +61,7 @@ function shuffle<T>(items: T[]): T[] {
   return result;
 }
 
-export default function VocabTestStage({ vocab }: Props) {
+export default function VocabTestStage({ vocab, unitId }: Props) {
   const [mode, setMode] = useState<TestMode>('en_en');
 
   // 영한/한영: 한글 뜻이 있는 단어 전부. 영영: 영어 정의(vocab_en_en)가 있는 단어만
@@ -124,6 +133,35 @@ export default function VocabTestStage({ vocab }: Props) {
             : normalizeEn(st.input) === normalizeEn(item.word);
         }).length;
 
+  const detail: MiddleNaesinDrillDetailItem[] =
+    mode === 'en_en'
+      ? enEnRounds.map((r, idx) => {
+          const sel = choiceStates[idx]?.selected;
+          const yourAnswer = sel !== undefined && sel !== null ? r.choices[sel] : '';
+          return {
+            prompt: r.item.word,
+            yourAnswer,
+            correctAnswer: r.item.definition,
+            isCorrect: yourAnswer === r.item.definition,
+          };
+        })
+      : order
+          .filter((i) => textStates[i]?.checked)
+          .map((i) => {
+            const st = textStates[i]!;
+            const item = pool[i];
+            const isCorrect =
+              mode === 'en_to_ko'
+                ? isKoAnswerCorrect(st.input, item.koGloss!)
+                : normalizeEn(st.input) === normalizeEn(item.word);
+            return {
+              prompt: mode === 'en_to_ko' ? item.word : item.koGloss!,
+              yourAnswer: st.input,
+              correctAnswer: mode === 'en_to_ko' ? item.koGloss! : item.word,
+              isCorrect,
+            };
+          });
+
   if (pool.length === 0) {
     return (
       <div className="space-y-4">
@@ -152,6 +190,15 @@ export default function VocabTestStage({ vocab }: Props) {
           >
             다시 풀기
           </button>
+          {unitId && (
+            <SaveResultButton
+              unitId={unitId}
+              drillType={MODE_DRILL_TYPE[mode]}
+              score={correctCount}
+              total={checkedCount}
+              detail={detail}
+            />
+          )}
         </div>
       </div>
 

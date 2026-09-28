@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import type { MiddleDrillSentence } from '@/models/middle-naesin/drill';
+import SaveResultButton from '@/components/middle-naesin/drill/SaveResultButton';
+import type { MiddleNaesinDrillDetailItem } from '@/lib/middle-naesin/drill-results';
 
 type SentenceState = {
   input: string;
@@ -11,13 +13,14 @@ type SentenceState = {
 
 type Props = {
   sentences: MiddleDrillSentence[];
+  unitId?: string;
 };
 
 function normalize(s: string) {
   return s.trim().toLowerCase().replace(/[^가-힣a-z0-9\s]/g, '').replace(/\s+/g, ' ');
 }
 
-export default function TranslationStage({ sentences }: Props) {
+export default function TranslationStage({ sentences, unitId }: Props) {
   const [states, setStates] = useState<SentenceState[]>(
     sentences.map(() => ({ input: '', checked: false, revealed: false })),
   );
@@ -25,10 +28,29 @@ export default function TranslationStage({ sentences }: Props) {
   const update = (idx: number, patch: Partial<SentenceState>) =>
     setStates((prev) => prev.map((s, i) => (i === idx ? { ...s, ...patch } : s)));
 
+  const checkableIdx = sentences.map((s, i) => (s.ko ? i : -1)).filter((i) => i >= 0);
+  const score = checkableIdx.filter((i) => {
+    const st = states[i];
+    return st.checked && normalize(st.input).includes(normalize(sentences[i].ko!).slice(0, 8));
+  }).length;
+  const detail: MiddleNaesinDrillDetailItem[] = checkableIdx.map((i) => {
+    const st = states[i];
+    const isCorrect = st.checked && normalize(st.input).includes(normalize(sentences[i].ko!).slice(0, 8));
+    return {
+      prompt: sentences[i].en,
+      yourAnswer: st.input,
+      correctAnswer: sentences[i].ko!,
+      isCorrect,
+    };
+  });
+
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border bg-white px-5 py-3 text-sm text-neutral-500">
-        영어 문장을 보고 한국어로 해석하세요.
+      <div className="flex items-center justify-between rounded-2xl border bg-white px-5 py-3 text-sm text-neutral-500">
+        <span>영어 문장을 보고 한국어로 해석하세요.</span>
+        {unitId && (
+          <SaveResultButton unitId={unitId} drillType="translation" score={score} total={checkableIdx.length} detail={detail} />
+        )}
       </div>
 
       {sentences.map((sentence, idx) => {

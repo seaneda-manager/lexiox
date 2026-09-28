@@ -140,9 +140,9 @@ export default function MiddleNaesinDrillSections({
             드릴 선택으로 →
           </Link>
         </div>
-        {vocabDrill === 'check' && <VocabStage vocab={drillData.vocab} />}
-        {vocabDrill === 'test' && <VocabTestStage vocab={drillData.vocab} />}
-        {vocabDrill === 'cram' && <VocabCramStage vocab={drillData.vocab} />}
+        {vocabDrill === 'check' && <VocabStage vocab={drillData.vocab} unitId={unitId} />}
+        {vocabDrill === 'test' && <VocabTestStage vocab={drillData.vocab} unitId={unitId} />}
+        {vocabDrill === 'cram' && <VocabCramStage vocab={drillData.vocab} unitId={unitId} />}
       </div>
     );
   }
@@ -152,7 +152,7 @@ export default function MiddleNaesinDrillSections({
     return (
       <div className="space-y-4">
         {backToSections}
-        <GrammarStage points={drillData.grammar} />
+        <GrammarStage points={drillData.grammar} unitId={unitId} />
       </div>
     );
   }
@@ -206,8 +206,8 @@ export default function MiddleNaesinDrillSections({
         </Link>
       </div>
 
-      {activeDrill === 'translation' && <TranslationStage sentences={textSection.sentences} />}
-      {activeDrill === 'composition' && <CompositionStage sentences={textSection.sentences} />}
+      {activeDrill === 'translation' && <TranslationStage sentences={textSection.sentences} unitId={unitId} />}
+      {activeDrill === 'composition' && <CompositionStage sentences={textSection.sentences} unitId={unitId} />}
       {activeDrill === 'grammar_analysis' && <GrammarAnalysisPanel sentences={textSection.sentences} />}
     </div>
   );
