@@ -110,17 +110,20 @@ function parseVocab(contents: MiddleNaesinContent[]): MiddleDrillVocabItem[] {
       const line = lines[i];
 
       if (line.includes('|')) {
+        // "word | definition | example" (3필드) 또는
+        // "word | definition | example | 한글 뜻" (4필드, 한글 뜻 전용 필드)
         const parts = line.split('|').map((s) => s.trim());
         const word = parts[0];
         const definition = parts[1];
         if (!word || !definition) continue;
         const example = parts[2] ?? null;
+        const explicitKoGloss = parts[3] || null;
         items.push({
           index: idx++,
           word,
           definition,
           example,
-          koGloss: extractKoGlossFromExample(example),
+          koGloss: explicitKoGloss ?? extractKoGlossFromExample(example),
           kind: 'en_en',
         });
         continue;
