@@ -20,7 +20,7 @@ type Role    = 'student' | 'teacher' | 'admin';
 type Program = 'gap' | 'toefl' | 'lexiox' | null;
 // collapsed는 ProtectedLayoutClient가 소유한다 — 사이드바 하단 프로필 카드도
 // 같은 상태를 봐야 접혔을 때 서로 어긋나지 않는다.
-type Props   = { role: Role; program?: Program; hasHiNaesin?: boolean; collapsed: boolean };
+type Props   = { role: Role; program?: Program; hasHiNaesin?: boolean; hasMiddleNaesin?: boolean; collapsed: boolean };
 
 // ── Section type: all section keys used across roles ─────────────
 type NavSection =
@@ -176,7 +176,7 @@ const SKILL_DOT: Record<SkillColor, string> = {
 
 
 // ── Component ────────────────────────────────────────────────────
-export default function SidebarClient({ role, program = null, hasHiNaesin = false, collapsed }: Props) {
+export default function SidebarClient({ role, program = null, hasHiNaesin = false, hasMiddleNaesin = false, collapsed }: Props) {
   const pathnameRaw = usePathname() || '/';
   const pathname    = normalizePath(pathnameRaw);
   const { lang }    = useLang();
@@ -376,6 +376,10 @@ export default function SidebarClient({ role, program = null, hasHiNaesin = fals
           { section: 'Hi-내신' as NavSection, href: '/hi-naesin/review', label: '직전정리', icon: BookOpen },
         ] : []),
 
+        ...(hasMiddleNaesin ? [
+          { section: '내신' as NavSection, href: '/naesin/middle', label: '중학 내신 드릴', icon: ClipboardList },
+        ] : []),
+
         { section: '설정', href: '/settings', label: '설정', icon: Settings },
       ];
     }
@@ -411,9 +415,13 @@ export default function SidebarClient({ role, program = null, hasHiNaesin = fals
         { section: 'Hi-내신' as NavSection, href: '/hi-naesin/review', label: '직전정리', icon: BookOpen },
       ] : []),
 
+      ...(hasMiddleNaesin ? [
+        { section: '내신' as NavSection, href: '/naesin/middle', label: '중학 내신 드릴', icon: ClipboardList },
+      ] : []),
+
       { section: '설정', href: '/settings', label: '설정', icon: Settings },
     ];
-  }, [role, program, hasHiNaesin]);
+  }, [role, program, hasHiNaesin, hasMiddleNaesin]);
 
   // ── Group items by section (preserves insertion order) ──────
   const groups = useMemo(() => {

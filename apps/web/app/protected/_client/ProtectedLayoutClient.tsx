@@ -22,6 +22,7 @@ type Props = {
   fullName: string | null;
   showMobileTabBar: boolean;
   hasHiNaesin: boolean;
+  hasMiddleNaesin: boolean;
 };
 
 export default function ProtectedLayoutClient({
@@ -33,6 +34,7 @@ export default function ProtectedLayoutClient({
   fullName,
   showMobileTabBar,
   hasHiNaesin,
+  hasMiddleNaesin,
 }: Props) {
   const pathname = usePathname();
   const examRoute = isExamRoute(pathname);
@@ -76,7 +78,7 @@ export default function ProtectedLayoutClient({
           ].join(' ')}
         >
           <div className="flex-1 min-h-0 overflow-hidden">
-            <SidebarClient role={role} program={program} hasHiNaesin={hasHiNaesin} collapsed={collapsed} />
+            <SidebarClient role={role} program={program} hasHiNaesin={hasHiNaesin} hasMiddleNaesin={hasMiddleNaesin} collapsed={collapsed} />
           </div>
           {!collapsed && role === 'student' && (
             <div className="shrink-0 mx-2 mb-1">

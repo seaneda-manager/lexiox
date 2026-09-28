@@ -66,6 +66,19 @@ export default async function ProtectedLayout({ children }: { children: ReactNod
     hasHiNaesin = !!hiNaesinRow;
   }
 
+  // 위와 동일한 이유로 중학내신도 program 필드만으로는 표현이 안 됨 — program이
+  // 'toefl'인 학생도 middle_naesin_assignments를 따로 배정받을 수 있다.
+  let hasMiddleNaesin = false;
+  if (user && role === 'student' && program !== 'lexiox') {
+    const { data: middleNaesinRow } = await supabase
+      .from('middle_naesin_assignments')
+      .select('id')
+      .eq('student_id', user.id)
+      .limit(1)
+      .maybeSingle();
+    hasMiddleNaesin = !!middleNaesinRow;
+  }
+
   return (
     <LangProvider>
       <ProtectedLayoutClient
@@ -76,6 +89,7 @@ export default async function ProtectedLayout({ children }: { children: ReactNod
         fullName={fullName}
         showMobileTabBar={showMobileTabBar}
         hasHiNaesin={hasHiNaesin}
+        hasMiddleNaesin={hasMiddleNaesin}
       >
         {children}
       </ProtectedLayoutClient>
