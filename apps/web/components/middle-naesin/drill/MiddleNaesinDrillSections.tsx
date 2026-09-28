@@ -10,11 +10,12 @@ import StructureAnalysisStage from '@/components/middle-naesin/drill/stages/Stru
 import GrammarLabelStage from '@/components/middle-naesin/drill/stages/GrammarLabelStage';
 import VocabStage from '@/components/middle-naesin/drill/stages/VocabStage';
 import VocabTestStage from '@/components/middle-naesin/drill/stages/VocabTestStage';
+import VocabCramStage from '@/components/middle-naesin/drill/stages/VocabCramStage';
 import GrammarStage from '@/components/middle-naesin/drill/stages/GrammarStage';
 
 type SectionId = 'vocab' | 'dialogue' | 'grammar' | 'main_text';
 type DrillId = 'translation' | 'composition' | 'grammar_analysis';
-type VocabDrillId = 'check' | 'test';
+type VocabDrillId = 'check' | 'test' | 'cram';
 
 const SECTION_LABEL: Record<SectionId, string> = {
   vocab: '단어',
@@ -104,7 +105,7 @@ export default function MiddleNaesinDrillSections({
       return (
         <div className="space-y-4">
           {backToSections}
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-3">
             <Link
               href={`${baseHref()}?section=vocab&drill=check`}
               className="rounded-2xl border bg-white p-5 text-center font-medium hover:border-sky-300 hover:bg-sky-50/50"
@@ -115,7 +116,13 @@ export default function MiddleNaesinDrillSections({
               href={`${baseHref()}?section=vocab&drill=test`}
               className="rounded-2xl border bg-white p-5 text-center font-medium hover:border-sky-300 hover:bg-sky-50/50"
             >
-              단어 시험 (영한/한영)
+              단어 시험 (영영/영한/한영)
+            </Link>
+            <Link
+              href={`${baseHref()}?section=vocab&drill=cram`}
+              className="rounded-2xl border bg-white p-5 text-center font-medium hover:border-sky-300 hover:bg-sky-50/50"
+            >
+              디지털 깜지
             </Link>
           </div>
         </div>
@@ -135,6 +142,7 @@ export default function MiddleNaesinDrillSections({
         </div>
         {vocabDrill === 'check' && <VocabStage vocab={drillData.vocab} />}
         {vocabDrill === 'test' && <VocabTestStage vocab={drillData.vocab} />}
+        {vocabDrill === 'cram' && <VocabCramStage vocab={drillData.vocab} />}
       </div>
     );
   }

@@ -64,8 +64,11 @@ export default function VocabStage({ vocab }: Props) {
                 {item.word}
               </div>
               {isOpen ? (
-                <div className="mt-2 space-y-1">
+                <div className="mt-2 space-y-1.5">
                   <p className="text-sm text-neutral-700">{item.definition}</p>
+                  {item.kind === 'en_en' && item.koGloss && (
+                    <p className="text-sm font-semibold text-sky-700">🇰🇷 {item.koGloss}</p>
+                  )}
                   {item.example && (
                     <p className="text-xs italic text-neutral-400">{item.example}</p>
                   )}
