@@ -93,6 +93,14 @@ function extractKoGlossFromExample(example: string | null): string | null {
   return gloss || null;
 }
 
+// 필드 순서가 다른 데이터(예: "word | 한글 뜻 | definition")도 자동으로 바로잡기 위한 한글 비중 판별
+function isHangulHeavy(s: string): boolean {
+  const compact = s.replace(/\s+/g, '');
+  if (!compact) return false;
+  const hangulCount = (compact.match(/[가-힣]/g) ?? []).length;
+  return hangulCount / compact.length > 0.3;
+}
+
 function parseVocab(contents: MiddleNaesinContent[]): MiddleDrillVocabItem[] {
   const items: MiddleDrillVocabItem[] = [];
   let idx = 0;
@@ -110,22 +118,33 @@ function parseVocab(contents: MiddleNaesinContent[]): MiddleDrillVocabItem[] {
       const line = lines[i];
 
       if (line.includes('|')) {
-        // "word | definition | example" (3필드) 또는
-        // "word | definition | example | 한글 뜻" (4필드, 한글 뜻 전용 필드)
+        // "word | definition | example" (3필드, 한글 뜻 없음) 또는
+        // "word | definition | example | 한글 뜻" (4필드) 또는
+        // "word | 한글 뜻 | definition" (필드 순서가 다른 경우, 한글 비중으로 자동 판별)
         const parts = line.split('|').map((s) => s.trim());
         const word = parts[0];
-        const definition = parts[1];
-        if (!word || !definition) continue;
-        const example = parts[2] ?? null;
-        const explicitKoGloss = parts[3] || null;
-        items.push({
-          index: idx++,
-          word,
-          definition,
-          example,
-          koGloss: explicitKoGloss ?? extractKoGlossFromExample(example),
-          kind: 'en_en',
-        });
+        if (!word) continue;
+
+        let definition: string;
+        let example: string | null;
+        let koGloss: string | null;
+
+        if (parts.length >= 4) {
+          definition = parts[1];
+          example = parts[2] || null;
+          koGloss = parts[3] || null;
+        } else if (parts.length === 3 && isHangulHeavy(parts[1]) && !isHangulHeavy(parts[2])) {
+          koGloss = parts[1];
+          definition = parts[2];
+          example = null;
+        } else {
+          definition = parts[1];
+          example = parts[2] || null;
+          koGloss = extractKoGlossFromExample(example);
+        }
+
+        if (!definition) continue;
+        items.push({ index: idx++, word, definition, example, koGloss, kind: 'en_en' });
         continue;
       }
 
