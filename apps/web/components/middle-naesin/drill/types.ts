@@ -9,8 +9,15 @@ import type { MiddleNaesinContent } from '@/models/middle-naesin';
 
 // ── Sentence parser ──────────────────────────────────────────────
 
+const isHangul = (c: string | undefined) => !!c && /[가-힣]/.test(c);
+
 function splitSentences(text: string): string[] {
-  const cleaned = text.replace(/\r\n/g, ' ').replace(/\n+/g, ' ').trim();
+  // 문제 번호("2. B : ...", "6. I'll ...")는 문장이 아니므로 줄 머리에서 제거
+  const cleaned = text
+    .replace(/^[ \t]*\d+\.[ \t]+/gm, '')
+    .replace(/\r\n/g, ' ')
+    .replace(/\n+/g, ' ')
+    .trim();
   const results: string[] = [];
   let buf = '';
 
@@ -19,30 +26,64 @@ function splitSentences(text: string): string[] {
     const ch = cleaned[i];
     const next = cleaned[i + 1];
 
-    if ((ch === '.' || ch === '?' || ch === '!') && (next === ' ' || next === undefined || next === '"')) {
-      // Skip abbreviations: the word the period is attached to (e.g. "Mr." "Dr.") is
-      // a single capital letter or ≤2-char English token. Restricted to A-Z tokens so
-      // short Korean words (네, 돼, 했다 등) aren't mistaken for abbreviations, and taken
-      // from the LAST word (the one ending in the period), not the word before it —
-      // otherwise any sentence ending after a short word like "in"/"at"/"to" (very
-      // common) got wrongly treated as an abbreviation and merged with the next one.
+    // 한글 문장은 마침표 뒤에 공백 없이 다음 문장이 붙어 있는 경우가 있다("어려워요.택시를")
+    const hangulGlue = isHangul(cleaned[i - 1]) && isHangul(next);
+    if ((ch === '.' || ch === '?' || ch === '!') && (next === ' ' || next === undefined || next === '"' || hangulGlue)) {
+      // Skip abbreviations ("Mr." "Dr." 등, 그리고 "J." 같은 한 글자 대문자 이니셜).
+      // 2글자 영단어("go." "me." "it." "up." "no." 등)는 문장 끝에 아주 흔하므로
+      // 약어로 취급하면 다음 문장과 합쳐져 영어/한글 문장 수가 어긋난다(한 칸씩 밀림).
+      // "I."/"A."는 대명사·관사로 문장이 끝나는 경우가 많아 이니셜에서 제외.
       if (ch === '.') {
         const words = buf.trim().split(/\s+/);
         const lastWord = (words[words.length - 1] ?? '').replace(/\.$/, '');
-        if (/^[A-Za-z]{1,2}$/.test(lastWord) || /^(Mr|Mrs|Ms|Dr|St|vs|etc|e\.g|i\.e)$/i.test(lastWord)) {
+        if (/^[B-HJ-Z]$/.test(lastWord) || /^(Mr|Mrs|Ms|Dr|St|vs|etc|e\.g|i\.e)$/i.test(lastWord)) {
           continue;
         }
+        // "bus No. 2" 처럼 No. 뒤에 숫자가 오면 문장 끝이 아니다
+        if (/^No$/.test(lastWord) && /^\d/.test(cleaned.slice(i + 1).trim())) continue;
+      }
+      // 닫는 따옴표는 앞 문장에 붙인다
+      if (next === '"') {
+        buf += '"';
+        i++;
       }
       const sentence = buf.trim();
       if (sentence) results.push(sentence);
       buf = '';
-      i++; // skip the space
+      if (cleaned[i + 1] === ' ') i++; // skip the space
     }
   }
   const remaining = buf.trim();
   if (remaining) results.push(remaining);
 
-  return results.filter((s) => s.length > 3);
+  // 글자가 하나도 없는 조각만 버린다. 길이로 거르면 "네." "OK." 같은 짧은 대화문이
+  // 한쪽(주로 한글)에서만 사라져 영어/한글 문장이 한 칸씩 밀린다.
+  return results.filter((s) => /[A-Za-z0-9가-힣]/.test(s));
+}
+
+// 영어/한글을 짝지어 돌려준다. 줄 수가 같으면 줄 단위로 맞추고, 한 줄 안에서 문장 수가
+// 다르면(번역이 두 문장을 합친 경우 등) 그 줄만 통째로 한 묶음으로 둬서 어긋남이 뒤로
+// 번지지 않게 한다. 줄 수부터 다르면 전체 문장 단위로 맞춘다.
+function pairSentences(enText: string, koText: string): { en: string; ko: string | null }[] {
+  const toLines = (t: string) =>
+    t.replace(/^[ \t]*\d+\.[ \t]+/gm, '').split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  const enLines = toLines(enText);
+  const koLines = toLines(koText);
+
+  if (enLines.length > 1 && enLines.length === koLines.length) {
+    const out: { en: string; ko: string | null }[] = [];
+    enLines.forEach((enLine, i) => {
+      const es = splitSentences(enLine);
+      const ks = splitSentences(koLines[i]);
+      if (es.length === ks.length) es.forEach((en, j) => out.push({ en, ko: ks[j] }));
+      else if (es.length > 0) out.push({ en: enLine, ko: koLines[i] });
+    });
+    return out;
+  }
+
+  const es = splitSentences(enText);
+  const ks = splitSentences(koText);
+  return es.map((en, i) => ({ en, ko: ks[i] ?? null }));
 }
 
 // ── Fill-blank generator ─────────────────────────────────────────
@@ -215,15 +256,14 @@ export function buildDrillData(
     contents.find((c) => c.content_type === 'main_text') ??
     drillable[0];
 
-  const enSentences = splitSentences(target.body_text ?? '');
-  const koSentences = splitSentences(target.translation_ko ?? '');
+  const pairs = pairSentences(target.body_text ?? '', target.translation_ko ?? '');
 
-  const sentences: MiddleDrillSentence[] = enSentences.map((en, i) => {
+  const sentences: MiddleDrillSentence[] = pairs.map(({ en, ko }, i) => {
     const blank = pickBlankWord(en);
     return {
       index: i,
       en,
-      ko: koSentences[i] ?? null,
+      ko,
       fillBlankWord: blank?.word ?? '',
       fillBlankTemplate: blank?.template ?? en,
     };
@@ -279,29 +319,29 @@ export type MiddleNaesinDrillSections = {
   unitId: string;
   mainText: MiddleNaesinDrillSection | null;
   dialogue: MiddleNaesinDrillSection | null;
+  moreReading: MiddleNaesinDrillSection | null;
   vocab: MiddleDrillVocabItem[];
   grammar: MiddleGrammarPoint[];
 };
 
 function buildSectionForType(
   contents: MiddleNaesinContent[],
-  contentType: 'main_text' | 'dialogue',
+  contentType: 'main_text' | 'dialogue' | 'more_reading',
 ): MiddleNaesinDrillSection | null {
   const items = contents.filter((c) => c.content_type === contentType);
   if (items.length === 0) return null;
 
   const sentences: MiddleDrillSentence[] = [];
   for (const item of items) {
-    const enSentences = splitSentences(item.body_text ?? '');
-    const koSentences = splitSentences(item.translation_ko ?? '');
+    const pairs = pairSentences(item.body_text ?? '', item.translation_ko ?? '');
 
-    enSentences.forEach((en, localIndex) => {
+    pairs.forEach(({ en, ko }, localIndex) => {
       const blank = pickBlankWord(en);
       const ann = readAnnotation(item, localIndex);
       sentences.push({
         index: sentences.length, // 섹션 전체에서 유일한 순번 (여러 콘텐츠를 이어붙임)
         en,
-        ko: koSentences[localIndex] ?? null,
+        ko,
         fillBlankWord: blank?.word ?? '',
         fillBlankTemplate: blank?.template ?? en,
         structureAnswer: ann.structureAnswer,
@@ -387,6 +427,7 @@ export function buildDrillSections(
     unitId,
     mainText: buildSectionForType(contents, 'main_text'),
     dialogue: buildSectionForType(contents, 'dialogue'),
+    moreReading: buildSectionForType(contents, 'more_reading'),
     vocab: parseVocab(contents),
     grammar: buildGrammarPoints(contents),
   };

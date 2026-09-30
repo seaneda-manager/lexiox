@@ -13,7 +13,7 @@ import VocabTestStage from '@/components/middle-naesin/drill/stages/VocabTestSta
 import VocabCramStage from '@/components/middle-naesin/drill/stages/VocabCramStage';
 import GrammarStage from '@/components/middle-naesin/drill/stages/GrammarStage';
 
-type SectionId = 'vocab' | 'dialogue' | 'grammar' | 'main_text';
+type SectionId = 'vocab' | 'dialogue' | 'grammar' | 'main_text' | 'more_reading';
 type DrillId = 'translation' | 'composition' | 'grammar_analysis';
 type VocabDrillId = 'check' | 'test' | 'cram';
 
@@ -22,6 +22,7 @@ const SECTION_LABEL: Record<SectionId, string> = {
   dialogue: '대화문',
   grammar: '문법',
   main_text: '본문',
+  more_reading: 'More Reading',
 };
 
 const TEXT_SECTION_DRILLS: { id: DrillId; label: string }[] = [
@@ -51,13 +52,14 @@ export default function MiddleNaesinDrillSections({
   const activeDrill = (drill as DrillId | undefined) ?? null;
   const baseHref = () => basePath;
 
-  // ── 최상위: 4섹션 카드 ──────────────────────────────────────────
+  // ── 최상위: 섹션 카드 ──────────────────────────────────────────
   if (!activeSection) {
     const cards: { id: SectionId; count: number; ready: boolean }[] = [
       { id: 'vocab', count: drillData.vocab.length, ready: drillData.vocab.length > 0 },
       { id: 'dialogue', count: drillData.dialogue?.sentences.length ?? 0, ready: !!drillData.dialogue },
       { id: 'grammar', count: drillData.grammar.length, ready: drillData.grammar.length > 0 },
       { id: 'main_text', count: drillData.mainText?.sentences.length ?? 0, ready: !!drillData.mainText },
+      { id: 'more_reading', count: drillData.moreReading?.sentences.length ?? 0, ready: !!drillData.moreReading },
     ];
 
     return (
@@ -158,7 +160,12 @@ export default function MiddleNaesinDrillSections({
   }
 
   // ── 대화문 / 본문 섹션 ─────────────────────────────────────────
-  const textSection = activeSection === 'dialogue' ? drillData.dialogue : drillData.mainText;
+  const textSection =
+    activeSection === 'dialogue'
+      ? drillData.dialogue
+      : activeSection === 'more_reading'
+        ? drillData.moreReading
+        : drillData.mainText;
 
   if (!textSection) {
     return (
