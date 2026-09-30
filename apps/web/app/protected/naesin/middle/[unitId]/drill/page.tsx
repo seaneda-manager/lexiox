@@ -9,12 +9,12 @@ export const dynamic = 'force-dynamic';
 
 type Props = {
   params: Promise<{ unitId: string }>;
-  searchParams: Promise<{ section?: string; drill?: string }>;
+  searchParams: Promise<{ section?: string; drill?: string; part?: string }>;
 };
 
 export default async function MiddleNaesinStudentDrillPage({ params, searchParams }: Props) {
   const { unitId } = await params;
-  const { section, drill } = await searchParams;
+  const { section, drill, part } = await searchParams;
   const supabase = await getServerSupabase();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) notFound();
@@ -79,6 +79,7 @@ export default async function MiddleNaesinStudentDrillPage({ params, searchParam
         drillData={drillData}
         section={section}
         drill={drill}
+        part={part}
         basePath={`/naesin/middle/${unitId}/drill`}
       />
     </main>

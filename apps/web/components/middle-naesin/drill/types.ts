@@ -36,7 +36,7 @@ function splitSentences(text: string): string[] {
       if (ch === '.') {
         const words = buf.trim().split(/\s+/);
         const lastWord = (words[words.length - 1] ?? '').replace(/\.$/, '');
-        if (/^[B-HJ-Z]$/.test(lastWord) || /^(Mr|Mrs|Ms|Dr|St|vs|etc|e\.g|i\.e)$/i.test(lastWord)) {
+        if (/^[B-HJ-Z]$/.test(lastWord) || /^(Mr|Mrs|Ms|Dr|Prof|Jr|Sr|Mt|St|vs|etc|a\.m|p\.m|e\.g|i\.e)$/i.test(lastWord)) {
           continue;
         }
         // "bus No. 2" 처럼 No. 뒤에 숫자가 오면 문장 끝이 아니다
@@ -65,8 +65,19 @@ function splitSentences(text: string): string[] {
 // 다르면(번역이 두 문장을 합친 경우 등) 그 줄만 통째로 한 묶음으로 둬서 어긋남이 뒤로
 // 번지지 않게 한다. 줄 수부터 다르면 전체 문장 단위로 맞춘다.
 function pairSentences(enText: string, koText: string): { en: string; ko: string | null }[] {
-  const toLines = (t: string) =>
-    t.replace(/^[ \t]*\d+\.[ \t]+/gm, '').split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  // 문장 중간에서 줄이 바뀐 경우("On March 1, 1919,\n…")는 다음 줄과 이어붙인다.
+  // 다음 줄이 화자 표시("B :", "소녀:")로 시작하면 새 발화이므로 이어붙이지 않는다.
+  const toLines = (t: string) => {
+    const raw = t.replace(/^[ \t]*\d+\.[ \t]+/gm, '').split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    const out: string[] = [];
+    for (const line of raw) {
+      const prev = out[out.length - 1];
+      const startsSpeaker = /^[A-Za-z가-힣]{1,10}\s*:/.test(line);
+      if (prev && !/[.?!"”’'」』)]$/.test(prev) && !startsSpeaker) out[out.length - 1] = `${prev} ${line}`;
+      else out.push(line);
+    }
+    return out;
+  };
   const enLines = toLines(enText);
   const koLines = toLines(koText);
 
@@ -290,10 +301,18 @@ function readAnnotation(content: MiddleNaesinContent, localIndex: number): Sente
   return extra?.sentenceAnnotations?.[localIndex] ?? {};
 }
 
+export type MiddleNaesinDrillPart = {
+  contentId: string;
+  title: string;
+  sentences: MiddleDrillSentence[];
+};
+
 export type MiddleNaesinDrillSection = {
   contentIds: string[];
   contentTitle: string | null;
   sentences: MiddleDrillSentence[];
+  // 콘텐츠(No. 1, No. 2 …)별로 나뉜 묶음. 2개 이상이면 학생이 하나를 골라 드릴한다.
+  parts: MiddleNaesinDrillPart[];
 };
 
 export type MiddleGrammarQuizItem = {
@@ -331,8 +350,15 @@ function buildSectionForType(
   const items = contents.filter((c) => c.content_type === contentType);
   if (items.length === 0) return null;
 
+  // 제목에 번호가 있으면("No. 2", "Topic 1 B") 번호순으로 자연 정렬
+  if (items.every((c) => /\d/.test(c.title ?? ''))) {
+    items.sort((a, b) => (a.title ?? '').localeCompare(b.title ?? '', 'en', { numeric: true }));
+  }
+
   const sentences: MiddleDrillSentence[] = [];
+  const parts: MiddleNaesinDrillPart[] = [];
   for (const item of items) {
+    const partStart = sentences.length;
     const pairs = pairSentences(item.body_text ?? '', item.translation_ko ?? '');
 
     pairs.forEach(({ en, ko }, localIndex) => {
@@ -348,12 +374,18 @@ function buildSectionForType(
         grammarAnswers: ann.grammarAnswers,
       });
     });
+    parts.push({
+      contentId: item.id,
+      title: item.title?.trim() || `${parts.length + 1}`,
+      sentences: sentences.slice(partStart),
+    });
   }
 
   return {
     contentIds: items.map((c) => c.id),
     contentTitle: items.length === 1 ? items[0].title : null,
     sentences,
+    parts,
   };
 }
 

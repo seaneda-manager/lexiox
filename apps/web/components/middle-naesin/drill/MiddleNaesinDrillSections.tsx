@@ -37,6 +37,7 @@ type Props = {
   drillData: DrillSections;
   section?: string;
   drill?: string;
+  part?: string;
   basePath?: string;
 };
 
@@ -46,6 +47,7 @@ export default function MiddleNaesinDrillSections({
   drillData,
   section,
   drill,
+  part,
   basePath = `/admin/middle-naesin/units/${unitId}/drill`,
 }: Props) {
   const activeSection = (section as SectionId | undefined) ?? null;
@@ -54,12 +56,12 @@ export default function MiddleNaesinDrillSections({
 
   // ── 최상위: 섹션 카드 ──────────────────────────────────────────
   if (!activeSection) {
-    const cards: { id: SectionId; count: number; ready: boolean }[] = [
+    const cards: { id: SectionId; count: number; parts?: number; ready: boolean }[] = [
       { id: 'vocab', count: drillData.vocab.length, ready: drillData.vocab.length > 0 },
-      { id: 'dialogue', count: drillData.dialogue?.sentences.length ?? 0, ready: !!drillData.dialogue },
+      { id: 'dialogue', count: drillData.dialogue?.sentences.length ?? 0, parts: drillData.dialogue?.parts.length, ready: !!drillData.dialogue },
       { id: 'grammar', count: drillData.grammar.length, ready: drillData.grammar.length > 0 },
-      { id: 'main_text', count: drillData.mainText?.sentences.length ?? 0, ready: !!drillData.mainText },
-      { id: 'more_reading', count: drillData.moreReading?.sentences.length ?? 0, ready: !!drillData.moreReading },
+      { id: 'main_text', count: drillData.mainText?.sentences.length ?? 0, parts: drillData.mainText?.parts.length, ready: !!drillData.mainText },
+      { id: 'more_reading', count: drillData.moreReading?.sentences.length ?? 0, parts: drillData.moreReading?.parts.length, ready: !!drillData.moreReading },
     ];
 
     return (
@@ -84,7 +86,11 @@ export default function MiddleNaesinDrillSections({
             >
               <div className="text-lg font-semibold">{SECTION_LABEL[c.id]}</div>
               <div className="mt-1 text-sm text-neutral-500">
-                {c.ready ? `${c.count}개 항목` : '준비 중 · 콘텐츠 없음'}
+                {c.ready
+                  ? c.parts && c.parts > 1
+                    ? `${c.parts}개 · ${c.count}문장`
+                    : `${c.count}개 항목`
+                  : '준비 중 · 콘텐츠 없음'}
               </div>
             </Link>
           ))}
@@ -178,19 +184,55 @@ export default function MiddleNaesinDrillSections({
     );
   }
 
+  // 콘텐츠가 여러 개(No. 1, No. 2 …)면 먼저 하나를 고른다
+  if (textSection.parts.length > 1 && !part) {
+    return (
+      <div className="space-y-4">
+        {backToSections}
+        <div className="rounded-2xl border bg-white px-5 py-4 text-sm text-neutral-500">
+          {SECTION_LABEL[activeSection]} — 연습할 항목을 선택하세요
+        </div>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {textSection.parts.map((p) => (
+            <Link
+              key={p.contentId}
+              href={`${baseHref()}?section=${activeSection}&part=${p.contentId}`}
+              className="rounded-2xl border bg-white p-4 hover:border-sky-300 hover:bg-sky-50/50"
+            >
+              <div className="font-medium">{p.title}</div>
+              <div className="mt-1 text-xs text-neutral-500">{p.sentences.length}문장</div>
+            </Link>
+          ))}
+          <Link
+            href={`${baseHref()}?section=${activeSection}&part=all`}
+            className="rounded-2xl border border-dashed bg-white p-4 text-neutral-500 hover:border-sky-300 hover:bg-sky-50/50"
+          >
+            <div className="font-medium">전체 이어서</div>
+            <div className="mt-1 text-xs">{textSection.sentences.length}문장</div>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const chosenPart = textSection.parts.find((p) => p.contentId === part);
+  const activeSentences = chosenPart ? chosenPart.sentences : textSection.sentences;
+  const activeTitle = chosenPart ? chosenPart.title : textSection.contentTitle;
+  const partQuery = part && textSection.parts.length > 1 ? `&part=${part}` : '';
+
   if (!activeDrill) {
     return (
       <div className="space-y-4">
         {backToSections}
         <div className="rounded-2xl border bg-white px-5 py-4 text-sm text-neutral-500">
           {SECTION_LABEL[activeSection]}
-          {textSection.contentTitle ? ` · ${textSection.contentTitle}` : ''} — 드릴을 선택하세요
+          {activeTitle ? ` · ${activeTitle}` : ''} — 드릴을 선택하세요
         </div>
         <div className="grid gap-3 sm:grid-cols-3">
           {TEXT_SECTION_DRILLS.map((d) => (
             <Link
               key={d.id}
-              href={`${baseHref()}?section=${activeSection}&drill=${d.id}`}
+              href={`${baseHref()}?section=${activeSection}${partQuery}&drill=${d.id}`}
               className="rounded-2xl border bg-white p-5 text-center font-medium hover:border-sky-300 hover:bg-sky-50/50"
             >
               {d.label}
@@ -206,16 +248,16 @@ export default function MiddleNaesinDrillSections({
       <div className="flex items-center justify-between">
         {backToSections}
         <Link
-          href={`${baseHref()}?section=${activeSection}`}
+          href={`${baseHref()}?section=${activeSection}${partQuery}`}
           className="text-sm text-neutral-500 hover:text-neutral-800"
         >
           드릴 선택으로 →
         </Link>
       </div>
 
-      {activeDrill === 'translation' && <TranslationStage sentences={textSection.sentences} unitId={unitId} />}
-      {activeDrill === 'composition' && <CompositionStage sentences={textSection.sentences} unitId={unitId} />}
-      {activeDrill === 'grammar_analysis' && <GrammarAnalysisPanel sentences={textSection.sentences} />}
+      {activeDrill === 'translation' && <TranslationStage sentences={activeSentences} unitId={unitId} />}
+      {activeDrill === 'composition' && <CompositionStage sentences={activeSentences} unitId={unitId} />}
+      {activeDrill === 'grammar_analysis' && <GrammarAnalysisPanel sentences={activeSentences} />}
     </div>
   );
 }

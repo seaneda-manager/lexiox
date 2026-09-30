@@ -18,10 +18,8 @@ type Props = {
 };
 
 function roughMatch(input: string, reference: string): boolean {
-  const norm = (s: string) =>
-    s.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim().split(/\s+/).join(' ');
-  const a = norm(input);
-  const b = norm(reference);
+  const a = normalizeExact(input);
+  const b = normalizeExact(reference);
   // Count common words
   const aWords = new Set(a.split(' '));
   const bWords = b.split(' ');
@@ -29,12 +27,25 @@ function roughMatch(input: string, reference: string): boolean {
   return overlap / Math.max(bWords.length, 1) >= 0.6;
 }
 
-// 모범 답안 재입력 확인용: 대소문자/구두점 무시하고 정확히 일치하는지 검사
+// 대소문자/구두점은 무시하되 단어 사이 띄어쓰기는 유지한다 ("ice cream" ≠ "icecream").
+// 쉼표·마침표 뒤 공백 유무("Hello,world" / "Hello, world")는 문장부호가 공백으로 바뀌므로 상관없다.
+// 아포스트로피는 지워서 "I'll" = "Ill"(소문자 ill)처럼 한 단어로 유지한다.
 function normalizeExact(s: string): string {
-  return s.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim();
+  return s
+    .toLowerCase()
+    .replace(/['’‘]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
 }
 
-export default function CompositionStage({ sentences, unitId }: Props) {
+// 대화문 정답 앞의 화자 표시("Man :", "G :", "Dr. Schofield :")는 작문 대상이 아니므로 뺀다.
+// 한글 프롬프트에는 화자가 남아 있어서 누가 말하는지는 그대로 알 수 있다.
+function stripSpeaker(en: string): string {
+  return en.replace(/^[A-Z][A-Za-z.]*(?:\s[A-Z][A-Za-z.]*){0,2}\s*:\s+/, '');
+}
+
+export default function CompositionStage({ sentences: rawSentences, unitId }: Props) {
+  const sentences = rawSentences.map((s) => ({ ...s, en: stripSpeaker(s.en) }));
   const drillable = sentences.filter((s) => s.ko);
   const [states, setStates] = useState<ItemState[]>(
     drillable.map(() => ({ input: '', revealed: false, retype: '', retypeChecked: false })),

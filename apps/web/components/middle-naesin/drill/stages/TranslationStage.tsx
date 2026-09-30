@@ -17,7 +17,8 @@ type Props = {
 };
 
 function normalize(s: string) {
-  return s.trim().toLowerCase().replace(/[^가-힣a-z0-9\s]/g, '').replace(/\s+/g, ' ');
+  // 띄어쓰기는 채점에서 무시한다 (한글은 띄어쓰기 오류가 흔함)
+  return s.trim().toLowerCase().replace(/[^가-힣a-z0-9]/g, '');
 }
 
 export default function TranslationStage({ sentences, unitId }: Props) {

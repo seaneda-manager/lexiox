@@ -9,12 +9,12 @@ export const dynamic = 'force-dynamic';
 
 type Props = {
   params: Promise<{ unitId: string }>;
-  searchParams: Promise<{ section?: string; drill?: string }>;
+  searchParams: Promise<{ section?: string; drill?: string; part?: string }>;
 };
 
 export default async function MiddleNaesinAdminDrillPage({ params, searchParams }: Props) {
   const { unitId } = await params;
-  const { section, drill } = await searchParams;
+  const { section, drill, part } = await searchParams;
   const supabase = await getServerSupabase();
 
   const [{ data: unit, error: unitErr }, { data: contents }] = await Promise.all([
@@ -76,6 +76,7 @@ export default async function MiddleNaesinAdminDrillPage({ params, searchParams 
         drillData={drillData}
         section={section}
         drill={drill}
+        part={part}
       />
     </main>
   );

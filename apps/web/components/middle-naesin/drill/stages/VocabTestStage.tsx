@@ -35,7 +35,7 @@ const MODE_LABEL: Record<TestMode, string> = {
 };
 
 function normalizeEn(s: string): string {
-  return s.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim();
+  return s.toLowerCase().replace(/['’‘]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
 }
 
 function normalizeKo(s: string): string {
