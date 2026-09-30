@@ -8,6 +8,7 @@ import {
   type MiddleGrammarStageId,
 } from '@/components/middle-naesin/drill/types';
 import SaveResultButton from '@/components/middle-naesin/drill/SaveResultButton';
+import GrammarLessonFlow from '@/components/middle-naesin/drill/stages/GrammarLessonFlow';
 import type { MiddleNaesinDrillDetailItem } from '@/lib/middle-naesin/drill-results';
 
 type Props = {
@@ -32,9 +33,20 @@ export default function GrammarStage({ points, unitId }: Props) {
 
   return (
     <div className="space-y-5">
-      {points.map((point) => (
-        <GrammarPointCard key={point.id} point={point} unitId={unitId} />
-      ))}
+      {points.map((point) =>
+        point.lesson ? (
+          <GrammarLessonFlow
+            key={point.id}
+            pointId={point.id}
+            title={point.title}
+            lesson={point.lesson}
+            unitId={unitId}
+            isDraft={point.lesson.status !== 'final'}
+          />
+        ) : (
+          <GrammarPointCard key={point.id} point={point} unitId={unitId} />
+        ),
+      )}
     </div>
   );
 }

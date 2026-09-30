@@ -32,7 +32,7 @@ export default async function MiddleNaesinAdminDrillPage({ params, searchParams 
   const u = unit as MiddleNaesinUnit;
   const items = (contents ?? []) as MiddleNaesinContent[];
 
-  const drillData = buildDrillSections(unitId, items);
+  const drillData = buildDrillSections(unitId, items, { includeDrafts: true });
 
   const unitTitle = [
     u.publisher,

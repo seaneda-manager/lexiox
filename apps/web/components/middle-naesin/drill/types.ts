@@ -6,6 +6,7 @@ import type {
   MiddleGrammarPattern,
 } from '@/models/middle-naesin/drill';
 import type { MiddleNaesinContent } from '@/models/middle-naesin';
+import { parseGrammarLesson, type GrammarLesson } from '@/models/middle-naesin/grammar-lesson';
 
 // ── Sentence parser ──────────────────────────────────────────────
 
@@ -332,6 +333,8 @@ export type MiddleGrammarPoint = {
   explanationEn: string | null;
   explanationKo: string | null;
   quiz: Record<MiddleGrammarStageId, MiddleGrammarQuizItem[]>;
+  // 설명 → 깜지 → 빈칸 → Drill → 문제 레슨. 있으면 기존 3단계 퀴즈 대신 이 흐름을 보여준다.
+  lesson: GrammarLesson | null;
 };
 
 export type MiddleNaesinDrillSections = {
@@ -432,9 +435,16 @@ function readGrammarQuizRawByStage(extra: unknown): GrammarQuizRawByStage {
   return raw ?? {};
 }
 
-function buildGrammarPoints(contents: MiddleNaesinContent[]): MiddleGrammarPoint[] {
+// 레슨이 있는 문법 포인트는 관리자가 '확정'하기 전(draft)에는 학생에게 보이지 않는다.
+function buildGrammarPoints(contents: MiddleNaesinContent[], includeDrafts: boolean): MiddleGrammarPoint[] {
   return contents
     .filter((c) => c.content_type === 'grammar_point')
+    .filter((c) => {
+      if (includeDrafts) return true;
+      const hasLessonData = !!(c.extra_data as { lesson?: unknown } | null)?.lesson;
+      if (!hasLessonData) return true;
+      return parseGrammarLesson(c.extra_data)?.status === 'final';
+    })
     .map((c) => {
       const rawByStage = readGrammarQuizRawByStage(c.extra_data);
       return {
@@ -447,6 +457,7 @@ function buildGrammarPoints(contents: MiddleNaesinContent[]): MiddleGrammarPoint
           practice: parseGrammarQuiz(rawByStage.practice),
           test: parseGrammarQuiz(rawByStage.test),
         },
+        lesson: parseGrammarLesson(c.extra_data),
       };
     });
 }
@@ -454,6 +465,7 @@ function buildGrammarPoints(contents: MiddleNaesinContent[]): MiddleGrammarPoint
 export function buildDrillSections(
   unitId: string,
   contents: MiddleNaesinContent[],
+  opts: { includeDrafts?: boolean } = {},
 ): MiddleNaesinDrillSections {
   return {
     unitId,
@@ -461,7 +473,7 @@ export function buildDrillSections(
     dialogue: buildSectionForType(contents, 'dialogue'),
     moreReading: buildSectionForType(contents, 'more_reading'),
     vocab: parseVocab(contents),
-    grammar: buildGrammarPoints(contents),
+    grammar: buildGrammarPoints(contents, opts.includeDrafts ?? false),
   };
 }
 

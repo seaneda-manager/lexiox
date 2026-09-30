@@ -68,7 +68,14 @@ export async function upsertContentAction(formData: FormData) {
   // 문법 포인트의 단계별(Drill/Practice/Test) 퀴즈 원문은 extra_data에 저장
   // (다른 타입의 extra_data는 건드리지 않음)
   if (content_type === 'grammar_point') {
+    // 수정 시 extra_data.lesson(설명→깜지→…→문제 레슨)이 지워지지 않게 기존 값을 보존한다
+    let existingExtra: Record<string, unknown> = {};
+    if (id) {
+      const { data: existing } = await supabase.from('middle_naesin_contents').select('extra_data').eq('id', id).maybeSingle();
+      existingExtra = (existing?.extra_data as Record<string, unknown> | null) ?? {};
+    }
     payload.extra_data = {
+      ...existingExtra,
       quizRaw: {
         drill:    (formData.get('quiz_drill_raw') as string) || '',
         practice: (formData.get('quiz_practice_raw') as string) || '',

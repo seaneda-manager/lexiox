@@ -27,7 +27,7 @@ export default async function UnitPreviewPage({ params }: { params: Promise<{ un
 
   const u = unit as MiddleNaesinUnit;
   const items = (contents ?? []) as MiddleNaesinContent[];
-  const drillData = buildDrillSections(unitId, items);
+  const drillData = buildDrillSections(unitId, items, { includeDrafts: true });
 
   const typeOrder: MiddleNaesinContentType[] = [
     'main_text', 'dialogue', 'more_reading', 'vocab_en_en', 'vocab_ko', 'grammar_point', 'past_exam',

@@ -162,6 +162,15 @@ export default async function UnitDetailPage({
                     >
                       수정
                     </Link>
+                    {type === 'grammar_point' && (item.extra_data as { lesson?: unknown } | null)?.lesson ? (
+                      <Link
+                        href={`/admin/middle-naesin/units/${unitId}/grammar/${item.id}`}
+                        className="rounded-lg border border-violet-300 bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-700 hover:bg-violet-100"
+                      >
+                        레슨 검수·확정
+                        {(item.extra_data as { lesson?: { status?: string } }).lesson?.status === 'final' ? ' (확정됨)' : ' (초안)'}
+                      </Link>
+                    ) : null}
                     <DeleteContentButton id={item.id} unitId={unitId} />
                   </div>
                 </div>
