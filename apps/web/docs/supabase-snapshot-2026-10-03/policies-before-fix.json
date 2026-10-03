@@ -1,0 +1,572 @@
+﻿[
+    {
+        "cmd":  "ALL",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "admin_all_lecture_assignments",
+        "qual":  "true",
+        "roles":  "{public}",
+        "schemaname":  "public",
+        "tablename":  "lecture_assignments",
+        "with_check":  "true"
+    },
+    {
+        "cmd":  "ALL",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "admin_all_lecture_completions",
+        "qual":  "true",
+        "roles":  "{public}",
+        "schemaname":  "public",
+        "tablename":  "lecture_completions",
+        "with_check":  "true"
+    },
+    {
+        "cmd":  "ALL",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "admin_all_lecture_quiz_attempts",
+        "qual":  "true",
+        "roles":  "{public}",
+        "schemaname":  "public",
+        "tablename":  "lecture_quiz_attempts",
+        "with_check":  "true"
+    },
+    {
+        "cmd":  "INSERT",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "daily_tasks_auth_insert",
+        "qual":  null,
+        "roles":  "{authenticated}",
+        "schemaname":  "public",
+        "tablename":  "daily_tasks",
+        "with_check":  "true"
+    },
+    {
+        "cmd":  "SELECT",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "daily_tasks_auth_select",
+        "qual":  "true",
+        "roles":  "{authenticated}",
+        "schemaname":  "public",
+        "tablename":  "daily_tasks",
+        "with_check":  null
+    },
+    {
+        "cmd":  "ALL",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "student_own_daily_task",
+        "qual":  "(auth.uid() = student_id)",
+        "roles":  "{public}",
+        "schemaname":  "public",
+        "tablename":  "daily_tasks",
+        "with_check":  null
+    },
+    {
+        "cmd":  "SELECT",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "Students can read locked analyses for their assigned passages",
+        "qual":  "(passage_id IN ( SELECT hi_naesin_assignments.passage_id\n   FROM hi_naesin_assignments\n  WHERE (hi_naesin_assignments.student_id = auth.uid())))",
+        "roles":  "{authenticated}",
+        "schemaname":  "public",
+        "tablename":  "hi_naesin_passage_analysis",
+        "with_check":  null
+    },
+    {
+        "cmd":  "ALL",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "allow all authenticated",
+        "qual":  "true",
+        "roles":  "{authenticated}",
+        "schemaname":  "public",
+        "tablename":  "hi_naesin_passage_analysis",
+        "with_check":  "true"
+    },
+    {
+        "cmd":  "ALL",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "admin_all_quiz_questions",
+        "qual":  "true",
+        "roles":  "{public}",
+        "schemaname":  "public",
+        "tablename":  "lecture_quiz_questions",
+        "with_check":  "true"
+    },
+    {
+        "cmd":  "SELECT",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "authenticated_read",
+        "qual":  "true",
+        "roles":  "{authenticated}",
+        "schemaname":  "public",
+        "tablename":  "lecture_quiz_questions",
+        "with_check":  null
+    },
+    {
+        "cmd":  "UPDATE",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "Allow authenticated updates to public-assets",
+        "qual":  "(bucket_id = \u0027public-assets\u0027::text)",
+        "roles":  "{authenticated}",
+        "schemaname":  "storage",
+        "tablename":  "objects",
+        "with_check":  "(bucket_id = \u0027public-assets\u0027::text)"
+    },
+    {
+        "cmd":  "INSERT",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "Allow authenticated uploads to public-assets",
+        "qual":  null,
+        "roles":  "{authenticated}",
+        "schemaname":  "storage",
+        "tablename":  "objects",
+        "with_check":  "(bucket_id = \u0027public-assets\u0027::text)"
+    },
+    {
+        "cmd":  "INSERT",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "Anyone can upload to public-assets",
+        "qual":  null,
+        "roles":  "{public}",
+        "schemaname":  "storage",
+        "tablename":  "objects",
+        "with_check":  "(bucket_id = \u0027public-assets\u0027::text)"
+    },
+    {
+        "cmd":  "INSERT",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "Authenticated upload public-assets",
+        "qual":  null,
+        "roles":  "{authenticated}",
+        "schemaname":  "storage",
+        "tablename":  "objects",
+        "with_check":  "(bucket_id = \u0027public-assets\u0027::text)"
+    },
+    {
+        "cmd":  "SELECT",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "Public read public-assets",
+        "qual":  "(bucket_id = \u0027public-assets\u0027::text)",
+        "roles":  "{public}",
+        "schemaname":  "storage",
+        "tablename":  "objects",
+        "with_check":  null
+    },
+    {
+        "cmd":  "DELETE",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "admin delete speaking assets",
+        "qual":  "(bucket_id = \u0027speaking-assets\u0027::text)",
+        "roles":  "{authenticated}",
+        "schemaname":  "storage",
+        "tablename":  "objects",
+        "with_check":  null
+    },
+    {
+        "cmd":  "UPDATE",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "admin update speaking assets",
+        "qual":  "(bucket_id = \u0027speaking-assets\u0027::text)",
+        "roles":  "{authenticated}",
+        "schemaname":  "storage",
+        "tablename":  "objects",
+        "with_check":  null
+    },
+    {
+        "cmd":  "INSERT",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "admin upload speaking assets",
+        "qual":  null,
+        "roles":  "{authenticated}",
+        "schemaname":  "storage",
+        "tablename":  "objects",
+        "with_check":  "(bucket_id = \u0027speaking-assets\u0027::text)"
+    },
+    {
+        "cmd":  "SELECT",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "audio public read",
+        "qual":  "(bucket_id = \u0027audio\u0027::text)",
+        "roles":  "{public}",
+        "schemaname":  "storage",
+        "tablename":  "objects",
+        "with_check":  null
+    },
+    {
+        "cmd":  "INSERT",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "audio staff write",
+        "qual":  null,
+        "roles":  "{public}",
+        "schemaname":  "storage",
+        "tablename":  "objects",
+        "with_check":  "((bucket_id = \u0027audio\u0027::text) AND (EXISTS ( SELECT 1\n   FROM memberships m\n  WHERE ((m.user_id = auth.uid()) AND (m.role = ANY (ARRAY[\u0027owner\u0027::role_enum, \u0027manager\u0027::role_enum, \u0027teacher\u0027::role_enum]))))))"
+    },
+    {
+        "cmd":  "DELETE",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "avatar_delete",
+        "qual":  "((bucket_id = \u0027profiles\u0027::text) AND (owner = auth.uid()))",
+        "roles":  "{authenticated}",
+        "schemaname":  "storage",
+        "tablename":  "objects",
+        "with_check":  null
+    },
+    {
+        "cmd":  "SELECT",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "avatar_read",
+        "qual":  "(bucket_id = \u0027profiles\u0027::text)",
+        "roles":  "{public}",
+        "schemaname":  "storage",
+        "tablename":  "objects",
+        "with_check":  null
+    },
+    {
+        "cmd":  "UPDATE",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "avatar_update",
+        "qual":  "((bucket_id = \u0027profiles\u0027::text) AND (owner = auth.uid()))",
+        "roles":  "{authenticated}",
+        "schemaname":  "storage",
+        "tablename":  "objects",
+        "with_check":  null
+    },
+    {
+        "cmd":  "INSERT",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "avatar_upload",
+        "qual":  null,
+        "roles":  "{authenticated}",
+        "schemaname":  "storage",
+        "tablename":  "objects",
+        "with_check":  "((bucket_id = \u0027profiles\u0027::text) AND (name = (((\u0027avatars/\u0027::text || auth.uid()) || \u0027.\u0027::text) || split_part(name, \u0027.\u0027::text, 2))))"
+    },
+    {
+        "cmd":  "SELECT",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "public read speaking assets",
+        "qual":  "(bucket_id = \u0027speaking-assets\u0027::text)",
+        "roles":  "{public}",
+        "schemaname":  "storage",
+        "tablename":  "objects",
+        "with_check":  null
+    },
+    {
+        "cmd":  "ALL",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "admin_all_lectures",
+        "qual":  "true",
+        "roles":  "{public}",
+        "schemaname":  "public",
+        "tablename":  "lectures",
+        "with_check":  "true"
+    },
+    {
+        "cmd":  "SELECT",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "authenticated_read",
+        "qual":  "true",
+        "roles":  "{authenticated}",
+        "schemaname":  "public",
+        "tablename":  "lectures",
+        "with_check":  null
+    },
+    {
+        "cmd":  "ALL",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "open",
+        "qual":  "true",
+        "roles":  "{public}",
+        "schemaname":  "public",
+        "tablename":  "middle_naesin_assignments",
+        "with_check":  "true"
+    },
+    {
+        "cmd":  "ALL",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "open",
+        "qual":  "true",
+        "roles":  "{public}",
+        "schemaname":  "public",
+        "tablename":  "middle_naesin_contents",
+        "with_check":  "true"
+    },
+    {
+        "cmd":  "ALL",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "open",
+        "qual":  "true",
+        "roles":  "{public}",
+        "schemaname":  "public",
+        "tablename":  "middle_naesin_units",
+        "with_check":  "true"
+    },
+    {
+        "cmd":  "INSERT",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "reading_attempt_answers_auth_insert",
+        "qual":  null,
+        "roles":  "{authenticated}",
+        "schemaname":  "public",
+        "tablename":  "reading_attempt_answers",
+        "with_check":  "true"
+    },
+    {
+        "cmd":  "SELECT",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "reading_attempt_answers_auth_select",
+        "qual":  "true",
+        "roles":  "{authenticated}",
+        "schemaname":  "public",
+        "tablename":  "reading_attempt_answers",
+        "with_check":  null
+    },
+    {
+        "cmd":  "ALL",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "open",
+        "qual":  "true",
+        "roles":  "{public}",
+        "schemaname":  "public",
+        "tablename":  "middle_naesin_drill_results",
+        "with_check":  "true"
+    },
+    {
+        "cmd":  "INSERT",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "student_vocab_assignments_admin_insert",
+        "qual":  null,
+        "roles":  "{public}",
+        "schemaname":  "public",
+        "tablename":  "student_vocab_assignments",
+        "with_check":  "true"
+    },
+    {
+        "cmd":  "INSERT",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "student_vocab_assignments_insert_own",
+        "qual":  null,
+        "roles":  "{public}",
+        "schemaname":  "public",
+        "tablename":  "student_vocab_assignments",
+        "with_check":  "is_current_user_student_key(student_id)"
+    },
+    {
+        "cmd":  "SELECT",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "student_vocab_assignments_select_own",
+        "qual":  "is_current_user_student_key(student_id)",
+        "roles":  "{authenticated}",
+        "schemaname":  "public",
+        "tablename":  "student_vocab_assignments",
+        "with_check":  null
+    },
+    {
+        "cmd":  "UPDATE",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "student_vocab_assignments_update_own",
+        "qual":  "is_current_user_student_key(student_id)",
+        "roles":  "{authenticated}",
+        "schemaname":  "public",
+        "tablename":  "student_vocab_assignments",
+        "with_check":  "is_current_user_student_key(student_id)"
+    },
+    {
+        "cmd":  "INSERT",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "Allow authenticated users to insert vocab plans",
+        "qual":  null,
+        "roles":  "{authenticated}",
+        "schemaname":  "public",
+        "tablename":  "student_vocab_plans",
+        "with_check":  "true"
+    },
+    {
+        "cmd":  "SELECT",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "Allow authenticated users to select vocab plans",
+        "qual":  "true",
+        "roles":  "{authenticated}",
+        "schemaname":  "public",
+        "tablename":  "student_vocab_plans",
+        "with_check":  null
+    },
+    {
+        "cmd":  "UPDATE",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "Allow authenticated users to update vocab plans",
+        "qual":  "true",
+        "roles":  "{authenticated}",
+        "schemaname":  "public",
+        "tablename":  "student_vocab_plans",
+        "with_check":  "true"
+    },
+    {
+        "cmd":  "SELECT",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "student_vocab_plans_select_own",
+        "qual":  "is_current_user_student_key(student_id)",
+        "roles":  "{authenticated}",
+        "schemaname":  "public",
+        "tablename":  "student_vocab_plans",
+        "with_check":  null
+    },
+    {
+        "cmd":  "INSERT",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "test_sessions_auth_insert",
+        "qual":  null,
+        "roles":  "{authenticated}",
+        "schemaname":  "public",
+        "tablename":  "test_sessions",
+        "with_check":  "true"
+    },
+    {
+        "cmd":  "SELECT",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "test_sessions_auth_select",
+        "qual":  "true",
+        "roles":  "{authenticated}",
+        "schemaname":  "public",
+        "tablename":  "test_sessions",
+        "with_check":  null
+    },
+    {
+        "cmd":  "SELECT",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "items_select_own",
+        "qual":  "(user_id = auth.uid())",
+        "roles":  "{authenticated}",
+        "schemaname":  "public",
+        "tablename":  "vocab_items",
+        "with_check":  null
+    },
+    {
+        "cmd":  "INSERT",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "vocab_items_auth_insert",
+        "qual":  null,
+        "roles":  "{authenticated}",
+        "schemaname":  "public",
+        "tablename":  "vocab_items",
+        "with_check":  "true"
+    },
+    {
+        "cmd":  "SELECT",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "vocab_items_auth_select",
+        "qual":  "true",
+        "roles":  "{authenticated}",
+        "schemaname":  "public",
+        "tablename":  "vocab_items",
+        "with_check":  null
+    },
+    {
+        "cmd":  "SELECT",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "track_days_select_auth",
+        "qual":  "true",
+        "roles":  "{authenticated}",
+        "schemaname":  "public",
+        "tablename":  "vocab_track_days",
+        "with_check":  null
+    },
+    {
+        "cmd":  "DELETE",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "vocab_track_days_auth_delete",
+        "qual":  "true",
+        "roles":  "{authenticated}",
+        "schemaname":  "public",
+        "tablename":  "vocab_track_days",
+        "with_check":  null
+    },
+    {
+        "cmd":  "SELECT",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "vocab_track_days_auth_select",
+        "qual":  "true",
+        "roles":  "{authenticated}",
+        "schemaname":  "public",
+        "tablename":  "vocab_track_days",
+        "with_check":  null
+    },
+    {
+        "cmd":  "UPDATE",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "vocab_track_days_auth_update",
+        "qual":  "true",
+        "roles":  "{authenticated}",
+        "schemaname":  "public",
+        "tablename":  "vocab_track_days",
+        "with_check":  "true"
+    },
+    {
+        "cmd":  "INSERT",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "vocab_track_days_auth_write",
+        "qual":  null,
+        "roles":  "{authenticated}",
+        "schemaname":  "public",
+        "tablename":  "vocab_track_days",
+        "with_check":  "true"
+    },
+    {
+        "cmd":  "SELECT",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "hackers_toefl_track_access",
+        "qual":  "\nCASE\n    WHEN (slug = \u0027hackers-toefl\u0027::text) THEN (( SELECT profiles.program\n       FROM profiles\n      WHERE (profiles.id = auth.uid())) = ANY (ARRAY[\u0027toefl\u0027::text, NULL::text]))\n    ELSE true\nEND",
+        "roles":  "{authenticated}",
+        "schemaname":  "public",
+        "tablename":  "vocab_tracks",
+        "with_check":  null
+    },
+    {
+        "cmd":  "SELECT",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "tracks_select_auth",
+        "qual":  "true",
+        "roles":  "{authenticated}",
+        "schemaname":  "public",
+        "tablename":  "vocab_tracks",
+        "with_check":  null
+    },
+    {
+        "cmd":  "DELETE",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "vocab_tracks_auth_delete",
+        "qual":  "true",
+        "roles":  "{authenticated}",
+        "schemaname":  "public",
+        "tablename":  "vocab_tracks",
+        "with_check":  null
+    },
+    {
+        "cmd":  "SELECT",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "vocab_tracks_auth_select",
+        "qual":  "true",
+        "roles":  "{authenticated}",
+        "schemaname":  "public",
+        "tablename":  "vocab_tracks",
+        "with_check":  null
+    },
+    {
+        "cmd":  "UPDATE",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "vocab_tracks_auth_update",
+        "qual":  "true",
+        "roles":  "{authenticated}",
+        "schemaname":  "public",
+        "tablename":  "vocab_tracks",
+        "with_check":  "true"
+    },
+    {
+        "cmd":  "INSERT",
+        "permissive":  "PERMISSIVE",
+        "policyname":  "vocab_tracks_auth_write",
+        "qual":  null,
+        "roles":  "{authenticated}",
+        "schemaname":  "public",
+        "tablename":  "vocab_tracks",
+        "with_check":  "true"
+    }
+]

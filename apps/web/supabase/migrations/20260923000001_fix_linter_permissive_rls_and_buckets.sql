@@ -125,13 +125,16 @@ CREATE POLICY "middle_naesin_assignments_staff_update" ON public.middle_naesin_a
 CREATE POLICY "middle_naesin_assignments_staff_delete" ON public.middle_naesin_assignments
   FOR DELETE TO authenticated USING (public.is_staff());
 
--- ── 11) reading_attempt_answers: attempt_id를 통해 reading_attempts.user_id로 소유권 확인 ──
+-- ── 11) reading_attempt_answers: attempt_id -> reading_attempts.session_id -> reading_sessions.user_id 로 소유권 확인 ──
+-- (reading_attempts 자체에는 user 컬럼이 없다. 2026-10-03 운영 DB 확인: 두 테이블 모두 0행 + 코드 미사용)
 DROP POLICY IF EXISTS "reading_attempt_answers_auth_insert" ON public.reading_attempt_answers;
 CREATE POLICY "reading_attempt_answers_own_insert" ON public.reading_attempt_answers
   FOR INSERT TO authenticated WITH CHECK (
     public.is_staff() OR EXISTS (
-      SELECT 1 FROM public.reading_attempts ra
-      WHERE ra.id = attempt_id AND ra.user_id = auth.uid()
+      SELECT 1
+      FROM public.reading_attempts ra
+      JOIN public.reading_sessions rs ON rs.id = ra.session_id
+      WHERE ra.id = attempt_id AND rs.user_id = auth.uid()
     )
   );
 

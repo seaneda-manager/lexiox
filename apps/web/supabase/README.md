@@ -2,15 +2,15 @@
 
 이 폴더 `apps/web/supabase/migrations/` 가 마이그레이션의 **정본**이다.
 
-## ⚠️ 지금은 `supabase db push` 금지 (통합 진행 중)
+## 통합 완료 (2026-10-03)
 
-2026-10-03에 저장소 루트 `supabase/migrations/` 의 103개를 이 폴더로 **복사**했다.
-이 파일들은 과거에 콘솔에서 수동 적용되어 운영 DB의 이력 표(`schema_migrations`)에 기록이 없다.
-이력을 맞추기(Phase D) 전에 `db push`를 하면 옛 SQL이 **다시 실행**된다.
+저장소 루트 `supabase/migrations/` 의 103개를 이 폴더로 복사하고, 운영 DB 이력(`schema_migrations`)을 맞췄다.
+이제 `supabase db push` 를 써도 옛 SQL이 재실행되지 않는다.
 
-- 진행 상황과 계획: `docs/SUPABASE_MIGRATION_CONSOLIDATION.md`
+- 계획과 결과: `docs/SUPABASE_MIGRATION_CONSOLIDATION.md`
 - 현재 상태 확인(읽기 전용): `npm run migrations:check`
-- Phase D 완료 후 이 경고를 지운다.
+- 의도된 미적용 1개(`20260722103000_add_default_vocab_book`)가 남아 있어, **`db push` 하면 이 마이그레이션도 함께 적용된다.**
+  `academy_students.default_vocab_book_id` 컬럼 추가뿐이고 코드는 쓰지 않아 해롭지 않다. 원치 않으면 push 전에 이 파일을 정리할 것.
 
 ## 규칙
 
