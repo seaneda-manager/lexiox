@@ -6,6 +6,8 @@
     "build": "next build",
     "lint": "eslint . --ext .ts,.tsx --max-warnings=0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "migrations:check": "node scripts/check-migrations.mjs",
     "supabase:types": "powershell -NoProfile -Command \"cd ..\\..; supabase gen types typescript --linked --schema public | Out-File -Encoding utf8 apps\\\\web\\\\schema_public.types.ts\""
   },
   "dependencies": {
@@ -38,6 +40,7 @@
     "next": "^14.2.35",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.18",
-    "typescript": "5.4.5"
+    "typescript": "5.4.5",
+    "vitest": "^2.1.9"
   }
 }
