@@ -11,6 +11,12 @@ import {
   type ImportReport,
   type StudentWithGuardians,
 } from "../actions";
+import {
+  createReportLinkAction,
+  listReportLinkStatusAction,
+  revokeReportLinkAction,
+  type ReportLinkStatus,
+} from "../report-actions";
 
 export default function GuardiansClient() {
   const [students, setStudents] = useState<StudentWithGuardians[]>([]);
@@ -19,11 +25,15 @@ export default function GuardiansClient() {
   const [onlyMissing, setOnlyMissing] = useState(false);
   const [report, setReport] = useState<ImportReport | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [links, setLinks] = useState<Record<string, ReportLinkStatus>>({});
+  // 방금 발급한 링크 주소. 서버에는 해시만 있어서 나중에 다시 볼 수 없으므로 이 화면에서만 보여준다.
+  const [freshUrls, setFreshUrls] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
-    const res = await listStudentsWithGuardiansAction();
+    const [res, linkRes] = await Promise.all([listStudentsWithGuardiansAction(), listReportLinkStatusAction()]);
     if (res.ok) setStudents(res.students ?? []);
     else setMsg(`❌ ${res.error}`);
+    if (linkRes.ok) setLinks(linkRes.links ?? {});
   }, []);
 
   useEffect(() => {
@@ -131,6 +141,16 @@ export default function GuardiansClient() {
                     <GuardianRow key={g.id} g={g} busy={busy} run={run} />
                   ))}
                   <AddForm studentId={s.student_id} busy={busy} run={run} />
+                  <ReportLinkBox
+                    studentId={s.student_id}
+                    status={links[s.student_id]}
+                    freshUrl={freshUrls[s.student_id]}
+                    busy={busy}
+                    onCreated={(url) => setFreshUrls((m) => ({ ...m, [s.student_id]: url }))}
+                    onRevoked={() => setFreshUrls((m) => { const n = { ...m }; delete n[s.student_id]; return n; })}
+                    run={run}
+                    setMsg={setMsg}
+                  />
                 </div>
               )}
             </div>
@@ -222,6 +242,72 @@ function AddForm({ studentId, busy, run }: { studentId: string; busy: boolean; r
       >
         + 연락처 추가
       </button>
+    </div>
+  );
+}
+
+function ReportLinkBox(props: {
+  studentId: string;
+  status: ReportLinkStatus | undefined;
+  freshUrl: string | undefined;
+  busy: boolean;
+  onCreated: (url: string) => void;
+  onRevoked: () => void;
+  run: Runner;
+  setMsg: (m: string) => void;
+}) {
+  const { studentId, status, freshUrl, busy, run } = props;
+
+  async function create() {
+    if (status && !confirm("이미 발급한 링크가 있습니다. 새 링크를 만들면 이전 링크는 바로 사용할 수 없게 됩니다. 계속할까요?")) return;
+    let created = "";
+    const ok = await run(async () => {
+      const res = await createReportLinkAction({ studentId });
+      if (res.ok && res.url) created = res.url;
+      return { ok: !!res.ok, error: res.error };
+    }, "리포트 링크를 만들었습니다");
+    if (ok && created) {
+      props.onCreated(created);
+      try {
+        await navigator.clipboard.writeText(created);
+        props.setMsg("✅ 리포트 링크를 만들고 복사했습니다. 카톡/문자에 붙여 넣어 보내세요.");
+      } catch {
+        props.setMsg("✅ 리포트 링크를 만들었습니다. 아래 주소를 직접 복사하세요.");
+      }
+    }
+  }
+
+  const fmt = (iso: string) => new Date(iso).toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul", month: "numeric", day: "numeric" });
+
+  return (
+    <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-3">
+      <div className="text-xs font-semibold text-indigo-900">학부모 리포트 링크 (로그인 없이 열람, 출석 현황만 표시)</div>
+      <div className="mt-1 text-xs text-indigo-800">
+        {status
+          ? `사용 중 — ${fmt(status.expires_at)}까지 · 열람 ${status.view_count}회${status.last_viewed_at ? ` (마지막 ${fmt(status.last_viewed_at)})` : ""}`
+          : "발급된 링크가 없습니다."}
+      </div>
+      {freshUrl && (
+        <input className="mt-2 w-full rounded border bg-white px-2 py-1.5 text-xs" readOnly value={freshUrl} onFocus={(e) => e.currentTarget.select()} />
+      )}
+      <div className="mt-2 flex flex-wrap gap-2">
+        <button className="rounded bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50" disabled={busy} onClick={create}>
+          {status ? "새 링크 만들기 (이전 링크 폐기)" : "링크 만들기 · 복사"}
+        </button>
+        {status && (
+          <button
+            className="rounded border border-red-300 bg-white px-3 py-1.5 text-sm text-red-700 disabled:opacity-50"
+            disabled={busy}
+            onClick={() => {
+              if (!confirm("이 링크를 지금 바로 사용 중지할까요?")) return;
+              run(() => revokeReportLinkAction({ studentId }), "링크를 사용 중지했습니다").then(() => props.onRevoked());
+            }}
+          >
+            사용 중지
+          </button>
+        )}
+      </div>
+      <p className="mt-2 text-xs text-indigo-700">링크는 14일 뒤 만료됩니다. 주소는 만든 직후에만 볼 수 있으니 바로 복사해서 보내세요. 보안을 위해 서버에는 주소 원문이 저장되지 않습니다.</p>
     </div>
   );
 }

@@ -36,6 +36,9 @@ const APP_PREFIXES = [
   "/lingox",
   "/focus",
   "/install",
+  // 학부모 읽기 전용 리포트(/p/[token]) — 로그인 없는 공개 페이지라 마케팅 헤더(로그인 링크 등)를 붙이지 않고
+  // 페이지가 자체 최소 화면을 그린다. ("/p" 는 정확히 /p 또는 /p/... 만 일치하므로 /pricing 등과 겹치지 않는다)
+  "/p",
 ];
 
 function isAppRoute(pathname: string) {
