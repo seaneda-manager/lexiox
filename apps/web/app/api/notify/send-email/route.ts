@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { sendBulkEmails } from '@/lib/utils/emailService';
 import type { EmailNotificationType } from '@/lib/types/email';
+import { requireStaff } from '@/lib/classes/requireStaff';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -25,6 +26,13 @@ interface SendEmailRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    // 교사/관리자만 호출할 수 있다. (이 라우트는 서비스 키로 학생·학부모에게 메일을 보내므로
+    // 인증 없이 열어 두면 누구나 스팸 중계로 쓸 수 있다.)
+    const auth = await requireStaff();
+    if (auth.error) {
+      return NextResponse.json({ error: auth.error }, { status: auth.error === '로그인이 필요합니다.' ? 401 : 403 });
+    }
+
     const body: SendEmailRequest = await request.json();
     const { type, studentIds, includeParents = false, data } = body;
 
