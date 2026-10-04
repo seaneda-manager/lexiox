@@ -265,6 +265,7 @@ export default function SidebarClient({ role, program = null, hasHiNaesin = fals
         { section: '선생님 도구' as NavSection, href: '/teacher/session',          label: '오늘의 수업',  icon: ClipboardCheck },
         { section: '선생님 도구' as NavSection, href: '/admin/classes',            label: '반 관리',      icon: Users },
         { section: '선생님 도구' as NavSection, href: '/admin/attendance',         label: '출석 현황',    icon: Calendar },
+        { section: '선생님 도구' as NavSection, href: '/admin/guardians',          label: '학부모 연락처', icon: Users },
         { section: '선생님 도구' as NavSection, href: '/teacher/homework-calendar', label: '배정 캘린더',  icon: Calendar },
         { section: '선생님 도구' as NavSection, href: '/teacher/lesson-log',        label: '수업 로그',    icon: ClipboardCheck },
         { section: '선생님 도구' as NavSection, href: '/teacher/exam-schedule',     label: '시험 배정',    icon: ClipboardList },
