@@ -4,6 +4,8 @@
 import { getServiceRoleClient } from "@/lib/supabase/server";
 import { requireStaff } from "@/lib/classes/requireStaff";
 import { todayKST, isISODate } from "@/lib/classes/dates";
+import { makeAttendanceDedupeKey } from "@/lib/notifications/attendanceMessage";
+import { noticeKindForStatus } from "@/lib/notifications/guardianPick";
 import {
   isMemberOn,
   summarizeAttendance,
@@ -268,6 +270,14 @@ export async function setAttendanceAction(params: {
     if (chk.error) return { ok: false, error: chk.error };
     if (chk.session.status === "cancelled") return { ok: false, error: "휴강 처리된 수업입니다." };
 
+    // 기존 출석 상태 (상태가 바뀌면 이미 만든 학부모 안내 초안을 정리하기 위해)
+    const { data: prevRec } = await db
+      .from("attendance_records")
+      .select("status")
+      .eq("session_id", params.sessionId)
+      .eq("student_id", params.studentId)
+      .maybeSingle();
+
     const { error } = await db.from("attendance_records").upsert(
       {
         session_id: params.sessionId,
@@ -280,6 +290,18 @@ export async function setAttendanceAction(params: {
       { onConflict: "session_id,student_id" }
     );
     if (error) throw new Error(error.message);
+
+    // 결석/지각 → 다른 상태로 정정했다면, 아직 보내지 않은 이전 상태의 안내 초안은 취소한다.
+    // (이미 '보냄' 처리된 안내는 건드리지 않는다. 화면에서 이미 안내했음을 확인할 수 있다.)
+    const prevKind = noticeKindForStatus((prevRec as any)?.status);
+    if (prevKind && (prevRec as any).status !== params.status) {
+      await db
+        .from("notification_outbox")
+        .update({ status: "cancelled" })
+        .eq("dedupe_key", makeAttendanceDedupeKey(prevKind, params.sessionId, params.studentId))
+        .in("status", ["draft", "approved", "failed"]);
+    }
+
     await markHeld(db, params.sessionId, chk.session.status);
     return { ok: true };
   } catch (e: any) {

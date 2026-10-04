@@ -10,6 +10,7 @@ import {
   type BoardStudent,
   type SessionBoard,
 } from "../../actions";
+import ParentNoticePanel from "./ParentNoticePanel";
 import { formatKoreanDate, timeRange } from "@/lib/classes/dates";
 import {
   ATTENDANCE_LABEL,
@@ -45,6 +46,7 @@ export default function BoardClient({ initial }: { initial: SessionBoard }) {
   const [status, setStatus] = useState(session.status);
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
+  const [noticeTick, setNoticeTick] = useState(0);
 
   const cancelled = status === "cancelled";
   const stepKeys = useMemo(() => flow.map((f) => f.step_key), [flow]);
@@ -85,7 +87,10 @@ export default function BoardClient({ initial }: { initial: SessionBoard }) {
     if (!res.ok) {
       patch(studentId, (s) => ({ ...s, attendance: before.attendance }));
       setMsg(`❌ ${res.error}`);
-    } else setMsg("");
+    } else {
+      setMsg("");
+      setNoticeTick((t) => t + 1); // 서버 저장 완료 → 학부모 안내 목록 새로고침
+    }
   }
 
   async function toggleStep(studentId: string, stepKey: string) {
@@ -112,6 +117,7 @@ export default function BoardClient({ initial }: { initial: SessionBoard }) {
       setStudents((prev) => prev.map((s) => (s.attendance ? s : { ...s, attendance: "present" })));
       if (status === "scheduled") setStatus("held");
       setMsg(`✅ 기록 없던 학생 ${res.created ?? 0}명을 출석으로 확정했습니다`);
+      setNoticeTick((t) => t + 1);
     } else setMsg(`❌ ${res.error}`);
     setBusy(false);
   }
@@ -294,6 +300,9 @@ export default function BoardClient({ initial }: { initial: SessionBoard }) {
               </table>
             </div>
           )}
+
+          {/* 출석이 서버에 저장된 뒤(noticeTick 증가)에만 안내 목록을 다시 읽는다 — 저장 전 상태를 읽는 경쟁을 피함 */}
+          <ParentNoticePanel sessionId={session.id} attendanceKey={String(noticeTick)} />
 
           <p className="mt-3 text-xs text-gray-400">
             출석은 직접 눌러서 정합니다(지각 기준 5분은 선생님 판단). 아무도 안 눌렀을 때는 &quot;나머지 출석 확정&quot;으로 한 번에 저장하세요. 단계는 눌러서 완료 표시하고, 다시 누르면 취소됩니다.
