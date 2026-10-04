@@ -42,6 +42,28 @@ export function summarizeAttendance(
   return s;
 }
 
+/**
+ * 출석률: (출석+지각) / (출석+지각+결석). 사유결석(excused)은 분모에서 뺀다.
+ * 센 수업이 하나도 없으면 rate 는 null (0%와 구분).
+ */
+export function attendanceRate(records: { status: AttendanceStatus }[]): {
+  attended: number;
+  counted: number;
+  rate: number | null;
+} {
+  let attended = 0;
+  let counted = 0;
+  for (const r of records) {
+    if (r.status === "present" || r.status === "late") {
+      attended += 1;
+      counted += 1;
+    } else if (r.status === "absent") {
+      counted += 1;
+    }
+  }
+  return { attended, counted, rate: counted === 0 ? null : Math.round((attended / counted) * 100) };
+}
+
 /** 수업 상태 배지: 출석 기록이 하나도 없으면 '미체크', 일부만 있으면 '일부 체크', 모두 있으면 '체크 완료'. */
 export function checkState(summary: AttendanceSummary): "unchecked" | "partial" | "done" {
   if (summary.total === 0) return "done";

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  attendanceRate,
   checkState,
   havrutaQueue,
   isMemberOn,
@@ -129,6 +130,31 @@ describe("havrutaQueue - 하브루타 1:1 대기열", () => {
       oneOnOneKey: one,
     });
     expect(q).toEqual(["a", "b"]);
+  });
+});
+
+describe("attendanceRate", () => {
+  const rec = (...s: AttendanceStatus[]) => s.map((status) => ({ status }));
+
+  it("출석+지각을 출석으로 세고 결석은 분모에만 넣는다", () => {
+    expect(attendanceRate(rec("present", "late", "absent", "present"))).toEqual({ attended: 3, counted: 4, rate: 75 });
+  });
+
+  it("사유결석은 분모에서 뺀다", () => {
+    expect(attendanceRate(rec("present", "excused", "excused"))).toEqual({ attended: 1, counted: 1, rate: 100 });
+  });
+
+  it("센 수업이 없으면 null (0%가 아님)", () => {
+    expect(attendanceRate([]).rate).toBeNull();
+    expect(attendanceRate(rec("excused")).rate).toBeNull();
+  });
+
+  it("전부 결석이면 0%", () => {
+    expect(attendanceRate(rec("absent", "absent")).rate).toBe(0);
+  });
+
+  it("반올림", () => {
+    expect(attendanceRate(rec("present", "present", "absent")).rate).toBe(67);
   });
 });
 

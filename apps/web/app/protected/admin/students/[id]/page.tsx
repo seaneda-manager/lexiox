@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getServerSupabase } from "@/lib/supabase/server";
+import StudentAttendanceCard from "@/components/classes/StudentAttendanceCard";
 
 export const dynamic = "force-dynamic";
 
@@ -81,6 +82,7 @@ export default async function StudentAnalyticsPage({ params }: PageProps) {
         .from("academy_class_students")
         .select("class_id, academy_classes(id, name)")
         .eq("student_id", authUserId)
+        .is("left_on", null) // 퇴반한 반은 현재 소속에서 제외 (과거 출석 기록은 그대로 남음)
     : { data: [] };
 
   const classes = (classMemberships ?? []).map((m) => {
@@ -298,6 +300,8 @@ export default async function StudentAnalyticsPage({ params }: PageProps) {
           )}
         </div>
       </section>
+
+      <StudentAttendanceCard authUserId={authUserId} />
 
       {/* 핵심 지표 */}
       <section className="grid gap-4 md:grid-cols-4">
