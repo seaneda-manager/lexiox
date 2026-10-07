@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 type Section = "reading" | "listening" | "speaking" | "writing";
@@ -42,7 +42,6 @@ export default function ReviewClient({ initial }: { initial: Record<Section, Tes
   const [before, setBefore] = useState("");
 
   const rows = initial[tab];
-  const deletable = useMemo(() => rows.filter((r) => !r.assigned), [rows]);
 
   const switchTab = (t: Section) => {
     setTab(t);
@@ -59,7 +58,7 @@ export default function ReviewClient({ initial }: { initial: Record<Section, Tes
 
   const selectBefore = () => {
     if (!before) return;
-    setSelected(new Set(deletable.filter((r) => (r.createdAt ?? "") < before).map((r) => r.id)));
+    setSelected(new Set(rows.filter((r) => (r.createdAt ?? "") < before).map((r) => r.id)));
   };
 
   const proof = async (id: string) => {
@@ -88,19 +87,21 @@ export default function ReviewClient({ initial }: { initial: Record<Section, Tes
   const remove = async () => {
     const targets = rows.filter((r) => selected.has(r.id));
     if (targets.length === 0) return;
-    const names = targets.slice(0, 5).map((t) => `· ${t.label}`).join("\n");
-    if (!confirm(`${targets.length}개 시험을 삭제할까요? (되돌릴 수 없습니다)\n\n${names}${targets.length > 5 ? "\n…" : ""}`)) return;
+    const names = targets.slice(0, 5).map((t) => `· ${t.label}${t.assigned ? " 📌배정됨" : ""}`).join("\n");
+    const assignedCount = targets.filter((t) => t.assigned).length;
+    const warn = assignedCount > 0 ? `\n\n⚠ 배정된 시험 ${assignedCount}개는 학생 배정이 자동으로 취소됩니다.` : "";
+    if (!confirm(`${targets.length}개 시험을 삭제할까요? (되돌릴 수 없습니다)\n\n${names}${targets.length > 5 ? "\n…" : ""}${warn}`)) return;
 
     setDeleting(true);
     try {
       const res = await fetch("/api/admin/updated-toefl/delete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ section: tab, ids: targets.map((t) => t.id) }),
+        body: JSON.stringify({ section: tab, ids: targets.map((t) => t.id), unassign: true }),
       });
       const data = await res.json();
       if (!data.ok) throw new Error(data.error || "삭제 실패");
-      if (data.skippedAssigned?.length) alert(`배정된 시험 ${data.skippedAssigned.length}개는 삭제하지 않았습니다.`);
+      if (data.unassignedCount) alert(`학생 배정 ${data.unassignedCount}건을 취소하고 삭제했습니다.`);
       setSelected(new Set());
       router.refresh();
     } catch (e) {
@@ -136,7 +137,7 @@ export default function ReviewClient({ initial }: { initial: Record<Section, Tes
           해당 시험 선택
         </button>
         <button
-          onClick={() => setSelected(new Set(deletable.map((r) => r.id)))}
+          onClick={() => setSelected(new Set(rows.filter((r) => !r.assigned).map((r) => r.id)))}
           className="rounded border px-2 py-1 font-medium"
         >
           배정 안 된 시험 전체 선택
@@ -170,9 +171,7 @@ export default function ReviewClient({ initial }: { initial: Record<Section, Tes
                 <input
                   type="checkbox"
                   checked={selected.has(r.id)}
-                  disabled={r.assigned}
                   onChange={() => toggle(r.id)}
-                  title={r.assigned ? "배정된 시험은 삭제할 수 없습니다" : ""}
                 />
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-semibold text-gray-900">{r.label || "(제목 없음)"}</div>

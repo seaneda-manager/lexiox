@@ -38,7 +38,7 @@ export default async function UpdatedToeflReviewPage() {
         <h1 className="text-xl font-bold text-gray-900">Updated TOEFL – AI 검수 &amp; 정리</h1>
         <p className="mt-1 text-xs text-gray-600">
           이미 publish된 시험을 AI가 정답을 모른 채 직접 풀어 오류를 찾고, 잘못된 과거 시험을 일괄 삭제합니다.
-          학생에게 배정된 시험은 삭제할 수 없습니다.
+          배정된 시험을 삭제하면 해당 학생 배정이 자동으로 취소됩니다.
         </p>
         {errors.length > 0 && <p className="mt-1 text-xs text-rose-600">{errors.join(" / ")}</p>}
       </header>
