@@ -230,6 +230,7 @@ export default function SidebarClient({ role, program = null, hasHiNaesin = fals
         { section: 'Updated TOEFL' as NavSection, href: '/admin/content/updated-reading',   label: 'Reading',   icon: BookOpen },
         { section: 'Updated TOEFL' as NavSection, href: '/admin/content/updated-listening', label: 'Listening', icon: Headphones },
         { section: 'Updated TOEFL' as NavSection, href: '/admin/content/updated-writing',   label: 'Writing',   icon: PenLine },
+        { section: 'Updated TOEFL' as NavSection, href: '/admin/content/updated-toefl-review', label: 'AI 검수·정리', icon: CheckSquare },
         { section: 'Updated TOEFL' as NavSection, href: '/admin/content/grammar-2026',      label: 'Grammar',   icon: BookText },
         { section: 'Updated TOEFL' as NavSection, href: '/admin/grammar-quiz',              label: '문법 퀴즈 뱅크', icon: CheckSquare },
         { section: 'Updated TOEFL' as NavSection, href: '/admin/problem-bank',              label: 'Problem Bank', icon: Library },
