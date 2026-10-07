@@ -1,7 +1,12 @@
 import { Resend } from 'resend';
 import type { EmailNotificationType } from '@/lib/types/email';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// 모듈 로드 시점에 만들면 RESEND_API_KEY가 없는 빌드 환경에서 next build가 실패하므로 호출 시점에 초기화한다.
+let _resend: Resend | null = null;
+function getResend(): Resend {
+  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY);
+  return _resend;
+}
 
 const SENDER_EMAIL = 'notifications@toefl-platform.com';
 const APP_URL = process.env.NEXT_PUBLIC_SUPABASE_SITE_URL || 'https://app.toefl.com';
@@ -317,7 +322,7 @@ export async function sendEmailNotification(
     for (const recipient of emails) {
       const template = getEmailTemplate(type, recipient.name, data);
 
-      const result = await resend.emails.send({
+      const result = await getResend().emails.send({
         from: `TOEFL Platform <${SENDER_EMAIL}>`,
         to: recipient.email,
         subject: template.subject,

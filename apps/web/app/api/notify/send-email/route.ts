@@ -3,10 +3,9 @@ import { createClient } from '@supabase/supabase-js';
 import { sendBulkEmails } from '@/lib/utils/emailService';
 import type { EmailNotificationType } from '@/lib/types/email';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// 빌드 시점에 env가 없어도 모듈 로드가 실패하지 않도록 요청 시점에 생성한다.
+const getSupabase = () =>
+  createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 
 interface SendEmailRequest {
   type: EmailNotificationType;
@@ -25,6 +24,7 @@ interface SendEmailRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = getSupabase();
     const body: SendEmailRequest = await request.json();
     const { type, studentIds, includeParents = false, data } = body;
 
