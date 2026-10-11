@@ -5,6 +5,7 @@ import { getServerSupabase } from '@/lib/supabase/server';
 export const MIDDLE_NAESIN_DRILL_TYPES = [
   'translation',
   'composition',
+  'sentence_order',
   'vocab_check',
   'vocab_test_en_en',
   'vocab_test_en_to_ko',
