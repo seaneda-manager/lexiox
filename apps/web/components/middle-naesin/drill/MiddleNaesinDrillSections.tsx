@@ -5,6 +5,7 @@ import Link from 'next/link';
 import type { MiddleNaesinDrillSections as DrillSections } from '@/components/middle-naesin/drill/types';
 import type { MiddleDrillSentence } from '@/models/middle-naesin/drill';
 import TranslationStage from '@/components/middle-naesin/drill/stages/TranslationStage';
+import ConnectorFillStage from '@/components/middle-naesin/drill/stages/ConnectorFillStage';
 import SentenceOrderStage from '@/components/middle-naesin/drill/stages/SentenceOrderStage';
 import CompositionStage from '@/components/middle-naesin/drill/stages/CompositionStage';
 import StructureAnalysisStage from '@/components/middle-naesin/drill/stages/StructureAnalysisStage';
@@ -15,7 +16,7 @@ import VocabCramStage from '@/components/middle-naesin/drill/stages/VocabCramSta
 import GrammarStage from '@/components/middle-naesin/drill/stages/GrammarStage';
 
 type SectionId = 'vocab' | 'dialogue' | 'grammar' | 'main_text' | 'more_reading';
-type DrillId = 'translation' | 'composition' | 'ordering' | 'grammar_analysis';
+type DrillId = 'translation' | 'composition' | 'ordering' | 'connector' | 'grammar_analysis';
 type VocabDrillId = 'check' | 'test' | 'cram';
 
 const SECTION_LABEL: Record<SectionId, string> = {
@@ -30,6 +31,7 @@ const TEXT_SECTION_DRILLS: { id: DrillId; label: string }[] = [
   { id: 'translation', label: '영한번역' },
   { id: 'composition', label: '한영작문' },
   { id: 'ordering', label: '문장 순서 배열' },
+  { id: 'connector', label: '연결어 빈칸' },
   { id: 'grammar_analysis', label: '문법분석' },
 ];
 
@@ -230,7 +232,7 @@ export default function MiddleNaesinDrillSections({
           {SECTION_LABEL[activeSection]}
           {activeTitle ? ` · ${activeTitle}` : ''} — 드릴을 선택하세요
         </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {TEXT_SECTION_DRILLS.map((d) => (
             <Link
               key={d.id}
@@ -261,6 +263,13 @@ export default function MiddleNaesinDrillSections({
       {activeDrill === 'composition' && <CompositionStage sentences={activeSentences} unitId={unitId} />}
       {activeDrill === 'ordering' && (
         <SentenceOrderStage
+          sentences={activeSentences}
+          unitId={unitId}
+          refId={`${activeSection}:${chosenPart ? chosenPart.contentId : 'all'}`}
+        />
+      )}
+      {activeDrill === 'connector' && (
+        <ConnectorFillStage
           sentences={activeSentences}
           unitId={unitId}
           refId={`${activeSection}:${chosenPart ? chosenPart.contentId : 'all'}`}

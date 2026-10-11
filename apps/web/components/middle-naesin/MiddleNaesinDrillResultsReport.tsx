@@ -5,6 +5,7 @@ const DRILL_TYPE_LABEL: Record<MiddleNaesinDrillType, string> = {
   translation: '영한번역',
   composition: '한영작문',
   sentence_order: '문장순서',
+  connector_fill: '연결어빈칸',
   vocab_check: '단어확인',
   vocab_test_en_en: '단어시험(영영)',
   vocab_test_en_to_ko: '단어시험(영한)',
