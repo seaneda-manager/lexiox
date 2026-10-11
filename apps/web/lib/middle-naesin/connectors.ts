@@ -101,25 +101,35 @@ export type ConnectorItem = {
   choices: string[]; // 섞기 전 순서(정답 포함)
 };
 
-/** 같은 갈래가 아닌 연결어에서 오답 3개를 뽑는다(같은 갈래는 정답이 될 수 있어 제외). */
-function distractors(answer: ConnectorMatch, seed: number): string[] {
-  const pool = CONNECTORS.filter(
-    (c) => c.kind === answer.def.kind && c.category !== answer.def.category && c.text !== answer.def.text.toLowerCase(),
-  );
-  // 오답은 서로 다른 갈래에서 하나씩 뽑는다
-  const byCat = new Map<ConnectorCategory, Def[]>();
-  for (const c of pool) byCat.set(c.category, [...(byCat.get(c.category) ?? []), c]);
-  const cats = [...byCat.keys()];
-  const picked: string[] = [];
-  for (let k = 0; picked.length < 3 && k < cats.length; k++) {
-    const list = byCat.get(cats[(seed + k) % cats.length])!;
-    picked.push(list[(seed + k) % list.length].text);
+/**
+ * 오답 3개. 정답은 지문에 나온 연결어 하나뿐이다(채점은 보기 선택이라 그 단어만 정답).
+ * 같은 갈래는 정답과 의미가 겹쳐 억울한 오답이 되므로 제외하고, 같은 품사 계열(kind)에서 갈래당 하나씩 뽑는다.
+ * 그 단원 지문에 실제로 나온 연결어를 먼저 쓰고, 모자라면 기본 목록으로 채운다.
+ */
+function distractors(answer: ConnectorMatch, seed: number, passageTexts: string[]): string[] {
+  const ok = (c: Def) =>
+    c.kind === answer.def.kind && c.category !== answer.def.category && c.text !== answer.def.text.toLowerCase();
+  const fromPassage = CONNECTORS.filter((c) => ok(c) && passageTexts.includes(c.text));
+  const fromList = CONNECTORS.filter((c) => ok(c) && !passageTexts.includes(c.text));
+
+  const picked: Def[] = [];
+  const usedCats = new Set<ConnectorCategory>();
+  for (const pool of [fromPassage, fromList]) {
+    // 풀 안에서는 seed 로 시작 위치만 달리해서 문제마다 보기가 조금씩 달라지게 한다
+    for (let k = 0; k < pool.length && picked.length < 3; k++) {
+      const c = pool[(seed + k) % pool.length];
+      if (usedCats.has(c.category)) continue;
+      usedCats.add(c.category);
+      picked.push(c);
+    }
   }
-  return picked.slice(0, 3);
+  return picked.map((c) => c.text);
 }
 
 export function buildConnectorItems(sentences: { en: string }[]): ConnectorItem[] {
   const items: ConnectorItem[] = [];
+  // 지문 전체에 나온 연결어(소문자 표기) — 오답 후보 우선순위용
+  const passageTexts = [...new Set(sentences.map((s) => findConnector(s.en)?.def.text).filter((t): t is string => !!t))];
   sentences.forEach((s, i) => {
     const m = findConnector(s.en);
     if (!m) return;
@@ -131,7 +141,7 @@ export function buildConnectorItems(sentences: { en: string }[]): ConnectorItem[
       template: `${s.en.slice(0, m.start)}___${s.en.slice(m.end)}`,
       answer: m.original,
       category: m.def.category,
-      choices: [m.original, ...distractors(m, i + items.length).map(fmt)],
+      choices: [m.original, ...distractors(m, i + items.length, passageTexts).map(fmt)],
     });
   });
   return items;
