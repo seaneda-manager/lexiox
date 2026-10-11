@@ -10,8 +10,11 @@ import type { MiddleNaesinUnit, MiddleNaesinContent } from '@/models/middle-naes
 import { upsertContentAction } from '../../actions';
 import { assignUnitAction, removeAssignmentAction } from './assign-actions';
 import { DeleteContentButton } from './_components/DeleteContentButton';
+import { GenerateLessonButton } from './_components/GenerateLessonButton';
 
 export const dynamic = 'force-dynamic';
+// 문법 레슨 AI 생성(서버 액션)이 오래 걸려 시간 제한을 늘린다.
+export const maxDuration = 300;
 
 type Assignment = {
   id: string;
@@ -171,6 +174,13 @@ export default async function UnitDetailPage({
                         {(item.extra_data as { lesson?: { status?: string } }).lesson?.status === 'final' ? ' (확정됨)' : ' (초안)'}
                       </Link>
                     ) : null}
+                    {type === 'grammar_point' && (
+                      <GenerateLessonButton
+                        unitId={unitId}
+                        contentId={item.id}
+                        hasLesson={!!(item.extra_data as { lesson?: unknown } | null)?.lesson}
+                      />
+                    )}
                     <DeleteContentButton id={item.id} unitId={unitId} />
                   </div>
                 </div>

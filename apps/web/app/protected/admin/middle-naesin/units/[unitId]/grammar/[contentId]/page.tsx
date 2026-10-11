@@ -11,8 +11,10 @@ import {
   type GrammarLessonLevel,
 } from '@/models/middle-naesin/grammar-lesson';
 import { saveGrammarLessonAction, setGrammarLessonStatusAction } from '../../../../grammar-lesson-actions';
+import { GenerateLessonButton } from '../../_components/GenerateLessonButton';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 300;
 
 type Props = {
   params: Promise<{ unitId: string; contentId: string }>;
@@ -86,6 +88,7 @@ export default async function GrammarLessonReviewPage({ params, searchParams }: 
       {!lesson || !counts ? (
         <div className="space-y-2 rounded-2xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-800">
           <div className="font-semibold">레슨 데이터가 올바르지 않습니다.</div>
+          <GenerateLessonButton unitId={unitId} contentId={contentId} hasLesson />
           <ul className="list-disc pl-5">
             {('errors' in validation ? validation.errors : []).map((e, i) => (
               <li key={i}>{e}</li>
@@ -110,7 +113,8 @@ export default async function GrammarLessonReviewPage({ params, searchParams }: 
                 <div className="text-xs text-neutral-400">확정: {new Date(lesson.finalizedAt).toLocaleString('ko-KR')}</div>
               )}
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <GenerateLessonButton unitId={unitId} contentId={contentId} hasLesson />
               <Link
                 href={`/admin/middle-naesin/units/${unitId}/drill?section=grammar`}
                 className="rounded-xl border px-4 py-2 text-sm hover:bg-neutral-50"
