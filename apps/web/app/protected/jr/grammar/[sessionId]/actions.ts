@@ -1,5 +1,6 @@
 "use server";
 
+import { logActivity } from "@/lib/activityLog";
 import { getServiceSupabase } from "@/lib/supabase/service";
 
 export async function updateGrammarSessionProgressAction(
@@ -24,7 +25,7 @@ export async function updateGrammarSessionProgressAction(
   }
 }
 
-export async function completeGrammarSessionAction(sessionId: string) {
+async function completeGrammarSessionAction__impl(sessionId: string) {
   try {
     const supabase = getServiceSupabase();
     await supabase
@@ -99,4 +100,10 @@ export async function savePracticeLogAction(
     console.error("Failed to save practice log:", e);
     return { ok: false, error: e?.message };
   }
+}
+
+export async function completeGrammarSessionAction(...args: Parameters<typeof completeGrammarSessionAction__impl>): Promise<Awaited<ReturnType<typeof completeGrammarSessionAction__impl>>> {
+  const result = await completeGrammarSessionAction__impl(...args);
+  await logActivity("jr_grammar_complete");
+  return result;
 }

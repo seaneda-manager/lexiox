@@ -1,6 +1,7 @@
 // apps/web/app/(protected)/vocab/session/actions.ts
 "use server";
 
+import { logActivity } from "@/lib/activityLog";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
@@ -1004,7 +1005,7 @@ async function resolveAcademyStudentId(
   return null;
 }
 
-export async function completeVocabDayAction(input: {
+async function completeVocabDayAction__impl(input: {
   setId: string;
 }): Promise<CompleteVocabDayResult> {
   const empty: CompleteVocabDayResult = {
@@ -1349,4 +1350,10 @@ export async function saveVocabSessionProgressAction(input: {
     console.error("saveVocabSessionProgressAction exception:", toErrMsg(e));
     return { ok: false };
   }
+}
+
+export async function completeVocabDayAction(...args: Parameters<typeof completeVocabDayAction__impl>): Promise<Awaited<ReturnType<typeof completeVocabDayAction__impl>>> {
+  const result = await completeVocabDayAction__impl(...args);
+  await logActivity("vocab_day_complete");
+  return result;
 }

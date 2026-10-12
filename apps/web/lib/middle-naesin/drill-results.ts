@@ -1,5 +1,6 @@
 'use server';
 
+import { logActivity } from "@/lib/activityLog";
 import { getServerSupabase } from '@/lib/supabase/server';
 
 export const MIDDLE_NAESIN_DRILL_TYPES = [
@@ -33,7 +34,7 @@ type SaveParams = {
 
 // 관리자가 /admin/middle-naesin/units/[unitId]/drill 에서 미리보기용으로 풀 때는
 // 저장하지 않는다 — 실제 학생(student role)일 때만 기록한다.
-export async function saveMiddleNaesinDrillResultAction(params: SaveParams) {
+async function saveMiddleNaesinDrillResultAction__impl(params: SaveParams) {
   try {
     const supabase = await getServerSupabase();
     const {
@@ -88,4 +89,10 @@ export async function saveMiddleNaesinDrillResultAction(params: SaveParams) {
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : '저장 실패' };
   }
+}
+
+export async function saveMiddleNaesinDrillResultAction(...args: Parameters<typeof saveMiddleNaesinDrillResultAction__impl>): Promise<Awaited<ReturnType<typeof saveMiddleNaesinDrillResultAction__impl>>> {
+  const result = await saveMiddleNaesinDrillResultAction__impl(...args);
+  await logActivity("middle_naesin_drill_complete");
+  return result;
 }

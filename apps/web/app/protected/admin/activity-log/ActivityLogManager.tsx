@@ -14,7 +14,19 @@ type Entry = {
 
 const ACTION_LABEL: Record<string, string> = {
   login: '로그인',
+  logout: '로그아웃',
   page_view: '페이지 이동',
+  listening_finish: 'Listening 완료',
+  reading_finish: 'Reading 완료',
+  naesin_reading_finish: '내신 Reading 완료',
+  vocab_day_complete: '단어 Day 완료',
+  vocab_drill_complete: '단어 드릴 완료',
+  naesin_session_complete: '내신 세션 완료',
+  jr_grammar_complete: 'JR Grammar 완료',
+  jr_listening_complete: 'JR Listening 완료',
+  jr_reading_complete: 'JR Reading 완료',
+  exam_submit: '시험 제출',
+  middle_naesin_drill_complete: '중학내신 드릴 완료',
 };
 
 const ROLE_LABEL: Record<string, string> = { student: '학생', teacher: '선생님', admin: '관리자' };

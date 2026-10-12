@@ -1,5 +1,6 @@
 "use server";
 
+import { logActivity } from "@/lib/activityLog";
 import { getServiceSupabase } from "@/lib/supabase/service";
 
 export async function updateSessionProgressAction(
@@ -26,7 +27,7 @@ export async function updateSessionProgressAction(
   }
 }
 
-export async function completeSessionAction(sessionId: string) {
+async function completeSessionAction__impl(sessionId: string) {
   try {
     const supabase = getServiceSupabase();
     await supabase
@@ -196,4 +197,10 @@ export async function saveDiscussionLogAction(
     console.error("Failed to save discussion log:", e);
     return { ok: false, error: e?.message };
   }
+}
+
+export async function completeSessionAction(...args: Parameters<typeof completeSessionAction__impl>): Promise<Awaited<ReturnType<typeof completeSessionAction__impl>>> {
+  const result = await completeSessionAction__impl(...args);
+  await logActivity("jr_reading_complete");
+  return result;
 }

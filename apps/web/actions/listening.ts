@@ -1,6 +1,7 @@
 // apps/web/actions/listening.ts (?덉떆 ?꾩튂; ?꾩옱 ?뚯씪 ?꾩튂 ?좎? 媛??
 'use server';
 
+import { logActivity } from "@/lib/activityLog";
 import { getSupabaseServer } from '@/lib/supabaseServer';
 import type { Mode } from '@/lib/consumePlay';
 // ?꾩슂 ??吏㏃?/湲??쒓린 蹂?섏쓣 ?먰븳?ㅻ㈃ ?꾨옒 二쇱꽍 ?댁젣 ???ъ슜
@@ -75,7 +76,7 @@ export async function submitListeningAnswer(
 
 export type FinishListeningSessionArgs = { sessionId: string };
 
-export async function finishListeningSession(
+async function finishListeningSession__impl(
   { sessionId }: FinishListeningSessionArgs
 ): Promise<{ ok: true }> {
   const supabase = await getSupabaseServer();
@@ -92,3 +93,9 @@ export async function finishListeningSession(
 
 
 
+
+export async function finishListeningSession(...args: Parameters<typeof finishListeningSession__impl>): Promise<Awaited<ReturnType<typeof finishListeningSession__impl>>> {
+  const result = await finishListeningSession__impl(...args);
+  await logActivity("listening_finish");
+  return result;
+}

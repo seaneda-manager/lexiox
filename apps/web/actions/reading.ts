@@ -1,5 +1,6 @@
 "use server";
 
+import { logActivity } from "@/lib/activityLog";
 import { getSupabaseServer } from "@/lib/supabaseServer";
 import { readingSetSchema } from "@/models/reading/zod";
 import { z } from "zod";
@@ -305,7 +306,7 @@ export async function submitReadingAnswer(
   }
 }
 
-export async function finishReadingSession(arg: FinishReadingArgs | string | number) {
+async function finishReadingSession__impl(arg: FinishReadingArgs | string | number) {
   try {
     const supabase = await getSupabaseServer();
     const {
@@ -336,4 +337,9 @@ export async function finishReadingSession(arg: FinishReadingArgs | string | num
   } catch (e: any) {
     return { ok: false, error: supaMsg(e), sessionId: "" } as const;
   }
+}
+export async function finishReadingSession(...args: Parameters<typeof finishReadingSession__impl>): Promise<Awaited<ReturnType<typeof finishReadingSession__impl>>> {
+  const result = await finishReadingSession__impl(...args);
+  await logActivity("reading_finish");
+  return result;
 }

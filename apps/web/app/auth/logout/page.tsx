@@ -12,6 +12,11 @@ export default function LogoutPage() {
     let mounted = true;
     (async () => {
       try {
+        await fetch('/api/activity', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'logout', path: '/auth/logout' }),
+        }).catch(() => {});
         const { error } = await supabase.auth.signOut();
         if (error && mounted) setErr(error.message);
       } finally {

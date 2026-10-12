@@ -1,5 +1,6 @@
 "use server";
 
+import { logActivity } from "@/lib/activityLog";
 import { getServerSupabase } from "@/lib/supabase/server";
 
 export type DrillResultRow = {
@@ -15,7 +16,7 @@ export type SaveDrillResultsResult = { ok: boolean; saved: number; error?: strin
  * 드릴 문항 결과를 일괄 저장.
  * 저장 실패가 학습 흐름을 막으면 안 되므로 항상 ok 로 돌려주고 로그만 남긴다.
  */
-export async function saveDrillResultsAction(
+async function saveDrillResultsAction__impl(
   rows: DrillResultRow[],
 ): Promise<SaveDrillResultsResult> {
   try {
@@ -50,4 +51,10 @@ export async function saveDrillResultsAction(
     console.warn("[saveDrillResultsAction] exception:", e?.message ?? String(e));
     return { ok: false, saved: 0, error: "EXCEPTION" };
   }
+}
+
+export async function saveDrillResultsAction(...args: Parameters<typeof saveDrillResultsAction__impl>): Promise<Awaited<ReturnType<typeof saveDrillResultsAction__impl>>> {
+  const result = await saveDrillResultsAction__impl(...args);
+  await logActivity("vocab_drill_complete");
+  return result;
 }

@@ -1,6 +1,7 @@
 /* apps/web/actions/auth.ts */
 "use server";
 
+import { logActivity } from "@/lib/activityLog";
 import { redirect } from "next/navigation";
 import { cookies, headers } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
@@ -239,7 +240,7 @@ export async function signUpTeacher(formData: FormData): Promise<ActionState> {
 }
 
 /** Sign out */
-export async function signOut(): Promise<ActionState> {
+async function signOut__impl(): Promise<ActionState> {
   const supabase = await getSupabaseActionClient();
   const { error } = await supabase.auth.signOut();
   if (error) return { ok: false, error: sanitizeAuthError(error.message) };
@@ -267,4 +268,9 @@ function sanitizeAuthError(msg?: string | null) {
     return "Invalid email or password.";
   if (s.includes("email not confirmed")) return "Please confirm your email.";
   return msg || "Authentication failed.";
+}
+
+export async function signOut(...args: Parameters<typeof signOut__impl>): Promise<Awaited<ReturnType<typeof signOut__impl>>> {
+  await logActivity("logout"); // 세션이 끊기기 전에 기록
+  return await signOut__impl(...args);
 }

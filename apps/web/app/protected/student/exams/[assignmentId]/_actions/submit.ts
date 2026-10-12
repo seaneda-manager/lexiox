@@ -1,5 +1,6 @@
 'use server';
 
+import { logActivity } from "@/lib/activityLog";
 import { getServerSupabase } from '@/lib/supabase/server';
 
 export async function saveExamAnswers(
@@ -18,7 +19,7 @@ export async function saveExamAnswers(
   return {};
 }
 
-export async function submitExam(
+async function submitExam__impl(
   assignmentId: string,
   answers: Record<string, string>,
 ): Promise<{ error?: string }> {
@@ -37,4 +38,10 @@ export async function submitExam(
 
   if (error) return { error: error.message };
   return {};
+}
+
+export async function submitExam(...args: Parameters<typeof submitExam__impl>): Promise<Awaited<ReturnType<typeof submitExam__impl>>> {
+  const result = await submitExam__impl(...args);
+  await logActivity("exam_submit");
+  return result;
 }

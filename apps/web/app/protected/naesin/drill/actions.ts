@@ -1,5 +1,6 @@
 'use server';
 
+import { logActivity } from "@/lib/activityLog";
 import { redirect } from 'next/navigation';
 import { getServerSupabase } from '@/lib/supabase/server';
 
@@ -64,7 +65,7 @@ export async function saveNaesinSessionProgressAction(
   return { ok: true };
 }
 
-export async function completeNaesinSessionAction(
+async function completeNaesinSessionAction__impl(
   sessionId: string,
 ): Promise<{ ok: boolean; error?: string }> {
   const supabase = await getServerSupabase();
@@ -75,4 +76,10 @@ export async function completeNaesinSessionAction(
 
   if (error) return { ok: false, error: error.message };
   return { ok: true };
+}
+
+export async function completeNaesinSessionAction(...args: Parameters<typeof completeNaesinSessionAction__impl>): Promise<Awaited<ReturnType<typeof completeNaesinSessionAction__impl>>> {
+  const result = await completeNaesinSessionAction__impl(...args);
+  await logActivity("naesin_session_complete");
+  return result;
 }

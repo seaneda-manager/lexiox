@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServer } from '../../../lib/supabaseServer';
 
-const ALLOWED_ACTIONS = new Set(['page_view']);
+const ALLOWED_ACTIONS = new Set(['page_view', 'logout']);
 
 export async function POST(req: NextRequest) {
   const supabase = await getSupabaseServer();

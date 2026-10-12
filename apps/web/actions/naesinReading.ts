@@ -1,5 +1,6 @@
 "use server";
 
+import { logActivity } from "@/lib/activityLog";
 import { getServerSupabase } from "@/lib/supabase/server";
 import type {
   NReadingAnswerKey,
@@ -161,7 +162,7 @@ export async function submitNaesinReadingAnswer(
   }
 }
 
-export async function finishNaesinReadingSession(
+async function finishNaesinReadingSession__impl(
   input: FinishNaesinReadingSessionInput,
 ): Promise<ActionOk<{ sessionId: string }> | ActionFail> {
   try {
@@ -372,4 +373,10 @@ function normalizeMode(mode?: string): StartMode {
     default:
       return "test";
   }
+}
+
+export async function finishNaesinReadingSession(...args: Parameters<typeof finishNaesinReadingSession__impl>): Promise<Awaited<ReturnType<typeof finishNaesinReadingSession__impl>>> {
+  const result = await finishNaesinReadingSession__impl(...args);
+  await logActivity("naesin_reading_finish");
+  return result;
 }
