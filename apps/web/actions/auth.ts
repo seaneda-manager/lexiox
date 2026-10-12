@@ -130,6 +130,13 @@ export async function signInWithPassword(
         ip_address: ip,
         user_agent: h.get("user-agent"),
       });
+      await supabase.from("user_activity_log").insert({
+        user_id: data.user.id,
+        action: "login",
+        path: "/auth/login",
+        ip_address: ip,
+        user_agent: h.get("user-agent"),
+      });
     } catch (logErr) {
       console.error("[login_history] insert failed:", logErr);
     }

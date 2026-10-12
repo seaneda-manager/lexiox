@@ -8,6 +8,7 @@ import SidebarClient from '@/components/dashboard/SidebarClient';
 import SidebarProfile from '@/components/dashboard/SidebarProfile';
 import MobileLexioxTabBar from '@/components/dashboard/MobileLexioxTabBar';
 import PWAInstallBanner from '@/components/PWAInstallBanner';
+import ActivityTracker from '@/components/activity/ActivityTracker';
 import { isExamRoute } from '@/lib/utils/examRoute';
 
 type Role = 'student' | 'teacher' | 'admin';
@@ -67,6 +68,7 @@ export default function ProtectedLayoutClient({
 
   return (
     <div className="h-screen overflow-hidden grid grid-rows-[auto_1fr] bg-neutral-50 text-neutral-900" suppressHydrationWarning>
+      <ActivityTracker />
       <div>
         <TopbarClient email={email} role={role} />
       </div>
