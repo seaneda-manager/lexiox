@@ -72,14 +72,25 @@ export function buildGrammarClassify(
 }
 
 // ── 2. 단어(한→영) / 숙어(전치사 등 빈칸) ──────────────────────────────────
-export type WordQuiz = { items: { no: number; ko: string; answer: string }[]; skipped: number };
-export type PhraseQuiz = { items: { no: number; text: string; ko: string | null; answer: string }[] };
+// 단서(clue): 한글 뜻이 있으면 그것을, 없으면 사전 → 영영 정의 순으로 채운다.
+export type Clue = { text: string; kind: 'ko' | 'dict' | 'def' };
+export type WordQuiz = { items: { no: number; clue: Clue; answer: string }[] };
+export type PhraseQuiz = { items: { no: number; text: string; clue: Clue | null; answer: string }[] };
+export type KoLookup = (word: string) => string | null;
 
 const isPhrase = (w: string) => /\s/.test(w.trim()) && w.trim().split(/\s+/).length <= 5 && !/[.?!]$/.test(w.trim());
+const hasHangul = (s: string | null | undefined): s is string => !!s && /[가-힣]/.test(s);
 
-function koOf(v: MiddleDrillVocabItem): string | null {
+export function clueOf(v: MiddleDrillVocabItem, lookup?: KoLookup): Clue | null {
   const ko = v.koGloss ?? (v.kind === 'ko' ? v.definition : null);
-  return ko && /[가-힣]/.test(ko) ? ko : null;
+  if (hasHangul(ko)) return { text: ko, kind: 'ko' };
+  const dict = lookup?.(v.word.trim().toLowerCase());
+  if (hasHangul(dict)) return { text: dict, kind: 'dict' };
+  const def = (v.kind === 'en_en' ? v.definition : '').trim();
+  if (!def) return null;
+  // 정의 속에 정답 단어가 그대로 들어 있으면 가린다.
+  const masked = def.replace(new RegExp(`\\b${v.word.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\w*`, 'gi'), '____');
+  return { text: masked, kind: 'def' };
 }
 
 function uniqueVocab(vocab: MiddleDrillVocabItem[]): MiddleDrillVocabItem[] {
@@ -87,40 +98,59 @@ function uniqueVocab(vocab: MiddleDrillVocabItem[]): MiddleDrillVocabItem[] {
   for (const v of vocab) {
     const k = norm(v.word);
     const prev = m.get(k);
-    if (!prev || (!koOf(prev) && koOf(v))) m.set(k, v);
+    if (!prev || (!hasHangul(prev.koGloss) && hasHangul(v.koGloss))) m.set(k, v);
   }
   return [...m.values()];
 }
 
-export function buildWordQuiz(vocab: MiddleDrillVocabItem[], rng: Rng): WordQuiz | null {
-  const words = uniqueVocab(vocab).filter((v) => !isPhrase(v.word));
-  const withKo = words.filter((v) => koOf(v));
-  if (withKo.length === 0) return null;
-  const items = shuffle(withKo, rng).map((v, i) => ({ no: i + 1, ko: koOf(v)!, answer: v.word.trim() }));
-  return { items, skipped: words.length - withKo.length };
+export function buildWordQuiz(vocab: MiddleDrillVocabItem[], rng: Rng, lookup?: KoLookup): WordQuiz | null {
+  const items: { clue: Clue; answer: string }[] = [];
+  for (const v of uniqueVocab(vocab).filter((x) => !isPhrase(x.word))) {
+    const clue = clueOf(v, lookup);
+    if (clue) items.push({ clue, answer: v.word.trim() });
+  }
+  if (items.length === 0) return null;
+  return { items: shuffle(items, rng).map((x, i) => ({ no: i + 1, ...x })) };
 }
 
 const PARTICLES = new Set([
   'in', 'on', 'at', 'up', 'out', 'off', 'for', 'to', 'of', 'with', 'from', 'into', 'about', 'over', 'down',
   'away', 'back', 'by', 'after', 'along', 'around', 'through', 'against', 'across', 'behind', 'between', 'under',
 ]);
+// 비울 대상이 아닌 토큰(관사·대용어·기호)
+const NOT_BLANKABLE = new Set([
+  'a', 'an', 'the', 'to', 'sb', 'sth', 'sb\'s', 'one', 'ones', 'one\'s', 'oneself', 'someone', 'someone\'s', 'something',
+  'myself', 'yourself', 'himself', 'herself', 'itself', 'ourselves', 'themselves',
+]);
 
 export function blankPhrase(phrase: string, rng: Rng): { text: string; answer: string } {
   const tokens = phrase.trim().split(/\s+/);
   const clean = (t: string) => t.replace(/[^A-Za-z']/g, '').toLowerCase();
-  let cands = tokens.map((t, i) => i).filter((i) => i >= 1 && PARTICLES.has(clean(tokens[i])));
-  if (cands.length === 0) cands = tokens.map((t, i) => i).filter((i) => PARTICLES.has(clean(tokens[i])));
-  const idx = cands.length > 0 ? cands[Math.floor(rng() * cands.length)] : tokens.length - 1;
+  const all = tokens.map((_, i) => i);
+
+  // 1) 전치사·부사 (첫 단어보다 뒤의 것을 우선). 여러 개면 그중 무작위
+  let cands = all.filter((i) => i >= 1 && PARTICLES.has(clean(tokens[i])));
+  if (cands.length === 0) cands = all.filter((i) => PARTICLES.has(clean(tokens[i])));
+  if (cands.length > 0) {
+    const idx = cands[Math.floor(rng() * cands.length)];
+    return { text: tokens.map((t, i) => (i === idx ? '________' : t)).join(' '), answer: tokens[idx].replace(/[,.;]$/, '') };
+  }
+
+  // 2) 전치사가 없으면 핵심 단어(동사·명사 등)를 무작위로 비우되, 첫 글자를 힌트로 남긴다
+  const content = all.filter((i) => /[A-Za-z]/.test(tokens[i]) && !NOT_BLANKABLE.has(clean(tokens[i])) && !/^[~(…]/.test(tokens[i]));
+  const pool = content.length > 0 ? content : [tokens.length - 1];
+  const idx = pool[Math.floor(rng() * pool.length)];
   const answer = tokens[idx].replace(/[,.;]$/, '');
-  return { text: tokens.map((t, i) => (i === idx ? '________' : t)).join(' '), answer };
+  const blank = `${answer[0]}______`;
+  return { text: tokens.map((t, i) => (i === idx ? blank : t)).join(' '), answer };
 }
 
-export function buildPhraseQuiz(vocab: MiddleDrillVocabItem[], rng: Rng): PhraseQuiz | null {
+export function buildPhraseQuiz(vocab: MiddleDrillVocabItem[], rng: Rng, lookup?: KoLookup): PhraseQuiz | null {
   const phrases = uniqueVocab(vocab).filter((v) => isPhrase(v.word));
   if (phrases.length === 0) return null;
   const items = shuffle(phrases, rng).map((v, i) => {
     const b = blankPhrase(v.word, rng);
-    return { no: i + 1, text: b.text, ko: koOf(v), answer: b.answer };
+    return { no: i + 1, text: b.text, clue: clueOf(v, lookup), answer: b.answer };
   });
   return { items };
 }

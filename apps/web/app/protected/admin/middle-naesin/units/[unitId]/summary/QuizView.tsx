@@ -1,6 +1,16 @@
 import type { GrammarClassifyQuiz } from '@/lib/middle-naesin/summaryQuiz';
-import type { OrderQuiz, LabelItem } from '@/lib/middle-naesin/summaryQuiz';
+import type { OrderQuiz, LabelItem, Clue } from '@/lib/middle-naesin/summaryQuiz';
 import type { LessonQuizData } from './quizData';
+
+function ClueText({ clue }: { clue: Clue }) {
+  return clue.kind === 'def' ? (
+    <span className="italic text-neutral-700">
+      {clue.text} <span className="not-italic text-[10px] text-neutral-400">(영영)</span>
+    </span>
+  ) : (
+    <>{clue.text}</>
+  );
+}
 
 const Ans = ({ children }: { children: React.ReactNode }) => (
   <span className="answer-key ml-2 rounded bg-red-50 px-1.5 text-xs font-semibold text-red-600">{children}</span>
@@ -115,13 +125,15 @@ export function LessonQuizView({ quiz }: { quiz: LessonQuizData }) {
             {q.words.items.map((it) => (
               <li key={it.no} className="avoid-break mb-1">
                 <span className="mr-1 inline-block w-6 text-right text-xs text-neutral-500">{it.no}.</span>
-                {it.ko} → ____________
+                <ClueText clue={it.clue} /> → ____________
                 <Ans>{it.answer}</Ans>
               </li>
             ))}
           </ol>
-          {q.words.skipped > 0 && (
-            <p className="no-print text-[10px] text-amber-600">한글 뜻이 없는 단어 {q.words.skipped}개는 제외했습니다.</p>
+          {q.words.items.some((i) => i.clue.kind !== 'ko') && (
+            <p className="no-print text-[10px] text-amber-600">
+              한글 뜻이 없는 단어는 사전 뜻 또는 영영 정의로 대신했습니다. 인쇄 전 확인하세요.
+            </p>
           )}
         </Q>
       )}
@@ -132,7 +144,7 @@ export function LessonQuizView({ quiz }: { quiz: LessonQuizData }) {
             {q.phrases.items.map((it) => (
               <li key={it.no} className="avoid-break mb-1">
                 <span className="mr-1 inline-block w-6 text-right text-xs text-neutral-500">{it.no}.</span>
-                {it.text} {it.ko && <span className="text-xs text-neutral-500">({it.ko})</span>}
+                {it.text} {it.clue && <span className="text-xs text-neutral-500">(<ClueText clue={it.clue} />)</span>}
                 <Ans>{it.answer}</Ans>
               </li>
             ))}

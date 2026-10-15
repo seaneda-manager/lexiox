@@ -1,5 +1,6 @@
 import type { MiddleNaesinContent } from '@/models/middle-naesin';
 import type { MiddleNaesinDrillSections, MiddleNaesinDrillSection } from '@/components/middle-naesin/drill/types';
+import { TOEFL_DICTIONARY } from '@/lib/dictionary/words';
 import {
   makeRng,
   buildWordQuiz,
@@ -18,6 +19,8 @@ import type {
   ExpressionClassifyQuiz,
   LabelItem,
 } from '@/lib/middle-naesin/summaryQuiz';
+
+const lookup = (w: string) => TOEFL_DICTIONARY[w] ?? null;
 
 export type LessonQuizData = {
   words: WordQuiz | null;
@@ -44,8 +47,8 @@ export function buildLessonQuiz(
   const dialogueParts = partsOf(d.dialogue);
 
   return {
-    words: buildWordQuiz(d.vocab, rng('words')),
-    phrases: buildPhraseQuiz(d.vocab, rng('phrases')),
+    words: buildWordQuiz(d.vocab, rng('words'), lookup),
+    phrases: buildPhraseQuiz(d.vocab, rng('phrases'), lookup),
     expressions: buildExpressionClassify(keyGroups, rng('expr')),
     qaMatch: keyGroups.length === 0 ? buildQaMatch(dialogueParts, rng('qa')) : null,
     dialogueOrder: buildOrderQuizzes(dialogueParts, rng('dorder')),
