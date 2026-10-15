@@ -103,7 +103,7 @@ function LabelList({ items }: { items: LabelItem[] }) {
             <span className="ml-2 text-neutral-500">→ 정답 ( )</span>
             <Ans>{it.answer}</Ans>
           </p>
-          {it.auto && <p className="no-print mt-0.5 text-[10px] text-amber-600">자동 판별 문장입니다. 인쇄 전 확인하세요.</p>}
+          {it.auto && <p className="teacher-only no-print mt-0.5 text-[10px] text-amber-600">자동 판별 문장입니다. 인쇄 전 확인하세요.</p>}
         </li>
       ))}
     </ol>
@@ -131,7 +131,7 @@ export function LessonQuizView({ quiz }: { quiz: LessonQuizData }) {
             ))}
           </ol>
           {q.words.items.some((i) => i.clue.kind !== 'ko') && (
-            <p className="no-print text-[10px] text-amber-600">
+            <p className="teacher-only no-print text-[10px] text-amber-600">
               한글 뜻이 없는 단어는 사전 뜻 또는 영영 정의로 대신했습니다. 인쇄 전 확인하세요.
             </p>
           )}

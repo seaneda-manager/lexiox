@@ -39,6 +39,9 @@ export default async function UnitReadinessPage({
         <p className="mt-1 text-sm text-neutral-500">
           {unit.publisher} · {unit.semester}학기
         </p>
+        <Link href={`/naesin/middle/${unitId}/summary`} className="mt-3 inline-block text-xs font-medium text-emerald-600 hover:underline">
+          직전 요약 + 체크 퀴즈 보기 →
+        </Link>
         <p className="mt-3 text-sm text-neutral-500">
           각 항목을 눌러 단계를 진행하세요: <span className="font-medium text-neutral-700">수행 → check → test</span>.
           test까지 끝나면 준비 완료(readiness)로 표시됩니다.
