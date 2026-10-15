@@ -5,6 +5,7 @@ import type { MiddleNaesinUnit, MiddleNaesinContent } from '@/models/middle-naes
 import { buildDrillSections } from '@/components/middle-naesin/drill/types';
 import type { MiddleNaesinDrillSection, MiddleNaesinDrillSections, MiddleGrammarPoint } from '@/components/middle-naesin/drill/types';
 import type { MiddleDrillVocabItem } from '@/models/middle-naesin/drill';
+import { validateGrammarLesson } from '@/models/middle-naesin/grammar-lesson';
 import { PrintControls } from './PrintControls';
 import { GrammarClassifyView, LessonQuizView } from './QuizView';
 import { buildLessonQuiz } from './quizData';
@@ -105,6 +106,38 @@ export default async function UnitSummaryPage({
         </div>
       </header>
       <div className="no-print"><PrintControls /></div>
+
+      <details className="no-print rounded-lg border bg-neutral-50 p-3 text-xs">
+        <summary className="cursor-pointer font-medium text-neutral-600">문법 포인트 진단 (요약본에 안 보일 때 확인)</summary>
+        <div className="mt-2 space-y-2">
+          {drills.map(({ unit, own }) => (
+            <div key={unit.id}>
+              <div className="font-semibold">Lesson {unit.lesson_number}</div>
+              {own.filter((c) => c.content_type === 'grammar_point').length === 0 && (
+                <p className="text-neutral-500">등록된 문법 포인트가 없습니다.</p>
+              )}
+              <ul className="list-disc pl-5">
+                {own
+                  .filter((c) => c.content_type === 'grammar_point')
+                  .map((c) => {
+                    const raw = (c.extra_data as { lesson?: { status?: string } } | null)?.lesson;
+                    const check = raw ? validateGrammarLesson(raw) : null;
+                    return (
+                      <li key={c.id}>
+                        {c.title} —{' '}
+                        {!raw
+                          ? '레슨 데이터 없음(기존 방식 문법 포인트)'
+                          : check && !check.ok
+                            ? `⚠ 형식 오류로 레슨을 읽지 못함: ${check.errors.slice(0, 3).join(' / ')}`
+                            : `상태: ${raw.status === 'final' ? '확정' : '초안'}`}
+                      </li>
+                    );
+                  })}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </details>
 
       {drills.map(({ unit, d, own }) => (
         <LessonSummary key={unit.id} unit={unit} d={d} contents={own} />
