@@ -38,6 +38,34 @@ function normalizeExact(s: string): string {
     .trim();
 }
 
+// 모범 답안 재입력에서 봐주는 오류(단어) 개수. 문장이 길수록 조금 더 너그럽게 본다.
+// 짧은 문장(3단어 이하)은 오타 하나로 뜻이 달라지므로 그대로 일치해야 한다.
+function allowedErrors(reference: string): number {
+  const n = normalizeExact(reference).split(' ').filter(Boolean).length;
+  if (n < 4) return 0;
+  if (n < 8) return 1;
+  if (n < 12) return 2;
+  return 3;
+}
+
+// 단어 단위 편집 거리: 틀린 단어(철자 오류 포함) · 빠진 단어 · 더 쓴 단어를 각각 1개로 센다.
+function countWordErrors(input: string, reference: string): number {
+  const a = normalizeExact(input).split(' ').filter(Boolean);
+  const b = normalizeExact(reference).split(' ').filter(Boolean);
+  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    for (let j = 1; j <= b.length; j++) {
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    }
+    prev = cur;
+  }
+  return prev[b.length];
+}
+
+const retypeOk = (input: string, reference: string) =>
+  countWordErrors(input, reference) <= allowedErrors(reference);
+
 // 대화문 정답 앞의 화자 표시("Man :", "G :", "Dr. Schofield :")는 작문 대상이 아니므로 뺀다.
 // 한글 프롬프트에는 화자가 남아 있어서 누가 말하는지는 그대로 알 수 있다.
 function stripSpeaker(en: string): string {
@@ -74,7 +102,7 @@ export default function CompositionStage({ sentences: rawSentences, unitId }: Pr
 
   const checkRetype = (idx: number) => {
     update(idx, { retypeChecked: true });
-    if (normalizeExact(states[idx].retype) === normalizeExact(drillable[idx].en)) {
+    if (retypeOk(states[idx].retype, drillable[idx].en)) {
       focusNext(idx);
     }
   };
@@ -94,7 +122,7 @@ export default function CompositionStage({ sentences: rawSentences, unitId }: Pr
     const st = states[idx];
     return (
       isFirstTryCorrect(idx) ||
-      (st.retypeChecked && normalizeExact(st.retype) === normalizeExact(drillable[idx].en))
+      (st.retypeChecked && retypeOk(st.retype, drillable[idx].en))
     );
   };
 
@@ -107,14 +135,19 @@ export default function CompositionStage({ sentences: rawSentences, unitId }: Pr
       yourAnswer: st.retypeChecked ? st.retype : st.input,
       correctAnswer: sentence.en,
       isCorrect: passed,
-      explanation: passed && !isFirstTryCorrect(idx) ? '모범 답안 재입력으로 완료함' : undefined,
+      explanation:
+        passed && !isFirstTryCorrect(idx)
+          ? `모범 답안 재입력으로 완료함${
+              countWordErrors(st.retype, sentence.en) > 0 ? ` (오류 ${countWordErrors(st.retype, sentence.en)}개)` : ''
+            }`
+          : undefined,
     };
   });
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-white px-5 py-3 text-sm text-neutral-500">
-        <span>한국어를 보고 영어 문장을 작문하세요. 틀리면 모범 답안을 그대로 다시 입력해야 다음 문장으로 넘어갑니다.</span>
+        <span>한국어를 보고 영어 문장을 작문하세요. 틀리면 모범 답안을 다시 입력해야 다음 문장으로 넘어갑니다. (오타 등 작은 오류는 문장 길이에 따라 최대 3개까지 봐줍니다.)</span>
         <div className="flex shrink-0 items-center gap-3">
           <span className="font-semibold text-neutral-700">{passedCount}/{drillable.length}</span>
           {unitId && (
@@ -231,9 +264,10 @@ export default function CompositionStage({ sentences: rawSentences, unitId }: Pr
                   >
                     재입력 확인
                   </button>
-                  {st.retypeChecked && (
+                  {st.retypeChecked && !retypeOk(st.retype, sentence.en) && (
                     <span className="text-xs font-semibold text-amber-600">
-                      △ 모범 답안과 일치하지 않아요. 다시 입력하세요.
+                      △ 틀린 단어가 {countWordErrors(st.retype, sentence.en)}개예요 (
+                      {allowedErrors(sentence.en)}개까지 허용). 모범 답안과 비교해 다시 입력하세요.
                     </span>
                   )}
                 </div>

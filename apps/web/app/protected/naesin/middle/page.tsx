@@ -98,6 +98,9 @@ export default async function MiddleNaesinStudentPage() {
                   <Link href={`/naesin/middle/${u.id}/readiness`} className="text-xs font-medium text-violet-600 hover:underline">
                     시험대비 진행 →
                   </Link>
+                  <Link href={`/naesin/middle/${u.id}/summary`} className="text-xs font-medium text-emerald-600 hover:underline">
+                    직전 요약 →
+                  </Link>
                 </div>
               </div>
             ))}
