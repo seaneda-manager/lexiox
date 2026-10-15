@@ -1,6 +1,7 @@
 import type { GrammarClassifyQuiz } from '@/lib/middle-naesin/summaryQuiz';
 import type { OrderQuiz, LabelItem, Clue } from '@/lib/middle-naesin/summaryQuiz';
 import type { LessonQuizData } from './quizData';
+import { ChoiceList, MatchList, OrderList as InteractiveOrderList } from './InteractiveQuiz';
 
 function ClueText({ clue }: { clue: Clue }) {
   return clue.kind === 'def' ? (
@@ -16,20 +17,50 @@ const Ans = ({ children }: { children: React.ReactNode }) => (
   <span className="answer-key ml-2 rounded bg-red-50 px-1.5 text-xs font-semibold text-red-600">{children}</span>
 );
 
-function Q({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
+// 화면에서는 눌러서 푸는 interactive 를, 인쇄할 때는 쓰는 칸이 있는 정적 문제지(children)를 보여준다.
+function Q({
+  title,
+  hint,
+  screenHint,
+  interactive,
+  children,
+}: {
+  title: string;
+  hint?: string;
+  screenHint?: string;
+  interactive: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
     <section className="space-y-2">
       <h4 className="avoid-break border-b border-neutral-400 pb-0.5 text-sm font-semibold text-neutral-900">
-        {title} {hint && <span className="text-xs font-normal text-neutral-500">{hint}</span>}
+        {title}{' '}
+        <span className="print-only text-xs font-normal text-neutral-500">{hint}</span>
+        <span className="no-print text-xs font-normal text-neutral-500">{screenHint ?? hint}</span>
       </h4>
-      {children}
+      <div className="no-print">{interactive}</div>
+      <div className="print-only">{children}</div>
     </section>
   );
 }
 
 export function GrammarClassifyView({ quiz }: { quiz: GrammarClassifyQuiz }) {
   return (
-    <Q title="① 문법 분류" hint="각 문장/설명이 어느 문법인지 기호를 ( ) 안에 쓰세요.">
+    <Q
+      title="① 문법 분류"
+      hint="각 문장/설명이 어느 문법인지 기호를 ( ) 안에 쓰세요."
+      screenHint="각 문장/설명이 어느 문법인지 눌러서 고르세요."
+      interactive={
+        <ChoiceList
+          items={quiz.items.map((it) => ({
+            prompt: it.en,
+            sub: it.ko,
+            choices: quiz.options.map((o) => o.label),
+            answer: quiz.options.findIndex((o) => o.letter === it.answer),
+          }))}
+        />
+      }
+    >
       <ul className="avoid-break flex flex-wrap gap-x-5 gap-y-1 rounded bg-neutral-50 p-2 text-xs">
         {quiz.options.map((o) => (
           <li key={o.letter}>
@@ -120,7 +151,20 @@ export function LessonQuizView({ quiz }: { quiz: LessonQuizData }) {
   return (
     <div className="space-y-5">
       {q.words && (
-        <Q title="② 단어 (한 → 영)" hint="뜻을 보고 영어 단어를 쓰세요.">
+        <Q
+          title="② 단어 (한 → 영)"
+          hint="뜻을 보고 영어 단어를 쓰세요."
+          screenHint="뜻에 맞는 영어 단어를 고르세요."
+          interactive={
+            <ChoiceList
+              items={q.words.items.map((it) => ({
+                prompt: it.clue.kind === 'def' ? `${it.clue.text} (영영)` : it.clue.text,
+                choices: it.choices,
+                answer: it.choices.indexOf(it.answer),
+              }))}
+            />
+          }
+        >
           <ol className="columns-2 gap-6 text-sm">
             {q.words.items.map((it) => (
               <li key={it.no} className="avoid-break mb-1">
@@ -139,7 +183,21 @@ export function LessonQuizView({ quiz }: { quiz: LessonQuizData }) {
       )}
 
       {q.phrases && (
-        <Q title="③ 숙어 빈칸" hint="빈칸에 알맞은 전치사/부분을 쓰세요.">
+        <Q
+          title="③ 숙어 빈칸"
+          hint="빈칸에 알맞은 전치사/부분을 쓰세요."
+          screenHint="빈칸에 알맞은 말을 고르세요."
+          interactive={
+            <ChoiceList
+              items={q.phrases.items.map((it) => ({
+                prompt: it.text,
+                sub: it.clue ? `(${it.clue.text})` : null,
+                choices: it.choices,
+                answer: it.choices.indexOf(it.answer),
+              }))}
+            />
+          }
+        >
           <ol className="columns-2 gap-6 text-sm">
             {q.phrases.items.map((it) => (
               <li key={it.no} className="avoid-break mb-1">
@@ -153,7 +211,20 @@ export function LessonQuizView({ quiz }: { quiz: LessonQuizData }) {
       )}
 
       {q.expressions && (
-        <Q title="④ 대화문 주요 표현 분류" hint="각 표현이 어디에 속하는지 기호를 ( ) 안에 쓰세요.">
+        <Q
+          title="④ 대화문 주요 표현 분류"
+          hint="각 표현이 어디에 속하는지 기호를 ( ) 안에 쓰세요."
+          screenHint="각 표현이 어디에 속하는지 눌러서 고르세요."
+          interactive={
+            <ChoiceList
+              items={q.expressions.items.map((it) => ({
+                prompt: it.text,
+                choices: q.expressions!.options.map((o) => o.label),
+                answer: q.expressions!.options.findIndex((o) => o.letter === it.answer),
+              }))}
+            />
+          }
+        >
           <ul className="avoid-break flex flex-wrap gap-x-5 gap-y-1 rounded bg-neutral-50 p-2 text-xs">
             {q.expressions.options.map((o) => (
               <li key={o.letter}>
@@ -173,7 +244,18 @@ export function LessonQuizView({ quiz }: { quiz: LessonQuizData }) {
       )}
 
       {q.qaMatch && (
-        <Q title="④ 대화문 질문-응답 연결" hint="질문에 알맞은 응답의 기호를 쓰세요.">
+        <Q
+          title="④ 대화문 질문-응답 연결"
+          hint="질문에 알맞은 응답의 기호를 쓰세요."
+          screenHint="질문에 알맞은 응답을 고르세요."
+          interactive={
+            <MatchList
+              questions={q.qaMatch.questions.map((x) => x.text)}
+              replies={q.qaMatch.replies.map((r) => r.text)}
+              answerIdx={q.qaMatch.answerIdx}
+            />
+          }
+        >
           <div className="grid gap-4 text-sm sm:grid-cols-2">
             <ol className="space-y-1">
               {q.qaMatch.questions.map((it) => (
@@ -198,31 +280,72 @@ export function LessonQuizView({ quiz }: { quiz: LessonQuizData }) {
       )}
 
       {q.dialogueOrder.length > 0 && (
-        <Q title="⑤ 대화문 순서 배열" hint="처음 문장 다음에 이어질 순서대로 기호를 쓰세요.">
+        <Q
+          title="⑤ 대화문 순서 배열"
+          hint="처음 문장 다음에 이어질 순서대로 기호를 쓰세요."
+          screenHint="처음 문장 다음에 이어질 순서대로 문장을 눌러 고르세요."
+          interactive={<InteractiveOrderList items={q.dialogueOrder} />}
+        >
           <OrderList list={q.dialogueOrder} />
         </Q>
       )}
 
       {q.mainOrder.length > 0 && (
-        <Q title="⑥ 본문 순서 배열" hint="처음 문장 다음에 이어질 순서대로 기호를 쓰세요.">
+        <Q
+          title="⑥ 본문 순서 배열"
+          hint="처음 문장 다음에 이어질 순서대로 기호를 쓰세요."
+          screenHint="처음 문장 다음에 이어질 순서대로 문장을 눌러 고르세요."
+          interactive={<InteractiveOrderList items={q.mainOrder} />}
+        >
           <OrderList list={q.mainOrder} />
         </Q>
       )}
 
       {q.mainLabel.length > 0 && (
-        <Q title="⑦ 본문 문법 요소" hint="문장을 바르게 설명한 것을 고르세요.">
+        <Q
+          title="⑦ 본문 문법 요소"
+          hint="문장을 바르게 설명한 것을 고르세요."
+          interactive={
+            <ChoiceList
+              items={q.mainLabel.map((it) => ({
+                prompt: it.en,
+                sub: it.ko,
+                choices: [it.a, it.b],
+                answer: it.answer === 'A' ? 0 : 1,
+              }))}
+            />
+          }
+        >
           <LabelList items={q.mainLabel} />
         </Q>
       )}
 
       {q.moreOrder.length > 0 && (
-        <Q title="⑧ More Reading 순서 배열" hint="처음 문장 다음에 이어질 순서대로 기호를 쓰세요.">
+        <Q
+          title="⑧ More Reading 순서 배열"
+          hint="처음 문장 다음에 이어질 순서대로 기호를 쓰세요."
+          screenHint="처음 문장 다음에 이어질 순서대로 문장을 눌러 고르세요."
+          interactive={<InteractiveOrderList items={q.moreOrder} />}
+        >
           <OrderList list={q.moreOrder} />
         </Q>
       )}
 
       {q.moreLabel.length > 0 && (
-        <Q title="⑨ More Reading 문법 요소" hint="문장을 바르게 설명한 것을 고르세요.">
+        <Q
+          title="⑨ More Reading 문법 요소"
+          hint="문장을 바르게 설명한 것을 고르세요."
+          interactive={
+            <ChoiceList
+              items={q.moreLabel.map((it) => ({
+                prompt: it.en,
+                sub: it.ko,
+                choices: [it.a, it.b],
+                answer: it.answer === 'A' ? 0 : 1,
+              }))}
+            />
+          }
+        >
           <LabelList items={q.moreLabel} />
         </Q>
       )}

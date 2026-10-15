@@ -74,8 +74,8 @@ export function buildGrammarClassify(
 // ── 2. 단어(한→영) / 숙어(전치사 등 빈칸) ──────────────────────────────────
 // 단서(clue): 한글 뜻이 있으면 그것을, 없으면 사전 → 영영 정의 순으로 채운다.
 export type Clue = { text: string; kind: 'ko' | 'dict' | 'def' };
-export type WordQuiz = { items: { no: number; clue: Clue; answer: string }[] };
-export type PhraseQuiz = { items: { no: number; text: string; clue: Clue | null; answer: string }[] };
+export type WordQuiz = { items: { no: number; clue: Clue; answer: string; choices: string[] }[] };
+export type PhraseQuiz = { items: { no: number; text: string; clue: Clue | null; answer: string; choices: string[] }[] };
 export type KoLookup = (word: string) => string | null;
 
 const isPhrase = (w: string) => /\s/.test(w.trim()) && w.trim().split(/\s+/).length <= 5 && !/[.?!]$/.test(w.trim());
@@ -110,7 +110,20 @@ export function buildWordQuiz(vocab: MiddleDrillVocabItem[], rng: Rng, lookup?: 
     if (clue) items.push({ clue, answer: v.word.trim() });
   }
   if (items.length === 0) return null;
-  return { items: shuffle(items, rng).map((x, i) => ({ no: i + 1, ...x })) };
+  const pool = items.map((x) => x.answer);
+  return {
+    items: shuffle(items, rng).map((x, i) => ({
+      no: i + 1,
+      ...x,
+      choices: withDistractors(x.answer, pool, rng),
+    })),
+  };
+}
+
+// 정답 + 다른 보기(최대 3개)를 섞어 돌려준다. 클릭 선택형 퀴즈용.
+export function withDistractors(answer: string, pool: string[], rng: Rng, n = 3): string[] {
+  const others = [...new Set(pool.filter((w) => norm(w) !== norm(answer)))];
+  return shuffle([answer, ...shuffle(others, rng).slice(0, n)], rng);
 }
 
 const PARTICLES = new Set([
@@ -123,7 +136,7 @@ const NOT_BLANKABLE = new Set([
   'myself', 'yourself', 'himself', 'herself', 'itself', 'ourselves', 'themselves',
 ]);
 
-export function blankPhrase(phrase: string, rng: Rng): { text: string; answer: string } {
+export function blankPhrase(phrase: string, rng: Rng): { text: string; answer: string; particle: boolean } {
   const tokens = phrase.trim().split(/\s+/);
   const clean = (t: string) => t.replace(/[^A-Za-z']/g, '').toLowerCase();
   const all = tokens.map((_, i) => i);
@@ -133,7 +146,7 @@ export function blankPhrase(phrase: string, rng: Rng): { text: string; answer: s
   if (cands.length === 0) cands = all.filter((i) => PARTICLES.has(clean(tokens[i])));
   if (cands.length > 0) {
     const idx = cands[Math.floor(rng() * cands.length)];
-    return { text: tokens.map((t, i) => (i === idx ? '________' : t)).join(' '), answer: tokens[idx].replace(/[,.;]$/, '') };
+    return { text: tokens.map((t, i) => (i === idx ? '________' : t)).join(' '), answer: tokens[idx].replace(/[,.;]$/, ''), particle: true };
   }
 
   // 2) 전치사가 없으면 핵심 단어(동사·명사 등)를 무작위로 비우되, 첫 글자를 힌트로 남긴다
@@ -142,16 +155,23 @@ export function blankPhrase(phrase: string, rng: Rng): { text: string; answer: s
   const idx = pool[Math.floor(rng() * pool.length)];
   const answer = tokens[idx].replace(/[,.;]$/, '');
   const blank = `${answer[0]}______`;
-  return { text: tokens.map((t, i) => (i === idx ? blank : t)).join(' '), answer };
+  return { text: tokens.map((t, i) => (i === idx ? blank : t)).join(' '), answer, particle: false };
 }
 
 export function buildPhraseQuiz(vocab: MiddleDrillVocabItem[], rng: Rng, lookup?: KoLookup): PhraseQuiz | null {
   const phrases = uniqueVocab(vocab).filter((v) => isPhrase(v.word));
   if (phrases.length === 0) return null;
-  const items = shuffle(phrases, rng).map((v, i) => {
-    const b = blankPhrase(v.word, rng);
-    return { no: i + 1, text: b.text, clue: clueOf(v, lookup), answer: b.answer };
-  });
+  const blanks = shuffle(phrases, rng).map((v) => ({ v, b: blankPhrase(v.word, rng) }));
+  const wordPool = blanks.filter((x) => !x.b.particle).map((x) => x.b.answer);
+  const particlePool = [...PARTICLES];
+  const items = blanks.map(({ v, b }, i) => ({
+    no: i + 1,
+    text: b.text,
+    clue: clueOf(v, lookup),
+    answer: b.answer,
+    // 전치사 빈칸은 다른 전치사를, 핵심 단어 빈칸은 다른 숙어의 단어를 보기로 쓴다
+    choices: withDistractors(b.answer, b.particle ? particlePool : wordPool.length > 1 ? wordPool : particlePool, rng),
+  }));
   return { items };
 }
 
@@ -239,6 +259,7 @@ export type QaMatchQuiz = {
   questions: { no: number; text: string }[];
   replies: { letter: string; text: string }[];
   answer: string; // 예: "1-C, 2-A"
+  answerIdx: number[]; // 질문별 정답 응답의 replies 인덱스
 };
 
 const stripSpeaker = (s: string) => s.replace(/^\s*[A-Za-z가-힣]{1,10}\s*:\s*/, '').trim();
@@ -265,6 +286,7 @@ export function buildQaMatch(
     questions: pick.map((p, i) => ({ no: i + 1, text: p.q })),
     replies,
     answer: pick.map((_, i) => `${i + 1}-${letter(order.indexOf(i))}`).join(', '),
+    answerIdx: pick.map((_, i) => order.indexOf(i)),
   };
 }
 
