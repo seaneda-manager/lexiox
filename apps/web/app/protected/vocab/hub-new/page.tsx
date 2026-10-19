@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import RemedialNotice from "@/components/vocab/RemedialNotice";
 
 type Chapter = {
   chapterId: string;
@@ -436,6 +437,7 @@ export default function VocabHubNewPage() {
                       </div>
                     )}
                   </div>
+                  <RemedialNotice />
                 </div>
 
                 {/* 오늘의 문장 섹션 */}

@@ -16,6 +16,8 @@ export default function VocabTestPage() {
   const urlTrackId = params.get("track_id");
   const urlDay = params.get("day");
   const useWrongOnly = params.get("wrong_only") === "true";
+  // 복습시험: 필수 재학습(remedial task) id. 있으면 그 단어들로만 출제된다
+  const retestTaskId = params.get("retest");
 
   // track/day 는 URL 파라미터가 있으면 그걸 쓰고,
   // 없으면(사이드바 "단어 시험" 등 맨링크 진입) 학생 프로필+eligibility 로 해석한다.
@@ -104,10 +106,15 @@ export default function VocabTestPage() {
           track_id: trackId,
           day_number: parseInt(dayNumber),
           use_wrong_only: useWrongOnly,
+          remedial_task_id: retestTaskId ?? undefined,
         }),
       });
       if (!response.ok) {
         const errorData = await response.json();
+        if (errorData.error === "remedial_not_done") {
+          setNotReady(errorData.reason ?? "필수 재학습을 먼저 끝내야 복습시험을 볼 수 있어요.");
+          return;
+        }
         if (errorData.error === "already_taken") {
           const r = errorData.result ?? {};
           setNotReady(
@@ -263,12 +270,20 @@ export default function VocabTestPage() {
           <div className="text-4xl">📝</div>
           <p className="text-gray-800 text-lg font-bold">아직 시험을 볼 수 없어요</p>
           <p className="text-gray-500 text-sm">{notReady}</p>
-          <button
-            onClick={() => router.push("/vocab/hub-new")}
-            className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold"
-          >
-            단어 학습하러 가기
-          </button>
+          <div className="flex flex-col gap-2 pt-2">
+            <button
+              onClick={() => router.push("/vocab/remedial")}
+              className="px-4 py-2 bg-rose-600 text-white rounded-lg font-semibold"
+            >
+              필수 재학습 확인하기
+            </button>
+            <button
+              onClick={() => router.push("/vocab/hub-new")}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold"
+            >
+              단어 학습하러 가기
+            </button>
+          </div>
         </div>
       </FocusModeWrapper>
     );
@@ -341,8 +356,8 @@ export default function VocabTestPage() {
           <TestResultsScreen
             results={results}
             questions={questions}
-            onRetry={() => router.push(`/vocab/test?track_id=${trackId}&day=${dayNumber}`)}
             onHome={() => router.push("/vocab")}
+            onRemedial={() => router.push("/vocab/remedial")}
           />
         )}
       </div>

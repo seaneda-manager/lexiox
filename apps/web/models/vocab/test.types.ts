@@ -141,6 +141,8 @@ export type TestStartRequest = {
   track_id: string;
   day_number: number;
   use_wrong_only?: boolean; // "틀린 것만 보기" 옵션
+  /** 복습시험: 필수 재학습(vocab_remedial_tasks) 배정 id. 있으면 그 단어들로만 출제 */
+  remedial_task_id?: string;
 };
 
 export type TestStartResponse = {

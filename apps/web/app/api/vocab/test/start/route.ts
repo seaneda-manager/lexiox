@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     );
 
     const body: TestStartRequest = await req.json();
-    const { track_id, day_number, use_wrong_only = false } = body;
+    const { track_id, day_number, use_wrong_only = false, remedial_task_id } = body;
 
     if (!track_id || day_number === undefined) {
       return NextResponse.json(
@@ -110,7 +110,28 @@ export async function POST(req: NextRequest) {
     }
 
     // 3.5. 이미 응시한 시험이면 재시작 대신 결과 안내, 진행 중이면 이어하기 (타이머 리셋 방지)
-    const existing = await findExistingAttempt(admin, user.id, track_id, day_number, dayAssignment.id);
+    // 복습시험(retest): 필수 재학습을 끝낸(done) 배정에 대해서만, 그 단어들로만 출제
+    let retestTask: { id: string; word_ids: string[]; retest_session_id: string | null } | null = null;
+    if (remedial_task_id) {
+      const { data: task } = await admin
+        .from("vocab_remedial_tasks")
+        .select("id, student_id, track_id, day_index, status, word_ids, retest_session_id")
+        .eq("id", remedial_task_id)
+        .maybeSingle();
+      if (!task || task.student_id !== studentId || task.track_id !== track_id || task.day_index !== day_number) {
+        return NextResponse.json({ error: "Remedial task not found" }, { status: 404 });
+      }
+      if (task.status !== "done") {
+        return NextResponse.json(
+          { error: "remedial_not_done", reason: "필수 재학습을 먼저 끝내야 복습시험을 볼 수 있어요." },
+          { status: 403 }
+        );
+      }
+      retestTask = { id: task.id, word_ids: task.word_ids ?? [], retest_session_id: task.retest_session_id };
+    }
+    const attemptKind: "main" | "retest" = retestTask ? "retest" : "main";
+
+    const existing = await findExistingAttempt(admin, user.id, track_id, day_number, dayAssignment.id, attemptKind);
     if (existing.kind === "locked") {
       return NextResponse.json(
         { error: "already_taken", result: existing.result },
@@ -119,6 +140,20 @@ export async function POST(req: NextRequest) {
     }
     if (existing.kind === "resume") {
       return NextResponse.json(await buildResumeResponse(admin, existing.session, testConfig.pass_score));
+    }
+    if (retestTask?.retest_session_id) {
+      // 이 재학습 배정의 복습시험은 이미 응시했다 (불합격이면 새 재학습 배정이 만들어져 있다)
+      const { data: done } = await admin
+        .from("vocab_test_sessions")
+        .select("score, passed, pass_score, status")
+        .eq("id", retestTask.retest_session_id)
+        .maybeSingle();
+      if (done?.status === "graded") {
+        return NextResponse.json(
+          { error: "already_taken", result: { score: done.score, passed: done.passed, pass_score: done.pass_score } },
+          { status: 409 }
+        );
+      }
     }
 
     // Step 2: vocab_set_items에서 word_id들 찾기
@@ -136,10 +171,14 @@ export async function POST(req: NextRequest) {
     }
 
     const total_words_count = dayWords.length;
-    let wordIds = dayWords.map((w: any) => w.word_id);
+    let wordIds = retestTask ? retestTask.word_ids : dayWords.map((w: any) => w.word_id);
 
-    // 4. "틀린 것만 보기" 옵션 처리
-    if (use_wrong_only) {
+    if (retestTask && wordIds.length === 0) {
+      return NextResponse.json({ error: "No words in remedial task" }, { status: 404 });
+    }
+
+    // 4. "틀린 것만 보기" 옵션 처리 (복습시험은 재학습 단어가 이미 정해져 있어 해당 없음)
+    if (use_wrong_only && !retestTask) {
       const wrongCheckResult = await checkWrongOnlyOption(
         admin,
         studentId,
@@ -162,10 +201,12 @@ export async function POST(req: NextRequest) {
     const coverage_ratio = testConfig.coverage_ratio;
     const arrangement = testConfig.arrangement;
 
-    const words_count = Math.max(
-      Math.ceil((total_words_count * coverage_ratio) / 100),
-      Math.min(wordIds.length, dayWords.length)
-    );
+    const words_count = retestTask
+      ? wordIds.length
+      : Math.max(
+          Math.ceil((total_words_count * coverage_ratio) / 100),
+          Math.min(wordIds.length, dayWords.length)
+        );
 
     // 6.5. Class ID 조회 (academy_class_students.student_id는 auth uid를 참조함)
     const { data: membership } = await admin
@@ -185,7 +226,8 @@ export async function POST(req: NextRequest) {
       .select("id", { count: "exact", head: true })
       .eq("student_id", user.id)
       .eq("track_id", track_id)
-      .eq("day_number", day_number);
+      .eq("day_number", day_number)
+      .eq("kind", attemptKind);
 
     const startedAt = new Date();
     const { data: session, error: sessionError } = await admin
@@ -197,7 +239,7 @@ export async function POST(req: NextRequest) {
         class_id: membership?.class_id ?? "",
         track_id,
         day_number,
-        kind: "main",
+        kind: attemptKind,
         attempt_no: (previousAttempts ?? 0) + 1,
         pass_score: testConfig.pass_score,
         total_words_count,
@@ -214,7 +256,7 @@ export async function POST(req: NextRequest) {
     if (sessionError || !session) {
       // 동시에 두 번 눌러 같은 회차를 만든 경우: 먼저 만들어진 세션으로 이어하기
       if ((sessionError as any)?.code === "23505") {
-        const again = await findExistingAttempt(admin, user.id, track_id, day_number, dayAssignment.id);
+        const again = await findExistingAttempt(admin, user.id, track_id, day_number, dayAssignment.id, attemptKind);
         if (again.kind === "resume") {
           return NextResponse.json(await buildResumeResponse(admin, again.session, testConfig.pass_score));
         }
@@ -249,6 +291,13 @@ export async function POST(req: NextRequest) {
       .from("vocab_test_sessions")
       .update({ deadline_at: deadlineAt })
       .eq("id", session.id);
+
+    if (retestTask) {
+      await admin
+        .from("vocab_remedial_tasks")
+        .update({ retest_session_id: session.id, updated_at: new Date().toISOString() })
+        .eq("id", retestTask.id);
+    }
 
     return NextResponse.json({
       session_id: session.id,
@@ -357,7 +406,8 @@ async function findExistingAttempt(
   userId: string,
   trackId: string,
   dayNumber: number,
-  assignmentId: string
+  assignmentId: string,
+  kind: "main" | "retest"
 ): Promise<ExistingAttempt> {
   const { data: open } = await admin
     .from("vocab_test_sessions")
@@ -365,6 +415,7 @@ async function findExistingAttempt(
     .eq("student_id", userId)
     .eq("track_id", trackId)
     .eq("day_number", dayNumber)
+    .eq("kind", kind)
     .eq("status", "in_progress")
     .order("started_at", { ascending: false })
     .limit(1)
@@ -385,6 +436,9 @@ async function findExistingAttempt(
       await finalizeSession(admin, open.id, "timeout");
     }
   }
+
+  // 복습시험은 재학습 배정(task)마다 한 번이므로 여기서는 본시험만 잠근다
+  if (kind === "retest") return { kind: "none" };
 
   const { data: taken } = await admin
     .from("vocab_test_sessions")

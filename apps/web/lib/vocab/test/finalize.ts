@@ -1,6 +1,7 @@
 import type { TestSubmitResponse, VocabTestQuestion } from "@/models/vocab/test.types";
 import { POINTS_BASE } from "./scoring";
 import { DEFAULT_TEST_CONFIG } from "./config";
+import { applyTestOutcome } from "./cycle";
 
 export type EndedBy = "submit" | "timeout";
 
@@ -119,7 +120,16 @@ export async function finalizeSession(
     hints_used: session.hints_used,
   });
 
-  return toResponse(claimed[0], await loadQuestions(admin, sessionId), true);
+  const finalQuestions = await loadQuestions(admin, sessionId);
+
+  // 단어별 숙달 기록 + 불합격 시 필수 재학습 배정 (부가 작업: 실패해도 시험 결과는 유지)
+  try {
+    await applyTestOutcome(admin, claimed[0], finalQuestions);
+  } catch (error) {
+    console.warn("[vocab test] applyTestOutcome failed:", error);
+  }
+
+  return toResponse(claimed[0], finalQuestions, true);
 }
 
 async function awardTestPoints(

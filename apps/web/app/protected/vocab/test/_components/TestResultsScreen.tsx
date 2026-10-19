@@ -6,9 +6,9 @@ import type { TestSubmitResponse, VocabTestQuestion } from "@/models/vocab/test.
 export interface TestResultsScreenProps {
   results: TestSubmitResponse;
   questions: VocabTestQuestion[];
-  /** 본시험은 한 번만 응시하므로 더 이상 쓰지 않는다 (호환용) */
-  onRetry?: () => void;
   onHome: () => void;
+  /** 불합격 시 필수 재학습으로 이동 */
+  onRemedial?: () => void;
 }
 
 const questionTypeLabel: Record<string, string> = {
@@ -26,8 +26,8 @@ function readableAnswer(q: VocabTestQuestion, raw: string | null): string {
 export default function TestResultsScreen({
   results,
   questions,
-  onRetry,
   onHome,
+  onRemedial,
 }: TestResultsScreenProps) {
   const wrongQuestions = questions.filter((q) => q.is_correct === false);
 
@@ -119,6 +119,14 @@ export default function TestResultsScreen({
 
       {/* 액션 버튼 */}
       <div className="flex flex-col gap-3 w-full max-w-md">
+        {!results.passed && onRemedial && (
+          <button
+            onClick={onRemedial}
+            className="w-full px-6 py-3 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-lg transition"
+          >
+            필수 재학습 하러 가기
+          </button>
+        )}
         <div className="flex gap-4">
           <button
             onClick={onHome}
