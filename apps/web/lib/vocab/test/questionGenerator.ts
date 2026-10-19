@@ -19,12 +19,18 @@ export type WordData = {
  * - meaning_to_word (주관식): 뜻 → 단어
  * - synonym (객관식): 동의어 선택
  * - listening (객관식): 오디오 들고 뜻 선택
+ *
+ * enabledTypes 로 실제 출제할 유형을 고른다 (기본: 단어→뜻, 뜻→단어).
  */
+/** 학원 시험 기본 구성: 단어→뜻, 뜻→단어 (동의어/듣기는 선택 옵션) */
+export const DEFAULT_EXAM_QUESTION_TYPES: QuestionType[] = ["word_to_meaning", "meaning_to_word"];
+
 export async function generateTestQuestions(
   sessionId: string,
   wordIds: string[],
   wordDataMap: Map<string, WordData>,
-  arrangement: "grouped" | "random"
+  arrangement: "grouped" | "random",
+  enabledTypes: QuestionType[] = DEFAULT_EXAM_QUESTION_TYPES
 ): Promise<VocabTestQuestion[]> {
   let questionNumber = 1;
   const nextId = () => `q-${sessionId}-${questionNumber++}`;
@@ -208,26 +214,20 @@ export async function generateTestQuestions(
     }
   }
 
-  // 2. 배열 방식에 따라 정렬
+  // 2. 켜진 유형만 모아 배열 방식에 따라 정렬
+  const typeOrder: QuestionType[] = ["word_to_meaning", "meaning_to_word", "synonym", "listening"];
+  const enabled = new Set(enabledTypes);
+  const pooled = typeOrder.filter((t) => enabled.has(t)).flatMap((t) => byType[t]);
+
   let questions: VocabTestQuestion[];
 
   if (arrangement === "random") {
     // 모든 유형을 한 풀에 섞는다
-    questions = [
-      ...byType.word_to_meaning,
-      ...byType.meaning_to_word,
-      ...byType.synonym,
-      ...byType.listening,
-    ];
+    questions = pooled;
     shuffleArray(questions);
   } else {
     // grouped: 유형별 블록으로 이어붙인다 (블록 내부는 단어 순서 그대로)
-    questions = [
-      ...byType.word_to_meaning,
-      ...byType.meaning_to_word,
-      ...byType.synonym,
-      ...byType.listening,
-    ];
+    questions = pooled;
   }
 
   // 3. question_number 재정렬

@@ -6,6 +6,8 @@ import { createServerClient } from "@supabase/ssr";
 import { type HintRequest, type HintResponse } from "@/models/vocab/test.types";
 import { NextRequest, NextResponse } from "next/server";
 import { hintsAllowed, hintReveal, basePointsFor, MAX_HINT_LEVEL } from "@/lib/vocab/test/scoring";
+import { isSessionExpired } from "@/lib/vocab/test/config";
+import { finalizeSession } from "@/lib/vocab/test/finalize";
 
 /**
  * POST /api/vocab/test/hint
@@ -62,6 +64,14 @@ export async function POST(req: NextRequest) {
         { error: "Session not found or unauthorized" },
         { status: 404 }
       );
+    }
+
+    if (session.status !== "in_progress") {
+      return NextResponse.json({ error: "session_closed" }, { status: 409 });
+    }
+    if (isSessionExpired(session)) {
+      await finalizeSession(admin, session_id, "timeout");
+      return NextResponse.json({ error: "time_expired" }, { status: 409 });
     }
 
     // 2. 문제 조회

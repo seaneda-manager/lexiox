@@ -15,6 +15,10 @@ export type VocabTestConfig = {
   scope_id: string | null;
   coverage_ratio: number; // 30-100
   arrangement: QuestionArrangement;
+  pass_score: number; // 통과 기준 (정답률 %, 기본 80)
+  seconds_per_question: number;
+  max_total_minutes: number;
+  enable_listen_spell: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -29,12 +33,23 @@ export type TestSessionStatus =
   | "submitted"
   | "graded";
 
+export type TestKind = "main" | "retest";
+export type TestEndedBy = "submit" | "timeout";
+
 export type VocabTestSession = {
   id: string;
   student_id: string;
   class_id: string;
   track_id: string;
   day_number: number;
+
+  kind: TestKind;
+  attempt_no: number;
+  assignment_id: string | null;
+  deadline_at: string | null; // 서버 기준 마감 시각
+  pass_score: number | null; // 이 시험에 적용된 통과 기준(스냅샷)
+  passed: boolean | null;
+  ended_by: TestEndedBy | null;
 
   total_words_count: number; // Day의 전체 단어 수
   words_count: number; // 실제 시험에 포함된 단어 수
@@ -132,6 +147,16 @@ export type TestStartResponse = {
   session_id: string;
   questions: VocabTestQuestion[];
   total_count: number;
+  /** 서버 기준 남은 시간(초). 클라이언트 시계와 무관하게 이 값에서 카운트다운한다 */
+  remaining_seconds: number | null;
+  time_limit_seconds: number | null;
+  pass_score: number;
+  /** 이어하기일 때 복원할 상태 */
+  resumed?: boolean;
+  hint_reveals?: Record<string, string>;
+  current_streak?: number;
+  best_streak?: number;
+  total_points?: number;
 };
 
 export type AnswerSubmitRequest = {
@@ -143,6 +168,8 @@ export type AnswerSubmitRequest = {
 export type AnswerSubmitResponse = {
   question_id: string;
   is_correct: boolean;
+  /** 답을 낸 뒤에만 공개되는 정답 정보 */
+  reveal: { correct_answer: string; meaning_ko: string[] | null };
   base_points: number;
   streak_bonus: number;
   points_earned: number;
@@ -177,6 +204,11 @@ export type TestSubmitResponse = {
   max_points: number;
   best_streak: number;
   hints_used: number;
+  passed: boolean;
+  pass_score: number;
+  ended_by: TestEndedBy;
+  /** 채점 확정 후의 전체 문제(정답 포함) — 결과/오답 화면용 */
+  questions?: VocabTestQuestion[];
 };
 
 // ─────────────────────────────────────────────────────

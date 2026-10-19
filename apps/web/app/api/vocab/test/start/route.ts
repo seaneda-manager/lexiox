@@ -5,6 +5,15 @@ import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import { type TestStartRequest, type TestStartResponse } from "@/models/vocab/test.types";
 import { NextRequest, NextResponse } from "next/server";
+import type { QuestionType, VocabTestQuestion } from "@/models/vocab/test.types";
+import {
+  computeTimeLimitSeconds,
+  isSessionExpired,
+  remainingSeconds,
+  resolveTestConfig,
+} from "@/lib/vocab/test/config";
+import { finalizeSession } from "@/lib/vocab/test/finalize";
+import { rebuildHintReveals, redactQuestionForClient } from "@/lib/vocab/test/redact";
 
 /**
  * POST /api/vocab/test/start
@@ -58,6 +67,9 @@ export async function POST(req: NextRequest) {
 
     const studentId = studentRow?.id ?? user.id;
 
+    // 시험 설정 (코드 기본값 < global < student). scope_id 는 auth uid / academy id 어느 쪽이든 매칭
+    const testConfig = await resolveTestConfig(admin, [user.id, studentId]);
+
     // 2. Day의 단어 목록 가져오기
     // Step 1: student_vocab_assignments에서 set_id 찾기 (학습 완료 확인에도 필요해서 먼저 조회)
     const { data: dayAssignment, error: dayAssignmentError } = await admin
@@ -76,13 +88,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. Admin 설정에서 학습 확인 스킵 여부 확인
-    const { data: config } = await admin
-      .from("vocab_test_configs")
-      .select("skip_learning_check")
-      .eq("scope", "global")
-      .single();
-
-    const skipLearningCheck = config?.skip_learning_check ?? false;
+    const skipLearningCheck = testConfig.skip_learning_check;
 
     // 학습 완료 상태 확인 (skip_learning_check가 false일 때만)
     // 권위 신호: 해당 Day assignment.completed_at (깜지까지 끝내면 completeVocabDayAction이 기록).
@@ -101,6 +107,18 @@ export async function POST(req: NextRequest) {
           { status: 403 }
         );
       }
+    }
+
+    // 3.5. 이미 응시한 시험이면 재시작 대신 결과 안내, 진행 중이면 이어하기 (타이머 리셋 방지)
+    const existing = await findExistingAttempt(admin, user.id, track_id, day_number, dayAssignment.id);
+    if (existing.kind === "locked") {
+      return NextResponse.json(
+        { error: "already_taken", result: existing.result },
+        { status: 409 }
+      );
+    }
+    if (existing.kind === "resume") {
+      return NextResponse.json(await buildResumeResponse(admin, existing.session, testConfig.pass_score));
     }
 
     // Step 2: vocab_set_items에서 word_id들 찾기
@@ -140,10 +158,9 @@ export async function POST(req: NextRequest) {
       wordIds = wrongCheckResult.wordIds!;
     }
 
-    // 5. 포함 범위 결정
-    const configResult = await getTestConfig(admin, user.id);
-    const coverage_ratio = configResult.coverage_ratio;
-    const arrangement = configResult.arrangement;
+    // 5. 포함 범위 결정 (학원 시험은 기본적으로 Day 전체 단어)
+    const coverage_ratio = testConfig.coverage_ratio;
+    const arrangement = testConfig.arrangement;
 
     const words_count = Math.max(
       Math.ceil((total_words_count * coverage_ratio) / 100),
@@ -159,24 +176,49 @@ export async function POST(req: NextRequest) {
       .limit(1)
       .maybeSingle();
 
-    // 7. 시험 세션 생성
+    // 출제 유형: 기본은 단어→뜻 / 뜻→단어. 듣고 쓰기 옵션은 PR4(listen_spell) 전까지 미출제
+    const enabledTypes: QuestionType[] = ["word_to_meaning", "meaning_to_word"];
+
+    // 7. 시험 세션 생성 (마감 시각은 문제 수가 정해진 뒤 기록)
+    const { count: previousAttempts } = await admin
+      .from("vocab_test_sessions")
+      .select("id", { count: "exact", head: true })
+      .eq("student_id", user.id)
+      .eq("track_id", track_id)
+      .eq("day_number", day_number);
+
+    const startedAt = new Date();
     const { data: session, error: sessionError } = await admin
       .from("vocab_test_sessions")
       .insert({
         student_id: user.id,
+        academy_student_id: studentRow?.id ?? null,
+        assignment_id: dayAssignment.id,
         class_id: membership?.class_id ?? "",
         track_id,
         day_number,
+        kind: "main",
+        attempt_no: (previousAttempts ?? 0) + 1,
+        pass_score: testConfig.pass_score,
         total_words_count,
         words_count,
         use_wrong_only,
         status: "in_progress",
-        started_at: new Date().toISOString(),
+        started_at: startedAt.toISOString(),
+        // 문제 생성 중 실패해도 무기한 열려 있지 않도록 임시 마감(상한)을 먼저 걸어 둔다
+        deadline_at: new Date(startedAt.getTime() + testConfig.max_total_minutes * 60 * 1000).toISOString(),
       })
       .select()
       .single();
 
     if (sessionError || !session) {
+      // 동시에 두 번 눌러 같은 회차를 만든 경우: 먼저 만들어진 세션으로 이어하기
+      if ((sessionError as any)?.code === "23505") {
+        const again = await findExistingAttempt(admin, user.id, track_id, day_number, dayAssignment.id);
+        if (again.kind === "resume") {
+          return NextResponse.json(await buildResumeResponse(admin, again.session, testConfig.pass_score));
+        }
+      }
       return NextResponse.json(
         { error: "Failed to create test session" },
         { status: 500 }
@@ -188,13 +230,33 @@ export async function POST(req: NextRequest) {
       admin,
       session.id,
       wordIds.slice(0, words_count),
-      arrangement
+      arrangement,
+      enabledTypes
     );
+
+    if (questions.length === 0) {
+      await admin.from("vocab_test_sessions").delete().eq("id", session.id);
+      return NextResponse.json(
+        { error: "Failed to generate questions" },
+        { status: 500 }
+      );
+    }
+
+    // 9. 서버 기준 마감 시각 기록 (새로고침/다른 기기로도 리셋되지 않음)
+    const timeLimitSeconds = computeTimeLimitSeconds(questions.length, testConfig);
+    const deadlineAt = new Date(startedAt.getTime() + timeLimitSeconds * 1000).toISOString();
+    await admin
+      .from("vocab_test_sessions")
+      .update({ deadline_at: deadlineAt })
+      .eq("id", session.id);
 
     return NextResponse.json({
       session_id: session.id,
-      questions,
+      questions: questions.map(redactQuestionForClient),
       total_count: questions.length,
+      remaining_seconds: timeLimitSeconds,
+      time_limit_seconds: timeLimitSeconds,
+      pass_score: testConfig.pass_score,
     } as TestStartResponse);
   } catch (error) {
     console.error("Test start error:", error);
@@ -278,42 +340,106 @@ async function checkWrongOnlyOption(
   return { ok: true, wordIds: attempts.wrong_word_ids };
 }
 
-async function getTestConfig(admin: any, userId: string): Promise<{
-  coverage_ratio: number;
-  arrangement: string;
-}> {
-  // 1. Global 설정 조회
-  const { data: global_config } = await admin
-    .from("vocab_test_configs")
-    .select("coverage_ratio, arrangement")
-    .eq("scope", "global")
-    .single();
+type ExistingAttempt =
+  | { kind: "none" }
+  | { kind: "resume"; session: any }
+  | { kind: "locked"; result: { score: number | null; passed: boolean | null; pass_score: number | null } };
 
-  let coverage_ratio = global_config?.coverage_ratio ?? 70;
-  let arrangement = global_config?.arrangement ?? "grouped";
+/**
+ * 같은 Day 시험의 기존 응시 상태를 판단한다.
+ * - 진행 중(in_progress) + 마감 전: 이어하기
+ * - 진행 중 + 마감 후: 시간 만료로 채점 확정 → 응시 완료 처리
+ * - 새 규칙(passed 기록 있음)으로 채점된 본시험이 이 배정에 있으면 재응시 불가(locked).
+ *   passed 가 null 인 구 데이터 세션은 잠금 대상이 아니다.
+ */
+async function findExistingAttempt(
+  admin: any,
+  userId: string,
+  trackId: string,
+  dayNumber: number,
+  assignmentId: string
+): Promise<ExistingAttempt> {
+  const { data: open } = await admin
+    .from("vocab_test_sessions")
+    .select("*")
+    .eq("student_id", userId)
+    .eq("track_id", trackId)
+    .eq("day_number", dayNumber)
+    .eq("status", "in_progress")
+    .order("started_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
-  // 2. Student 개별 설정 오버라이드
-  const { data: student_config } = await admin
-    .from("vocab_test_configs")
-    .select("coverage_ratio, arrangement")
-    .eq("scope", "student")
-    .eq("scope_id", userId)
-    .single();
-
-  if (student_config) {
-    coverage_ratio = student_config.coverage_ratio;
-    arrangement = student_config.arrangement;
+  if (open) {
+    if (!isSessionExpired(open)) {
+      const { count: questionCount } = await admin
+        .from("vocab_test_questions")
+        .select("id", { count: "exact", head: true })
+        .eq("session_id", open.id);
+      if ((questionCount ?? 0) > 0) {
+        return { kind: "resume", session: open };
+      }
+      // 문제 생성에 실패한 빈 세션: 버리고 새로 시작
+      await admin.from("vocab_test_sessions").delete().eq("id", open.id);
+    } else {
+      await finalizeSession(admin, open.id, "timeout");
+    }
   }
 
-  return { coverage_ratio, arrangement };
+  const { data: taken } = await admin
+    .from("vocab_test_sessions")
+    .select("score, passed, pass_score")
+    .eq("student_id", userId)
+    .eq("assignment_id", assignmentId)
+    .eq("kind", "main")
+    .eq("status", "graded")
+    .not("passed", "is", null)
+    .order("submitted_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (taken) {
+    return {
+      kind: "locked",
+      result: { score: taken.score, passed: taken.passed, pass_score: taken.pass_score },
+    };
+  }
+  return { kind: "none" };
+}
+
+async function buildResumeResponse(admin: any, session: any, fallbackPassScore: number): Promise<TestStartResponse> {
+  const { data: rows } = await admin
+    .from("vocab_test_questions")
+    .select("*")
+    .eq("session_id", session.id)
+    .order("question_number", { ascending: true });
+  const questions = (rows ?? []) as VocabTestQuestion[];
+
+  return {
+    session_id: session.id,
+    questions: questions.map(redactQuestionForClient),
+    total_count: questions.length,
+    remaining_seconds: remainingSeconds(session),
+    time_limit_seconds:
+      session.deadline_at && session.started_at
+        ? Math.round((new Date(session.deadline_at).getTime() - new Date(session.started_at).getTime()) / 1000)
+        : null,
+    pass_score: session.pass_score ?? fallbackPassScore,
+    resumed: true,
+    hint_reveals: rebuildHintReveals(questions),
+    current_streak: session.current_streak ?? 0,
+    best_streak: session.best_streak ?? 0,
+    total_points: session.total_points ?? 0,
+  };
 }
 
 async function generateQuestions(
   admin: any,
   sessionId: string,
   wordIds: string[],
-  arrangement: string
-): Promise<any[]> {
+  arrangement: string,
+  enabledTypes: QuestionType[]
+): Promise<VocabTestQuestion[]> {
   try {
     const { generateTestQuestions } = await import("@/lib/vocab/test/questionGenerator");
 
@@ -364,7 +490,8 @@ async function generateQuestions(
       sessionId,
       wordIds,
       wordDataMap,
-      arrangement as "grouped" | "random"
+      arrangement as "grouped" | "random",
+      enabledTypes
     );
 
     // 3. DB에 저장

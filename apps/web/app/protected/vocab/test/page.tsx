@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import type { VocabTestQuestion, TestSubmitResponse } from "@/models/vocab/test.types";
+import type { VocabTestQuestion, TestSubmitResponse, TestStartResponse, AnswerSubmitResponse } from "@/models/vocab/test.types";
 import FocusModeWrapper from "@/components/common/FocusModeWrapper";
 import StageBackground from "@/components/common/StageBackground";
 import MascotLayer from "@/components/common/MascotLayer";
@@ -34,6 +34,12 @@ export default function VocabTestPage() {
   const [bestStreak, setBestStreak] = useState(0);
   const [sessionPoints, setSessionPoints] = useState(0);
   const [hintReveals, setHintReveals] = useState<Record<string, string>>({});
+  // 서버가 내려준 남은 시간에서 카운트다운한다 (클라이언트 시계 조작/불일치 무관)
+  const [deadlineMs, setDeadlineMs] = useState<number | null>(null);
+  const [remaining, setRemaining] = useState<number | null>(null);
+  const [passScore, setPassScore] = useState(80);
+  const autoSubmitted = useRef(false);
+  const submitRef = useRef<() => void>(() => {});
 
   useEffect(() => {
     let cancelled = false;
@@ -102,16 +108,34 @@ export default function VocabTestPage() {
       });
       if (!response.ok) {
         const errorData = await response.json();
+        if (errorData.error === "already_taken") {
+          const r = errorData.result ?? {};
+          setNotReady(
+            `이 Day 시험은 이미 응시했어요. 점수 ${r.score ?? "-"}점` +
+              (r.passed === true ? " (통과)" : r.passed === false ? ` (통과 기준 ${r.pass_score ?? 80}점 미달 — 선생님 안내에 따라 다시 학습해요)` : ""),
+          );
+          return;
+        }
         throw new Error(errorData.error || "Failed to start test");
       }
-      const data = await response.json();
+      const data: TestStartResponse = await response.json();
       setSessionId(data.session_id);
       setQuestions(data.questions);
-      setSelectedQuestionIdx(0);
-      setStreak(0);
-      setBestStreak(0);
-      setSessionPoints(0);
-      setHintReveals({});
+      const firstUnanswered = data.questions.findIndex((q) => q.is_correct === null);
+      setSelectedQuestionIdx(firstUnanswered === -1 ? 0 : firstUnanswered);
+      setStreak(data.current_streak ?? 0);
+      setBestStreak(data.best_streak ?? 0);
+      setSessionPoints(data.total_points ?? 0);
+      setHintReveals(data.hint_reveals ?? {});
+      setPassScore(data.pass_score);
+      autoSubmitted.current = false;
+      if (data.remaining_seconds != null) {
+        setDeadlineMs(Date.now() + data.remaining_seconds * 1000);
+        setRemaining(data.remaining_seconds);
+      } else {
+        setDeadlineMs(null);
+        setRemaining(null);
+      }
       setState("testing");
     } catch (err: any) {
       setError(err.message || "Failed to start test");
@@ -132,16 +156,32 @@ export default function VocabTestPage() {
           answer,
         }),
       });
+      if (response.status === 409) {
+        // 시간 만료/이미 종료: 서버가 채점을 확정했으므로 결과 화면으로 보낸다
+        const body = await response.json().catch(() => ({}));
+        if (body.error === "time_expired" || body.error === "session_closed") {
+          submitRef.current();
+          return;
+        }
+      }
       if (!response.ok) throw new Error("Failed to submit answer");
-      const answerResult = await response.json();
+      const answerResult: AnswerSubmitResponse = await response.json();
       setQuestions(prev => {
         const newQuestions = [...prev];
+        const current = newQuestions[questionIdx];
+        const correctId = answerResult.reveal.correct_answer;
         newQuestions[questionIdx] = {
-          ...newQuestions[questionIdx],
+          ...current,
           student_answer: answer,
           is_correct: answerResult.is_correct,
           points_earned: answerResult.points_earned,
           streak_bonus: answerResult.streak_bonus,
+          // 정답 정보는 답을 낸 뒤에만 서버가 내려준다
+          correct_answer: correctId,
+          meaning_ko: answerResult.reveal.meaning_ko ?? current.meaning_ko,
+          options: current.options
+            ? current.options.map((o) => ({ ...o, is_correct: o.id === correctId }))
+            : current.options,
         };
         return newQuestions;
       });
@@ -188,13 +228,33 @@ export default function VocabTestPage() {
         body: JSON.stringify({ session_id: sessionId }),
       });
       if (!response.ok) throw new Error("Failed to submit test");
-      const data = await response.json();
+      const data: TestSubmitResponse = await response.json();
+      if (data.questions) setQuestions(data.questions);
       setResults(data);
+      setDeadlineMs(null);
       setState("results");
     } catch (err: any) {
       setError(err.message || "Failed to submit test");
     }
   };
+
+  submitRef.current = () => {
+    if (autoSubmitted.current) return;
+    autoSubmitted.current = true;
+    handleSubmitTest();
+  };
+
+  useEffect(() => {
+    if (state !== "testing" || deadlineMs == null) return;
+    const tick = () => {
+      const left = Math.max(0, Math.ceil((deadlineMs - Date.now()) / 1000));
+      setRemaining(left);
+      if (left <= 0) submitRef.current();
+    };
+    tick();
+    const id = setInterval(tick, 500);
+    return () => clearInterval(id);
+  }, [state, deadlineMs]);
 
   if (notReady) {
     return (
@@ -245,6 +305,19 @@ export default function VocabTestPage() {
         )}
         {state === "testing" && sessionId && (
           <div className="max-w-2xl mx-auto">
+            {remaining != null && (
+              <div
+                className={`mb-3 flex items-center justify-between rounded-lg px-4 py-2 text-sm font-semibold ${
+                  remaining <= 60 ? "bg-red-100 text-red-700" : "bg-white/80 text-gray-700"
+                }`}
+              >
+                <span>남은 시간</span>
+                <span className="tabular-nums">
+                  {Math.floor(remaining / 60)}:{String(remaining % 60).padStart(2, "0")}
+                </span>
+                <span className="text-xs font-normal text-gray-500">통과 {passScore}점</span>
+              </div>
+            )}
             {questions[selectedQuestionIdx] && (
               <TestQuestionPanel
                 key={questions[selectedQuestionIdx].id}

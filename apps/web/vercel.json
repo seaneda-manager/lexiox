@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/exam-mode-check",
       "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/vocab-test-expire",
+      "schedule": "0 18 * * *"
     }
   ]
 }

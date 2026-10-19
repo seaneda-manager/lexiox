@@ -6,7 +6,8 @@ import type { TestSubmitResponse, VocabTestQuestion } from "@/models/vocab/test.
 export interface TestResultsScreenProps {
   results: TestSubmitResponse;
   questions: VocabTestQuestion[];
-  onRetry: () => void;
+  /** 본시험은 한 번만 응시하므로 더 이상 쓰지 않는다 (호환용) */
+  onRetry?: () => void;
   onHome: () => void;
 }
 
@@ -48,7 +49,18 @@ export default function TestResultsScreen({
     <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-8">
       {/* 성적 표시 */}
       <div className={`${getScoreBg(results.score)} rounded-xl p-8 max-w-md w-full`}>
-        <p className="text-gray-600 text-sm mb-4 text-center">시험 완료</p>
+        <p className="text-gray-600 text-sm mb-2 text-center">
+          {results.ended_by === "timeout" ? "시간 종료" : "시험 완료"}
+        </p>
+        <p
+          className={`text-center text-lg font-bold mb-4 ${
+            results.passed ? "text-green-700" : "text-red-700"
+          }`}
+        >
+          {results.passed
+            ? `통과 (기준 ${results.pass_score}점)`
+            : `통과 기준 ${results.pass_score}점 미달 — 오답 단어를 다시 학습해요`}
+        </p>
         <div className="grid grid-cols-2 gap-4 text-center">
           <div>
             <p className="text-xs text-gray-500 mb-1">점수</p>
@@ -113,12 +125,6 @@ export default function TestResultsScreen({
             className="flex-1 px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg transition"
           >
             홈으로
-          </button>
-          <button
-            onClick={onRetry}
-            className="flex-1 px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition"
-          >
-            다시 풀기
           </button>
         </div>
         <Link

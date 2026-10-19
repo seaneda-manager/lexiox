@@ -6,6 +6,9 @@ import { createServerClient } from "@supabase/ssr";
 import { type AnswerSubmitRequest, type AnswerSubmitResponse } from "@/models/vocab/test.types";
 import { NextRequest, NextResponse } from "next/server";
 import { scoreAnswer } from "@/lib/vocab/test/scoring";
+import { isSessionExpired } from "@/lib/vocab/test/config";
+import { finalizeSession } from "@/lib/vocab/test/finalize";
+import { buildReveal } from "@/lib/vocab/test/redact";
 
 /**
  * POST /api/vocab/test/answer
@@ -62,6 +65,15 @@ export async function POST(req: NextRequest) {
         { error: "Session not found or unauthorized" },
         { status: 404 }
       );
+    }
+
+    // 1.5. 이미 끝난 시험이거나 마감이 지났으면 답안을 받지 않는다 (서버 타이머)
+    if (session.status !== "in_progress") {
+      return NextResponse.json({ error: "session_closed" }, { status: 409 });
+    }
+    if (isSessionExpired(session)) {
+      await finalizeSession(admin, session_id, "timeout");
+      return NextResponse.json({ error: "time_expired" }, { status: 409 });
     }
 
     // 2. 문제 조회
@@ -163,6 +175,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       question_id,
       is_correct,
+      reveal: buildReveal(question),
       base_points: result.base_points,
       streak_bonus: result.streak_bonus,
       points_earned: result.points_earned,
