@@ -3,6 +3,14 @@ import { resolveAcademyStudentId } from "@/lib/vocab/academyStudent";
 
 /** 이 난이도 이상은 틀리지 않았어도 필수 재학습에 포함한다 (words.difficulty 1~5) */
 export const HARD_DIFFICULTY_MIN = 4;
+/**
+ * words.difficulty 가 비어 있는 단어가 대부분이라, 실제 시험 결과로도 "어려운 단어"를 판단한다.
+ *  - 이 학생이 같은 단어를 2번 이상 틀림 (vocab_word_mastery.wrong_count)
+ *  - 전체 응시 기록에서 최소 응답 수 이상이고 오답률이 기준 이상 (vocab_test_questions)
+ */
+export const REPEAT_WRONG_MIN = 2;
+export const CROWD_MIN_ANSWERS = 10;
+export const CROWD_WRONG_RATE_MIN = 0.5;
 /** 파생어(명사형·형용사형 등) 카드 상한 */
 const MAX_EXTRA_TERMS = 40;
 /** 연속 정답 횟수별 다음 복습까지의 일수 */
@@ -96,6 +104,7 @@ export async function createRemedialTask(admin: any, session: SessionRow, academ
   for (const id of wrongWordIds) reasons[id] = "wrong";
 
   let dayWordTexts = new Set<string>();
+  let dayIds: string[] = [];
   if (session.kind === "main" && session.assignment_id) {
     const { data: asg } = await admin
       .from("student_vocab_assignments")
@@ -104,7 +113,7 @@ export async function createRemedialTask(admin: any, session: SessionRow, academ
       .maybeSingle();
     if (asg?.set_id) {
       const { data: items } = await admin.from("vocab_set_items").select("word_id").eq("set_id", asg.set_id);
-      const dayIds = (items ?? []).map((i: any) => i.word_id);
+      dayIds = (items ?? []).map((i: any) => i.word_id);
       if (dayIds.length > 0) {
         const { data: dayWords } = await admin.from("words").select("id, text, difficulty").in("id", dayIds);
         for (const w of dayWords ?? []) {
@@ -114,6 +123,13 @@ export async function createRemedialTask(admin: any, session: SessionRow, academ
           }
         }
       }
+    }
+  }
+
+  // 난이도 데이터가 없어도 동작하도록: 반복해서 틀리는 단어 / 다들 많이 틀리는 단어를 어려운 단어로 본다
+  if (dayIds.length > 0) {
+    for (const id of await findHardWordIds(admin, academyId, dayIds)) {
+      if (!reasons[id]) reasons[id] = "hard";
     }
   }
 
@@ -150,4 +166,35 @@ export async function createRemedialTask(admin: any, session: SessionRow, academ
     { onConflict: "source_session_id", ignoreDuplicates: true }
   );
   if (error) console.warn("[vocab cycle] remedial task insert failed:", error.message);
+}
+
+async function findHardWordIds(admin: any, academyId: string, dayIds: string[]): Promise<string[]> {
+  const hard = new Set<string>();
+
+  const { data: mastery } = await admin
+    .from("vocab_word_mastery")
+    .select("word_id, wrong_count")
+    .eq("student_id", academyId)
+    .in("word_id", dayIds);
+  for (const m of mastery ?? []) {
+    if ((m.wrong_count ?? 0) >= REPEAT_WRONG_MIN) hard.add(m.word_id);
+  }
+
+  const { data: answers } = await admin
+    .from("vocab_test_questions")
+    .select("word_id, is_correct")
+    .in("word_id", dayIds)
+    .limit(20000);
+  const stat = new Map<string, { total: number; wrong: number }>();
+  for (const a of answers ?? []) {
+    if (a.is_correct === null || a.is_correct === undefined) continue;
+    const st = stat.get(a.word_id) ?? { total: 0, wrong: 0 };
+    st.total += 1;
+    if (a.is_correct === false) st.wrong += 1;
+    stat.set(a.word_id, st);
+  }
+  for (const [id, st] of stat) {
+    if (st.total >= CROWD_MIN_ANSWERS && st.wrong / st.total >= CROWD_WRONG_RATE_MIN) hard.add(id);
+  }
+  return [...hard];
 }
