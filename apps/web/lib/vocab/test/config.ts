@@ -11,6 +11,8 @@ export type ResolvedTestConfig = {
   seconds_per_question: number;
   max_total_minutes: number;
   enable_listen_spell: boolean;
+  /** true 면 수업일(academy_students.class_days)에만 시험/복습시험을 볼 수 있다 */
+  require_class_day: boolean;
   /** 학습 완료 확인 스킵은 global 설정만 따른다 (학생 row의 기본값 false가 덮어쓰지 않도록) */
   skip_learning_check: boolean;
 };
@@ -24,6 +26,7 @@ export const DEFAULT_TEST_CONFIG: ResolvedTestConfig = {
   seconds_per_question: 6,
   max_total_minutes: 15,
   enable_listen_spell: false,
+  require_class_day: false,
   skip_learning_check: false,
 };
 
@@ -36,6 +39,7 @@ const OVERRIDABLE_KEYS = [
   "seconds_per_question",
   "max_total_minutes",
   "enable_listen_spell",
+  "require_class_day",
 ] as const;
 
 function pickDefined(row: Record<string, any> | null | undefined): Partial<ResolvedTestConfig> {

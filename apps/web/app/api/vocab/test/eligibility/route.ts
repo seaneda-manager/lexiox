@@ -108,6 +108,7 @@ export async function GET(req: NextRequest) {
         .eq("track_id", trackId)
         .eq("day_number", day)
         .eq("status", "graded")
+        .is("voided_at", null)
         .order("submitted_at", { ascending: false })
         .limit(1)
         .maybeSingle();

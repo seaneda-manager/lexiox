@@ -13,6 +13,7 @@ import {
   resolveTestConfig,
 } from "@/lib/vocab/test/config";
 import { finalizeSession } from "@/lib/vocab/test/finalize";
+import { isClassDay } from "@/lib/vocab/classDay";
 import { rebuildHintReveals, redactQuestionForClient } from "@/lib/vocab/test/redact";
 
 /**
@@ -61,7 +62,7 @@ export async function POST(req: NextRequest) {
     // 1.5. academy_students.id 확인 (student_vocab_assignments 등은 auth uid가 아니라 이 id를 씀)
     const { data: studentRow } = await admin
       .from("academy_students")
-      .select("id")
+      .select("id, class_days")
       .or(`user_id.eq.${user.id},auth_user_id.eq.${user.id},profile_id.eq.${user.id}`)
       .maybeSingle();
 
@@ -69,6 +70,9 @@ export async function POST(req: NextRequest) {
 
     // 시험 설정 (코드 기본값 < global < student). scope_id 는 auth uid / academy id 어느 쪽이든 매칭
     const testConfig = await resolveTestConfig(admin, [user.id, studentId]);
+
+    // 수업일 제한 (설정 켠 경우): 집에서 미리 시험을 소모하지 못하게 한다. 진행 중인 시험 이어하기는 허용
+    const classDayBlocked = testConfig.require_class_day && !isClassDay((studentRow as any)?.class_days);
 
     // 2. Day의 단어 목록 가져오기
     // Step 1: student_vocab_assignments에서 set_id 찾기 (학습 완료 확인에도 필요해서 먼저 조회)
@@ -109,6 +113,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // 3.4. 수업일 제한 (이어하기 중인 세션은 아래 findExistingAttempt 에서 먼저 처리)
     // 3.5. 이미 응시한 시험이면 재시작 대신 결과 안내, 진행 중이면 이어하기 (타이머 리셋 방지)
     // 복습시험(retest): 필수 재학습을 끝낸(done) 배정에 대해서만, 그 단어들로만 출제
     let retestTask: { id: string; word_ids: string[]; retest_session_id: string | null } | null = null;
@@ -140,6 +145,12 @@ export async function POST(req: NextRequest) {
     }
     if (existing.kind === "resume") {
       return NextResponse.json(await buildResumeResponse(admin, existing.session, testConfig.pass_score));
+    }
+    if (classDayBlocked) {
+      return NextResponse.json(
+        { error: "not_class_day", reason: "단어 시험은 수업이 있는 날에 볼 수 있어요." },
+        { status: 403 }
+      );
     }
     if (retestTask?.retest_session_id) {
       // 이 재학습 배정의 복습시험은 이미 응시했다 (불합격이면 새 재학습 배정이 만들어져 있다)
@@ -447,6 +458,7 @@ async function findExistingAttempt(
     .eq("assignment_id", assignmentId)
     .eq("kind", "main")
     .eq("status", "graded")
+    .is("voided_at", null)
     .not("passed", "is", null)
     .order("submitted_at", { ascending: false })
     .limit(1)

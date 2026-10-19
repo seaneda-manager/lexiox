@@ -43,6 +43,7 @@ export async function GET(req: NextRequest) {
       .from("vocab_test_sessions")
       .select("student_id, track_id, day_number, started_at, correct_count, total_points")
       .eq("status", "graded")
+      .is("voided_at", null)
       .gte("submitted_at", start.toISOString())
       .lt("submitted_at", end.toISOString())
       .limit(10000);

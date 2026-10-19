@@ -328,6 +328,7 @@ export default async function TeacherHomePage() {
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
           { href: '/teacher/session-report',   emoji: '📋', label: '오늘 수업 리포트',   desc: '학생별 완료 현황' },
+          { href: '/teacher/vocab-exams',      emoji: '📝', label: '단어 시험 현황',     desc: '시험 결과·재학습·재응시' },
           { href: '/teacher/reports/students', emoji: '📊', label: '학생 활동 리포트',   desc: '누적 학습 분석' },
           { href: '/teacher/exam-generator',   emoji: '📝', label: '예상문제 생성',      desc: '학교·학년별 30문항' },
           { href: '/teacher/tasks',            emoji: '✅', label: '할 일 관리',          desc: '수업 준비 체크' },

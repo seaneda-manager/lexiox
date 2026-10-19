@@ -19,6 +19,7 @@ export type VocabTestConfig = {
   seconds_per_question: number;
   max_total_minutes: number;
   enable_listen_spell: boolean;
+  require_class_day: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -50,6 +51,7 @@ export type VocabTestSession = {
   pass_score: number | null; // 이 시험에 적용된 통과 기준(스냅샷)
   passed: boolean | null;
   ended_by: TestEndedBy | null;
+  voided_at: string | null; // 선생님이 무효 처리(재응시 허용)한 시각
 
   total_words_count: number; // Day의 전체 단어 수
   words_count: number; // 실제 시험에 포함된 단어 수

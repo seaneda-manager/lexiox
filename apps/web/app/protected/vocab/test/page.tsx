@@ -111,6 +111,10 @@ export default function VocabTestPage() {
       });
       if (!response.ok) {
         const errorData = await response.json();
+        if (errorData.error === "not_class_day") {
+          setNotReady(errorData.reason ?? "단어 시험은 수업이 있는 날에 볼 수 있어요.");
+          return;
+        }
         if (errorData.error === "remedial_not_done") {
           setNotReady(errorData.reason ?? "필수 재학습을 먼저 끝내야 복습시험을 볼 수 있어요.");
           return;
