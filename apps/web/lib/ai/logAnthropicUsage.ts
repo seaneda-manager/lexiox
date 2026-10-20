@@ -9,6 +9,7 @@ const MODEL_PRICING: Record<string, { input: number; output: number }> = {
   "claude-sonnet-4-6": { input: 3, output: 15 },
   "claude-haiku-4-5-20251001": { input: 1, output: 5 },
   "claude-opus-4-8": { input: 5, output: 25 },
+  "claude-opus-5-5": { input: 4, output: 20 },
 };
 
 // 5분 ephemeral 캐시 쓰기는 표준 input가의 ~1.25배, 캐시 읽기는 ~10%.
