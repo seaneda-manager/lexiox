@@ -9,7 +9,8 @@ export type AssignmentKind =
   | "jr"
   | "hi_naesin"
   | "middle_naesin"
-  | "middle_general";
+  | "middle_general"
+  | "grammar_plan";
 
 // ── 프로그램(수강 구분) ───────────────────────────────────────────
 // 1. Updated TOEFL  2. Hi-내신(고등 내신)  3. 중학 = 중학내신(학교 시험 대비) + 중학일반(고등 공부 준비)  4. Jr.(초등)
@@ -44,6 +45,7 @@ export function programOfKind(kind: AssignmentKind): AssignmentProgram | null {
     case "daily_test":
     case "toefl_section":
     case "toefl_group":
+    case "grammar_plan": // LEXiOX-Gram 은 TOEFL·GAP 학생용
       return "updated_toefl";
     case "hi_naesin":
       return "hi_naesin";
@@ -101,6 +103,7 @@ export const ASSIGNMENT_KIND_LABEL: Record<AssignmentKind, string> = {
   hi_naesin: "Hi-내신",
   middle_naesin: "중학내신",
   middle_general: "중학일반",
+  grammar_plan: "문법 챕터",
 };
 
 export const ASSIGNMENT_AREA_LABEL: Record<AssignmentArea, string> = {

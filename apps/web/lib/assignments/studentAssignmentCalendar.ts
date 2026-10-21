@@ -368,6 +368,52 @@ async function collectHiNaesin(db: any, { fromIso, toIso, authId }: Ctx): Promis
   return out;
 }
 
+// LEXiOX-Gram 문법 스케줄: 날짜별로 배정된 챕터 하나가 과제 하나. 완료는 grammar_2026_unit_completions 로 판단한다.
+// 아직 마이그레이션 전이면 테이블이 없으므로 조용히 건너뛴다.
+async function collectGrammarPlan(db: any, { fromIso, toIso, authId, carryOver }: Ctx): Promise<AssignmentItem[]> {
+  if (!authId) return [];
+  const { data: rows, error } = await db
+    .from("student_grammar_assignments")
+    .select("unit_id, scheduled_date")
+    .eq("student_id", authId);
+  if (error || !rows?.length) return [];
+
+  const unitIds = [...new Set(rows.map((r: any) => r.unit_id as string))];
+  const [{ data: units }, { data: done }] = await Promise.all([
+    db.from("grammar_2026_units").select("id, label_ko").in("id", unitIds),
+    db.from("grammar_2026_unit_completions").select("unit_id").eq("student_id", authId).in("unit_id", unitIds),
+  ]);
+  const label = new Map<string, string>((units ?? []).map((u: any) => [u.id as string, (u.label_ko as string) ?? u.id]));
+  const doneSet = new Set((done ?? []).map((d: any) => d.unit_id as string));
+  const today = new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Seoul" });
+  const lookback = (() => {
+    const d = new Date(`${fromIso}T00:00:00`);
+    d.setDate(d.getDate() - 60);
+    return toIsoDate(d);
+  })();
+
+  const out: AssignmentItem[] = [];
+  for (const r of rows) {
+    const date = datePart(r.scheduled_date);
+    if (!date) continue;
+    const finished = doneSet.has(r.unit_id);
+    const inWindow = inRange(date, fromIso, toIso);
+    // 선생님 현황 화면에서는 기간 밖의 미완료(밀린) 챕터도 함께 보여준다
+    const carried = carryOver && !finished && date < fromIso && date >= lookback;
+    if (!inWindow && !carried) continue;
+    out.push({
+      id: `${r.unit_id}`,
+      kind: "grammar_plan",
+      area: "grammar",
+      title: `문법 · ${label.get(r.unit_id) ?? r.unit_id}`,
+      date,
+      dateBasis: "due",
+      status: finished ? "completed" : date < today ? "overdue" : "pending",
+    });
+  }
+  return out;
+}
+
 // 중학내신: 배정된 단원마다 단어/해석·작문/문법/시험대비 항목을 만든다.
 // 이 영역은 student_id 가 academy_students.id 가 아니라 auth uid 이다(기존 컨벤션).
 async function collectMiddleNaesin(db: any, { fromIso, toIso, authId, carryOver }: Ctx): Promise<AssignmentItem[]> {
@@ -438,6 +484,7 @@ export async function getStudentAssignmentCalendar(opts: {
     collectJr,
     collectHiNaesin,
     collectMiddleNaesin,
+    collectGrammarPlan,
   ];
 
   const results = await Promise.all(

@@ -29,6 +29,7 @@ const KIND_ORDER: AssignmentKind[] = [
   "daily_test",
   "toefl_section",
   "toefl_group",
+  "grammar_plan",
   "hi_naesin",
   "middle_naesin",
   "middle_general",
