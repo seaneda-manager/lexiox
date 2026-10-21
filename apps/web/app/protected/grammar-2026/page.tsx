@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { MOCK_GRAMMAR_UNITS_LIST } from "@/models/grammar/mock";
 import SectionGuide from "@/app/components/SectionGuide";
+import { todayKst } from "@/lib/grammar/planSchedule";
 
 const LEVEL_LABEL: Record<string, string> = {
   all: "전체", ms: "중등", hs: "고등", toefl: "TOEFL",
@@ -42,6 +43,33 @@ export default async function Grammar2026Page() {
     completedUnitIds = new Set((completionsRes.data ?? []).map((r: any) => r.unit_id));
   } catch {}
 
+  // 선생님이 잡아 준 스케줄(날짜 ↔ 챕터). 테이블이 없거나 플랜이 없으면 조용히 건너뛴다.
+  const today = todayKst();
+  let scheduled: { unit_id: string; scheduled_date: string; seq: number }[] = [];
+  let schedulePaused = false;
+  try {
+    const supabase = await getServerSupabase();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const [{ data: sched }, { data: plan }] = await Promise.all([
+        supabase.from("student_grammar_assignments").select("unit_id, scheduled_date, seq").eq("student_id", user.id).order("scheduled_date").order("seq"),
+        supabase.from("student_grammar_plans").select("is_paused").eq("student_id", user.id).maybeSingle(),
+      ]);
+      scheduled = (sched ?? []) as typeof scheduled;
+      schedulePaused = !!plan?.is_paused;
+    }
+  } catch {}
+
+  const unitById = new Map(units.map((u) => [u.id, u]));
+  const scheduleDateOf = new Map(scheduled.map((a) => [a.unit_id, a.scheduled_date]));
+  const openSched = scheduled.filter((a) => !completedUnitIds.has(a.unit_id));
+  const overdueSched = openSched.filter((a) => a.scheduled_date < today);
+  const todaySched = openSched.filter((a) => a.scheduled_date === today);
+  const upcomingSched = openSched.filter((a) => a.scheduled_date > today).slice(0, 4);
+  const fmtDate = (d: string) => `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}`;
+  // 밀린 것 → 오늘 순서로 이어하기 대상을 정한다 (공개된 챕터만)
+  const nextScheduled = [...overdueSched, ...todaySched].find((a) => unitById.get(a.unit_id)?.status === "published");
+
   const publishedCount = units.filter((u) => u.status === "published").length;
   const completedCount = units.filter((u) => completedUnitIds.has(u.id)).length;
 
@@ -70,12 +98,52 @@ export default async function Grammar2026Page() {
         ]}
         progress={publishedCount > 0 ? { done: completedCount, total: publishedCount, unit: '챕터' } : undefined}
         nextAction={(() => {
+          if (nextScheduled) {
+            const u = unitById.get(nextScheduled.unit_id)!;
+            return { label: `${u.label_ko} 이어하기`, href: `/grammar-2026/${u.id}` };
+          }
           const next = units.find((u) => u.status === 'published' && !completedUnitIds.has(u.id));
           return next ? { label: `${next.label_ko} 이어하기`, href: `/grammar-2026/${next.id}` } : undefined;
         })()}
       />
 
 
+
+      {scheduled.length > 0 && (
+        <div className="mb-6 rounded-2xl border border-indigo-200 bg-white p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-indigo-500 mb-2">오늘의 문법</p>
+          {schedulePaused && (
+            <p className="mb-2 rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-500">스케줄이 잠시 멈춰 있어요. 선생님이 다시 시작하면 일정이 새로 잡혀요.</p>
+          )}
+          {overdueSched.length === 0 && todaySched.length === 0 && (
+            <p className="text-sm text-gray-500">오늘 할 문법 챕터가 없어요. {upcomingSched[0] ? `다음 수업은 ${fmtDate(upcomingSched[0].scheduled_date)} 이에요.` : "스케줄을 모두 끝냈어요! 🎉"}</p>
+          )}
+          <ul className="space-y-1.5">
+            {[...overdueSched.map((a) => ({ a, tag: "밀림" })), ...todaySched.map((a) => ({ a, tag: "오늘" }))].map(({ a, tag }) => {
+              const u = unitById.get(a.unit_id);
+              if (!u) return null;
+              const ready = u.status === "published";
+              const body = (
+                <span className={`flex items-center justify-between gap-2 rounded-xl border px-3 py-2 text-sm ${tag === "밀림" ? "border-rose-200 bg-rose-50" : "border-indigo-200 bg-indigo-50"}`}>
+                  <span className="font-medium text-gray-900">{u.label_ko}</span>
+                  <span className="flex items-center gap-2 text-[11px]">
+                    {tag === "밀림" && <span className="text-rose-600">{fmtDate(a.scheduled_date)} 예정</span>}
+                    <span className={tag === "밀림" ? "rounded-full bg-rose-100 px-2 py-0.5 font-semibold text-rose-700" : "rounded-full bg-indigo-100 px-2 py-0.5 font-semibold text-indigo-700"}>
+                      {ready ? tag : "준비중"}
+                    </span>
+                  </span>
+                </span>
+              );
+              return <li key={a.unit_id}>{ready ? <Link href={`/grammar-2026/${u.id}`}>{body}</Link> : body}</li>;
+            })}
+          </ul>
+          {upcomingSched.length > 0 && (overdueSched.length > 0 || todaySched.length > 0) && (
+            <p className="mt-3 text-xs text-gray-400">
+              다음 일정: {upcomingSched.slice(0, 3).map((a) => `${fmtDate(a.scheduled_date)} ${unitById.get(a.unit_id)?.label_ko ?? ""}`).join(" · ")}
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="mb-6 p-4 rounded-2xl bg-indigo-50 border border-indigo-100">
         <div className="flex items-center justify-between mb-2">
@@ -117,6 +185,11 @@ export default async function Grammar2026Page() {
                 <span className="text-[10px] text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
                   {LEVEL_LABEL[unit.level] ?? unit.level}
                 </span>
+                {scheduleDateOf.has(unit.id) && !isDone && (
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full ${scheduleDateOf.get(unit.id)! < today ? "bg-rose-100 text-rose-700" : scheduleDateOf.get(unit.id) === today ? "bg-indigo-100 text-indigo-700" : "bg-gray-100 text-gray-500"}`}>
+                    {scheduleDateOf.get(unit.id) === today ? "오늘" : scheduleDateOf.get(unit.id)! < today ? "밀림" : fmtDate(scheduleDateOf.get(unit.id)!)}
+                  </span>
+                )}
                 {!isPublished && (
                   <span className="text-[10px] text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">준비중</span>
                 )}

@@ -98,6 +98,16 @@ function pairSentences(enText: string, koText: string): { en: string; ko: string
   return es.map((en, i) => ({ en, ko: ks[i] ?? null }));
 }
 
+// 한 줄이 정확히 한 문장인 콘텐츠(AI 읽기 등, extra_data.sentencePerLine)는 줄을 다시 쪼개지 않는다.
+// 대사("...?" I asked.)처럼 문장 안에 부호가 있어도 문장 번호가 밀리지 않아, 문장별 정답 주석이 그대로 맞는다.
+function pairByLines(enText: string, koText: string): { en: string; ko: string | null }[] | null {
+  const lines = (t: string) => t.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  const en = lines(enText);
+  const ko = lines(koText);
+  if (en.length === 0 || en.length !== ko.length) return null;
+  return en.map((e, i) => ({ en: e, ko: ko[i] }));
+}
+
 // ── Fill-blank generator ─────────────────────────────────────────
 
 const SKIP_WORDS = new Set([
@@ -154,7 +164,12 @@ function isHangulHeavy(s: string): boolean {
   return hangulCount / compact.length > 0.3;
 }
 
-function parseVocab(contents: MiddleNaesinContent[]): MiddleDrillVocabItem[] {
+// AI 로 만든 읽기/단어는 선생님이 '확정'하기 전(draft)에는 학생에게 보이지 않는다.
+const isAiDraft = (c: MiddleNaesinContent) =>
+  (c.extra_data as { aiReading?: { status?: string } } | null)?.aiReading?.status === 'draft';
+
+function parseVocab(allContents: MiddleNaesinContent[], includeDrafts = false): MiddleDrillVocabItem[] {
+  const contents = includeDrafts ? allContents : allContents.filter((c) => !isAiDraft(c));
   const items: MiddleDrillVocabItem[] = [];
   let idx = 0;
 
@@ -349,8 +364,9 @@ export type MiddleNaesinDrillSections = {
 function buildSectionForType(
   contents: MiddleNaesinContent[],
   contentType: 'main_text' | 'dialogue' | 'more_reading',
+  includeDrafts = false,
 ): MiddleNaesinDrillSection | null {
-  const items = contents.filter((c) => c.content_type === contentType);
+  const items = contents.filter((c) => c.content_type === contentType && (includeDrafts || !isAiDraft(c)));
   if (items.length === 0) return null;
 
   // 제목에 번호가 있으면("No. 2", "Topic 1 B") 번호순으로 자연 정렬
@@ -362,7 +378,10 @@ function buildSectionForType(
   const parts: MiddleNaesinDrillPart[] = [];
   for (const item of items) {
     const partStart = sentences.length;
-    const pairs = pairSentences(item.body_text ?? '', item.translation_ko ?? '');
+    const perLine = (item.extra_data as { sentencePerLine?: boolean } | null)?.sentencePerLine
+      ? pairByLines(item.body_text ?? '', item.translation_ko ?? '')
+      : null;
+    const pairs = perLine ?? pairSentences(item.body_text ?? '', item.translation_ko ?? '');
 
     pairs.forEach(({ en, ko }, localIndex) => {
       const blank = pickBlankWord(en);
@@ -469,10 +488,10 @@ export function buildDrillSections(
 ): MiddleNaesinDrillSections {
   return {
     unitId,
-    mainText: buildSectionForType(contents, 'main_text'),
-    dialogue: buildSectionForType(contents, 'dialogue'),
-    moreReading: buildSectionForType(contents, 'more_reading'),
-    vocab: parseVocab(contents),
+    mainText: buildSectionForType(contents, 'main_text', opts.includeDrafts),
+    dialogue: buildSectionForType(contents, 'dialogue', opts.includeDrafts),
+    moreReading: buildSectionForType(contents, 'more_reading', opts.includeDrafts),
+    vocab: parseVocab(contents, opts.includeDrafts),
     grammar: buildGrammarPoints(contents, opts.includeDrafts ?? false),
   };
 }

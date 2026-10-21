@@ -30,7 +30,7 @@ export function PrintControls() {
       </select>
       <label className="flex items-center gap-1.5">
         <input type="checkbox" checked={answers} onChange={(e) => setAnswers(e.target.checked)} />
-        정답 포함
+        정답 포함(인쇄)
       </label>
       <button
         type="button"

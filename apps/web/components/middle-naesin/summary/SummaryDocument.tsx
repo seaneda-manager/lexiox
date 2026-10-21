@@ -59,6 +59,7 @@ export function SummaryDocument({
         .summary .lesson { break-before: page; }
         .summary .lesson:first-of-type { break-before: auto; }
         .summary .avoid-break { break-inside: avoid; }
+        .summary .print-only { display: none; }
         .summary mark { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .summary[data-mode="student"] .teacher-only { display: none; }
         .summary[data-show="summary"] .part-quiz { display: none; }
@@ -66,6 +67,7 @@ export function SummaryDocument({
         .summary:not([data-answers="on"]) .answer-key { display: none; }
         @media print {
           .no-print { display: none !important; }
+          .summary .print-only { display: block; }
           .summary .quiz { break-before: page; }
           .summary { max-width: none; padding: 0; font-size: 11px; }
           @page { size: A4; margin: 12mm; }
