@@ -68,7 +68,7 @@ export async function resolveStudentIds(
 
 // ── 소스별 수집 ────────────────────────────────────────────
 
-type Ctx = { fromIso: string; toIso: string; authId: string | null; academyId: string | null };
+type Ctx = { fromIso: string; toIso: string; authId: string | null; academyId: string | null; carryOver: boolean };
 
 async function collectHomework(db: any, { fromIso, toIso, authId }: Ctx): Promise<AssignmentItem[]> {
   if (!authId) return [];
@@ -329,8 +329,16 @@ async function collectHiNaesin(db: any, { fromIso, toIso, authId }: Ctx): Promis
     }
   }
 
+  // 중학일반은 Hi-내신 시스템의 중학 학년(M1~M3) 지문이다 → 지문 학년으로 Hi-내신(H*)과 가른다.
+  const passageIds = [...new Set(assigns.map((a: any) => a.passage_id).filter(Boolean))] as string[];
+  const { data: passages } = passageIds.length
+    ? await db.from("hi_naesin_passages").select("id, grade").in("id", passageIds)
+    : { data: [] };
+  const gradeByPassage = new Map<string, string>((passages ?? []).map((p: any) => [p.id as string, String(p.grade ?? "")]));
+
   const out: AssignmentItem[] = [];
   for (const a of assigns) {
+    const isMiddle = /^M[123]$/.test(gradeByPassage.get(a.passage_id) ?? "");
     const sess = sessByAssign.get(a.id);
     let picked: { date: string; basis: AssignmentDateBasis } | null;
     let status: AssignmentStatus = "pending";
@@ -348,9 +356,9 @@ async function collectHiNaesin(db: any, { fromIso, toIso, authId }: Ctx): Promis
     if (!picked || !inRange(picked.date, fromIso, toIso)) continue;
     out.push({
       id: a.id,
-      kind: "hi_naesin",
+      kind: isMiddle ? "middle_general" : "hi_naesin",
       area: "reading",
-      title: "Hi-내신 드릴",
+      title: isMiddle ? "중학일반 드릴" : "Hi-내신 드릴",
       date: picked.date,
       dateBasis: picked.basis,
       status,
@@ -362,7 +370,7 @@ async function collectHiNaesin(db: any, { fromIso, toIso, authId }: Ctx): Promis
 
 // 중학내신: 배정된 단원마다 단어/해석·작문/문법/시험대비 항목을 만든다.
 // 이 영역은 student_id 가 academy_students.id 가 아니라 auth uid 이다(기존 컨벤션).
-async function collectMiddleNaesin(db: any, { fromIso, toIso, authId }: Ctx): Promise<AssignmentItem[]> {
+async function collectMiddleNaesin(db: any, { fromIso, toIso, authId, carryOver }: Ctx): Promise<AssignmentItem[]> {
   if (!authId) return [];
   const { data: assigns } = await db
     .from("middle_naesin_assignments")
@@ -399,6 +407,7 @@ async function collectMiddleNaesin(db: any, { fromIso, toIso, authId }: Ctx): Pr
     fromIso,
     toIso,
     todayIso: toIsoDate(new Date()),
+    carryOver,
   });
 }
 
@@ -409,6 +418,8 @@ export async function getStudentAssignmentCalendar(opts: {
   academyStudentId: string | null;
   fromIso: string;
   toIso: string;
+  /** 선생님 현황 화면용: 이번 기간 밖의 미완료 중학내신 과제도 포함 */
+  carryOver?: boolean;
 }): Promise<AssignmentItem[]> {
   const db = getServiceSupabase();
   const ctx: Ctx = {
@@ -416,6 +427,7 @@ export async function getStudentAssignmentCalendar(opts: {
     toIso: opts.toIso,
     authId: opts.authUserId,
     academyId: opts.academyStudentId,
+    carryOver: opts.carryOver ?? false,
   };
 
   const collectors = [

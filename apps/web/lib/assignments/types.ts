@@ -8,7 +8,41 @@ export type AssignmentKind =
   | "vocab"
   | "jr"
   | "hi_naesin"
-  | "middle_naesin";
+  | "middle_naesin"
+  | "middle_general";
+
+// ── 프로그램(수강 구분) ───────────────────────────────────────────
+// 1. Updated TOEFL  2. Hi-내신(고등 내신)  3. 중학 = 중학내신(학교 시험 대비) + 중학일반(고등 공부 준비)  4. Jr.(초등)
+// 중학일반 콘텐츠는 Hi-내신 시스템에 중학 학년(M1~M3) 지문으로 만들어 쓰므로, 지문 학년으로 구분한다.
+export type AssignmentProgram = "updated_toefl" | "hi_naesin" | "middle" | "jr";
+
+export const ASSIGNMENT_PROGRAM_LABEL: Record<AssignmentProgram, string> = {
+  updated_toefl: "Updated TOEFL",
+  hi_naesin: "Hi-내신",
+  middle: "중학",
+  jr: "Jr.",
+};
+
+export const ASSIGNMENT_PROGRAM_ORDER: AssignmentProgram[] = ["updated_toefl", "hi_naesin", "middle", "jr"];
+
+/** 어느 프로그램의 과제인가. null = 프로그램 공통(숙제 채점, 단어). */
+export function programOfKind(kind: AssignmentKind): AssignmentProgram | null {
+  switch (kind) {
+    case "daily_test":
+    case "toefl_section":
+    case "toefl_group":
+      return "updated_toefl";
+    case "hi_naesin":
+      return "hi_naesin";
+    case "middle_naesin":
+    case "middle_general":
+      return "middle";
+    case "jr":
+      return "jr";
+    default:
+      return null;
+  }
+}
 
 // 영역(스킬)별 보기용. 배정 시스템(kind)과 별개로 "무엇을 공부하는 과제인가"를 나타낸다.
 export type AssignmentArea =
@@ -53,6 +87,7 @@ export const ASSIGNMENT_KIND_LABEL: Record<AssignmentKind, string> = {
   jr: "Jr.",
   hi_naesin: "Hi-내신",
   middle_naesin: "중학내신",
+  middle_general: "중학일반",
 };
 
 export const ASSIGNMENT_AREA_LABEL: Record<AssignmentArea, string> = {

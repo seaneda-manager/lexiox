@@ -20,6 +20,8 @@ const KIND_COLOR: Record<AssignmentKind, string> = {
   vocab: "bg-amber-100 text-amber-700",
   jr: "bg-emerald-100 text-emerald-700",
   hi_naesin: "bg-rose-100 text-rose-700",
+  middle_naesin: "bg-teal-100 text-teal-700",
+  middle_general: "bg-orange-100 text-orange-700",
 };
 
 const STATUS_COLOR: Record<AssignmentStatus, string> = {

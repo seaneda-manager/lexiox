@@ -6,6 +6,8 @@ import {
   ASSIGNMENT_AREA_LABEL,
   ASSIGNMENT_AREA_ORDER,
   ASSIGNMENT_KIND_LABEL,
+  ASSIGNMENT_PROGRAM_LABEL,
+  programOfKind,
   ASSIGNMENT_STATUS_LABEL,
   type AssignmentItem,
   type AssignmentStatus,
@@ -53,6 +55,7 @@ export default async function StudentAssignmentDetailPage({
     academyStudentId: stu.id as string,
     fromIso: range.from,
     toIso: range.to,
+    carryOver: true,
   }).catch(() => []);
 
   const open = items
@@ -134,6 +137,8 @@ function ItemList({ items }: { items: AssignmentItem[] }) {
                   {ASSIGNMENT_AREA_LABEL[it.area ?? "other"]}
                 </span>
                 {ASSIGNMENT_KIND_LABEL[it.kind]}
+                <span className="text-gray-300">·</span>
+                {programOfKind(it.kind) ? ASSIGNMENT_PROGRAM_LABEL[programOfKind(it.kind)!] : "공통"}
               </div>
               <div className="truncate text-sm font-medium text-gray-900">{it.title}</div>
             </div>

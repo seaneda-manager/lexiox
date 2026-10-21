@@ -27,6 +27,8 @@ export function buildMiddleNaesinItems(o: {
   fromIso: string;
   toIso: string;
   todayIso: string;
+  /** true 면 이번 기간 밖의 미완료 과제(최근 60일)도 함께 돌려준다 — 선생님 현황 화면 전용 */
+  carryOver?: boolean;
 }): AssignmentItem[] {
   const unitById = new Map(o.units.map((u) => [u.id, u]));
   const out: AssignmentItem[] = [];
@@ -44,7 +46,7 @@ export function buildMiddleNaesinItems(o: {
       const finished = status === "completed";
       const overdue = !finished && basis === "due" && base < o.todayIso;
       const inRange = base >= o.fromIso && base <= o.toIso;
-      const carried = !finished && base < o.fromIso && base >= shiftIso(o.fromIso, -CARRY_OVER_DAYS);
+      const carried = !!o.carryOver && !finished && base < o.fromIso && base >= shiftIso(o.fromIso, -CARRY_OVER_DAYS);
       if (!inRange && !carried) return;
       out.push({
         id: `${a.unit_id}:${kind}`,
