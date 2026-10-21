@@ -2,21 +2,27 @@ import "server-only";
 import { getServiceSupabase } from "@/lib/supabase/service";
 import {
   toIsoDate,
+  areaFromText,
   type AssignmentItem,
+  type AssignmentArea,
   type AssignmentDateBasis,
   type AssignmentStatus,
 } from "@/lib/assignments/types";
+import { buildMiddleNaesinItems } from "@/lib/assignments/middleNaesinItems";
 
 export {
   toIsoDate,
   ASSIGNMENT_KIND_LABEL,
   ASSIGNMENT_STATUS_LABEL,
+  ASSIGNMENT_AREA_LABEL,
+  ASSIGNMENT_AREA_ORDER,
 } from "@/lib/assignments/types";
 export type {
   AssignmentItem,
   AssignmentKind,
   AssignmentStatus,
   AssignmentDateBasis,
+  AssignmentArea,
 } from "@/lib/assignments/types";
 
 /** timestamptz/date 문자열 → YYYY-MM-DD (앞 10자). 못 읽으면 null */
@@ -101,6 +107,7 @@ async function collectHomework(db: any, { fromIso, toIso, authId }: Ctx): Promis
     out.push({
       id: h.id,
       kind: "homework",
+      area: areaFromText(h.subject) ?? areaFromText(h.title) ?? "other",
       title: h.title ?? "숙제",
       subject: h.subject ?? undefined,
       date: picked.date,
@@ -134,6 +141,7 @@ async function collectDailyTests(db: any, { fromIso, toIso, authId }: Ctx): Prom
     out.push({
       id: t.id,
       kind: "daily_test",
+      area: areaFromText(t.task_type) ?? "other",
       title: `Daily Test · ${t.task_type ?? ""}${t.difficulty ? ` (${t.difficulty})` : ""}`.trim(),
       date: picked.date,
       dateBasis: picked.basis,
@@ -169,6 +177,7 @@ async function collectToeflAssignments(db: any, { fromIso, toIso, authId, academ
     out.push({
       id: a.id,
       kind: "toefl_section",
+      area: areaFromText(section) ?? "exam",
       title: SECTION_KO[section] ?? section ?? "영역 배정",
       date: picked.date,
       dateBasis: picked.basis,
@@ -197,6 +206,7 @@ async function collectToeflAssignments(db: any, { fromIso, toIso, authId, academ
     out.push({
       id: g.id,
       kind: "toefl_group",
+      area: "exam",
       title: `${g.kind === "full" ? "Full Test" : "Half Test"} · ${cntByGroup.get(g.id) ?? 0}개 영역`,
       date: picked.date,
       dateBasis: picked.basis,
@@ -235,6 +245,7 @@ async function collectVocab(db: any, { fromIso, toIso, academyId }: Ctx): Promis
     out.push({
       id: v.id,
       kind: "vocab",
+      area: "vocab",
       title: `단어 Day ${v.day_index ?? "?"}`,
       subject: "vocab",
       date: picked.date,
@@ -248,12 +259,12 @@ async function collectVocab(db: any, { fromIso, toIso, academyId }: Ctx): Promis
 async function collectJr(db: any, { fromIso, toIso, academyId }: Ctx): Promise<AssignmentItem[]> {
   if (!academyId) return [];
   const out: AssignmentItem[] = [];
-  const tables: Array<[string, string]> = [
-    ["jr_reading_sessions", "Jr. Reading"],
-    ["jr_grammar_sessions", "Jr. Grammar"],
-    ["jr_listening_sessions", "Jr. Listening"],
+  const tables: Array<[string, string, AssignmentArea]> = [
+    ["jr_reading_sessions", "Jr. Reading", "reading"],
+    ["jr_grammar_sessions", "Jr. Grammar", "grammar"],
+    ["jr_listening_sessions", "Jr. Listening", "listening"],
   ];
-  for (const [table, label] of tables) {
+  for (const [table, label, area] of tables) {
     const { data } = await db
       .from(table)
       .select("id, created_at, completed_at, stage")
@@ -266,6 +277,7 @@ async function collectJr(db: any, { fromIso, toIso, academyId }: Ctx): Promise<A
       out.push({
         id: s.id,
         kind: "jr",
+        area,
         title: label,
         date: picked.date,
         dateBasis: picked.basis,
@@ -287,6 +299,7 @@ async function collectJr(db: any, { fromIso, toIso, academyId }: Ctx): Promise<A
     out.push({
       id: t.id,
       kind: "jr",
+      area: areaFromText(t.task_type) ?? "speaking",
       title: t.title ?? `Jr. ${t.task_type === "speaking" ? "Speaking" : "Writing"}`,
       date: picked.date,
       dateBasis: picked.basis,
@@ -336,6 +349,7 @@ async function collectHiNaesin(db: any, { fromIso, toIso, authId }: Ctx): Promis
     out.push({
       id: a.id,
       kind: "hi_naesin",
+      area: "reading",
       title: "Hi-내신 드릴",
       date: picked.date,
       dateBasis: picked.basis,
@@ -344,6 +358,48 @@ async function collectHiNaesin(db: any, { fromIso, toIso, authId }: Ctx): Promis
     });
   }
   return out;
+}
+
+// 중학내신: 배정된 단원마다 단어/해석·작문/문법/시험대비 항목을 만든다.
+// 이 영역은 student_id 가 academy_students.id 가 아니라 auth uid 이다(기존 컨벤션).
+async function collectMiddleNaesin(db: any, { fromIso, toIso, authId }: Ctx): Promise<AssignmentItem[]> {
+  if (!authId) return [];
+  const { data: assigns } = await db
+    .from("middle_naesin_assignments")
+    .select("unit_id, due_at, assigned_at")
+    .eq("student_id", authId);
+  if (!assigns?.length) return [];
+  const unitIds = [...new Set(assigns.map((a: any) => a.unit_id as string))];
+
+  const [{ data: units }, { data: grammar }, { data: results }, { data: readiness }] = await Promise.all([
+    db.from("middle_naesin_units").select("id, publisher, lesson_number, lesson_title").in("id", unitIds),
+    db.from("middle_naesin_contents").select("unit_id, extra_data").eq("content_type", "grammar_point").in("unit_id", unitIds),
+    db
+      .from("middle_naesin_drill_results")
+      .select("unit_id, drill_type, ref_id, score, total, completed_at")
+      .eq("student_id", authId)
+      .in("unit_id", unitIds),
+    db.from("student_readiness").select("unit_id, test_status").eq("student_id", authId).in("unit_id", unitIds),
+  ]);
+
+  // 학생 드릴에는 확정된 문법 레슨(또는 레슨 없는 기존 문법 포인트)만 보인다 → 같은 기준으로 센다.
+  const grammarTotals: Record<string, number> = {};
+  for (const g of grammar ?? []) {
+    const lesson = (g.extra_data as { lesson?: { status?: string } } | null)?.lesson;
+    if (lesson && lesson.status !== "final") continue;
+    grammarTotals[g.unit_id] = (grammarTotals[g.unit_id] ?? 0) + 1;
+  }
+
+  return buildMiddleNaesinItems({
+    assignments: assigns,
+    units: units ?? [],
+    grammarTotals,
+    results: results ?? [],
+    readiness: readiness ?? [],
+    fromIso,
+    toIso,
+    todayIso: toIsoDate(new Date()),
+  });
 }
 
 // ── 엔트리 ──────────────────────────────────────────────────
@@ -369,6 +425,7 @@ export async function getStudentAssignmentCalendar(opts: {
     collectVocab,
     collectJr,
     collectHiNaesin,
+    collectMiddleNaesin,
   ];
 
   const results = await Promise.all(
