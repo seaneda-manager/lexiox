@@ -11,12 +11,15 @@ import {
   ASSIGNMENT_AREA_ORDER,
   ASSIGNMENT_PROGRAM_LABEL,
   ASSIGNMENT_PROGRAM_ORDER,
-  programOfKind,
+  programOfItem,
+  explicitPrograms,
+  isProgramSet,
   type AssignmentKind,
   type AssignmentArea,
   type AssignmentItem,
   type AssignmentProgram,
 } from "@/lib/assignments/types";
+import { getStudentProgramMap } from "@/lib/assignments/studentPrograms";
 import { getWeekRange, parseWeek, weekLabel, WEEK_LINKS } from "@/lib/assignments/weeks";
 
 export const dynamic = "force-dynamic";
@@ -62,6 +65,11 @@ export default async function AssignmentsOverviewPage({ searchParams }: Props) {
 
   const students = roster ?? [];
 
+  // 학생별로 저장된 프로그램(트랙 + TOEFL). 컬럼이 아직 없으면 null → 아래에서 콘텐츠 기준으로 대체한다.
+  const spMap = await getStudentProgramMap(
+    students.map((s: any) => (s.user_id ?? s.auth_user_id ?? s.id) as string),
+  );
+
   const rows = await Promise.all(
     students.map(async (s: any) => {
       const authUserId = (s.user_id ?? s.auth_user_id ?? s.id) as string;
@@ -73,16 +81,23 @@ export default async function AssignmentsOverviewPage({ searchParams }: Props) {
         carryOver: true,
       }).catch(() => []);
 
+      // 프로그램: 저장된 값이 있으면 그것, 없으면(미지정) 과제 내용으로 추정한다.
+      const stored = spMap?.get(authUserId) ?? null;
+      const specified = isProgramSet(stored);
       const programs = new Set<AssignmentProgram>();
-      for (const it of allItems) {
-        const p = programOfKind(it.kind);
-        if (p) programs.add(p);
+      if (specified) {
+        for (const p of explicitPrograms(stored)) programs.add(p);
+      } else {
+        for (const it of allItems) {
+          const p = programOfItem(it.kind, null);
+          if (p) programs.add(p);
+        }
       }
       const items =
         program === "all"
           ? allItems
           : allItems.filter((it) => {
-              const p = programOfKind(it.kind);
+              const p = programOfItem(it.kind, specified ? stored : null);
               return p === null || p === program;
             });
 
@@ -115,6 +130,7 @@ export default async function AssignmentsOverviewPage({ searchParams }: Props) {
         byKind,
         byArea,
         programs,
+        specified,
         total,
         overallPct: total.total > 0 ? Math.round((total.done / total.total) * 100) : null,
       };
@@ -239,6 +255,11 @@ export default async function AssignmentsOverviewPage({ searchParams }: Props) {
                           {ASSIGNMENT_PROGRAM_LABEL[p]}
                         </span>
                       ))}
+                      {!r.specified && r.programs.size > 0 && (
+                        <span className="rounded bg-amber-50 px-1.5 py-0.5 text-[10px] text-amber-700" title="학생 프로그램이 아직 지정되지 않아 과제 내용으로 추정했습니다">
+                          추정
+                        </span>
+                      )}
                     </div>
                   </td>
                   {columns.map((c) => {
@@ -294,7 +315,7 @@ export default async function AssignmentsOverviewPage({ searchParams }: Props) {
         </table>
       </div>
       <p className="text-[11px] text-gray-500">
-        완료 기준: 완료/채점완료/제출 상태. 기한초과가 많은 학생이 위로 옵니다. 프로그램 탭에서는 그 프로그램 과제와 공통 과제(숙제 채점·단어)만 보입니다. 중학일반은 Hi-내신 시스템의 중학 학년(M1~M3) 지문 배정입니다. 중학내신은 기한이 지난 미완료 과제와 최근 60일 안에 배정된 미완료 과제도 함께 보여줍니다. 학생 이름을 누르면 밀린 숙제 목록이 열립니다.
+        완료 기준: 완료/채점완료/제출 상태. 기한초과가 많은 학생이 위로 옵니다. 프로그램 탭에서는 학생에게 지정된 프로그램 기준으로 그 프로그램 과제와 공통 과제(숙제 채점·단어)만 보입니다. 프로그램이 지정되지 않은 학생은 "추정"으로 표시되며 과제 내용으로 판별합니다(관리자 → 사용자 화면에서 지정). Hi-내신 지문은 어느 프로그램 학생에게나 배정될 수 있고, 그 학생의 트랙에 집계됩니다. 중학내신은 기한이 지난 미완료 과제와 최근 60일 안에 배정된 미완료 과제도 함께 보여줍니다. 학생 이름을 누르면 밀린 숙제 목록이 열립니다.
       </p>
     </main>
   );

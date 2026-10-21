@@ -29,28 +29,35 @@ export async function GET(req: NextRequest) {
 
   // 踰좎씠??荑쇰━: auth.users + profiles 議곗씤??酉곌? ?녿떎硫? profiles留??ъ슜(?대찓??蹂꾨룄 而щ읆 媛??
   // ?ш린??profiles(email, full_name, created_at, role) 而щ읆???덈떎怨?媛??
-  let query = supabase
-    .from("profiles")
-    .select("id, email, full_name, role, program, created_at", { count: "exact" })
-    .order("created_at", { ascending: false })
-    .limit(PAGE_SIZE + 1);
+  // track / has_toefl 은 20261021000001 마이그레이션이 만드는 컬럼이다.
+  // 아직 실행 전이면 컬럼이 없어 조회가 실패하므로, 그때는 기존 컬럼만으로 다시 조회한다.
+  const run = (columns: string) => {
+    let query = supabase
+      .from("profiles")
+      .select(columns, { count: "exact" })
+      .order("created_at", { ascending: false })
+      .limit(PAGE_SIZE + 1);
 
-  if (q) {
-    query = query.ilike("email", `%${q}%`)
-                 .or(`full_name.ilike.%${q}%`);
+    if (q) {
+      query = query.ilike("email", `%${q}%`)
+                   .or(`full_name.ilike.%${q}%`);
+    }
+
+    if (cursor) {
+      query = query.lt("created_at", cursor);
+    }
+    return query;
+  };
+
+  let { data, count, error } = await run("id, email, full_name, role, program, track, has_toefl, created_at");
+  if (error && /track|has_toefl/i.test(error.message)) {
+    ({ data, count, error } = await run("id, email, full_name, role, program, created_at"));
   }
-
-  if (cursor) {
-    // created_at 而ㅼ꽌蹂대떎 ?묒?(?댄썑) ??
-    query = query.lt("created_at", cursor);
-  }
-
-  const { data, count, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   // 而ㅼ꽌 怨꾩궛
   let nextCursor: string | null = null;
-  let items = data ?? [];
+  let items = ((data ?? []) as unknown) as Array<Record<string, any>>;
   if (items.length > PAGE_SIZE) {
     const last = items[PAGE_SIZE - 1];
     nextCursor = last.created_at;

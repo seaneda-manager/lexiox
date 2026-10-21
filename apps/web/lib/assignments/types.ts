@@ -25,6 +25,19 @@ export const ASSIGNMENT_PROGRAM_LABEL: Record<AssignmentProgram, string> = {
 
 export const ASSIGNMENT_PROGRAM_ORDER: AssignmentProgram[] = ["updated_toefl", "hi_naesin", "middle", "jr"];
 
+/** 학생에게 저장된 프로그램: 트랙은 하나만(서로 겹치지 않음), TOEFL 은 어느 트랙과도 함께 가능. */
+export type StudentProgram = { track: "hi_naesin" | "middle" | "jr" | null; hasToefl: boolean };
+
+/** 트랙도 TOEFL 도 비어 있으면 "아직 지정 안 됨" */
+export const isProgramSet = (sp: StudentProgram | null | undefined): sp is StudentProgram => !!sp && (!!sp.track || sp.hasToefl);
+
+export function explicitPrograms(sp: StudentProgram): AssignmentProgram[] {
+  const out: AssignmentProgram[] = [];
+  if (sp.hasToefl) out.push("updated_toefl");
+  if (sp.track) out.push(sp.track);
+  return out;
+}
+
 /** 어느 프로그램의 과제인가. null = 프로그램 공통(숙제 채점, 단어). */
 export function programOfKind(kind: AssignmentKind): AssignmentProgram | null {
   switch (kind) {
@@ -137,4 +150,20 @@ export const ASSIGNMENT_STATUS_LABEL: Record<AssignmentStatus, string> = {
 
 export function toIsoDate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/**
+ * 학생의 프로그램을 기준으로 과제가 어느 프로그램 소속인지 정한다.
+ * - Hi-내신 지문 라이브러리(hi_naesin / middle_general)는 어느 프로그램 학생에게나 배정될 수 있으므로,
+ *   지문 학년이 아니라 "학생의 트랙"에 속한다. 트랙이 없으면 TOEFL, 그것도 없으면 지문 쪽 프로그램.
+ * - 그 밖의 과제는 종류가 정하는 프로그램에 속한다.
+ * - 학생 프로그램이 아직 지정되지 않았으면(sp 없음) 지금까지처럼 종류(콘텐츠) 기준이다.
+ */
+export function programOfItem(kind: AssignmentKind, sp: StudentProgram | null): AssignmentProgram | null {
+  const natural = programOfKind(kind);
+  if (!isProgramSet(sp)) return natural;
+  if (kind === "hi_naesin" || kind === "middle_general") {
+    return sp.track ?? (sp.hasToefl ? "updated_toefl" : natural);
+  }
+  return natural;
 }

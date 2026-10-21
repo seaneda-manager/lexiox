@@ -7,11 +7,14 @@ import {
   ASSIGNMENT_AREA_ORDER,
   ASSIGNMENT_KIND_LABEL,
   ASSIGNMENT_PROGRAM_LABEL,
-  programOfKind,
+  programOfItem,
+  isProgramSet,
   ASSIGNMENT_STATUS_LABEL,
   type AssignmentItem,
   type AssignmentStatus,
+  type StudentProgram,
 } from "@/lib/assignments/types";
+import { getStudentProgramMap } from "@/lib/assignments/studentPrograms";
 import { getWeekRange, parseWeek, weekLabel, WEEK_LINKS } from "@/lib/assignments/weeks";
 
 export const dynamic = "force-dynamic";
@@ -57,6 +60,9 @@ export default async function StudentAssignmentDetailPage({
     toIso: range.to,
     carryOver: true,
   }).catch(() => []);
+
+  const stored = (await getStudentProgramMap([authUserId]))?.get(authUserId) ?? null;
+  const sp = isProgramSet(stored) ? stored : null;
 
   const open = items
     .filter((it) => !DONE.has(it.status))
@@ -110,14 +116,14 @@ export default async function StudentAssignmentDetailPage({
       <section className="space-y-2">
         <h2 className="text-sm font-semibold text-gray-800">해야 할 과제 ({open.length})</h2>
         {open.length === 0 && <p className="rounded-xl border bg-white p-4 text-sm text-emerald-700">밀린 과제가 없습니다. 🎉</p>}
-        <ItemList items={open} />
+        <ItemList items={open} sp={sp} />
       </section>
 
       {done.length > 0 && (
         <details className="rounded-xl border bg-white p-3">
           <summary className="cursor-pointer text-sm font-semibold text-gray-700">완료한 과제 ({done.length})</summary>
           <div className="mt-2">
-            <ItemList items={done} />
+            <ItemList items={done} sp={sp} />
           </div>
         </details>
       )}
@@ -125,7 +131,7 @@ export default async function StudentAssignmentDetailPage({
   );
 }
 
-function ItemList({ items }: { items: AssignmentItem[] }) {
+function ItemList({ items, sp }: { items: AssignmentItem[]; sp: StudentProgram | null }) {
   return (
     <ul className="divide-y rounded-xl border bg-white">
       {items.map((it) => {
@@ -138,7 +144,7 @@ function ItemList({ items }: { items: AssignmentItem[] }) {
                 </span>
                 {ASSIGNMENT_KIND_LABEL[it.kind]}
                 <span className="text-gray-300">·</span>
-                {programOfKind(it.kind) ? ASSIGNMENT_PROGRAM_LABEL[programOfKind(it.kind)!] : "공통"}
+                {programOfItem(it.kind, sp) ? ASSIGNMENT_PROGRAM_LABEL[programOfItem(it.kind, sp)!] : "공통"}
               </div>
               <div className="truncate text-sm font-medium text-gray-900">{it.title}</div>
             </div>
