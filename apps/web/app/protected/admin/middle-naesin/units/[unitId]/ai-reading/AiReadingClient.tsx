@@ -35,7 +35,7 @@ export function AiReadingClient({ unitId, jrPassages }: { unitId: string; jrPass
     setMessage('');
     const res = await generateAiReadingAction({ unitId, title, passage, koreanHint: koHint });
     setBusy(null);
-    if (!res.ok) return setError(res.error);
+    if ('error' in res) return setError(res.error);
     setReading(res.reading);
     setGrammarText(res.reading.sentences.map((s) => s.grammar.join(', ')));
     setWarnings(res.warnings);
@@ -63,7 +63,7 @@ export function AiReadingClient({ unitId, jrPassages }: { unitId: string; jrPass
       source: source ? `jr:${source}` : 'pasted',
     });
     setBusy(null);
-    if (!res.ok) return setError(res.error);
+    if ('error' in res) return setError(res.error);
     setMessage(res.message);
     setReading(null);
   }
