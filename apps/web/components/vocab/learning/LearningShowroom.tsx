@@ -199,7 +199,6 @@ export default function LearningShowroom({ word, index, total, onDoneWord, track
   }, [posList, currentMeaning, meaning1Ok]);
 
   const spellingRef = useRef<HTMLInputElement | null>(null);
-  const posRef = useRef<HTMLSelectElement | null>(null);
   const meaning1Ref = useRef<HTMLInputElement | null>(null);
   const meaning2Ref = useRef<HTMLInputElement | null>(null);
 
@@ -233,7 +232,7 @@ export default function LearningShowroom({ word, index, total, onDoneWord, track
     if (spellingOk && !posOk) {
       setPos(inferredPos[0]);
       setPosOk(true);
-      window.setTimeout(() => meaning1Ref.current?.focus(), 250);
+      // 뜻 입력칸은 마운트될 때 autoFocus로 바로 포커스를 받는다 (타이머 대기 없음)
     }
   }, [spellingOk, posOk, inferredPos]);
 
@@ -241,7 +240,6 @@ export default function LearningShowroom({ word, index, total, onDoneWord, track
     if (spellingOk) return;
     setSpellingOk(true);
     if (target) speak(target, accent);
-    window.setTimeout(() => posRef.current?.focus(), 250);
   };
 
   const onChangeSpelling = (v: string) => {
@@ -254,7 +252,6 @@ export default function LearningShowroom({ word, index, total, onDoneWord, track
     if (posOk) return;
     if (!v) return;
     setPosOk(true);
-    window.setTimeout(() => meaning1Ref.current?.focus(), 100);
   };
 
   const speakKorean = (text: string) => {
@@ -393,7 +390,12 @@ export default function LearningShowroom({ word, index, total, onDoneWord, track
                   disabled={spellingOk}
                   className="w-full rounded-lg px-5 py-4 text-center outline-none focus:ring-2 transition-all duration-300"
                   style={inputStyle(spellingOk, true)}
+                  lang="en"
+                  inputMode="text"
+                  autoFocus
                   autoComplete="off"
+                  autoCapitalize="none"
+                  autoCorrect="off"
                   spellCheck={false}
                 />
               </div>
@@ -439,6 +441,8 @@ export default function LearningShowroom({ word, index, total, onDoneWord, track
                       disabled={meaning1Ok}
                       className="w-full rounded-lg px-4 py-3 text-center outline-none focus:ring-2 transition-all duration-300"
                       style={inputStyle(meaning1Ok, posOk)}
+                      lang="ko"
+                      autoFocus
                       autoComplete="off"
                       spellCheck={false}
                     />
@@ -470,6 +474,8 @@ export default function LearningShowroom({ word, index, total, onDoneWord, track
                         disabled={meaning2Ok}
                         className="w-full rounded-lg px-4 py-3 text-center outline-none focus:ring-2 transition-all duration-300"
                         style={inputStyle(meaning2Ok, meaning1Ok)}
+                        lang="ko"
+                        autoFocus
                         autoComplete="off"
                         spellCheck={false}
                       />

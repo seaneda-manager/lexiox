@@ -260,7 +260,10 @@ export default function VocabSessionLearningStage({
                     placeholder="철자를 입력하세요..."
                     className="w-full px-4 py-3 border-2 border-slate-300 rounded-lg text-center text-lg font-semibold placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     autoFocus
+                    lang="en"
                     autoComplete="off"
+                    autoCapitalize="none"
+                    autoCorrect="off"
                     spellCheck={false}
                   />
                   <p className="text-xs text-slate-500 text-center">
@@ -302,6 +305,8 @@ export default function VocabSessionLearningStage({
                       meaning2Ref.current?.focus();
                     }
                   }}
+                  lang="ko"
+                  autoFocus
                   placeholder={currentWord.meanings_ko?.[0] || '한국어 뜻을 입력하세요...'}
                   className="w-full px-4 py-3 border border-slate-300 rounded-lg placeholder-slate-400 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
@@ -322,6 +327,7 @@ export default function VocabSessionLearningStage({
                       handleMeaningComplete();
                     }
                   }}
+                  lang="ko"
                   placeholder={currentWord.meanings_ko?.[1] || '또 다른 뜻을 입력하세요...'}
                   className="w-full px-4 py-3 border border-slate-300 rounded-lg placeholder-slate-400 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
