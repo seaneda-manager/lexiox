@@ -3,6 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import type { VocabTestQuestion } from "@/models/vocab/test.types";
 import { hintsAllowed, basePointsFor, MAX_HINT_LEVEL } from "@/lib/vocab/test/scoring";
+import SpellingHint from "@/components/vocab/common/SpellingHint";
+import TabLeaveNotice from "@/components/vocab/common/TabLeaveNotice";
+import { useCountdown } from "@/lib/hooks/useCountdown";
+import { useTabLeaveGuard } from "@/lib/hooks/useTabLeaveGuard";
+
+/** 문제당 제한 시간(초). 넘기면 오답 처리된다. */
+const TYPED_SECONDS = 40;
+const CHOICE_SECONDS = 25;
 
 // 저장된 오디오 파일 없이, 학습 단계(VocabSessionLearningStage 등)와 동일한
 // 브라우저 내장 TTS로 발음을 재생한다.
@@ -68,6 +76,14 @@ export default function TestQuestionPanel({
     }
   };
 
+  // 시간 초과 / 화면 이탈 시 빈 답으로 제출 → 서버에서 오답 처리
+  const failCurrent = () => {
+    if (!isAnswered) onAnswerSubmit("");
+  };
+  const timeLimit = isTypedInput ? TYPED_SECONDS : CHOICE_SECONDS;
+  const timeLeft = useCountdown(timeLimit, question.id, failCurrent, isAnswered);
+  const leave = useTabLeaveGuard({ enabled: !isAnswered, onPenalty: failCurrent });
+
   // 답변이 채점되면 기본 버튼(다음/시험 제출)에 포커스를 줘서 Enter로 바로 넘어갈 수 있게 함
   useEffect(() => {
     if (isAnswered) {
@@ -94,12 +110,22 @@ export default function TestQuestionPanel({
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6 space-y-6">
+      <TabLeaveNotice show={leave.showWarning} leaveCount={leave.leaveCount} onClose={leave.dismissWarning} />
       {/* 진행률 + 점수/연속정답 */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <span className="text-sm font-medium text-gray-600">
             문제 {questionNumber} / {totalQuestions}
           </span>
+          {!isAnswered && (
+            <span
+              className={`text-sm font-bold tabular-nums ${
+                timeLeft <= 5 ? "text-red-600" : "text-gray-500"
+              }`}
+            >
+              ⏱ {timeLeft}s
+            </span>
+          )}
           <div className="w-48 h-2 bg-gray-200 rounded-full overflow-hidden">
             <div
               className="h-full bg-blue-500 transition-all"
@@ -229,6 +255,10 @@ export default function TestQuestionPanel({
       {/* 주관식 입력 */}
       {isTypedInput && (
         <div className="space-y-3">
+          {/* 시험에서는 글자를 숨기고 단어 수(칸)만 알려준다: "help out" → 2칸 */}
+          {question.question_type === "meaning_to_word" && question.correct_answer ? (
+            <SpellingHint answer={question.correct_answer} mode="shape" />
+          ) : null}
           <input
             ref={inputRef}
             type="text"
@@ -240,6 +270,9 @@ export default function TestQuestionPanel({
             placeholder="답변을 입력하세요"
             disabled={isAnswered}
             autoComplete="off"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
             className="w-full px-4 py-3 border-2 rounded-lg text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-blue-500 disabled:bg-gray-100"
           />
         </div>

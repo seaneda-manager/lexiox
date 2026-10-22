@@ -1,6 +1,14 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import SpellingHint from '@/components/vocab/common/SpellingHint';
+import { normAnswer } from '@/lib/vocab/spellingHint';
+import { spellingTimeLimit, useCountdown } from '@/lib/hooks/useCountdown';
+import { useTabLeaveGuard } from '@/lib/hooks/useTabLeaveGuard';
+import TabLeaveNotice from '@/components/vocab/common/TabLeaveNotice';
+
+/** 단어당 최대 시도 횟수 (2번째 오답이면 "모름"으로 처리하고 다음으로) */
+const MAX_TRIES = 2;
 
 type Word = { id: string; text: string; meanings_ko?: string[] };
 type SpellingResult = { spellingFailedIds: string[] };
@@ -9,9 +17,7 @@ function safeWords(v: any): Word[] {
   return Array.isArray(v) ? (v as Word[]).filter(Boolean) : [];
 }
 
-function norm(s: string): string {
-  return String(s ?? '').trim().toLowerCase();
-}
+const norm = normAnswer;
 
 function createConfetti() {
   if (typeof window === 'undefined') return;
@@ -81,6 +87,8 @@ export default function PrescreenSpellingBoard({
   const [failedIds, setFailedIds] = useState<string[]>([]);
   const [shake, setShake] = useState(false);
   const [animKey, setAnimKey] = useState(0);
+  // 현재 단어에서 틀린 횟수 (틀릴 때마다 글자를 하나씩 더 공개)
+  const [wrongTries, setWrongTries] = useState(0);
 
   const [streak, setStreak] = useState(0);
   const [bestStreak, setBestStreak] = useState(0);
@@ -124,6 +132,7 @@ export default function PrescreenSpellingBoard({
     setAnimKey((k) => k + 1);
     setI(nextIndex);
     setValue('');
+    setWrongTries(0);
     requestAnimationFrame(() => inputRef.current?.focus());
   };
 
@@ -143,9 +152,19 @@ export default function PrescreenSpellingBoard({
     }
     setShake(true);
     window.setTimeout(() => setShake(false), 280);
+    // 틀리면 힌트를 한 글자 더 주고 한 번만 더 기회를 준다. 두 번째 오답이면 "모름" 처리하고 넘어간다.
+    if (wrongTries + 1 >= MAX_TRIES) {
+      markFailAndNext();
+      return;
+    }
     setStreak(0);
+    setWrongTries((n) => n + 1);
     if (!failedIds.includes(cur.id)) setFailedIds((p) => [...p, cur.id]);
   };
+
+  const timeLeft = useCountdown(spellingTimeLimit(answer), cur?.id ?? i, markFailAndNext, !cur);
+  const timeMax = spellingTimeLimit(answer);
+  const leave = useTabLeaveGuard({ enabled: !!cur, onPenalty: markFailAndNext });
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -178,6 +197,7 @@ export default function PrescreenSpellingBoard({
 
   return (
     <div className="fixed inset-0 w-screen h-screen flex bg-[#F7FAF9] z-50 overflow-hidden">
+      <TabLeaveNotice show={leave.showWarning} leaveCount={leave.leaveCount} onClose={leave.dismissWarning} />
       <div className="flex-[7] flex flex-col justify-center items-center px-6 py-8 overflow-y-auto">
         <div
           className="w-full flex flex-col gap-6 items-center px-6"
@@ -196,6 +216,22 @@ export default function PrescreenSpellingBoard({
               <span className="text-sm font-semibold text-slate-400">철자 확인</span>
             </div>
             <ProgressBar current={i + 1} total={total} />
+            <div className="rounded-2xl bg-amber-50 border border-amber-300 px-4 py-3 text-center text-base font-extrabold text-amber-800 leading-snug">
+              정확히 모르면 바로 “모르겠어요”를 누르고 넘어가세요.
+              <br />
+              <span className="text-sm font-semibold">틀리면 학습할 단어 목록에 추가될 뿐이에요 🙂</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="h-2 flex-1 rounded-full bg-slate-100 overflow-hidden">
+                <div
+                  className={`h-full rounded-full ${timeLeft <= 5 ? 'bg-orange-500' : 'bg-[#0F766E]'}`}
+                  style={{ width: `${(timeLeft / timeMax) * 100}%`, transition: 'width 1s linear' }}
+                />
+              </div>
+              <span className={`text-sm font-bold tabular-nums ${timeLeft <= 5 ? 'text-orange-600' : 'text-slate-400'}`}>
+                ⏱ {timeLeft}s
+              </span>
+            </div>
           </div>
 
           <div
@@ -222,6 +258,7 @@ export default function PrescreenSpellingBoard({
 
             <div className="space-y-2">
               <p className="text-sm font-semibold text-slate-400 text-center">영어 단어를 입력하세요</p>
+              <SpellingHint answer={answer} mode="full" extraReveal={wrongTries} className="py-2" />
               <input
                 ref={inputRef}
                 value={value}
