@@ -11,6 +11,18 @@
     {
       "path": "/api/cron/exam-mode-check",
       "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/promo-daily",
+      "schedule": "0 18 * * *"
+    },
+    {
+      "path": "/api/cron/promo-publish",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/promo-weekly",
+      "schedule": "0 20 * * 0"
     }
   ]
 }
