@@ -64,12 +64,13 @@ export default function FranchiseHubPage() {
       </div>
 
       {/* Nav tiles */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         {[
           { href: "/admin/franchise/announcements", icon: "📢", label: "공지사항", desc: "긴급·중요·일반 공지 발행 및 관리" },
           { href: "/admin/franchise/training", icon: "🎓", label: "교육 센터", desc: "온보딩 모듈, 이수 현황, 자격 배지" },
           { href: "/admin/franchise/qna", icon: "💬", label: "Q&A / 지식베이스", desc: "FAQ 관리 및 가맹점 문의 처리" },
           { href: "/admin/franchise/resources", icon: "📁", label: "자료실", desc: "마케팅·커리큘럼·브랜드 자료 배포" },
+          { href: "/admin/franchise/marketing", icon: "📣", label: "홍보센터", desc: "가맹점 관리, 브랜드 가이드, 시즌 캠페인 배포, 홍보 성과" },
         ].map((tile) => (
           <Link
             key={tile.href}
