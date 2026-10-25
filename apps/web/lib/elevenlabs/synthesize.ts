@@ -32,7 +32,7 @@ export function planParts(text: string, mode: SplitMode): LangPart[] {
   return plain ? [{ lang: "auto", text: plain }] : [];
 }
 
-async function synthPart(text: string, voiceId: string, o: SynthOptions, prev?: string, next?: string): Promise<Buffer> {
+async function synthPart(text: string, voiceId: string, o: SynthOptions, prev?: string, next?: string, lang?: "en" | "ko"): Promise<Buffer> {
   const key = process.env.ELEVENLABS_API_KEY;
   if (!key) throw new Error("ELEVENLABS_API_KEY is not set");
 
@@ -49,6 +49,11 @@ async function synthPart(text: string, voiceId: string, o: SynthOptions, prev?: 
     if (next) body.next_text = next;
   }
 
+  // 언어를 명시하면 "he", "that" 같은 짧은 단어도 한국어식으로 읽히지 않는다.
+  // (language_code 를 지원하지 않는 모델이면 400 이 오므로 그 경우 빼고 다시 시도)
+  let withLang = !!lang;
+  if (withLang) body.language_code = lang;
+
   // 요청 한도(429)일 때는 잠깐 쉬고 다시 시도한다
   for (let attempt = 0; attempt < 3; attempt++) {
     const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`, {
@@ -57,6 +62,16 @@ async function synthPart(text: string, voiceId: string, o: SynthOptions, prev?: 
       body: JSON.stringify(body),
     });
     if (res.ok) return Buffer.from(await res.arrayBuffer());
+    if (res.status === 400 && withLang) {
+      const msg = await res.text();
+      if (/language/i.test(msg)) {
+        withLang = false;
+        delete body.language_code;
+        attempt--;
+        continue;
+      }
+      throw new Error(`ElevenLabs 400: ${msg.slice(0, 400)}`);
+    }
     if (res.status === 429 && attempt < 2) {
       await sleep(2000 * (attempt + 1));
       continue;
@@ -74,9 +89,12 @@ export async function synthesizeNarration(text: string, o: SynthOptions): Promis
   for (let i = 0; i < parts.length; i++) {
     const p = parts[i];
     const voice = p.lang === "en" && o.enVoiceId ? o.enVoiceId : o.koVoiceId;
-    const prev = parts.slice(Math.max(0, i - 2), i).map((x) => x.text).join(" ").slice(-200);
-    const next = parts.slice(i + 1, i + 3).map((x) => x.text).join(" ").slice(0, 200);
-    buffers.push(await synthPart(p.text, voice, o, prev || undefined, next || undefined));
+    // 영어 구간에는 한국어 앞뒤 문맥을 보내지 않는다(발음이 한국어 쪽으로 끌려감)
+    const sameLang = (x: LangPart) => x.lang === p.lang;
+    const prev = p.lang === "en" ? "" : parts.slice(Math.max(0, i - 2), i).filter(sameLang).map((x) => x.text).join(" ").slice(-200);
+    const next = p.lang === "en" ? "" : parts.slice(i + 1, i + 3).filter(sameLang).map((x) => x.text).join(" ").slice(0, 200);
+    const lang = p.lang === "en" ? "en" : p.lang === "ko" ? "ko" : undefined;
+    buffers.push(await synthPart(p.text, voice, o, prev || undefined, next || undefined, lang));
   }
   return { audio: Buffer.concat(buffers), parts };
 }
