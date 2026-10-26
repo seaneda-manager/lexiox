@@ -49,13 +49,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 1. 세션 확인 (권한 확인)
-    const { data: session } = await admin
-      .from("vocab_test_sessions")
-      .select("*")
-      .eq("id", session_id)
-      .eq("student_id", user.id)
-      .single();
+    // 1~2. 세션 확인(권한) + 문제 조회 — 서로 독립이라 동시에 가져온다 (왕복 1회 절약)
+    const [{ data: session }, { data: question }] = await Promise.all([
+      admin
+        .from("vocab_test_sessions")
+        .select("*")
+        .eq("id", session_id)
+        .eq("student_id", user.id)
+        .single(),
+      admin
+        .from("vocab_test_questions")
+        .select("*")
+        .eq("id", question_id)
+        .eq("session_id", session_id)
+        .single(),
+    ]);
 
     if (!session) {
       return NextResponse.json(
@@ -63,14 +71,6 @@ export async function POST(req: NextRequest) {
         { status: 404 }
       );
     }
-
-    // 2. 문제 조회
-    const { data: question } = await admin
-      .from("vocab_test_questions")
-      .select("*")
-      .eq("id", question_id)
-      .eq("session_id", session_id)
-      .single();
 
     if (!question) {
       return NextResponse.json(
@@ -80,11 +80,19 @@ export async function POST(req: NextRequest) {
     }
 
     // 2.5. 재제출 방지 (이미 채점된 문제는 재답변 불가 — MC 정답 재클릭 악용 방지)
+    // 응답이 유실돼 클라이언트가 재시도한 경우도 있으므로, 새로 채점하지 않고 저장된 결과를 그대로 돌려준다.
     if (question.is_correct !== null) {
-      return NextResponse.json(
-        { error: "already_answered" },
-        { status: 409 }
-      );
+      return NextResponse.json({
+        question_id,
+        is_correct: question.is_correct,
+        base_points: (question.points_earned ?? 0) - (question.streak_bonus ?? 0),
+        streak_bonus: question.streak_bonus ?? 0,
+        points_earned: question.points_earned ?? 0,
+        current_streak: session.current_streak ?? 0,
+        best_streak: session.best_streak ?? 0,
+        session_total_points: session.total_points ?? 0,
+        already_answered: true,
+      });
     }
 
     // 3. 답변 채점

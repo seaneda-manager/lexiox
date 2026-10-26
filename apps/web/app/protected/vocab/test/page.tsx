@@ -34,6 +34,9 @@ export default function VocabTestPage() {
   const [bestStreak, setBestStreak] = useState(0);
   const [sessionPoints, setSessionPoints] = useState(0);
   const [hintReveals, setHintReveals] = useState<Record<string, string>>({});
+  // 답변/시험 제출 중 표시 + 실패 안내 (응답을 기다리는 동안 중복 클릭 방지)
+  const [pending, setPending] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -87,6 +90,26 @@ export default function VocabTestPage() {
     };
   }, [urlTrackId, urlDay]);
 
+  // 응답이 오래 걸리면 멈춘 것처럼 보이므로 시간 제한(20초) + 네트워크 오류 시 1회 재시도
+  const postJson = async (url: string, body: unknown, retries = 1): Promise<Response> => {
+    for (let attempt = 0; ; attempt++) {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 20000);
+      try {
+        return await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+          signal: ctrl.signal,
+        });
+      } catch (err) {
+        if (attempt >= retries) throw err;
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+  };
+
   const handleStartTest = async () => {
     if (!trackId || !dayNumber) return;
     setState("loading");
@@ -120,19 +143,18 @@ export default function VocabTestPage() {
   };
 
   const handleSubmitAnswer = async (questionIdx: number, answer: string) => {
-    if (!sessionId || !questions[questionIdx]) return;
+    if (!sessionId || !questions[questionIdx] || pending) return;
     const question = questions[questionIdx];
+    setPending(true);
+    setSubmitError(null);
     try {
-      const response = await fetch("/api/vocab/test/answer", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          session_id: sessionId,
-          question_id: question.id,
-          answer,
-        }),
+      // 서버는 이미 채점된 문제를 409 로 거절하므로 재시도해도 이중 채점되지 않는다
+      const response = await postJson("/api/vocab/test/answer", {
+        session_id: sessionId,
+        question_id: question.id,
+        answer,
       });
-      if (!response.ok) throw new Error("Failed to submit answer");
+      if (!response.ok) throw new Error(`answer ${response.status}`);
       const answerResult = await response.json();
       setQuestions(prev => {
         const newQuestions = [...prev];
@@ -150,6 +172,9 @@ export default function VocabTestPage() {
       setSessionPoints(answerResult.session_total_points);
     } catch (err: any) {
       console.error("Answer submit error:", err);
+      setSubmitError("답변을 저장하지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.");
+    } finally {
+      setPending(false);
     }
   };
 
@@ -179,20 +204,22 @@ export default function VocabTestPage() {
   };
 
   const handleSubmitTest = async () => {
-    if (!sessionId) return;
-    setState("loading");
+    if (!sessionId || pending) return;
+    setPending(true);
+    setSubmitError(null);
     try {
-      const response = await fetch("/api/vocab/test/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ session_id: sessionId }),
-      });
-      if (!response.ok) throw new Error("Failed to submit test");
+      // 서버는 이미 채점된 세션이면 저장된 결과를 그대로 돌려주므로 재시도해도 안전하다
+      const response = await postJson("/api/vocab/test/submit", { session_id: sessionId }, 2);
+      if (!response.ok) throw new Error(`submit ${response.status}`);
       const data = await response.json();
       setResults(data);
       setState("results");
     } catch (err: any) {
-      setError(err.message || "Failed to submit test");
+      console.error("Test submit error:", err);
+      // 시험 화면에 그대로 남겨 다시 제출할 수 있게 한다 (예전엔 오류 화면으로 빠져 멈춘 듯 보임)
+      setSubmitError("시험 제출이 지연되고 있어요. 답은 저장되어 있으니 '시험 제출'을 다시 눌러 주세요.");
+    } finally {
+      setPending(false);
     }
   };
 
@@ -255,10 +282,12 @@ export default function VocabTestPage() {
                 correctCount={questions.filter(q => q.is_correct === true).length}
                 streak={streak}
                 hintReveal={hintReveals[questions[selectedQuestionIdx].id]}
+                pending={pending}
+                submitError={submitError}
                 onAnswerSubmit={(answer) => handleSubmitAnswer(selectedQuestionIdx, answer)}
                 onUseHint={() => handleUseHint(selectedQuestionIdx)}
                 onSubmitTest={handleSubmitTest}
-                onNext={() => setSelectedQuestionIdx(Math.min(selectedQuestionIdx + 1, questions.length - 1))}
+                onNext={() => { setSubmitError(null); setSelectedQuestionIdx(Math.min(selectedQuestionIdx + 1, questions.length - 1)); }}
                 onPrev={() => setSelectedQuestionIdx(Math.max(selectedQuestionIdx - 1, 0))}
               />
             )}
