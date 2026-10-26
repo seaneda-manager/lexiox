@@ -44,14 +44,57 @@ export default function VocabTestPage() {
   const unsynced = useRef<Map<string, string>>(new Map()); // question_id -> answer (아직 서버에 못 올린 것)
   const streakRef = useRef(0);
 
+  // 새로고침해도 처음으로 돌아가지 않게: 같은 Day 의 진행 중 시험이 있으면 이어서 보여준다
+  const tryResume = async (track: string, day: string): Promise<boolean> => {
+    try {
+      const res = await fetch(
+        `/api/vocab/test/resume?track_id=${encodeURIComponent(track)}&day=${encodeURIComponent(day)}&wrong_only=${useWrongOnly}`,
+        { cache: "no-store" },
+      );
+      if (!res.ok) return false;
+      const d = await res.json();
+      if (!d?.session_id || !Array.isArray(d.questions) || d.questions.length === 0) return false;
+      const qs = d.questions as VocabTestQuestion[];
+      const firstOpen = qs.findIndex(q => q.is_correct === null);
+      setSessionId(d.session_id);
+      setQuestions(qs);
+      setSelectedQuestionIdx(firstOpen === -1 ? qs.length - 1 : firstOpen);
+      streakRef.current = d.current_streak ?? 0;
+      setStreak(d.current_streak ?? 0);
+      setBestStreak(d.best_streak ?? 0);
+      setSessionPoints(d.total_points ?? 0);
+      setState("testing");
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  // 답을 아직 서버에 못 올렸는데 창을 닫으려 하면 경고
+  useEffect(() => {
+    const warn = (e: BeforeUnloadEvent) => {
+      if (state === "testing" && unsynced.current.size > 0) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [state]);
+
   useEffect(() => {
     let cancelled = false;
 
     if (urlTrackId && urlDay) {
       setTrackId(urlTrackId);
       setDayNumber(urlDay);
-      setState("start");
-      return;
+      (async () => {
+        const resumed = await tryResume(urlTrackId, urlDay);
+        if (!cancelled && !resumed) setState("start");
+      })();
+      return () => {
+        cancelled = true;
+      };
     }
 
     // 맨링크 진입: 현재 배정된 트랙 + 가장 최근 완료 Day 로 해석
@@ -85,7 +128,8 @@ export default function VocabTestPage() {
 
         setTrackId(bookId);
         setDayNumber(String(elig.day));
-        setState("start");
+        const resumed = await tryResume(bookId, String(elig.day));
+        if (!cancelled && !resumed) setState("start");
       } catch {
         if (!cancelled) setError("시험 정보를 불러오지 못했어요.");
       }
