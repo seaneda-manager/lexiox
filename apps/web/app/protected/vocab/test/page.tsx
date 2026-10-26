@@ -3,14 +3,23 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { VocabTestQuestion, TestSubmitResponse } from "@/models/vocab/test.types";
-import FocusModeWrapper from "@/components/common/FocusModeWrapper";
-import StageBackground from "@/components/common/StageBackground";
 import MascotLayer from "@/components/common/MascotLayer";
 import TestQuestionPanel from "./_components/TestQuestionPanel";
 import TestResultsScreen from "./_components/TestResultsScreen";
 import TestStartScreen from "./_components/TestStartScreen";
 import { scoreAnswer } from "@/lib/vocab/test/scoring";
 import { scoreShortAnswer, scoreMultipleChoice } from "@/lib/vocab/test/questionGenerator";
+
+// 전체 화면을 덮고, 내용은 항상 가로 중앙에 둔다 (예전 3:2 고정 무대는 창 크기에 따라 한쪽으로 치우쳤다)
+function TestShell({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className="fixed inset-0 z-[60] overflow-y-auto bg-gradient-to-br from-blue-50 to-indigo-50">
+      <div className={["relative mx-auto flex min-h-full w-full max-w-3xl flex-col justify-center px-4 py-8", className].join(" ")}>
+        {children}
+      </div>
+    </div>
+  );
+}
 
 export default function VocabTestPage() {
   const router = useRouter();
@@ -329,7 +338,7 @@ export default function VocabTestPage() {
 
   if (notReady) {
     return (
-      <FocusModeWrapper className="flex items-center justify-center min-h-screen">
+      <TestShell>
         <div className="max-w-sm text-center space-y-3">
           <div className="text-4xl">📝</div>
           <p className="text-gray-800 text-lg font-bold">아직 시험을 볼 수 없어요</p>
@@ -341,13 +350,13 @@ export default function VocabTestPage() {
             단어 학습하러 가기
           </button>
         </div>
-      </FocusModeWrapper>
+      </TestShell>
     );
   }
 
   if (error) {
     return (
-      <FocusModeWrapper className="flex items-center justify-center min-h-screen">
+      <TestShell>
         <div className="text-center space-y-2">
           <p className="text-gray-700 text-lg">시험 정보를 찾을 수 없습니다.</p>
           <p className="text-gray-500 text-sm">{error}</p>
@@ -358,14 +367,16 @@ export default function VocabTestPage() {
             단어 학습으로 이동
           </button>
         </div>
-      </FocusModeWrapper>
+      </TestShell>
     );
   }
 
   return (
-    <FocusModeWrapper className="relative w-full min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
-      <StageBackground />
-      <div className="relative z-10 max-w-7xl mx-auto px-4 py-8">
+    <TestShell>
+      <div className="relative z-10 w-full">
+        {state === "loading" && (
+          <div className="py-24 text-center text-gray-500 animate-pulse">시험을 준비하고 있어요…</div>
+        )}
         {state === "start" && (
           <TestStartScreen
             trackId={trackId!}
@@ -407,6 +418,6 @@ export default function VocabTestPage() {
         )}
       </div>
       <MascotLayer />
-    </FocusModeWrapper>
+    </TestShell>
   );
 }
