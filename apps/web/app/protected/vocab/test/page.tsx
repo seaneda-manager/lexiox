@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { VocabTestQuestion, TestSubmitResponse } from "@/models/vocab/test.types";
 import FocusModeWrapper from "@/components/common/FocusModeWrapper";
@@ -9,6 +9,8 @@ import MascotLayer from "@/components/common/MascotLayer";
 import TestQuestionPanel from "./_components/TestQuestionPanel";
 import TestResultsScreen from "./_components/TestResultsScreen";
 import TestStartScreen from "./_components/TestStartScreen";
+import { scoreAnswer } from "@/lib/vocab/test/scoring";
+import { scoreShortAnswer, scoreMultipleChoice } from "@/lib/vocab/test/questionGenerator";
 
 export default function VocabTestPage() {
   const router = useRouter();
@@ -37,6 +39,10 @@ export default function VocabTestPage() {
   // 답변/시험 제출 중 표시 + 실패 안내 (응답을 기다리는 동안 중복 클릭 방지)
   const [pending, setPending] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  // 답변은 화면에서 먼저 채점해 바로 다음 문제로 넘기고, 서버 저장은 순서대로 뒤에서 처리한다.
+  const syncQueue = useRef<Promise<void>>(Promise.resolve());
+  const unsynced = useRef<Map<string, string>>(new Map()); // question_id -> answer (아직 서버에 못 올린 것)
+  const streakRef = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -132,6 +138,8 @@ export default function VocabTestPage() {
       setQuestions(data.questions);
       setSelectedQuestionIdx(0);
       setStreak(0);
+      streakRef.current = 0;
+      unsynced.current.clear();
       setBestStreak(0);
       setSessionPoints(0);
       setHintReveals({});
@@ -142,40 +150,85 @@ export default function VocabTestPage() {
     }
   };
 
-  const handleSubmitAnswer = async (questionIdx: number, answer: string) => {
-    if (!sessionId || !questions[questionIdx] || pending) return;
-    const question = questions[questionIdx];
-    setPending(true);
-    setSubmitError(null);
+  /** 서버에 답 저장 → 서버 채점 결과(정답/점수/연속)로 화면 값을 맞춘다. 실패하면 unsynced 에 남긴다. */
+  const syncAnswer = async (questionIdx: number, questionId: string, answer: string): Promise<boolean> => {
     try {
-      // 서버는 이미 채점된 문제를 409 로 거절하므로 재시도해도 이중 채점되지 않는다
+      // 서버는 이미 채점된 문제엔 저장된 결과를 돌려주므로 재시도해도 이중 채점되지 않는다
       const response = await postJson("/api/vocab/test/answer", {
         session_id: sessionId,
-        question_id: question.id,
+        question_id: questionId,
         answer,
       });
       if (!response.ok) throw new Error(`answer ${response.status}`);
-      const answerResult = await response.json();
+      const r = await response.json();
+      unsynced.current.delete(questionId);
       setQuestions(prev => {
-        const newQuestions = [...prev];
-        newQuestions[questionIdx] = {
-          ...newQuestions[questionIdx],
-          student_answer: answer,
-          is_correct: answerResult.is_correct,
-          points_earned: answerResult.points_earned,
-          streak_bonus: answerResult.streak_bonus,
+        const next = [...prev];
+        next[questionIdx] = {
+          ...next[questionIdx],
+          is_correct: r.is_correct,
+          points_earned: r.points_earned,
+          streak_bonus: r.streak_bonus,
         };
-        return newQuestions;
+        return next;
       });
-      setStreak(answerResult.current_streak);
-      setBestStreak(answerResult.best_streak);
-      setSessionPoints(answerResult.session_total_points);
-    } catch (err: any) {
-      console.error("Answer submit error:", err);
-      setSubmitError("답변을 저장하지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.");
-    } finally {
-      setPending(false);
+      streakRef.current = r.current_streak;
+      setStreak(r.current_streak);
+      setBestStreak(r.best_streak);
+      setSessionPoints(r.session_total_points);
+      return true;
+    } catch (err) {
+      console.error("Answer sync error:", err);
+      return false;
     }
+  };
+
+  const handleSubmitAnswer = (questionIdx: number, answer: string) => {
+    if (!sessionId || !questions[questionIdx]) return;
+    const q = questions[questionIdx];
+    if (q.is_correct !== null) return;
+
+    // 서버와 같은 규칙으로 즉시 채점 (정답/보기는 문제 데이터에 이미 들어 있다)
+    let ok = false;
+    if (q.question_type === "word_to_meaning" && q.options) {
+      ok = scoreMultipleChoice(answer, q.correct_answer, q.options);
+    } else if (q.question_type === "word_to_meaning") {
+      const acceptable =
+        Array.isArray(q.meaning_ko) && q.meaning_ko.length > 0 ? q.meaning_ko : [q.correct_answer];
+      ok = scoreShortAnswer(answer, acceptable, true);
+    } else if (q.question_type === "meaning_to_word") {
+      ok = scoreShortAnswer(answer, q.correct_answer);
+    } else if (q.question_type === "synonym" || q.question_type === "listening") {
+      ok = scoreMultipleChoice(answer, q.correct_answer, q.options ?? []);
+    }
+    const sc = scoreAnswer({
+      questionType: q.question_type,
+      isCorrect: ok,
+      hintLevel: q.hint_level ?? 0,
+      streakBefore: streakRef.current,
+    });
+
+    setQuestions(prev => {
+      const next = [...prev];
+      next[questionIdx] = {
+        ...next[questionIdx],
+        student_answer: answer,
+        is_correct: sc.is_correct,
+        points_earned: sc.points_earned,
+        streak_bonus: sc.streak_bonus,
+      };
+      return next;
+    });
+    streakRef.current = sc.streak_after;
+    setStreak(sc.streak_after);
+    setBestStreak(b => Math.max(b, sc.streak_after));
+    setSessionPoints(p => p + sc.points_earned);
+    setSubmitError(null);
+
+    unsynced.current.set(q.id, answer);
+    syncQueue.current = syncQueue.current.then(async () => {
+      await syncAnswer(questionIdx, q.id, answer);
+    });
   };
 
   const handleUseHint = async (questionIdx: number) => {
@@ -208,6 +261,13 @@ export default function VocabTestPage() {
     setPending(true);
     setSubmitError(null);
     try {
+      // 아직 서버에 못 올린 답이 있으면 먼저 올린다 (순서대로)
+      await syncQueue.current;
+      for (const [qid, ans] of Array.from(unsynced.current.entries())) {
+        const idx = questions.findIndex(x => x.id === qid);
+        if (idx >= 0) await syncAnswer(idx, qid, ans);
+      }
+      if (unsynced.current.size > 0) throw new Error("unsynced answers");
       // 서버는 이미 채점된 세션이면 저장된 결과를 그대로 돌려주므로 재시도해도 안전하다
       const response = await postJson("/api/vocab/test/submit", { session_id: sessionId }, 2);
       if (!response.ok) throw new Error(`submit ${response.status}`);
