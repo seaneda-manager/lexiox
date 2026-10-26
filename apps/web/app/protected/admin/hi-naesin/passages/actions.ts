@@ -138,3 +138,34 @@ export async function toggleHiNaesinPassagePublishedAction(
   if (error) throw new Error(error.message);
   revalidatePath('/admin/hi-naesin/passages');
 }
+
+/** 삭제 전 확인용: 지문에 딸린 학생 진행 기록/숙제 배정 개수 */
+export async function countHiNaesinPassageUsageAction(
+  ids: string[],
+): Promise<{ sessions: number; assignments: number }> {
+  if (ids.length === 0) return { sessions: 0, assignments: 0 };
+  const supabase = await getServerSupabase();
+  const [s, a] = await Promise.all([
+    supabase.from('hi_naesin_sessions').select('id', { count: 'exact', head: true }).in('passage_id', ids),
+    supabase.from('hi_naesin_assignments').select('id', { count: 'exact', head: true }).in('passage_id', ids),
+  ]);
+  return { sessions: s.count ?? 0, assignments: a.count ?? 0 };
+}
+
+/** 지문 삭제(여러 개). 문장/Drill/학생 기록 등 딸린 데이터는 DB cascade 로 함께 삭제된다. */
+export async function deleteHiNaesinPassagesAction(
+  ids: string[],
+): Promise<{ ok: true; count: number } | { ok: false; error: string }> {
+  if (ids.length === 0) return { ok: true, count: 0 };
+  const supabase = await getServerSupabase();
+  const { data, error } = await supabase
+    .from('hi_naesin_passages')
+    .delete()
+    .in('id', ids)
+    .select('id');
+  if (error) return { ok: false, error: error.message };
+  // 권한(RLS)이 없으면 오류 없이 0건이 지워진다 — 그 경우를 알린다
+  if (!data || data.length === 0) return { ok: false, error: '삭제된 지문이 없습니다. 관리자 권한을 확인하세요.' };
+  revalidatePath('/admin/hi-naesin/passages');
+  return { ok: true, count: data.length };
+}

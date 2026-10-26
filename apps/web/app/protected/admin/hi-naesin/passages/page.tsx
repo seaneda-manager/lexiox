@@ -5,6 +5,8 @@ import { toggleHiNaesinPassagePublishedAction, bulkUpdateSchoolByTitleKeywordAct
 import { sourceTypeLabel, gradeLabel } from '@/models/hi-naesin';
 import type { HiNaesinPassageRow } from '@/models/hi-naesin';
 import BulkMetaPanel from './_components/BulkMetaPanel';
+import PassageDeleteButton from './_components/PassageDeleteButton';
+import ExpandCollapseAll from './_components/ExpandCollapseAll';
 
 export const dynamic = 'force-dynamic';
 
@@ -170,7 +172,13 @@ export default async function HiNaesinPassageListPage({
         }))} />
       )}
 
-      {/* 목록 — 출처별 그룹 */}
+      {tab !== 'bulk' && rows.length > 0 && (
+        <div className="flex justify-end">
+          <ExpandCollapseAll />
+        </div>
+      )}
+
+      {/* 목록 — 출처별 그룹 (아코디언) */}
       {tab !== 'bulk' && rows.length === 0 ? (
         <div className="rounded-2xl border border-dashed p-12 text-center text-sm text-neutral-400">
           등록된 지문이 없습니다.
@@ -228,83 +236,85 @@ export default async function HiNaesinPassageListPage({
               }
 
               return (
-                <section key={src} className="overflow-hidden rounded-2xl border bg-white">
-                  {/* 출처 헤더 */}
-                  <div className="flex items-center gap-2 border-b bg-neutral-50 px-4 py-3">
+                <details key={src} open data-acc className="group overflow-hidden rounded-2xl border bg-white">
+                  {/* 출처 헤더 (클릭하면 접힘/펼침) */}
+                  <summary className="flex cursor-pointer list-none [&::-webkit-details-marker]:hidden items-center gap-2 border-b bg-neutral-50 px-4 py-3">
+                    <span className="text-xs text-neutral-400 transition-transform group-open:rotate-90">▶</span>
                     <span className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${srcBadge}`}>
                       {sourceTypeLabel(src)}
                     </span>
                     <span className="text-sm text-neutral-400">{items.length}개 지문</span>
-                  </div>
+                  </summary>
 
-                  <table className="min-w-full text-sm">
-                    <thead className="bg-neutral-50/50 text-left text-neutral-500">
-                      <tr className="[&>th]:px-4 [&>th]:py-2 border-b">
-                        <th>제목 / 정보</th>
-                        <th>학년</th>
-                        <th>공개</th>
-                        <th></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {subGroups.map(({ label, items: groupItems }) => (
-                        <React.Fragment key={label}>
-                          {/* 서브 그룹 헤더 (교재명/연도) */}
-                          {subGroups.length > 1 && (
-                            <tr key={`sub-${label}`} className="bg-neutral-50/60 border-t">
-                              <td colSpan={4} className="px-4 py-2 text-xs font-semibold text-neutral-500">
-                                {label}
-                              </td>
+                  <div className="divide-y">
+                    {subGroups.map(({ label, items: groupItems }) => (
+                      <details key={label} data-acc open={subGroups.length === 1} className="group/sub">
+                        {/* 교재 / 모의고사(연도·월) / 챕터 단위 아코디언 */}
+                        <summary className="flex cursor-pointer list-none [&::-webkit-details-marker]:hidden items-center justify-between gap-2 bg-neutral-50/60 px-4 py-2">
+                          <span className="flex items-center gap-2 text-xs font-semibold text-neutral-600">
+                            <span className="text-neutral-400 transition-transform group-open/sub:rotate-90">▶</span>
+                            {label}
+                            <span className="font-normal text-neutral-400">{groupItems.length}개</span>
+                          </span>
+                          <PassageDeleteButton variant="group" label={label} ids={groupItems.map((g) => g.id)} />
+                        </summary>
+
+                        <table className="min-w-full text-sm">
+                          <thead className="bg-neutral-50/50 text-left text-neutral-500">
+                            <tr className="[&>th]:px-4 [&>th]:py-2 border-b">
+                              <th>제목 / 정보</th>
+                              <th>학년</th>
+                              <th>공개</th>
+                              <th></th>
                             </tr>
-                          )}
-                          {groupItems.map((row) => {
-                            const hint = buildHint(row);
-                            return (
-                              <tr key={row.id} className="border-t hover:bg-neutral-50/40 [&>td]:px-4 [&>td]:py-3">
-                                <td>
-                                  <div className="font-medium text-neutral-900">
-                                    {row.title ?? hint}
-                                  </div>
-                                  {row.title && (
-                                    <div className="mt-0.5 text-xs text-neutral-400">{hint}</div>
-                                  )}
-                                </td>
-                                <td className="text-xs text-neutral-500">
-                                  {gradeLabel(row.grade as never)}
-                                </td>
-                                <td>
-                                  <form action={toggleHiNaesinPassagePublishedAction}>
-                                    <input type="hidden" name="id" value={row.id} />
-                                    <input type="hidden" name="is_published" value={String(!row.is_published)} />
-                                    <button
-                                      type="submit"
-                                      className={[
-                                        'rounded-full border px-3 py-1 text-xs',
-                                        row.is_published
-                                          ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
-                                          : 'border-neutral-200 bg-neutral-50 text-neutral-500',
-                                      ].join(' ')}
-                                    >
-                                      {row.is_published ? '공개' : '비공개'}
-                                    </button>
-                                  </form>
-                                </td>
-                                <td>
-                                  <Link
-                                    href={`/admin/hi-naesin/passages/${row.id}/edit`}
-                                    className="rounded-lg border px-3 py-1 text-xs hover:bg-neutral-50"
-                                  >
-                                    편집
-                                  </Link>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </React.Fragment>
-                      ))}
-                    </tbody>
-                  </table>
-                </section>
+                          </thead>
+                          <tbody>
+                            {groupItems.map((row) => {
+                              const hint = buildHint(row);
+                              return (
+                                <tr key={row.id} className="border-t hover:bg-neutral-50/40 [&>td]:px-4 [&>td]:py-3">
+                                  <td>
+                                    <div className="font-medium text-neutral-900">{row.title ?? hint}</div>
+                                    {row.title && <div className="mt-0.5 text-xs text-neutral-400">{hint}</div>}
+                                  </td>
+                                  <td className="text-xs text-neutral-500">{gradeLabel(row.grade as never)}</td>
+                                  <td>
+                                    <form action={toggleHiNaesinPassagePublishedAction}>
+                                      <input type="hidden" name="id" value={row.id} />
+                                      <input type="hidden" name="is_published" value={String(!row.is_published)} />
+                                      <button
+                                        type="submit"
+                                        className={[
+                                          'rounded-full border px-3 py-1 text-xs',
+                                          row.is_published
+                                            ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
+                                            : 'border-neutral-200 bg-neutral-50 text-neutral-500',
+                                        ].join(' ')}
+                                      >
+                                        {row.is_published ? '공개' : '비공개'}
+                                      </button>
+                                    </form>
+                                  </td>
+                                  <td>
+                                    <div className="flex items-start justify-end gap-2">
+                                      <Link
+                                        href={`/admin/hi-naesin/passages/${row.id}/edit`}
+                                        className="rounded-lg border px-3 py-1 text-xs hover:bg-neutral-50"
+                                      >
+                                        편집
+                                      </Link>
+                                      <PassageDeleteButton label={row.title ?? hint} ids={[row.id]} />
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </details>
+                    ))}
+                  </div>
+                </details>
               );
             })}
         </div>
