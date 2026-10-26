@@ -148,7 +148,7 @@ function GrammarDiagnostics({ drills }: { drills: { unit: MiddleNaesinUnit; own:
                       {c.title} —{' '}
                       {!raw
                         ? '레슨 데이터 없음(기존 방식 문법 포인트)'
-                        : check && !check.ok
+                        : check && check.ok === false
                           ? `⚠ 형식 오류로 레슨을 읽지 못함: ${check.errors.slice(0, 3).join(' / ')}`
                           : `상태: ${raw.status === 'final' ? '확정' : '초안'}`}
                     </li>

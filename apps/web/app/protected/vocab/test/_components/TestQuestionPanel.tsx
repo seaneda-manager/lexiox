@@ -34,6 +34,8 @@ export interface TestQuestionPanelProps {
   correctCount: number;
   streak: number;
   hintReveal?: string;
+  pending?: boolean;
+  submitError?: string | null;
   onAnswerSubmit: (answer: string) => void;
   onUseHint: () => void;
   onSubmitTest: () => void;
@@ -49,6 +51,8 @@ export default function TestQuestionPanel({
   correctCount,
   streak,
   hintReveal,
+  pending = false,
+  submitError = null,
   onAnswerSubmit,
   onUseHint,
   onSubmitTest,
@@ -71,7 +75,7 @@ export default function TestQuestionPanel({
       question.question_type === "meaning_to_word");
 
   const handleSubmitAnswer = () => {
-    if (answer.trim()) {
+    if (answer.trim() && !pending) {
       onAnswerSubmit(answer);
     }
   };
@@ -206,10 +210,11 @@ export default function TestQuestionPanel({
               <button
                 key={option.id}
                 onClick={() => {
+                  if (pending) return;
                   setAnswer(option.id);
                   onAnswerSubmit(option.id);
                 }}
-                disabled={isAnswered}
+                disabled={isAnswered || pending}
                 className={`p-3 text-left rounded-lg border-2 transition disabled:cursor-not-allowed ${
                   answer === option.id
                     ? "border-blue-500 bg-blue-50"
@@ -268,7 +273,7 @@ export default function TestQuestionPanel({
               if (e.key === "Enter") handleSubmitAnswer();
             }}
             placeholder="답변을 입력하세요"
-            disabled={isAnswered}
+            disabled={isAnswered || pending}
             autoComplete="off"
             autoCapitalize="none"
             autoCorrect="off"
@@ -313,6 +318,11 @@ export default function TestQuestionPanel({
         </div>
       )}
 
+      {pending && <p className="text-sm text-blue-600 animate-pulse">채점 중이에요… 잠시만요</p>}
+      {submitError && !pending && (
+        <div className="p-3 rounded-lg text-sm font-medium bg-amber-100 text-amber-800">{submitError}</div>
+      )}
+
       {/* 네비게이션 */}
       <div className="flex gap-3 pt-4 border-t">
         <button
@@ -332,7 +342,7 @@ export default function TestQuestionPanel({
                 ? onSubmitTest
                 : onNext
           }
-          disabled={!isAnswered && (isTypedInput ? !answer.trim() : true)}
+          disabled={pending || (!isAnswered && (isTypedInput ? !answer.trim() : true))}
           className={`flex-1 px-4 py-2 text-white font-semibold rounded-lg transition disabled:bg-gray-300 ${
             isAnswered
               ? isLast
@@ -341,7 +351,7 @@ export default function TestQuestionPanel({
               : "bg-blue-500 hover:bg-blue-600"
           }`}
         >
-          {!isAnswered ? "답변 제출" : isLast ? "시험 제출" : "다음 →"}
+          {pending ? "처리 중…" : !isAnswered ? "답변 제출" : isLast ? "시험 제출" : "다음 →"}
         </button>
       </div>
     </div>
