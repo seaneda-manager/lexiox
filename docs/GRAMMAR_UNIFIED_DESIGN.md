@@ -116,10 +116,17 @@
 - 교재별 **콘텐츠 제작 현황**(단원 ↔ 개념 챕터 ↔ 변형 확정 여부)을 보는 화면.
 
 ### 9.3 데이터 ◻︎
-- `grammar_books`(title, level, source), `grammar_book_units`(book_id, chapter_no, chapter_title, unit_no, title, page, concept_id, confidence).
+- `grammar_books`(title, level, source), `grammar_book_units`(book_id, chapter_no, chapter_title, unit_no, title, page, concept_id, point_id nullable, confidence). 콘텐츠 테이블에는 `book_id`가 없다(공유).
 - `student_grammar_books`(student_id, book_id, assigned_by, start_unit, pace).
 - 단원 진행은 기존 완료 기록(`grammar_2026_unit_completions`) 또는 새 단원 단위 기록에 연결.
 - 목차 JSON은 초기 데이터로 가져오는 용도(관리자 가져오기 화면 또는 SQL).
+
+### 9.3a 원칙: 내용은 하나, 교재는 목차·레벨만 다르다 ✅
+- 설명·퀴즈·문제 같은 **콘텐츠는 모든 교재가 공유**한다. 교재마다 따로 만들지 않는다.
+- 교재가 다른 것은 **목차(챕터·단원 구성과 순서)** 와 **레벨**뿐이다. 교재는 공통 콘텐츠를 다른 순서·묶음으로 보여 주는 "목차 보기"다.
+- 따라서 교재 단원 → **공통 개념 챕터(+ 그 안의 소주제/포인트)** 로 연결한다. 한 교재 단원이 개념의 일부 포인트만 가리킬 수 있고(예: be동사 6단원 → be동사 개념의 포인트 하나씩), 여러 교재의 서로 다른 단원이 같은 개념을 가리킬 수 있다.
+- 교재의 **레벨**이 학생에게 보여 줄 변형(수준·예문 난이도)을 정한다.
+- **진행(완료·점수)은 교재가 아니라 개념/포인트 단위로 쌓는다.** 교재가 바뀌어도 이미 통과한 내용은 다시 하지 않고, 교재 화면에는 그 진행이 그대로 표시된다.
 
 ### 9.4 순서 제안
 유니버설 챕터·변형 스키마(1단계) → 교재 목차 가져오기 + 매핑 확정 → 선생님 배정 화면 → 학생 교재 화면 → 학습 연결.
