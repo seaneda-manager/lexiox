@@ -24,7 +24,12 @@ export type TextSegmentContent = { text: string };
 export type AnimationSegmentContent = { key: string; duration_ms: number };
 export type BlankSegmentContent = {
   prompt: string;
+  /** 대표 정답 (기존 데이터 호환). answers 가 있으면 answers 가 우선한다. */
   answer: string;
+  /** 정답이 둘 이상일 때(who/that 등) 모두 정답으로 인정 */
+  answers?: string[];
+  /** 객관식 전환 시 보여줄 오답 후보 (정답은 자동으로 섞어 넣는다) */
+  options?: string[];
   hint_ko?: string;
 };
 

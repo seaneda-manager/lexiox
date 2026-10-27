@@ -293,6 +293,18 @@ export default function SegmentsEditor({ unitId, segments, onChange }: Props) {
                       placeholder="단수 / 복수"
                     />
                   </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <InlineInput label="정답이 여러 개면 (쉼표로)"
+                      value={((seg.content as any).answers ?? []).join(", ")}
+                      onChange={(v) => handleUpdateContent(seg.id, { ...(seg.content as any), answers: v.split(",").map((x) => x.trim()).filter(Boolean) })}
+                      placeholder="who, that"
+                    />
+                    <InlineInput label="객관식 오답 보기 (쉼표로, 2~3개)"
+                      value={((seg.content as any).options ?? []).join(", ")}
+                      onChange={(v) => handleUpdateContent(seg.id, { ...(seg.content as any), options: v.split(",").map((x) => x.trim()).filter(Boolean) })}
+                      placeholder="which, whom, what"
+                    />
+                  </div>
                 </div>
               )}
 

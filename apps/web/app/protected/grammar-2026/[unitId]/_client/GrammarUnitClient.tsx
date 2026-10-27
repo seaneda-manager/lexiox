@@ -70,6 +70,7 @@ export default function GrammarUnitClient({ data }: { data: GrammarUnitFull }) {
       {phase === "explanation" && (
         <ExplanationPlayer
           segments={data.segments}
+          unitId={data.unit.id}
           onDone={handleExplanationDone}
         />
       )}
