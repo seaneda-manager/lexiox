@@ -318,9 +318,10 @@
     },
     {
      "unit": 12,
-     "grammar": "목적격보어 형태(원형/분사) 구별",
+     "grammar": "지각동사와 to부정사를 목적격보어로 취하는 경우",
      "page": "109",
-     "confidence": "l"
+     "confidence": "h",
+     "note": "사용자 확인"
     },
     {
      "unit": 13,
