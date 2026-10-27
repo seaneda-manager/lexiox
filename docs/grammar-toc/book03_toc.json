@@ -1,0 +1,79 @@
+{
+ "book": {
+  "title": "(교재명 미확인)",
+  "level_guess": "중3",
+  "source": "사용자가 텍스트로 제공한 챕터 목록 (단원 정보 없음)"
+ },
+ "chapters": [
+  {
+   "chapter": 1,
+   "title": "문장의 동사",
+   "units": []
+  },
+  {
+   "chapter": 2,
+   "title": "시제",
+   "units": []
+  },
+  {
+   "chapter": 3,
+   "title": "조동사",
+   "units": []
+  },
+  {
+   "chapter": 4,
+   "title": "수동태",
+   "units": []
+  },
+  {
+   "chapter": 5,
+   "title": "부정사",
+   "units": []
+  },
+  {
+   "chapter": 6,
+   "title": "동명사와 분사",
+   "units": []
+  },
+  {
+   "chapter": 7,
+   "title": "비교 표현",
+   "units": []
+  },
+  {
+   "chapter": 8,
+   "title": "접속사",
+   "units": []
+  },
+  {
+   "chapter": 9,
+   "title": "분사구문",
+   "units": []
+  },
+  {
+   "chapter": 10,
+   "title": "관계사",
+   "units": []
+  },
+  {
+   "chapter": 11,
+   "title": "가정법",
+   "units": []
+  },
+  {
+   "chapter": 12,
+   "title": "일치와 화법",
+   "units": []
+  },
+  {
+   "chapter": 13,
+   "title": "강조, 부정, 도치, 부정대명사",
+   "units": []
+  },
+  {
+   "chapter": 14,
+   "title": "문장의 이해",
+   "units": []
+  }
+ ]
+}
