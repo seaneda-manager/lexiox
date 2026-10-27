@@ -44,7 +44,8 @@ export default function ExplanationPlayer({ segments, onDone }: Props) {
   useEffect(() => {
     setAudioMs(undefined);
     const el = audioRef.current;
-    if (!el || !seg?.audio_url) {
+    // 빈칸 문제는 대본(정답을 말해버릴 수 있음)을 재생하지 않는다
+    if (!el || !seg?.audio_url || seg.type === "blank") {
       setPlaying(false);
       return;
     }
@@ -133,7 +134,7 @@ export default function ExplanationPlayer({ segments, onDone }: Props) {
       </div>
 
       {/* 자막 */}
-      {showSubtitle && seg.narration && (
+      {showSubtitle && seg.narration && seg.type !== "blank" && (
         <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">{seg.narration}</p>
       )}
 

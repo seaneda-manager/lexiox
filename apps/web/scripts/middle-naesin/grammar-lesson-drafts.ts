@@ -2,6 +2,7 @@
 // 문제 난이도: basic(형태 확인) → intermediate(오류 고치기·구별) → advanced(내신 고난도·구문 전환·개수 세기)
 import type { GrammarLesson } from '../../models/middle-naesin/grammar-lesson';
 import { EXTRA_QUESTIONS } from './grammar-lesson-extra-questions';
+import { EXAMPLE_GROUPS, EXTRA_RULES, MORE_QUESTIONS } from './grammar-lesson-examples';
 
 type Draft = { lessonNumber: number; sortOrder: number; lesson: GrammarLesson };
 
@@ -890,6 +891,14 @@ export const GRAMMAR_LESSON_DRAFTS: Draft[] = [
 // 주제당 22문제(초급 6 · 중급 8 · 고급 8)가 되도록 추가 문항을 합친다.
 for (const d of GRAMMAR_LESSON_DRAFTS) {
   d.lesson.questions.push(...(EXTRA_QUESTIONS[`${d.lessonNumber}-${d.sortOrder}`] ?? []));
+}
+
+// 설명 속 모든 포인트별 예문 모음 + 추가 규칙 + 추가 문제(주제당 25문제)
+for (const d of GRAMMAR_LESSON_DRAFTS) {
+  const key = `${d.lessonNumber}-${d.sortOrder}`;
+  d.lesson.explanation.rules.push(...(EXTRA_RULES[key] ?? []));
+  d.lesson.exampleGroups = EXAMPLE_GROUPS[key] ?? [];
+  d.lesson.questions.push(...(MORE_QUESTIONS[key] ?? []));
 }
 
 // 정답 위치가 한쪽(A)으로 쏠리지 않도록 결정적으로 고르게 배치한다. (개수 세기 문제는 보기가 1~4 순서라 제외)

@@ -198,6 +198,26 @@ export default async function GrammarLessonReviewPage({ params, searchParams }: 
             </div>
           </Section>
 
+          {lesson.exampleGroups && lesson.exampleGroups.length > 0 && (
+            <Section title={`1-B. 예문 모음 (${counts.exampleCount}개 · ${lesson.exampleGroups.length}그룹)`}>
+              {lesson.exampleGroups.map((g, gi) => (
+                <div key={gi} className="space-y-1 rounded-lg border p-3">
+                  <div className="text-sm font-semibold text-neutral-800">{g.title}</div>
+                  {g.note && <div className="text-xs text-violet-700">💡 {g.note}</div>}
+                  {g.examples.map((e, ei) => (
+                    <div key={ei} className={['rounded px-2 py-1.5 text-sm', e.wrong ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50/40'].join(' ')}>
+                      {e.wrong ? '✗ ' : ''}
+                      {e.tag && <span className="mr-1.5 rounded border bg-white px-1.5 py-0.5 text-[10px] font-bold text-neutral-600">{e.tag}</span>}
+                      {e.en}
+                      <span className="ml-2 text-xs text-neutral-500">{e.ko}</span>
+                      {e.note && <span className="ml-2 text-[11px] text-neutral-400">({e.note})</span>}
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </Section>
+          )}
+
           <Section title="2. 쓰기 깜지 (학생이 따라 쓸 원문)">
             <pre className="whitespace-pre-wrap rounded-lg bg-neutral-50 p-3 font-sans text-sm">{lesson.cramText}</pre>
           </Section>

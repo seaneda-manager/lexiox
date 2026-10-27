@@ -189,6 +189,38 @@ function ExplanationStep({ lesson, onNext }: { lesson: GrammarLesson; onNext: ()
           </div>
         ))}
       </div>
+      {lesson.exampleGroups && lesson.exampleGroups.length > 0 && (
+        <div className="space-y-2">
+          <div className="text-xs font-bold uppercase tracking-widest text-neutral-400">
+            예문 모음 ({lesson.exampleGroups.reduce((a, g) => a + g.examples.length, 0)})
+          </div>
+          {lesson.exampleGroups.map((g, gi) => (
+            <details key={gi} open={gi === 0} className="rounded-xl border">
+              <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-neutral-800">
+                {g.title} <span className="font-normal text-neutral-400">({g.examples.length})</span>
+              </summary>
+              <div className="space-y-1.5 border-t px-3 py-2">
+                {g.note && <p className="text-xs text-violet-700">💡 {g.note}</p>}
+                {g.examples.map((e, ei) => (
+                  <div key={ei} className={['rounded-lg p-2.5 text-sm', e.wrong ? 'bg-rose-50' : 'bg-emerald-50/40'].join(' ')}>
+                    <p className={e.wrong ? 'text-rose-700 line-through decoration-rose-300' : 'text-neutral-800'}>
+                      {e.wrong ? '✗ ' : ''}
+                      {e.tag && (
+                        <span className="mr-1.5 rounded border border-neutral-300 bg-white px-1.5 py-0.5 text-[10px] font-bold not-italic text-neutral-600 no-underline">
+                          {e.tag}
+                        </span>
+                      )}
+                      {e.en}
+                    </p>
+                    {showKo && <p className="mt-0.5 text-xs text-neutral-500">{e.ko}</p>}
+                    {e.note && <p className="mt-0.5 text-[11px] text-neutral-400">{e.note}</p>}
+                  </div>
+                ))}
+              </div>
+            </details>
+          ))}
+        </div>
+      )}
       <button type="button" onClick={onNext} className="rounded-xl bg-neutral-900 px-5 py-2 text-sm font-semibold text-white hover:bg-neutral-800">
         다 읽었어요 → 쓰기 깜지
       </button>

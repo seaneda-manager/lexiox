@@ -24,6 +24,21 @@ export type GrammarLessonStatus = 'draft' | 'final';
 
 export type GrammarLessonBilingual = { en: string; ko: string };
 
+// 예문 모음: 설명 속 모든 포인트별 예문. tag=형태 표시(원형/v-ing/p.p.), note=한 줄 설명, wrong=틀린 예(✗)
+export type GrammarLessonExample = {
+  en: string;
+  ko: string;
+  tag?: string;
+  note?: string;
+  wrong?: boolean;
+};
+
+export type GrammarLessonExampleGroup = {
+  title: string;
+  note?: string;
+  examples: GrammarLessonExample[];
+};
+
 export type GrammarLessonBlank = {
   text: string; // '___' 한 곳이 빈칸
   answer: string;
@@ -71,6 +86,7 @@ export type GrammarLesson = {
     rules: GrammarLessonBilingual[];
     examples: GrammarLessonBilingual[];
   };
+  exampleGroups?: GrammarLessonExampleGroup[];
   cramText: string;
   blanks: GrammarLessonBlank[];
   drillFill: GrammarLessonFill[];
@@ -118,6 +134,24 @@ export function validateGrammarLesson(
   if (isObj(ex)) {
     bilingual(ex.rules, 'explanation.rules');
     bilingual(ex.examples, 'explanation.examples');
+  }
+
+  if (raw.exampleGroups !== undefined) {
+    if (!Array.isArray(raw.exampleGroups)) {
+      errors.push('exampleGroups 가 배열이 아닙니다.');
+    } else {
+      raw.exampleGroups.forEach((g, i) => {
+        if (!isObj(g) || !isStr(g.title) || !Array.isArray(g.examples) || g.examples.length === 0) {
+          errors.push(`exampleGroups[${i + 1}] 에는 title 과 examples[] 가 필요합니다.`);
+          return;
+        }
+        g.examples.forEach((e, j) => {
+          if (!isObj(e) || !isStr(e.en) || !e.en.trim() || !isStr(e.ko)) {
+            errors.push(`exampleGroups[${i + 1}].examples[${j + 1}] 에 en/ko 가 필요합니다.`);
+          }
+        });
+      });
+    }
   }
 
   if (!isStr(raw.cramText) || !raw.cramText.trim()) errors.push('cramText 가 비어 있습니다.');
@@ -205,6 +239,7 @@ export function lessonCounts(lesson: GrammarLesson) {
   const byLevel = (items: { level: GrammarLessonLevel }[]) =>
     Object.fromEntries(GRAMMAR_LESSON_LEVELS.map((lv) => [lv, items.filter((x) => x.level === lv).length])) as Record<GrammarLessonLevel, number>;
   return {
+    exampleCount: (lesson.exampleGroups ?? []).reduce((a, g) => a + g.examples.length, 0),
     blanks: lesson.blanks.length,
     drillFill: byLevel(lesson.drillFill),
     drillFix: byLevel(lesson.drillFix),

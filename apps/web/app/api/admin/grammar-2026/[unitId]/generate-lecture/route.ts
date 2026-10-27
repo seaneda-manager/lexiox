@@ -5,7 +5,8 @@ export const maxDuration = 300;
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { getServerSupabase, getServiceRoleClient } from "@/lib/supabase/server";
-import { generateSpeech } from "@/lib/elevenlabs/generate-speech";
+import { generateMixedSpeech } from "@/lib/elevenlabs/generate-speech";
+import { prepareNarrationForTts } from "@/lib/elevenlabs/prepare-narration";
 import { callClaudeJson, sanitizeSegments, existingSegmentsBlock, insertDroppingMissing } from "@/lib/ai/grammarGen";
 
 function buildPrompt(unit: any, manualSegs: any[], drills: any[]): string {
@@ -35,10 +36,16 @@ ${drillText || "(없음)"}
 세그먼트 타입:
 - "text": 짧은 도입/전환/요약 문단. content = { "text": "화면에 띄울 짧은 문장(한국어)" }
 - "board": 칠판 판서. content = { "title"?: "소제목", "lines": [{ "text": "한 줄(영어 예문/공식 등)", "emphasis"?: [{ "from": 문자시작index, "to": 문자끝index, "kind": "highlight"|"circle"|"underline" }] }] }
-- "blank": 학생이 직접 채우는 빈칸. content = { "prompt": "___ 문장", "answer": "정답", "hint_ko"?: "힌트" }
+- "blank": 학생이 직접 채우는 빈칸(설명 팝업퀴즈). content = { "prompt": "___ 문장", "answer": "정답", "hint_ko"?: "힌트" }
+  - ⚠️ prompt 문장에는 정답 단어가 절대 들어가면 안 됨 (정답 자리는 ___ 하나만).
+  - ⚠️ board에서 이미 보여준 예문을 blank로 재사용 금지. 학생이 처음 보는 새 문장으로 출제.
+  - 정답이 명백히 노출되는 문맥(바로 앞 board가 같은 구조를 answer와 함께 보여준 경우 등) 회피.
 
 ## narration (필수, 모든 세그먼트)
 강사의 말. 한국어. 영어 예문·표현은 그대로 영어로 읽어줌. 1~4문장.
+음성(TTS)으로 읽히므로: 기호(→, =, /, ~, 괄호)와 "S+V", "to V", "-ing" 같은 약어 대신 말로 풀어 쓰고(예: "주어 동사", "to부정사", "ing 형태"), 영어 단어는 한 번에 짧은 덩어리(예문 1개 단위)로만 섞으세요.
+
+주의: "blank" 세그먼트의 narration은 정답을 절대 말하거나 암시하지 말 것 (어차피 고정 안내로 대체됨). 정답은 직전 board/text 세그먼트에서 충분히 설명한 뒤에 blank로 묻고, blank 바로 앞 설명에서 "정답 단어가 그대로 문제에 보이게" 하지 말 것.
 
 ## 출력: 이 JSON만 (다른 텍스트/코드블록 없이)
 { "segments": [ { "type": "board", "narration": "...", "content": { "lines": [{ "text": "...", "emphasis": [] }] } } ] }`;
@@ -96,10 +103,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ unitId:
     for (let i = 0; i < generated.length; i++) {
       const seg = generated[i];
       let audio_url: string | null = null;
-      const narration = (seg.narration ?? "").trim();
+      // 빈칸 문제: AI 대본은 정답을 말해버릴 수 있어 고정 안내로 대체
+      const narration = seg.type === "blank"
+        ? "빈칸에 들어갈 알맞은 말을 직접 써 보세요."
+        : (seg.narration ?? "").trim();
       if (narration) {
         try {
-          const { url } = await generateSpeech(narration, { voiceId, modelId: "eleven_multilingual_v2" });
+          const { url } = await generateMixedSpeech(prepareNarrationForTts(narration), {
+            voiceId,
+            modelId: "eleven_multilingual_v2",
+            stability: 0.7,
+          });
           audio_url = url;
           audioCount++;
         } catch (e) {

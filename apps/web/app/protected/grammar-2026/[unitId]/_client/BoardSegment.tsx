@@ -25,8 +25,12 @@ function renderLine(line: BoardLine, revealChars: number) {
   const parts: React.ReactNode[] = [];
   let cursor = 0;
   marks.forEach((m, i) => {
-    const from = Math.max(0, Math.min(m.from, text.length));
-    const to = Math.max(from, Math.min(m.to, text.length));
+    let from = Math.max(cursor, Math.min(m.from, text.length));
+    let to = Math.max(from, Math.min(m.to, text.length));
+    // AI가 센 문자 인덱스가 1~2자 어긋나 단어가 중간에서 잘리는 경우 → 단어 경계로 확장
+    const isWord = (ch: string | undefined) => !!ch && /[A-Za-z0-9'’]/.test(ch);
+    while (from > cursor && isWord(text[from - 1]) && isWord(text[from])) from--;
+    while (to < text.length && isWord(text[to - 1]) && isWord(text[to])) to++;
     if (from > cursor) parts.push(<span key={`p${i}`}>{text.slice(cursor, from)}</span>);
     const seg = text.slice(from, to);
     if (m.kind === "highlight") {
