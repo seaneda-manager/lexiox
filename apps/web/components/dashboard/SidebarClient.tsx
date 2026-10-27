@@ -231,7 +231,8 @@ export default function SidebarClient({ role, program = null, hasHiNaesin = fals
         { section: 'Updated TOEFL' as NavSection, href: '/admin/content/updated-listening', label: 'Listening', icon: Headphones },
         { section: 'Updated TOEFL' as NavSection, href: '/admin/content/updated-writing',   label: 'Writing',   icon: PenLine },
         { section: 'Updated TOEFL' as NavSection, href: '/admin/content/grammar-2026',      label: 'Grammar',   icon: BookText },
-        { section: 'Updated TOEFL' as NavSection, href: '/admin/grammar-quiz',              label: '문법 퀴즈 뱅크', icon: CheckSquare },
+        { section: 'Updated TOEFL' as NavSection, href: '/admin/grammar-engine',            label: '문법 엔진(개념×레벨)', icon: BookText },
+        { section: 'Updated TOEFL' as NavSection, href: '/admin/grammar-quiz',             label: '문법 퀴즈 뱅크', icon: CheckSquare },
         { section: 'Updated TOEFL' as NavSection, href: '/admin/problem-bank',              label: 'Problem Bank', icon: Library },
         { section: 'Updated TOEFL' as NavSection, href: '/admin/daily-tests',               label: 'Daily Tests', icon: CheckSquare },
 
