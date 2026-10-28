@@ -21,6 +21,16 @@ export default function LessonActions({ conceptKey, level, exists, isFinal, less
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [json, setJson] = useState(lessonJson);
   const [pasted, setPasted] = useState<Record<string, string>>({});
+  const [extraAll, setExtraAll] = useState("");
+  const [extra, setExtra] = useState<Record<string, string>>({});
+
+  // 프롬프트 + 공통 추가 요청 + 섹션별 추가 요청 (주제·소재·분위기 등)
+  const withExtra = (prompt: string, key: string) => {
+    const parts = [extraAll.trim(), (extra[key] ?? "").trim()].filter(Boolean);
+    if (parts.length === 0) return prompt;
+    const lines = parts.map((t) => "- " + t.replace(/\n+/g, " ")).join("\n");
+    return prompt + "\n\n## 추가 요청 (위 규칙에 더해 반영)\n" + lines;
+  };
 
   async function call(action: string, extra: Record<string, unknown> = {}, okText = "완료"): Promise<boolean> {
     setBusy(action + (extra.section ?? ""));
@@ -66,6 +76,16 @@ export default function LessonActions({ conceptKey, level, exists, isFinal, less
           <p className="text-xs text-neutral-500">
             섹션마다 [프롬프트 복사] → 외부 AI(구독 중인 채팅)에 붙여 넣기 → 나온 JSON 을 아래 칸에 붙여 넣고 [적용]. 앞 섹션을 먼저 채우면 뒤 섹션 프롬프트에 그 규칙이 자동으로 들어갑니다.
           </p>
+          <div className="rounded-2xl border bg-violet-50/40 p-4">
+            <div className="text-sm font-bold text-neutral-700">공통 추가 요청 (모든 섹션 프롬프트 끝에 붙음)</div>
+            <textarea
+              value={extraAll}
+              onChange={(e) => setExtraAll(e.target.value)}
+              rows={2}
+              placeholder="예) 예문 소재는 학교생활·스포츠 위주로 / 한국 중학생이 흔히 하는 실수 중심 / 대화체 예문 포함"
+              className="mt-2 w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-violet-200"
+            />
+          </div>
           {sections.map((s) => (
             <details key={s.key} open={s.count === 0} className="rounded-2xl border bg-white p-4">
               <summary className="cursor-pointer select-none text-sm font-bold text-neutral-700">
@@ -76,7 +96,7 @@ export default function LessonActions({ conceptKey, level, exists, isFinal, less
               </summary>
               <div className="mt-3 space-y-2">
                 <div className="flex flex-wrap gap-2">
-                  <button onClick={() => copy(s.prompt, s.label)} className={`${btn} border bg-white hover:bg-neutral-50`}>
+                  <button onClick={() => copy(withExtra(s.prompt, s.key), s.label)} className={`${btn} border bg-white hover:bg-neutral-50`}>
                     프롬프트 복사
                   </button>
                 </div>
@@ -97,10 +117,14 @@ export default function LessonActions({ conceptKey, level, exists, isFinal, less
                 >
                   {busy === `paste${s.key}` ? "적용 중…" : "적용"}
                 </button>
-                <details className="text-xs text-neutral-400">
-                  <summary className="cursor-pointer">프롬프트 미리보기</summary>
-                  <pre className="mt-1 max-h-64 overflow-auto whitespace-pre-wrap rounded-lg bg-neutral-50 p-2 font-sans text-neutral-600">{s.prompt}</pre>
-                </details>
+                <input
+                  value={extra[s.key] ?? ""}
+                  onChange={(e) => setExtra((p) => ({ ...p, [s.key]: e.target.value }))}
+                  placeholder="이 섹션 추가 요청 (선택) — 예) 이중목적어 4형식 ↔ 3형식 전환 예문 비중을 높여 줘"
+                  className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-violet-200"
+                />
+                <div className="text-xs font-semibold text-neutral-500">AI에게 요구하는 내용 (복사되는 프롬프트 전체)</div>
+                <pre className="max-h-72 overflow-auto whitespace-pre-wrap rounded-lg bg-neutral-50 p-3 font-sans text-xs text-neutral-700">{withExtra(s.prompt, s.key)}</pre>
               </div>
             </details>
           ))}
