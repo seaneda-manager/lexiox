@@ -1,0 +1,821 @@
+{
+ "book": {
+  "title": "뉴런 기출로 영문법 중3",
+  "level_guess": "중3",
+  "source": "답지(정답과 해설) 1~62쪽에서 추정 — 목차 없음",
+  "note": "page는 교재 본문 쪽수(답지 표기). confidence: h=해설/정답에 개념이 명시, m=문항 형태로 추정, l=불확실. 워크북 답지(63~96쪽)는 같은 단원이라 단원 구성 확인용으로만 봄."
+ },
+ "chapters": [
+  {
+   "chapter": 1,
+   "title": "문장의 동사",
+   "units": [
+    {
+     "unit": 1,
+     "grammar": "문장의 5요소(S·V·O·C·M) 구분",
+     "page": "14",
+     "confidence": "h"
+    },
+    {
+     "unit": 2,
+     "grammar": "2형식: 감각동사 + 형용사",
+     "page": "15",
+     "confidence": "h"
+    },
+    {
+     "unit": 3,
+     "grammar": "3형식: 동사 뒤 목적어(명사구·명사절)",
+     "page": "16-17",
+     "confidence": "m"
+    },
+    {
+     "unit": 4,
+     "grammar": "4형식과 3형식 전환(수여동사 to/for/of)",
+     "page": "18-19",
+     "confidence": "h"
+    },
+    {
+     "unit": 5,
+     "grammar": "5형식 1: 명사·형용사 목적격보어",
+     "page": "20",
+     "confidence": "h"
+    },
+    {
+     "unit": 6,
+     "grammar": "5형식 2: to부정사 목적격보어",
+     "page": "21",
+     "confidence": "h"
+    },
+    {
+     "unit": 7,
+     "grammar": "5형식 3: 지각동사",
+     "page": "22",
+     "confidence": "h"
+    },
+    {
+     "unit": 8,
+     "grammar": "5형식 4: 사역동사",
+     "page": "23",
+     "confidence": "h"
+    },
+    {
+     "unit": 9,
+     "grammar": "목적격보어의 형태 종합(원형/to/p.p.)",
+     "page": "24",
+     "confidence": "m"
+    },
+    {
+     "unit": 10,
+     "grammar": "help·get·make·let·have 동사별 목적격보어",
+     "page": "25",
+     "confidence": "m"
+    }
+   ]
+  },
+  {
+   "chapter": 2,
+   "title": "시제",
+   "units": [
+    {
+     "unit": 1,
+     "grammar": "동사 변화(과거·과거분사: 규칙/불규칙)",
+     "page": "35-38",
+     "confidence": "h"
+    },
+    {
+     "unit": 2,
+     "grammar": "현재·과거·미래 시제",
+     "page": "39",
+     "confidence": "h"
+    },
+    {
+     "unit": 3,
+     "grammar": "진행형",
+     "page": "40",
+     "confidence": "h"
+    },
+    {
+     "unit": 4,
+     "grammar": "현재완료 1: for/since (계속)",
+     "page": "41",
+     "confidence": "h"
+    },
+    {
+     "unit": 5,
+     "grammar": "현재완료 2: 경험·완료·결과",
+     "page": "42-43",
+     "confidence": "h"
+    },
+    {
+     "unit": 6,
+     "grammar": "현재완료 종합(ever·yet·already·just)",
+     "page": "44-45",
+     "confidence": "m"
+    },
+    {
+     "unit": 7,
+     "grammar": "현재완료 진행형",
+     "page": "46-47",
+     "confidence": "h"
+    },
+    {
+     "unit": 8,
+     "grammar": "과거완료",
+     "page": "48",
+     "confidence": "h"
+    },
+    {
+     "unit": 9,
+     "grammar": "과거완료 진행형",
+     "page": "49",
+     "confidence": "h"
+    }
+   ]
+  },
+  {
+   "chapter": 3,
+   "title": "조동사",
+   "units": [
+    {
+     "unit": 1,
+     "grammar": "can / be able to (능력·허가·요청·추측)",
+     "page": "58",
+     "confidence": "h"
+    },
+    {
+     "unit": 2,
+     "grammar": "may (허가·추측)",
+     "page": "59",
+     "confidence": "h"
+    },
+    {
+     "unit": 3,
+     "grammar": "must (의무·추측·금지)",
+     "page": "60",
+     "confidence": "h"
+    },
+    {
+     "unit": 4,
+     "grammar": "have to vs must",
+     "page": "61",
+     "confidence": "h"
+    },
+    {
+     "unit": 5,
+     "grammar": "should / ought to",
+     "page": "62",
+     "confidence": "h"
+    },
+    {
+     "unit": 6,
+     "grammar": "had better / would rather",
+     "page": "63",
+     "confidence": "h"
+    },
+    {
+     "unit": 7,
+     "grammar": "used to / would",
+     "page": "64",
+     "confidence": "h"
+    },
+    {
+     "unit": 8,
+     "grammar": "조동사 + have p.p. (추측·후회)",
+     "page": "65-66",
+     "confidence": "h"
+    }
+   ]
+  },
+  {
+   "chapter": 4,
+   "title": "수동태",
+   "units": [
+    {
+     "unit": 1,
+     "grammar": "수동태 기본형과 수동태 불가 동사",
+     "page": "74-75",
+     "confidence": "h"
+    },
+    {
+     "unit": 2,
+     "grammar": "by 이외의 전치사를 쓰는 수동태",
+     "page": "76",
+     "confidence": "h"
+    },
+    {
+     "unit": 3,
+     "grammar": "진행·완료·미래 시제의 수동태",
+     "page": "77",
+     "confidence": "h"
+    },
+    {
+     "unit": 4,
+     "grammar": "조동사 수동태",
+     "page": "78",
+     "confidence": "h"
+    },
+    {
+     "unit": 5,
+     "grammar": "동사구 수동태",
+     "page": "79",
+     "confidence": "h"
+    },
+    {
+     "unit": 6,
+     "grammar": "that절 목적어의 수동태(It is said that ~)",
+     "page": "80",
+     "confidence": "h"
+    },
+    {
+     "unit": 7,
+     "grammar": "4형식 문장의 수동태",
+     "page": "81-82",
+     "confidence": "h"
+    },
+    {
+     "unit": 8,
+     "grammar": "5형식 문장의 수동태",
+     "page": "83",
+     "confidence": "h"
+    },
+    {
+     "unit": 9,
+     "grammar": "지각동사·사역동사의 수동태",
+     "page": "84",
+     "confidence": "h"
+    }
+   ]
+  },
+  {
+   "chapter": 5,
+   "title": "부정사",
+   "units": [
+    {
+     "unit": 1,
+     "grammar": "to부정사의 명사적 용법(주어·보어·목적어·가주어)",
+     "page": "94-95",
+     "confidence": "h"
+    },
+    {
+     "unit": 2,
+     "grammar": "의미상 주어(for/of)",
+     "page": "96",
+     "confidence": "h"
+    },
+    {
+     "unit": 3,
+     "grammar": "의문사 + to부정사",
+     "page": "97",
+     "confidence": "h"
+    },
+    {
+     "unit": 4,
+     "grammar": "형용사적 용법",
+     "page": "98",
+     "confidence": "h"
+    },
+    {
+     "unit": 5,
+     "grammar": "be + to부정사",
+     "page": "99",
+     "confidence": "h"
+    },
+    {
+     "unit": 6,
+     "grammar": "부사적 용법",
+     "page": "100-101",
+     "confidence": "h"
+    },
+    {
+     "unit": 7,
+     "grammar": "to부정사 용법 구별",
+     "page": "102",
+     "confidence": "h"
+    },
+    {
+     "unit": 8,
+     "grammar": "too ~ to / enough to / so ~ that",
+     "page": "103-104",
+     "confidence": "h"
+    },
+    {
+     "unit": 9,
+     "grammar": "완료부정사(seem to have p.p.)",
+     "page": "105-106",
+     "confidence": "h"
+    },
+    {
+     "unit": 10,
+     "grammar": "5형식 to부정사 목적격보어",
+     "page": "107",
+     "confidence": "m"
+    },
+    {
+     "unit": 11,
+     "grammar": "사역·지각동사 + 원형부정사",
+     "page": "108",
+     "confidence": "m"
+    },
+    {
+     "unit": 12,
+     "grammar": "지각동사와 to부정사를 목적격보어로 취하는 경우",
+     "page": "109",
+     "confidence": "m",
+     "note": "사용자 의견(확실하지 않음, 문항 형태와도 일치) — 본문 확인 시 확정"
+    },
+    {
+     "unit": 13,
+     "grammar": "독립부정사(to be sure 등)",
+     "page": "110",
+     "confidence": "h"
+    }
+   ]
+  },
+  {
+   "chapter": 6,
+   "title": "동명사와 분사",
+   "units": [
+    {
+     "unit": 1,
+     "grammar": "동명사의 역할(주어·보어·목적어·전치사의 목적어)",
+     "page": "118-119",
+     "confidence": "h"
+    },
+    {
+     "unit": 2,
+     "grammar": "동명사 vs to부정사 목적어",
+     "page": "120-121",
+     "confidence": "h"
+    },
+    {
+     "unit": 3,
+     "grammar": "동명사의 의미상 주어·부정",
+     "page": "122",
+     "confidence": "h"
+    },
+    {
+     "unit": 4,
+     "grammar": "동명사의 시제·수동(being p.p., having p.p.)",
+     "page": "123",
+     "confidence": "h"
+    },
+    {
+     "unit": 5,
+     "grammar": "동명사 관용 표현",
+     "page": "124-125",
+     "confidence": "h"
+    },
+    {
+     "unit": 6,
+     "grammar": "동명사 vs 현재분사",
+     "page": "126",
+     "confidence": "h"
+    },
+    {
+     "unit": 7,
+     "grammar": "분사의 명사 수식(앞/뒤)",
+     "page": "127",
+     "confidence": "h"
+    },
+    {
+     "unit": 8,
+     "grammar": "분사가 수식하는 명사 찾기",
+     "page": "128",
+     "confidence": "l"
+    },
+    {
+     "unit": 9,
+     "grammar": "감정을 나타내는 분사",
+     "page": "129-130",
+     "confidence": "h"
+    },
+    {
+     "unit": 10,
+     "grammar": "현재분사 vs 동명사 구별",
+     "page": "131",
+     "confidence": "h"
+    }
+   ]
+  },
+  {
+   "chapter": 7,
+   "title": "비교 표현",
+   "units": [
+    {
+     "unit": 1,
+     "grammar": "원급 비교(as ~ as)",
+     "page": "140",
+     "confidence": "h"
+    },
+    {
+     "unit": 2,
+     "grammar": "as ~ as possible",
+     "page": "141",
+     "confidence": "h"
+    },
+    {
+     "unit": 3,
+     "grammar": "비교급·최상급 만드는 법",
+     "page": "142-145",
+     "confidence": "h"
+    },
+    {
+     "unit": 4,
+     "grammar": "비교급 강조 · less",
+     "page": "146",
+     "confidence": "h"
+    },
+    {
+     "unit": 5,
+     "grammar": "배수 비교",
+     "page": "147",
+     "confidence": "h"
+    },
+    {
+     "unit": 6,
+     "grammar": "비교급 and 비교급 / the 비교급 ~ the 비교급",
+     "page": "148",
+     "confidence": "h"
+    },
+    {
+     "unit": 7,
+     "grammar": "최상급 표현",
+     "page": "149",
+     "confidence": "h"
+    },
+    {
+     "unit": 8,
+     "grammar": "비교급으로 최상급 의미 표현",
+     "page": "150",
+     "confidence": "h"
+    },
+    {
+     "unit": 9,
+     "grammar": "원급·비교급·최상급 종합",
+     "page": "151",
+     "confidence": "m"
+    }
+   ]
+  },
+  {
+   "chapter": 8,
+   "title": "접속사",
+   "units": [
+    {
+     "unit": 1,
+     "grammar": "시간 접속사",
+     "page": "160",
+     "confidence": "h"
+    },
+    {
+     "unit": 2,
+     "grammar": "조건 접속사(if/unless)",
+     "page": "161",
+     "confidence": "h"
+    },
+    {
+     "unit": 3,
+     "grammar": "이유 접속사(because/as/since, because of)",
+     "page": "162",
+     "confidence": "h"
+    },
+    {
+     "unit": 4,
+     "grammar": "양보 접속사",
+     "page": "163",
+     "confidence": "h"
+    },
+    {
+     "unit": 5,
+     "grammar": "목적·결과(so that, in order to, so ~ that)",
+     "page": "164",
+     "confidence": "h"
+    },
+    {
+     "unit": 6,
+     "grammar": "as / while의 의미 구별",
+     "page": "165",
+     "confidence": "h"
+    },
+    {
+     "unit": 7,
+     "grammar": "명사절 접속사 that",
+     "page": "166",
+     "confidence": "h"
+    },
+    {
+     "unit": 8,
+     "grammar": "명사절 whether/if",
+     "page": "167",
+     "confidence": "h"
+    },
+    {
+     "unit": 9,
+     "grammar": "접속부사(however, thus 등)",
+     "page": "168",
+     "confidence": "h"
+    },
+    {
+     "unit": 10,
+     "grammar": "명령문 + and/or",
+     "page": "169",
+     "confidence": "h"
+    },
+    {
+     "unit": 11,
+     "grammar": "상관접속사",
+     "page": "170-171",
+     "confidence": "h"
+    }
+   ]
+  },
+  {
+   "chapter": 9,
+   "title": "분사구문",
+   "units": [
+    {
+     "unit": 1,
+     "grammar": "분사구문 만들기와 의미",
+     "page": "180",
+     "confidence": "h"
+    },
+    {
+     "unit": 2,
+     "grammar": "부정 분사구문과 의미 구별",
+     "page": "181-182",
+     "confidence": "m"
+    },
+    {
+     "unit": 3,
+     "grammar": "완료형 분사구문",
+     "page": "183",
+     "confidence": "h"
+    },
+    {
+     "unit": 4,
+     "grammar": "Being / Having been 생략",
+     "page": "184",
+     "confidence": "h"
+    },
+    {
+     "unit": 5,
+     "grammar": "독립 분사구문",
+     "page": "185",
+     "confidence": "h"
+    },
+    {
+     "unit": 6,
+     "grammar": "관용 분사구문",
+     "page": "186",
+     "confidence": "h"
+    },
+    {
+     "unit": 7,
+     "grammar": "with + 명사 + 분사",
+     "page": "187",
+     "confidence": "h"
+    }
+   ]
+  },
+  {
+   "chapter": 10,
+   "title": "관계사",
+   "units": [
+    {
+     "unit": 1,
+     "grammar": "주격 관계대명사",
+     "page": "196",
+     "confidence": "h"
+    },
+    {
+     "unit": 2,
+     "grammar": "목적격 관계대명사",
+     "page": "197",
+     "confidence": "h"
+    },
+    {
+     "unit": 3,
+     "grammar": "관계대명사 that",
+     "page": "198-199",
+     "confidence": "h"
+    },
+    {
+     "unit": 4,
+     "grammar": "소유격 whose",
+     "page": "200",
+     "confidence": "h"
+    },
+    {
+     "unit": 5,
+     "grammar": "관계대명사 생략 / 주격+be 생략",
+     "page": "201",
+     "confidence": "m"
+    },
+    {
+     "unit": 6,
+     "grammar": "관계대명사 what",
+     "page": "202",
+     "confidence": "h"
+    },
+    {
+     "unit": 7,
+     "grammar": "전치사 + 관계대명사",
+     "page": "203",
+     "confidence": "h"
+    },
+    {
+     "unit": 8,
+     "grammar": "관계부사(when, where, why, how)",
+     "page": "204-205",
+     "confidence": "h"
+    },
+    {
+     "unit": 9,
+     "grammar": "계속적 용법",
+     "page": "206-207",
+     "confidence": "h"
+    },
+    {
+     "unit": 10,
+     "grammar": "복합관계대명사(whoever 등)",
+     "page": "208",
+     "confidence": "h"
+    },
+    {
+     "unit": 11,
+     "grammar": "복합관계대명사/형용사(whichever, whatever)",
+     "page": "209",
+     "confidence": "h"
+    },
+    {
+     "unit": 12,
+     "grammar": "복합관계부사(whenever, however 등)",
+     "page": "210",
+     "confidence": "h"
+    }
+   ]
+  },
+  {
+   "chapter": 11,
+   "title": "가정법",
+   "units": [
+    {
+     "unit": 1,
+     "grammar": "가정법 과거 / 과거완료와 조건문 구별",
+     "page": "220-221",
+     "confidence": "h"
+    },
+    {
+     "unit": 2,
+     "grammar": "혼합 가정법",
+     "page": "222",
+     "confidence": "h"
+    },
+    {
+     "unit": 3,
+     "grammar": "I wish + 가정법 과거",
+     "page": "223",
+     "confidence": "h"
+    },
+    {
+     "unit": 4,
+     "grammar": "I wish + 가정법 과거완료",
+     "page": "224-225",
+     "confidence": "h"
+    },
+    {
+     "unit": 5,
+     "grammar": "as if + 가정법",
+     "page": "226-227",
+     "confidence": "h"
+    },
+    {
+     "unit": 6,
+     "grammar": "Without / But for / If it were(had been) not for",
+     "page": "228-229",
+     "confidence": "h"
+    },
+    {
+     "unit": 7,
+     "grammar": "It's (high) time + 가정법",
+     "page": "230",
+     "confidence": "h"
+    }
+   ]
+  },
+  {
+   "chapter": 12,
+   "title": "일치와 화법",
+   "units": [
+    {
+     "unit": 1,
+     "grammar": "수일치(both/all/the number of/half of 등)",
+     "page": "240-241",
+     "confidence": "h"
+    },
+    {
+     "unit": 2,
+     "grammar": "시제 일치와 예외",
+     "page": "242-243",
+     "confidence": "h"
+    },
+    {
+     "unit": 3,
+     "grammar": "평서문의 화법 전환",
+     "page": "244-245",
+     "confidence": "h"
+    },
+    {
+     "unit": 4,
+     "grammar": "의문문의 화법 전환",
+     "page": "246-247",
+     "confidence": "h"
+    },
+    {
+     "unit": 5,
+     "grammar": "명령문의 화법 전환",
+     "page": "248",
+     "confidence": "h"
+    }
+   ]
+  },
+  {
+   "chapter": 13,
+   "title": "강조, 부정, 도치, 부정대명사",
+   "units": [
+    {
+     "unit": 1,
+     "grammar": "조동사 do를 이용한 강조",
+     "page": "258",
+     "confidence": "h"
+    },
+    {
+     "unit": 2,
+     "grammar": "It ~ that 강조 구문",
+     "page": "259-260",
+     "confidence": "h"
+    },
+    {
+     "unit": 3,
+     "grammar": "부분 부정·전체 부정",
+     "page": "261",
+     "confidence": "h"
+    },
+    {
+     "unit": 4,
+     "grammar": "도치(부정어, So/Neither, 장소 부사구)",
+     "page": "262-263",
+     "confidence": "h"
+    },
+    {
+     "unit": 5,
+     "grammar": "부정대명사 it/one/another/the others",
+     "page": "264",
+     "confidence": "h"
+    }
+   ]
+  },
+  {
+   "chapter": 14,
+   "title": "문장의 이해",
+   "units": [
+    {
+     "unit": 1,
+     "grammar": "주어 찾기(문장 성분)",
+     "page": "274",
+     "confidence": "h"
+    },
+    {
+     "unit": 2,
+     "grammar": "보어",
+     "page": "275",
+     "confidence": "h"
+    },
+    {
+     "unit": 3,
+     "grammar": "목적어(직접·간접)",
+     "page": "276",
+     "confidence": "h"
+    },
+    {
+     "unit": 4,
+     "grammar": "목적격보어",
+     "page": "277",
+     "confidence": "h"
+    },
+    {
+     "unit": 5,
+     "grammar": "형용사적 수식어",
+     "page": "278",
+     "confidence": "h"
+    },
+    {
+     "unit": 6,
+     "grammar": "부사적 수식어",
+     "page": "279",
+     "confidence": "h"
+    }
+   ]
+  }
+ ]
+}

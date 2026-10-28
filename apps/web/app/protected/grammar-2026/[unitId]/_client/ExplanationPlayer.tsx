@@ -14,10 +14,11 @@ import VideoExplanationPlayer from "./VideoExplanationPlayer";
 
 type Props = {
   segments: ExplanationSegment[];
+  unitId?: string;
   onDone: () => void;
 };
 
-export default function ExplanationPlayer({ segments, onDone }: Props) {
+export default function ExplanationPlayer({ segments, unitId, onDone }: Props) {
   const [current, setCurrent] = useState(0);
   const [showSubtitle, setShowSubtitle] = useState(true);
   const [playing, setPlaying] = useState(false);
@@ -127,7 +128,7 @@ export default function ExplanationPlayer({ segments, onDone }: Props) {
 
         {/* 현재 세그먼트 — key로 세그먼트마다 강제 리마운트 (blank state·board 애니메이션 누수 방지) */}
         {seg.type === "blank" ? (
-          <BlankFillChallenge key={seg.id} content={seg.content as BlankSegmentContent} onDone={handleBlankDone} />
+          <BlankFillChallenge key={seg.id} content={seg.content as BlankSegmentContent} unitId={unitId} segmentId={seg.id} onDone={handleBlankDone} />
         ) : (
           <SegmentDisplay key={seg.id} segment={seg} muted={false} animateBoardMs={audioMs} />
         )}

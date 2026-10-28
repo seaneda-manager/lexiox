@@ -1,0 +1,728 @@
+{
+ "book": {
+  "title": "(교재명 미확인)",
+  "level_guess": "중2~중3 / 고등 기초",
+  "source": "사용자 제공 PDF 목차(4쪽)"
+ },
+ "chapters": [
+  {
+   "chapter": 1,
+   "title": "시제",
+   "units": [
+    {
+     "unit": 1,
+     "grammar": "동사변화표",
+     "page": 14
+    },
+    {
+     "unit": 2,
+     "grammar": "기본시제: 현재, 과거, 미래",
+     "page": 19
+    },
+    {
+     "unit": 3,
+     "grammar": "진행형 V-ing 만드는 법",
+     "page": 21
+    },
+    {
+     "unit": 4,
+     "grammar": "현재진행 & 과거진행",
+     "page": 22
+    },
+    {
+     "unit": 5,
+     "grammar": "과거시제 vs. 현재완료",
+     "page": 23
+    },
+    {
+     "unit": 6,
+     "grammar": "현재완료 1 – 계속",
+     "page": 24
+    },
+    {
+     "unit": 7,
+     "grammar": "현재완료 2 – 완료",
+     "page": 25
+    },
+    {
+     "unit": 8,
+     "grammar": "현재완료 3 – 경험",
+     "page": 26
+    },
+    {
+     "unit": 9,
+     "grammar": "현재완료 4 – 결과",
+     "page": 27
+    },
+    {
+     "unit": 10,
+     "grammar": "완료 시제 종합",
+     "page": 28
+    }
+   ]
+  },
+  {
+   "chapter": 2,
+   "title": "조동사",
+   "units": [
+    {
+     "unit": 1,
+     "grammar": "can",
+     "page": 36
+    },
+    {
+     "unit": 2,
+     "grammar": "may",
+     "page": 37
+    },
+    {
+     "unit": 3,
+     "grammar": "must",
+     "page": 38
+    },
+    {
+     "unit": 4,
+     "grammar": "have to",
+     "page": 39
+    },
+    {
+     "unit": 5,
+     "grammar": "should",
+     "page": 40
+    },
+    {
+     "unit": 6,
+     "grammar": "had better & would like to",
+     "page": 41
+    },
+    {
+     "unit": 7,
+     "grammar": "used to & would",
+     "page": 42
+    }
+   ]
+  },
+  {
+   "chapter": 3,
+   "title": "수동태",
+   "units": [
+    {
+     "unit": 1,
+     "grammar": "수동태의 의미와 형태",
+     "page": 50
+    },
+    {
+     "unit": 2,
+     "grammar": "수동태의 과거시제",
+     "page": 52
+    },
+    {
+     "unit": 3,
+     "grammar": "수동태의 미래시제",
+     "page": 53
+    },
+    {
+     "unit": 4,
+     "grammar": "수동태 시제 종합",
+     "page": 54
+    },
+    {
+     "unit": 5,
+     "grammar": "by 이외의 전치사를 쓰는 수동태",
+     "page": 55
+    },
+    {
+     "unit": 6,
+     "grammar": "조동사가 있는 수동태",
+     "page": 56
+    },
+    {
+     "unit": 7,
+     "grammar": "수동태의 부정문과 의문문",
+     "page": 57
+    },
+    {
+     "unit": 8,
+     "grammar": "4형식 문장의 수동태",
+     "page": 58
+    },
+    {
+     "unit": 9,
+     "grammar": "5형식 문장의 수동태",
+     "page": 60
+    },
+    {
+     "unit": 10,
+     "grammar": "지각동사와 사역동사의 수동태",
+     "page": 61
+    },
+    {
+     "unit": 11,
+     "grammar": "동사구 수동태",
+     "page": 62
+    }
+   ]
+  },
+  {
+   "chapter": 4,
+   "title": "to부정사",
+   "units": [
+    {
+     "unit": 1,
+     "grammar": "to부정사의 명사적 용법 1 – 주어, 보어",
+     "page": 70
+    },
+    {
+     "unit": 2,
+     "grammar": "가주어 It",
+     "page": 71
+    },
+    {
+     "unit": 3,
+     "grammar": "to부정사의 명사적 용법 2 – 목적어",
+     "page": 72
+    },
+    {
+     "unit": 4,
+     "grammar": "의문사+to부정사",
+     "page": 73
+    },
+    {
+     "unit": 5,
+     "grammar": "to부정사의 명사적 용법 3 – 목적격보어",
+     "page": 74
+    },
+    {
+     "unit": 6,
+     "grammar": "to부정사의 형용사적 용법",
+     "page": 75
+    },
+    {
+     "unit": 7,
+     "grammar": "to부정사의 부사적 용법 1",
+     "page": 76
+    },
+    {
+     "unit": 8,
+     "grammar": "to부정사의 부사적 용법 2",
+     "page": 77
+    },
+    {
+     "unit": 9,
+     "grammar": "to부정사의 의미상 주어",
+     "page": 79
+    },
+    {
+     "unit": 10,
+     "grammar": "too ~ to = so ~ that",
+     "page": 80
+    },
+    {
+     "unit": 11,
+     "grammar": "~ enough to = so ~ that",
+     "page": 81
+    }
+   ]
+  },
+  {
+   "chapter": 5,
+   "title": "동명사와 분사",
+   "units": [
+    {
+     "unit": 1,
+     "grammar": "명사로 쓰이는 동명사 1 – 주어, 보어",
+     "page": 90
+    },
+    {
+     "unit": 2,
+     "grammar": "명사로 쓰이는 동명사 2 – 동사의 목적어",
+     "page": 91
+    },
+    {
+     "unit": 3,
+     "grammar": "동명사와 to부정사 목적어 – 의미가 같은 경우",
+     "page": 92
+    },
+    {
+     "unit": 4,
+     "grammar": "동명사와 to부정사 목적어 – 의미가 다른 경우",
+     "page": 93
+    },
+    {
+     "unit": 5,
+     "grammar": "동명사와 to부정사 목적어 종합",
+     "page": 94
+    },
+    {
+     "unit": 6,
+     "grammar": "전치사의 목적어 & 동명사 관용표현",
+     "page": 95
+    },
+    {
+     "unit": 7,
+     "grammar": "현재분사 vs. 과거분사",
+     "page": 97
+    },
+    {
+     "unit": 8,
+     "grammar": "명사를 앞뒤에서 수식하는 분사",
+     "page": 98
+    },
+    {
+     "unit": 9,
+     "grammar": "보어로 쓰이는 분사",
+     "page": 99
+    },
+    {
+     "unit": 10,
+     "grammar": "감정 분사 리스트: 현재분사, 과거분사",
+     "page": 100
+    },
+    {
+     "unit": 11,
+     "grammar": "동명사 vs. 현재분사",
+     "page": 102
+    }
+   ]
+  },
+  {
+   "chapter": 6,
+   "title": "대명사, 형용사, 부사",
+   "units": [
+    {
+     "unit": 1,
+     "grammar": "부정대명사 1",
+     "page": 110
+    },
+    {
+     "unit": 2,
+     "grammar": "부정대명사 2",
+     "page": 111
+    },
+    {
+     "unit": 3,
+     "grammar": "부정대명사 3",
+     "page": 112
+    },
+    {
+     "unit": 4,
+     "grammar": "부정대명사 4",
+     "page": 113
+    },
+    {
+     "unit": 5,
+     "grammar": "재귀대명사",
+     "page": 114
+    },
+    {
+     "unit": 6,
+     "grammar": "재귀대명사 관용표현",
+     "page": 115
+    },
+    {
+     "unit": 7,
+     "grammar": "-thing + 형용사",
+     "page": 116
+    },
+    {
+     "unit": 8,
+     "grammar": "수량형용사",
+     "page": 117
+    },
+    {
+     "unit": 9,
+     "grammar": "부사의 역할과 형태",
+     "page": 118
+    },
+    {
+     "unit": 10,
+     "grammar": "빈도부사",
+     "page": 120
+    }
+   ]
+  },
+  {
+   "chapter": 7,
+   "title": "비교 표현",
+   "units": [
+    {
+     "unit": 1,
+     "grammar": "원급 비교",
+     "page": 128
+    },
+    {
+     "unit": 2,
+     "grammar": "as + 형용사/부사 + as possible",
+     "page": 129
+    },
+    {
+     "unit": 3,
+     "grammar": "비교급과 최상급 만드는 법",
+     "page": 130
+    },
+    {
+     "unit": 4,
+     "grammar": "비교급",
+     "page": 133
+    },
+    {
+     "unit": 5,
+     "grammar": "배수사 비교",
+     "page": 134
+    },
+    {
+     "unit": 6,
+     "grammar": "비교급 표현",
+     "page": 135
+    },
+    {
+     "unit": 7,
+     "grammar": "최상급",
+     "page": 136
+    },
+    {
+     "unit": 8,
+     "grammar": "최상급 표현",
+     "page": 137
+    },
+    {
+     "unit": 9,
+     "grammar": "원급 vs. 비교급 vs. 최상급",
+     "page": 138
+    }
+   ]
+  },
+  {
+   "chapter": 8,
+   "title": "의문사 의문문",
+   "units": [
+    {
+     "unit": 1,
+     "grammar": "who/what 의문문",
+     "page": 146
+    },
+    {
+     "unit": 2,
+     "grammar": "when/where/why/how 의문문",
+     "page": 147
+    },
+    {
+     "unit": 3,
+     "grammar": "<how + 형용사/부사> 의문문",
+     "page": 148
+    },
+    {
+     "unit": 4,
+     "grammar": "how come 의문문",
+     "page": 149
+    },
+    {
+     "unit": 5,
+     "grammar": "what과 how를 이용한 감탄문",
+     "page": 150
+    }
+   ]
+  },
+  {
+   "chapter": 9,
+   "title": "문장의 형식",
+   "units": [
+    {
+     "unit": 1,
+     "grammar": "문장의 요소",
+     "page": 158
+    },
+    {
+     "unit": 2,
+     "grammar": "1형식 & 2형식",
+     "page": 159
+    },
+    {
+     "unit": 3,
+     "grammar": "감각동사 + 형용사",
+     "page": 160
+    },
+    {
+     "unit": 4,
+     "grammar": "3형식 & 4형식",
+     "page": 161
+    },
+    {
+     "unit": 5,
+     "grammar": "3~4형식 전환",
+     "page": 162
+    },
+    {
+     "unit": 6,
+     "grammar": "5형식 1 – 명사, 형용사",
+     "page": 163
+    },
+    {
+     "unit": 7,
+     "grammar": "5형식 2 – to부정사",
+     "page": 164
+    },
+    {
+     "unit": 8,
+     "grammar": "5형식 3 – 지각동사",
+     "page": 165
+    },
+    {
+     "unit": 9,
+     "grammar": "5형식 4 – 사역동사",
+     "page": 166
+    },
+    {
+     "unit": 10,
+     "grammar": "5형식 5 – help/get",
+     "page": 167
+    },
+    {
+     "unit": 11,
+     "grammar": "목적격보어의 다양한 형태 확인",
+     "page": 168
+    }
+   ]
+  },
+  {
+   "chapter": 10,
+   "title": "접속사",
+   "units": [
+    {
+     "unit": 1,
+     "grammar": "등위접속사",
+     "page": 178
+    },
+    {
+     "unit": 2,
+     "grammar": "상관접속사",
+     "page": 179
+    },
+    {
+     "unit": 3,
+     "grammar": "부사절 접속사 1 – 시간",
+     "page": 181
+    },
+    {
+     "unit": 4,
+     "grammar": "부사절 접속사 2 – 조건",
+     "page": 182
+    },
+    {
+     "unit": 5,
+     "grammar": "명령문 + and/or",
+     "page": 183
+    },
+    {
+     "unit": 6,
+     "grammar": "부사절 접속사 3 – 원인과 결과",
+     "page": 184
+    },
+    {
+     "unit": 7,
+     "grammar": "so that ~ & so ~ that …",
+     "page": 185
+    },
+    {
+     "unit": 8,
+     "grammar": "부사절 접속사 4 – 양보",
+     "page": 186
+    },
+    {
+     "unit": 9,
+     "grammar": "명사절 접속사 that",
+     "page": 187
+    },
+    {
+     "unit": 10,
+     "grammar": "접속사 종합",
+     "page": 189
+    }
+   ]
+  },
+  {
+   "chapter": 11,
+   "title": "분사구문",
+   "units": [
+    {
+     "unit": 1,
+     "grammar": "현재분사",
+     "page": 198
+    },
+    {
+     "unit": 2,
+     "grammar": "과거분사",
+     "page": 199
+    },
+    {
+     "unit": 3,
+     "grammar": "분사구문 만드는 법",
+     "page": 200
+    },
+    {
+     "unit": 4,
+     "grammar": "분사구문 1 – 때, 이유",
+     "page": 201
+    },
+    {
+     "unit": 5,
+     "grammar": "분사구문 2 – 조건, 양보",
+     "page": 202
+    },
+    {
+     "unit": 6,
+     "grammar": "분사구문 3 – 동시동작, 연속상황",
+     "page": 203
+    }
+   ]
+  },
+  {
+   "chapter": 12,
+   "title": "관계사",
+   "units": [
+    {
+     "unit": 1,
+     "grammar": "주격 관계대명사 1 – 사람",
+     "page": 212
+    },
+    {
+     "unit": 2,
+     "grammar": "주격 관계대명사 2 – 사물",
+     "page": 213
+    },
+    {
+     "unit": 3,
+     "grammar": "목적격 관계대명사",
+     "page": 214
+    },
+    {
+     "unit": 4,
+     "grammar": "소유격 관계대명사",
+     "page": 215
+    },
+    {
+     "unit": 5,
+     "grammar": "주격, 목적격, 소유격 관계대명사 종합",
+     "page": 216
+    },
+    {
+     "unit": 6,
+     "grammar": "관계대명사 that을 주로 쓰는 경우",
+     "page": 217
+    },
+    {
+     "unit": 7,
+     "grammar": "관계대명사 that vs. 접속사 that",
+     "page": 218
+    },
+    {
+     "unit": 8,
+     "grammar": "관계대명사의 생략",
+     "page": 219
+    },
+    {
+     "unit": 9,
+     "grammar": "관계대명사 what",
+     "page": 220
+    },
+    {
+     "unit": 10,
+     "grammar": "관계부사 1 – when, where",
+     "page": 221
+    },
+    {
+     "unit": 11,
+     "grammar": "관계부사 2 – why, how",
+     "page": 222
+    }
+   ]
+  },
+  {
+   "chapter": 13,
+   "title": "가정법",
+   "units": [
+    {
+     "unit": 1,
+     "grammar": "if + 가정법 과거",
+     "page": 230
+    },
+    {
+     "unit": 2,
+     "grammar": "I wish + 가정법 과거",
+     "page": 232
+    },
+    {
+     "unit": 3,
+     "grammar": "as if + 가정법 과거",
+     "page": 233
+    },
+    {
+     "unit": 4,
+     "grammar": "if + 가정법 과거완료",
+     "page": 234
+    },
+    {
+     "unit": 5,
+     "grammar": "I wish + 가정법 과거완료",
+     "page": 236
+    },
+    {
+     "unit": 6,
+     "grammar": "as if + 가정법 과거완료",
+     "page": 237
+    }
+   ]
+  },
+  {
+   "chapter": 14,
+   "title": "일치와 화법",
+   "units": [
+    {
+     "unit": 1,
+     "grammar": "시제 일치",
+     "page": 246
+    },
+    {
+     "unit": 2,
+     "grammar": "시제 일치의 예외",
+     "page": 247
+    },
+    {
+     "unit": 3,
+     "grammar": "조동사 do의 쓰임",
+     "page": 248
+    },
+    {
+     "unit": 4,
+     "grammar": "도치",
+     "page": 249
+    },
+    {
+     "unit": 5,
+     "grammar": "직접화법과 간접화법 1",
+     "page": 250
+    },
+    {
+     "unit": 6,
+     "grammar": "직접화법과 간접화법 2",
+     "page": 252
+    },
+    {
+     "unit": 7,
+     "grammar": "간접의문문",
+     "page": 254
+    },
+    {
+     "unit": 8,
+     "grammar": "부가의문문 1",
+     "page": 256
+    },
+    {
+     "unit": 9,
+     "grammar": "부가의문문 2",
+     "page": 257
+    }
+   ]
+  }
+ ]
+}
