@@ -29,7 +29,7 @@ export type ConceptCtx = {
   refLesson?: { level: number; lesson: GrammarLesson } | null; // 이웃 레벨 확정본(핵심 규칙 일관성용)
 };
 
-function header(c: ConceptCtx, level: number): string {
+export function header(c: ConceptCtx, level: number): string {
   const spec = LEVEL_SPEC[level];
   const ref = c.refLesson
     ? `\n## 이미 확정된 L${c.refLesson.level} 레슨의 핵심 규칙 (사실은 레벨과 무관하게 동일해야 함. 눈높이만 바꿔 다시 쓸 것)\n${JSON.stringify(c.refLesson.lesson.explanation.rules)}`
@@ -48,50 +48,91 @@ function header(c: ConceptCtx, level: number): string {
 ${RULES}`;
 }
 
-const PART_A_SHAPE = `{
-  "topic": "개념 제목",
-  "explanation": { "titleKo": "", "summaryEn": "", "summaryKo": "", "rules": [{"en":"","ko":""}], "examples": [{"en":"","ko":""}] },
-  "exampleGroups": [{ "title": "", "note": "", "examples": [{"en":"","ko":"","tag":"","note":"","wrong":false}] }],
-  "cramText": "학생이 따라 쓸 설명 원문(줄바꿈 가능)",
-  "blanks": [{ "text": "___ 가 한 곳 있는 설명 문장", "answer": "", "hint": "" }]
-}`;
+// 한 번에 만들면 응답이 max_tokens 에서 잘리므로 작은 호출 여러 개로 나눈다.
+const TOKENS = 12000;
+const rulesOf = (a: any) => JSON.stringify({ rules: a.explanation?.rules, groups: a.exampleGroups?.map((g: any) => g.title) });
 
-export async function generatePartA(c: ConceptCtx, level: number) {
+async function genExplanation(c: ConceptCtx, level: number) {
   const prompt = `${header(c, level)}
 
-## 이번에 만들 것 (1/2): 설명 파트
+## 이번에 만들 것: 설명 + 예문 모음
 - explanation.rules 3~6개, examples 3~4개.
-- exampleGroups 4~8그룹, 그룹당 3~5문장(틀린 예 그룹 포함).
-- cramText: rules 를 학생이 따라 쓰기 좋게 정리한 원문.
-- blanks 4~6개: cramText 속 핵심을 비운 문장 (text 에 '___' 정확히 한 곳).
+- exampleGroups 4~7그룹, 그룹당 3~4문장(틀린 예 그룹 포함). 간결하게.
 
 ## 출력: 이 JSON만 (다른 텍스트/코드블록 없이)
-${PART_A_SHAPE}`;
-  return callClaudeJson("admin/grammar-engine/generate-a", prompt, 16000);
+{
+  "topic": "개념 제목",
+  "explanation": { "titleKo": "", "summaryEn": "", "summaryKo": "", "rules": [{"en":"","ko":""}], "examples": [{"en":"","ko":""}] },
+  "exampleGroups": [{ "title": "", "note": "", "examples": [{"en":"","ko":"","tag":"","note":"","wrong":false}] }]
+}`;
+  return callClaudeJson("admin/grammar-engine/generate-explanation", prompt, TOKENS);
 }
 
-export async function generatePartB(c: ConceptCtx, level: number, partA: any) {
+async function genCram(c: ConceptCtx, level: number, a: any) {
+  const prompt = `${header(c, level)}
+
+## 이미 만든 설명 (이 규칙과 어긋나지 않게)
+${rulesOf(a)}
+
+## 이번에 만들 것: 깜지 + 설명 빈칸
+- cramText: rules 를 학생이 따라 쓰기 좋게 정리한 원문(줄바꿈 가능).
+- blanks 4~6개: cramText 속 핵심을 비운 문장 (text 에 '___' 정확히 한 곳).
+
+## 출력: 이 JSON만
+{ "cramText": "", "blanks": [{ "text": "", "answer": "", "hint": "" }] }`;
+  return callClaudeJson("admin/grammar-engine/generate-cram", prompt, TOKENS);
+}
+
+async function genDrills(c: ConceptCtx, level: number, a: any) {
   const spec = LEVEL_SPEC[level];
   const prompt = `${header(c, level)}
 
-## 이미 만든 설명 파트 (이 규칙과 어긋나지 않게)
-${JSON.stringify({ rules: partA.explanation?.rules, exampleGroups: partA.exampleGroups?.map((g: any) => g.title) })}
+## 이미 만든 설명 (이 규칙과 어긋나지 않게)
+${rulesOf(a)}
 
-## 이번에 만들 것 (2/2): 연습 파트
+## 이번에 만들 것: Drill
 - drillFill ${spec.fill}개: { level, sentence('___' 한 곳), answer, choices?(있으면 answer 포함), ko, noteKo, hint }
 - drillFix ${spec.fix}개: 틀린 단어가 정확히 한 개 든 문장. { level, sentence, wrong(문장 속 한 토큰), correct[](삭제가 정답이면 ""), reasonChoices[3~4], reasonIndex, ko }
-- questions ${spec.questions}개: { level, kind(count_wrong|pick_correct|pick_different|reason), stem, stemKo, choices:[{en,ko}], answerIndex(0부터), explanationKo }
-- level 필드는 "basic" | "intermediate" | "advanced" 중 하나(이 레슨 안의 난이도 단계, 대략 3:4:3).
+- level 필드는 "basic" | "intermediate" | "advanced" (대략 3:4:3).
 
-## 출력: 이 JSON만 (다른 텍스트/코드블록 없이)
-{ "drillFill": [], "drillFix": [], "questions": [] }`;
-  return callClaudeJson("admin/grammar-engine/generate-b", prompt, 16000);
+## 출력: 이 JSON만
+{ "drillFill": [], "drillFix": [] }`;
+  return callClaudeJson("admin/grammar-engine/generate-drills", prompt, TOKENS);
+}
+
+async function genQuestions(c: ConceptCtx, level: number, a: any, count: number, part: 1 | 2, prevStems: string[]) {
+  const levels = part === 1 ? '"basic" 과 "intermediate" 위주' : '"intermediate" 와 "advanced" 위주';
+  const prompt = `${header(c, level)}
+
+## 이미 만든 설명 (이 규칙과 어긋나지 않게)
+${rulesOf(a)}
+${prevStems.length ? "\n## 이미 출제한 문제 (겹치지 않게)\n" + prevStems.map((t) => "- " + t.slice(0, 80)).join("\n") + "\n" : ""}
+## 이번에 만들 것: 문제 ${count}개 (${part}/2)
+- { level, kind(count_wrong|pick_correct|pick_different|reason), stem, stemKo, choices:[{en,ko}], answerIndex(0부터), explanationKo }
+- level 필드는 ${levels}. 유형 4종을 고르게. 정답 위치(A~D)가 한쪽으로 쏠리지 않게.
+
+## 출력: 이 JSON만
+{ "questions": [] }`;
+  return callClaudeJson(`admin/grammar-engine/generate-questions-${part}`, prompt, TOKENS);
 }
 
 export async function generateLesson(c: ConceptCtx, level: number): Promise<{ lesson: GrammarLesson } | { errors: string[] }> {
-  const a = await generatePartA(c, level);
-  const b = await generatePartB(c, level, a);
-  const merged = { version: 1, status: "draft", ...a, drillFill: b.drillFill ?? [], drillFix: b.drillFix ?? [], questions: b.questions ?? [] };
+  const spec = LEVEL_SPEC[level];
+  const a = await genExplanation(c, level);
+  const q1Count = Math.ceil(spec.questions / 2);
+  const [cram, drills, q1] = await Promise.all([genCram(c, level, a), genDrills(c, level, a), genQuestions(c, level, a, q1Count, 1, [])]);
+  const q1List: any[] = q1.questions ?? [];
+  const q2 = await genQuestions(c, level, a, spec.questions - q1Count, 2, q1List.map((q) => String(q?.stem ?? "")));
+  const merged = {
+    version: 1,
+    status: "draft",
+    ...a,
+    cramText: cram.cramText,
+    blanks: cram.blanks ?? [],
+    drillFill: drills.drillFill ?? [],
+    drillFix: drills.drillFix ?? [],
+    questions: [...q1List, ...(q2.questions ?? [])],
+  };
   const res = validateGrammarLesson(merged);
   if ("errors" in res) return { errors: res.errors };
   return { lesson: { ...res.lesson, status: "draft" } };

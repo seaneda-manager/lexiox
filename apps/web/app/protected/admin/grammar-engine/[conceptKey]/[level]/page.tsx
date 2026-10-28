@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getServiceRoleClient } from "@/lib/supabase/server";
-import { validateGrammarLesson } from "@/models/middle-naesin/grammar-lesson";
+import type { GrammarLesson } from "@/models/middle-naesin/grammar-lesson";
+import { loadCtx } from "@/lib/grammar-engine/ctx";
+import { SECTIONS, normalizeLesson, sectionCount } from "@/lib/grammar-engine/sections";
+import { reviewPrompt, sectionPrompt } from "@/lib/grammar-engine/section-prompts";
 import { LEVEL_SPEC } from "@/lib/grammar-engine/lesson-ai";
 import LessonPreview from "@/components/grammar-engine/LessonPreview";
 import LessonActions from "./LessonActions";
@@ -32,8 +35,15 @@ export default async function GrammarCellPage({ params }: Props) {
   ]);
 
   const units = ((unitRows ?? []) as any[]).map((r) => r.unit).filter(Boolean);
-  const validation = lessonRow ? validateGrammarLesson(lessonRow.lesson) : null;
-  const lesson = validation && validation.ok ? validation.lesson : null;
+  const loaded = await loadCtx(db, conceptKey, level);
+  const normalized = normalizeLesson(lessonRow?.lesson);
+  const lesson = lessonRow ? (normalized as unknown as GrammarLesson) : null;
+  const sections = SECTIONS.map((sec) => ({
+    key: sec.key,
+    label: sec.label,
+    count: sectionCount(normalized, sec.key),
+    prompt: loaded ? sectionPrompt(sec.key, loaded.ctx, level, lessonRow?.lesson) : "",
+  }));
   const isFinal = lessonRow?.status === "final";
   const review = (lessonRow?.ai_review ?? null) as { issues: { target: string; severity: string; note: string }[]; reviewedAt: string } | null;
   const statusByLevel = new Map((siblings ?? []).map((s: any) => [s.level as number, s.status as string]));
@@ -86,6 +96,8 @@ export default async function GrammarCellPage({ params }: Props) {
           exists={!!lessonRow}
           isFinal={isFinal}
           lessonJson={JSON.stringify(lessonRow?.lesson ?? {}, null, 2)}
+          sections={sections}
+          reviewPrompt={loaded ? reviewPrompt(loaded.ctx, level, lessonRow?.lesson) : ""}
           key={lessonRow?.updated_at ?? "new"}
         />
       </section>
@@ -109,13 +121,6 @@ export default async function GrammarCellPage({ params }: Props) {
             </ul>
           )}
         </section>
-      )}
-
-      {validation && !validation.ok && (
-        <div className="space-y-1 rounded-2xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-800">
-          <div className="font-semibold">레슨 데이터가 올바르지 않습니다.</div>
-          <ul className="list-disc pl-5">{(validation as { errors: string[] }).errors.map((e, i) => <li key={i}>{e}</li>)}</ul>
-        </div>
       )}
 
       {lesson && <LessonPreview lesson={lesson} />}
