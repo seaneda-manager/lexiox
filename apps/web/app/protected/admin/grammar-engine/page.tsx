@@ -1,4 +1,5 @@
 import { Fragment } from "react";
+import Link from "next/link";
 import { getServerSupabase, getServiceRoleClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -12,24 +13,25 @@ type UnitRow = { concept_id: string; unit: { chapter_no: number; unit_no: number
 // 필수 레벨 = tier-1 ~ tier+1 (1~5로 자름). docs/GRAMMAR_LEVELS_AND_SCHEMA_DESIGN.md
 const requiredRange = (tier: number): [number, number] => [Math.max(1, tier - 1), Math.min(5, tier + 1)];
 
-function Cell({ lesson, required }: { lesson?: LessonRow; required: boolean }) {
+function Cell({ lesson, required, href }: { lesson?: LessonRow; required: boolean; href: string }) {
   if (lesson) {
     const final = lesson.status === "final";
     return (
-      <span
+      <Link
+        href={href}
         title={`${lesson.status} · ${lesson.source}`}
-        className={`inline-block min-w-[3.25rem] rounded px-2 py-0.5 text-xs font-medium ${
+        className={`inline-block min-w-[3.25rem] rounded px-2 py-0.5 text-xs font-medium hover:ring-2 hover:ring-violet-300 ${
           final ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
         }`}
       >
         {final ? "확정" : "초안"}
-      </span>
+      </Link>
     );
   }
   return required ? (
-    <span className="inline-block min-w-[3.25rem] rounded border border-dashed border-rose-300 px-2 py-0.5 text-xs text-rose-500">필요</span>
+    <Link href={href} className="inline-block min-w-[3.25rem] rounded border border-dashed border-rose-300 px-2 py-0.5 text-xs text-rose-500 hover:bg-rose-50">필요</Link>
   ) : (
-    <span className="inline-block min-w-[3.25rem] px-2 py-0.5 text-xs text-gray-300">—</span>
+    <Link href={href} className="inline-block min-w-[3.25rem] px-2 py-0.5 text-xs text-gray-300 hover:text-violet-500">—</Link>
   );
 }
 
@@ -151,7 +153,7 @@ export default async function GrammarEnginePage() {
                     <td className="px-3 py-2 text-gray-600">{c.tier}</td>
                     {LEVELS.map((lv) => (
                       <td key={lv} className="px-3 py-2 text-center">
-                        <Cell lesson={lessonByKey.get(`${c.id}:${lv}`)} required={lv >= lo && lv <= hi} />
+                        <Cell lesson={lessonByKey.get(`${c.id}:${lv}`)} required={lv >= lo && lv <= hi} href={`/admin/grammar-engine/${c.key}/${lv}`} />
                       </td>
                     ))}
                   </tr>
