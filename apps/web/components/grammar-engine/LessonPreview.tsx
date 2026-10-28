@@ -26,6 +26,12 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
+// [b]굵게[/b] 만 렌더링 (서식 규칙: docs/GRAMMAR_STYLE_GUIDE.md 5-B)
+function T({ children }: { children?: string }) {
+  const parts = String(children ?? "").split(/\[b\](.+?)\[\/b\]/g);
+  return <>{parts.map((x, i) => (i % 2 ? <b key={i}>{x}</b> : <span key={i}>{x}</span>))}</>;
+}
+
 // 레슨 전체를 검수용으로 펼쳐 보여 준다 (서버 컴포넌트 — 상호작용 없음)
 export default function LessonPreview({ lesson }: { lesson: GrammarLesson }) {
   const counts = lessonCounts(lesson);
@@ -43,16 +49,16 @@ export default function LessonPreview({ lesson }: { lesson: GrammarLesson }) {
         <ol className="space-y-2">
           {lesson.explanation.rules.map((r, i) => (
             <li key={i} className="rounded-lg border p-3 text-sm">
-              <div className="font-medium">{r.en}</div>
-              <div className="text-xs text-neutral-500">{r.ko}</div>
+              <div className="font-medium"><T>{r.en}</T></div>
+              <div className="text-xs text-neutral-500"><T>{r.ko}</T></div>
             </li>
           ))}
         </ol>
         <div className="space-y-1.5">
           {lesson.explanation.examples.map((r, i) => (
             <div key={i} className="rounded-lg bg-emerald-50/50 p-3 text-sm">
-              <div>{r.en}</div>
-              <div className="text-xs text-neutral-500">{r.ko}</div>
+              <div><T>{r.en}</T></div>
+              <div className="text-xs text-neutral-500"><T>{r.ko}</T></div>
             </div>
           ))}
         </div>
@@ -68,8 +74,8 @@ export default function LessonPreview({ lesson }: { lesson: GrammarLesson }) {
                 <div key={ei} className={["rounded px-2 py-1.5 text-sm", e.wrong ? "bg-rose-50 text-rose-700" : "bg-emerald-50/40"].join(" ")}>
                   {e.wrong ? "✗ " : ""}
                   {e.tag && <span className="mr-1.5 rounded border bg-white px-1.5 py-0.5 text-[10px] font-bold text-neutral-600">{e.tag}</span>}
-                  {e.en}
-                  <span className="ml-2 text-xs text-neutral-500">{e.ko}</span>
+                  <T>{e.en}</T>
+                  <span className="ml-2 text-xs text-neutral-500"><T>{e.ko}</T></span>
                   {e.note && <span className="ml-2 text-[11px] text-neutral-400">({e.note})</span>}
                 </div>
               ))}

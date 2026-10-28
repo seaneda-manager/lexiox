@@ -97,11 +97,32 @@ export function parsePasted(text: string): { ok: true; data: Raw } | { ok: false
   return { ok: false, error: `JSON 형식이 올바르지 않습니다${firstErr ? `: ${firstErr}` : ""}. 코드블록 안의 JSON 전체가 빠짐없이 복사됐는지 확인하세요(끝의 } 와 ] 포함).` };
 }
 
+// 외부 AI 가 섞어 넣는 마크다운 흔적이 학생 화면에 그대로 보이지 않게 붙여넣을 때 정리한다.
+// 허용되는 강조 표시는 [b]...[/b] 하나뿐. (## 제목, **굵게**, `코드`, 줄머리 - * • 같은 기호는 모두 제거/변환)
+export function cleanText(v: string): string {
+  return v
+    .replace(/\*\*(.+?)\*\*/gs, "[b]$1[/b]")
+    .replace(/__(.+?)__/gs, "[b]$1[/b]")
+    .replace(/`+/g, "")
+    .split("\n")
+    .map((line) => line.replace(/^\s{0,3}#{1,6}\s+/, "").replace(/^\s*[-*•·]\s+/, ""))
+    .join("\n")
+    .replace(/[ \t]+\n/g, "\n")
+    .trim();
+}
+
+export function cleanDeep<T>(v: T): T {
+  if (typeof v === "string") return cleanText(v) as unknown as T;
+  if (Array.isArray(v)) return v.map(cleanDeep) as unknown as T;
+  if (v && typeof v === "object") return Object.fromEntries(Object.entries(v as Raw).map(([k, x]) => [k, cleanDeep(x)])) as T;
+  return v;
+}
+
 // 붙여넣은 섹션을 기존 초안에 합친다. 그 섹션의 필드만 검증한다(나머지가 비어 있어도 통과).
 export function mergeSection(existing: unknown, key: SectionKey, data: Raw): { ok: true; lesson: Raw } | { ok: false; errors: string[] } {
   const section = SECTIONS.find((s) => s.key === key)!;
   const picked: Raw = {};
-  for (const f of section.fields) if (data[f] !== undefined) picked[f] = data[f];
+  for (const f of section.fields) if (data[f] !== undefined) picked[f] = cleanDeep(data[f]);
   if (Object.keys(picked).length === 0) {
     return { ok: false, errors: [`이 섹션에 필요한 키(${section.fields.join(", ")})가 JSON 에 없습니다.`] };
   }
