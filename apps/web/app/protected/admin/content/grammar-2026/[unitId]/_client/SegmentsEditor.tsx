@@ -33,6 +33,9 @@ export default function SegmentsEditor({ unitId, segments, onChange }: Props) {
   // AI 강의 생성 (판서 + 음성)
   const [genOpen, setGenOpen] = useState(false);
   const [genVoiceId, setGenVoiceId] = useState("");
+  const [genEnVoiceId, setGenEnVoiceId] = useState("");
+  const [genModelId, setGenModelId] = useState("");
+  const [genSplit, setGenSplit] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [genMsg, setGenMsg] = useState<string | null>(null);
 
@@ -69,13 +72,20 @@ export default function SegmentsEditor({ unitId, segments, onChange }: Props) {
       const res = await fetch(`/api/admin/grammar-2026/${unitId}/generate-lecture`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ voiceId: genVoiceId.trim() || undefined }),
+        body: JSON.stringify({
+          voiceId: genVoiceId.trim() || undefined,
+          enVoiceId: genEnVoiceId.trim() || undefined,
+          modelId: genModelId.trim() || undefined,
+          splitEnglish: genSplit,
+        }),
       });
       const data = await res.json();
       if (!res.ok || !data.ok) throw new Error(data.error || "생성 실패");
       onChange(data.segments ?? []);
       setGenMsg(
-        `✅ 세그먼트 ${data.segmentCount}개 · 음성 ${data.audioCount}개 생성 (voice: ${data.voiceId})` +
+        `✅ 세그먼트 ${data.segmentCount}개 · 음성 ${data.audioCount}개 생성 (한국어: ${data.voiceId}` +
+          (data.splitEnglish ? ` · 영어: ${data.enVoiceId}` : "") +
+          ` · 모델: ${data.modelId})` +
           (data.failures?.length ? ` · 음성 실패 ${data.failures.length}개` : "")
       );
       setGenOpen(false);
@@ -168,6 +178,28 @@ export default function SegmentsEditor({ unitId, segments, onChange }: Props) {
               placeholder="예: 21m00Tcm4TlvDq8ikWAM"
               className="w-full rounded border px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-400"
             />
+            <label className="block text-[10px] text-gray-500">
+              영어용 Voice ID (선택 — 미국 원어민 목소리 등. 비우면 위 목소리가 영어도 읽음)
+            </label>
+            <input
+              value={genEnVoiceId}
+              onChange={(e) => setGenEnVoiceId(e.target.value)}
+              placeholder="영어 구간(예문·한국어 설명 속 영어 단어)에 쓸 목소리"
+              className="w-full rounded border px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-400"
+            />
+            <label className="block text-[10px] text-gray-500">
+              모델 ID (선택 — 비우면 환경변수 LESSON_TTS_MODEL_ID, 없으면 eleven_multilingual_v2. 목록은 "음성 시험대"에서 확인)
+            </label>
+            <input
+              value={genModelId}
+              onChange={(e) => setGenModelId(e.target.value)}
+              placeholder="예: eleven_v3"
+              className="w-full rounded border px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-400"
+            />
+            <label className="flex items-center gap-1.5 text-[11px] text-gray-700">
+              <input type="checkbox" checked={genSplit} onChange={(e) => setGenSplit(e.target.checked)} />
+              한국어 설명 속 영어 단어·예문을 영어 발음으로 따로 읽기 (한국어 Voice ID 필요)
+            </label>
             <button
               onClick={handleGenerateLecture}
               disabled={generating}

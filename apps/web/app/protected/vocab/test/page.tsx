@@ -1,14 +1,25 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { VocabTestQuestion, TestSubmitResponse } from "@/models/vocab/test.types";
-import FocusModeWrapper from "@/components/common/FocusModeWrapper";
-import StageBackground from "@/components/common/StageBackground";
 import MascotLayer from "@/components/common/MascotLayer";
 import TestQuestionPanel from "./_components/TestQuestionPanel";
 import TestResultsScreen from "./_components/TestResultsScreen";
 import TestStartScreen from "./_components/TestStartScreen";
+import { scoreAnswer } from "@/lib/vocab/test/scoring";
+import { scoreShortAnswer, scoreMultipleChoice } from "@/lib/vocab/test/questionGenerator";
+
+// 전체 화면을 덮고, 내용은 항상 가로 중앙에 둔다 (예전 3:2 고정 무대는 창 크기에 따라 한쪽으로 치우쳤다)
+function TestShell({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className="fixed inset-0 z-[60] overflow-y-auto bg-gradient-to-br from-blue-50 to-indigo-50">
+      <div className={["relative mx-auto flex min-h-full w-full max-w-3xl flex-col justify-center px-4 py-8", className].join(" ")}>
+        {children}
+      </div>
+    </div>
+  );
+}
 
 export default function VocabTestPage() {
   const router = useRouter();
@@ -34,6 +45,51 @@ export default function VocabTestPage() {
   const [bestStreak, setBestStreak] = useState(0);
   const [sessionPoints, setSessionPoints] = useState(0);
   const [hintReveals, setHintReveals] = useState<Record<string, string>>({});
+  // 답변/시험 제출 중 표시 + 실패 안내 (응답을 기다리는 동안 중복 클릭 방지)
+  const [pending, setPending] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  // 답변은 화면에서 먼저 채점해 바로 다음 문제로 넘기고, 서버 저장은 순서대로 뒤에서 처리한다.
+  const syncQueue = useRef<Promise<void>>(Promise.resolve());
+  const unsynced = useRef<Map<string, string>>(new Map()); // question_id -> answer (아직 서버에 못 올린 것)
+  const streakRef = useRef(0);
+
+  // 새로고침해도 처음으로 돌아가지 않게: 같은 Day 의 진행 중 시험이 있으면 이어서 보여준다
+  const tryResume = async (track: string, day: string): Promise<boolean> => {
+    try {
+      const res = await fetch(
+        `/api/vocab/test/resume?track_id=${encodeURIComponent(track)}&day=${encodeURIComponent(day)}&wrong_only=${useWrongOnly}`,
+        { cache: "no-store" },
+      );
+      if (!res.ok) return false;
+      const d = await res.json();
+      if (!d?.session_id || !Array.isArray(d.questions) || d.questions.length === 0) return false;
+      const qs = d.questions as VocabTestQuestion[];
+      const firstOpen = qs.findIndex(q => q.is_correct === null);
+      setSessionId(d.session_id);
+      setQuestions(qs);
+      setSelectedQuestionIdx(firstOpen === -1 ? qs.length - 1 : firstOpen);
+      streakRef.current = d.current_streak ?? 0;
+      setStreak(d.current_streak ?? 0);
+      setBestStreak(d.best_streak ?? 0);
+      setSessionPoints(d.total_points ?? 0);
+      setState("testing");
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  // 답을 아직 서버에 못 올렸는데 창을 닫으려 하면 경고
+  useEffect(() => {
+    const warn = (e: BeforeUnloadEvent) => {
+      if (state === "testing" && unsynced.current.size > 0) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [state]);
 
   useEffect(() => {
     let cancelled = false;
@@ -41,8 +97,13 @@ export default function VocabTestPage() {
     if (urlTrackId && urlDay) {
       setTrackId(urlTrackId);
       setDayNumber(urlDay);
-      setState("start");
-      return;
+      (async () => {
+        const resumed = await tryResume(urlTrackId, urlDay);
+        if (!cancelled && !resumed) setState("start");
+      })();
+      return () => {
+        cancelled = true;
+      };
     }
 
     // 맨링크 진입: 현재 배정된 트랙 + 가장 최근 완료 Day 로 해석
@@ -76,7 +137,8 @@ export default function VocabTestPage() {
 
         setTrackId(bookId);
         setDayNumber(String(elig.day));
-        setState("start");
+        const resumed = await tryResume(bookId, String(elig.day));
+        if (!cancelled && !resumed) setState("start");
       } catch {
         if (!cancelled) setError("시험 정보를 불러오지 못했어요.");
       }
@@ -86,6 +148,26 @@ export default function VocabTestPage() {
       cancelled = true;
     };
   }, [urlTrackId, urlDay]);
+
+  // 응답이 오래 걸리면 멈춘 것처럼 보이므로 시간 제한(20초) + 네트워크 오류 시 1회 재시도
+  const postJson = async (url: string, body: unknown, retries = 1): Promise<Response> => {
+    for (let attempt = 0; ; attempt++) {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 20000);
+      try {
+        return await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+          signal: ctrl.signal,
+        });
+      } catch (err) {
+        if (attempt >= retries) throw err;
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+  };
 
   const handleStartTest = async () => {
     if (!trackId || !dayNumber) return;
@@ -109,6 +191,8 @@ export default function VocabTestPage() {
       setQuestions(data.questions);
       setSelectedQuestionIdx(0);
       setStreak(0);
+      streakRef.current = 0;
+      unsynced.current.clear();
       setBestStreak(0);
       setSessionPoints(0);
       setHintReveals({});
@@ -119,38 +203,85 @@ export default function VocabTestPage() {
     }
   };
 
-  const handleSubmitAnswer = async (questionIdx: number, answer: string) => {
-    if (!sessionId || !questions[questionIdx]) return;
-    const question = questions[questionIdx];
+  /** 서버에 답 저장 → 서버 채점 결과(정답/점수/연속)로 화면 값을 맞춘다. 실패하면 unsynced 에 남긴다. */
+  const syncAnswer = async (questionIdx: number, questionId: string, answer: string): Promise<boolean> => {
     try {
-      const response = await fetch("/api/vocab/test/answer", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          session_id: sessionId,
-          question_id: question.id,
-          answer,
-        }),
+      // 서버는 이미 채점된 문제엔 저장된 결과를 돌려주므로 재시도해도 이중 채점되지 않는다
+      const response = await postJson("/api/vocab/test/answer", {
+        session_id: sessionId,
+        question_id: questionId,
+        answer,
       });
-      if (!response.ok) throw new Error("Failed to submit answer");
-      const answerResult = await response.json();
+      if (!response.ok) throw new Error(`answer ${response.status}`);
+      const r = await response.json();
+      unsynced.current.delete(questionId);
       setQuestions(prev => {
-        const newQuestions = [...prev];
-        newQuestions[questionIdx] = {
-          ...newQuestions[questionIdx],
-          student_answer: answer,
-          is_correct: answerResult.is_correct,
-          points_earned: answerResult.points_earned,
-          streak_bonus: answerResult.streak_bonus,
+        const next = [...prev];
+        next[questionIdx] = {
+          ...next[questionIdx],
+          is_correct: r.is_correct,
+          points_earned: r.points_earned,
+          streak_bonus: r.streak_bonus,
         };
-        return newQuestions;
+        return next;
       });
-      setStreak(answerResult.current_streak);
-      setBestStreak(answerResult.best_streak);
-      setSessionPoints(answerResult.session_total_points);
-    } catch (err: any) {
-      console.error("Answer submit error:", err);
+      streakRef.current = r.current_streak;
+      setStreak(r.current_streak);
+      setBestStreak(r.best_streak);
+      setSessionPoints(r.session_total_points);
+      return true;
+    } catch (err) {
+      console.error("Answer sync error:", err);
+      return false;
     }
+  };
+
+  const handleSubmitAnswer = (questionIdx: number, answer: string) => {
+    if (!sessionId || !questions[questionIdx]) return;
+    const q = questions[questionIdx];
+    if (q.is_correct !== null) return;
+
+    // 서버와 같은 규칙으로 즉시 채점 (정답/보기는 문제 데이터에 이미 들어 있다)
+    let ok = false;
+    if (q.question_type === "word_to_meaning" && q.options) {
+      ok = scoreMultipleChoice(answer, q.correct_answer, q.options);
+    } else if (q.question_type === "word_to_meaning") {
+      const acceptable =
+        Array.isArray(q.meaning_ko) && q.meaning_ko.length > 0 ? q.meaning_ko : [q.correct_answer];
+      ok = scoreShortAnswer(answer, acceptable, true);
+    } else if (q.question_type === "meaning_to_word") {
+      ok = scoreShortAnswer(answer, q.correct_answer);
+    } else if (q.question_type === "synonym" || q.question_type === "listening") {
+      ok = scoreMultipleChoice(answer, q.correct_answer, q.options ?? []);
+    }
+    const sc = scoreAnswer({
+      questionType: q.question_type,
+      isCorrect: ok,
+      hintLevel: q.hint_level ?? 0,
+      streakBefore: streakRef.current,
+    });
+
+    setQuestions(prev => {
+      const next = [...prev];
+      next[questionIdx] = {
+        ...next[questionIdx],
+        student_answer: answer,
+        is_correct: sc.is_correct,
+        points_earned: sc.points_earned,
+        streak_bonus: sc.streak_bonus,
+      };
+      return next;
+    });
+    streakRef.current = sc.streak_after;
+    setStreak(sc.streak_after);
+    setBestStreak(b => Math.max(b, sc.streak_after));
+    setSessionPoints(p => p + sc.points_earned);
+    setSubmitError(null);
+
+    unsynced.current.set(q.id, answer);
+    syncQueue.current = syncQueue.current.then(async () => {
+      await syncAnswer(questionIdx, q.id, answer);
+    });
   };
 
   const handleUseHint = async (questionIdx: number) => {
@@ -179,26 +310,35 @@ export default function VocabTestPage() {
   };
 
   const handleSubmitTest = async () => {
-    if (!sessionId) return;
-    setState("loading");
+    if (!sessionId || pending) return;
+    setPending(true);
+    setSubmitError(null);
     try {
-      const response = await fetch("/api/vocab/test/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ session_id: sessionId }),
-      });
-      if (!response.ok) throw new Error("Failed to submit test");
+      // 아직 서버에 못 올린 답이 있으면 먼저 올린다 (순서대로)
+      await syncQueue.current;
+      for (const [qid, ans] of Array.from(unsynced.current.entries())) {
+        const idx = questions.findIndex(x => x.id === qid);
+        if (idx >= 0) await syncAnswer(idx, qid, ans);
+      }
+      if (unsynced.current.size > 0) throw new Error("unsynced answers");
+      // 서버는 이미 채점된 세션이면 저장된 결과를 그대로 돌려주므로 재시도해도 안전하다
+      const response = await postJson("/api/vocab/test/submit", { session_id: sessionId }, 2);
+      if (!response.ok) throw new Error(`submit ${response.status}`);
       const data = await response.json();
       setResults(data);
       setState("results");
     } catch (err: any) {
-      setError(err.message || "Failed to submit test");
+      console.error("Test submit error:", err);
+      // 시험 화면에 그대로 남겨 다시 제출할 수 있게 한다 (예전엔 오류 화면으로 빠져 멈춘 듯 보임)
+      setSubmitError("시험 제출이 지연되고 있어요. 답은 저장되어 있으니 '시험 제출'을 다시 눌러 주세요.");
+    } finally {
+      setPending(false);
     }
   };
 
   if (notReady) {
     return (
-      <FocusModeWrapper className="flex items-center justify-center min-h-screen">
+      <TestShell>
         <div className="max-w-sm text-center space-y-3">
           <div className="text-4xl">📝</div>
           <p className="text-gray-800 text-lg font-bold">아직 시험을 볼 수 없어요</p>
@@ -210,13 +350,13 @@ export default function VocabTestPage() {
             단어 학습하러 가기
           </button>
         </div>
-      </FocusModeWrapper>
+      </TestShell>
     );
   }
 
   if (error) {
     return (
-      <FocusModeWrapper className="flex items-center justify-center min-h-screen">
+      <TestShell>
         <div className="text-center space-y-2">
           <p className="text-gray-700 text-lg">시험 정보를 찾을 수 없습니다.</p>
           <p className="text-gray-500 text-sm">{error}</p>
@@ -227,14 +367,16 @@ export default function VocabTestPage() {
             단어 학습으로 이동
           </button>
         </div>
-      </FocusModeWrapper>
+      </TestShell>
     );
   }
 
   return (
-    <FocusModeWrapper className="relative w-full min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
-      <StageBackground />
-      <div className="relative z-10 max-w-7xl mx-auto px-4 py-8">
+    <TestShell>
+      <div className="relative z-10 w-full">
+        {state === "loading" && (
+          <div className="py-24 text-center text-gray-500 animate-pulse">시험을 준비하고 있어요…</div>
+        )}
         {state === "start" && (
           <TestStartScreen
             trackId={trackId!}
@@ -255,10 +397,12 @@ export default function VocabTestPage() {
                 correctCount={questions.filter(q => q.is_correct === true).length}
                 streak={streak}
                 hintReveal={hintReveals[questions[selectedQuestionIdx].id]}
+                pending={pending}
+                submitError={submitError}
                 onAnswerSubmit={(answer) => handleSubmitAnswer(selectedQuestionIdx, answer)}
                 onUseHint={() => handleUseHint(selectedQuestionIdx)}
                 onSubmitTest={handleSubmitTest}
-                onNext={() => setSelectedQuestionIdx(Math.min(selectedQuestionIdx + 1, questions.length - 1))}
+                onNext={() => { setSubmitError(null); setSelectedQuestionIdx(Math.min(selectedQuestionIdx + 1, questions.length - 1)); }}
                 onPrev={() => setSelectedQuestionIdx(Math.max(selectedQuestionIdx - 1, 0))}
               />
             )}
@@ -274,6 +418,6 @@ export default function VocabTestPage() {
         )}
       </div>
       <MascotLayer />
-    </FocusModeWrapper>
+    </TestShell>
   );
 }

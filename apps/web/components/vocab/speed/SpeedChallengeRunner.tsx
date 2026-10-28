@@ -3,6 +3,9 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { SpeedAttemptResult, SpeedQuestion } from "@/models/vocab/speed.types";
 import StageScaffold from "@/components/common/stage/StageScaffold";
+import SpellingHint from "@/components/vocab/common/SpellingHint";
+import { useTabLeaveGuard } from "@/lib/hooks/useTabLeaveGuard";
+import TabLeaveNotice from "@/components/vocab/common/TabLeaveNotice";
 
 type Props = {
   userId: string;
@@ -196,6 +199,8 @@ export default function SpeedChallengeRunner({
     gradeAndAdvance(norm(choice) === norm(q.answer));
   }
 
+  const leave = useTabLeaveGuard({ enabled: !!q && !locked, onPenalty: () => gradeAndAdvance(false) });
+
   const isMcq = Array.isArray(q?.choices) && (q?.choices?.length ?? 0) > 0;
 
   if (total === 0) return null;
@@ -221,6 +226,7 @@ export default function SpeedChallengeRunner({
 
   return (
     <div className="h-full w-full">
+      <TabLeaveNotice show={leave.showWarning} leaveCount={leave.leaveCount} onClose={leave.dismissWarning} />
       <StageScaffold
         stageKey="speed"
         stageLabel="Speed Check"
@@ -266,6 +272,10 @@ export default function SpeedChallengeRunner({
               ))}
             </div>
           ) : (
+            <>
+            {q?.type === "MEANING_TO_WORD" && q.answer ? (
+              <SpellingHint answer={q.answer} mode="full" className="py-1" />
+            ) : null}
             <input
               ref={inputRef}
               value={input}
@@ -278,8 +288,11 @@ export default function SpeedChallengeRunner({
               style={{ fontSize: "clamp(18px, 2.3cqi, 30px)" }}
               placeholder="Type here..."
               autoComplete="off"
+              autoCapitalize="none"
+              autoCorrect="off"
               spellCheck={false}
             />
+            </>
           )}
 
           {lastVerdict === "correct" ? (

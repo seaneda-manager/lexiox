@@ -4,6 +4,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 type Role = 'student' | 'teacher' | 'admin';
 type Program = 'gap' | 'toefl' | 'lexiox' | null;
+// 트랙(Hi-내신 / 중학 / Jr.)은 서로 겹치지 않고, TOEFL 은 어느 트랙과도 함께 가능하다.
+type Track = 'hi_naesin' | 'middle' | 'jr' | null;
+type ProgramDraft = { track: Track; hasToefl: boolean };
+
+const TRACK_LABEL: Record<string, string> = {
+  hi_naesin: 'Hi-내신',
+  middle: '중학 (내신+일반)',
+  jr: 'Jr.',
+};
 
 type Profile = {
   id: string;
@@ -11,6 +20,9 @@ type Profile = {
   full_name: string | null;
   role: Role;
   program: Program;
+  // 20261021000001 마이그레이션 전에는 API 가 이 값을 주지 않는다(undefined).
+  track?: Track;
+  has_toefl?: boolean;
   created_at: string | null;
 };
 
@@ -51,7 +63,7 @@ export default function UsersManager() {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<UsersResp>({ items: [] });
   const [draftRole, setDraftRole] = useState<Record<string, Role>>({});
-  const [draftProgram, setDraftProgram] = useState<Record<string, Program>>({});
+  const [draftProgram, setDraftProgram] = useState<Record<string, ProgramDraft>>({});
   const [saving, setSaving] = useState<Record<string, boolean>>({});
   const [savingProgram, setSavingProgram] = useState<Record<string, boolean>>({});
   const [toast, setToast] = useState<string | null>(null);
@@ -163,14 +175,12 @@ export default function UsersManager() {
   };
 
   const applyProgram = async (userId: string) => {
-    // draftProgram[userId] may be undefined meaning "no change drafted"
-    // We allow explicitly setting to null (no program)
-    const key = userId;
-    const hasDraft = key in draftProgram;
-    if (!hasDraft) return;
-    const newProgram = draftProgram[key];
+    const draft = draftProgram[userId];
+    if (!draft) return;
 
-    const prev = data.items.find((it) => it.id === userId)?.program;
+    const prevItem = data.items.find((it) => it.id === userId);
+    // 서버가 기존 program 값도 같은 규칙으로 맞춰 둔다 (TOEFL 포함 → toefl/gap 유지, 트랙만 → lexiox)
+    const legacy: Program = draft.hasToefl ? (prevItem?.program === 'gap' ? 'gap' : 'toefl') : draft.track ? 'lexiox' : null;
 
     setSavingProgram((s) => ({ ...s, [userId]: true }));
     setError(null);
@@ -178,18 +188,19 @@ export default function UsersManager() {
 
     setData((d) => ({
       ...d,
-      items: d.items.map((it) => (it.id === userId ? { ...it, program: newProgram } : it)),
+      items: d.items.map((it) =>
+        it.id === userId ? { ...it, track: draft.track, has_toefl: draft.hasToefl, program: legacy } : it,
+      ),
     }));
 
     try {
       const res = await fetch('/api/admin/set-program', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, program: newProgram }),
+        body: JSON.stringify({ userId, track: draft.track, hasToefl: draft.hasToefl }),
       });
       if (!res.ok) throw new Error(await res.text());
       setToast('프로그램이 저장되었습니다.');
-      // Remove from draft after save
       setDraftProgram((d) => {
         const next = { ...d };
         delete next[userId];
@@ -198,7 +209,11 @@ export default function UsersManager() {
     } catch (e: any) {
       setData((d) => ({
         ...d,
-        items: d.items.map((it) => (it.id === userId ? { ...it, program: prev ?? null } : it)),
+        items: d.items.map((it) =>
+          it.id === userId
+            ? { ...it, track: prevItem?.track, has_toefl: prevItem?.has_toefl, program: prevItem?.program ?? null }
+            : it,
+        ),
       }));
       setError(e?.message || 'Failed to set program');
     } finally {
@@ -235,26 +250,33 @@ export default function UsersManager() {
   };
 
   const ProgramSelect = ({ user }: { user: Profile }) => {
-    const hasDraft = user.id in draftProgram;
-    const value = hasDraft ? draftProgram[user.id] : user.program;
-    const isDirty = hasDraft && value !== user.program;
+    // track 이 undefined 면 DB 마이그레이션 전 → 지정할 수 없다
+    if (user.track === undefined) {
+      return <span className="text-[10px] text-amber-600">DB 마이그레이션 필요</span>;
+    }
+    const cur: ProgramDraft = { track: user.track ?? null, hasToefl: !!user.has_toefl };
+    const draft = draftProgram[user.id];
+    const value = draft ?? cur;
+    const isDirty = !!draft && (draft.track !== cur.track || draft.hasToefl !== cur.hasToefl);
+    const set = (patch: Partial<ProgramDraft>) => setDraftProgram((d) => ({ ...d, [user.id]: { ...value, ...patch } }));
 
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <select
-          id={`program-${user.id}`}
+          id={`track-${user.id}`}
           className="rounded border px-2 py-1 text-xs"
-          value={value ?? ''}
-          onChange={(e) => {
-            const v = e.target.value === '' ? null : (e.target.value as Program);
-            setDraftProgram((d) => ({ ...d, [user.id]: v }));
-          }}
+          value={value.track ?? ''}
+          onChange={(e) => set({ track: e.target.value === '' ? null : (e.target.value as Track) })}
         >
-          <option value="">— 없음 —</option>
-          <option value="gap">GAP</option>
-          <option value="toefl">TOEFL</option>
-          <option value="lexiox">LEXiOX</option>
+          <option value="">— 트랙 없음 —</option>
+          <option value="hi_naesin">Hi-내신</option>
+          <option value="middle">중학 (내신+일반)</option>
+          <option value="jr">Jr.</option>
         </select>
+        <label className="flex items-center gap-1 text-xs text-neutral-700">
+          <input type="checkbox" checked={value.hasToefl} onChange={(e) => set({ hasToefl: e.target.checked })} />
+          TOEFL
+        </label>
         <button
           className="rounded border px-3 py-1 text-xs disabled:opacity-50"
           disabled={!!savingProgram[user.id] || !isDirty}
@@ -363,7 +385,29 @@ export default function UsersManager() {
                       </span>
                     </td>
                     <td className="px-3 py-2 align-middle">
-                      {u.program ? (
+                      {u.track !== undefined ? (
+                        // 새 구조: 트랙 + TOEFL. 트랙이 없고 기존 program 이 lexiox 면 "트랙 미지정"으로 알려 준다.
+                        <div className="flex flex-wrap gap-1">
+                          {u.has_toefl && (
+                            <span className="inline-flex items-center rounded-full bg-sky-50 px-2.5 py-1 text-xs font-medium text-sky-700 ring-1 ring-sky-100">
+                              TOEFL
+                            </span>
+                          )}
+                          {u.track && (
+                            <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-100">
+                              {TRACK_LABEL[u.track]}
+                            </span>
+                          )}
+                          {!u.has_toefl && !u.track && u.program === 'lexiox' && (
+                            <span className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-100">
+                              트랙 미지정
+                            </span>
+                          )}
+                          {!u.has_toefl && !u.track && u.program !== 'lexiox' && (
+                            <span className="text-xs text-neutral-300">—</span>
+                          )}
+                        </div>
+                      ) : u.program ? (
                         <span
                           className={[
                             'inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ring-1',

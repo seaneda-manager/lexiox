@@ -91,6 +91,18 @@ export default async function UnitDetailPage({
             단원 수정
           </Link>
           <Link
+            href={`/admin/middle-naesin/units/${unitId}/ai-reading`}
+            className="rounded-xl border border-violet-300 px-4 py-2 text-sm text-violet-700 hover:bg-violet-50"
+          >
+            AI 읽기 드릴
+          </Link>
+          <Link
+            href={`/admin/middle-naesin/units/${unitId}/summary`}
+            className="rounded-xl border px-4 py-2 text-sm hover:bg-neutral-50"
+          >
+            요약본
+          </Link>
+          <Link
             href={`/admin/middle-naesin/units/${unitId}/preview`}
             className="rounded-xl border px-4 py-2 text-sm hover:bg-neutral-50"
           >

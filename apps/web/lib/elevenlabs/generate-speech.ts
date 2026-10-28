@@ -32,7 +32,8 @@ const getVoiceId = (voiceIndex: number = 0): string => {
 export type SpeechGenerationOptions = {
   voiceId?: string;
   voiceIndex?: number; // 0~7 (8명 중 선택)
-  modelId?: "eleven_multilingual_v2" | "eleven_v3" | "eleven_flash_v2_5";
+  // ElevenLabs 모델 ID. 새 모델이 나와도 코드 수정 없이 쓸 수 있게 문자열로 받는다.
+  modelId?: string;
   stability?: number; // 0~1
   similarityBoost?: number; // 0~1
   languageCode?: string; // flash_v2_5 등에서 언어 고정 (짧은 단어 오판 방지)
@@ -115,6 +116,14 @@ async function uploadToSupabase(
     .getPublicUrl(data.path);
 
   return publicUrlData.publicUrl;
+}
+
+// 이미 만들어진 오디오(mp3)를 저장소에 올리고 공개 URL을 돌려준다 (구간별로 이어 붙인 결과용)
+export async function saveSpeechAudio(audio: Buffer | Blob): Promise<{ url: string; fileName: string }> {
+  const blob = audio instanceof Blob ? audio : new Blob([new Uint8Array(audio)], { type: "audio/mpeg" });
+  const fileName = `listen-repeat/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.mp3`;
+  const url = await uploadToSupabase(blob, fileName);
+  return { url, fileName };
 }
 
 // 메인 함수: 텍스트 → 음성 URL

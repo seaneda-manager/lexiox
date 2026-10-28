@@ -1,6 +1,12 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import { useCountdown } from "@/lib/hooks/useCountdown";
+import { useTabLeaveGuard } from "@/lib/hooks/useTabLeaveGuard";
+import TabLeaveNotice from "@/components/vocab/common/TabLeaveNotice";
+
+/** 단어당 제한 시간(초). 넘기면 "아직 몰라요"로 처리하고 다음 단어로 넘어간다. */
+const SECONDS_PER_WORD = 8;
 
 type Word = {
   id: string;
@@ -75,6 +81,9 @@ export default function PrescreenBoard({
     setI(nextIndex);
   };
 
+  const timeLeft = useCountdown(SECONDS_PER_WORD, cur?.id ?? i, () => commit(false), !cur);
+  const leave = useTabLeaveGuard({ enabled: !!cur, onPenalty: () => commit(false) });
+
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
@@ -99,6 +108,7 @@ export default function PrescreenBoard({
 
   return (
     <div className="fixed inset-0 w-screen flex flex-col z-50" style={{ background: "#1a3d30" }}>
+      <TabLeaveNotice show={leave.showWarning} leaveCount={leave.leaveCount} onClose={leave.dismissWarning} />
       <div
         className="flex-1 flex flex-col justify-center items-center px-6 py-8"
         key={animKey}
@@ -117,6 +127,38 @@ export default function PrescreenBoard({
           <ProgressBar current={i + 1} total={total} />
         </div>
 
+        {/* 안내: 이 단계는 학습할 단어를 고르는 단계 */}
+        <div
+          className="w-full rounded-2xl px-5 py-4 text-center font-extrabold leading-snug"
+          style={{
+            background: "#153229",
+            border: "1.5px solid #EF9F27",
+            color: "#FAC775",
+            fontSize: "clamp(16px, 2.4cqi, 22px)",
+          }}
+        >
+          학습할 단어를 고르는 단계예요.
+          <br />
+          정확히 모르면 바로 <span style={{ color: "#fff" }}>“아직 몰라요”</span>를 누르고 넘어가세요!
+        </div>
+
+        {/* 남은 시간 */}
+        <div className="w-full flex items-center gap-3">
+          <div className="h-2 flex-1 rounded-full overflow-hidden" style={{ background: "#153229" }}>
+            <div
+              className="h-full rounded-full"
+              style={{
+                width: `${(timeLeft / SECONDS_PER_WORD) * 100}%`,
+                background: timeLeft <= 3 ? "#EF9F27" : "#5DCAA5",
+                transition: "width 1s linear",
+              }}
+            />
+          </div>
+          <span className="text-sm font-bold tabular-nums" style={{ color: timeLeft <= 3 ? "#EF9F27" : "#4da88a" }}>
+            ⏱ {timeLeft}s
+          </span>
+        </div>
+
         {/* 단어 카드 */}
         <div
           className="rounded-3xl text-center space-y-4 flex flex-col justify-center items-center w-full"
@@ -125,7 +167,7 @@ export default function PrescreenBoard({
             border: "0.5px solid #2d6652",
             boxShadow: "0 4px 32px rgba(0,0,0,0.25)",
             aspectRatio: "4 / 3",
-            minHeight: "400px",
+            minHeight: "300px",
             padding: "32px",
             boxSizing: "border-box"
           }}
