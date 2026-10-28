@@ -48,23 +48,53 @@ export function sectionCount(lesson: Raw, key: SectionKey): number {
   }
 }
 
-// 코드펜스·앞뒤 설명을 걷어내고 가장 바깥 {...} 만 JSON 으로 읽는다.
-export function parsePasted(text: string): { ok: true; data: Raw } | { ok: false; error: string } {
-  let t = text.trim();
-  const fence = /```(?:json)?\s*([\s\S]*?)\s*```/i.exec(t);
-  if (fence) t = fence[1].trim();
-  const s = t.indexOf("{");
-  const e = t.lastIndexOf("}");
-  if (s < 0 || e <= s) return { ok: false, error: "JSON 을 찾을 수 없습니다. { 로 시작하는 JSON 을 붙여 넣으세요." };
-  try {
-    return { ok: true, data: JSON.parse(t.slice(s, e + 1)) };
-  } catch (err: any) {
+// 문자열·이스케이프를 감안해 start 에서 시작하는 { ... } 의 끝 index 를 찾는다. 못 찾으면 -1.
+function balancedEnd(t: string, start: number): number {
+  let depth = 0, inStr = false, esc = false;
+  for (let i = start; i < t.length; i++) {
+    const c = t[i];
+    if (esc) { esc = false; continue; }
+    if (c === "\\") { if (inStr) esc = true; continue; }
+    if (c === '"') { inStr = !inStr; continue; }
+    if (inStr) continue;
+    if (c === "{") depth++;
+    else if (c === "}") { depth--; if (depth === 0) return i; }
+  }
+  return -1;
+}
+
+function tryParse(src: string): Raw | null {
+  for (const cand of [src, src.replace(/,\s*([}\]])/g, "$1")]) {
     try {
-      return { ok: true, data: JSON.parse(t.slice(s, e + 1).replace(/,\s*([}\]])/g, "$1")) };
+      const v = JSON.parse(cand);
+      if (v && typeof v === "object" && !Array.isArray(v)) return v as Raw;
     } catch {
-      return { ok: false, error: `JSON 형식이 올바르지 않습니다: ${err.message}` };
+      /* 다음 후보 */
     }
   }
+  return null;
+}
+
+// 화면 전체를 복사해 와도 되게: 모든 { 에서 시작하는 균형 잡힌 덩어리를 읽어 보고, 읽히는 것 중 가장 긴 것을 쓴다.
+// (프롬프트 틀이 같이 복사됐을 때 틀이 아니라 실제 결과가 선택된다.)
+export function parsePasted(text: string): { ok: true; data: Raw } | { ok: false; error: string } {
+  const t = text.replace(/```(?:json)?/gi, "");
+  let best: { len: number; data: Raw } | null = null;
+  let firstErr = "";
+  for (let i = t.indexOf("{"); i >= 0; i = t.indexOf("{", i + 1)) {
+    const end = balancedEnd(t, i);
+    if (end < 0) continue;
+    const chunk = t.slice(i, end + 1);
+    if (best && chunk.length <= best.len) continue;
+    const data = tryParse(chunk);
+    if (data) best = { len: chunk.length, data };
+    else if (!firstErr && chunk.length > 200) {
+      try { JSON.parse(chunk); } catch (e: any) { firstErr = e.message; }
+    }
+  }
+  if (best) return { ok: true, data: best.data };
+  if (t.indexOf("{") < 0) return { ok: false, error: "JSON 을 찾을 수 없습니다. { 로 시작하는 JSON 을 붙여 넣으세요." };
+  return { ok: false, error: `JSON 형식이 올바르지 않습니다${firstErr ? `: ${firstErr}` : ""}. 코드블록 안의 JSON 전체가 빠짐없이 복사됐는지 확인하세요(끝의 } 와 ] 포함).` };
 }
 
 // 붙여넣은 섹션을 기존 초안에 합친다. 그 섹션의 필드만 검증한다(나머지가 비어 있어도 통과).
