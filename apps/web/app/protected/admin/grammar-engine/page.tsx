@@ -1,6 +1,7 @@
 import { Fragment } from "react";
 import Link from "next/link";
 import { getServerSupabase, getServiceRoleClient } from "@/lib/supabase/server";
+import { UNIT_SELECT, gradeLabel, unitLabel, type UnitWithBook } from "@/lib/grammar-engine/book-label";
 
 export const dynamic = "force-dynamic";
 
@@ -8,7 +9,7 @@ const LEVELS = [1, 2, 3, 4, 5] as const;
 
 type Concept = { id: string; key: string; title_ko: string; title_en: string; tier: number; difficulty_rank: number; category: string | null; status: string };
 type LessonRow = { concept_id: string; level: number; status: "draft" | "final"; source: string };
-type UnitRow = { concept_id: string; unit: { chapter_no: number; unit_no: number; title: string; page: number | null } | null };
+type UnitRow = { concept_id: string; unit: UnitWithBook | null };
 
 // 필수 레벨 = tier-1 ~ tier+1 (1~5로 자름). docs/GRAMMAR_LEVELS_AND_SCHEMA_DESIGN.md
 const requiredRange = (tier: number): [number, number] => [Math.max(1, tier - 1), Math.min(5, tier + 1)];
@@ -48,7 +49,7 @@ export default async function GrammarEnginePage() {
     const [c, l, u] = await Promise.all([
       db.from("grammar_concepts").select("id, key, title_ko, title_en, tier, difficulty_rank, category, status").order("difficulty_rank"),
       db.from("grammar_lessons").select("concept_id, level, status, source"),
-      db.from("grammar_unit_concepts").select("concept_id, unit:grammar_book_units(chapter_no, unit_no, title, page)").order("sort_order"),
+      db.from("grammar_unit_concepts").select(`concept_id, unit:grammar_book_units(${UNIT_SELECT})`).order("sort_order"),
     ]);
     const err = c.error ?? l.error ?? u.error;
     if (err) loadError = err.message;
@@ -141,10 +142,7 @@ export default async function GrammarEnginePage() {
                           <summary className="cursor-pointer select-none">유닛 {units.length}개</summary>
                           <ul className="mt-1 space-y-0.5">
                             {units.map((u) => (
-                              <li key={`${u!.chapter_no}-${u!.unit_no}`}>
-                                {u!.chapter_no}-{u!.unit_no} {u!.title}
-                                {u!.page ? ` (p.${u!.page})` : ""}
-                              </li>
+                              <li key={`${gradeLabel(u!.book)}-${u!.chapter_no}-${u!.unit_no}`}>{unitLabel(u!)}</li>
                             ))}
                           </ul>
                         </details>

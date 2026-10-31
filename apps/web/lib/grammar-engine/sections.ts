@@ -78,7 +78,8 @@ function tryParse(src: string): Raw | null {
 // 화면 전체를 복사해 와도 되게: 모든 { 에서 시작하는 균형 잡힌 덩어리를 읽어 보고, 읽히는 것 중 가장 긴 것을 쓴다.
 // (프롬프트 틀이 같이 복사됐을 때 틀이 아니라 실제 결과가 선택된다.)
 export function parsePasted(text: string): { ok: true; data: Raw } | { ok: false; error: string } {
-  const t = text.replace(/```(?:json)?/gi, "");
+  // 코드펜스가 중간에 끊겨 줄마다 `...` 로 감싸져 복사되는 경우까지 대비해 백틱을 모두 제거한다(JSON 값에 백틱은 쓰지 않는다).
+  const t = text.replace(/```(?:json)?/gi, "").replace(/`/g, "");
   let best: { len: number; data: Raw } | null = null;
   let firstErr = "";
   for (let i = t.indexOf("{"); i >= 0; i = t.indexOf("{", i + 1)) {

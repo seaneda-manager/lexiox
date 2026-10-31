@@ -7,6 +7,7 @@ import { SECTIONS, normalizeLesson, sectionCount } from "@/lib/grammar-engine/se
 import { reviewPrompt, sectionPrompt } from "@/lib/grammar-engine/section-prompts";
 import { LEVEL_SPEC } from "@/lib/grammar-engine/lesson-ai";
 import LessonPreview from "@/components/grammar-engine/LessonPreview";
+import { UNIT_SELECT, unitLabel } from "@/lib/grammar-engine/book-label";
 import LessonActions from "./LessonActions";
 
 export const dynamic = "force-dynamic";
@@ -30,7 +31,7 @@ export default async function GrammarCellPage({ params }: Props) {
 
   const [{ data: lessonRow }, { data: unitRows }, { data: siblings }] = await Promise.all([
     db.from("grammar_lessons").select("*").eq("concept_id", concept.id).eq("level", level).maybeSingle(),
-    db.from("grammar_unit_concepts").select("unit:grammar_book_units(chapter_no, unit_no, title, page)").eq("concept_id", concept.id).order("sort_order"),
+    db.from("grammar_unit_concepts").select(`unit:grammar_book_units(${UNIT_SELECT})`).eq("concept_id", concept.id).order("sort_order"),
     db.from("grammar_lessons").select("level, status").eq("concept_id", concept.id),
   ]);
 
@@ -60,7 +61,7 @@ export default async function GrammarCellPage({ params }: Props) {
         </h1>
         {units.length > 0 && (
           <div className="text-xs text-neutral-500">
-            교재: {units.map((u: any) => `${u.chapter_no}-${u.unit_no} ${u.title}${u.page ? ` (p.${u.page})` : ""}`).join(" · ")}
+            교재: {units.map((u: any) => unitLabel(u)).join(" · ")}
           </div>
         )}
         <nav className="flex gap-1.5 pt-1">

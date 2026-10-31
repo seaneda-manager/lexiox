@@ -7,7 +7,7 @@ const u = (unit: number, title: string, page: number): TocUnit => ({ unit, title
 
 export const NEURON_MIDDLE3_BOOK = {
   bookKey: 'neuron-giche-middle3',
-  title: '뉴런 기출로 중3 영문법',
+  title: 'EBS 뉴런 기출로 영문법 중3',
   grade: 'M3',
 } as const;
 
