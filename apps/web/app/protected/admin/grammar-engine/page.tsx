@@ -80,7 +80,10 @@ export default async function GrammarEnginePage() {
 
   return (
     <div className="mx-auto max-w-6xl p-4 sm:p-6">
-      <h1 className="text-2xl font-bold text-gray-900">문법 엔진 · 개념 × 레벨</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-gray-900">문법 엔진 · 개념 × 레벨</h1>
+        <Link href="/admin/grammar-engine/books" className="rounded-lg border bg-white px-3 py-1.5 text-sm font-medium text-violet-700 hover:bg-violet-50">교재별 목차 →</Link>
+      </div>
       <p className="mt-1 text-sm text-gray-600">
         개념은 난이도순입니다. 칸은 레벨(L1~L5)별 레슨 상태이고, 필수 레벨(tier±1)이 비어 있으면 &quot;필요&quot;로 표시됩니다.
       </p>
