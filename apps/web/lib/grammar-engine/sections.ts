@@ -77,18 +77,21 @@ function tryParse(src: string): Raw | null {
 
 // 화면 전체를 복사해 와도 되게: 모든 { 에서 시작하는 균형 잡힌 덩어리를 읽어 보고, 읽히는 것 중 가장 긴 것을 쓴다.
 // (프롬프트 틀이 같이 복사됐을 때 틀이 아니라 실제 결과가 선택된다.)
-export function parsePasted(text: string): { ok: true; data: Raw } | { ok: false; error: string } {
+export function parsePasted(text: string, prefer?: (d: Raw) => boolean): { ok: true; data: Raw } | { ok: false; error: string } {
   // 코드펜스가 중간에 끊겨 줄마다 `...` 로 감싸져 복사되는 경우까지 대비해 백틱을 모두 제거한다(JSON 값에 백틱은 쓰지 않는다).
   const t = text.replace(/```(?:json)?/gi, "").replace(/`/g, "");
-  let best: { len: number; data: Raw } | null = null;
+  let best: { len: number; data: Raw; pref: boolean } | null = null;
   let firstErr = "";
   for (let i = t.indexOf("{"); i >= 0; i = t.indexOf("{", i + 1)) {
     const end = balancedEnd(t, i);
     if (end < 0) continue;
     const chunk = t.slice(i, end + 1);
-    if (best && chunk.length <= best.len) continue;
     const data = tryParse(chunk);
-    if (data) best = { len: chunk.length, data };
+    if (data) {
+      // 선호 조건(예: issues 배열 보유)을 만족하는 덩어리가 항상 우선, 그 안에서 가장 긴 것
+      const pref = prefer ? prefer(data) : false;
+      if (!best || (pref && !best.pref) || (pref === best.pref && chunk.length > best.len)) best = { len: chunk.length, data, pref };
+    }
     else if (!firstErr && chunk.length > 200) {
       try { JSON.parse(chunk); } catch (e: any) { firstErr = e.message; }
     }

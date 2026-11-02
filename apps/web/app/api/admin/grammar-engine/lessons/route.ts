@@ -86,7 +86,7 @@ export async function POST(req: Request) {
     if (!existing) return NextResponse.json({ ok: false, error: "레슨이 아직 없습니다. 먼저 생성하세요." }, { status: 404 });
 
     if (action === "paste-review") {
-      const parsed = parsePasted(String(body?.text ?? ""));
+      const parsed = parsePasted(String(body?.text ?? ""), (d) => Array.isArray(d.issues));
       if ("error" in parsed) return NextResponse.json({ ok: false, error: parsed.error }, { status: 422 });
       const issues = Array.isArray(parsed.data.issues)
         ? parsed.data.issues.filter((x: any) => x && x.note).map((x: any) => ({
@@ -95,7 +95,7 @@ export async function POST(req: Request) {
             note: String(x.note),
           }))
         : null;
-      if (!issues) return NextResponse.json({ ok: false, error: "issues 배열이 없습니다." }, { status: 422 });
+      if (!issues) return NextResponse.json({ ok: false, error: "붙여 넣은 글에서 {\"issues\": [...]} 형태를 찾지 못했습니다. 검수 AI의 답변(JSON)을 복사했는지 확인하세요. 문제가 없다면 {\"issues\": []} 로 답하게 하세요." }, { status: 422 });
       const review = { issues, reviewedAt: new Date().toISOString() };
       const { error } = await db.from("grammar_lessons").update({ ai_review: review }).eq("id", existing.id);
       if (error) throw new Error(error.message);
