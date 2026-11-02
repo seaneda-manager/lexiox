@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { GRAMMAR_LEVEL_LABEL, GRAMMAR_QUESTION_KIND_LABEL, findWrongTokenIndex, type GrammarLesson } from "@/models/middle-naesin/grammar-lesson";
+import { useMemo, useState } from "react";
+import { GRAMMAR_LEVEL_LABEL, GRAMMAR_QUESTION_KIND_LABEL, GRAMMAR_WRITTEN_KIND_LABEL, findWrongTokenIndex, type GrammarLesson } from "@/models/middle-naesin/grammar-lesson";
+import { acceptedAnswers, buildOptions, isCorrectAnswer } from "@/lib/grammar/gate";
 
 // 학생이 보는 순서대로 레슨을 한 단계씩 돌려 보는 미리보기. 점수·기록은 저장하지 않는다.
 
@@ -147,16 +148,134 @@ function Question({ q, n }: { q: GrammarLesson["questions"][number]; n: number }
   );
 }
 
+function Lecture({ segs }: { segs: NonNullable<GrammarLesson["lecture"]> }) {
+  const [n, setN] = useState(1);
+  return (
+    <div className="space-y-3">
+      <div className="text-xs text-neutral-500">강의 {Math.min(n, segs.length)} / {segs.length} · 음성은 준비 중이라 대본을 글로 보여 줍니다.</div>
+      {segs.slice(0, n).map((s, i) => (
+        <div key={i} className="space-y-2">
+          {s.type === "board" ? (
+            <div className="rounded-xl bg-emerald-900 p-4 text-emerald-50">
+              {s.title && <div className="mb-2 text-sm font-bold text-yellow-200"><T>{s.title}</T></div>}
+              <ul className="space-y-1 font-medium">
+                {(s.lines ?? []).map((l, k) => <li key={k}><T>{l}</T></li>)}
+              </ul>
+            </div>
+          ) : (
+            <div className="rounded-xl border bg-white p-4 text-base font-medium"><T>{s.text}</T></div>
+          )}
+          <div className="px-1 text-xs text-neutral-500">🔊 {s.narration}</div>
+        </div>
+      ))}
+      {n < segs.length && (
+        <button onClick={() => setN(n + 1)} className="rounded-xl bg-violet-700 px-4 py-2 text-sm font-semibold text-white">다음 설명 ▶</button>
+      )}
+    </div>
+  );
+}
+
+const shuffle = (a: string[]) => [...a].sort(() => Math.random() - 0.5);
+
+// 문법 관문 규칙: 주관식 → (틀리면) 객관식 → (틀리면) 정답을 보고 다시 쓰기(감점). 미리보기에서는 점수를 저장하지 않는다.
+function Popup({ q, n }: { q: NonNullable<GrammarLesson["popupQuiz"]>[number]; n: number }) {
+  const [stage, setStage] = useState<0 | 1 | 2>(0);
+  const [v, setV] = useState("");
+  const [done, setDone] = useState<null | "ok" | "assisted">(null);
+  const [miss, setMiss] = useState(false);
+  const options = useMemo(() => buildOptions(q, shuffle), [q]);
+  const [a, b] = q.prompt.split("___");
+  const answer = acceptedAnswers(q)[0];
+
+  function submit() {
+    if (isCorrectAnswer(q, v)) return setDone(stage === 0 ? "ok" : "assisted");
+    setMiss(true);
+    setV("");
+    if (stage === 0) setStage(options.length > 0 ? 1 : 2);
+  }
+
+  return (
+    <Box>
+      <div className="text-xs text-neutral-500">팝업 퀴즈 {n}</div>
+      <div className="font-medium">
+        <T>{a}</T>
+        <span className={`mx-1 inline-block min-w-[4rem] rounded border px-2 ${done ? ok : ""}`}>{done ? answer : "＿＿"}</span>
+        <T>{b}</T>
+      </div>
+      {q.hint_ko && <div className="text-xs text-neutral-400">힌트: {q.hint_ko}</div>}
+      {!done && stage === 0 && (
+        <div className="flex gap-2">
+          <input value={v} onChange={(e) => setV(e.target.value)} onKeyDown={(e) => e.key === "Enter" && submit()} className="w-40 rounded border px-2 py-0.5" placeholder="직접 쓰기" />
+          <button onClick={submit} className="rounded-lg bg-neutral-900 px-3 py-1 text-xs text-white">확인</button>
+        </div>
+      )}
+      {!done && stage === 1 && (
+        <div className="space-y-1">
+          <div className="text-rose-700">틀렸어요. 보기에서 골라 보세요.</div>
+          <div className="flex flex-wrap gap-2">
+            {options.map((o) => (
+              <button key={o} onClick={() => (isCorrectAnswer(q, o) ? setDone("assisted") : setStage(2))} className="rounded-lg border px-3 py-1 hover:bg-neutral-50">{o}</button>
+            ))}
+          </div>
+        </div>
+      )}
+      {!done && stage === 2 && (
+        <div className="space-y-1">
+          <div className="text-rose-700">정답은 <b>{answer}</b> 입니다. 정답을 보고 직접 다시 써 보세요.{miss && " (감점)"}</div>
+          <div className="flex gap-2">
+            <input value={v} onChange={(e) => setV(e.target.value)} onKeyDown={(e) => e.key === "Enter" && submit()} className="w-40 rounded border px-2 py-0.5" />
+            <button onClick={submit} className="rounded-lg bg-neutral-900 px-3 py-1 text-xs text-white">확인</button>
+          </div>
+        </div>
+      )}
+      {done && <div className={done === "ok" ? "text-emerald-700" : "text-amber-700"}>{done === "ok" ? "정답! (+점수)" : "통과했어요. (실제 화면에서는 감점이 적용됩니다)"}</div>}
+    </Box>
+  );
+}
+
+const sentenceKey = (s: string) => s.toLowerCase().replace(/[^a-z0-9' ]/g, "").replace(/\s+/g, " ").trim();
+
+function Written({ t, n }: { t: NonNullable<GrammarLesson["writtenTasks"]>[number]; n: number }) {
+  const [v, setV] = useState("");
+  const [res, setRes] = useState<boolean | null>(null);
+  return (
+    <Box>
+      <div className="text-xs text-neutral-500">
+        {n}. {GRAMMAR_LEVEL_LABEL[t.level]} · {GRAMMAR_WRITTEN_KIND_LABEL[t.kind]}
+      </div>
+      {t.prompt && <div className="font-medium"><T>{t.prompt}</T></div>}
+      <div className="text-sm text-neutral-700"><T>{t.promptKo}</T></div>
+      {t.kind === "order" && (
+        <div className="flex flex-wrap gap-1.5">
+          {(t.words ?? []).map((w, i) => <span key={i} className="rounded border bg-neutral-50 px-2 py-0.5">{w}</span>)}
+        </div>
+      )}
+      <textarea value={v} onChange={(e) => setV(e.target.value)} disabled={res !== null} rows={2} className="w-full rounded-lg border p-2" placeholder="문장 전체를 쓰세요" />
+      {res === null ? (
+        <button onClick={() => setRes(t.answers.some((a) => sentenceKey(a) === sentenceKey(v)))} className="rounded-lg bg-neutral-900 px-3 py-1 text-xs text-white">확인</button>
+      ) : (
+        <div className={res ? "text-emerald-700" : "text-rose-700"}>
+          {res ? "정답!" : "오답"} — 정답: {t.answers.join(" / ")} {t.noteKo && <span className="text-neutral-600">· {t.noteKo}</span>}
+        </div>
+      )}
+    </Box>
+  );
+}
+
 export default function LessonStudentPreview({ lesson }: { lesson: GrammarLesson }) {
   const ex = lesson.explanation;
+  const hasLecture = (lesson.lecture?.length ?? 0) > 0;
   const steps = [
-    { key: "explain", label: "설명", show: ex.rules.length > 0 || (lesson.exampleGroups?.length ?? 0) > 0 },
+    { key: "lecture", label: "강의", show: hasLecture },
+    { key: "explain", label: "설명", show: !hasLecture && (ex.rules.length > 0 || (lesson.exampleGroups?.length ?? 0) > 0) },
     { key: "summary", label: "요약", show: !!ex.summaryKo },
+    { key: "popup", label: "팝업 퀴즈", show: (lesson.popupQuiz?.length ?? 0) > 0 },
     { key: "cram", label: "깜지", show: !!lesson.cramText.trim() },
     { key: "blanks", label: "설명 빈칸", show: lesson.blanks.length > 0 },
     { key: "fill", label: "Drill 빈칸", show: lesson.drillFill.length > 0 },
     { key: "fix", label: "Drill 고치기", show: lesson.drillFix.length > 0 },
     { key: "questions", label: "문제", show: lesson.questions.length > 0 },
+    { key: "written", label: "서술형", show: (lesson.writtenTasks?.length ?? 0) > 0 },
   ].filter((s) => s.show);
   const [i, setI] = useState(0);
   const cur = steps[i];
@@ -215,6 +334,39 @@ export default function LessonStudentPreview({ lesson }: { lesson: GrammarLesson
                 <div key={k} className="rounded bg-emerald-50/50 px-2 py-1"><T>{e.en}</T> <span className="ml-2 text-xs text-neutral-500"><T>{e.ko}</T></span></div>
               ))}
             </div>
+            {(lesson.examPoints?.length ?? 0) > 0 && (
+              <div className="rounded-lg border border-sky-200 bg-sky-50 p-3">
+                <div className="mb-1 text-xs font-bold text-sky-700">기출 유형</div>
+                <ul className="space-y-1">{lesson.examPoints!.map((x, k) => <li key={k}><T>{x}</T></li>)}</ul>
+              </div>
+            )}
+            {(lesson.topPoints?.length ?? 0) > 0 && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+                <div className="mb-1 text-xs font-bold text-amber-700">1등급 포인트</div>
+                <ul className="space-y-1.5">
+                  {lesson.topPoints!.map((x, k) => (
+                    <li key={k}>
+                      <T>{x.text}</T>
+                      {x.example && <div className="text-xs text-neutral-600"><T>{x.example.en}</T> <span className="ml-1 text-neutral-500"><T>{x.example.ko}</T></span></div>}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {(lesson.deepDive?.length ?? 0) > 0 && (
+              <div className="rounded-lg border border-violet-200 bg-violet-50 p-3">
+                <div className="mb-1 text-xs font-bold text-violet-700">심화</div>
+                <ul className="space-y-2">
+                  {lesson.deepDive!.map((x, k) => (
+                    <li key={k}>
+                      <div className="font-medium"><T>{x.title}</T></div>
+                      <div><T>{x.ko}</T></div>
+                      {(x.examples ?? []).map((e, j) => <div key={j} className="text-xs text-neutral-600"><T>{e.en}</T> <span className="ml-1 text-neutral-500"><T>{e.ko}</T></span></div>)}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </Box>
         )}
 
@@ -226,6 +378,9 @@ export default function LessonStudentPreview({ lesson }: { lesson: GrammarLesson
           </Box>
         )}
 
+        {cur.key === "lecture" && <Lecture segs={lesson.lecture!} />}
+        {cur.key === "popup" && lesson.popupQuiz!.map((q, k) => <Popup key={k} q={q} n={k + 1} />)}
+        {cur.key === "written" && lesson.writtenTasks!.map((t, k) => <Written key={k} t={t} n={k + 1} />)}
         {cur.key === "blanks" && lesson.blanks.map((b, k) => <Blank key={k} {...b} />)}
         {cur.key === "fill" && lesson.drillFill.map((q, k) => <Fill key={k} q={q} />)}
         {cur.key === "fix" && lesson.drillFix.map((q, k) => <Fix key={k} q={q} />)}

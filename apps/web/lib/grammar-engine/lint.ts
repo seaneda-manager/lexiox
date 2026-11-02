@@ -100,6 +100,31 @@ export function lintLesson(lesson: GrammarLesson): LintIssue[] {
     else if (top / qIdx.length > 0.5 || (qIdx.length >= 8 && count.some((c) => c === 0))) add("warn", "questions", `정답 위치가 고르지 않습니다 (${dist}).`);
   }
 
+  // 6-B) 강의형 확장
+  const tok = (s: string) => norm(s).replace(/[^a-z0-9' ]/g, "").split(" ").filter(Boolean);
+  (lesson.lecture ?? []).forEach((s, i) => {
+    if (/\[\/?b\]|[→「」]/.test(s.narration)) add("warn", `lecture[${i}]`, "narration(읽을 대본)에 기호([b], →, 「」)가 있습니다. 말로 풀어 쓰세요.");
+  });
+  if (lesson.lecture && lesson.lecture.length > 0 && lesson.lecture.length < 4) add("warn", "lecture", "강의 세그먼트가 4개 미만입니다.");
+  (lesson.popupQuiz ?? []).forEach((p, i) => {
+    const w = `popupQuiz[${i}]`;
+    if (p.hint_ko && norm(p.hint_ko).includes(norm(p.answer))) add("error", w, "힌트에 정답이 그대로 들어 있습니다.");
+    if (!p.options || p.options.length < 2) add("warn", w, "객관식 전환용 오답 보기(options)가 2개 미만입니다.");
+    if (p.options && p.options.some((o) => norm(o) === norm(p.answer) || (p.answers ?? []).some((a) => norm(a) === norm(o)))) add("error", w, "오답 보기에 정답이 들어 있습니다.");
+    if ((p.prompt.match(/___/g) ?? []).length !== 1) add("warn", w, "빈칸이 한 곳이 아닙니다.");
+  });
+  (lesson.writtenTasks ?? []).forEach((t, i) => {
+    const w = `writtenTasks[${i}]`;
+    if (t.kind === "order" && t.words) {
+      const a = tok(t.answers[0]).sort().join(" ");
+      const b = tok(t.words.join(" ")).sort().join(" ");
+      if (a !== b) add("error", w, "배열 영작의 words 가 정답 문장의 단어와 일치하지 않습니다(불필요/누락 단어).");
+      if (norm(t.words.join(" ")).replace(/[^a-z0-9' ]/g, "") === norm(t.answers[0]).replace(/[^a-z0-9' ]/g, "")) add("warn", w, "words 가 정답 순서 그대로입니다. 섞어서 제시하세요.");
+    }
+    if (t.kind === "fix_write" && t.answers.some((a) => norm(a) === norm(t.prompt))) add("error", w, "정답이 틀린 원문과 같습니다.");
+    if (t.kind === "rewrite" && t.answers.some((a) => norm(a) === norm(t.prompt))) add("warn", w, "정답이 원문과 같습니다.");
+  });
+
   // 7) 분량
   if (lesson.explanation.rules.length < 3) add("warn", "explanation.rules", "규칙이 3개 미만입니다.");
   if (lesson.drillFill.length < 5) add("warn", "drillFill", "Drill 빈칸이 5개 미만입니다.");

@@ -2,11 +2,17 @@ import { validateGrammarLesson } from "@/models/middle-naesin/grammar-lesson";
 
 // 레슨을 4개 섹션으로 나눠 따로 채운다 (외부 AI에서 만든 JSON 을 섹션 단위로 붙여넣기).
 export const SECTIONS = [
-  { key: "explanation", label: "1. 설명 + 예문 모음", fields: ["topic", "explanation", "exampleGroups"] },
-  { key: "cram", label: "2. 깜지 + 설명 빈칸", fields: ["cramText", "blanks"] },
-  { key: "drills", label: "3. Drill (빈칸 · 고치기)", fields: ["drillFill", "drillFix"] },
-  { key: "questions", label: "4. 문제", fields: ["questions"] },
+  { key: "explanation", label: "1. 설명 + 예문 모음", fields: ["topic", "explanation", "exampleGroups"], optional: false },
+  { key: "cram", label: "2. 깜지 + 설명 빈칸", fields: ["cramText", "blanks"], optional: false },
+  { key: "drills", label: "3. Drill (빈칸 · 고치기)", fields: ["drillFill", "drillFix"], optional: false },
+  { key: "questions", label: "4. 문제", fields: ["questions"], optional: false },
+  // 강의형 확장 — 비워 두어도 확정할 수 있다 (기존 레슨 호환)
+  { key: "lecture", label: "5. 강의 + 기출 유형 · 1등급 포인트 · 심화 (선택)", fields: ["lecture", "examPoints", "topPoints", "deepDive"], optional: true },
+  { key: "extra", label: "6. 팝업 퀴즈 + 서술형 (선택)", fields: ["popupQuiz", "writtenTasks"], optional: true },
 ] as const;
+
+// 핵심 4개 섹션이 모두 채워졌는지 (선택 섹션은 제외)
+export const coreFilled = (lesson: Record<string, any>) => SECTIONS.every((s) => s.optional || sectionCount(lesson, s.key) > 0);
 
 export type SectionKey = (typeof SECTIONS)[number]["key"];
 
@@ -45,6 +51,10 @@ export function sectionCount(lesson: Raw, key: SectionKey): number {
       return (lesson.drillFill?.length ?? 0) + (lesson.drillFix?.length ?? 0);
     case "questions":
       return lesson.questions?.length ?? 0;
+    case "lecture":
+      return (lesson.lecture?.length ?? 0) + (lesson.examPoints?.length ?? 0) + (lesson.topPoints?.length ?? 0) + (lesson.deepDive?.length ?? 0);
+    case "extra":
+      return (lesson.popupQuiz?.length ?? 0) + (lesson.writtenTasks?.length ?? 0);
   }
 }
 

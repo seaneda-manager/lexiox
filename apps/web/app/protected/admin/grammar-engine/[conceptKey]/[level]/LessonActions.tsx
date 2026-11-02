@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-type SectionInfo = { key: string; label: string; count: number; prompt: string };
+type SectionInfo = { key: string; label: string; optional: boolean; count: number; prompt: string };
 
 type Props = {
   conceptKey: string;
@@ -67,7 +67,7 @@ export default function LessonActions({ conceptKey, level, exists, isFinal, less
   }
 
   const btn = "rounded-xl px-4 py-2 text-sm font-semibold disabled:opacity-50";
-  const allFilled = sections.every((s) => s.count > 0);
+  const allFilled = sections.every((s) => s.optional || s.count > 0);
 
   return (
     <div className="space-y-4">
@@ -87,11 +87,11 @@ export default function LessonActions({ conceptKey, level, exists, isFinal, less
             />
           </div>
           {sections.map((s) => (
-            <details key={s.key} open={s.count === 0} className="rounded-2xl border bg-white p-4">
+            <details key={s.key} open={s.count === 0 && !s.optional} className="rounded-2xl border bg-white p-4">
               <summary className="cursor-pointer select-none text-sm font-bold text-neutral-700">
                 {s.label}{" "}
-                <span className={`ml-2 text-xs font-medium ${s.count > 0 ? "text-emerald-600" : "text-rose-500"}`}>
-                  {s.count > 0 ? `채워짐 (${s.count})` : "비어 있음"}
+                <span className={`ml-2 text-xs font-medium ${s.count > 0 ? "text-emerald-600" : s.optional ? "text-neutral-400" : "text-rose-500"}`}>
+                  {s.count > 0 ? `채워짐 (${s.count})` : s.optional ? "비어 있음 (선택)" : "비어 있음"}
                 </span>
               </summary>
               <div className="mt-3 space-y-2">

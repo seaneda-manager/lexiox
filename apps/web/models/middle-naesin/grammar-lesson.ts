@@ -75,6 +75,36 @@ export type GrammarLessonQuestion = {
   explanationKo: string;
 };
 
+// ── 강의형 확장 (모두 선택. 없으면 기존 레슨 그대로 동작) ─────────────────────────
+// 강의: 음성(narration) + 판서가 순서대로 나타나는 세그먼트. 판서는 lines 가 한 줄씩 나타난다. docs/GRAMMAR_STYLE_GUIDE.md 6절
+export type GrammarLectureSegment = {
+  type: 'text' | 'board';
+  text?: string; // type=text
+  title?: string; // type=board
+  lines?: string[]; // type=board
+  narration: string; // TTS 로 읽을 대본 (한국어 설명 + 영어 예문)
+};
+export type GrammarTopPoint = { text: string; example?: GrammarLessonBilingual };
+export type GrammarDeepDive = { title: string; ko: string; examples?: GrammarLessonBilingual[] };
+// 팝업 퀴즈: 문법 관문 퀴즈와 같은 형태 (models/grammar/types.ts BlankSegmentContent)
+export type GrammarPopupQuiz = { prompt: string; answer: string; answers?: string[]; options?: string[]; hint_ko?: string };
+export const GRAMMAR_WRITTEN_KINDS = ['rewrite', 'order', 'fix_write'] as const;
+export type GrammarWrittenKind = (typeof GRAMMAR_WRITTEN_KINDS)[number];
+export const GRAMMAR_WRITTEN_KIND_LABEL: Record<GrammarWrittenKind, string> = {
+  rewrite: '다시 쓰기',
+  order: '배열 영작',
+  fix_write: '어법 고쳐 쓰기',
+};
+export type GrammarWrittenTask = {
+  level: GrammarLessonLevel;
+  kind: GrammarWrittenKind;
+  prompt: string; // rewrite/fix_write: 원 문장. order: 빈 문자열("")
+  promptKo: string; // 지시문(rewrite/fix_write) 또는 우리말 뜻(order)
+  words?: string[]; // order: 섞인 단어들
+  answers: string[]; // 허용되는 정답 문장들
+  noteKo?: string;
+};
+
 export type GrammarLesson = {
   version: 1;
   status: GrammarLessonStatus;
@@ -92,6 +122,12 @@ export type GrammarLesson = {
   drillFill: GrammarLessonFill[];
   drillFix: GrammarLessonFix[];
   questions: GrammarLessonQuestion[];
+  lecture?: GrammarLectureSegment[];
+  examPoints?: string[]; // 기출 유형
+  topPoints?: GrammarTopPoint[]; // 1등급 포인트
+  deepDive?: GrammarDeepDive[]; // 심화
+  popupQuiz?: GrammarPopupQuiz[];
+  writtenTasks?: GrammarWrittenTask[];
   reviewNote?: string;
   finalizedAt?: string;
 };
@@ -222,6 +258,45 @@ export function validateGrammarLesson(
     ) {
       errors.push(`questions[${i + 1}] 형식이 올바르지 않습니다. (level/kind/stem/choices[]/answerIndex/explanationKo)`);
     }
+  });
+
+  // 강의형 확장 (있을 때만 검사)
+  const optArr = (v: unknown, label: string, each: (x: unknown, i: number) => string | null) => {
+    if (v === undefined) return;
+    if (!Array.isArray(v)) {
+      errors.push(`${label} 가 배열이 아닙니다.`);
+      return;
+    }
+    v.forEach((x, i) => {
+      const m = each(x, i);
+      if (m) errors.push(`${label}[${i + 1}] ${m}`);
+    });
+  };
+  const bil = (x: unknown) => isObj(x) && isStr(x.en) && isStr(x.ko);
+  optArr(raw.lecture, 'lecture', (s) => {
+    if (!isObj(s) || !isStr(s.narration) || !s.narration.trim()) return '에는 narration 이 필요합니다.';
+    if (s.type === 'text') return isStr(s.text) && s.text.trim() ? null : '(text) 에는 text 가 필요합니다.';
+    if (s.type === 'board') return Array.isArray(s.lines) && s.lines.length > 0 && s.lines.every(isStr) ? null : '(board) 에는 lines[] 가 필요합니다.';
+    return 'type 은 text | board 여야 합니다.';
+  });
+  optArr(raw.examPoints, 'examPoints', (x) => (isStr(x) && x.trim() ? null : '는 비어 있지 않은 문자열이어야 합니다.'));
+  optArr(raw.topPoints, 'topPoints', (x) => (isObj(x) && isStr(x.text) && x.text.trim() && (x.example === undefined || bil(x.example)) ? null : '에는 text (+ example{en,ko}) 가 필요합니다.'));
+  optArr(raw.deepDive, 'deepDive', (x) =>
+    isObj(x) && isStr(x.title) && isStr(x.ko) && (x.examples === undefined || (Array.isArray(x.examples) && x.examples.every(bil))) ? null : '에는 title, ko (+ examples[{en,ko}]) 가 필요합니다.',
+  );
+  optArr(raw.popupQuiz, 'popupQuiz', (x) => {
+    if (!isObj(x) || !isStr(x.prompt) || !x.prompt.includes('___') || !isStr(x.answer) || !x.answer.trim()) return "에는 '___' 가 들어 있는 prompt 와 answer 가 필요합니다.";
+    if (x.answers !== undefined && !(Array.isArray(x.answers) && x.answers.every(isStr))) return 'answers 는 문자열 배열이어야 합니다.';
+    if (x.options !== undefined && !(Array.isArray(x.options) && x.options.every(isStr))) return 'options 는 문자열 배열이어야 합니다.';
+    return null;
+  });
+  optArr(raw.writtenTasks, 'writtenTasks', (x) => {
+    if (!isObj(x) || !isLevel(x.level) || !(GRAMMAR_WRITTEN_KINDS as readonly string[]).includes(x.kind as string) || !isStr(x.prompt) || !isStr(x.promptKo)) {
+      return '에는 level, kind(rewrite|order|fix_write), prompt, promptKo 가 필요합니다.';
+    }
+    if (!Array.isArray(x.answers) || x.answers.length === 0 || !x.answers.every((a) => isStr(a) && a.trim())) return 'answers[] 가 필요합니다.';
+    if (x.kind === 'order' && !(Array.isArray(x.words) && x.words.length >= 3 && x.words.every(isStr))) return '(order) 에는 words[] 가 3개 이상 필요합니다.';
+    return null;
   });
 
   if (errors.length > 0) return { ok: false, errors };

@@ -54,6 +54,43 @@ ${prev}
 
 ${ONLY_JSON}
 { "questions": [] }`;
+    case "lecture": {
+      const full = level >= 3;
+      return `${header(c, level)}
+${prev}
+## 이번에 만들 것: 강의 + 기출 유형 + 1등급 포인트 + 심화
+이 내용은 학생에게 "음성 강의 + 칠판 판서"로 전달됩니다. 위 설명(rules, exampleGroups)과 똑같은 순서와 내용으로 가르치되, 말하듯이 풉니다.
+- lecture 6~10개: { "type": "text" | "board", ... , "narration": "읽어 줄 대본" }
+  - text: { "type":"text", "text":"화면에 뜨는 한두 문장", "narration":"..." }
+  - board: { "type":"board", "title":"칠판 제목", "lines":["한 줄","한 줄"], "narration":"..." } (lines 2~5줄, 각 줄 짧게. 핵심 부분은 [b]…[/b])
+  - narration 은 소리 내어 읽을 글: 한국어 설명 + 영어 예문은 그대로. 기호(→, 「」, [b])는 쓰지 말고 말로 풀어 쓰기. 한 세그먼트 2~4문장.
+  - 흐름: 도입(왜 필요한가) → 규칙 하나씩(판서+예문) → 헷갈리는 점 → 한 줄 정리.
+- examPoints ${full ? "1~3" : "0~1"}개: 내신 시험에서 이 개념이 어떻게 출제되는지 한두 문장 (문자열 배열).
+- topPoints ${full ? "1~3" : "0~1"}개: { "text":"학생이 자주 틀리는 구별·함정 한두 문장", "example":{"en":"","ko":""} }
+- deepDive ${level <= 3 ? "0~2" : "빈 배열 []"}개: { "title":"", "ko":"심화 규칙 설명", "examples":[{"en":"","ko":""}] } ${level <= 3 ? "" : "(이 레벨에서는 심화를 따로 두지 않고 설명 안에서 다룹니다)"}
+- 위 설명에서 가르치지 않은 내용은 넣지 않습니다.
+
+${ONLY_JSON}
+{ "lecture": [], "examPoints": [], "topPoints": [], "deepDive": [] }`;
+    }
+    case "extra": {
+      const written = [2, 3, 4, 5, 6][level - 1] ?? 3;
+      return `${header(c, level)}
+${prev}
+## 이번에 만들 것: 팝업 퀴즈 + 서술형
+- popupQuiz 4~8개: 강의(설명)에서 방금 나온 핵심만 빈칸으로. 문장당 1개, 한 문장에 빈칸('___') 한 곳.
+  { "prompt":"빈칸이 하나 든 문장", "answer":"대표 정답", "answers":["정답이 둘 이상일 때만"], "options":["오답 보기 2~3개(정답은 넣지 않음)"], "hint_ko":"짧은 힌트(정답을 말하지 않기)" }
+  - 학생은 먼저 직접 쓰고, 틀리면 보기에서 고르고, 또 틀리면 정답을 보고 다시 씁니다.
+- writtenTasks ${written}개: 종류를 섞어서.
+  - rewrite(다시 쓰기): { "level","kind":"rewrite","prompt":"원래 문장","promptKo":"~로 시작하여 다시 쓰시오 같은 지시","answers":["허용되는 정답 문장들"] }
+  - order(배열 영작): { "level","kind":"order","prompt":"","promptKo":"우리말 뜻","words":["섞인 단어들(정답에 쓰는 단어 전부, 불필요한 단어 없음)"],"answers":["정답 문장"] }
+  - fix_write(어법 고쳐 쓰기): { "level","kind":"fix_write","prompt":"틀린 곳이 한 군데 있는 문장","promptKo":"틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오","answers":["고친 문장"] }
+  - level 필드는 "basic" | "intermediate" | "advanced". noteKo 는 정답 설명(선택).
+  - answers 에는 정답으로 인정할 문장을 모두 적고, 대소문자·마침표는 신경 쓰지 않습니다.
+
+${ONLY_JSON}
+{ "popupQuiz": [], "writtenTasks": [] }`;
+    }
   }
 }
 

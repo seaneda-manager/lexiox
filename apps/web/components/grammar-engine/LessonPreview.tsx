@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import {
   GRAMMAR_LEVEL_LABEL,
   GRAMMAR_QUESTION_KIND_LABEL,
+  GRAMMAR_WRITTEN_KIND_LABEL,
   lessonCounts,
   type GrammarLesson,
   type GrammarLessonLevel,
@@ -129,6 +130,71 @@ export default function LessonPreview({ lesson }: { lesson: GrammarLesson }) {
           </div>
         ))}
       </Section>
+
+      {(lesson.lecture?.length ?? 0) > 0 && (
+        <Section title={`강의 (${lesson.lecture!.length})`}>
+          {lesson.lecture!.map((s, i) => (
+            <div key={i} className="rounded-lg border p-3 text-sm">
+              <div className="text-xs font-bold text-neutral-500">{s.type === "board" ? "판서" : "문장"} {i + 1}</div>
+              {s.type === "board" ? (
+                <>
+                  {s.title && <div className="font-medium"><T>{s.title}</T></div>}
+                  {(s.lines ?? []).map((l, k) => <div key={k}><T>{l}</T></div>)}
+                </>
+              ) : (
+                <div><T>{s.text}</T></div>
+              )}
+              <div className="mt-1 text-xs text-neutral-500">🔊 {s.narration}</div>
+            </div>
+          ))}
+        </Section>
+      )}
+
+      {((lesson.examPoints?.length ?? 0) > 0 || (lesson.topPoints?.length ?? 0) > 0 || (lesson.deepDive?.length ?? 0) > 0) && (
+        <Section title="기출 유형 · 1등급 포인트 · 심화">
+          {(lesson.examPoints ?? []).map((x, i) => <div key={`e${i}`} className="rounded-lg bg-sky-50 p-3 text-sm"><b className="mr-2 text-xs text-sky-700">기출 유형</b><T>{x}</T></div>)}
+          {(lesson.topPoints ?? []).map((x, i) => (
+            <div key={`t${i}`} className="rounded-lg bg-amber-50 p-3 text-sm">
+              <b className="mr-2 text-xs text-amber-700">1등급 포인트</b><T>{x.text}</T>
+              {x.example && <div className="text-xs text-neutral-600"><T>{x.example.en}</T> <span className="ml-1"><T>{x.example.ko}</T></span></div>}
+            </div>
+          ))}
+          {(lesson.deepDive ?? []).map((x, i) => (
+            <div key={`d${i}`} className="rounded-lg bg-violet-50 p-3 text-sm">
+              <b className="mr-2 text-xs text-violet-700">심화</b><T>{x.title}</T>
+              <div><T>{x.ko}</T></div>
+              {(x.examples ?? []).map((e, j) => <div key={j} className="text-xs text-neutral-600"><T>{e.en}</T> <span className="ml-1"><T>{e.ko}</T></span></div>)}
+            </div>
+          ))}
+        </Section>
+      )}
+
+      {(lesson.popupQuiz?.length ?? 0) > 0 && (
+        <Section title={`팝업 퀴즈 (${lesson.popupQuiz!.length})`}>
+          {lesson.popupQuiz!.map((p, i) => (
+            <div key={i} className="rounded-lg border p-3 text-sm">
+              {i + 1}. {p.prompt.replace("___", `[ ${[p.answer, ...(p.answers ?? []).filter((a) => a !== p.answer)].join(" / ")} ]`)}
+              <span className="ml-2 text-xs text-neutral-400">오답 보기: {(p.options ?? []).join(" / ") || "(없음)"}</span>
+              {p.hint_ko && <div className="text-xs text-neutral-500">힌트 {p.hint_ko}</div>}
+            </div>
+          ))}
+        </Section>
+      )}
+
+      {(lesson.writtenTasks?.length ?? 0) > 0 && (
+        <Section title={`서술형 (${lesson.writtenTasks!.length})`}>
+          {lesson.writtenTasks!.map((t, i) => (
+            <div key={i} className="space-y-1 rounded-lg border p-3 text-sm">
+              <div><Badge level={t.level} /> {i + 1}. {GRAMMAR_WRITTEN_KIND_LABEL[t.kind]}</div>
+              {t.prompt && <div className="font-medium">{t.prompt}</div>}
+              <div className="text-xs text-neutral-600">{t.promptKo}</div>
+              {t.words && <div className="text-xs text-neutral-500">단어: {t.words.join(" / ")}</div>}
+              <div className="text-xs text-emerald-700">정답: {t.answers.join(" / ")}</div>
+              {t.noteKo && <div className="text-xs text-neutral-400">💡 {t.noteKo}</div>}
+            </div>
+          ))}
+        </Section>
+      )}
 
       <Section title={`5. 문제 (${lesson.questions.length})`}>
         {lesson.questions.map((q, i) => (
