@@ -6,6 +6,7 @@ import { loadCtx } from "@/lib/grammar-engine/ctx";
 import { SECTIONS, normalizeLesson, sectionCount } from "@/lib/grammar-engine/sections";
 import { reviewPrompt, sectionPrompt } from "@/lib/grammar-engine/section-prompts";
 import { LEVEL_SPEC } from "@/lib/grammar-engine/lesson-ai";
+import { lintLesson } from "@/lib/grammar-engine/lint";
 import LessonPreview from "@/components/grammar-engine/LessonPreview";
 import { UNIT_SELECT, unitLabel } from "@/lib/grammar-engine/book-label";
 import LessonActions from "./LessonActions";
@@ -13,6 +14,9 @@ import LessonActions from "./LessonActions";
 export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ conceptKey: string; level: string }> };
+
+// 일부 섹션만 채운 초안은 비어 있는 섹션 때문에 점검 결과가 어지러워지므로 4개 섹션이 다 찼을 때만 점검한다.
+const sectionsFilled = (l: Record<string, any>) => SECTIONS.every((s) => sectionCount(l, s.key) > 0);
 
 const SEV: Record<string, string> = {
   high: "border-rose-300 bg-rose-50 text-rose-800",
@@ -39,6 +43,7 @@ export default async function GrammarCellPage({ params }: Props) {
   const loaded = await loadCtx(db, conceptKey, level);
   const normalized = normalizeLesson(lessonRow?.lesson);
   const lesson = lessonRow ? (normalized as unknown as GrammarLesson) : null;
+  const lint = lesson && sectionsFilled(normalized) ? lintLesson(lesson) : null;
   const sections = SECTIONS.map((sec) => ({
     key: sec.key,
     label: sec.label,
@@ -107,6 +112,27 @@ export default async function GrammarCellPage({ params }: Props) {
           key={lessonRow?.updated_at ?? "new"}
         />
       </section>
+
+      {lint && (
+        <section className="space-y-2 rounded-2xl border bg-white p-5">
+          <div className="text-sm font-bold text-neutral-700">
+            자동 점검 <span className="text-xs font-normal text-neutral-400">오류가 있으면 확정할 수 없습니다</span>
+          </div>
+          {lint.length === 0 ? (
+            <div className="text-sm text-emerald-700">✓ 문제 없음</div>
+          ) : (
+            <ul className="space-y-1.5">
+              {lint.map((it, i) => (
+                <li key={i} className={`rounded-lg border px-3 py-2 text-sm ${it.level === "error" ? SEV.high : SEV.med}`}>
+                  <b className="mr-2 text-xs uppercase">{it.level === "error" ? "오류" : "주의"}</b>
+                  <span className="mr-2 text-xs opacity-70">{it.where || "전체"}</span>
+                  {it.msg}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
 
       {review && (
         <section className="space-y-2 rounded-2xl border bg-white p-5">

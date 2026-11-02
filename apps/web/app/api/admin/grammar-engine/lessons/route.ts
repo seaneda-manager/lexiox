@@ -8,6 +8,7 @@ import { requireTeacherOrAdmin } from "@/lib/auth/requireTeacherOrAdmin";
 import { validateGrammarLesson, type GrammarLesson } from "@/models/middle-naesin/grammar-lesson";
 import { generateLesson, reviewLesson } from "@/lib/grammar-engine/lesson-ai";
 import { loadCtx } from "@/lib/grammar-engine/ctx";
+import { lintLesson } from "@/lib/grammar-engine/lint";
 import { collectObjects, isSectionKey, mergeSection, normalizeLesson, parsePasted } from "@/lib/grammar-engine/sections";
 
 type Db = ReturnType<typeof getServiceRoleClient>;
@@ -135,6 +136,11 @@ export async function POST(req: Request) {
     if (action === "finalize") {
       const v = validateGrammarLesson(existing.lesson);
       if ("errors" in v) return NextResponse.json({ ok: false, error: `확정할 수 없습니다: ${v.errors.slice(0, 5).join(" / ")}` }, { status: 422 });
+      const lintErrors = lintLesson(v.lesson).filter((x) => x.level === "error");
+      if (lintErrors.length > 0) {
+        const head = lintErrors.slice(0, 4).map((x) => `${x.where}: ${x.msg}`).join(" / ");
+        return NextResponse.json({ ok: false, error: `자동 점검 오류 ${lintErrors.length}건이 있어 확정할 수 없습니다. ${head}${lintErrors.length > 4 ? " …" : ""}` }, { status: 422 });
+      }
       const now = new Date().toISOString();
       const lesson = { ...v.lesson, status: "final" as const, finalizedAt: now };
       const { error } = await db
