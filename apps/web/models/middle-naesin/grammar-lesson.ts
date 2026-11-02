@@ -82,7 +82,8 @@ export type GrammarLectureSegment = {
   text?: string; // type=text
   title?: string; // type=board
   lines?: string[]; // type=board
-  narration: string; // TTS 로 읽을 대본 (한국어 설명 + 영어 예문)
+  narration: string; // TTS 로 읽을 대본. 한국어 문장 속 영어는 [en]…[/en] 로 감싼다 (lib/elevenlabs 와 같은 규칙)
+  audioUrl?: string; // ElevenLabs(선생님 클론 목소리)로 만든 음성. 대본을 고치면 다시 만들어야 한다
 };
 export type GrammarTopPoint = { text: string; example?: GrammarLessonBilingual };
 export type GrammarDeepDive = { title: string; ko: string; examples?: GrammarLessonBilingual[] };
@@ -275,6 +276,7 @@ export function validateGrammarLesson(
   const bil = (x: unknown) => isObj(x) && isStr(x.en) && isStr(x.ko);
   optArr(raw.lecture, 'lecture', (s) => {
     if (!isObj(s) || !isStr(s.narration) || !s.narration.trim()) return '에는 narration 이 필요합니다.';
+    if (s.audioUrl !== undefined && !isStr(s.audioUrl)) return 'audioUrl 은 문자열이어야 합니다.';
     if (s.type === 'text') return isStr(s.text) && s.text.trim() ? null : '(text) 에는 text 가 필요합니다.';
     if (s.type === 'board') return Array.isArray(s.lines) && s.lines.length > 0 && s.lines.every(isStr) ? null : '(board) 에는 lines[] 가 필요합니다.';
     return 'type 은 text | board 여야 합니다.';

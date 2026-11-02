@@ -9,6 +9,8 @@ import { validateGrammarLesson, type GrammarLesson } from "@/models/middle-naesi
 import { generateLesson, reviewLesson } from "@/lib/grammar-engine/lesson-ai";
 import { loadCtx } from "@/lib/grammar-engine/ctx";
 import { lintLesson } from "@/lib/grammar-engine/lint";
+import { synthesizeNarration } from "@/lib/elevenlabs/synthesize";
+import { saveSpeechAudio } from "@/lib/elevenlabs/generate-speech";
 import { collectObjects, isSectionKey, mergeSection, normalizeLesson, parsePasted } from "@/lib/grammar-engine/sections";
 
 type Db = ReturnType<typeof getServiceRoleClient>;
@@ -150,6 +152,41 @@ export async function POST(req: Request) {
       if (error) throw new Error(error.message);
       const itemCount = await syncItems(db, existing.id, concept.id, level, lesson, existing.source);
       return NextResponse.json({ ok: true, itemCount });
+    }
+
+    // 강의 음성: 문법 2026 강의와 같은 ElevenLabs 파이프라인(선생님 클론 목소리, [en] 구간은 영어 발음)을 쓴다.
+    // 사용자가 버튼을 눌렀을 때만 ElevenLabs 크레딧을 쓴다. 이미 음성이 있는 세그먼트는 force 가 아니면 건너뛴다.
+    if (action === "lecture-audio") {
+      const voiceId = (typeof body?.voiceId === "string" && body.voiceId.trim()) || process.env.LESSON_VOICE_ID || "";
+      const enVoiceId = process.env.LESSON_VOICE_ID_EN || undefined;
+      const modelId = process.env.LESSON_TTS_MODEL_ID || "eleven_multilingual_v2";
+      if (!voiceId) return NextResponse.json({ ok: false, error: "LESSON_VOICE_ID(클론 목소리)가 서버 환경변수에 없습니다. Vercel 환경변수에 추가한 뒤 다시 배포하세요." }, { status: 422 });
+      if (!/^[A-Za-z0-9]{8,40}$/.test(voiceId)) return NextResponse.json({ ok: false, error: "Voice ID 형식이 올바르지 않습니다." }, { status: 400 });
+
+      const lesson = normalizeLesson(existing.lesson) as any;
+      const segs: any[] = Array.isArray(lesson.lecture) ? lesson.lecture : [];
+      if (segs.length === 0) return NextResponse.json({ ok: false, error: "먼저 5번 섹션(강의)을 채우세요." }, { status: 422 });
+
+      const force = body?.force === true;
+      let made = 0;
+      const failures: number[] = [];
+      for (let i = 0; i < segs.length; i++) {
+        const tagged = String(segs[i].narration ?? "").trim();
+        if (!tagged || (segs[i].audioUrl && !force)) continue;
+        try {
+          const mode = /\[en\]/i.test(tagged) ? "tags" : "auto";
+          const synth = await synthesizeNarration(tagged, { koVoiceId: voiceId, enVoiceId, modelId, mode });
+          segs[i].audioUrl = (await saveSpeechAudio(synth.audio)).url;
+          made++;
+        } catch (e) {
+          console.error(`lecture-audio 실패 (seg ${i}):`, e);
+          failures.push(i + 1);
+        }
+        await new Promise((r) => setTimeout(r, 3000));
+      }
+      const { error } = await db.from("grammar_lessons").update({ lesson: { ...lesson, lecture: segs }, updated_at: new Date().toISOString() }).eq("id", existing.id);
+      if (error) throw new Error(error.message);
+      return NextResponse.json({ ok: true, made, failures, total: segs.length });
     }
 
     if (action === "revert") {

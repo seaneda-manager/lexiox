@@ -104,6 +104,8 @@ export function lintLesson(lesson: GrammarLesson): LintIssue[] {
   const tok = (s: string) => norm(s).replace(/[^a-z0-9' ]/g, "").split(" ").filter(Boolean);
   (lesson.lecture ?? []).forEach((s, i) => {
     if (/\[\/?b\]|[→「」]/.test(s.narration)) add("warn", `lecture[${i}]`, "narration(읽을 대본)에 기호([b], →, 「」)가 있습니다. 말로 풀어 쓰세요.");
+    const outsideEn = s.narration.replace(/\[en\][\s\S]*?\[\/en\]/gi, " ");
+    if (/[A-Za-z]{2,}/.test(outsideEn)) add("warn", `lecture[${i}]`, "narration 의 영어가 [en]…[/en] 밖에 있습니다. 감싸야 영어 발음으로 읽힙니다.");
   });
   if (lesson.lecture && lesson.lecture.length > 0 && lesson.lecture.length < 4) add("warn", "lecture", "강의 세그먼트가 4개 미만입니다.");
   (lesson.popupQuiz ?? []).forEach((p, i) => {

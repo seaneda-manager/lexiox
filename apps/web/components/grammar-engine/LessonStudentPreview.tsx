@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { GRAMMAR_LEVEL_LABEL, GRAMMAR_QUESTION_KIND_LABEL, GRAMMAR_WRITTEN_KIND_LABEL, findWrongTokenIndex, type GrammarLesson } from "@/models/middle-naesin/grammar-lesson";
+import { stripTags } from "@/lib/elevenlabs/mixedText";
 import { acceptedAnswers, buildOptions, isCorrectAnswer } from "@/lib/grammar/gate";
 
 // 학생이 보는 순서대로 레슨을 한 단계씩 돌려 보는 미리보기. 점수·기록은 저장하지 않는다.
@@ -152,7 +153,7 @@ function Lecture({ segs }: { segs: NonNullable<GrammarLesson["lecture"]> }) {
   const [n, setN] = useState(1);
   return (
     <div className="space-y-3">
-      <div className="text-xs text-neutral-500">강의 {Math.min(n, segs.length)} / {segs.length} · 음성은 준비 중이라 대본을 글로 보여 줍니다.</div>
+      <div className="text-xs text-neutral-500">강의 {Math.min(n, segs.length)} / {segs.length}{segs.some((x) => x.audioUrl) ? "" : " · 음성이 아직 없어 대본을 글로 보여 줍니다."}</div>
       {segs.slice(0, n).map((s, i) => (
         <div key={i} className="space-y-2">
           {s.type === "board" ? (
@@ -165,7 +166,8 @@ function Lecture({ segs }: { segs: NonNullable<GrammarLesson["lecture"]> }) {
           ) : (
             <div className="rounded-xl border bg-white p-4 text-base font-medium"><T>{s.text}</T></div>
           )}
-          <div className="px-1 text-xs text-neutral-500">🔊 {s.narration}</div>
+          {s.audioUrl && i === n - 1 && <audio key={s.audioUrl} src={s.audioUrl} controls autoPlay className="w-full" />}
+          <div className="px-1 text-xs text-neutral-500">🔊 {stripTags(s.narration)}</div>
         </div>
       ))}
       {n < segs.length && (

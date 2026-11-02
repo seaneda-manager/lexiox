@@ -13,9 +13,10 @@ type Props = {
   lessonJson: string;
   sections: SectionInfo[];
   reviewPrompt: string;
+  lectureAudio: { total: number; done: number };
 };
 
-export default function LessonActions({ conceptKey, level, exists, isFinal, lessonJson, sections, reviewPrompt }: Props) {
+export default function LessonActions({ conceptKey, level, exists, isFinal, lessonJson, sections, reviewPrompt, lectureAudio }: Props) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -117,6 +118,31 @@ export default function LessonActions({ conceptKey, level, exists, isFinal, less
                 >
                   {busy === `paste${s.key}` ? "적용 중…" : "적용"}
                 </button>
+                {s.key === "lecture" && lectureAudio.total > 0 && (
+                  <div className="space-y-1 rounded-xl border border-violet-200 bg-violet-50/50 p-3">
+                    <div className="text-xs text-neutral-600">
+                      강의 음성 {lectureAudio.done} / {lectureAudio.total} · 선생님 클론 목소리(ElevenLabs)로 대본을 읽습니다. 누를 때만 크레딧이 쓰이고, 이미 만든 음성은 건너뜁니다.
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        disabled={!!busy}
+                        onClick={() => call("lecture-audio", {}, "강의 음성을 만들었습니다.")}
+                        className={`${btn} bg-violet-700 text-white hover:bg-violet-800`}
+                      >
+                        {busy === "lecture-audio" ? "음성 만드는 중… (1~3분)" : "강의 음성 만들기"}
+                      </button>
+                      {lectureAudio.done > 0 && (
+                        <button
+                          disabled={!!busy}
+                          onClick={() => confirm("이미 만든 음성도 모두 다시 만듭니다(크레딧 사용). 계속할까요?") && call("lecture-audio", { force: true }, "강의 음성을 다시 만들었습니다.")}
+                          className={`${btn} border bg-white hover:bg-neutral-50`}
+                        >
+                          전부 다시 만들기
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
                 <input
                   value={extra[s.key] ?? ""}
                   onChange={(e) => setExtra((p) => ({ ...p, [s.key]: e.target.value }))}

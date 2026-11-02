@@ -109,6 +109,7 @@ export default async function GrammarCellPage({ params }: Props) {
           isFinal={isFinal}
           lessonJson={JSON.stringify(lessonRow?.lesson ?? {}, null, 2)}
           sections={sections}
+          lectureAudio={{ total: lesson?.lecture?.length ?? 0, done: (lesson?.lecture ?? []).filter((s) => s.audioUrl).length }}
           reviewPrompt={loaded ? reviewPrompt(loaded.ctx, level, lessonRow?.lesson) : ""}
           key={lessonRow?.updated_at ?? "new"}
         />
