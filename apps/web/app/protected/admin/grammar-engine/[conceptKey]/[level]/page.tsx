@@ -90,6 +90,11 @@ export default async function GrammarCellPage({ params }: Props) {
             {!lessonRow ? "아직 없음" : isFinal ? "확정됨 · 학생에게 보임" : "초안 · 학생에게 보이지 않음"}
           </span>
           {lessonRow && <span className="text-xs text-neutral-400">출처 {lessonRow.source}</span>}
+          {lessonRow && (
+            <Link href={`/admin/grammar-engine/${concept.key}/${level}/preview`} className="ml-auto rounded-xl border bg-white px-3 py-1.5 text-sm font-semibold text-violet-700 hover:bg-violet-50">
+              학생 화면으로 미리보기 →
+            </Link>
+          )}
         </div>
         <LessonActions
           conceptKey={concept.key}
