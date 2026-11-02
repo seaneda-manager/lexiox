@@ -8,7 +8,7 @@ import { requireTeacherOrAdmin } from "@/lib/auth/requireTeacherOrAdmin";
 import { validateGrammarLesson, type GrammarLesson } from "@/models/middle-naesin/grammar-lesson";
 import { generateLesson, reviewLesson } from "@/lib/grammar-engine/lesson-ai";
 import { loadCtx } from "@/lib/grammar-engine/ctx";
-import { isSectionKey, mergeSection, normalizeLesson, parsePasted } from "@/lib/grammar-engine/sections";
+import { collectObjects, isSectionKey, mergeSection, normalizeLesson, parsePasted } from "@/lib/grammar-engine/sections";
 
 type Db = ReturnType<typeof getServiceRoleClient>;
 
@@ -86,10 +86,17 @@ export async function POST(req: Request) {
     if (!existing) return NextResponse.json({ ok: false, error: "레슨이 아직 없습니다. 먼저 생성하세요." }, { status: 404 });
 
     if (action === "paste-review") {
-      const parsed = parsePasted(String(body?.text ?? ""), (d) => Array.isArray(d.issues));
-      if ("error" in parsed) return NextResponse.json({ ok: false, error: parsed.error }, { status: 422 });
-      const issues = Array.isArray(parsed.data.issues)
-        ? parsed.data.issues.filter((x: any) => x && x.note).map((x: any) => ({
+      const text = String(body?.text ?? "");
+      const parsed = parsePasted(text, (d) => Array.isArray(d.issues));
+      let rawIssues: any[] | null = !("error" in parsed) && Array.isArray(parsed.data.issues) ? parsed.data.issues : null;
+      // 끝이 잘려 바깥 JSON 이 안 읽히면, 읽히는 개별 지적 항목({target?, severity?, note})만 모은다
+      if (!rawIssues) {
+        const items = collectObjects(text, (d) => typeof d.note === "string" && !Array.isArray(d.issues));
+        if (items.length > 0) rawIssues = items;
+      }
+      if (!rawIssues && "error" in parsed) return NextResponse.json({ ok: false, error: parsed.error }, { status: 422 });
+      const issues = rawIssues
+        ? rawIssues.filter((x: any) => x && x.note).map((x: any) => ({
             target: String(x.target ?? "overall"),
             severity: ["high", "med", "low"].includes(x.severity) ? x.severity : "med",
             note: String(x.note),

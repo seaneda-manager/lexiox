@@ -101,6 +101,22 @@ export function parsePasted(text: string, prefer?: (d: Raw) => boolean): { ok: t
   return { ok: false, error: `JSON 형식이 올바르지 않습니다${firstErr ? `: ${firstErr}` : ""}. 코드블록 안의 JSON 전체가 빠짐없이 복사됐는지 확인하세요(끝의 } 와 ] 포함).` };
 }
 
+// 끝이 잘린 JSON 에서도 건질 수 있게: 읽히는 모든 { } 덩어리 중 조건에 맞는 것을 등장 순서대로 모두 돌려준다(중복 제외).
+export function collectObjects(text: string, pred: (d: Raw) => boolean): Raw[] {
+  const t = text.replace(/```(?:json)?/gi, "").replace(/`/g, "");
+  const out: Raw[] = [];
+  const seen = new Set<string>();
+  for (let i = t.indexOf("{"); i >= 0; i = t.indexOf("{", i + 1)) {
+    const end = balancedEnd(t, i);
+    if (end < 0) continue;
+    const d = tryParse(t.slice(i, end + 1));
+    if (!d || !pred(d)) continue;
+    const k = JSON.stringify(d);
+    if (!seen.has(k)) { seen.add(k); out.push(d); }
+  }
+  return out;
+}
+
 // 외부 AI 가 섞어 넣는 마크다운 흔적이 학생 화면에 그대로 보이지 않게 붙여넣을 때 정리한다.
 // 허용되는 강조 표시는 [b]...[/b] 하나뿐. (## 제목, **굵게**, `코드`, 줄머리 - * • 같은 기호는 모두 제거/변환)
 export function cleanText(v: string): string {
