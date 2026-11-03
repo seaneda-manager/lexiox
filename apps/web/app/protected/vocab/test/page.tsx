@@ -27,6 +27,7 @@ export default function VocabTestPage() {
   const urlTrackId = params.get("track_id");
   const urlDay = params.get("day");
   const useWrongOnly = params.get("wrong_only") === "true";
+  const examId = params.get("exam_id");
 
   // track/day 는 URL 파라미터가 있으면 그걸 쓰고,
   // 없으면(사이드바 "단어 시험" 등 맨링크 진입) 학생 프로필+eligibility 로 해석한다.
@@ -94,6 +95,46 @@ export default function VocabTestPage() {
   useEffect(() => {
     let cancelled = false;
 
+    // 선생님이 출제한 시험: 배정 확인 → 출제 문제로 세션 시작/이어하기
+    if (examId) {
+      (async () => {
+        try {
+          const res = await fetch("/api/vocab/test/exam/start", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ exam_id: examId }),
+          });
+          const d = await res.json();
+          if (cancelled) return;
+          if (!res.ok) {
+            setError(d?.error || "시험을 불러오지 못했어요.");
+            return;
+          }
+          if (d.already_graded) {
+            setQuestions([]);
+            setResults(d.result);
+            setState("results");
+            return;
+          }
+          const qs = d.questions as VocabTestQuestion[];
+          const firstOpen = qs.findIndex(q => q.is_correct === null);
+          setSessionId(d.session_id);
+          setQuestions(qs);
+          setSelectedQuestionIdx(firstOpen === -1 ? qs.length - 1 : firstOpen);
+          streakRef.current = d.current_streak ?? 0;
+          setStreak(d.current_streak ?? 0);
+          setBestStreak(d.best_streak ?? 0);
+          setSessionPoints(d.total_points ?? 0);
+          setState("testing");
+        } catch {
+          if (!cancelled) setError("시험을 불러오지 못했어요.");
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }
+
     if (urlTrackId && urlDay) {
       setTrackId(urlTrackId);
       setDayNumber(urlDay);
@@ -147,7 +188,7 @@ export default function VocabTestPage() {
     return () => {
       cancelled = true;
     };
-  }, [urlTrackId, urlDay]);
+  }, [urlTrackId, urlDay, examId]);
 
   // 응답이 오래 걸리면 멈춘 것처럼 보이므로 시간 제한(20초) + 네트워크 오류 시 1회 재시도
   const postJson = async (url: string, body: unknown, retries = 1): Promise<Response> => {
@@ -412,7 +453,9 @@ export default function VocabTestPage() {
           <TestResultsScreen
             results={results}
             questions={questions}
-            onRetry={() => router.push(`/vocab/test?track_id=${trackId}&day=${dayNumber}`)}
+            onRetry={() =>
+              router.push(examId ? "/vocab/exams" : `/vocab/test?track_id=${trackId}&day=${dayNumber}`)
+            }
             onHome={() => router.push("/vocab")}
           />
         )}
