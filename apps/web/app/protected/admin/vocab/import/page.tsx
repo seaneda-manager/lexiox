@@ -1,6 +1,6 @@
 // apps/web/app/(protected)/admin/vocab/import/page.tsx
 import WisewordCsvImporter from "./_client/WisewordCsvImporter";
-import { listTracksAction, type TrackLite } from "../tracks/actions";
+import { listTracksAction } from "../tracks/actions";
 
 export default async function Page() {
   const tracksRes = await listTracksAction().catch((e) => ({
@@ -9,7 +9,7 @@ export default async function Page() {
     rows: [],
   }));
 
-  const tracks = tracksRes.ok ? tracksRes.rows : [];
+  const tracks = tracksRes.ok ? ((tracksRes as any).tracks ?? []) : [];
 
   return <WisewordCsvImporter initialTracks={tracks} />;
 }

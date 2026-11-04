@@ -74,6 +74,7 @@ export default async function AdminVocabSetsPage() {
       <div className="flex gap-3 text-sm">
         <Link href="/admin/vocab/import" className="text-violet-600 hover:underline">→ CSV 업로드</Link>
         <Link href="/admin/vocab/Tracks" className="text-violet-600 hover:underline">→ 트랙 배포</Link>
+        <Link href="/admin/vocab/tracks/new" className="text-violet-600 hover:underline">→ Track 만들기·Day 편성</Link>
         <Link href="/admin/vocab/words" className="text-violet-600 hover:underline">→ 단어 목록</Link>
       </div>
     </main>
