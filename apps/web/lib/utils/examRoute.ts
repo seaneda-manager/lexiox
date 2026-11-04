@@ -21,6 +21,10 @@ export function isExamRoute(pathnameRaw: string | null | undefined): boolean {
     (/\/speaking-2026\//.test(p) && exam.test(p)) ||
     (/\/writing-2026\//.test(p) && exam.test(p)) ||
     (/\/voca\//.test(p) && exam.test(p)) ||
+    // 단어 학습 세션은 배경이 화면 전체를 덮어 사이드바가 보이지 않는데도 사이드바 열(240px)이
+    // 남아 있어서 내용이 오른쪽으로 치우쳐 보였다 → 시험 화면처럼 접는다.
+    /^\/vocab\/session(\/|$)/.test(p) ||
+    /^\/protected\/vocab\/session(\/|$)/.test(p) ||
     /\/hi-naesin\/drill\//.test(p)
   );
 }

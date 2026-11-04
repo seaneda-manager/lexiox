@@ -34,6 +34,36 @@ export default function VocabTestPage() {
   const [trackId, setTrackId] = useState<string | null>(urlTrackId);
   const [dayNumber, setDayNumber] = useState<string | null>(urlDay);
 
+  // 여러 교재가 배정된 학생이 시험 볼 교재를 고를 수 있게 (맨링크 진입 때만 사용)
+  const [books, setBooks] = useState<Array<{ trackId: string; title: string }>>([]);
+  const [bookChoice, setBookChoice] = useState<string | null>(null);
+  const [activeBook, setActiveBook] = useState<string | null>(null);
+  const bookPicker =
+    !urlTrackId && books.length > 1 ? (
+      <div className="mb-4 flex flex-wrap justify-center gap-2">
+        {books.map((b) => (
+          <button
+            key={b.trackId}
+            onClick={() => {
+              try {
+                localStorage.setItem("vocab_hub_book", b.trackId);
+              } catch {
+                /* ignore */
+              }
+              setBookChoice(b.trackId);
+            }}
+            className={`rounded-full border px-4 py-1.5 text-sm font-medium ${
+              b.trackId === activeBook
+                ? "border-blue-600 bg-blue-600 text-white"
+                : "border-gray-300 bg-white text-gray-700 hover:bg-gray-100"
+            }`}
+          >
+            {b.title}
+          </button>
+        ))}
+      </div>
+    ) : null;
+
   const [state, setState] = useState<"loading" | "start" | "testing" | "results">("loading");
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [questions, setQuestions] = useState<VocabTestQuestion[]>([]);
@@ -148,11 +178,25 @@ export default function VocabTestPage() {
     }
 
     // 맨링크 진입: 현재 배정된 트랙 + 가장 최근 완료 Day 로 해석
+    setNotReady(null);
+    setState("loading");
     (async () => {
       try {
         const profRes = await fetch("/api/student/profile");
         const prof = profRes.ok ? await profRes.json() : null;
-        const bookId: string | undefined = prof?.bookId;
+        const list: Array<{ trackId: string; title: string }> = Array.isArray(prof?.books) ? prof.books : [];
+        if (!cancelled) setBooks(list);
+        // 선택 우선순위: 화면에서 방금 고른 책 > 단어 학습 허브에서 고른 책 > 가장 최근 배정
+        let bookId: string | undefined = prof?.bookId;
+        let saved: string | null = null;
+        try {
+          saved = localStorage.getItem("vocab_hub_book");
+        } catch {
+          /* ignore */
+        }
+        if (bookChoice && list.some((b) => b.trackId === bookChoice)) bookId = bookChoice;
+        else if (saved && list.some((b) => b.trackId === saved)) bookId = saved;
+        if (!cancelled) setActiveBook(bookId ?? null);
         if (!bookId) {
           if (!cancelled) setError("배정된 단어 트랙이 없습니다. 담당 선생님에게 문의하세요.");
           return;
@@ -188,7 +232,7 @@ export default function VocabTestPage() {
     return () => {
       cancelled = true;
     };
-  }, [urlTrackId, urlDay, examId]);
+  }, [urlTrackId, urlDay, examId, bookChoice]);
 
   // 응답이 오래 걸리면 멈춘 것처럼 보이므로 시간 제한(20초) + 네트워크 오류 시 1회 재시도
   const postJson = async (url: string, body: unknown, retries = 1): Promise<Response> => {
@@ -381,6 +425,7 @@ export default function VocabTestPage() {
     return (
       <TestShell>
         <div className="max-w-sm text-center space-y-3">
+          {bookPicker}
           <div className="text-4xl">📝</div>
           <p className="text-gray-800 text-lg font-bold">아직 시험을 볼 수 없어요</p>
           <p className="text-gray-500 text-sm">{notReady}</p>
@@ -415,6 +460,7 @@ export default function VocabTestPage() {
   return (
     <TestShell>
       <div className="relative z-10 w-full">
+        {state === "start" && bookPicker}
         {state === "loading" && (
           <div className="py-24 text-center text-gray-500 animate-pulse">시험을 준비하고 있어요…</div>
         )}

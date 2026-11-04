@@ -2593,15 +2593,32 @@ export default function VocabSessionPage() {
                       today.setHours(0, 0, 0, 0);
                       const todayISO = today.toISOString().split("T")[0];
 
-                      // 다음 미완료 Day
-                      const { data: nextDay } = await sb
+                      // 다음 미완료 Day — 지금 학습한 교재(Track) 안에서만 찾는다.
+                      // (예전엔 교재 구분 없이 day_index가 가장 작은 것을 골라서, 여러 교재가 배정된
+                      //  학생은 다른 교재의 Day로 넘어갔다)
+                      let currentTrackId: string | null = null;
+                      if (sessionSetId) {
+                        const { data: cur } = await sb
+                          .from("student_vocab_assignments")
+                          .select("track_id")
+                          .eq("set_id", sessionSetId)
+                          .is("canceled_at", null)
+                          .limit(1)
+                          .maybeSingle();
+                        currentTrackId = (cur as any)?.track_id ?? null;
+                      }
+
+                      let nextQuery = sb
                         .from("student_vocab_assignments")
                         .select("set_id,day_index")
                         .is("completed_at", null)
+                        .is("canceled_at", null)
                         .lte("available_at", todayISO)
                         .order("day_index", { ascending: true })
-                        .limit(1)
-                        .maybeSingle();
+                        .limit(1);
+                      if (currentTrackId) nextQuery = nextQuery.eq("track_id", currentTrackId);
+                      const { data: nextDayRow } = await nextQuery.maybeSingle();
+                      const nextDay = nextDayRow as { set_id: string; day_index: number } | null;
 
                       if (!nextDay) {
                         window.location.href = "/home";
