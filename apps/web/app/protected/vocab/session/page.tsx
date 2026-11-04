@@ -973,7 +973,22 @@ export default function VocabSessionPage() {
           diag: (res as any).diag ?? null,
         });
 
-        if (shortcut.jump === "DRILL") {
+        // 개발 전용: 학습 기록을 건드리지 않고 특정 단계 화면만 열어 본다 (레이아웃 확인용)
+        //  ?jump=SPELLING | LEARNING | FLASHCARD_REVIEW   (production 에서는 동작하지 않음)
+        const devJump = process.env.NODE_ENV !== "production" ? shortcut.jump : "";
+        const devIds = limited.words.map((w: any) => w.id);
+        if (devJump === "SPELLING") {
+          setPrescreenResult({ knownWordIds: devIds, unknownWordIds: [] } as any);
+          setStage("SPELLING");
+        } else if (devJump === "LEARNING") {
+          setPrescreenResult({ knownWordIds: [], unknownWordIds: devIds } as any);
+          setSpellingResult(makeEmptySpellingResult());
+          setLearningWords(limited.words as any);
+          setStage("LEARNING");
+        } else if (devJump === "FLASHCARD_REVIEW") {
+          setSpeedWrongIds(devIds.slice(0, 3));
+          setStage("FLASHCARD_REVIEW");
+        } else if (shortcut.jump === "DRILL") {
           setPrescreenResult(
             (prev) => prev ?? ({ knownWordIds: [], unknownWordIds: limited.words.map((w: any) => w.id) } as any),
           );
@@ -2017,8 +2032,9 @@ export default function VocabSessionPage() {
     }
 
     if (stage === "LEARNING") {
+      // 전체 화면 보드: CardWrap(폭 66%)에 가두면 학습기가 좁고 아래가 잘렸다
       return (
-        <CardWrap>
+        <div className="fixed inset-0 z-50 bg-slate-50">
           {Debug}
           <VocabSessionLearningStage
             words={learningPayload}
@@ -2027,7 +2043,7 @@ export default function VocabSessionPage() {
             dayIndex={dayIndex}
             totalDays={totalDays}
           />
-        </CardWrap>
+        </div>
       );
     }
 
@@ -2257,49 +2273,61 @@ export default function VocabSessionPage() {
         ? currentWord.meanings_ko
         : [currentWord.meanings_ko];
 
+      // 전체 화면 보드: 한 화면에 다 들어오고(스크롤/배율 조절 없이), 글씨는 크게
+      const isLastCard = currentFlashcardIndex >= wrongWords.length - 1;
       return (
-        <CardWrap>
+        <div className="fixed inset-0 z-50 flex flex-col bg-[#F7FAF9] text-slate-900">
           {Debug}
-          {headerBlock}
-          <div className="rounded-2xl border bg-white p-6">
-            <div className="mb-6 flex items-center justify-between">
-              <div>
-                <div className="text-2xl font-bold text-slate-900 mb-1">📚 깜지 복습</div>
-                <div className="text-sm text-slate-600">
-                  {currentFlashcardIndex + 1} / {wrongWords.length}
+          <div className="mx-auto flex h-full min-h-0 w-full max-w-3xl flex-col justify-center gap-3 px-4 py-3 sm:py-5">
+            {/* 헤더: 교재/Day · 진행 · 포인트 */}
+            <div className="flex shrink-0 items-center justify-between gap-3">
+              <div className="min-w-0">
+                <div className="truncate text-sm font-semibold text-slate-500">
+                  {trackTitle ? `${trackTitle}${dayIndex != null && totalDays != null ? ` · Day ${dayIndex}/${totalDays}` : ""}` : "깜지 복습"}
+                </div>
+                <div className="text-xl font-extrabold text-slate-900">
+                  📚 깜지 복습{" "}
+                  <span className="text-base font-bold text-slate-500">
+                    {currentFlashcardIndex + 1} / {wrongWords.length}
+                  </span>
                 </div>
               </div>
-              <div className="text-right">
-                <div className="text-sm text-slate-600 mb-1">누적 포인트</div>
-                <div className="text-2xl font-bold text-emerald-600">{flashcardPoints}</div>
+              <div className="shrink-0 text-right">
+                <div className="text-xs font-semibold text-slate-500">누적 포인트</div>
+                <div className="text-2xl font-extrabold text-emerald-600">{flashcardPoints}</div>
               </div>
             </div>
 
-            <div className="mb-6 h-2 w-full rounded-full bg-slate-200">
+            <div className="h-2 w-full shrink-0 rounded-full bg-slate-200">
               <div
                 className="h-full rounded-full bg-blue-600 transition-all"
-                style={{
-                  width: `${((currentFlashcardIndex + 1) / wrongWords.length) * 100}%`,
-                }}
+                style={{ width: `${((currentFlashcardIndex + 1) / wrongWords.length) * 100}%` }}
               />
             </div>
 
-            <TextFlashcard
-              wordId={currentWord.id}
-              word={currentWord.text}
-              pos="명사"
-              meanings={meanings}
-              onComplete={(points) => {
-                setFlashcardPoints(prev => prev + points);
-                if (currentFlashcardIndex < wrongWords.length - 1) {
-                  setCurrentFlashcardIndex(prev => prev + 1);
-                } else {
-                  setStage("FLASHCARD");
-                }
-              }}
-            />
+            {/* 학습기: 남는 높이 안에서 가운데 정렬. 넘치면 이 영역만 스크롤 */}
+            <div className="flex min-h-0 shrink flex-col justify-center overflow-y-auto rounded-3xl border border-slate-200 bg-white px-5 py-5 shadow-sm sm:px-8">
+              <TextFlashcard
+                wordId={currentWord.id}
+                word={currentWord.text}
+                pos={currentWord.pos || "명사"}
+                meanings={meanings}
+                requireMeaning
+                nextLabel={isLastCard ? "깜지 마치기 ✓" : "다음 단어 →"}
+                onComplete={(points) => {
+                  setFlashcardPoints((prev) => prev + points);
+                }}
+                onNext={() => {
+                  if (!isLastCard) {
+                    setCurrentFlashcardIndex((prev) => prev + 1);
+                  } else {
+                    setStage("FLASHCARD");
+                  }
+                }}
+              />
+            </div>
           </div>
-        </CardWrap>
+        </div>
       );
     }
 

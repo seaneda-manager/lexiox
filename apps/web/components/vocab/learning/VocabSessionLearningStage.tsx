@@ -175,56 +175,59 @@ export default function VocabSessionLearningStage({
   }
 
   return (
-    <div className="flex flex-col lg:flex-row w-full h-full gap-0 bg-slate-50" style={{ maxWidth: '1400px', margin: '0 auto' }}>
-      {/* 좌측 메인 콘텐츠 (70%) */}
-      <div className="flex-[7] flex flex-col px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:pr-6 overflow-y-auto">
+    <div className="flex flex-col lg:flex-row w-full h-full min-h-0 gap-0 bg-slate-50" style={{ maxWidth: '1400px', margin: '0 auto' }}>
+      {/* 좌측 메인 콘텐츠 (70%) — 한 화면에 다 들어오게: 카드가 남는 높이를 쓰고, 넘칠 때만 카드 안에서 스크롤 */}
+      <div className="flex-[7] min-h-0 flex flex-col justify-center px-4 sm:px-6 lg:px-8 py-3 sm:py-4 lg:pr-6">
         {/* 헤더: 진도 + 스트릭 */}
-        <div className="mb-6 sm:mb-8 flex items-center justify-between gap-4">
-          <div className="flex-1">
-            <p className="text-xs sm:text-sm text-slate-500 font-semibold">
+        <div className="mb-2 sm:mb-3 flex shrink-0 items-center justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <p className="truncate text-sm sm:text-base text-slate-500 font-semibold">
               {trackTitle || '단어 학습'}
               {dayIndex != null && totalDays != null && ` - Day ${dayIndex} / ${totalDays}`}
             </p>
-            <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 mt-1">{progress}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">{progress}</h1>
           </div>
           <div className="text-right flex-shrink-0">
-            <div className="flex items-center gap-1 sm:gap-2 justify-end mb-2">
+            <div className="flex items-center gap-2 justify-end">
               <span className="text-2xl sm:text-3xl">🔥</span>
               <div>
                 <p className="text-xs sm:text-sm text-slate-600">연속 학습</p>
-                <p className="text-lg sm:text-2xl font-bold text-orange-600">{streakDays}일째</p>
+                <p className="text-lg sm:text-xl font-bold text-orange-600">{streakDays}일째</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* 메인 학습 카드 - 반응형 너비 */}
-        <div className="bg-white rounded-2xl sm:rounded-3xl border-2 border-slate-200 p-6 sm:p-8 lg:p-10 space-y-6 sm:space-y-8 flex-1" style={{ width: '100%' }}>
+        {/* 메인 학습 카드 - 남는 높이를 채움 */}
+        <div className="bg-white rounded-2xl sm:rounded-3xl border-2 border-slate-200 p-4 sm:p-6 space-y-4 shrink min-h-0 overflow-y-auto" style={{ width: '100%' }}>
           {/* Spelling Section */}
-          <div className="space-y-4">
-            <div className="text-sm font-bold text-slate-600">📚 단어 학습 (통합 Step)</div>
+          <div className="space-y-3">
+            <div className="text-base font-bold text-slate-600">📚 단어 학습</div>
 
             {!spellingDone && (
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <p className="text-sm font-semibold text-slate-600">📝 철자 입력</p>
-                  <p className="text-xs text-slate-500 italic">
-                    아래에 단어의 철자를 입력하세요 (자동 진행)
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <p className="text-lg font-bold text-slate-700">📝 철자 입력</p>
+                  <p className="text-sm text-slate-500">
+                    아래 단어를 그대로 입력하세요 (맞으면 자동으로 넘어가요)
                   </p>
                 </div>
 
                 {/* Clear letter display */}
-                <div className="text-center py-8 bg-slate-100 rounded-xl">
+                <div className="text-center py-3 sm:py-5 bg-slate-100 rounded-xl">
                   <div style={{
-                    fontSize: currentWord.text.length <= 7 ? '2.5rem' :
-                             currentWord.text.length <= 11 ? '1.8rem' : '1.4rem',
-                    fontWeight: 300,
-                    letterSpacing: '0.1em',
+                    fontSize: currentWord.text.length <= 8 ? 'clamp(38px, 9vh, 80px)' :
+                             currentWord.text.length <= 12 ? 'clamp(30px, 7vh, 60px)' : 'clamp(24px, 5.2vh, 46px)',
+                    fontWeight: 400,
                     color: '#1e293b',
                     fontFamily: 'monospace'
                   }}>
-                    {currentWord.text.split('').map((char, idx) => (
-                      <span key={`${currentWordIdx}-${idx}`} style={{ marginRight: '0.2em' }}>
+                    {/* 글자 사이에만 간격을 둔다. (예전엔 마지막 글자 뒤에도 여백이 남아 단어가 왼쪽으로 치우쳐 보였다) */}
+                    {currentWord.text.split('').map((char, idx, arr) => (
+                      <span
+                        key={`${currentWordIdx}-${idx}`}
+                        style={{ marginRight: idx < arr.length - 1 ? '0.3em' : 0 }}
+                      >
                         {char}
                       </span>
                     ))}
@@ -258,7 +261,7 @@ export default function VocabSessionLearningStage({
                       }
                     }}
                     placeholder="철자를 입력하세요..."
-                    className="w-full px-4 py-3 border-2 border-slate-300 rounded-lg text-center text-lg font-semibold placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl text-center text-2xl font-bold placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     autoFocus
                     lang="en"
                     autoComplete="off"
@@ -266,27 +269,24 @@ export default function VocabSessionLearningStage({
                     autoCorrect="off"
                     spellCheck={false}
                   />
-                  <p className="text-xs text-slate-500 text-center">
-                    올바르게 입력하면 자동으로 진행됩니다 ✨
-                  </p>
                 </div>
               </div>
             )}
 
             {spellingDone && (
-              <div className="bg-emerald-50 border border-emerald-300 rounded-lg p-4 text-center">
-                <p className="text-sm font-semibold text-emerald-700">✅ 철자 학습 완료!</p>
-                <p className="text-3xl font-bold text-slate-900 mt-2">{currentWord.text}</p>
+              <div className="bg-emerald-50 border border-emerald-300 rounded-xl px-4 py-2.5 text-center">
+                <p className="text-sm font-semibold text-emerald-700">✅ 철자 완료!</p>
+                <p className="text-3xl font-bold text-slate-900">{currentWord.text}</p>
               </div>
             )}
           </div>
 
           {/* Meaning Section */}
           {spellingDone && (
-            <div className="space-y-4 border-t-2 border-slate-200 pt-8">
-              <div className="text-sm font-bold text-slate-600">뜻 입력</div>
+            <div className="space-y-3 border-t-2 border-slate-200 pt-3">
+              <div className="text-lg font-bold text-slate-700">뜻 입력</div>
 
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 <input
                   ref={meaning1Ref}
                   type="text"
@@ -308,7 +308,7 @@ export default function VocabSessionLearningStage({
                   lang="ko"
                   autoFocus
                   placeholder={currentWord.meanings_ko?.[0] || '한국어 뜻을 입력하세요...'}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg placeholder-slate-400 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 text-xl border-2 border-slate-300 rounded-xl placeholder-slate-400 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <input
                   ref={meaning2Ref}
@@ -329,18 +329,16 @@ export default function VocabSessionLearningStage({
                   }}
                   lang="ko"
                   placeholder={currentWord.meanings_ko?.[1] || '또 다른 뜻을 입력하세요...'}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg placeholder-slate-400 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 text-xl border-2 border-slate-300 rounded-xl placeholder-slate-400 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
-              <p className="text-xs text-slate-500 text-center">
-                (두 뜻을 입력하면 자동으로 진행됩니다 ✨)
-              </p>
-
-              {meaningDone && (
-                <div className="bg-blue-50 border border-blue-300 rounded-lg p-4 text-center">
-                  <p className="text-sm font-semibold text-blue-700">✅ 뜻 학습 완료!</p>
+              {meaningDone ? (
+                <div className="bg-blue-50 border border-blue-300 rounded-xl px-4 py-2 text-center">
+                  <p className="text-base font-semibold text-blue-700">✅ 뜻 완료!</p>
                 </div>
+              ) : (
+                <p className="text-sm text-slate-500 text-center">두 뜻을 모두 입력하면 다음으로 넘어가요</p>
               )}
             </div>
           )}
@@ -349,7 +347,7 @@ export default function VocabSessionLearningStage({
           {canProceedToNextWord && (
             <button
               onClick={handleNextWord}
-              className="w-full py-4 px-6 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg transition text-lg"
+              className="mx-auto block min-w-[220px] py-3 px-10 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-full transition text-lg shadow-md shadow-emerald-900/15 active:scale-[0.97]"
             >
               다음 단어 ➔
             </button>
@@ -358,7 +356,7 @@ export default function VocabSessionLearningStage({
       </div>
 
       {/* 우측 사이드바 (30%) - 반응형 */}
-      <div className="flex-[3] bg-white border-t lg:border-t-0 lg:border-l border-slate-200 px-4 sm:px-6 py-6 sm:py-8 lg:pl-4 overflow-y-auto space-y-4 sm:space-y-6 lg:max-w-xs">
+      <div className="hidden lg:block flex-[3] min-h-0 bg-white border-l border-slate-200 px-4 py-4 lg:pl-4 overflow-y-auto space-y-4 lg:max-w-xs">
         {/* 오늘 완료한 단어 */}
         <div className="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
           <h3 className="text-sm font-bold text-slate-700">🏆 오늘 완료한 단어</h3>

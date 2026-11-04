@@ -109,12 +109,13 @@ export default function PrescreenBoard({
   return (
     <div className="fixed inset-0 w-screen flex flex-col z-50" style={{ background: "#1a3d30" }}>
       <TabLeaveNotice show={leave.showWarning} leaveCount={leave.leaveCount} onClose={leave.dismissWarning} />
+      {/* 한 화면에 다 들어오게: 카드가 남는 높이를 채우고(flex-1), 위아래 요소는 고정 크기 */}
       <div
-        className="flex-1 flex flex-col justify-center items-center px-6 py-8"
+        className="flex-1 min-h-0 flex flex-col items-center justify-center px-4 py-3 sm:py-5"
         key={animKey}
         style={{ animation: "lx-card-in 220ms cubic-bezier(0.22,1,0.36,1) both" }}
       >
-        <div className="w-full flex flex-col gap-6 items-center px-6" style={{ maxWidth: "804px", margin: "0 auto" }}>
+        <div className="w-full max-h-full min-h-0 flex flex-col gap-3 sm:gap-4 items-center px-2" style={{ maxWidth: "880px", margin: "0 auto" }}>
         {/* 헤더 */}
         <div className="space-y-3 w-full">
           <div className="flex items-center gap-2">
@@ -129,12 +130,12 @@ export default function PrescreenBoard({
 
         {/* 안내: 이 단계는 학습할 단어를 고르는 단계 */}
         <div
-          className="w-full rounded-2xl px-5 py-4 text-center font-extrabold leading-snug"
+          className="w-full shrink-0 rounded-2xl px-4 py-2.5 text-center font-extrabold leading-snug"
           style={{
             background: "#153229",
             border: "1.5px solid #EF9F27",
             color: "#FAC775",
-            fontSize: "clamp(16px, 2.4cqi, 22px)",
+            fontSize: "clamp(15px, 1.05vw + 8px, 20px)",
           }}
         >
           학습할 단어를 고르는 단계예요.
@@ -161,45 +162,45 @@ export default function PrescreenBoard({
 
         {/* 단어 카드 */}
         <div
-          className="rounded-3xl text-center space-y-4 flex flex-col justify-center items-center w-full"
+          className="rounded-3xl text-center space-y-3 flex flex-col justify-center items-center w-full shrink min-h-0"
           style={{
             background: "#22503f",
             border: "0.5px solid #2d6652",
             boxShadow: "0 4px 32px rgba(0,0,0,0.25)",
-            aspectRatio: "4 / 3",
-            minHeight: "300px",
-            padding: "32px",
-            boxSizing: "border-box"
+            padding: "16px 24px",
+            boxSizing: "border-box",
+            // 페이지 높이만큼 늘리지 않고, 화면 높이에 비례한 적당한 높이로 (낮은 화면에선 줄어듦)
+            height: "clamp(190px, 36vh, 360px)",
           }}
         >
           <p
             className="font-extrabold tracking-tight leading-tight break-words"
-            style={{ fontSize: "clamp(24px, 5cqi, 48px)", color: "#E1F5EE" }}
+            style={{ fontSize: "clamp(36px, 8vh, 72px)", color: "#E1F5EE" }}
           >
             {cur?.text ?? ""}
           </p>
 
           <div className="w-10 h-[2px] mx-auto rounded-full" style={{ background: "#5DCAA5", opacity: 0.5 }} />
 
-          <p className="text-base font-semibold" style={{ color: "#4da88a" }}>
+          <p className="text-lg font-semibold" style={{ color: "#6fc4a6" }}>
             이 단어를 알고 있나요?
           </p>
         </div>
 
         {/* 버튼 */}
-        <div className="flex flex-col gap-3 w-full">
+        <div className="flex flex-row flex-wrap justify-center gap-3 w-full shrink-0">
           <button
             type="button"
             onClick={() => commit(true)}
-            className="w-full rounded-2xl font-bold text-lg py-5 transition-all duration-150 active:scale-[0.98]"
-            style={{ background: "#5DCAA5", color: "#04342C" }}
+            className="min-w-[170px] sm:min-w-[210px] rounded-full font-bold text-lg px-8 py-3 transition-all duration-150 hover:brightness-105 active:scale-[0.97]"
+            style={{ background: "#5DCAA5", color: "#04342C", boxShadow: "0 4px 14px rgba(93,202,165,0.28)" }}
           >
             알아요 <span className="ml-2 text-xs font-semibold" style={{ opacity: 0.5 }}>(1)</span>
           </button>
           <button
             type="button"
             onClick={() => commit(false)}
-            className="w-full rounded-2xl font-bold text-lg py-5 transition-all duration-150 active:scale-[0.98]"
+            className="min-w-[170px] sm:min-w-[210px] rounded-full font-bold text-lg px-8 py-3 transition-all duration-150 hover:bg-white/5 active:scale-[0.97]"
             style={{ background: "transparent", border: "1.5px solid #3d7a63", color: "#9FE1CB" }}
           >
             아직 몰라요 <span className="ml-2 text-xs font-semibold" style={{ opacity: 0.4 }}>(2)</span>

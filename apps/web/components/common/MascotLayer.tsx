@@ -25,10 +25,25 @@ export default function MascotLayer({
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // 초기 위치를 클라이언트에서 설정
+  // 화면 안에 온전히 보이도록 가두는 함수 (예전엔 초기 x가 창 폭-50px 라서 마스코트 대부분이 잘려 보였다)
+  const clamp = (x: number, y: number) => {
+    const margin = 8;
+    const maxX = Math.max(margin, window.innerWidth - size - margin);
+    const maxY = Math.max(margin, window.innerHeight - size - margin);
+    return {
+      x: Math.min(Math.max(margin, x), maxX),
+      y: Math.min(Math.max(margin, y), maxY),
+    };
+  };
+
+  // 초기 위치: 오른쪽 아래 구석에 온전히 보이게 (학습 화면 본문은 가운데에 있고 버튼은 아래 중앙이라 덜 가린다)
   React.useEffect(() => {
-    setPos({ x: window.innerWidth - 50, y: 50 });
-  }, []);
+    setPos(clamp(window.innerWidth - size - 20, window.innerHeight - size - 20));
+    const onResize = () => setPos((p) => clamp(p.x, p.y));
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [size]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true);
@@ -40,10 +55,7 @@ export default function MascotLayer({
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging) return;
-    setPos({
-      x: e.clientX - dragOffset.x,
-      y: e.clientY - dragOffset.y,
-    });
+    setPos(clamp(e.clientX - dragOffset.x, e.clientY - dragOffset.y));
   };
 
   const handleMouseUp = () => {

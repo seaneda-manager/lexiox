@@ -198,16 +198,16 @@ export default function PrescreenSpellingBoard({
   return (
     <div className="fixed inset-0 w-screen h-screen flex bg-[#F7FAF9] z-50 overflow-hidden">
       <TabLeaveNotice show={leave.showWarning} leaveCount={leave.leaveCount} onClose={leave.dismissWarning} />
-      <div className="flex-[7] flex flex-col justify-center items-center px-6 py-8 overflow-y-auto">
+      <div className="flex-[7] min-h-0 flex flex-col items-center justify-center px-4 py-3 sm:py-5">
         <div
-          className="w-full flex flex-col gap-6 items-center px-6"
+          className="w-full max-h-full min-h-0 flex flex-col gap-3 sm:gap-4 items-center px-2"
           key={animKey}
           style={{
-            maxWidth: '500px',
+            maxWidth: '720px',
             animation: 'lx-card-in 220ms cubic-bezier(0.22,1,0.36,1) both',
           }}
         >
-          <div className="space-y-3 w-full">
+          <div className="space-y-2 w-full shrink-0">
             <div className="flex items-center gap-2">
               <span className="text-sm font-extrabold tracking-widest text-[#0F766E] uppercase">
                 LEXiOX
@@ -216,7 +216,7 @@ export default function PrescreenSpellingBoard({
               <span className="text-sm font-semibold text-slate-400">철자 확인</span>
             </div>
             <ProgressBar current={i + 1} total={total} />
-            <div className="rounded-2xl bg-amber-50 border border-amber-300 px-4 py-3 text-center text-base font-extrabold text-amber-800 leading-snug">
+            <div className="rounded-2xl bg-amber-50 border border-amber-300 px-4 py-2 text-center text-base font-extrabold text-amber-800 leading-snug">
               정확히 모르면 바로 “모르겠어요”를 누르고 넘어가세요.
               <br />
               <span className="text-sm font-semibold">틀리면 학습할 단어 목록에 추가될 뿐이에요 🙂</span>
@@ -236,20 +236,19 @@ export default function PrescreenSpellingBoard({
 
           <div
             className={[
-              'rounded-3xl bg-white shadow-[0_4px_32px_rgba(0,0,0,0.08)] border border-slate-100 px-8 py-8 space-y-5 w-full',
-              'flex flex-col justify-center',
+              'rounded-3xl bg-white shadow-[0_4px_32px_rgba(0,0,0,0.08)] border border-slate-100 px-6 py-4 space-y-3 w-full',
+              'flex flex-col justify-center shrink min-h-0',
               shake ? 'lx-shake' : '',
               showStreakEffect ? 'scale-105' : '',
             ].join(' ')}
             style={{
-              minHeight: '350px',
               boxSizing: 'border-box',
               transition: 'transform 200ms ease-out',
             }}
           >
             <div className="text-center space-y-1">
               <p className="text-sm font-semibold text-slate-400 uppercase tracking-wider">뜻</p>
-              <p className="font-bold text-slate-700" style={{ fontSize: 'clamp(24px, 5cqi, 48px)' }}>
+              <p className="font-bold text-slate-700" style={{ fontSize: 'clamp(24px, 4.6vh, 42px)' }}>
                 {meaning.length ? meaning.join(' / ') : '뜻 없음'}
               </p>
             </div>
@@ -264,8 +263,8 @@ export default function PrescreenSpellingBoard({
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
                 placeholder="철자 입력..."
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-5 font-bold text-slate-900 text-center outline-none focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20 transition-all"
-                style={{ fontSize: 'clamp(24px, 5cqi, 48px)' }}
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 font-bold text-slate-900 text-center outline-none focus:border-[#0F766E] focus:ring-2 focus:ring-[#0F766E]/20 transition-all"
+                style={{ fontSize: 'clamp(24px, 4.2vh, 38px)' }}
                 autoCapitalize="none"
                 autoCorrect="off"
                 spellCheck={false}
@@ -273,18 +272,18 @@ export default function PrescreenSpellingBoard({
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 w-full">
+          <div className="flex flex-row flex-wrap justify-center gap-3 w-full shrink-0">
             <button
               type="button"
               onClick={submit}
-              className="w-full rounded-2xl bg-[#0F766E] hover:bg-[#115E59] active:scale-[0.98] text-white font-bold text-lg py-5 transition-all duration-150 shadow-sm"
+              className="min-w-[170px] sm:min-w-[200px] rounded-full bg-[#0F766E] hover:bg-[#115E59] active:scale-[0.97] text-white font-bold text-lg px-8 py-3 transition-all duration-150 shadow-md shadow-teal-900/15"
             >
               확인 <span className="ml-2 opacity-50 text-xs">(Enter)</span>
             </button>
             <button
               type="button"
               onClick={markFailAndNext}
-              className="w-full rounded-2xl bg-white hover:bg-slate-50 active:scale-[0.98] text-slate-500 font-semibold text-base py-4 transition-all duration-150 border border-slate-200"
+              className="min-w-[150px] sm:min-w-[180px] rounded-full bg-white hover:bg-slate-50 active:scale-[0.97] text-slate-600 font-semibold text-lg px-7 py-3 transition-all duration-150 border border-slate-300"
             >
               모르겠어요 <span className="ml-2 opacity-40 text-xs">(Esc)</span>
             </button>

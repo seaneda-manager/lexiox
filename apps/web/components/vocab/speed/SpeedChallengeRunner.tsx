@@ -29,7 +29,7 @@ function clamp(n: number, min: number, max: number) {
 function Pill({ children }: { children: React.ReactNode }) {
   return (
     <div className="h-9 px-4 rounded-full font-extrabold bg-white/90 border border-black/10 inline-flex items-center">
-      <span style={{ fontSize: "clamp(12px, 1.35cqi, 14px)" }}>{children}</span>
+      <span style={{ fontSize: "13px" }}>{children}</span>
     </div>
   );
 }
@@ -248,10 +248,10 @@ export default function SpeedChallengeRunner({
       >
         <div className="w-full space-y-4">
           <div className="rounded-2xl border border-black/5 bg-white/70 px-6 py-8 text-left min-h-40 flex flex-col justify-center overflow-hidden">
-            <div className="text-neutral-500 font-semibold" style={{ fontSize: "clamp(12px, 1.35cqi, 13px)" }}>
+            <div className="text-neutral-500 font-semibold" style={{ fontSize: "14px" }}>
               Prompt
             </div>
-            <div className="mt-3 text-neutral-900 font-extrabold whitespace-nowrap overflow-x-auto scrollbar-hide" style={{ fontSize: "clamp(16px, 2.2cqi, 28px)" }}>
+            <div className="mt-3 text-neutral-900 font-extrabold whitespace-nowrap overflow-x-auto scrollbar-hide" style={{ fontSize: "clamp(22px, 3.4vh, 32px)" }}>
               {q?.prompt ?? ""}
             </div>
           </div>
@@ -265,7 +265,7 @@ export default function SpeedChallengeRunner({
                   disabled={locked}
                   onClick={() => onPick(choice)}
                   className="rounded-2xl border border-black/10 bg-white/85 px-5 py-4 text-left font-bold text-neutral-900 transition-colors hover:border-black/30 hover:bg-white disabled:opacity-60"
-                  style={{ fontSize: "clamp(15px, 1.9cqi, 20px)" }}
+                  style={{ fontSize: "clamp(17px, 2.6vh, 22px)" }}
                 >
                   {choice}
                 </button>
@@ -285,7 +285,7 @@ export default function SpeedChallengeRunner({
                 if (e.key === "Enter") onSubmit();
               }}
               className="w-full rounded-2xl border border-black/10 bg-white/80 px-5 py-4 text-center font-extrabold outline-none focus:ring-2 focus:ring-black/10"
-              style={{ fontSize: "clamp(18px, 2.3cqi, 30px)" }}
+              style={{ fontSize: "clamp(22px, 3.4vh, 32px)" }}
               placeholder="Type here..."
               autoComplete="off"
               autoCapitalize="none"
