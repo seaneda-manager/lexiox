@@ -210,14 +210,23 @@ async function ensureWords(admin: any, rows: any[]) {
   const toInsert = normalized.filter((w) => !textToId.has(w.text));
   let insertedWords = 0;
 
-  for (const group of chunk(toInsert, 200)) {
-    if (group.length === 0) continue;
-    const { error } = await admin.from("words").insert(group);
-    if (error) {
-      // tolerate duplicates/race: record and refetch
-      errors.push(`words insert failed (tolerated): ${toErrMsg(error)}`);
-    } else {
-      insertedWords += group.length;
+  // null 필드는 빼서 NOT NULL 컬럼은 DB 기본값을 쓰게 한다. PostgREST 대량 INSERT는 키가 같아야 하므로 키 조합별로 묶는다.
+  const bySig = new Map<string, any[]>();
+  for (const w of toInsert) {
+    const o: any = Object.fromEntries(Object.entries(w).filter(([, v]) => v != null));
+    const sig = Object.keys(o).sort().join("|");
+    if (!bySig.has(sig)) bySig.set(sig, []);
+    bySig.get(sig)!.push(o);
+  }
+  for (const rowsOfSig of bySig.values()) {
+    for (const group of chunk(rowsOfSig, 200)) {
+      const { error } = await admin.from("words").insert(group);
+      if (error) {
+        // tolerate duplicates/race: record and refetch
+        errors.push(`words insert failed (tolerated): ${toErrMsg(error)}`);
+      } else {
+        insertedWords += group.length;
+      }
     }
   }
 
