@@ -260,6 +260,7 @@ export default function SidebarClient({ role, program = null, hasHiNaesin = fals
         { section: '어휘관리' as NavSection, href: '/admin/vocab/words/import', label: '단어 가져오기',   icon: Download },
         { section: '어휘관리' as NavSection, href: '/admin/vocab/import',       label: 'CSV 업로드',      icon: Upload },
         { section: '어휘관리' as NavSection, href: '/admin/vocab/validate',     label: '단어 검증',    icon: CheckSquare },
+        { section: '어휘관리' as NavSection, href: '/admin/vocab/tracks/new',   label: '트랙 만들기',     icon: Library },
         { section: '어휘관리' as NavSection, href: '/admin/vocab/Tracks',       label: '트랙 배포',       icon: Send },
         { section: '어휘관리' as NavSection, href: '/admin/vocab/progress',     label: '학생 진행 현황',  icon: BarChart2 },
         { section: '어휘관리' as NavSection, href: '/admin/vocab/speed-settings', label: 'Speed 타이머',  icon: Settings },

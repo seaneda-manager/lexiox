@@ -234,6 +234,7 @@ export default function AdminPage() {
           description="학생에게 어휘 트랙을 배포하고 진행 현황을 확인합니다."
           links={[
             { label: '트랙 배포', href: '/admin/vocab/Tracks', primary: true },
+            { label: '트랙 만들기', href: '/admin/vocab/tracks/new' },
             { label: '진행 현황', href: '/admin/vocab/progress' },
           ]}
         />
