@@ -38,6 +38,7 @@ export default function VocabTestPage() {
   const [books, setBooks] = useState<Array<{ trackId: string; title: string }>>([]);
   const [bookChoice, setBookChoice] = useState<string | null>(null);
   const [activeBook, setActiveBook] = useState<string | null>(null);
+  const [needPick, setNeedPick] = useState(false);
   const bookPicker =
     !urlTrackId && books.length > 1 ? (
       <div className="mb-4 flex flex-wrap justify-center gap-2">
@@ -186,17 +187,24 @@ export default function VocabTestPage() {
         const prof = profRes.ok ? await profRes.json() : null;
         const list: Array<{ trackId: string; title: string }> = Array.isArray(prof?.books) ? prof.books : [];
         if (!cancelled) setBooks(list);
-        // 선택 우선순위: 화면에서 방금 고른 책 > 단어 학습 허브에서 고른 책 > 가장 최근 배정
+        // 교재가 2개 이상이면 들어올 때마다 교재 선택 화면부터 보여준다.
+        // (예전엔 지난번에 고른 교재 시험이 바로 이어져서, 다른 교재를 보려면 돌아갈 방법이 없었다)
+        // 고른 뒤에는 그 교재의 진행 중 시험이 있으면 이어서 보여준다.
         let bookId: string | undefined = prof?.bookId;
-        let saved: string | null = null;
-        try {
-          saved = localStorage.getItem("vocab_hub_book");
-        } catch {
-          /* ignore */
+        if (list.length > 1) {
+          if (!bookChoice || !list.some((b) => b.trackId === bookChoice)) {
+            if (!cancelled) {
+              setNeedPick(true);
+              setActiveBook(null);
+            }
+            return;
+          }
+          bookId = bookChoice;
         }
-        if (bookChoice && list.some((b) => b.trackId === bookChoice)) bookId = bookChoice;
-        else if (saved && list.some((b) => b.trackId === saved)) bookId = saved;
-        if (!cancelled) setActiveBook(bookId ?? null);
+        if (!cancelled) {
+          setNeedPick(false);
+          setActiveBook(bookId ?? null);
+        }
         if (!bookId) {
           if (!cancelled) setError("배정된 단어 트랙이 없습니다. 담당 선생님에게 문의하세요.");
           return;
@@ -420,6 +428,35 @@ export default function VocabTestPage() {
       setPending(false);
     }
   };
+
+  if (needPick) {
+    return (
+      <TestShell>
+        <div className="max-w-sm w-full text-center space-y-3">
+          <div className="text-4xl">📝</div>
+          <p className="text-gray-800 text-lg font-bold">어느 교재 시험을 볼까요?</p>
+          <div className="space-y-2">
+            {books.map((b) => (
+              <button
+                key={b.trackId}
+                onClick={() => {
+                  try {
+                    localStorage.setItem("vocab_hub_book", b.trackId);
+                  } catch {
+                    /* ignore */
+                  }
+                  setBookChoice(b.trackId);
+                }}
+                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-base font-semibold text-gray-800 hover:bg-blue-50 hover:border-blue-400"
+              >
+                {b.title}
+              </button>
+            ))}
+          </div>
+        </div>
+      </TestShell>
+    );
+  }
 
   if (notReady) {
     return (
