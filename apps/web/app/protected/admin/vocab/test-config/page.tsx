@@ -13,6 +13,8 @@ interface Config {
   skip_learning_check: boolean;
   hints_enabled: boolean;
   max_hint_level: number;
+  /** 출제 단어 수. null/없음 = 자동(약점 단어 위주) */
+  max_words?: number | null;
 }
 
 export default function VocabTestConfigPage() {
@@ -97,7 +99,7 @@ export default function VocabTestConfigPage() {
   const createConfigForScope = async (scope: string, scopeId: string | null) => {
     try {
       setSaving(true);
-      const response = await fetch("/api/admin/vocab/test-config/create", {
+      const response = await fetch("/api/admin/vocab/test-config", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ scope, scope_id: scopeId }),
@@ -184,6 +186,7 @@ export default function VocabTestConfigPage() {
             onArrangementUpdate={(configId, value) => updateConfig(configId, "arrangement", value)}
             onHintsEnabledUpdate={(configId, value) => updateConfig(configId, "hints_enabled", value)}
             onMaxHintLevelUpdate={(configId, value) => updateConfig(configId, "max_hint_level", value)}
+            onMaxWordsUpdate={(configId, value) => updateConfig(configId, "max_words", value)}
           />
         )}
 
@@ -262,6 +265,7 @@ export default function VocabTestConfigPage() {
                     onMaxHintLevelUpdate={(value) =>
                       updateConfig(config.id, "max_hint_level", value)
                     }
+                    onMaxWordsUpdate={(value) => updateConfig(config.id, "max_words", value)}
                   />
                 </div>
               ))
@@ -284,6 +288,7 @@ function ConfigSection({
   onArrangementUpdate,
   onHintsEnabledUpdate,
   onMaxHintLevelUpdate,
+  onMaxWordsUpdate,
 }: any) {
   if (!config) {
     return (
@@ -313,6 +318,7 @@ function ConfigSection({
         onArrangementUpdate={(value) => onArrangementUpdate(config.id, value)}
         onHintsEnabledUpdate={() => onHintsEnabledUpdate(config.id, !config.hints_enabled)}
         onMaxHintLevelUpdate={(value) => onMaxHintLevelUpdate(config.id, value)}
+        onMaxWordsUpdate={(value) => onMaxWordsUpdate(config.id, value)}
       />
     </div>
   );
@@ -346,6 +352,7 @@ function ClassConfigSection({ className, classId, config, onUpdate, onCreate }: 
         onArrangementUpdate={(value) => onUpdate(config.id, "arrangement", value)}
         onHintsEnabledUpdate={() => onUpdate(config.id, "hints_enabled", !config.hints_enabled)}
         onMaxHintLevelUpdate={(value) => onUpdate(config.id, "max_hint_level", value)}
+        onMaxWordsUpdate={(value) => onUpdate(config.id, "max_words", value)}
       />
     </div>
   );
@@ -358,9 +365,51 @@ function ConfigControls({
   onArrangementUpdate,
   onHintsEnabledUpdate,
   onMaxHintLevelUpdate,
+  onMaxWordsUpdate,
 }: any) {
+  const [maxWordsInput, setMaxWordsInput] = useState<string>(
+    config.max_words != null ? String(config.max_words) : "",
+  );
+
   return (
     <div className="space-y-4">
+      {/* 출제 단어 수 */}
+      <div className="p-3 bg-gray-50 rounded-lg">
+        <p className="font-medium text-gray-900">
+          출제 단어 수: {config.max_words != null ? `${config.max_words}개` : "자동"}
+        </p>
+        <p className="text-xs text-gray-600 mt-1 mb-2">
+          비워 두면 자동 — 학습 중 prescreen에서 모른 단어 + speed에서 틀린 단어만 출제합니다. 숫자를 넣으면 그 개수로
+          맞춥니다(약점 단어 우선, 모자라면 같은 Day의 다른 단어로 채움). 단어 하나당 문제는 약 3개입니다.
+        </p>
+        <div className="flex gap-2">
+          <input
+            type="number"
+            min={1}
+            max={500}
+            placeholder="자동"
+            value={maxWordsInput}
+            onChange={(e) => setMaxWordsInput(e.target.value)}
+            className="w-32 px-3 py-2 border border-gray-300 rounded-lg"
+          />
+          <button
+            onClick={() => {
+              const t = maxWordsInput.trim();
+              if (t === "") return onMaxWordsUpdate(null);
+              const n = parseInt(t, 10);
+              if (!Number.isInteger(n) || n < 1 || n > 500) {
+                alert("1~500 사이의 숫자를 입력하거나, 자동으로 두려면 비워 주세요.");
+                return;
+              }
+              onMaxWordsUpdate(n);
+            }}
+            className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition"
+          >
+            저장
+          </button>
+        </div>
+      </div>
+
       {/* 학습 확인 스킵 */}
       <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
         <div>

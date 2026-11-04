@@ -141,16 +141,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 5. 포함 범위 결정
-    const configResult = await getTestConfig(admin, user.id);
-    const coverage_ratio = configResult.coverage_ratio;
-    const arrangement = configResult.arrangement;
-
-    const words_count = Math.max(
-      Math.ceil((total_words_count * coverage_ratio) / 100),
-      Math.min(wordIds.length, dayWords.length)
-    );
-
-    // 6.5. Class ID 조회 (academy_class_students.student_id는 auth uid를 참조함)
+    // Class ID 조회 (academy_class_students.student_id는 auth uid를 참조함) — 반별 설정에도 쓴다
     const { data: membership } = await admin
       .from("academy_class_students")
       .select("class_id")
@@ -158,6 +149,39 @@ export async function POST(req: NextRequest) {
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
+
+    const configResult = await getTestConfig(admin, user.id, membership?.class_id ?? null);
+    const coverage_ratio = configResult.coverage_ratio;
+    const arrangement = configResult.arrangement;
+    const maxWords = configResult.max_words;
+
+    // 출제 범위: 학습 중 약점 단어 위주
+    //  - prescreen(know)에서 "모른다"고 한 단어 + speed에서 틀린 단어 (각 단계의 가장 최근 시도 기준)
+    //  - 약점 단어가 하나도 없으면(전부 알고 다 맞힘/기록 없음) 설정된 비율(coverage_ratio)만큼 무작위로 출제
+    // 예전엔 계산식(max)이 항상 Day의 전체 단어를 고르게 해서 Day 단어가 100개 넘는 교재는
+    // 한 번에 300문제 이상 나왔다.
+    let words_count: number;
+    if (use_wrong_only) {
+      words_count = Math.min(wordIds.length, dayWords.length);
+    } else {
+      const weakIds = await getWeakWordIds(admin, studentId, dayAssignment.set_id, wordIds);
+      if (maxWords != null) {
+        // admin/teacher가 정한 개수: 약점 단어 우선, 모자라면 같은 Day의 나머지 단어로 채움
+        const weakSet = new Set(weakIds);
+        const rest = shuffle(wordIds.filter((id: string) => !weakSet.has(id)));
+        wordIds = [...weakIds, ...rest].slice(0, maxWords);
+        words_count = wordIds.length;
+      } else if (weakIds.length > 0) {
+        wordIds = weakIds;
+        words_count = weakIds.length;
+      } else {
+        wordIds = shuffle(wordIds);
+        words_count = Math.min(
+          wordIds.length,
+          Math.max(1, Math.ceil((total_words_count * coverage_ratio) / 100))
+        );
+      }
+    }
 
     // 7. 시험 세션 생성
     const { data: session, error: sessionError } = await admin
@@ -238,6 +262,41 @@ async function checkLearningCompletion(
   return { ok: true };
 }
 
+function shuffle<T>(arr: T[]): T[] {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+/** 이 Day 학습에서 약점이었던 단어: prescreen(know) 모름 + speed 오답 (단계별 가장 최근 시도) */
+async function getWeakWordIds(
+  admin: any,
+  studentId: string,
+  setId: string,
+  dayWordIds: string[]
+): Promise<string[]> {
+  const { data } = await admin
+    .from("vocab_learning_attempts")
+    .select("stage, wrong_word_ids, attempted_at")
+    .eq("student_id", studentId)
+    .eq("set_id", setId)
+    .in("stage", ["know", "speed"])
+    .order("attempted_at", { ascending: false });
+
+  const seenStage = new Set<string>();
+  const weak = new Set<string>();
+  for (const r of (data as any[]) ?? []) {
+    if (seenStage.has(r.stage)) continue;
+    seenStage.add(r.stage);
+    for (const id of Array.isArray(r.wrong_word_ids) ? r.wrong_word_ids : []) weak.add(String(id));
+  }
+  // Day의 단어 순서를 유지하면서 이 Day에 속한 것만
+  return dayWordIds.filter((id) => weak.has(String(id)));
+}
+
 async function checkWrongOnlyOption(
   admin: any,
   studentId: string,
@@ -278,34 +337,41 @@ async function checkWrongOnlyOption(
   return { ok: true, wordIds: attempts.wrong_word_ids };
 }
 
-async function getTestConfig(admin: any, userId: string): Promise<{
+async function getTestConfig(
+  admin: any,
+  userId: string,
+  classId: string | null
+): Promise<{
   coverage_ratio: number;
   arrangement: string;
+  max_words: number | null;
 }> {
-  // 1. Global 설정 조회
-  const { data: global_config } = await admin
-    .from("vocab_test_configs")
-    .select("coverage_ratio, arrangement")
-    .eq("scope", "global")
-    .single();
+  // select("*") — max_words 컬럼이 아직 없는 DB에서도 깨지지 않게 (없으면 undefined → 자동)
+  const pick = async (scope: string, scopeId: string | null) => {
+    let q = admin.from("vocab_test_configs").select("*").eq("scope", scope);
+    q = scopeId ? q.eq("scope_id", scopeId) : q.is("scope_id", null);
+    const { data } = await q.limit(1).maybeSingle();
+    return data as any | null;
+  };
+
+  const global_config = await pick("global", null);
+  const class_config = classId ? await pick("class", classId) : null;
+  const student_config = await pick("student", userId);
 
   let coverage_ratio = global_config?.coverage_ratio ?? 70;
   let arrangement = global_config?.arrangement ?? "grouped";
+  let max_words: number | null = global_config?.max_words ?? null;
 
-  // 2. Student 개별 설정 오버라이드
-  const { data: student_config } = await admin
-    .from("vocab_test_configs")
-    .select("coverage_ratio, arrangement")
-    .eq("scope", "student")
-    .eq("scope_id", userId)
-    .single();
-
-  if (student_config) {
-    coverage_ratio = student_config.coverage_ratio;
-    arrangement = student_config.arrangement;
+  // 우선순위: 학생별 > 반별 > 전역
+  for (const c of [class_config, student_config]) {
+    if (!c) continue;
+    coverage_ratio = c.coverage_ratio ?? coverage_ratio;
+    arrangement = c.arrangement ?? arrangement;
+    // max_words 는 "비어 있음(자동)"도 의미가 있으므로, 이 설정에 컬럼이 존재할 때만 덮어쓴다
+    if ("max_words" in c && c.max_words != null) max_words = c.max_words;
   }
 
-  return { coverage_ratio, arrangement };
+  return { coverage_ratio, arrangement, max_words: max_words != null ? Number(max_words) : null };
 }
 
 async function generateQuestions(
