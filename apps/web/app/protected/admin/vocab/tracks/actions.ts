@@ -230,9 +230,10 @@ export async function updateAssignmentDayAction(params: {
       .from("student_vocab_assignments")
       .select("student_id, track_id")
       .eq("id", params.assignmentId)
-      .single();
+      .maybeSingle();
 
     if (fetchErr) throw new Error(fetchErr.message);
+    if (!assignment) throw new Error("배정을 찾을 수 없습니다. 화면을 새로고침하세요.");
 
     // Get student plan to access start_date and weekdays
     const { data: plan, error: planErr } = await supabase
@@ -240,9 +241,10 @@ export async function updateAssignmentDayAction(params: {
       .select("start_date, weekdays")
       .eq("student_id", assignment.student_id)
       .eq("track_id", assignment.track_id)
-      .single();
+      .maybeSingle();
 
     if (planErr) throw new Error(planErr.message);
+    if (!plan) throw new Error("이 학생의 Track 계획이 없습니다. Track을 다시 배정하세요.");
 
     // Calculate new available_at using weekdays
     const { data: dateResult, error: dateErr } = await supabase.rpc(
@@ -667,9 +669,10 @@ export async function assignMultipleDaysAction(params: {
       .select("start_date, weekdays")
       .eq("student_id", params.studentId)
       .eq("track_id", params.trackId)
-      .single();
+      .maybeSingle();
 
     if (planErr) throw new Error(planErr.message);
+    if (!plan) throw new Error("이 학생에게 배정된 Track 계획이 없습니다. 먼저 Track을 배정하세요.");
 
     // 각 Day에 대해 assignment 생성 또는 업데이트
     let assignedCount = 0;
