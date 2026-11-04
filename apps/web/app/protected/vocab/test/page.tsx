@@ -432,7 +432,7 @@ export default function VocabTestPage() {
   if (needPick) {
     return (
       <TestShell>
-        <div className="max-w-sm w-full text-center space-y-3">
+        <div className="mx-auto max-w-sm w-full text-center space-y-3">
           <div className="text-4xl">📝</div>
           <p className="text-gray-800 text-lg font-bold">어느 교재 시험을 볼까요?</p>
           <div className="space-y-2">
@@ -461,7 +461,7 @@ export default function VocabTestPage() {
   if (notReady) {
     return (
       <TestShell>
-        <div className="max-w-sm text-center space-y-3">
+        <div className="mx-auto max-w-sm text-center space-y-3">
           {bookPicker}
           <div className="text-4xl">📝</div>
           <p className="text-gray-800 text-lg font-bold">아직 시험을 볼 수 없어요</p>
