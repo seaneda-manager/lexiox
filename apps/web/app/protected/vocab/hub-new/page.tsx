@@ -63,7 +63,21 @@ export default function VocabHubNewPage() {
   const router = useRouter();
   const [studentId, setStudentId] = useState<string>("");
   const [bookId, setBookId] = useState<string>("");
+  const [books, setBooks] = useState<Array<{ trackId: string; title: string }>>([]);
   const [loading, setLoading] = useState(true);
+
+  function pickBook(id: string) {
+    if (id === bookId) return;
+    setTodayData(null);
+    setReviewData(null);
+    setTestEligibility(null);
+    setBookId(id);
+    try {
+      localStorage.setItem("vocab_hub_book", id);
+    } catch {
+      /* ignore */
+    }
+  }
   const [error, setError] = useState<string>("");
 
   const [todayData, setTodayData] = useState<ProgressData | null>(null);
@@ -101,7 +115,17 @@ export default function VocabHubNewPage() {
         }
         const data = await res.json();
         setStudentId(data.studentId);
-        setBookId(data.bookId);
+        const list: Array<{ trackId: string; title: string }> = Array.isArray(data.books) ? data.books : [];
+        setBooks(list);
+        // 지난번에 고른 교재가 아직 배정돼 있으면 그걸 유지, 아니면 가장 최근 배정
+        let initial: string = data.bookId;
+        try {
+          const saved = localStorage.getItem("vocab_hub_book");
+          if (saved && list.some((b) => b.trackId === saved)) initial = saved;
+        } catch {
+          /* ignore */
+        }
+        setBookId(initial);
       } catch (e: any) {
         setError(e?.message ?? "초기화 중 오류가 발생했습니다.");
       } finally {
@@ -309,6 +333,23 @@ export default function VocabHubNewPage() {
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900">단어 학습</h1>
           <p className="text-gray-600 mt-2">하루에 최대 2개 Day까지 학습할 수 있습니다.</p>
+          {books.length > 1 && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {books.map((b) => (
+                <button
+                  key={b.trackId}
+                  onClick={() => pickBook(b.trackId)}
+                  className={`rounded-full border px-4 py-1.5 text-sm font-medium ${
+                    b.trackId === bookId
+                      ? "border-blue-600 bg-blue-600 text-white"
+                      : "border-gray-300 bg-white text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  {b.title}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {error && (

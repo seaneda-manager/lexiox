@@ -69,18 +69,36 @@ export async function GET(request: NextRequest) {
     // 실제로는 student_vocab_plans 테이블을 참고하거나,
     // 다른 방식으로 현재 학습 중인 책을 결정해야 합니다.
 
-    const { data: plans, error: plansError } = await supabase
+    // 여러 교재가 배정될 수 있으므로 활성 plan 전부를 가져온다 (최근 배정 순).
+    const { data: planRows, error: plansError } = await supabase
       .from("student_vocab_plans")
       .select("track_id, is_active")
       .eq("student_id", studentId)
       .eq("is_active", true)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .order("created_at", { ascending: false });
 
     if (plansError) throw plansError;
 
-    const bookId = plans?.track_id;
+    const trackIds = Array.from(
+      new Set((planRows ?? []).map((p: any) => p.track_id).filter(Boolean) as string[]),
+    );
+
+    let books: Array<{ trackId: string; title: string }> = [];
+    if (trackIds.length > 0) {
+      const { data: trackRows } = await supabase
+        .from("vocab_tracks")
+        .select("id, title")
+        .in("id", trackIds);
+      const titleById = new Map<string, string>(
+        (trackRows ?? []).map((t: any) => [String(t.id), String(t.title ?? "")]),
+      );
+      books = trackIds.map((id) => ({ trackId: id, title: titleById.get(id) || "단어장" }));
+    }
+
+    // 기본값은 가장 최근 배정. ?bookId= 로 특정 교재를 지정할 수 있다.
+    const requested = request.nextUrl.searchParams.get("bookId");
+    const bookId =
+      requested && trackIds.includes(requested) ? requested : trackIds[0];
 
     if (!bookId) {
       return NextResponse.json(
@@ -97,6 +115,7 @@ export async function GET(request: NextRequest) {
       ok: true,
       studentId,
       bookId,
+      books,
     });
   } catch (e: any) {
     console.error("[/api/student/profile] GET error:", e);
