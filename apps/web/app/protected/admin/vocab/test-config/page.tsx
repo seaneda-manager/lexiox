@@ -15,6 +15,8 @@ interface Config {
   max_hint_level: number;
   /** 출제 단어 수. null/없음 = 자동(약점 단어 위주) */
   max_words?: number | null;
+  /** 총 시험 간격(일). null/없음 = 기본 30일 */
+  total_exam_interval_days?: number | null;
 }
 
 export default function VocabTestConfigPage() {
@@ -187,6 +189,7 @@ export default function VocabTestConfigPage() {
             onHintsEnabledUpdate={(configId, value) => updateConfig(configId, "hints_enabled", value)}
             onMaxHintLevelUpdate={(configId, value) => updateConfig(configId, "max_hint_level", value)}
             onMaxWordsUpdate={(configId, value) => updateConfig(configId, "max_words", value)}
+            onTotalIntervalUpdate={(configId, value) => updateConfig(configId, "total_exam_interval_days", value)}
           />
         )}
 
@@ -266,6 +269,7 @@ export default function VocabTestConfigPage() {
                       updateConfig(config.id, "max_hint_level", value)
                     }
                     onMaxWordsUpdate={(value) => updateConfig(config.id, "max_words", value)}
+                    onTotalIntervalUpdate={(value) => updateConfig(config.id, "total_exam_interval_days", value)}
                   />
                 </div>
               ))
@@ -289,6 +293,7 @@ function ConfigSection({
   onHintsEnabledUpdate,
   onMaxHintLevelUpdate,
   onMaxWordsUpdate,
+  onTotalIntervalUpdate,
 }: any) {
   if (!config) {
     return (
@@ -319,6 +324,7 @@ function ConfigSection({
         onHintsEnabledUpdate={() => onHintsEnabledUpdate(config.id, !config.hints_enabled)}
         onMaxHintLevelUpdate={(value) => onMaxHintLevelUpdate(config.id, value)}
         onMaxWordsUpdate={(value) => onMaxWordsUpdate(config.id, value)}
+        onTotalIntervalUpdate={(value) => onTotalIntervalUpdate(config.id, value)}
       />
     </div>
   );
@@ -353,6 +359,7 @@ function ClassConfigSection({ className, classId, config, onUpdate, onCreate }: 
         onHintsEnabledUpdate={() => onUpdate(config.id, "hints_enabled", !config.hints_enabled)}
         onMaxHintLevelUpdate={(value) => onUpdate(config.id, "max_hint_level", value)}
         onMaxWordsUpdate={(value) => onUpdate(config.id, "max_words", value)}
+        onTotalIntervalUpdate={(value) => onUpdate(config.id, "total_exam_interval_days", value)}
       />
     </div>
   );
@@ -366,7 +373,11 @@ function ConfigControls({
   onHintsEnabledUpdate,
   onMaxHintLevelUpdate,
   onMaxWordsUpdate,
+  onTotalIntervalUpdate,
 }: any) {
+  const [totalIntervalInput, setTotalIntervalInput] = useState<string>(
+    config.total_exam_interval_days != null ? String(config.total_exam_interval_days) : "",
+  );
   const [maxWordsInput, setMaxWordsInput] = useState<string>(
     config.max_words != null ? String(config.max_words) : "",
   );
@@ -402,6 +413,43 @@ function ConfigControls({
                 return;
               }
               onMaxWordsUpdate(n);
+            }}
+            className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition"
+          >
+            저장
+          </button>
+        </div>
+      </div>
+
+      {/* 총 시험 간격 */}
+      <div className="p-3 bg-gray-50 rounded-lg">
+        <p className="font-medium text-gray-900">
+          총 시험 간격: {config.total_exam_interval_days != null ? `${config.total_exam_interval_days}일` : "기본 30일"}
+        </p>
+        <p className="text-xs text-gray-600 mt-1 mb-2">
+          그동안 배운 단어를 한꺼번에 점검하는 총 시험이 열리는 주기입니다. 비워 두면 기본 30일(한 달), 2주마다 보려면 14를 넣으세요.
+          (7~180일) 마지막 총 시험을 본 날(처음이라면 학습을 시작한 날)부터 계산합니다.
+        </p>
+        <div className="flex gap-2">
+          <input
+            type="number"
+            min={7}
+            max={180}
+            placeholder="30"
+            value={totalIntervalInput}
+            onChange={(e) => setTotalIntervalInput(e.target.value)}
+            className="w-32 px-3 py-2 border border-gray-300 rounded-lg"
+          />
+          <button
+            onClick={() => {
+              const t = totalIntervalInput.trim();
+              if (t === "") return onTotalIntervalUpdate(null);
+              const n = parseInt(t, 10);
+              if (!Number.isInteger(n) || n < 7 || n > 180) {
+                alert("7~180 사이의 숫자를 입력하거나, 기본값(30일)으로 두려면 비워 주세요.");
+                return;
+              }
+              onTotalIntervalUpdate(n);
             }}
             className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition"
           >

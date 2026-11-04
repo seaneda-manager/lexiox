@@ -26,8 +26,10 @@ export default function VocabTestPage() {
   const params = useSearchParams();
   const urlTrackId = params.get("track_id");
   const urlDay = params.get("day");
-  // 복습 시험: /vocab/test?track_id=...&day=0&mode=review  (오늘 복습할 단어로 출제)
-  const urlMode: "day" | "review" = params.get("mode") === "review" ? "review" : "day";
+  // 복습 시험: /vocab/test?track_id=...&day=0&mode=review   (오늘 복습할 단어로 출제)
+  // 총 시험:   /vocab/test?track_id=...&day=-1&mode=total   (기본 30일마다, 한 달치 누적)
+  const urlMode: "day" | "review" | "total" =
+    params.get("mode") === "review" ? "review" : params.get("mode") === "total" ? "total" : "day";
   const useWrongOnly = params.get("wrong_only") === "true";
   const examId = params.get("exam_id");
 
@@ -42,7 +44,7 @@ export default function VocabTestPage() {
   const [activeBook, setActiveBook] = useState<string | null>(null);
   const [needPick, setNeedPick] = useState(false);
   // 교재를 고른 뒤, 오늘 복습할 단어가 있으면 "복습 시험 / Day 시험"을 고르게 한다
-  const [reviewChoice, setReviewChoice] = useState<{ trackId: string; due: number } | null>(null);
+  const [reviewChoice, setReviewChoice] = useState<{ trackId: string; due: number; totalDue: boolean } | null>(null);
   const [dayChosen, setDayChosen] = useState(false);
   const bookPicker =
     !urlTrackId && books.length > 1 ? (
@@ -173,6 +175,10 @@ export default function VocabTestPage() {
     }
 
     if (urlTrackId && urlDay) {
+      // 선택 화면에서 복습/총 시험으로 넘어온 경우 선택 화면 상태를 지운다 (안 지우면 주소만 바뀌고 선택 화면이 남는다)
+      setReviewChoice(null);
+      setNeedPick(false);
+      setNotReady(null);
       setTrackId(urlTrackId);
       setDayNumber(urlDay);
       (async () => {
@@ -219,15 +225,20 @@ export default function VocabTestPage() {
         // 오늘 복습할 단어가 있으면 먼저 "복습 / Day 시험" 선택 (Day 시험을 고른 뒤에는 건너뜀)
         if (!dayChosen) {
           let due = 0;
+          let totalDue = false;
           try {
             const rs = await fetch(`/api/vocab/test/review-summary?track_id=${encodeURIComponent(bookId)}`, { cache: "no-store" });
-            if (rs.ok) due = Number((await rs.json())?.due_count) || 0;
+            if (rs.ok) {
+              const j = await rs.json();
+              due = Number(j?.due_count) || 0;
+              totalDue = !!j?.total_exam?.due;
+            }
           } catch {
-            /* 복습 집계 실패는 무시 — 기존 흐름대로 */
+            /* 복습/총 시험 집계 실패는 무시 — 기존 흐름대로 */
           }
           if (cancelled) return;
-          if (due > 0) {
-            setReviewChoice({ trackId: bookId, due });
+          if (due > 0 || totalDue) {
+            setReviewChoice({ trackId: bookId, due, totalDue });
             return;
           }
         }
@@ -490,18 +501,34 @@ export default function VocabTestPage() {
           <div className="text-4xl">📝</div>
           <p className="text-gray-800 text-lg font-bold">오늘 볼 시험을 골라 주세요</p>
           <div className="space-y-3">
-            <button
-              onClick={() => router.push(`/vocab/test?track_id=${encodeURIComponent(reviewChoice.trackId)}&day=0&mode=review`)}
-              className="w-full rounded-2xl border-2 border-rose-300 bg-rose-50 px-5 py-4 text-left transition hover:bg-rose-100"
-            >
-              <span className="flex items-center justify-between gap-2">
-                <span className="text-base font-bold text-gray-900">📚 오늘의 복습</span>
-                <span className="rounded-full bg-rose-600 px-2.5 py-0.5 text-xs font-bold text-white">필수</span>
-              </span>
-              <span className="mt-1 block text-sm text-gray-600">
-                학습할 때 틀렸거나 몰랐던 단어 {reviewChoice.due}개를 다시 확인해요
-              </span>
-            </button>
+            {reviewChoice.due > 0 && (
+              <button
+                onClick={() => router.push(`/vocab/test?track_id=${encodeURIComponent(reviewChoice.trackId)}&day=0&mode=review`)}
+                className="w-full rounded-2xl border-2 border-rose-300 bg-rose-50 px-5 py-4 text-left transition hover:bg-rose-100"
+              >
+                <span className="flex items-center justify-between gap-2">
+                  <span className="text-base font-bold text-gray-900">📚 오늘의 복습</span>
+                  <span className="rounded-full bg-rose-600 px-2.5 py-0.5 text-xs font-bold text-white">필수</span>
+                </span>
+                <span className="mt-1 block text-sm text-gray-600">
+                  학습할 때 틀렸거나 몰랐던 단어 {reviewChoice.due}개를 다시 확인해요
+                </span>
+              </button>
+            )}
+            {reviewChoice.totalDue && (
+              <button
+                onClick={() => router.push(`/vocab/test?track_id=${encodeURIComponent(reviewChoice.trackId)}&day=-1&mode=total`)}
+                className="w-full rounded-2xl border-2 border-amber-300 bg-amber-50 px-5 py-4 text-left transition hover:bg-amber-100"
+              >
+                <span className="flex items-center justify-between gap-2">
+                  <span className="text-base font-bold text-gray-900">🏆 총 시험</span>
+                  <span className="rounded-full bg-amber-500 px-2.5 py-0.5 text-xs font-bold text-white">이번 달</span>
+                </span>
+                <span className="mt-1 block text-sm text-gray-600">
+                  그동안 배운 단어를 한꺼번에 점검하는 시험이에요
+                </span>
+              </button>
+            )}
             <button
               onClick={() => {
                 setReviewChoice(null);
@@ -610,7 +637,7 @@ export default function VocabTestPage() {
             results={results}
             questions={questions}
             onRetry={() =>
-              router.push(examId ? "/vocab/exams" : `/vocab/test?track_id=${trackId}&day=${dayNumber}${urlMode === "review" ? "&mode=review" : ""}`)
+              router.push(examId ? "/vocab/exams" : `/vocab/test?track_id=${trackId}&day=${dayNumber}${urlMode !== "day" ? `&mode=${urlMode}` : ""}`)
             }
             onHome={() => router.push("/vocab")}
           />

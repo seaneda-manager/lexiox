@@ -6,6 +6,12 @@ import { createServerClient } from "@supabase/ssr";
 import { type TestStartRequest, type TestStartResponse } from "@/models/vocab/test.types";
 import { NextRequest, NextResponse } from "next/server";
 import { getDueReviewItems } from "@/lib/vocab/review/reviewItems";
+import { getTestConfig } from "@/lib/vocab/test/testConfig";
+import {
+  DEFAULT_TOTAL_EXAM_WORDS,
+  getTotalExamStatus,
+  pickTotalExamWordIds,
+} from "@/lib/vocab/review/totalExam";
 
 /**
  * POST /api/vocab/test/start
@@ -111,6 +117,75 @@ export async function POST(req: NextRequest) {
         session_id: reviewSession.id,
         questions: reviewQuestions,
         total_count: reviewQuestions.length,
+      } as TestStartResponse);
+    }
+
+    // ── 총 시험(누적): 기본 30일마다. 마지막 총 시험 이후(또는 처음부터) 학습한 단어 + 복습에서 못 맞힌 단어 ──
+    if ((body as any).mode === "total") {
+      const { data: totalMembership } = await admin
+        .from("academy_class_students")
+        .select("class_id")
+        .eq("student_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const totalConfig = await getTestConfig(admin, user.id, totalMembership?.class_id ?? null);
+
+      const status = await getTotalExamStatus(admin, {
+        studentId,
+        authUserId: user.id,
+        trackId: track_id,
+        intervalDays: totalConfig.total_exam_interval_days,
+      });
+      if (!status.due) {
+        return NextResponse.json(
+          {
+            error: status.nextDueOn
+              ? `아직 총 시험 시기가 아니에요. (${status.nextDueOn} 이후)`
+              : "총 시험을 볼 학습 기록이 아직 없어요.",
+          },
+          { status: 403 }
+        );
+      }
+
+      const cap = totalConfig.max_words ?? DEFAULT_TOTAL_EXAM_WORDS;
+      // 마지막 총 시험 날(KST 0시) 이후에 학습한 Day 부터. 한 번도 안 봤으면 전체.
+      const sinceISO = status.lastTotalOn ? new Date(`${status.lastTotalOn}T00:00:00+09:00`).toISOString() : null;
+      const totalWordIds = await pickTotalExamWordIds(admin, {
+        studentId,
+        trackId: track_id,
+        sinceISO,
+        cap,
+      });
+      if (totalWordIds.length === 0) {
+        return NextResponse.json({ error: "총 시험에 낼 단어가 없어요" }, { status: 404 });
+      }
+
+      const { data: totalSession, error: totalSessionError } = await admin
+        .from("vocab_test_sessions")
+        .insert({
+          student_id: user.id,
+          class_id: totalMembership?.class_id ?? "",
+          track_id,
+          day_number: -1,
+          total_words_count: totalWordIds.length,
+          words_count: totalWordIds.length,
+          use_wrong_only: false,
+          status: "in_progress",
+          started_at: new Date().toISOString(),
+          mode: "total",
+        })
+        .select()
+        .single();
+      if (totalSessionError || !totalSession) {
+        return NextResponse.json({ error: "총 시험을 만들지 못했어요" }, { status: 500 });
+      }
+
+      const totalQuestions = await generateQuestions(admin, totalSession.id, totalWordIds, totalConfig.arrangement);
+      return NextResponse.json({
+        session_id: totalSession.id,
+        questions: totalQuestions,
+        total_count: totalQuestions.length,
       } as TestStartResponse);
     }
 
@@ -391,43 +466,6 @@ async function checkWrongOnlyOption(
   }
 
   return { ok: true, wordIds: attempts.wrong_word_ids };
-}
-
-async function getTestConfig(
-  admin: any,
-  userId: string,
-  classId: string | null
-): Promise<{
-  coverage_ratio: number;
-  arrangement: string;
-  max_words: number | null;
-}> {
-  // select("*") — max_words 컬럼이 아직 없는 DB에서도 깨지지 않게 (없으면 undefined → 자동)
-  const pick = async (scope: string, scopeId: string | null) => {
-    let q = admin.from("vocab_test_configs").select("*").eq("scope", scope);
-    q = scopeId ? q.eq("scope_id", scopeId) : q.is("scope_id", null);
-    const { data } = await q.limit(1).maybeSingle();
-    return data as any | null;
-  };
-
-  const global_config = await pick("global", null);
-  const class_config = classId ? await pick("class", classId) : null;
-  const student_config = await pick("student", userId);
-
-  let coverage_ratio = global_config?.coverage_ratio ?? 70;
-  let arrangement = global_config?.arrangement ?? "grouped";
-  let max_words: number | null = global_config?.max_words ?? null;
-
-  // 우선순위: 학생별 > 반별 > 전역
-  for (const c of [class_config, student_config]) {
-    if (!c) continue;
-    coverage_ratio = c.coverage_ratio ?? coverage_ratio;
-    arrangement = c.arrangement ?? arrangement;
-    // max_words 는 "비어 있음(자동)"도 의미가 있으므로, 이 설정에 컬럼이 존재할 때만 덮어쓴다
-    if ("max_words" in c && c.max_words != null) max_words = c.max_words;
-  }
-
-  return { coverage_ratio, arrangement, max_words: max_words != null ? Number(max_words) : null };
 }
 
 async function generateQuestions(

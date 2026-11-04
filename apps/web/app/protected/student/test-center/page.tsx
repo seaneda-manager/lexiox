@@ -2,6 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getServerSupabase, getServiceRoleClient } from "@/lib/supabase/server";
 import { countDueReviewByTrack } from "@/lib/vocab/review/reviewItems";
+import { getTotalExamStatus } from "@/lib/vocab/review/totalExam";
+import { getTestConfig } from "@/lib/vocab/test/testConfig";
 
 export const dynamic = "force-dynamic";
 
@@ -39,7 +41,7 @@ export default async function StudentTestCenterPage() {
 
   const uid = user.id;
 
-  const [reviewDue, vocabExams, expected, tests, daily] = await Promise.all([
+  const [reviewDue, totalDue, vocabExams, expected, tests, daily] = await Promise.all([
     // 오늘 복습할 단어 수 (prescreen 모름 + speed 오답 → 복습 회차 규칙)
     safeCount(async () => {
       const admin = getServiceRoleClient();
@@ -51,6 +53,41 @@ export default async function StudentTestCenterPage() {
       if (!st?.id) return 0;
       const byTrack = await countDueReviewByTrack(admin, { studentId: String(st.id) });
       return Object.values(byTrack).reduce((a, b) => a + b, 0);
+    }),
+    // 총 시험(기본 30일마다): 시기가 된 교재 수
+    safeCount(async () => {
+      const admin = getServiceRoleClient();
+      const { data: st } = await admin
+        .from("academy_students")
+        .select("id")
+        .or(`user_id.eq.${uid},auth_user_id.eq.${uid},profile_id.eq.${uid}`)
+        .maybeSingle();
+      if (!st?.id) return 0;
+      const { data: plans } = await admin
+        .from("student_vocab_plans")
+        .select("track_id")
+        .eq("student_id", String(st.id));
+      const trackIds = [...new Set(((plans as any[]) ?? []).map((p) => String(p.track_id)).filter(Boolean))];
+      if (trackIds.length === 0) return 0;
+      const { data: membership } = await admin
+        .from("academy_class_students")
+        .select("class_id")
+        .eq("student_id", uid)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const cfg = await getTestConfig(admin, uid, membership?.class_id ?? null);
+      let n = 0;
+      for (const trackId of trackIds) {
+        const status = await getTotalExamStatus(admin, {
+          studentId: String(st.id),
+          authUserId: uid,
+          trackId,
+          intervalDays: cfg.total_exam_interval_days,
+        });
+        if (status.due) n++;
+      }
+      return n;
     }),
     // 선생님이 낸 단어 시험: 배정됐지만 아직 제출/채점 안 된 것
     safeCount(async () => {
@@ -118,6 +155,16 @@ export default async function StudentTestCenterPage() {
       pending: reviewDue,
       pendingLabel: "복습할 단어",
       tone: "bg-rose-100",
+    },
+    {
+      key: "vocab-total",
+      href: "/vocab/test",
+      icon: "🏆",
+      title: "총 시험",
+      desc: "그동안 배운 단어를 한꺼번에 점검해요. 기본 한 달에 한 번 열려요.",
+      pending: totalDue,
+      pendingLabel: "볼 수 있는 시험",
+      tone: "bg-amber-100",
     },
     {
       key: "vocab-exams",

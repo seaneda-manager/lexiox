@@ -27,7 +27,8 @@ export async function GET(req: NextRequest) {
     const trackId = req.nextUrl.searchParams.get("track_id");
     const day = Number(req.nextUrl.searchParams.get("day"));
     const wrongOnly = req.nextUrl.searchParams.get("wrong_only") === "true";
-    const isReview = req.nextUrl.searchParams.get("mode") === "review";
+    const modeParam = req.nextUrl.searchParams.get("mode");
+    const examMode = modeParam === "review" || modeParam === "total" ? modeParam : null;
     if (!trackId || !Number.isFinite(day)) return NextResponse.json({ session: null });
 
     const admin = createClient(
@@ -45,8 +46,9 @@ export async function GET(req: NextRequest) {
       .eq("status", "in_progress")
       .eq("use_wrong_only", wrongOnly)
       .gte("started_at", since);
-    // 복습 시험은 day_number 0 + mode=review. (mode 컬럼이 없는 DB에서 Day 시험 이어하기가 깨지지 않게 복습일 때만 필터)
-    if (isReview) sessionQuery = sessionQuery.eq("mode", "review");
+    // 복습 시험은 day_number 0 + mode=review, 총 시험은 day_number -1 + mode=total.
+    // (mode 컬럼이 없는 DB에서 Day 시험 이어하기가 깨지지 않게 복습/총 시험일 때만 필터)
+    if (examMode) sessionQuery = sessionQuery.eq("mode", examMode);
     const { data: session } = await sessionQuery
       .order("started_at", { ascending: false })
       .limit(1)

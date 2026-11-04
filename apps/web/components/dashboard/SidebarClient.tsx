@@ -201,25 +201,29 @@ export default function SidebarClient({ role, program = null, hasHiNaesin = fals
   // 오늘 복습할 단어 수 → "단어 시험" 메뉴 배지 (학생만). 이동할 때마다 부르되 1분 안에는 다시 부르지 않는다.
   const [reviewDue, setReviewDue] = useState(0);
   const lastReviewFetch = useRef(0);
+  // 이동 중 요청이 취소돼도 결과가 사라지지 않게, 언마운트 여부만 추적한다. (실패하면 다음 이동 때 다시 시도)
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
   useEffect(() => {
     if (role !== 'student') return;
     const now = Date.now();
-    if (now - lastReviewFetch.current < 60_000 && lastReviewFetch.current !== 0) return;
+    if (lastReviewFetch.current !== 0 && now - lastReviewFetch.current < 60_000) return;
     lastReviewFetch.current = now;
-    let cancelled = false;
     (async () => {
       try {
         const r = await fetch('/api/vocab/test/review-summary', { cache: 'no-store' });
-        if (!r.ok) return;
+        if (!r.ok) throw new Error('not ok');
         const d = await r.json();
-        if (!cancelled) setReviewDue(Number(d?.due_count) || 0);
+        if (mountedRef.current) setReviewDue(Number(d?.due_count) || 0);
       } catch {
-        /* 배지는 없어도 된다 */
+        lastReviewFetch.current = 0; // 배지는 없어도 되지만, 다음 이동 때 다시 시도
       }
     })();
-    return () => {
-      cancelled = true;
-    };
   }, [role, pathname]);
   const badgeFor = (href?: string): number => (href === '/vocab/test' ? reviewDue : 0);
 

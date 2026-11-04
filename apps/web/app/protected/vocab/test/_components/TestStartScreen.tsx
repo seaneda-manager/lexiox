@@ -4,8 +4,8 @@ export interface TestStartScreenProps {
   trackId: string;
   dayNumber: number;
   useWrongOnly: boolean;
-  /** review = 오늘의 복습 시험 */
-  mode?: "day" | "review";
+  /** review = 오늘의 복습 시험, total = 총 시험 */
+  mode?: "day" | "review" | "total";
   onStart: () => void;
 }
 
@@ -17,14 +17,15 @@ export default function TestStartScreen({
   onStart,
 }: TestStartScreenProps) {
   const isReview = mode === "review";
+  const isTotal = mode === "total";
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh]">
       <div className="max-w-md text-center space-y-6">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold text-gray-900">{isReview ? "복습 시험" : "단어 시험"}</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{isReview ? "복습 시험" : isTotal ? "총 시험" : "단어 시험"}</h1>
           <p className="text-lg text-gray-600">
-            {isReview ? "오늘의 복습" : `Day ${dayNumber}`}
-            {!isReview && useWrongOnly && " - 틀린 것만"}
+            {isReview ? "오늘의 복습" : isTotal ? "누적 점검" : `Day ${dayNumber}`}
+            {!isReview && !isTotal && useWrongOnly && " - 틀린 것만"}
           </p>
         </div>
 
@@ -43,7 +44,9 @@ export default function TestStartScreen({
             <p className="text-sm text-gray-500">
               {isReview
                 ? "학습할 때 틀렸거나 몰랐던 단어 중, 오늘 복습할 단어들이 나와요."
-                : useWrongOnly
+                : isTotal
+                  ? "그동안 배운 단어 중 약했던 단어를 먼저, 나머지는 골고루 나와요."
+                  : useWrongOnly
                   ? "학습에서 틀린 단어들만 시험에 포함됩니다."
                   : "학습에서 약했던 단어 위주로 출제돼요."}
             </p>

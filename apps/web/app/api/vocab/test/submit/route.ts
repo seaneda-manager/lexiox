@@ -7,6 +7,7 @@ import { type TestSubmitRequest, type TestSubmitResponse } from "@/models/vocab/
 import { NextRequest, NextResponse } from "next/server";
 import { POINTS_BASE } from "@/lib/vocab/test/scoring";
 import { applyReviewResults } from "@/lib/vocab/review/reviewItems";
+import { applyTotalExamResults } from "@/lib/vocab/review/totalExam";
 
 /**
  * POST /api/vocab/test/submit
@@ -127,9 +128,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 4.5. 복습 시험이면 단어별 결과를 복습 항목에 반영 (회차 진행 / 졸업 / 3회차 투입)
+    // 4.5. 복습/총 시험이면 단어별 결과를 복습 항목에 반영
+    //      복습: 회차 진행 / 졸업 / 3회차 투입.  총 시험: 복습에서 끝내 못 맞혔던(lapsed) 단어를 맞히면 졸업.
     //      한 단어에 문제가 여러 유형으로 나가므로, 그 단어의 문제를 전부 맞혔을 때만 "맞힘".
-    if ((session as any).mode === "review") {
+    if ((session as any).mode === "review" || (session as any).mode === "total") {
       try {
         const { data: studentRow } = await admin
           .from("academy_students")
@@ -143,10 +145,12 @@ export async function POST(req: NextRequest) {
           const wid = String(q.word_id);
           perWord.set(wid, (perWord.get(wid) ?? true) && q.is_correct === true);
         }
-        await applyReviewResults(admin, {
-          studentId: academyStudentId,
-          results: [...perWord.entries()].map(([wordId, correct]) => ({ wordId, correct })),
-        });
+        const results = [...perWord.entries()].map(([wordId, correct]) => ({ wordId, correct }));
+        if ((session as any).mode === "total") {
+          await applyTotalExamResults(admin, { studentId: academyStudentId, results });
+        } else {
+          await applyReviewResults(admin, { studentId: academyStudentId, results });
+        }
       } catch (e) {
         console.warn("Failed to apply review results:", e);
         // non-fatal: 시험 결과는 이미 저장됨

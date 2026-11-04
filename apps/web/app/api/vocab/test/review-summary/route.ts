@@ -5,6 +5,8 @@ import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
 import { countDueReviewByTrack } from "@/lib/vocab/review/reviewItems";
+import { getTotalExamStatus } from "@/lib/vocab/review/totalExam";
+import { getTestConfig } from "@/lib/vocab/test/testConfig";
 
 /**
  * GET /api/vocab/test/review-summary[?track_id=...]
@@ -43,7 +45,34 @@ export async function GET(req: NextRequest) {
 
     const byTrack = await countDueReviewByTrack(admin, { studentId });
     const trackId = req.nextUrl.searchParams.get("track_id");
-    if (trackId) return NextResponse.json({ due_count: byTrack[trackId] ?? 0 });
+    if (trackId) {
+      // 교재별일 때는 총 시험 시기도 함께 알려 준다 (기본 30일마다, 설정으로 변경)
+      let total: { due: boolean; next_due_on: string | null; interval_days: number } = {
+        due: false,
+        next_due_on: null,
+        interval_days: 30,
+      };
+      try {
+        const { data: membership } = await admin
+          .from("academy_class_students")
+          .select("class_id")
+          .eq("student_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        const cfg = await getTestConfig(admin, user.id, membership?.class_id ?? null);
+        const st = await getTotalExamStatus(admin, {
+          studentId,
+          authUserId: user.id,
+          trackId,
+          intervalDays: cfg.total_exam_interval_days,
+        });
+        total = { due: st.due, next_due_on: st.nextDueOn, interval_days: st.intervalDays };
+      } catch {
+        /* 총 시험 집계 실패는 무시 */
+      }
+      return NextResponse.json({ due_count: byTrack[trackId] ?? 0, total_exam: total });
+    }
 
     const total = Object.values(byTrack).reduce((a, b) => a + b, 0);
     return NextResponse.json({ due_count: total, by_track: byTrack });

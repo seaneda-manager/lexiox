@@ -31,6 +31,7 @@ const EDITABLE_FIELDS = new Set([
   "hints_enabled",
   "max_hint_level",
   "max_words",
+  "total_exam_interval_days",
 ]);
 
 /**
@@ -114,6 +115,12 @@ export async function PUT(req: NextRequest) {
       const n = Number(value);
       if (!Number.isInteger(n) || n < 1 || n > 500) {
         return NextResponse.json({ error: "max_words must be 1~500 or null" }, { status: 400 });
+      }
+    }
+    if (field === "total_exam_interval_days" && value !== null) {
+      const n = Number(value);
+      if (!Number.isInteger(n) || n < 7 || n > 180) {
+        return NextResponse.json({ error: "total_exam_interval_days must be 7~180 or null" }, { status: 400 });
       }
     }
 
