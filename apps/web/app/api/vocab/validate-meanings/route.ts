@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     const prompt = `You are a Korean-English vocabulary validator. Analyze these word-meaning pairs and identify issues.
 
 VALIDATION RULES:
-1. Comma (,) separates multiple meanings
+1. Comma (,) or semicolon (;) separates multiple meanings (both are valid)
 2. Parentheses (...) are modifiers/examples, NOT separate meanings
    - "(시간, 돈 등을) 소비하다" = 1 valid meaning
    - "(명사)" alone without other meaning = ERROR
@@ -63,7 +63,7 @@ VALIDATION RULES:
 WORD-MEANING PAIRS TO VALIDATE:
 ${wordsJson}
 
-For EACH pair, identify issues (if any). Return ONLY valid JSON (no markdown):
+Return ONLY the pairs that have issues (omit pairs with no problem). Return ONLY valid JSON (no markdown), or [] if none:
 [
   {
     "index": 0,
@@ -92,7 +92,7 @@ Return ONLY the JSON array, no explanation.`;
 
     const message = await client.messages.create({
       model: "claude-sonnet-4-6",
-      max_tokens: 2000,
+      max_tokens: 4000,
       messages: [
         {
           role: "user",
@@ -112,7 +112,9 @@ Return ONLY the JSON array, no explanation.`;
       throw new Error("Could not find JSON in response");
     }
 
-    const issues: ValidationIssue[] = JSON.parse(jsonMatch[0]);
+    const issues: ValidationIssue[] = (JSON.parse(jsonMatch[0]) as ValidationIssue[]).filter(
+      (i) => Array.isArray(i.issues) && i.issues.length > 0 && (i.severity === "error" || i.severity === "warning"),
+    );
 
     // Calculate summary
     const hasErrors = issues.some((i) => i.severity === "error");

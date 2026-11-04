@@ -258,36 +258,40 @@ async function ensureWords(admin: any, rows: any[]) {
   };
 }
 
-async function createOrGetSetId(admin: any, slug: string, title?: string | null, description?: string | null, track_id?: string | null) {
-  // try select first
-  const sel = await admin.from("vocab_sets").select("id,slug").eq("slug", slug).limit(1);
-  if (!sel.error && Array.isArray(sel.data) && sel.data[0]?.id) {
-    return String(sel.data[0].id);
-  }
+function isMissingColumn(err: any): boolean {
+  const msg = String(err?.message ?? "");
+  return err?.code === "42703" || err?.code === "PGRST204" || /could not find the '.*' column|does not exist/i.test(msg);
+}
 
-  // insert
-  const ins = await admin
+async function createOrGetSetId(admin: any, slug: string, title?: string | null, description?: string | null, track_id?: string | null) {
+  const setTitle = title ?? slug;
+
+  // 1) slug 컬럼이 있는 DB: slug 기준
+  const sel = await admin.from("vocab_sets").select("id").eq("slug", slug).limit(1);
+  if (!sel.error) {
+    if (Array.isArray(sel.data) && sel.data[0]?.id) return String(sel.data[0].id);
+    const ins = await admin
+      .from("vocab_sets")
+      .insert({ slug, title: setTitle, description: description ?? null, track_id: track_id ?? null })
+      .select("id")
+      .limit(1);
+    if (!ins.error && Array.isArray(ins.data) && ins.data[0]?.id) return String(ins.data[0].id);
+    const sel2 = await admin.from("vocab_sets").select("id").eq("slug", slug).limit(1);
+    if (!sel2.error && Array.isArray(sel2.data) && sel2.data[0]?.id) return String(sel2.data[0].id);
+    throw new Error(`createOrGetSetId failed: ${toErrMsg(ins.error ?? sel2.error)}`);
+  }
+  if (!isMissingColumn(sel.error)) throw new Error(`createOrGetSetId failed: ${toErrMsg(sel.error)}`);
+
+  // 2) slug 컬럼이 없는 DB: title 기준 (같은 제목이면 기존 세트 재사용)
+  const byTitle = await admin.from("vocab_sets").select("id").eq("title", setTitle).limit(1);
+  if (!byTitle.error && Array.isArray(byTitle.data) && byTitle.data[0]?.id) return String(byTitle.data[0].id);
+  const ins2 = await admin
     .from("vocab_sets")
-    .insert({
-      slug,
-      title: title ?? slug,
-      description: description ?? null,
-      track_id: track_id ?? null,
-    })
+    .insert({ title: setTitle, description: description ?? null, track_id: track_id ?? null })
     .select("id")
     .limit(1);
-
-  if (!ins.error && Array.isArray(ins.data) && ins.data[0]?.id) {
-    return String(ins.data[0].id);
-  }
-
-  // if insert failed (duplicate), retry select
-  const sel2 = await admin.from("vocab_sets").select("id,slug").eq("slug", slug).limit(1);
-  if (!sel2.error && Array.isArray(sel2.data) && sel2.data[0]?.id) {
-    return String(sel2.data[0].id);
-  }
-
-  throw new Error(`createOrGetSetId failed: ${toErrMsg(ins.error ?? sel.error ?? sel2.error)}`);
+  if (!ins2.error && Array.isArray(ins2.data) && ins2.data[0]?.id) return String(ins2.data[0].id);
+  throw new Error(`createOrGetSetId failed: ${toErrMsg(ins2.error ?? byTitle.error)}`);
 }
 
 export type ImportWisewordWordsFromCsvTextInput = { csvText: string };
@@ -339,7 +343,7 @@ export async function importWisewordWordsAndCreateSetFromCsvText(
     diag.steps.push({ step: "setResolved", setId });
     const del = await admin.from("vocab_set_items").delete().eq("set_id", setId);
     diag.steps.push({ step: "deleteSetItems", ok: !del.error });
-    const items = ensured.orderedWordIds.map((word_id, i) => ({ set_id: setId, word_id, sort: i + 1 }));
+    const items = ensured.orderedWordIds.map((word_id, i) => ({ set_id: setId, word_id, sort_order: i + 1, order_no: i + 1 }));
     let insertedSetItems = 0;
     for (const group of chunk(items, 200)) {
       const ins = await admin.from("vocab_set_items").insert(group);
@@ -418,7 +422,8 @@ export async function importWisewordWordsAndCreateSetFromJsonText(
     const items = ensured.orderedWordIds.map((word_id, i) => ({
       set_id: setId,
       word_id,
-      sort: i + 1,
+      sort_order: i + 1,
+      order_no: i + 1,
     }));
 
     let insertedSetItems = 0;

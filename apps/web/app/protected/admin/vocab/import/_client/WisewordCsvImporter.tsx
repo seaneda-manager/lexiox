@@ -90,14 +90,35 @@ export default function WisewordCsvImporter({
         return;
       }
 
-      const response = await fetch("/api/vocab/validate-meanings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ words }),
+      // 한 번에 많이 보내면 AI 응답이 잘리므로 나눠서 검증
+      const CHUNK = 50;
+      const issues: any[] = [];
+      for (let i = 0; i < words.length; i += CHUNK) {
+        const response = await fetch("/api/vocab/validate-meanings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ words: words.slice(i, i + CHUNK) }),
+        });
+        const data = await response.json().catch(() => null);
+        if (!response.ok || !data?.ok) {
+          setValidationResult({
+            ok: false,
+            error: `${i + 1}~${Math.min(i + CHUNK, words.length)}번째 검증 실패: ${data?.error ?? response.status}`,
+          });
+          return;
+        }
+        for (const it of data.issues ?? []) issues.push({ ...it, index: i + it.index });
+      }
+      setValidationResult({
+        ok: true,
+        issues,
+        summary: {
+          total: words.length,
+          valid: words.length - issues.length,
+          hasErrors: issues.some((x) => x.severity === "error"),
+          hasWarnings: issues.some((x) => x.severity === "warning"),
+        },
       });
-
-      const data = await response.json();
-      setValidationResult(data);
     } finally {
       setBusy(null);
     }
@@ -308,6 +329,9 @@ acquire,acquire,verb,획득하다,to get or obtain something,She acquired new sk
                 : `⚠️ ${validationResult.issues.filter((i: any) => i.severity === "error").length}개 에러, ${validationResult.issues.filter((i: any) => i.severity === "warning").length}개 경고`
               : "❌ 검증 실패"}
           </div>
+          {!validationResult.ok && validationResult.error && (
+            <div className="mt-2 text-sm text-rose-800 font-mono">{validationResult.error}</div>
+          )}
           {validationResult.ok && validationResult.summary && (
             <div className="mt-2 text-sm text-slate-700">
               총 {validationResult.summary.total}개 중 {validationResult.summary.valid}개 정상 ·
