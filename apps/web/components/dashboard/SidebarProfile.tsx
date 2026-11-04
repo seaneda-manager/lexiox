@@ -1,15 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { Settings } from "lucide-react";
+import { CircleHelp, Settings } from "lucide-react";
 import Avatar from "@/components/Avatar";
 
 interface Props {
   name: string;
   avatarUrl: string | null;
+  /** 주어지면 설정 옆에 작은 도움말(가이드 다시보기) 아이콘을 보여준다 */
+  guideHref?: string;
 }
 
-export default function SidebarProfile({ name, avatarUrl }: Props) {
+export default function SidebarProfile({ name, avatarUrl, guideHref }: Props) {
   return (
     <div className="mx-2 mb-2 flex items-center justify-between gap-2 rounded-xl border border-neutral-200 bg-white p-2.5 shadow-sm">
       <Link href="/profile" className="flex min-w-0 flex-1 items-center gap-2.5 group">
@@ -21,13 +23,26 @@ export default function SidebarProfile({ name, avatarUrl }: Props) {
           <p className="text-[11px] text-neutral-400">프로필 편집</p>
         </div>
       </Link>
-      <Link
-        href="/settings"
-        className="shrink-0 rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 transition-colors"
-        aria-label="설정"
-      >
-        <Settings className="h-4 w-4" />
-      </Link>
+      <div className="flex shrink-0 items-center">
+        {guideHref && (
+          <Link
+            href={guideHref}
+            className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 transition-colors"
+            aria-label="가이드 다시보기"
+            title="가이드 다시보기"
+          >
+            <CircleHelp className="h-4 w-4" />
+          </Link>
+        )}
+        <Link
+          href="/settings"
+          className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 transition-colors"
+          aria-label="설정"
+          title="설정"
+        >
+          <Settings className="h-4 w-4" />
+        </Link>
+      </div>
     </div>
   );
 }

@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ChevronRight, ChevronDown,
   LayoutDashboard, BookOpen, Headphones, Mic, PenLine, BookText,
   ClipboardList, FileText, GraduationCap, Library, List, Download,
   Upload, Send, BarChart2, Home, UserPlus, CheckSquare, Users,
   ClipboardCheck, PlayCircle, Gift, ShieldCheck, Globe, Settings, Calendar, School, Gamepad2, History,
+  Video, Dumbbell, Repeat, Target, TrendingUp, Trophy, Gauge, CalendarCheck, SearchCheck, FileCheck, Zap, RotateCcw,
   type LucideProps,
 } from 'lucide-react';
 import { useLang } from '@/contexts/LangContext';
@@ -203,20 +204,38 @@ export default function SidebarClient({ role, program = null, hasHiNaesin = fals
     };
   });
 
+  // 학생이 접어 둔 섹션을 기억한다 (브라우저별). 저장소를 못 쓰는 환경에서도 동작해야 하므로 전부 try/catch.
+  const OPEN_KEY = `lx_sidebar_open_${role}`;
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(OPEN_KEY);
+      if (raw) setOpenSections((prev) => ({ ...prev, ...JSON.parse(raw) }));
+    } catch {
+      /* ignore */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const toggleSection = (section: string) =>
-    setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
+    setOpenSections((prev) => {
+      const next = { ...prev, [section]: !(prev[section] ?? true) };
+      try {
+        localStorage.setItem(OPEN_KEY, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
 
   // ── Active link detection ─────────────────────────────────────
+  // 선택 표시는 "가장 구체적으로 일치하는 메뉴 하나"만. (예전엔 /student 가 /student/home 의 앞부분이라
+  // "홈"과 "대시보드"가 동시에 켜지고, /hi-naesin 과 /hi-naesin/passages 도 같이 켜졌다)
+  // activeHref 는 아래 items 가 만들어진 뒤에 계산한다 — isActive 는 렌더 중에만 호출되므로 안전하다.
   const isActive = (href?: string) => {
     if (!href) return false;
-    const cur = pathname;
-    const tgt = normalizePath(href);
-    if ((cur === '/' || cur === '') && tgt === '/home') return true;
-    if (cur === tgt) return true;
-    if (cur.startsWith(tgt + '/')) return true;
-    if (cur !== '/' && tgt !== '/' && cur.endsWith(tgt)) return true;
-    return false;
+    return normalizePath(href) === activeHrefRef.current;
   };
+  const activeHrefRef = { current: '' as string };
 
   // ── Nav items: per role + per program ────────────────────────
   const items = useMemo<NavItem[]>(() => {
@@ -326,12 +345,12 @@ export default function SidebarClient({ role, program = null, hasHiNaesin = fals
         { section: '내 현황', href: '/student/home', label: '홈', icon: Home },
         { section: '내 현황', href: '/student/schedule', label: '스케줄', icon: Calendar },
 
-        { section: 'Hi-내신', href: '/hi-naesin',        label: 'Hi-내신 드릴', icon: PlayCircle },
+        { section: 'Hi-내신', href: '/hi-naesin',        label: 'Hi-내신 드릴', icon: Target },
         { section: 'Hi-내신', href: '/hi-naesin/passages', label: 'Reading', skill: 'reading' as SkillColor },
         { section: 'Hi-내신', href: '/hi-naesin/stats',  label: '학습 현황', icon: BarChart2 },
-        { section: 'Hi-내신', href: '/hi-naesin/review', label: '직전정리', icon: BookOpen },
+        { section: 'Hi-내신', href: '/hi-naesin/review', label: '직전정리', icon: Zap },
 
-        { section: '내신' as NavSection, href: '/naesin/middle', label: '중학 내신 드릴', icon: ClipboardList },
+        { section: '내신' as NavSection, href: '/naesin/middle', label: '중학 내신 드릴', icon: GraduationCap },
 
         { section: 'Jr.' as NavSection, href: '/jr/drill', label: 'Jr. 드릴', icon: PlayCircle },
         { section: 'Jr.' as NavSection, href: '/jr',       label: 'Jr. 문법·학습', icon: BookText },
@@ -340,16 +359,16 @@ export default function SidebarClient({ role, program = null, hasHiNaesin = fals
         { section: '학습', href: '/langgym', label: 'LXGym', icon: Gamepad2 },
 
         { section: '어휘', href: '/vocab/hub-new', label: '단어 학습', icon: Library },
-        { section: '어휘', href: '/vocab/test', label: '단어 시험', icon: FileText },
+        { section: '어휘', href: '/vocab/test', label: '단어 시험', icon: FileCheck },
         { section: '어휘', href: '/vocab/exams', label: '선생님 시험', icon: ClipboardList },
 
         { section: '숙제', href: '/student/exams',    label: '예상문제', icon: CheckSquare },
-        { section: '숙제', href: '/student/homework', label: '숙제 채점', icon: ClipboardCheck },
-        { section: '숙제', href: '/student/deepcheck', label: 'DeepCheck', icon: BookText },
-        { section: '숙제', href: '/student/level-test', label: '레벨 테스트', icon: BarChart2 },
-        { section: '숙제', href: '/student/lectures', label: '강의', icon: PlayCircle },
+        { section: '숙제', href: '/student/homework', label: '내 숙제', icon: ClipboardCheck },
+        { section: '숙제', href: '/student/deepcheck', label: 'DeepCheck', icon: SearchCheck },
+        { section: '숙제', href: '/student/level-test', label: '레벨 테스트', icon: Gauge },
+        { section: '숙제', href: '/student/lectures', label: '강의', icon: Video },
 
-        { section: '설정', href: '/student/progress', label: '포인트 히스토리', icon: BarChart2 },
+        { section: '설정', href: '/student/progress', label: '포인트 히스토리', icon: Trophy },
         { section: '설정', href: '/student/perks',    label: 'Perk 샵', icon: Gift },
         { section: '설정', href: '/settings',         label: '설정', icon: Settings },
       ];
@@ -365,36 +384,36 @@ export default function SidebarClient({ role, program = null, hasHiNaesin = fals
         { section: '학습', href: '/updated-listening',      label: 'Listening', icon: Headphones },
         { section: '학습', href: '/speaking-2026',          label: 'Speaking',  icon: Mic },
         { section: '학습', href: '/updated-writing',        label: 'Writing',   icon: PenLine },
-        { section: '학습', href: '/student/daily-tests',    label: 'Daily Tests', icon: CheckSquare },
+        { section: '학습', href: '/student/daily-tests',    label: 'Daily Tests', icon: CalendarCheck },
         { section: '학습', href: '/vocab/hub-new',              label: '단어 학습', icon: Library },
-        { section: '학습', href: '/vocab/test',                 label: '단어 시험', icon: FileText },
+        { section: '학습', href: '/vocab/test',                 label: '단어 시험', icon: FileCheck },
         { section: '학습', href: '/vocab/exams', label: '선생님 시험', icon: ClipboardList },
         { section: '학습', href: '/grammar-2026',           label: 'Lexiox Gram', icon: BookText },
-        { section: '학습', href: '/speaking-2026/drills',   label: 'Speaking 훈련', icon: PlayCircle },
-        { section: '학습', href: '/speaking-2026/shadowing', label: '쉐도잉 게임', icon: PlayCircle },
+        { section: '학습', href: '/speaking-2026/drills',   label: 'Speaking 훈련', icon: Dumbbell },
+        { section: '학습', href: '/speaking-2026/shadowing', label: '쉐도잉 게임', icon: Repeat },
         { section: '학습', href: '/langgym',                label: 'LXGym', icon: Gamepad2 },
 
         { section: '내 현황', href: '/student',            label: '대시보드', icon: LayoutDashboard },
         { section: '내 현황', href: '/student/exams',       label: '예상문제', icon: CheckSquare },
-        { section: '내 현황', href: '/student/homework',   label: '숙제 채점', icon: ClipboardCheck },
-        { section: '내 현황', href: '/student/deepcheck', label: 'DeepCheck', icon: BookText },
-        { section: '내 현황', href: '/student/level-test', label: '레벨 테스트', icon: BarChart2 },
-        { section: '내 현황', href: '/student/lectures',  label: '강의', icon: PlayCircle },
+        { section: '내 현황', href: '/student/homework',   label: '내 숙제', icon: ClipboardCheck },
+        { section: '내 현황', href: '/student/deepcheck', label: 'DeepCheck', icon: SearchCheck },
+        { section: '내 현황', href: '/student/level-test', label: '레벨 테스트', icon: Gauge },
+        { section: '내 현황', href: '/student/lectures',  label: '강의', icon: Video },
         { section: '내 현황', href: '/student/tests',      label: '시험 목록', icon: FileText },
-        { section: '내 현황', href: '/student/review',     label: '복습', icon: BookOpen },
-        { section: '내 현황', href: '/student/progress',   label: '진도 현황', icon: BarChart2 },
+        { section: '내 현황', href: '/student/review',     label: '복습', icon: RotateCcw },
+        { section: '내 현황', href: '/student/progress',   label: '진도 현황', icon: TrendingUp },
 
         // program은 'toefl'이지만 Hi-내신 과제를 별도로 배정받은 경우 — program 필드
         // 하나만으로는 복수 배정을 표현 못 해서, 실제 배정 데이터가 있을 때만 보여준다.
         ...(hasHiNaesin ? [
-          { section: 'Hi-내신' as NavSection, href: '/hi-naesin',        label: 'Hi-내신 드릴', icon: PlayCircle },
+          { section: 'Hi-내신' as NavSection, href: '/hi-naesin',        label: 'Hi-내신 드릴', icon: Target },
           { section: 'Hi-내신' as NavSection, href: '/hi-naesin/passages', label: 'Reading', skill: 'reading' as SkillColor },
           { section: 'Hi-내신' as NavSection, href: '/hi-naesin/stats',  label: '학습 현황', icon: BarChart2 },
-          { section: 'Hi-내신' as NavSection, href: '/hi-naesin/review', label: '직전정리', icon: BookOpen },
+          { section: 'Hi-내신' as NavSection, href: '/hi-naesin/review', label: '직전정리', icon: Zap },
         ] : []),
 
         ...(hasMiddleNaesin ? [
-          { section: '내신' as NavSection, href: '/naesin/middle', label: '중학 내신 드릴', icon: ClipboardList },
+          { section: '내신' as NavSection, href: '/naesin/middle', label: '중학 내신 드릴', icon: GraduationCap },
         ] : []),
 
         { section: '설정', href: '/settings', label: '설정', icon: Settings },
@@ -407,39 +426,68 @@ export default function SidebarClient({ role, program = null, hasHiNaesin = fals
       { section: '내 학습', href: '/student',           label: '대시보드', icon: LayoutDashboard },
       { section: '내 학습', href: '/student/exams',     label: '예상문제', icon: CheckSquare },
       { section: '내 학습', href: '/student/tests',     label: '시험 목록', icon: FileText },
-      { section: '내 학습', href: '/student/review',    label: '복습', icon: BookOpen },
-      { section: '내 학습', href: '/student/progress',  label: '진도 현황', icon: BarChart2 },
+      { section: '내 학습', href: '/student/review',    label: '복습', icon: RotateCcw },
+      { section: '내 학습', href: '/student/progress',  label: '진도 현황', icon: TrendingUp },
       { section: '내 학습', href: '/student/homework',  label: '숙제', icon: ClipboardCheck },
-      { section: '내 학습', href: '/student/deepcheck', label: 'DeepCheck', icon: BookText },
-      { section: '내 학습', href: '/student/level-test', label: '레벨 테스트', icon: BarChart2 },
-      { section: '내 학습', href: '/student/lectures',  label: '강의', icon: PlayCircle },
+      { section: '내 학습', href: '/student/deepcheck', label: 'DeepCheck', icon: SearchCheck },
+      { section: '내 학습', href: '/student/level-test', label: '레벨 테스트', icon: Gauge },
+      { section: '내 학습', href: '/student/lectures',  label: '강의', icon: Video },
 
       { section: 'Updated TOEFL' as NavSection, href: '/updated-reading',        label: 'Reading',   icon: BookOpen },
       { section: 'Updated TOEFL' as NavSection, href: '/updated-listening',      label: 'Listening', icon: Headphones },
       { section: 'Updated TOEFL' as NavSection, href: '/speaking-2026',          label: 'Speaking',  icon: Mic },
       { section: 'Updated TOEFL' as NavSection, href: '/updated-writing',        label: 'Writing',   icon: PenLine },
       { section: 'Updated TOEFL' as NavSection, href: '/vocab/hub-new',              label: '단어 학습', icon: Library },
-      { section: 'Updated TOEFL' as NavSection, href: '/vocab/test',                 label: '단어 시험', icon: FileText },
+      { section: 'Updated TOEFL' as NavSection, href: '/vocab/test',                 label: '단어 시험', icon: FileCheck },
       { section: 'Updated TOEFL' as NavSection, href: '/vocab/exams', label: '선생님 시험', icon: ClipboardList },
       { section: 'Updated TOEFL' as NavSection, href: '/grammar-2026',           label: 'Lexiox Gram', icon: BookText },
-      { section: 'Updated TOEFL' as NavSection, href: '/speaking-2026/drills',   label: 'Speaking 훈련', icon: PlayCircle },
-      { section: 'Updated TOEFL' as NavSection, href: '/speaking-2026/shadowing', label: '쉐도잉 게임', icon: PlayCircle },
+      { section: 'Updated TOEFL' as NavSection, href: '/speaking-2026/drills',   label: 'Speaking 훈련', icon: Dumbbell },
+      { section: 'Updated TOEFL' as NavSection, href: '/speaking-2026/shadowing', label: '쉐도잉 게임', icon: Repeat },
       { section: 'Updated TOEFL' as NavSection, href: '/langgym',                label: 'LXGym', icon: Gamepad2 },
 
       ...(hasHiNaesin ? [
-        { section: 'Hi-내신' as NavSection, href: '/hi-naesin',        label: 'Hi-내신 드릴', icon: PlayCircle },
+        { section: 'Hi-내신' as NavSection, href: '/hi-naesin',        label: 'Hi-내신 드릴', icon: Target },
         { section: 'Hi-내신' as NavSection, href: '/hi-naesin/passages', label: 'Reading', skill: 'reading' as SkillColor },
         { section: 'Hi-내신' as NavSection, href: '/hi-naesin/stats',  label: '학습 현황', icon: BarChart2 },
-        { section: 'Hi-내신' as NavSection, href: '/hi-naesin/review', label: '직전정리', icon: BookOpen },
+        { section: 'Hi-내신' as NavSection, href: '/hi-naesin/review', label: '직전정리', icon: Zap },
       ] : []),
 
       ...(hasMiddleNaesin ? [
-        { section: '내신' as NavSection, href: '/naesin/middle', label: '중학 내신 드릴', icon: ClipboardList },
+        { section: '내신' as NavSection, href: '/naesin/middle', label: '중학 내신 드릴', icon: GraduationCap },
       ] : []),
 
       { section: '설정', href: '/settings', label: '설정', icon: Settings },
     ];
   }, [role, program, hasHiNaesin, hasMiddleNaesin]);
+
+  // ── 현재 경로에 해당하는 메뉴 하나 결정 (가장 긴 일치) ───────────
+  {
+    const cur = pathname;
+    const hrefs = [
+      ...items.map((it) => it.href),
+      ...(role !== 'student' || program === null ? LEGACY_ITEMS.map((it) => it.href) : []),
+    ]
+      .filter(Boolean)
+      .map((h) => normalizePath(h as string));
+
+    let best = '';
+    // 1) 정확히 같거나, 하위 경로인 것 중 가장 긴 것
+    for (const tgt of hrefs) {
+      if (tgt === '/') continue;
+      if (cur === tgt || cur.startsWith(tgt + '/')) {
+        if (tgt.length > best.length) best = tgt;
+      }
+    }
+    // 2) 못 찾았으면 예전 방식(끝부분 일치: 라우트 그룹/접두사가 붙은 경로 대비)
+    if (!best) {
+      for (const tgt of hrefs) {
+        if (tgt !== '/' && cur !== '/' && cur.endsWith(tgt) && tgt.length > best.length) best = tgt;
+      }
+    }
+    // 3) 루트(/)는 /home 으로 취급
+    if (!best && (cur === '/' || cur === '') && hrefs.includes('/home')) best = '/home';
+    activeHrefRef.current = best;
+  }
 
   // ── Group items by section (preserves insertion order) ──────
   const groups = useMemo(() => {
@@ -461,7 +509,9 @@ export default function SidebarClient({ role, program = null, hasHiNaesin = fals
       <nav className="flex-1 overflow-y-auto py-3 text-sm">
         {groups.map(([section, list], idx) => {
           const open      = openSections[section] ?? true;
-          const showItems = collapsed || open;
+          // 항목이 하나뿐이고 이름이 섹션과 같으면("설정" 안의 "설정") 헤더가 중복이라 숨긴다
+          const hideHeader = list.length === 1 && list[0].label === section;
+          const showItems = collapsed || open || hideHeader;
           const theme     = getSectionTheme(section);
           const groupLabel = SECTION_GROUP[section];
           const prevGroupLabel = idx > 0 ? SECTION_GROUP[groups[idx - 1][0]] : undefined;
@@ -477,6 +527,7 @@ export default function SidebarClient({ role, program = null, hasHiNaesin = fals
                 </div>
               )}
               {/* Section header */}
+              {!hideHeader && (
               <button
                 type="button"
                 onClick={() => !collapsed && toggleSection(section)}
@@ -505,6 +556,7 @@ export default function SidebarClient({ role, program = null, hasHiNaesin = fals
                   </span>
                 )}
               </button>
+              )}
 
               {/* Section items */}
               {showItems && (

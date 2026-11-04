@@ -1,7 +1,6 @@
 'use client';
 
 import { ReactNode, useEffect, useState } from 'react';
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import TopbarClient from '@/components/dashboard/TopbarClient';
 import SidebarClient from '@/components/dashboard/SidebarClient';
@@ -80,19 +79,13 @@ export default function ProtectedLayoutClient({
           <div className="flex-1 min-h-0 overflow-hidden">
             <SidebarClient role={role} program={program} hasHiNaesin={hasHiNaesin} hasMiddleNaesin={hasMiddleNaesin} collapsed={collapsed} />
           </div>
-          {!collapsed && role === 'student' && (
-            <div className="shrink-0 mx-2 mb-1">
-              <Link
-                href="/student?tour=1"
-                className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs text-neutral-400 hover:bg-neutral-200/50 hover:text-neutral-600 transition-colors"
-              >
-                ❓ 가이드 다시보기
-              </Link>
-            </div>
-          )}
           {!collapsed && (
             <div className="shrink-0">
-              <SidebarProfile name={fullName ?? email} avatarUrl={avatarUrl} />
+              <SidebarProfile
+                name={fullName ?? email}
+                avatarUrl={avatarUrl}
+                guideHref={role === 'student' ? '/student?tour=1' : undefined}
+              />
             </div>
           )}
         </aside>
