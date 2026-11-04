@@ -229,11 +229,37 @@ export default async function StudentPage() {
   const todos = activityRows.filter((a) => a.status === "todo");
   const recent = activityRows.slice(0, 5);
 
-  // Vocabulary Day 진행 상황
-  const completedDayCount = vocabAssignmentRows.filter((a) => a.completed_at).length;
-  const nextIncompleteDay = vocabAssignmentRows.find((a) => !a.completed_at);
-  const totalDayCount = vocabAssignmentRows.length;
-  const vocabProgress = totalDayCount > 0 ? Math.round((completedDayCount / totalDayCount) * 100) : 0;
+  // Vocabulary Day 진행 상황 — 교재(Track)별로 따로 계산한다.
+  // (예전엔 모든 Track의 배정을 한 덩어리로 합쳐 카드 하나만 보여줬다)
+  const vocabTrackGroups = new Map<string, typeof vocabAssignmentRows>();
+  for (const a of vocabAssignmentRows) {
+    const key = a.track_id ?? "none";
+    const list = vocabTrackGroups.get(key) ?? [];
+    list.push(a);
+    vocabTrackGroups.set(key, list);
+  }
+  const vocabTrackIds = Array.from(vocabTrackGroups.keys()).filter((k) => k !== "none");
+  const vocabTrackTitles = new Map<string, string>();
+  if (vocabTrackIds.length > 0) {
+    const { data: trackRows } = await supabase
+      .from("vocab_tracks")
+      .select("id, title")
+      .in("id", vocabTrackIds);
+    for (const t of (trackRows ?? []) as Array<{ id: string; title: string | null }>) {
+      if (t.title) vocabTrackTitles.set(t.id, t.title);
+    }
+  }
+  const vocabTrackCards = Array.from(vocabTrackGroups.entries()).map(([key, rows]) => {
+    const done = rows.filter((a) => a.completed_at).length;
+    return {
+      key,
+      title: vocabTrackTitles.get(key) ?? null,
+      assignments: rows,
+      totalDayCount: rows.length,
+      vocabProgress: rows.length > 0 ? Math.round((done / rows.length) * 100) : 0,
+      nextIncompleteDay: rows.find((a) => !a.completed_at) ?? null,
+    };
+  });
 
   // Phase 진행률 계산
   const completedPhaseCount = Array.from(phaseStatuses.values()).filter(s => s.completed).length;
@@ -360,14 +386,16 @@ export default async function StudentPage() {
             )}
 
             {/* Vocab Track */}
-            {totalDayCount > 0 && (
+            {vocabTrackCards.map((c) => (
               <VocabTrackSelector
-                assignments={vocabAssignmentRows}
-                totalDayCount={totalDayCount}
-                vocabProgress={vocabProgress}
-                nextIncompleteDay={nextIncompleteDay}
+                key={c.key}
+                title={c.title}
+                assignments={c.assignments}
+                totalDayCount={c.totalDayCount}
+                vocabProgress={c.vocabProgress}
+                nextIncompleteDay={c.nextIncompleteDay}
               />
-            )}
+            ))}
           </main>
 
           {/* Right Sidebar */}

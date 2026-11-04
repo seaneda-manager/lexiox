@@ -15,9 +15,12 @@ interface VocabTrackSelectorProps {
   totalDayCount: number;
   vocabProgress: number;
   nextIncompleteDay?: VocabAssignment | null;
+  /** 교재(Track) 이름 — 여러 교재가 배정된 학생이 카드를 구분할 수 있게 */
+  title?: string | null;
 }
 
 export default function VocabTrackSelector({
+  title,
   assignments,
   totalDayCount,
   vocabProgress,
@@ -67,7 +70,7 @@ export default function VocabTrackSelector({
     return (
       <Link href="/vocab/hub" className="flex items-start justify-between rounded-lg border border-blue-200 bg-blue-50 p-4 hover:bg-blue-100">
         <div>
-          <p className="text-sm font-semibold text-blue-900">📚 Vocabulary Track</p>
+          <p className="text-sm font-semibold text-blue-900">📚 {title || 'Vocabulary Track'}</p>
           <p className="mt-1 text-xs text-blue-700">완료됨</p>
         </div>
         <span className="text-sm font-semibold text-blue-600">100%</span>
@@ -84,9 +87,9 @@ export default function VocabTrackSelector({
           className="flex items-start justify-between rounded-lg border border-blue-200 bg-blue-50 p-4 hover:bg-blue-100"
         >
           <div>
-            <p className="text-sm font-semibold text-blue-900">📚 Vocabulary Track</p>
+            <p className="text-sm font-semibold text-blue-900">📚 {title || 'Vocabulary Track'}</p>
             <p className="mt-1 text-xs text-blue-700">
-              Day {nextIncompleteDay.day_index + 1}/{totalDayCount}
+              Day {nextIncompleteDay.day_index}/{totalDayCount}
             </p>
           </div>
           <span className="text-sm font-semibold text-blue-600">{vocabProgress}%</span>
@@ -108,7 +111,7 @@ export default function VocabTrackSelector({
   return (
     <div className="space-y-3 rounded-lg border border-blue-200 bg-blue-50 p-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold text-blue-900">📚 여러 Day 선택</p>
+        <p className="text-sm font-semibold text-blue-900">📚 {title ? `${title} — ` : ''}여러 Day 선택</p>
         <button
           onClick={() => {
             setMode('single');
@@ -150,7 +153,7 @@ export default function VocabTrackSelector({
               className="w-4 h-4 rounded"
             />
             <span className="text-sm text-slate-700">
-              Day {day.day_index + 1}
+              Day {day.day_index}
             </span>
           </label>
         ))}
