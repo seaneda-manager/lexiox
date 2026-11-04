@@ -289,6 +289,8 @@ Total Study Time: ${Math.round(p.totalStudyTime / 60)}분
     const res = await deleteStudentTrackAssignmentAction({ studentId, trackId });
     if (res.ok) {
       setMsg("✅ 배정 삭제 완료");
+      setQueue([]);
+      setEditingId("");
       const aRes = await getStudentVocabAssignmentsAction();
       if (aRes.ok) setAssignments(aRes.assignments);
     } else {

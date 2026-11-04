@@ -731,9 +731,10 @@ export async function getAssignmentProgressAction(params: {
         "id, day_index, status, started_at, paused_at, resumed_at, completed_at, total_study_time"
       )
       .eq("id", params.assignmentId)
-      .single();
+      .maybeSingle();
 
     if (error) throw new Error(error.message);
+    if (!data) throw new Error("배정을 찾을 수 없습니다. 화면을 새로고침하세요.");
 
     return {
       ok: true,
