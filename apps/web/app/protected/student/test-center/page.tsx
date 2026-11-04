@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getServerSupabase, getServiceRoleClient } from "@/lib/supabase/server";
+import { countDueReviewByTrack } from "@/lib/vocab/review/reviewItems";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +39,19 @@ export default async function StudentTestCenterPage() {
 
   const uid = user.id;
 
-  const [vocabExams, expected, tests, daily] = await Promise.all([
+  const [reviewDue, vocabExams, expected, tests, daily] = await Promise.all([
+    // 오늘 복습할 단어 수 (prescreen 모름 + speed 오답 → 복습 회차 규칙)
+    safeCount(async () => {
+      const admin = getServiceRoleClient();
+      const { data: st } = await admin
+        .from("academy_students")
+        .select("id")
+        .or(`user_id.eq.${uid},auth_user_id.eq.${uid},profile_id.eq.${uid}`)
+        .maybeSingle();
+      if (!st?.id) return 0;
+      const byTrack = await countDueReviewByTrack(admin, { studentId: String(st.id) });
+      return Object.values(byTrack).reduce((a, b) => a + b, 0);
+    }),
     // 선생님이 낸 단어 시험: 배정됐지만 아직 제출/채점 안 된 것
     safeCount(async () => {
       const admin = getServiceRoleClient();
@@ -96,6 +109,16 @@ export default async function StudentTestCenterPage() {
   ]);
 
   const cards: Card[] = [
+    {
+      key: "vocab-review",
+      href: "/vocab/test",
+      icon: "📚",
+      title: "오늘의 복습",
+      desc: "학습할 때 틀렸거나 몰랐던 단어를 다시 확인해요. 이틀은 꼭 해야 해요.",
+      pending: reviewDue,
+      pendingLabel: "복습할 단어",
+      tone: "bg-rose-100",
+    },
     {
       key: "vocab-exams",
       href: "/vocab/exams",

@@ -6,6 +6,7 @@ import { createServerClient } from "@supabase/ssr";
 import { type TestSubmitRequest, type TestSubmitResponse } from "@/models/vocab/test.types";
 import { NextRequest, NextResponse } from "next/server";
 import { POINTS_BASE } from "@/lib/vocab/test/scoring";
+import { applyReviewResults } from "@/lib/vocab/review/reviewItems";
 
 /**
  * POST /api/vocab/test/submit
@@ -124,6 +125,32 @@ export async function POST(req: NextRequest) {
         { error: "Failed to update session" },
         { status: 500 }
       );
+    }
+
+    // 4.5. 복습 시험이면 단어별 결과를 복습 항목에 반영 (회차 진행 / 졸업 / 3회차 투입)
+    //      한 단어에 문제가 여러 유형으로 나가므로, 그 단어의 문제를 전부 맞혔을 때만 "맞힘".
+    if ((session as any).mode === "review") {
+      try {
+        const { data: studentRow } = await admin
+          .from("academy_students")
+          .select("id")
+          .or(`user_id.eq.${user.id},auth_user_id.eq.${user.id},profile_id.eq.${user.id}`)
+          .maybeSingle();
+        const academyStudentId = studentRow?.id ?? user.id;
+
+        const perWord = new Map<string, boolean>();
+        for (const q of questions as any[]) {
+          const wid = String(q.word_id);
+          perWord.set(wid, (perWord.get(wid) ?? true) && q.is_correct === true);
+        }
+        await applyReviewResults(admin, {
+          studentId: academyStudentId,
+          results: [...perWord.entries()].map(([wordId, correct]) => ({ wordId, correct })),
+        });
+      } catch (e) {
+        console.warn("Failed to apply review results:", e);
+        // non-fatal: 시험 결과는 이미 저장됨
+      }
     }
 
     // 5. Gamification: 포인트 지급

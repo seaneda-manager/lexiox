@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import { type TestStartRequest, type TestStartResponse } from "@/models/vocab/test.types";
 import { NextRequest, NextResponse } from "next/server";
+import { getDueReviewItems } from "@/lib/vocab/review/reviewItems";
 
 /**
  * POST /api/vocab/test/start
@@ -57,6 +58,61 @@ export async function POST(req: NextRequest) {
       .maybeSingle();
 
     const studentId = studentRow?.id ?? user.id;
+
+    // ── 복습 시험: Day 가 아니라 "오늘 복습할 단어"(prescreen 모름 + speed 오답, 회차 규칙)로 출제 ──
+    if ((body as any).mode === "review") {
+      const due = await getDueReviewItems(admin, { studentId, trackId: track_id });
+      if (due.length === 0) {
+        return NextResponse.json({ error: "오늘 복습할 단어가 없어요" }, { status: 404 });
+      }
+      const reviewWordIds = shuffle(due.map((d) => d.wordId));
+
+      const { data: reviewMembership } = await admin
+        .from("academy_class_students")
+        .select("class_id")
+        .eq("student_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const reviewConfig = await getTestConfig(admin, user.id, reviewMembership?.class_id ?? null);
+
+      const { data: reviewSession, error: reviewSessionError } = await admin
+        .from("vocab_test_sessions")
+        .insert({
+          student_id: user.id,
+          class_id: reviewMembership?.class_id ?? "",
+          track_id,
+          day_number: 0,
+          total_words_count: reviewWordIds.length,
+          words_count: reviewWordIds.length,
+          use_wrong_only: false,
+          status: "in_progress",
+          started_at: new Date().toISOString(),
+          mode: "review",
+        })
+        .select()
+        .single();
+
+      if (reviewSessionError || !reviewSession) {
+        return NextResponse.json(
+          { error: "복습 시험을 만들지 못했어요. (DB 마이그레이션이 적용됐는지 확인해 주세요)" },
+          { status: 500 }
+        );
+      }
+
+      const reviewQuestions = await generateQuestions(
+        admin,
+        reviewSession.id,
+        reviewWordIds,
+        reviewConfig.arrangement
+      );
+
+      return NextResponse.json({
+        session_id: reviewSession.id,
+        questions: reviewQuestions,
+        total_count: reviewQuestions.length,
+      } as TestStartResponse);
+    }
 
     // 2. Day의 단어 목록 가져오기
     // Step 1: student_vocab_assignments에서 set_id 찾기 (학습 완료 확인에도 필요해서 먼저 조회)

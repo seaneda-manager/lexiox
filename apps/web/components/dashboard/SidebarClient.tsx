@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ChevronRight, ChevronDown,
   LayoutDashboard, BookOpen, Headphones, Mic, PenLine, BookText,
@@ -197,6 +197,31 @@ export default function SidebarClient({ role, program = null, hasHiNaesin = fals
   const { lang }    = useLang();
 
   const [legacyOpen, setLegacyOpen] = useState(false);
+
+  // 오늘 복습할 단어 수 → "단어 시험" 메뉴 배지 (학생만). 이동할 때마다 부르되 1분 안에는 다시 부르지 않는다.
+  const [reviewDue, setReviewDue] = useState(0);
+  const lastReviewFetch = useRef(0);
+  useEffect(() => {
+    if (role !== 'student') return;
+    const now = Date.now();
+    if (now - lastReviewFetch.current < 60_000 && lastReviewFetch.current !== 0) return;
+    lastReviewFetch.current = now;
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await fetch('/api/vocab/test/review-summary', { cache: 'no-store' });
+        if (!r.ok) return;
+        const d = await r.json();
+        if (!cancelled) setReviewDue(Number(d?.due_count) || 0);
+      } catch {
+        /* 배지는 없어도 된다 */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [role, pathname]);
+  const badgeFor = (href?: string): number => (href === '/vocab/test' ? reviewDue : 0);
 
   // ── Initial open-section state ──────────────────────────────
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
@@ -649,6 +674,14 @@ export default function SidebarClient({ role, program = null, hasHiNaesin = fals
                           {!collapsed && (
                             <>
                               <span className="truncate flex-1">{it.label}</span>
+                              {badgeFor(it.href) > 0 && (
+                                <span
+                                  className="mr-1 min-w-[18px] rounded-full bg-rose-500 px-1.5 text-center text-[10px] font-bold leading-[18px] text-white"
+                                  title="오늘 복습할 단어"
+                                >
+                                  {badgeFor(it.href)}
+                                </span>
+                              )}
                               <ChevronRight
                                 className={[
                                   'h-3.5 w-3.5 shrink-0 transition-colors',

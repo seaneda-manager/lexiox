@@ -27,6 +27,7 @@ export async function GET(req: NextRequest) {
     const trackId = req.nextUrl.searchParams.get("track_id");
     const day = Number(req.nextUrl.searchParams.get("day"));
     const wrongOnly = req.nextUrl.searchParams.get("wrong_only") === "true";
+    const isReview = req.nextUrl.searchParams.get("mode") === "review";
     if (!trackId || !Number.isFinite(day)) return NextResponse.json({ session: null });
 
     const admin = createClient(
@@ -35,7 +36,7 @@ export async function GET(req: NextRequest) {
     );
 
     const since = new Date(Date.now() - RESUME_WINDOW_MS).toISOString();
-    const { data: session } = await admin
+    let sessionQuery = admin
       .from("vocab_test_sessions")
       .select("*")
       .eq("student_id", user.id)
@@ -43,7 +44,10 @@ export async function GET(req: NextRequest) {
       .eq("day_number", day)
       .eq("status", "in_progress")
       .eq("use_wrong_only", wrongOnly)
-      .gte("started_at", since)
+      .gte("started_at", since);
+    // 복습 시험은 day_number 0 + mode=review. (mode 컬럼이 없는 DB에서 Day 시험 이어하기가 깨지지 않게 복습일 때만 필터)
+    if (isReview) sessionQuery = sessionQuery.eq("mode", "review");
+    const { data: session } = await sessionQuery
       .order("started_at", { ascending: false })
       .limit(1)
       .maybeSingle();

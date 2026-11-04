@@ -7,6 +7,7 @@ import { createClient } from "@supabase/supabase-js";
 
 import type { SessionWord, VocabExample, VocabCollocation } from "@/models/vocab/SessionWord";
 import type { WordFormRowLike } from "@/lib/vocab/drill/buildBlockDrillTasksV1";
+import { registerReviewItemsForDay } from "@/lib/vocab/review/reviewItems";
 
 export type LoadSessionWordsActionInput = {
   /** Optional: force a specific setId (debug / admin / shortcut) */
@@ -1055,6 +1056,19 @@ export async function completeVocabDayAction(input: {
       .eq("id", row.id);
 
     if (updErr) return { ...empty, error: "UPDATE_FAILED", note: toErrMsg(updErr) };
+
+    // 복습 대상 등록: 이 Day 에서 prescreen 모름 + speed 오답이었던 단어는 무조건 복습 (D+1, D+2 의무)
+    // 테이블이 아직 없어도 학습 완료 처리는 그대로 성공해야 하므로 실패는 무시한다.
+    try {
+      const reg = await registerReviewItemsForDay(client, {
+        studentId: academyStudentId,
+        trackId: cleanStr(row.track_id) || null,
+        setId,
+      });
+      if (!reg.ok) console.warn("completeVocabDayAction: review items not registered:", reg.error);
+    } catch (e: any) {
+      console.warn("completeVocabDayAction: review items exception", toErrMsg(e));
+    }
 
     // 새 student_progress 테이블에도 기록 (동적 큐 시스템용)
     // non-fatal이므로 실패해도 무시

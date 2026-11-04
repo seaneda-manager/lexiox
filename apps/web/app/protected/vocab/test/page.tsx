@@ -26,6 +26,8 @@ export default function VocabTestPage() {
   const params = useSearchParams();
   const urlTrackId = params.get("track_id");
   const urlDay = params.get("day");
+  // 복습 시험: /vocab/test?track_id=...&day=0&mode=review  (오늘 복습할 단어로 출제)
+  const urlMode: "day" | "review" = params.get("mode") === "review" ? "review" : "day";
   const useWrongOnly = params.get("wrong_only") === "true";
   const examId = params.get("exam_id");
 
@@ -39,6 +41,9 @@ export default function VocabTestPage() {
   const [bookChoice, setBookChoice] = useState<string | null>(null);
   const [activeBook, setActiveBook] = useState<string | null>(null);
   const [needPick, setNeedPick] = useState(false);
+  // 교재를 고른 뒤, 오늘 복습할 단어가 있으면 "복습 시험 / Day 시험"을 고르게 한다
+  const [reviewChoice, setReviewChoice] = useState<{ trackId: string; due: number } | null>(null);
+  const [dayChosen, setDayChosen] = useState(false);
   const bookPicker =
     !urlTrackId && books.length > 1 ? (
       <div className="mb-4 flex flex-wrap justify-center gap-2">
@@ -51,7 +56,8 @@ export default function VocabTestPage() {
               } catch {
                 /* ignore */
               }
-              setBookChoice(b.trackId);
+              setDayChosen(false);
+                  setBookChoice(b.trackId);
             }}
             className={`rounded-full border px-4 py-1.5 text-sm font-medium ${
               b.trackId === activeBook
@@ -89,7 +95,7 @@ export default function VocabTestPage() {
   const tryResume = async (track: string, day: string): Promise<boolean> => {
     try {
       const res = await fetch(
-        `/api/vocab/test/resume?track_id=${encodeURIComponent(track)}&day=${encodeURIComponent(day)}&wrong_only=${useWrongOnly}`,
+        `/api/vocab/test/resume?track_id=${encodeURIComponent(track)}&day=${encodeURIComponent(day)}&wrong_only=${useWrongOnly}&mode=${urlMode}`,
         { cache: "no-store" },
       );
       if (!res.ok) return false;
@@ -210,6 +216,23 @@ export default function VocabTestPage() {
           return;
         }
 
+        // 오늘 복습할 단어가 있으면 먼저 "복습 / Day 시험" 선택 (Day 시험을 고른 뒤에는 건너뜀)
+        if (!dayChosen) {
+          let due = 0;
+          try {
+            const rs = await fetch(`/api/vocab/test/review-summary?track_id=${encodeURIComponent(bookId)}`, { cache: "no-store" });
+            if (rs.ok) due = Number((await rs.json())?.due_count) || 0;
+          } catch {
+            /* 복습 집계 실패는 무시 — 기존 흐름대로 */
+          }
+          if (cancelled) return;
+          if (due > 0) {
+            setReviewChoice({ trackId: bookId, due });
+            return;
+          }
+        }
+        setReviewChoice(null);
+
         const eligRes = await fetch(
           `/api/vocab/test/eligibility?track_id=${encodeURIComponent(bookId)}`,
           { cache: "no-store" },
@@ -240,7 +263,7 @@ export default function VocabTestPage() {
     return () => {
       cancelled = true;
     };
-  }, [urlTrackId, urlDay, examId, bookChoice]);
+  }, [urlTrackId, urlDay, examId, bookChoice, dayChosen]);
 
   // 응답이 오래 걸리면 멈춘 것처럼 보이므로 시간 제한(20초) + 네트워크 오류 시 1회 재시도
   const postJson = async (url: string, body: unknown, retries = 1): Promise<Response> => {
@@ -273,6 +296,7 @@ export default function VocabTestPage() {
           track_id: trackId,
           day_number: parseInt(dayNumber),
           use_wrong_only: useWrongOnly,
+          mode: urlMode,
         }),
       });
       if (!response.ok) {
@@ -445,6 +469,7 @@ export default function VocabTestPage() {
                   } catch {
                     /* ignore */
                   }
+                  setDayChosen(false);
                   setBookChoice(b.trackId);
                 }}
                 className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-base font-semibold text-gray-800 hover:bg-blue-50 hover:border-blue-400"
@@ -453,6 +478,53 @@ export default function VocabTestPage() {
               </button>
             ))}
           </div>
+        </div>
+      </TestShell>
+    );
+  }
+
+  if (reviewChoice) {
+    return (
+      <TestShell>
+        <div className="mx-auto max-w-sm w-full text-center space-y-4">
+          <div className="text-4xl">📝</div>
+          <p className="text-gray-800 text-lg font-bold">오늘 볼 시험을 골라 주세요</p>
+          <div className="space-y-3">
+            <button
+              onClick={() => router.push(`/vocab/test?track_id=${encodeURIComponent(reviewChoice.trackId)}&day=0&mode=review`)}
+              className="w-full rounded-2xl border-2 border-rose-300 bg-rose-50 px-5 py-4 text-left transition hover:bg-rose-100"
+            >
+              <span className="flex items-center justify-between gap-2">
+                <span className="text-base font-bold text-gray-900">📚 오늘의 복습</span>
+                <span className="rounded-full bg-rose-600 px-2.5 py-0.5 text-xs font-bold text-white">필수</span>
+              </span>
+              <span className="mt-1 block text-sm text-gray-600">
+                학습할 때 틀렸거나 몰랐던 단어 {reviewChoice.due}개를 다시 확인해요
+              </span>
+            </button>
+            <button
+              onClick={() => {
+                setReviewChoice(null);
+                setDayChosen(true);
+              }}
+              className="w-full rounded-2xl border border-gray-300 bg-white px-5 py-4 text-left transition hover:bg-gray-50"
+            >
+              <span className="text-base font-bold text-gray-900">📝 Day 시험</span>
+              <span className="mt-1 block text-sm text-gray-600">방금 학습한 Day의 시험을 봐요</span>
+            </button>
+          </div>
+          {books.length > 1 && (
+            <button
+              onClick={() => {
+                setReviewChoice(null);
+                setDayChosen(false);
+                setBookChoice(null);
+              }}
+              className="text-sm text-gray-500 underline"
+            >
+              다른 교재 고르기
+            </button>
+          )}
         </div>
       </TestShell>
     );
@@ -506,6 +578,7 @@ export default function VocabTestPage() {
             trackId={trackId!}
             dayNumber={parseInt(dayNumber!)}
             useWrongOnly={useWrongOnly}
+            mode={urlMode}
             onStart={handleStartTest}
           />
         )}
@@ -537,7 +610,7 @@ export default function VocabTestPage() {
             results={results}
             questions={questions}
             onRetry={() =>
-              router.push(examId ? "/vocab/exams" : `/vocab/test?track_id=${trackId}&day=${dayNumber}`)
+              router.push(examId ? "/vocab/exams" : `/vocab/test?track_id=${trackId}&day=${dayNumber}${urlMode === "review" ? "&mode=review" : ""}`)
             }
             onHome={() => router.push("/vocab")}
           />
