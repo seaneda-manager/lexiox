@@ -1,68 +1,12 @@
 // apps/web/app/(protected)/admin/_components/AdminShell.tsx
-'use client';
-import type { ReactNode } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import type { ReactNode } from "react";
 
+/**
+ * 관리자 화면 본문 틀.
+ * 예전에는 여기에 "Admin | 대시보드 | Problem Bank | Daily Tests" 상단 메뉴(sticky)가 있었지만,
+ * 같은 메뉴가 사이드바에 이미 있고 스크롤할 때 콘텐츠를 덮어서 제거했다.
+ * (앱 레이아웃이 이미 <main> 을 가지고 있으므로 여기서는 <div> 를 쓴다)
+ */
 export default function AdminShell({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
-
-  const isActive = (href: string) => pathname.startsWith(href);
-
-  return (
-    <>
-      {/* Top Navigation */}
-      <nav className="border-b bg-white sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link href="/admin" className="font-semibold text-gray-900 hover:text-gray-600">
-            👨‍💼 Admin
-          </Link>
-
-          <div className="flex gap-6 text-sm">
-            <Link
-              href="/admin"
-              className={`px-3 py-2 rounded-lg transition ${
-                pathname === '/admin' || pathname === '/protected/admin'
-                  ? 'bg-blue-100 text-blue-700 font-medium'
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              대시보드
-            </Link>
-
-            <Link
-              href="/admin/problem-bank"
-              className={`px-3 py-2 rounded-lg transition ${
-                isActive('/admin/problem-bank')
-                  ? 'bg-blue-100 text-blue-700 font-medium'
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              📚 Problem Bank
-            </Link>
-
-            <Link
-              href="/admin/daily-tests"
-              className={`px-3 py-2 rounded-lg transition ${
-                isActive('/admin/daily-tests')
-                  ? 'bg-blue-100 text-blue-700 font-medium'
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              📝 Daily Tests
-            </Link>
-          </div>
-        </div>
-      </nav>
-
-      {/* Main Content */}
-      <main className="p-4 max-w-6xl w-full mx-auto">
-        {children}
-      </main>
-    </>
-  );
+  return <div className="p-4 max-w-6xl w-full mx-auto">{children}</div>;
 }
-
-
-
-
