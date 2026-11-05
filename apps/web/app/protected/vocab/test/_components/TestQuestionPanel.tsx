@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { playWordAudio } from "@/lib/vocab/audio/wordAudio";
 import { joinSlotAnswers, slotCountFor, slotPosHints, splitSlotAnswers } from "@/lib/vocab/test/meaningMatch";
 import type { VocabTestQuestion } from "@/models/vocab/test.types";
 import { hintsAllowed, basePointsFor, MAX_HINT_LEVEL } from "@/lib/vocab/test/scoring";
@@ -13,19 +14,8 @@ import { useTabLeaveGuard } from "@/lib/hooks/useTabLeaveGuard";
 const TYPED_SECONDS = 60;
 const CHOICE_SECONDS = 25;
 
-// 저장된 오디오 파일 없이, 학습 단계(VocabSessionLearningStage 등)와 동일한
-// 브라우저 내장 TTS로 발음을 재생한다.
-function speakWord(text: string) {
-  try {
-    if (!("speechSynthesis" in window)) return;
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "en-US";
-    utterance.rate = 0.8;
-    window.speechSynthesis.speak(utterance);
-  } catch (err) {
-    console.error("Speech synthesis error:", err);
-  }
-}
+// 미리 만들어 둔 단어 음성(ElevenLabs)이 있으면 그것을, 없으면 브라우저 TTS로 재생한다.
+const speakWord = playWordAudio;
 
 export interface TestQuestionPanelProps {
   question: VocabTestQuestion;

@@ -1,6 +1,7 @@
 'use client';
 
 import { normEnglish, cleanTypedEnglish } from '@/lib/vocab/test/englishMatch';
+import { playWordAudio } from '@/lib/vocab/audio/wordAudio';
 import React, { useState, useMemo, useEffect, useLayoutEffect, useRef } from 'react';
 import type { LearningWord } from './learning.types';
 
@@ -13,13 +14,7 @@ interface VocabSessionLearningStageProps {
 }
 
 const playAudio = async (text: string) => {
-  try {
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'en-US';
-    window.speechSynthesis.speak(utterance);
-  } catch (err) {
-    console.error('Speech synthesis error:', err);
-  }
+  playWordAudio(text);
 };
 
 const playKoreanAudio = async (text: string) => {
