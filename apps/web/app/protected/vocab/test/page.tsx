@@ -1,5 +1,7 @@
 "use client";
 
+import { gradeMeaningAnswer, splitSlotAnswers } from "@/lib/vocab/test/meaningMatch";
+import { sameEnglish } from "@/lib/vocab/test/englishMatch";
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { VocabTestQuestion, TestSubmitResponse } from "@/models/vocab/test.types";
@@ -8,7 +10,7 @@ import TestQuestionPanel from "./_components/TestQuestionPanel";
 import TestResultsScreen from "./_components/TestResultsScreen";
 import TestStartScreen from "./_components/TestStartScreen";
 import { scoreAnswer } from "@/lib/vocab/test/scoring";
-import { scoreShortAnswer, scoreMultipleChoice } from "@/lib/vocab/test/questionGenerator";
+import { scoreMultipleChoice } from "@/lib/vocab/test/questionGenerator";
 
 // 전체 화면을 덮고, 내용은 항상 가로 중앙에 둔다 (예전 3:2 고정 무대는 창 크기에 따라 한쪽으로 치우쳤다)
 function TestShell({ children, className = "" }: { children: React.ReactNode; className?: string }) {
@@ -376,9 +378,9 @@ export default function VocabTestPage() {
     } else if (q.question_type === "word_to_meaning") {
       const acceptable =
         Array.isArray(q.meaning_ko) && q.meaning_ko.length > 0 ? q.meaning_ko : [q.correct_answer];
-      ok = scoreShortAnswer(answer, acceptable, true);
+      ok = gradeMeaningAnswer(splitSlotAnswers(answer), acceptable).correct;
     } else if (q.question_type === "meaning_to_word") {
-      ok = scoreShortAnswer(answer, q.correct_answer);
+      ok = sameEnglish(answer, q.correct_answer);
     } else if (q.question_type === "synonym" || q.question_type === "listening") {
       ok = scoreMultipleChoice(answer, q.correct_answer, q.options ?? []);
     }

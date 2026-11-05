@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { joinSlotAnswers, slotCountFor, slotPosHints, splitSlotAnswers } from "@/lib/vocab/test/meaningMatch";
 import type { VocabTestQuestion } from "@/models/vocab/test.types";
 import { hintsAllowed, basePointsFor, MAX_HINT_LEVEL } from "@/lib/vocab/test/scoring";
 import SpellingHint from "@/components/vocab/common/SpellingHint";
@@ -9,7 +10,7 @@ import { useCountdown } from "@/lib/hooks/useCountdown";
 import { useTabLeaveGuard } from "@/lib/hooks/useTabLeaveGuard";
 
 /** 문제당 제한 시간(초). 넘기면 오답 처리된다. */
-const TYPED_SECONDS = 40;
+const TYPED_SECONDS = 60;
 const CHOICE_SECONDS = 25;
 
 // 저장된 오디오 파일 없이, 학습 단계(VocabSessionLearningStage 등)와 동일한
@@ -62,6 +63,16 @@ export default function TestQuestionPanel({
   const [answer, setAnswer] = useState(question.student_answer || "");
   const primaryButtonRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  // 단어→뜻 주관식: 뜻이 여러 개면 칸을 최대 3개까지 나눠서 한 칸에 뜻 하나씩 쓰게 한다
+  const slotCount =
+    question.question_type === "word_to_meaning" && !(question.options && question.options.length > 0)
+      ? slotCountFor(question.meaning_ko)
+      : 1;
+  const [slots, setSlots] = useState<string[]>(() => {
+    const init = splitSlotAnswers(question.student_answer);
+    return Array.from({ length: slotCount }, (_, i) => init[i] ?? "");
+  });
+  const slotRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const isAnswered = question.is_correct !== null;
   const isLast = questionNumber === totalQuestions;
@@ -75,7 +86,12 @@ export default function TestQuestionPanel({
       question.question_type === "meaning_to_word");
 
   const handleSubmitAnswer = () => {
-    if (answer.trim() && !pending) {
+    if (pending) return;
+    if (slotCount > 1) {
+      if (slots.some((x) => x.trim())) onAnswerSubmit(joinSlotAnswers(slots));
+      return;
+    }
+    if (answer.trim()) {
       onAnswerSubmit(answer);
     }
   };
@@ -264,6 +280,36 @@ export default function TestQuestionPanel({
           {question.question_type === "meaning_to_word" && question.correct_answer ? (
             <SpellingHint answer={question.correct_answer} mode="shape" />
           ) : null}
+          {slotCount > 1 ? (
+            <div className="space-y-2">
+              <p className="text-xs text-gray-500">뜻이 여러 개예요. 칸마다 뜻 하나씩 쓰세요. (품사는 힌트예요)</p>
+              {slots.map((val, i) => (
+                <input
+                  key={i}
+                  ref={(el) => {
+                    slotRefs.current[i] = el;
+                    if (i === 0) inputRef.current = el;
+                  }}
+                  type="text"
+                  value={val}
+                  onChange={(e) => setSlots((prev) => prev.map((x, j) => (j === i ? e.target.value : x)))}
+                  onKeyDown={(e) => {
+                    if (e.key !== "Enter") return;
+                    e.preventDefault();
+                    if (i < slots.length - 1) slotRefs.current[i + 1]?.focus();
+                    else handleSubmitAnswer();
+                  }}
+                  placeholder={`뜻 ${i + 1}${slotPosHints(question.meaning_ko)[i] ? ` (${slotPosHints(question.meaning_ko)[i]})` : ""}`}
+                  disabled={isAnswered || pending}
+                  autoComplete="off"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  className="w-full px-4 py-3 border-2 rounded-lg text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-blue-500 disabled:bg-gray-100"
+                />
+              ))}
+            </div>
+          ) : (
           <input
             ref={inputRef}
             type="text"
@@ -280,6 +326,7 @@ export default function TestQuestionPanel({
             spellCheck={false}
             className="w-full px-4 py-3 border-2 rounded-lg text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-blue-500 disabled:bg-gray-100"
           />
+          )}
         </div>
       )}
 
@@ -342,7 +389,7 @@ export default function TestQuestionPanel({
                 ? onSubmitTest
                 : onNext
           }
-          disabled={pending || (!isAnswered && (isTypedInput ? !answer.trim() : true))}
+          disabled={pending || (!isAnswered && (isTypedInput ? (slotCount > 1 ? !slots.some((x) => x.trim()) : !answer.trim()) : true))}
           className={`flex-1 px-4 py-2 text-white font-semibold rounded-lg transition disabled:bg-gray-300 ${
             isAnswered
               ? isLast

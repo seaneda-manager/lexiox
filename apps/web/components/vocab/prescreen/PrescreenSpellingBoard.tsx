@@ -1,5 +1,6 @@
 'use client';
 
+import { sameEnglish } from '@/lib/vocab/test/englishMatch';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import SpellingHint from '@/components/vocab/common/SpellingHint';
 import { normAnswer } from '@/lib/vocab/spellingHint';
@@ -145,7 +146,7 @@ export default function PrescreenSpellingBoard({
 
   const submit = () => {
     if (!cur?.id) return;
-    const ok = norm(value) === norm(answer);
+    const ok = sameEnglish(value, answer);
     if (ok) {
       goNext(failedIds, true);
       return;

@@ -1,5 +1,6 @@
 "use client";
 
+import { sameEnglish } from "@/lib/vocab/test/englishMatch";
 import React, { useState, useRef, useEffect } from "react";
 
 type TextFlashcardProps = {
@@ -112,7 +113,7 @@ export function TextFlashcard({
 
   const handleSubmitAttempt = () => {
     if (!canSubmit) return;
-    const wordOk = currentWord.trim().toLowerCase() === word.toLowerCase();
+    const wordOk = sameEnglish(currentWord, word);
     const meaningOk = !requireMeaning || meaningCandidates.has(norm(currentMeaning));
     const correct = wordOk && meaningOk;
 

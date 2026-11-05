@@ -1,5 +1,7 @@
 export const dynamic = "force-dynamic";
 
+import { gradeMeaningAnswer, splitSlotAnswers } from "@/lib/vocab/test/meaningMatch";
+import { sameEnglish } from "@/lib/vocab/test/englishMatch";
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
@@ -96,7 +98,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. 답변 채점
-    const { scoreShortAnswer, scoreMultipleChoice } = await import(
+    const { scoreMultipleChoice } = await import(
       "@/lib/vocab/test/questionGenerator"
     );
 
@@ -111,9 +113,9 @@ export async function POST(req: NextRequest) {
         Array.isArray(question.meaning_ko) && question.meaning_ko.length > 0
           ? question.meaning_ko
           : [question.correct_answer];
-      is_correct = scoreShortAnswer(answer, acceptable, /* ignoreSpacing */ true);
+      is_correct = gradeMeaningAnswer(splitSlotAnswers(answer), acceptable).correct;
     } else if (question.question_type === "meaning_to_word") {
-      is_correct = scoreShortAnswer(answer, question.correct_answer);
+      is_correct = sameEnglish(answer, question.correct_answer);
     } else if (question.question_type === "synonym" || question.question_type === "listening") {
       is_correct = scoreMultipleChoice(answer, question.correct_answer, question.options);
     }

@@ -1,5 +1,6 @@
 "use client";
 
+import { sameEnglish } from '@/lib/vocab/test/englishMatch';
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { SpeedAttemptResult, SpeedQuestion } from "@/models/vocab/speed.types";
 import StageScaffold from "@/components/common/stage/StageScaffold";
@@ -187,7 +188,7 @@ export default function SpeedChallengeRunner({
     const ans = norm(q.answer);
     const typed = norm(input);
 
-    const ok = typed.length > 0 && typed === ans;
+    const ok = typed.length > 0 && (typed === ans || sameEnglish(typed, ans));
     gradeAndAdvance(ok);
   }
 

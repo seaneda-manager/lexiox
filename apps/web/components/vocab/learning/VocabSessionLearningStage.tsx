@@ -1,5 +1,6 @@
 'use client';
 
+import { normEnglish, cleanTypedEnglish } from '@/lib/vocab/test/englishMatch';
 import React, { useState, useMemo, useEffect, useLayoutEffect, useRef } from 'react';
 import type { LearningWord } from './learning.types';
 
@@ -86,14 +87,8 @@ export default function VocabSessionLearningStage({
   // Check if spelling is correct (independent of onChange)
   useEffect(() => {
     if (!spellingDone && spellingInput && currentWord?.text) {
-      const wordTextNormalized = String(currentWord.text)
-        .toLowerCase()
-        .trim()
-        .replace(/[^a-z]/g, '');
-      const inputNormalized = spellingInput
-        .toLowerCase()
-        .trim()
-        .replace(/[^a-z]/g, '');
+      const wordTextNormalized = normEnglish(currentWord.text);
+      const inputNormalized = normEnglish(spellingInput);
 
       if (inputNormalized === wordTextNormalized) {
         setSpellingDone(true);
@@ -243,17 +238,15 @@ export default function VocabSessionLearningStage({
                     value={spellingInput}
                     onChange={(e) => {
                       const value = e.target.value.toLowerCase();
-                      const cleaned = value.replace(/[^a-z]/g, '');
+                      const cleaned = cleanTypedEnglish(value);
+                      const cleanedNorm = normEnglish(cleaned);
                       setSpellingInput(cleaned);
 
                       // 자동 진행: 철자가 올바르면 다음 단계로
                       if (currentWord?.text) {
                         // Remove all whitespace and special characters from word text too
-                        const wordTextNormalized = String(currentWord.text)
-                          .toLowerCase()
-                          .trim()
-                          .replace(/[^a-z]/g, '');
-                        const isMatch = cleaned === wordTextNormalized;
+                        const wordTextNormalized = normEnglish(currentWord.text);
+                        const isMatch = cleanedNorm === wordTextNormalized;
 
                         if (isMatch) {
                           setSpellingDone(true);
