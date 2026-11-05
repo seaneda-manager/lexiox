@@ -1,6 +1,6 @@
 # 가맹점 · 역할 · 권한 설계서 (개발용)
 
-> 상태: **1단계(UI) 완료, 2단계(DB·계정) 계획 단계** — 작성 2026-11-05
+> 상태: **1단계(UI) 완료 · 2-A(스키마) SQL 작성 완료 — 적용 대기** — 작성·갱신 2026-11-05
 > 관련 문서: [영업·교육용 설명서](FRANCHISE_SALES_MANUAL.md) · `lib/auth/permissions.ts` · `components/dashboard/staffNav.ts`
 > 이 문서는 "이 프로그램을 만들 때" 기준 문서다. 스키마 변경은 **승인 후** 진행한다(아래 §7).
 
@@ -38,8 +38,10 @@
 → 새 역할(`franchisee`, `hq_staff`)을 추가하면 위 지점들이 모두 새 역할을 모른다. **`admin`은 계속 Super로 두고** 새 역할을 추가하는 방식이어야 기존 RLS·가드가 깨지지 않는다.
 
 ### 1.3 데이터 구분
-- 가맹점(지점)을 구분하는 컬럼이 **어디에도 없다**: `academy_students`, `academy_classes`, 배정·시험·출석 테이블 전부.
+- **`organizations` 테이블이 이미 있다** (`id, name, plan, created_at`, 현재 1행 "Main Academy"). 반(`academy_classes.org_id`)과 수업 진행 단계(`session_flow_steps.org_id`)가 이미 이것을 쓴다 → **가맹점 = `organizations`** 로 확정(새 `branches` 테이블은 만들지 않는다. 개념이 둘로 갈라지는 것을 피함).
+- 하지만 **학생·계정(`academy_students`, `profiles`)에는 org 소속 컬럼이 없고**, 배정·시험·출석 조회는 org 로 걸러지지 않는다.
 - 그래서 선생님은 전체 학생을 본다(예: `/api/teacher/vocab-exams/meta`는 전체 활성 학생 반환).
+- 현재 데이터 규모: 학생 `academy_students` 15명, `profiles` 21개, 반 0개(아직 반이 만들어지지 않음).
 
 ### 1.4 계정 발급 경로 (현재)
 - 학생: `/admin/students` 서버 액션이 서비스 키로 `auth.admin.createUser`(+`profiles` upsert) — **관리자 전용**.
@@ -106,60 +108,37 @@
 
 ---
 
-## 3. 데이터 모델 (안 — 승인 전 초안)
+## 3. 데이터 모델 (2-A 마이그레이션으로 확정)
 
-> 아래 SQL은 방향을 보여주는 **스케치**다. 실제 마이그레이션은 §6 순서대로, 승인 후 작성한다.
+> 실제 SQL: [`supabase/migrations/20261105000001_organizations_franchise_core.sql`](../supabase/migrations/20261105000001_organizations_franchise_core.sql)
+> 자동 검사: `lib/auth/migration2a.test.ts` (expand-only · 여러 번 실행 안전 · 직급 권한 키가 코드와 일치)
 
-```sql
--- 가맹점(지점). 기존 데이터는 모두 '본점' 하나로 이관한다.
-create table branches (
-  id            uuid primary key default gen_random_uuid(),
-  code          text unique not null,            -- 예: HQ-001
-  name          text not null,                   -- 예: 본점
-  kind          text not null default 'franchise' check (kind in ('direct','franchise')),
-  status        text not null default 'active'   check (status in ('active','paused','closed')),
-  owner_id      uuid references profiles(id),    -- 원장 계정
-  contract_start date,
-  phone         text,
-  address       text,
-  created_at    timestamptz not null default now()
-);
+### 3.1 변경 내용 (추가만 — 기존 데이터는 삭제·변경하지 않는다)
 
--- 선생님 직급과 권한 (원장이 정함)
-create table branch_positions (
-  id           uuid primary key default gen_random_uuid(),
-  branch_id    uuid not null references branches(id) on delete cascade,
-  name         text not null,
-  permissions  text[] not null default '{}',     -- permissions.ts 의 키
-  sort_order   int  not null default 0,
-  is_default   boolean not null default false,
-  unique (branch_id, name)
-);
+| 대상 | 변경 | 설명 |
+|---|---|---|
+| `organizations` (= 가맹점) | 컬럼 추가 `code`, `kind`(direct/franchise), `status`(active/paused/closed), `owner_id`(원장 계정), `contract_start`, `phone`, `address` | 기존 1행은 `kind='direct'`, `code='HQ-001'` 로 설정 |
+| `profiles` | `org_id`, `position_id` 추가 | 학생·선생님·원장의 소속과 직급. **Super(admin)·본사 직원은 NULL** |
+| `academy_students` | `org_id` 추가 | 학생 소속 |
+| `academy_classes` | (이미 `org_id` 있음) 빈 값만 채움 | 반 → 수업 회차·출석은 반을 통해 자동으로 가맹점이 정해진다 |
+| **`org_positions`** (새) | `org_id, name, permissions text[], sort_order, is_default`, `UNIQUE(org_id,name)` | 선생님 직급. **원장이 정한다** |
+| **`account_audit_log`** (새) | `actor_id, target_id, org_id, action, detail jsonb, created_at` | 계정 생성·권한·직급 변경 기록 |
 
--- 소속
-alter table profiles          add column branch_id   uuid references branches(id);
-alter table profiles          add column position_id uuid references branch_positions(id);
-alter table academy_students  add column branch_id   uuid references branches(id);
-alter table academy_classes   add column branch_id   uuid references branches(id);
-create index on profiles (branch_id);
-create index on academy_students (branch_id);
-create index on academy_classes (branch_id);
+- 새 컬럼은 모두 NULL 허용(또는 기본값) → **앱이 아직 쓰지 않으므로 화면·동작이 달라지지 않는다.**
+- 새 테이블 2개는 RLS를 켜 두고 정책은 두지 않는다(서버 키로만 접근). 앱이 직접 접근하게 될 때 정책을 추가한다.
+- 기본 직급 3개를 본점에 시드: **부원장**(권한 10개: 선생님 기본 + 학생 추가·학부모 연락처), **정교사**(8개 = 선생님 기본), **조교**(2개: 오늘의 수업·출석).
+- 학생에 연결된 학습 기록(`vocab_*`, 시험, 숙제 제출 등)은 학생을 통해 가맹점이 정해진다. **새 컬럼을 늘리지 않는 것**이 원칙(원천은 한 곳).
+- 이후 단계(공지·문의·교육·자료실) 테이블은 2-E에서 별도 설계한다.
 
--- 권한·직급 변경 기록 (누가 누구에게 무엇을)
-create table account_audit_log (
-  id          bigserial primary key,
-  actor_id    uuid not null,
-  target_id   uuid,
-  branch_id   uuid,
-  action      text not null,                     -- role_change | position_change | account_create | deactivate ...
-  detail      jsonb,
-  created_at  timestamptz not null default now()
-);
-```
+### 3.2 용어 대응
+| 설계서 용어 | DB |
+|---|---|
+| 가맹점 / 지점 / branch | `organizations` |
+| 가맹점 ID | `org_id` |
+| 직급 | `org_positions` |
+| 본점(직영) | `organizations` 의 기존 행 (`kind='direct'`) |
 
-- 반(`academy_classes`)에 가맹점이 붙으면 수업 회차·출석은 반을 통해 자동으로 가맹점이 정해진다(별도 컬럼 불필요).
-- 학생에 연결된 학습 기록(`vocab_*`, 시험, 숙제 제출 등)은 `academy_students`/`profiles`를 통해 가맹점이 정해진다. **새 컬럼을 늘리지 않는 것**이 원칙(원천은 한 곳).
-- 이후 단계(공지·문의·교육·자료실) 테이블은 §6의 2-E에서 별도 설계한다.
+> 권한 키 이름(`branch.settings`, `branches.view_all` 등)은 코드에서 이미 쓰고 있어 **그대로 둔다**(의미상 "가맹점").
 
 ---
 
@@ -177,13 +156,13 @@ create table account_audit_log (
 type AccessScope = {
   userId: string;
   role: AppRole;                    // 진짜 계정 역할 (view-as 무관)
-  branchId: string | null;          // admin/hq_staff 는 null 가능
+  orgId: string | null;             // organizations.id (가맹점). admin/hq_staff 는 null 가능
   permissions: PermissionKey[];     // 역할 기본값 ∪/∩ 직급 권한
   canViewAllBranches: boolean;      // 'branches.view_all'
 };
 getAccessScope(): Promise<AccessScope>                 // 서버에서만
 requirePermission(perm): Promise<AccessScope>          // 없으면 throw → 403
-scopeByBranch(query, scope, column = 'branch_id')      // 가맹점 조건 자동 부착
+scopeByOrg(query, scope, column = 'org_id')            // 가맹점 조건 자동 부착
 ```
 - **view-as는 메뉴에만** 영향. `getAccessScope()`는 view-as를 **절대 읽지 않는다**(진짜 역할 기준).
 - 기존 `requireStaff` / `requireTeacherOrAdmin` / admin layout은 이 헬퍼로 **점진 교체**한다(한 번에 바꾸지 않는다).
@@ -191,7 +170,7 @@ scopeByBranch(query, scope, column = 'branch_id')      // 가맹점 조건 자�
 ### 4.2 서비스 키 우회 위험 (가장 중요)
 - 서비스 키(`getServiceSupabase`, `getServiceRoleClient`)로 만든 쿼리는 **RLS를 무시**한다. 이 코드베이스에는 그런 쿼리가 매우 많다.
 - 따라서 격리는 "RLS를 켜면 끝"이 아니다. **서비스 키 쿼리마다 가맹점 조건을 직접 붙여야 한다.**
-- 대책: ① `scopeByBranch` 사용을 강제하는 린트/리뷰 체크 ② 도메인별 인벤토리(§4.3)로 빠짐없이 ③ 격리 자동 테스트(§8) ④ 새 테이블은 처음부터 RLS + 가맹점 조건.
+- 대책: ① `scopeByOrg` 사용을 강제하는 린트/리뷰 체크 ② 도메인별 인벤토리(§4.3)로 빠짐없이 ③ 격리 자동 테스트(§8) ④ 새 테이블은 처음부터 RLS + 가맹점 조건.
 
 ### 4.3 도메인별 전환 순서 (민감도 높은 것부터)
 | 순서 | 도메인 | 이유 | 대표 경로 |
@@ -209,8 +188,8 @@ scopeByBranch(query, scope, column = 'branch_id')      // 가맹점 조건 자�
 
 | 누가 | 만드는 것 | 방법 (2-C에서 구현) |
 |---|---|---|
-| Super / 본사 | 가맹점 + **원장 계정** | 가맹점 등록 화면 → 원장 초대(이메일/임시 비밀번호), `role='franchisee'`, `branch_id` 지정 |
-| 원장 | **선생님 계정** + 직급 | `/franchise/staff`: 이름·이메일·직급 선택 → 계정 생성(`role='teacher'`, `branch_id`, `position_id`) |
+| Super / 본사 | 가맹점(`organizations`) + **원장 계정** | 가맹점 등록 화면 → 원장 초대(이메일/임시 비밀번호), `role='franchisee'`, `org_id` 지정 + `organizations.owner_id` 연결 |
+| 원장 | **선생님 계정** + 직급 | `/franchise/staff`: 이름·이메일·직급 선택 → 계정 생성(`role='teacher'`, `org_id`, `position_id`) |
 | 원장 / 선생님(`students.manage`) | **학생 계정** | 기존 학생 등록 흐름을 가맹점 범위로 제한 |
 | 원장 | **직급 만들기·권한 설정** | `/franchise/positions`: 직급 CRUD, 권한 키 체크, 상한 검증(§2.3) |
 
@@ -227,11 +206,25 @@ scopeByBranch(query, scope, column = 'branch_id')      // 가맹점 조건 자�
 
 | 단계 | 내용 | 산출물 | 사용자에게 보이는 변화 | 되돌리기 | 규모 |
 |---|---|---|---|---|:-:|
-| **2-A** 스키마(추가만) | `branches`, `branch_positions`, `account_audit_log` + `profiles/academy_students/academy_classes`에 nullable `branch_id`(+`position_id`). **'본점' 시드 + 기존 행 전부 본점으로 채움** | 마이그레이션 SQL | **없음** | 컬럼 nullable → 무시/삭제 가능 | 소 |
+| **2-A** 스키마(추가만) ✅ SQL 작성 | `organizations` 확장 + `profiles/academy_students`에 `org_id`(+`position_id`) + `org_positions`, `account_audit_log`. **기본 직급 시드 + 기존 행 전부 본점으로 채움** | `20261105000001_organizations_franchise_core.sql` + 자동 검사 | **없음** | 파일 맨 아래 "되돌리기" SQL (새로 추가한 것만 삭제) | 소 |
 | **2-B** 접근 헬퍼·가드 | `getAccessScope/requirePermission`, 새 역할을 아는 가드. admin/teacher layout·`requireStaff` 점진 교체 | `lib/auth/access.ts` + 테스트 | 없음(모두 본점) | 헬퍼 미사용으로 복귀 | 중 |
 | **2-C** 계정 발급·직급 관리 | 가맹점 등록, 원장 초대, `/franchise/staff`, `/franchise/positions` | 화면 + 서버 액션 + 감사 기록 | 원장·선생님 계정 생성 가능 | 기능 숨김 | 중 |
-| **2-D** 데이터 격리 | §4.3 순서대로 도메인별 `scopeByBranch` 적용 + **격리 테스트** | 도메인별 PR | 가맹점 계정은 자기 데이터만 보임 | 도메인별 되돌리기 | **대** |
+| **2-D** 데이터 격리 | §4.3 순서대로 도메인별 `scopeByOrg` 적용 + **격리 테스트** | 도메인별 PR | 가맹점 계정은 자기 데이터만 보임 | 도메인별 되돌리기 | **대** |
 | **2-E** 본사 허브 실데이터 | 가맹점별 표, 공지·문의·교육·자료실 테이블과 화면 | 설계 별도 | 허브 "준비 중" → 실제 기능 | 기능별 | 대 |
+
+### 6.1 2-A 적용 절차 (Supabase 수동 적용)
+
+1. **백업 확인**: Supabase 대시보드 → Database → Backups 에서 최근 백업이 있는지 확인(없으면 먼저 수동 백업).
+2. **SQL 편집기**에서 `20261105000001_organizations_franchise_core.sql` 전체를 붙여 넣고 실행. (하나의 트랜잭션이라 중간에 실패하면 전부 취소된다. 여러 번 실행해도 안전하다.)
+3. 파일 맨 아래 **검증 SQL**을 실행해 결과 확인:
+   - `organizations` 에 `HQ-001 / direct / active` 한 줄
+   - `students_without_org`, `profiles_without_org`, `classes_without_org` 가 모두 **0**
+   - 기본 직급 3개: 부원장 10 / 정교사 8 / 조교 2
+4. **사이트 확인**: `/student/home`, `/teacher/home`, `/franchise/home`, `/admin/franchise` 가 평소처럼 열리는지.
+5. 문제가 있으면 파일 맨 아래 **되돌리기 SQL** 실행(새로 추가한 컬럼·테이블만 삭제, 기존 데이터는 그대로).
+6. 적용 결과를 알려 주면 2-B(접근 헬퍼·가드)로 진행한다.
+
+> 이 단계에서는 앱 코드가 새 컬럼을 **아직 읽지도 쓰지도 않는다.** 그래서 적용 전·후로 사용자에게 보이는 변화가 없어야 정상이다.
 
 **2-D 완료 기준(= 가맹점 오픈 가능 기준):** 가맹점 A 계정으로 가맹점 B의 학생·반·출석·성적·학부모 연락처가 **목록·상세·API 어디에서도** 보이지 않는다(§8 테스트 통과).
 
@@ -276,10 +269,10 @@ scopeByBranch(query, scope, column = 'branch_id')      // 가맹점 조건 자�
 | 1 | 본사가 가맹점 학생·학부모 정보를 **어디까지** 볼 수 있나? | 통계는 전체, 개인 식별 정보(학부모 연락처)는 **가맹점 안에서만**. 법무 확인 후 확정 |
 | 2 | 선생님이 **여러 가맹점**에 소속될 수 있나? | 처음엔 **불가**(한 가맹점). 필요해지면 소속 테이블로 확장 |
 | 3 | 학생이 **다른 가맹점으로 이동**하면 학습 기록은? | 기록은 학생에게 귀속(따라감), 이전 가맹점 열람은 종료 |
-| 4 | 가맹점이 **자기 교재(콘텐츠)** 를 만들 수 있나? | 처음엔 **본사 콘텐츠만**. 가맹점 전용 콘텐츠는 이후 `branch_id` 컬럼으로 확장 |
+| 4 | 가맹점이 **자기 교재(콘텐츠)** 를 만들 수 있나? | 처음엔 **본사 콘텐츠만**. 가맹점 전용 콘텐츠는 이후 콘텐츠 테이블에 `org_id` 컬럼을 두어 확장 |
 | 5 | **본사 직원** 세부 권한은? | Super가 직원별로 조정(기본값은 §2.2) |
 | 6 | **학부모 계정**(자녀 열람)이 필요한가? | 별도 기획(설계서 `CYCLE2_PARENT_COMMUNICATION_DESIGN.md`와 연계) |
-| 7 | **원장이 여러 가맹점**을 운영하나? | 처음엔 1:1. 확장은 `branches.owner_id` 다대일로 가능 |
+| 7 | **원장이 여러 가맹점**을 운영하나? | 처음엔 1:1. 확장은 `organizations.owner_id`(원장 1명 → 여러 가맹점)로 가능 |
 
 ---
 
