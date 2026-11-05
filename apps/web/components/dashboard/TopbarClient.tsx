@@ -7,6 +7,7 @@ import { createSupabaseBrowser } from '@/lib/supabaseBrowser';
 import { ChevronRight } from 'lucide-react';
 import Image from 'next/image';
 import { useLang } from '@/contexts/LangContext';
+import { VIEW_AS_COOKIE, VIEW_AS_OPTIONS, type ViewAs } from '@/lib/auth/viewAs';
 
 const PATH_LABELS: Record<string, { label: string; skill?: string }> = {
   '/student':              { label: '학습 현황' },
@@ -49,10 +50,13 @@ const SKILL_LABEL_COLOR: Record<string, string> = {
 type Props = {
   /** 서버에서 이메일을 넘길 수 있고, 없으면 클라이언트에서 조회 */
   email?: string;
-  role?: 'student' | 'teacher' | 'admin';
+  /** 진짜 계정 역할 (역할 미리보기 스위처는 admin 에게만 보인다) */
+  role?: 'student' | 'teacher' | 'admin' | 'franchisee' | 'hq_staff';
+  /** Super 가 미리보기 중인 역할 (없으면 Super 화면) */
+  viewAs?: ViewAs | null;
 };
 
-export default function TopbarClient({ email: initialEmail, role }: Props) {
+export default function TopbarClient({ email: initialEmail, role, viewAs = null }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const { lang, toggle: toggleLang } = useLang();
@@ -88,6 +92,20 @@ export default function TopbarClient({ email: initialEmail, role }: Props) {
       await supabase.auth.signOut();
       router.replace('/auth/login');
     });
+  };
+
+  // Super 의 역할 미리보기 전환: 쿠키에 저장하고 서버 레이아웃을 다시 그린다 (메뉴 구성만 바뀜)
+  const switchViewAs = (next: ViewAs) => {
+    try {
+      if (next === 'admin') {
+        document.cookie = `${VIEW_AS_COOKIE}=; path=/; max-age=0; samesite=lax`;
+      } else {
+        document.cookie = `${VIEW_AS_COOKIE}=${next}; path=/; max-age=${60 * 60 * 24 * 30}; samesite=lax`;
+      }
+    } catch {
+      /* 쿠키를 못 쓰면 전환만 안 된다 */
+    }
+    router.refresh();
   };
 
   const toggleSidebar = () => {
@@ -146,11 +164,43 @@ export default function TopbarClient({ email: initialEmail, role }: Props) {
         {/* 로고 */}
         <div className="flex items-center gap-2.5 shrink-0">
           <Image src="/LEXiOX.png" alt="LEXiOX" height={40} width={133} className="h-10 w-auto" priority unoptimized />
-          {role === 'admin' && (
-            <span className="rounded bg-amber-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-800">
-              Admin
+          {role === 'admin' ? (
+            // Super 계정: 본사직원/원장/선생님 화면으로 전환해서 볼 수 있다 (메뉴 구성만 바뀐다)
+            <div
+              className="hidden md:flex items-center gap-0.5 rounded-lg bg-amber-50 p-0.5 ring-1 ring-amber-200"
+              role="group"
+              aria-label="역할 미리보기"
+              title="이 계정은 Super 입니다. 다른 역할이 보는 화면을 미리 볼 수 있어요 (권한은 그대로)"
+            >
+              {VIEW_AS_OPTIONS.map((o) => {
+                const active = (viewAs ?? 'admin') === o.value;
+                return (
+                  <button
+                    key={o.value}
+                    type="button"
+                    onClick={() => switchViewAs(o.value)}
+                    aria-pressed={active}
+                    className={[
+                      'rounded-md px-2 py-0.5 text-[11px] font-semibold transition-colors',
+                      active
+                        ? 'bg-amber-500 text-white shadow-sm'
+                        : 'text-amber-800 hover:bg-amber-100',
+                    ].join(' ')}
+                  >
+                    {o.label}
+                  </button>
+                );
+              })}
+            </div>
+          ) : role === 'franchisee' ? (
+            <span className="rounded bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold tracking-wide text-emerald-800">
+              원장
             </span>
-          )}
+          ) : role === 'hq_staff' ? (
+            <span className="rounded bg-sky-100 px-2 py-0.5 text-[11px] font-semibold tracking-wide text-sky-800">
+              본사
+            </span>
+          ) : null}
         </div>
 
         {/* Breadcrumb — 데스크탑만 */}

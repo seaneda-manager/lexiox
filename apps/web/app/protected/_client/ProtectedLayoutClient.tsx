@@ -8,14 +8,21 @@ import SidebarProfile from '@/components/dashboard/SidebarProfile';
 import MobileLexioxTabBar from '@/components/dashboard/MobileLexioxTabBar';
 import PWAInstallBanner from '@/components/PWAInstallBanner';
 import { isExamRoute } from '@/lib/utils/examRoute';
+import type { AppRole } from '@/lib/auth/permissions';
+import type { ViewAs } from '@/lib/auth/viewAs';
 
-type Role = 'student' | 'teacher' | 'admin';
+type Role = AppRole;
 type Program = 'gap' | 'toefl' | 'lexiox' | null;
 
 type Props = {
   children: ReactNode;
   email: string;
+  /** 화면(메뉴)에 적용되는 역할 — Super 의 역할 미리보기 중이면 미리보기 역할 */
   role: Role;
+  /** 진짜 계정 역할 */
+  actualRole: Role;
+  viewAs: ViewAs | null;
+  permissions: string[];
   program: Program;
   avatarUrl: string | null;
   fullName: string | null;
@@ -28,6 +35,9 @@ export default function ProtectedLayoutClient({
   children,
   email,
   role,
+  actualRole,
+  viewAs,
+  permissions,
   program,
   avatarUrl,
   fullName,
@@ -67,7 +77,7 @@ export default function ProtectedLayoutClient({
   return (
     <div className="h-screen overflow-hidden grid grid-rows-[auto_1fr] bg-neutral-50 text-neutral-900" suppressHydrationWarning>
       <div>
-        <TopbarClient email={email} role={role} />
+        <TopbarClient email={email} role={actualRole} viewAs={viewAs} />
       </div>
       <div className="grid grid-cols-[auto_1fr] min-h-0">
         <aside
@@ -77,7 +87,7 @@ export default function ProtectedLayoutClient({
           ].join(' ')}
         >
           <div className="flex-1 min-h-0 overflow-hidden">
-            <SidebarClient role={role} program={program} hasHiNaesin={hasHiNaesin} hasMiddleNaesin={hasMiddleNaesin} collapsed={collapsed} />
+            <SidebarClient key={role} role={role} permissions={permissions} program={program} hasHiNaesin={hasHiNaesin} hasMiddleNaesin={hasMiddleNaesin} collapsed={collapsed} />
           </div>
           {!collapsed && (
             <div className="shrink-0">

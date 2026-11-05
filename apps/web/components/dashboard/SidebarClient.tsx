@@ -14,14 +14,16 @@ import {
 } from 'lucide-react';
 import { useLang } from '@/contexts/LangContext';
 import { normalizeRoutePath } from '@/lib/utils/examRoute';
+import { buildStaffMenu, isStaffRole, CONTENT_SECTIONS } from './staffNav';
+import { defaultPermissionsForRole } from '@/lib/auth/permissions';
 
 type Icon = React.ComponentType<LucideProps>;
 
-type Role    = 'student' | 'teacher' | 'admin';
+type Role    = 'student' | 'teacher' | 'admin' | 'franchisee' | 'hq_staff';
 type Program = 'gap' | 'toefl' | 'lexiox' | null;
 // collapsed는 ProtectedLayoutClient가 소유한다 — 사이드바 하단 프로필 카드도
 // 같은 상태를 봐야 접혔을 때 서로 어긋나지 않는다.
-type Props   = { role: Role; program?: Program; hasHiNaesin?: boolean; hasMiddleNaesin?: boolean; collapsed: boolean };
+type Props   = { role: Role; /** 이 계정이 가진 권한 키 (없으면 역할 기본값) */ permissions?: string[]; program?: Program; hasHiNaesin?: boolean; hasMiddleNaesin?: boolean; collapsed: boolean };
 
 // ── Section type: all section keys used across roles ─────────────
 type NavSection =
@@ -33,6 +35,7 @@ type NavSection =
   | '내신' | 'Hi-내신' | '어휘' | '숙제'   // lingx
   | '학습' | '내 현황'          // toefl / gap
   | '내 학습' | '학습 콘텐츠'   // unassigned (legacy)
+  | '오늘 운영' | '학생·반 관리' | '배정·시험 관리' | '수업 도구' | '본사'  // staff (admin/hq/franchisee/teacher)
   | '오늘' | '공부하기' | '시험·복습' | '연습·게임' | '내 기록'  // toefl / gap (재구성)
   // Shared
   | '설정';
@@ -59,6 +62,11 @@ const SECTION_EN: Record<NavSection, string> = {
   '내 학습': 'My Learning',
   '학습 콘텐츠': 'Content',
   '오늘': 'Today',
+  '오늘 운영': 'Today',
+  '학생·반 관리': 'Students & Classes',
+  '배정·시험 관리': 'Assignments & Tests',
+  '수업 도구': 'Class Tools',
+  '본사': 'HQ',
   '공부하기': 'Study',
   '시험·복습': 'Tests & Review',
   '연습·게임': 'Practice',
@@ -74,6 +82,11 @@ const SECTION_GROUP: Record<string, string> = {
   'Jr.':         'CONTENT',
   '어휘관리':    'CONTENT',
   '선생님 도구': 'TEACHER',
+  '오늘 운영':      'OPERATIONS',
+  '학생·반 관리':   'OPERATIONS',
+  '배정·시험 관리': 'OPERATIONS',
+  '수업 도구':      'OPERATIONS',
+  '본사':           'HQ',
   '시스템':      'SYSTEM',
 };
 
@@ -112,6 +125,7 @@ function collapsedLabel(section: string) {
     '학생 관리': '관',
     '내신': '내', 'Hi-내신': 'Hi', '어휘': '어', '숙제': '숙', '학습': '학', '내 현황': '현',
     '내 학습': '나', '학습 콘텐츠': '콘',
+    '오늘 운영': '운', '학생·반 관리': '학', '배정·시험 관리': '배', '수업 도구': '도', '본사': '본',
     '오늘': '오', '공부하기': '공', '시험·복습': '시', '연습·게임': '연', '내 기록': '기',
     '설정': '설',
   };
@@ -143,6 +157,11 @@ const SECTION_THEME: Record<string, SectionTheme> = {
   'Hi-내신':      { header: 'text-cyan-600',    active: 'border-cyan-400    bg-cyan-50    text-cyan-700',    hover: 'hover:bg-cyan-50    hover:text-cyan-900',    chevron: 'text-cyan-300',    dot: 'bg-cyan-400'    },
   '어휘':         { header: 'text-violet-600',  active: 'border-violet-400  bg-violet-50  text-violet-700',  hover: 'hover:bg-violet-50  hover:text-violet-900',  chevron: 'text-violet-300',  dot: 'bg-violet-400'  },
   '숙제':         { header: 'text-rose-500',    active: 'border-rose-400    bg-rose-50    text-rose-700',    hover: 'hover:bg-rose-50    hover:text-rose-900',    chevron: 'text-rose-300',    dot: 'bg-rose-400'    },
+  '오늘 운영':    { header: 'text-rose-500',    active: 'border-rose-400    bg-rose-50    text-rose-700',    hover: 'hover:bg-rose-50    hover:text-rose-900',    chevron: 'text-rose-300',    dot: 'bg-rose-400'    },
+  '학생·반 관리': { header: 'text-teal-600',    active: 'border-teal-400    bg-teal-50    text-teal-700',    hover: 'hover:bg-teal-50    hover:text-teal-900',    chevron: 'text-teal-300',    dot: 'bg-teal-400'    },
+  '배정·시험 관리': { header: 'text-violet-600', active: 'border-violet-400  bg-violet-50  text-violet-700',  hover: 'hover:bg-violet-50  hover:text-violet-900',  chevron: 'text-violet-300',  dot: 'bg-violet-400'  },
+  '수업 도구':    { header: 'text-orange-500',  active: 'border-orange-400  bg-orange-50  text-orange-700',  hover: 'hover:bg-orange-50  hover:text-orange-900',  chevron: 'text-orange-300',  dot: 'bg-orange-400'  },
+  '본사':         { header: 'text-sky-600',     active: 'border-sky-400     bg-sky-50     text-sky-700',     hover: 'hover:bg-sky-50     hover:text-sky-900',     chevron: 'text-sky-300',     dot: 'bg-sky-400'     },
   '오늘':         { header: 'text-rose-500',    active: 'border-rose-400    bg-rose-50    text-rose-700',    hover: 'hover:bg-rose-50    hover:text-rose-900',    chevron: 'text-rose-300',    dot: 'bg-rose-400'    },
   '공부하기':     { header: 'text-blue-600',    active: 'border-blue-400    bg-blue-50    text-blue-700',    hover: 'hover:bg-blue-50    hover:text-blue-900',    chevron: 'text-blue-300',    dot: 'bg-blue-400'    },
   '시험·복습':    { header: 'text-violet-600',  active: 'border-violet-400  bg-violet-50  text-violet-700',  hover: 'hover:bg-violet-50  hover:text-violet-900',  chevron: 'text-violet-300',  dot: 'bg-violet-400'  },
@@ -191,7 +210,7 @@ const SKILL_DOT: Record<SkillColor, string> = {
 
 
 // ── Component ────────────────────────────────────────────────────
-export default function SidebarClient({ role, program = null, hasHiNaesin = false, hasMiddleNaesin = false, collapsed }: Props) {
+export default function SidebarClient({ role, permissions, program = null, hasHiNaesin = false, hasMiddleNaesin = false, collapsed }: Props) {
   const pathnameRaw = usePathname() || '/';
   const pathname    = normalizePath(pathnameRaw);
   const { lang }    = useLang();
@@ -229,15 +248,14 @@ export default function SidebarClient({ role, program = null, hasHiNaesin = fals
 
   // ── Initial open-section state ──────────────────────────────
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
-    if (role === 'admin') {
-      return {
-        '대시보드': true, 'Updated TOEFL': true, 'Updated-Speaking': true, '내신관리': true,
-        'Jr.': true, '어휘관리': true,
-        '콘텐츠 허브': true, '선생님 도구': true, '시스템': true,
-      };
-    }
-    if (role === 'teacher') {
-      return { '콘텐츠': true, '학생 관리': true, '설정': true };
+    if (isStaffRole(role)) {
+      // 운영 메뉴는 펼치고, 자주 쓰지 않는 콘텐츠 제작·시스템은 접어 둔다 (직원 화면이 너무 길어지지 않게)
+      const closed = new Set<string>([...CONTENT_SECTIONS, '시스템']);
+      const init: Record<string, boolean> = {};
+      for (const it of buildStaffMenu(role, permissions ?? defaultPermissionsForRole(role))) {
+        init[it.section] = !closed.has(it.section);
+      }
+      return init;
     }
     return {
       '내신': true, 'Hi-내신': true, 'Jr.': true, '어휘': true,
@@ -283,105 +301,9 @@ export default function SidebarClient({ role, program = null, hasHiNaesin = fals
   // ── Nav items: per role + per program ────────────────────────
   const items = useMemo<NavItem[]>(() => {
 
-    // ── Admin ─────────────────────────────────────────────────
-    if (role === 'admin') {
-      return [
-        { section: '대시보드' as NavSection, href: '/admin', label: '대시보드', icon: LayoutDashboard },
-        { section: '대시보드' as NavSection, href: '/admin/dashboard', label: '학생 진행 현황', icon: Users },
-
-        { section: 'Updated TOEFL' as NavSection, href: '/admin/content/updated-reading',   label: 'Reading',   icon: BookOpen },
-        { section: 'Updated TOEFL' as NavSection, href: '/admin/content/updated-listening', label: 'Listening', icon: Headphones },
-        { section: 'Updated TOEFL' as NavSection, href: '/admin/content/updated-writing',   label: 'Writing',   icon: PenLine },
-        { section: 'Updated TOEFL' as NavSection, href: '/admin/content/grammar-2026',      label: 'Grammar',   icon: BookText },
-        { section: 'Updated TOEFL' as NavSection, href: '/admin/grammar-engine',            label: '문법 엔진(개념×레벨)', icon: BookText },
-        { section: 'Updated TOEFL' as NavSection, href: '/admin/content/grammar-2026/plans', label: '문법 스케줄', icon: Calendar },
-        { section: 'Updated TOEFL' as NavSection, href: '/admin/voice-lab', label: '강의 음성 시험대', icon: Mic },
-        { section: 'Updated TOEFL' as NavSection, href: '/admin/grammar-quiz',              label: '문법 퀴즈 뱅크', icon: CheckSquare },
-        { section: 'Updated TOEFL' as NavSection, href: '/admin/problem-bank',              label: 'Problem Bank', icon: Library },
-        { section: 'Updated TOEFL' as NavSection, href: '/admin/daily-tests',               label: 'Daily Tests', icon: CheckSquare },
-
-        { section: 'Updated-Speaking' as NavSection, href: '/admin/content/updated-speaking',  label: 'Speaking',  icon: Mic },
-        { section: 'Updated-Speaking' as NavSection, href: '/admin/speaking-drills',           label: 'Speaking 훈련',  icon: PlayCircle },
-
-        { section: '내신관리' as NavSection, href: '/admin/naesin',              label: '고등 드릴 관리', icon: ClipboardList },
-        { section: '내신관리' as NavSection, href: '/admin/hi-naesin/passages',  label: '고등 지문',      icon: FileText },
-        { section: '내신관리' as NavSection, href: '/admin/middle-naesin/units', label: '중학 단원·드릴', icon: GraduationCap },
-        { section: '내신관리' as NavSection, href: '/admin/middle-naesin/drill-results', label: '중학 드릴 결과', icon: BarChart2 },
-        { section: '내신관리' as NavSection, href: '/admin/hi-naesin/wrong-answers', label: '오답 검토', icon: ClipboardCheck },
-
-        { section: 'Jr.' as NavSection, href: '/admin/jr/content/generate',              label: 'AI 콘텐츠 생성', icon: Mic },
-        { section: 'Jr.' as NavSection, href: '/admin/jr/content/review',               label: 'AI 검토',        icon: ClipboardCheck },
-        { section: 'Jr.' as NavSection, href: '/admin/jr/content/reading',              label: '읽기',         icon: FileText },
-        { section: 'Jr.' as NavSection, href: '/admin/jr/content/grammar',              label: '문법',         icon: BookOpen },
-        { section: 'Jr.' as NavSection, href: '/admin/jr/content/listening',            label: '청취',         icon: Headphones },
-        { section: 'Jr.' as NavSection, href: '/admin/jr/content/speaking-writing',     label: '말하기/쓰기', icon: Mic },
-
-        { section: '어휘관리' as NavSection, href: '/admin/vocab/assign',      label: '단어 배정',       icon: UserPlus },
-        { section: '어휘관리' as NavSection, href: '/admin/vocab/sets',        label: '단어 책 관리',    icon: Library },
-        { section: '어휘관리' as NavSection, href: '/admin/vocab/words',        label: '단어 목록',       icon: List },
-        { section: '어휘관리' as NavSection, href: '/admin/vocab/words/import', label: '단어 가져오기',   icon: Download },
-        { section: '어휘관리' as NavSection, href: '/admin/vocab/import',       label: 'CSV 업로드',      icon: Upload },
-        { section: '어휘관리' as NavSection, href: '/admin/vocab/validate',     label: '단어 검증',    icon: CheckSquare },
-        { section: '어휘관리' as NavSection, href: '/admin/vocab/tracks/new',   label: '트랙 만들기',     icon: Library },
-        { section: '어휘관리' as NavSection, href: '/admin/vocab/Tracks',       label: '트랙 배포',       icon: Send },
-        { section: '어휘관리' as NavSection, href: '/admin/vocab/progress',     label: '학생 진행 현황',  icon: BarChart2 },
-        { section: '어휘관리' as NavSection, href: '/admin/vocab/speed-settings', label: 'Speed 타이머',  icon: Settings },
-
-        { section: '선생님 도구' as NavSection, href: '/teacher/home',             label: '선생님 홈',    icon: Home },
-        { section: '선생님 도구' as NavSection, href: '/teacher/session',          label: '오늘의 수업',  icon: ClipboardCheck },
-        { section: '선생님 도구' as NavSection, href: '/admin/classes',            label: '반 관리',      icon: Users },
-        { section: '선생님 도구' as NavSection, href: '/admin/attendance',         label: '출석 현황',    icon: Calendar },
-        { section: '선생님 도구' as NavSection, href: '/admin/guardians',          label: '학부모 연락처', icon: Users },
-        { section: '선생님 도구' as NavSection, href: '/teacher/homework-calendar', label: '배정 캘린더',  icon: Calendar },
-        { section: '선생님 도구' as NavSection, href: '/teacher/lesson-log',        label: '수업 로그',    icon: ClipboardCheck },
-        { section: '선생님 도구' as NavSection, href: '/teacher/exam-schedule',     label: '시험 배정',    icon: ClipboardList },
-        { section: '선생님 도구' as NavSection, href: '/teacher/vocab-exams',      label: '단어 시험 출제', icon: FileText },
-        { section: '선생님 도구' as NavSection, href: '/teacher/vocab-review',    label: '단어 복습 현황', icon: RotateCcw },
-        { section: '선생님 도구' as NavSection, href: '/admin/vocab/test-config',  label: '단어 시험 설정', icon: Settings },
-        { section: '선생님 도구' as NavSection, href: '/admin/students',          label: '학생 추가/관리', icon: UserPlus },
-        { section: '선생님 도구' as NavSection, href: '/admin/schools',            label: '학교 관리',    icon: School },
-        { section: '선생님 도구' as NavSection, href: '/admin/exam-mode',          label: '시험모드 현황', icon: Calendar },
-        { section: '선생님 도구' as NavSection, href: '/teacher/tasks',            label: '할 일 관리',   icon: CheckSquare },
-        { section: '선생님 도구' as NavSection, href: '/teacher/students',         label: '학생 현황',    icon: Users },
-        { section: '선생님 도구' as NavSection, href: '/teacher/reports/students', label: '활동 리포트',  icon: BarChart2 },
-        { section: '선생님 도구' as NavSection, href: '/admin/homework',           label: '숙제 채점',    icon: ClipboardCheck },
-        { section: '선생님 도구' as NavSection, href: '/admin/homework/books',     label: '교재별 정기 숙제', icon: Library },
-        { section: '선생님 도구' as NavSection, href: '/admin/deepcheck',          label: 'DeepCheck 현황', icon: BookText },
-        { section: '선생님 도구' as NavSection, href: '/admin/level-test',         label: '레벨 테스트', icon: BarChart2 },
-        { section: '선생님 도구' as NavSection, href: '/admin/lectures',           label: '강의 관리',    icon: PlayCircle },
-        { section: '선생님 도구' as NavSection, href: '/admin/toefl/curriculum',     label: 'TOEFL 커리',     icon: PlayCircle },
-        { section: '선생님 도구' as NavSection, href: '/admin/toefl/content/practice', label: 'Practice 지문', icon: PlayCircle },
-
-        { section: '시스템' as NavSection, href: '/admin/perks',    label: 'Perk 관리',  icon: Gift },
-        { section: '시스템' as NavSection, href: '/admin/users',    label: '사용자/권한', icon: ShieldCheck },
-        { section: '시스템' as NavSection, href: '/admin/login-history', label: '로그인 기록', icon: History },
-        { section: '시스템' as NavSection, href: '/admin/landing',  label: '랜딩 페이지', icon: Globe },
-        { section: '시스템' as NavSection, href: '/admin/settings', label: '설정',       icon: Settings },
-      ];
-    }
-
-    // ── Teacher ───────────────────────────────────────────────
-    if (role === 'teacher') {
-      return [
-        { section: '콘텐츠',  href: '/home',  label: '홈', icon: Home },
-        { section: '콘텐츠',  href: '/vocab/hub-new', label: '단어 학습', icon: Library },
-        { section: '콘텐츠',  href: '/teacher/speaking-drills', label: 'Speaking 훈련', icon: PlayCircle },
-
-        { section: '학생 관리', href: '/teacher/home',     label: '선생님 홈', icon: Home },
-        { section: '학생 관리', href: '/teacher/session',  label: '오늘의 수업', icon: ClipboardCheck },
-        { section: '학생 관리', href: '/teacher/homework-calendar', label: '배정 캘린더', icon: Calendar },
-        { section: '학생 관리', href: '/teacher/lesson-log', label: '수업 로그', icon: ClipboardCheck },
-        { section: '학생 관리', href: '/teacher/exam-schedule', label: '시험 배정', icon: ClipboardList },
-        { section: '학생 관리', href: '/teacher/vocab-exams', label: '단어 시험 출제', icon: FileText },
-        { section: '학생 관리', href: '/teacher/vocab-review', label: '단어 복습 현황', icon: RotateCcw },
-        { section: '학생 관리', href: '/teacher/vocab-test-config', label: '단어 시험 설정', icon: Settings },
-        { section: '학생 관리', href: '/teacher/tasks',    label: '할 일 관리', icon: CheckSquare },
-        { section: '학생 관리', href: '/teacher/students', label: '학생 현황', icon: Users },
-        { section: '학생 관리', href: '/teacher/reports/assignments', label: '배정 과제 현황', icon: BarChart2 },
-        { section: '학생 관리', href: '/teacher/middle-naesin-drill-results', label: '중학내신 드릴 결과', icon: BarChart2 },
-
-        { section: '설정', href: '/settings', label: '설정', icon: Settings },
-      ];
+    // ── 직원 계정(Super / 본사직원 / 원장 / 선생님): 권한으로 거른 공용 메뉴 정의 ─────
+    if (isStaffRole(role)) {
+      return buildStaffMenu(role, permissions ?? defaultPermissionsForRole(role)) as NavItem[];
     }
 
     // ── Student: LEXiOX ───────────────────────────────────────
@@ -505,7 +427,7 @@ export default function SidebarClient({ role, program = null, hasHiNaesin = fals
 
       { section: '설정', href: '/settings', label: '설정', icon: Settings },
     ];
-  }, [role, program, hasHiNaesin, hasMiddleNaesin]);
+  }, [role, permissions, program, hasHiNaesin, hasMiddleNaesin]);
 
   // ── 현재 경로에 해당하는 메뉴 하나 결정 (가장 긴 일치) ───────────
   {
@@ -553,7 +475,9 @@ export default function SidebarClient({ role, program = null, hasHiNaesin = fals
   }, [items]);
 
   // ── Legacy visibility: hide for program-assigned students ───
-  const showLegacy = role !== 'student' || program === null;
+  const showLegacy = role === 'admin' || (role === 'student' && program === null);
+  // 그룹 머리글(OPERATIONS/CONTENT/…)은 그룹이 둘 이상일 때만 의미가 있다 (선생님·원장 메뉴는 한 그룹)
+  const hasManyGroups = new Set(groups.map(([sec]) => SECTION_GROUP[sec]).filter(Boolean)).size > 1;
 
   // 실제 너비/숨김은 부모(ProtectedLayoutClient)의 <aside>가 결정한다 —
   // 여기서는 collapsed prop에 따라 아이콘 전용 레이아웃으로만 전환한다.
@@ -568,7 +492,7 @@ export default function SidebarClient({ role, program = null, hasHiNaesin = fals
           const theme     = getSectionTheme(section);
           const groupLabel = SECTION_GROUP[section];
           const prevGroupLabel = idx > 0 ? SECTION_GROUP[groups[idx - 1][0]] : undefined;
-          const showGroupHeader = !collapsed && groupLabel && groupLabel !== prevGroupLabel;
+          const showGroupHeader = !collapsed && hasManyGroups && groupLabel && groupLabel !== prevGroupLabel;
 
           return (
             <div key={section} className={[idx > 0 ? 'mt-1' : '', showGroupHeader ? 'pt-5' : ''].join(' ')}>

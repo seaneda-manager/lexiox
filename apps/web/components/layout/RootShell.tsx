@@ -9,6 +9,7 @@ const APP_PREFIXES = [
   // ── (protected) 라우트 ──────────────────────────────────
   "/student",
   "/teacher",
+  "/franchise",
   "/admin",
   "/dashboard",
   "/settings",

@@ -1,6 +1,7 @@
 // apps/web/app/protected/layout.tsx
 import { ReactNode } from 'react';
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 import { getServerSupabase } from '@/lib/supabase/server';
 import TopbarClient from '@/components/dashboard/TopbarClient';
 import SidebarClient from '@/components/dashboard/SidebarClient';
@@ -9,8 +10,10 @@ import MobileLexioxTabBar from '@/components/dashboard/MobileLexioxTabBar';
 import PWAInstallBanner from '@/components/PWAInstallBanner';
 import { LangProvider } from '@/contexts/LangContext';
 import ProtectedLayoutClient from './_client/ProtectedLayoutClient';
+import { VIEW_AS_COOKIE, parseViewAs, resolveEffectiveRole } from '@/lib/auth/viewAs';
+import { defaultPermissionsForRole, type AppRole } from '@/lib/auth/permissions';
 
-type Role = 'student' | 'teacher' | 'admin';
+type Role = AppRole;
 type Program = 'gap' | 'toefl' | 'lexiox' | null;
 
 export const revalidate = 0;
@@ -40,8 +43,14 @@ export default async function ProtectedLayout({ children }: { children: ReactNod
         .maybeSingle()
     : { data: null };
 
-  if (profile?.role === 'admin' || profile?.role === 'teacher' || profile?.role === 'student') {
-    role = profile.role;
+  if (
+    profile?.role === 'admin' ||
+    profile?.role === 'teacher' ||
+    profile?.role === 'student' ||
+    profile?.role === 'franchisee' ||
+    profile?.role === 'hq_staff'
+  ) {
+    role = profile.role as Role;
   }
   if (profile?.program === 'gap' || profile?.program === 'toefl' || profile?.program === 'lexiox') {
     program = profile.program;
@@ -50,6 +59,12 @@ export default async function ProtectedLayout({ children }: { children: ReactNod
   fullName = profile?.full_name ?? null;
 
   const showMobileTabBar = role === 'student' && program === 'lexiox';
+
+  // Super(admin) 계정의 "역할 미리보기": 본사직원/원장/선생님 화면을 로그아웃 없이 전환해서 본다.
+  // 메뉴 구성만 바꾼다 — 실제 접근 권한은 진짜 역할(role)이 결정한다. admin 이 아니면 쿠키는 무시.
+  const viewAs = role === 'admin' ? parseViewAs((await cookies()).get(VIEW_AS_COOKIE)?.value) : null;
+  const effectiveRole = resolveEffectiveRole(role, viewAs);
+  const permissions = defaultPermissionsForRole(effectiveRole);
 
   // program 필드 하나로는 "복수 배정"을 못 나타낸다 — 예: program이 'toefl'인 학생도
   // Hi-내신 과제를 따로 배정받을 수 있는데, 그러면 사이드바에 Hi-내신 메뉴가 아예 안 보이는
@@ -83,7 +98,10 @@ export default async function ProtectedLayout({ children }: { children: ReactNod
     <LangProvider>
       <ProtectedLayoutClient
         email={email}
-        role={role}
+        role={effectiveRole}
+        actualRole={role}
+        viewAs={viewAs}
+        permissions={permissions}
         program={program}
         avatarUrl={avatarUrl}
         fullName={fullName}

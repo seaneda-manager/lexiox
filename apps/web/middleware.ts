@@ -38,6 +38,8 @@ export function middleware(req: NextRequest) {
     pathname.startsWith("/student") ||
     pathname.startsWith("/teacher/") ||
     pathname.startsWith("/teacher") ||
+    pathname === "/franchise" ||
+    pathname.startsWith("/franchise/") ||
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/profile") ||
     pathname.startsWith("/settings") ||
