@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import ListeningTestLayout2026, { ListeningHeaderLabel, ListeningSubHeaderLabel } from "@/components/listening/ListeningTestLayout2026";
+import ListeningTestLayout2026, { ListeningHeaderLabel, ListeningSubHeaderLabel, useListeningTx } from "@/components/listening/ListeningTestLayout2026";
 import VolumeControl from "@/components/listening/VolumeControl";
 import PlaybackRateControl from "@/components/listening/PlaybackRateControl";
 import SpeakerVisual from "@/components/listening/SpeakerVisual";
@@ -39,14 +39,14 @@ interface Task1QuestionScreenProps {
 }
 
 const nextButtonStyle: React.CSSProperties = {
-  height: 32,
-  padding: "0 16px",
-  fontSize: 12,
+  height: 36,
+  padding: "0 18px",
+  fontSize: 13,
   fontWeight: 700,
   border: "none",
-  borderRadius: 4,
-  backgroundColor: "#0073E6",
-  color: "#FFFFFF",
+  borderRadius: 6,
+  backgroundColor: "#FFFFFF",
+  color: "#1E7B7D",
   cursor: "pointer",
 };
 
@@ -71,6 +71,7 @@ export default function Task1QuestionScreen({
   onPlaybackRateChange,
 }: Task1QuestionScreenProps) {
   const isStudy = mode === "study";
+  const tx = useListeningTx();
   const [selectedChoiceIndex, setSelectedChoiceIndex] = useState<number | null>(initialChoiceIndex);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const [timeLeft, setTimeLeft] = useState(maxTime);
@@ -156,48 +157,42 @@ export default function Task1QuestionScreen({
       subHeaderLeft={<ListeningSubHeaderLabel questionInfo={`Question ${currentQuestion} of ${totalQuestions}`} />}
       subHeaderRight={
         !isStudy ? (
-          <span style={{ fontSize: 13, fontWeight: 700, fontFamily: "monospace", color: audioHasPlayed && timeLeft <= 5 ? "#DC2626" : "#333" }}>
+          <span style={{ fontSize: 13, fontWeight: 700, fontVariantNumeric: "tabular-nums", color: audioHasPlayed && timeLeft <= 5 ? "#DC2626" : "#333" }}>
             {audioHasPlayed ? formatTime(timeLeft) : "--:--"}
           </span>
         ) : (
-          <span style={{ fontSize: 11, fontWeight: 700, color: "#0F9D58" }}>Study — no time limit</span>
+          <span style={{ fontSize: 12, color: "#444" }}>{tx("No time limit", "시간 제한 없음")}</span>
         )
       }
     >
-      <div style={{ display: "flex", gap: 40, alignItems: "center", height: "100%" }}>
+      <h2 style={{ textAlign: "center", fontSize: 21, fontWeight: 700, color: "#222", marginBottom: 26 }}>
+        {tx("Choose the best response.", "가장 알맞은 응답을 고르세요.")}
+      </h2>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 36, alignItems: "start" }}>
         {/* 좌: 화자 이미지 */}
-        <div style={{ flexShrink: 0 }}>
+        <div style={{ display: "flex", justifyContent: "center" }}>
           <SpeakerVisual taskKind="choose_response" illustrationUrl={illustrationUrl} size={200} />
-          {!isStudy && (
-            <div style={{ textAlign: "center", marginTop: 10, fontSize: 12, color: isAudioPlaying ? "#0073E6" : "#666" }}>
-              {isAudioPlaying ? "🔊 Now playing..." : audioHasPlayed ? "✓ Audio played" : "Ready to listen"}
-            </div>
-          )}
         </div>
 
-        {/* 우: 질문 + 선택지 */}
-        <div style={{ flex: 1 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 800, color: "#111", marginBottom: 20 }}>
-            Choose the best response.
-          </h2>
-
+        {/* 우: 선택지 (오디오가 끝나기 전에는 흐리게, 선택 불가) */}
+        <div>
           {isStudy && (
             <div style={{ marginBottom: 20 }}>
               <StudyAudioPlayer audioUrl={audioUrl} transcript={transcript} scriptSegments={scriptSegments} autoPlay />
             </div>
           )}
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {choices.map((choice, index) => (
               <label
                 key={choice.id}
                 style={{
                   display: "flex",
                   alignItems: "flex-start",
-                  gap: 10,
-                  padding: "8px 6px",
-                  cursor: isChoicesDisabled ? "not-allowed" : "pointer",
-                  opacity: isChoicesDisabled ? 0.55 : 1,
+                  gap: 12,
+                  cursor: isChoicesDisabled ? "default" : "pointer",
+                  opacity: isChoicesDisabled ? 0.4 : 1,
                 }}
               >
                 <input
@@ -206,20 +201,12 @@ export default function Task1QuestionScreen({
                   checked={selectedChoiceIndex === index}
                   onChange={() => setSelectedChoiceIndex(index)}
                   disabled={isChoicesDisabled}
-                  style={{ width: 16, height: 16, marginTop: 2, accentColor: "#0073E6", cursor: "inherit" }}
+                  style={{ width: 17, height: 17, marginTop: 1, accentColor: "#1E7B7D", cursor: "inherit" }}
                 />
-                <span style={{ fontSize: 15, lineHeight: 1.5, color: selectedChoiceIndex === index ? "#0073E6" : "#222", fontWeight: selectedChoiceIndex === index ? 600 : 400 }}>
-                  {choice.text}
-                </span>
+                <span style={{ fontSize: 14, lineHeight: 1.4, color: "#333" }}>{choice.text}</span>
               </label>
             ))}
           </div>
-
-          {!isStudy && isAudioPlaying && (
-            <p style={{ marginTop: 16, fontSize: 12, color: "#92600A" }}>
-              Listen to the audio. You can select your answer after it finishes playing.
-            </p>
-          )}
         </div>
       </div>
 

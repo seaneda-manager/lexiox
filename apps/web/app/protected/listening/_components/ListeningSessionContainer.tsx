@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import ListeningDirectionsScreen from "./ListeningDirectionsScreen";
 import ModuleStartScreen from "./ModuleStartScreen";
@@ -8,6 +8,9 @@ import Task1QuestionScreen from "./Task1QuestionScreen";
 import ListeningScreen from "./ListeningScreen";
 import Task2345QuestionScreen from "./Task2345QuestionScreen";
 import ModuleEndScreen from "./ModuleEndScreen";
+import ListeningTestLayout2026, { ListeningStudyContext, ListeningHeaderLabel, ListeningSubHeaderLabel, useListeningTx } from "@/components/listening/ListeningTestLayout2026";
+import VolumeControl from "@/components/listening/VolumeControl";
+import { loadStudy, saveStudy, clearStudy } from "@/lib/ui/studyProgress";
 import type { LListeningTest2026Linear, LListeningTrack2026, LQuestion2026 } from "@/models/listening";
 import { isChoiceCorrect } from "@/lib/utils/listeningChoice";
 
@@ -22,13 +25,20 @@ interface AnswerRecord {
 // choose_response 트랙은 질문마다 독립된 오디오라서 별도 "듣기 화면" 없이 바로 문제 화면에서 재생.
 // 그 외 트랙은 먼저 트랙 전체를 듣는 화면을 거친 뒤, 딸린 문제들을 순서대로 푼다.
 type Step =
+  | { kind: "groupIntro" }
   | { kind: "listening"; track: LListeningTrack2026 }
   | { kind: "question"; track: LListeningTrack2026; question: LQuestion2026; qIndex: number };
 
 function buildSteps(tracks: LListeningTrack2026[]): Step[] {
   const steps: Step[] = [];
+  let groupIntroAdded = false;
   for (const track of tracks) {
     if (track.taskKind !== "choose_response") {
+      // 실제 화면: Choose a Response 문항이 끝나면 "Conversation, Announcement, and Academic Talk" 안내가 한 번 나온다.
+      if (!groupIntroAdded) {
+        steps.push({ kind: "groupIntro" });
+        groupIntroAdded = true;
+      }
       steps.push({ kind: "listening", track });
     }
     (track.questions ?? []).forEach((question, qIndex) => {
@@ -50,7 +60,15 @@ interface ListeningSessionContainerProps {
   mode?: "test" | "study";
 }
 
-export default function ListeningSessionContainer({
+export default function ListeningSessionContainer(props: ListeningSessionContainerProps) {
+  return (
+    <ListeningStudyContext.Provider value={props.mode === "study"}>
+      <ListeningSessionContainerInner {...props} />
+    </ListeningStudyContext.Provider>
+  );
+}
+
+function ListeningSessionContainerInner({
   testData,
   testId,
   assignmentId,
@@ -70,6 +88,24 @@ export default function ListeningSessionContainer({
   const [nextSection, setNextSection] = useState<{ href: string; section: string } | null>(null);
   const [groupCompleted, setGroupCompleted] = useState(false);
   const [groupId, setGroupId] = useState<string | null>(null);
+
+  // ── Study 이어 풀기 ──────────────────────────────────────────────
+  type ListeningSaved = {
+    screen: ScreenType; module: 1 | 2; difficulty: "hard" | "easy"; stepIndex: number;
+    answers: Record<string, AnswerRecord>;
+  };
+  const [resumeOffer, setResumeOffer] = useState<{ data: ListeningSaved; savedAt: string } | null>(null);
+  const [resumeChecked, setResumeChecked] = useState(false);
+  useEffect(() => {
+    if (!isStudy) return;
+    setResumeOffer(loadStudy<ListeningSaved>("listening", testId));
+    setResumeChecked(true);
+  }, [isStudy, testId]);
+  useEffect(() => {
+    if (!isStudy || !resumeChecked || resumeOffer) return;
+    if (screen === "directions" || screen === "final") return;
+    saveStudy<ListeningSaved>("listening", testId, { screen, module, difficulty, stepIndex, answers });
+  }, [isStudy, resumeChecked, resumeOffer, screen, module, difficulty, stepIndex, answers, testId]);
 
   const module1Tracks = testData.modules?.[0]?.items ?? [];
   const module2Tracks =
@@ -179,6 +215,25 @@ export default function ListeningSessionContainer({
     );
   }
 
+  if (isStudy && resumeOffer && screen === "directions") {
+    return (
+      <ListeningResumeScreen
+        savedAt={resumeOffer.savedAt}
+        answered={Object.keys(resumeOffer.data.answers ?? {}).length}
+        onResume={() => {
+          const d = resumeOffer.data;
+          setModule(d.module);
+          setDifficulty(d.difficulty);
+          setAnswers(d.answers ?? {});
+          setStepIndex(d.stepIndex ?? 0);
+          setScreen(d.screen === "moduleStart" || d.screen === "moduleEnd" || d.screen === "step" ? d.screen : "moduleStart");
+          setResumeOffer(null);
+        }}
+        onRestart={() => { clearStudy("listening", testId); setResumeOffer(null); }}
+      />
+    );
+  }
+
   switch (screen) {
     case "directions":
       return <ListeningDirectionsScreen onNext={handleDirectionsNext} volume={volume} onVolumeChange={setVolume} />;
@@ -199,6 +254,10 @@ export default function ListeningSessionContainer({
 
       // study에서만 뒤로가기. 첫 단계에서는 돌아갈 곳이 없다.
       const backHandler = isStudy && stepIndex > 0 ? goBackStep : undefined;
+
+      if (currentStep.kind === "groupIntro") {
+        return <ListeningGroupIntro onNext={advanceStep} volume={volume} onVolumeChange={setVolume} />;
+      }
 
       if (currentStep.kind === "listening") {
         return (
@@ -290,41 +349,96 @@ export default function ListeningSessionContainer({
     }
 
     case "final":
+      if (isStudy) clearStudy("listening", testId);
       return (
-        <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center">
-          <div className="text-center space-y-6 max-w-2xl">
-            <div className="text-6xl">🎉</div>
-            <h1 className="text-4xl font-bold text-gray-900">Test Complete!</h1>
-            <p className="text-gray-600 text-lg">
-              Your Listening section is complete. Your results are being calculated.
-            </p>
-            {nextSection && (
-              <Link
-                href={nextSection.href}
-                className="block px-8 py-3 bg-black text-white font-semibold rounded-lg hover:bg-gray-800 transition-colors"
-              >
-                다음 영역: {nextSection.section === "speaking" ? "Speaking" : nextSection.section} 계속하기 →
-              </Link>
-            )}
-            {groupCompleted && groupId && (
-              <Link
-                href={`/student/full-tests/${groupId}`}
-                className="block px-8 py-3 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition-colors"
-              >
-                전체 결과 보기 →
-              </Link>
-            )}
-            <button
-              onClick={() => (window.location.href = "/")}
-              className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Back to Home
-            </button>
-          </div>
-        </div>
+        <ListeningFinalScreen
+          nextHref={nextSection?.href}
+          groupHref={groupCompleted && groupId ? `/student/full-tests/${groupId}` : undefined}
+        />
       );
 
     default:
       return null;
   }
+}
+
+
+// ── 실제 ETS 화면: 그룹 안내 / 섹션 종료 ─────────────────────────────────
+const etsNextStyle: React.CSSProperties = {
+  height: 36, padding: "0 18px", fontSize: 13, fontWeight: 700, border: "none",
+  borderRadius: 6, backgroundColor: "#FFFFFF", color: "#1E7B7D", cursor: "pointer",
+};
+const etsTitleStyle: React.CSSProperties = {
+  fontSize: 22, fontWeight: 400, color: "#333", paddingBottom: 8, marginBottom: 20, borderBottom: "1px solid #DDD",
+};
+const etsParaStyle: React.CSSProperties = { fontSize: 14, lineHeight: 1.7, color: "#444", marginBottom: 14 };
+
+function ListeningGroupIntro({
+  onNext, volume, onVolumeChange,
+}: { onNext: () => void; volume: number; onVolumeChange: (v: number) => void }) {
+  const tx = useListeningTx();
+  return (
+    <ListeningTestLayout2026
+      headerLeft={<ListeningHeaderLabel />}
+      headerRight={
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <VolumeControl volume={volume} onVolumeChange={onVolumeChange} />
+          <button onClick={onNext} style={etsNextStyle}>{tx("Next >", "다음 >")}</button>
+        </div>
+      }
+      subHeaderLeft={<ListeningSubHeaderLabel />}
+    >
+      <div style={{ maxWidth: 620, margin: "6px auto 0" }}>
+        <h2 style={etsTitleStyle}>{tx("Conversation, Announcement, and Academic Talk", "대화, 공지, 학술 강의")}</h2>
+        <p style={etsParaStyle}>{tx("You will listen only one time and then answer questions.", "한 번만 듣고 문제에 답합니다. (Study 모드에서는 다시 들을 수 있습니다.)")}</p>
+        <p style={etsParaStyle}>{tx("In an actual test, the clock will indicate how much time you have to answer.", "실제 시험에서는 답할 수 있는 남은 시간이 시계로 표시됩니다.")}</p>
+      </div>
+    </ListeningTestLayout2026>
+  );
+}
+
+function ListeningFinalScreen({ nextHref, groupHref }: { nextHref?: string; groupHref?: string }) {
+  const tx = useListeningTx();
+  const goNext = () => {
+    window.location.href = groupHref ?? nextHref ?? "/student";
+  };
+  return (
+    <ListeningTestLayout2026
+      headerLeft={<ListeningHeaderLabel />}
+      headerRight={<button onClick={goNext} style={etsNextStyle}>{tx("Next >", "다음 >")}</button>}
+      subHeaderLeft={<ListeningSubHeaderLabel />}
+    >
+      <div style={{ maxWidth: 620, margin: "6px auto 0" }}>
+        <h2 style={etsTitleStyle}>{tx("End of Listening Section", "Listening 섹션 종료")}</h2>
+        <p style={etsParaStyle}>{tx("Thank you for completing the listening section.", "Listening 섹션을 마쳤습니다.")}</p>
+      </div>
+    </ListeningTestLayout2026>
+  );
+}
+
+function ListeningResumeScreen({
+  savedAt, answered, onResume, onRestart,
+}: { savedAt: string; answered: number; onResume: () => void; onRestart: () => void }) {
+  const tx = useListeningTx();
+  return (
+    <ListeningTestLayout2026
+      headerLeft={<ListeningHeaderLabel />}
+      headerRight={<span />}
+      subHeaderLeft={<ListeningSubHeaderLabel />}
+    >
+      <div style={{ maxWidth: 620, margin: "6px auto 0" }}>
+        <h2 style={etsTitleStyle}>{tx("Resume your study session?", "이어서 학습할까요?")}</h2>
+        <p style={etsParaStyle}>{tx(`You have a saved session (${answered} answers saved).`, `저장된 학습이 있습니다 (답 ${answered}개 저장).`)}</p>
+        <p style={{ fontSize: 12, color: "#888", marginBottom: 22 }}>{tx("Last saved: ", "마지막 저장: ")}{new Date(savedAt).toLocaleString()}</p>
+        <div style={{ display: "flex", gap: 10 }}>
+          <button onClick={onResume} style={{ height: 36, padding: "0 18px", fontSize: 13, fontWeight: 700, border: "none", borderRadius: 6, backgroundColor: "#1E7B7D", color: "#FFFFFF", cursor: "pointer" }}>
+            {tx("Resume", "이어서 하기")}
+          </button>
+          <button onClick={onRestart} style={{ height: 36, padding: "0 18px", fontSize: 13, fontWeight: 700, borderRadius: 6, backgroundColor: "#FFFFFF", color: "#1E7B7D", border: "1px solid #1E7B7D", cursor: "pointer" }}>
+            {tx("Start over", "처음부터")}
+          </button>
+        </div>
+      </div>
+    </ListeningTestLayout2026>
+  );
 }

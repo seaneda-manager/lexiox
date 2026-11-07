@@ -31,21 +31,25 @@ export default function VolumeControl({ volume, onVolumeChange }: VolumeControlP
       <button
         onClick={() => setIsOpen((v) => !v)}
         style={{
-          height: 32,
+          height: 36,
           padding: "0 16px",
-          fontSize: 12,
+          fontSize: 13,
           fontWeight: 700,
-          border: "1px solid rgba(255,255,255,0.4)",
-          borderRadius: 20,
+          border: "1px solid rgba(255,255,255,0.85)",
+          borderRadius: 6,
           backgroundColor: isOpen ? "rgba(255,255,255,0.15)" : "transparent",
           color: "#FFFFFF",
           cursor: "pointer",
           display: "flex",
           alignItems: "center",
-          gap: 6,
+          gap: 8,
         }}
       >
-        Volume <span>{volume === 0 ? "🔇" : "🔊"}</span>
+        Volume
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="#FFFFFF" aria-hidden="true">
+          <path d="M3 9v6h4l5 4V5L7 9H3z" />
+          {volume > 0 && <path d="M16.5 12a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z" />}
+        </svg>
       </button>
 
       {isOpen && (

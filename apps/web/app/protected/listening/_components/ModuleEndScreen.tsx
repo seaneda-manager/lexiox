@@ -1,6 +1,7 @@
 "use client";
 
-import ListeningTestLayout2026, { ListeningHeaderLabel } from "@/components/listening/ListeningTestLayout2026";
+import { useContext } from "react";
+import ListeningTestLayout2026, { ListeningHeaderLabel, ListeningSubHeaderLabel, useListeningTx, ListeningStudyContext } from "@/components/listening/ListeningTestLayout2026";
 
 interface ModuleEndScreenProps {
   module: 1 | 2;
@@ -12,16 +13,18 @@ interface ModuleEndScreenProps {
 }
 
 const nextButtonStyle: React.CSSProperties = {
-  height: 32,
-  padding: "0 16px",
-  fontSize: 12,
+  height: 36,
+  padding: "0 18px",
+  fontSize: 13,
   fontWeight: 700,
   border: "none",
-  borderRadius: 4,
-  backgroundColor: "#0073E6",
-  color: "#FFFFFF",
+  borderRadius: 6,
+  backgroundColor: "#FFFFFF",
+  color: "#1E7B7D",
   cursor: "pointer",
 };
+
+const paragraphStyle: React.CSSProperties = { fontSize: 14, lineHeight: 1.7, color: "#444", marginBottom: 14 };
 
 export default function ModuleEndScreen({
   module,
@@ -33,41 +36,46 @@ export default function ModuleEndScreen({
   const percentage = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
   const isHardModule = percentage >= Math.round(cutScore * 100);
   const isFinal = module === 2;
+  const tx = useListeningTx();
+  const isStudy = useContext(ListeningStudyContext);
 
   return (
     <ListeningTestLayout2026
       headerLeft={<ListeningHeaderLabel module={module} />}
       headerRight={
         <button onClick={onNext} style={nextButtonStyle}>
-          Next &gt;
+          {tx("Next >", "다음 >")}
         </button>
       }
+      subHeaderLeft={<ListeningSubHeaderLabel />}
     >
-      <div style={{ maxWidth: 560, margin: "40px auto 0" }}>
-        <h2 style={{ fontSize: 22, fontWeight: 800, color: "#111", marginBottom: 16 }}>
-          {isFinal ? "End of Listening Section" : `End of Module ${module}`}
+      <div style={{ maxWidth: 620, margin: "6px auto 0" }}>
+        <h2 style={{ fontSize: 22, fontWeight: 400, color: "#333", paddingBottom: 8, marginBottom: 20, borderBottom: "1px solid #DDD" }}>
+          {isFinal ? tx("End of Listening Section", "Listening 섹션 종료") : tx(`End of Module ${module}`, `Module ${module} 종료`)}
         </h2>
 
-        <p style={{ fontSize: 15, lineHeight: 1.7, color: "#333", marginBottom: 28 }}>
-          {isFinal
-            ? "Thank you for completing the listening section."
-            : `This is the end of Module ${module} of the Listening section. You will now begin Module ${module + 1}.`}
-        </p>
+        {isFinal ? (
+          <p style={paragraphStyle}>{tx("Thank you for completing the listening section.", "Listening 섹션을 마쳤습니다.")}</p>
+        ) : (
+          <>
+            <p style={paragraphStyle}>{tx(`This is the end of Module ${module} of the Listening section.`, `Listening 섹션의 Module ${module}이 끝났습니다.`)}</p>
+            <p style={paragraphStyle}>{tx(`You will now begin Module ${module + 1}.`, `이제 Module ${module + 1}을 시작합니다.`)}</p>
+          </>
+        )}
 
-        {/* 참고용 성적 요약 (실제 ETS 화면엔 없지만, 연습 목적상 남겨둔다) */}
-        <div style={{ backgroundColor: "#F4F6F9", borderRadius: 6, padding: "18px 22px", border: "1px solid #E0E0E0" }}>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-            <span style={{ fontSize: 28, fontWeight: 800, color: "#1A2B4C" }}>{percentage}%</span>
-            <span style={{ fontSize: 13, color: "#555" }}>
-              {correctCount} of {totalQuestions} correct
+        {isStudy && (
+          <div style={{ marginTop: 24, backgroundColor: "#F4F6F9", borderRadius: 6, padding: "14px 18px", border: "1px solid #E0E0E0" }}>
+            <span style={{ fontSize: 22, fontWeight: 800, color: "#222" }}>{percentage}%</span>
+            <span style={{ marginLeft: 10, fontSize: 13, color: "#555" }}>
+              {tx(`${correctCount} of ${totalQuestions} correct`, `${totalQuestions}문항 중 ${correctCount}문항 정답`)}
             </span>
+            {!isFinal && (
+              <p style={{ fontSize: 12, color: "#666", marginTop: 8 }}>
+                {tx("Module 2 difficulty: ", "Module 2 난이도: ")}<strong>{isHardModule ? "Hard" : "Easy"}</strong>
+              </p>
+            )}
           </div>
-          {!isFinal && (
-            <p style={{ fontSize: 12, color: "#666", marginTop: 10 }}>
-              Module 2 difficulty: <strong>{isHardModule ? "Hard (Advanced)" : "Easy (Basic)"}</strong>
-            </p>
-          )}
-        </div>
+        )}
       </div>
     </ListeningTestLayout2026>
   );

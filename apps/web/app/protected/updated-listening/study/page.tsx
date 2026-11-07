@@ -35,7 +35,7 @@ export default async function Listening2026StudyPage() {
   }
 
   return (
-    <div className="-m-4 md:-m-6 h-[calc(100%+2rem)] md:h-[calc(100%+3rem)]">
+    <div>
       <ListeningSessionContainer
         testData={data.payload as LListeningTest2026Linear}
         testId={data.id}

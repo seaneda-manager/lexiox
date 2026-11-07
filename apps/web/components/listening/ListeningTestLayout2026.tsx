@@ -1,7 +1,18 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { createContext, useContext, type ReactNode } from 'react';
 import { ListeningETSFrame } from './ListeningETSFrame';
+import { StudyLangToggle, useStudyLang } from '@/lib/ui/studyLang';
+
+/** true이면 Study 모드: 헤더에 한/영 전환 버튼 표시, 안내 문구 번역 */
+export const ListeningStudyContext = createContext(false);
+
+/** 시험 모드는 항상 영어, Study 모드는 선택한 언어 */
+export function useListeningTx() {
+  const isStudy = useContext(ListeningStudyContext);
+  const { t } = useStudyLang();
+  return (en: string, ko: string) => (isStudy ? t(en, ko) : en);
+}
 
 type Props = {
   /** 상단 헤더 좌측: 섹션 라벨(+모듈 배지) */
@@ -25,54 +36,50 @@ type Props = {
  * - Body: #FFFFFF, flex-1, 중앙 정렬
  */
 /** 헤더 좌측에 쓰는 공통 라벨: "Listening" (+ 모듈 배지). Reading 헤더 배지와 같은 스타일. */
-export function ListeningHeaderLabel({ module }: { module?: 1 | 2 }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-      <span style={{ fontSize: 15, fontWeight: 700, color: '#FFFFFF' }}>Listening</span>
-      {module && (
-        <span style={{
-          backgroundColor: module === 1 ? 'rgba(255,255,255,0.15)' : '#4F6BCD',
-          color: '#FFFFFF', fontSize: 11, fontWeight: 700,
-          padding: '2px 10px', borderRadius: 20, letterSpacing: 1,
-        }}>
-          MODULE {module}
-        </span>
-      )}
-    </div>
-  );
+// 실제 ETS 화면은 헤더 왼쪽이 비어 있다(오른쪽에 Volume / Next 버튼만 있음).
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function ListeningHeaderLabel(_props: { module?: 1 | 2 }) {
+  return <span />;
 }
 
 /** 서브헤더 좌측: "Listening" 또는 "Listening | Question X of Y" */
 export function ListeningSubHeaderLabel({ questionInfo }: { questionInfo?: string }) {
   return (
-    <span style={{ fontSize: 13, color: '#555' }}>
-      Listening{questionInfo ? <>&nbsp;|&nbsp;{questionInfo}</> : null}
+    <span style={{ fontSize: 12, color: '#444' }}>
+      <strong style={{ fontSize: 14, color: '#222' }}>Listening</strong>
+      {questionInfo ? <><span style={{ margin: '0 10px', color: '#BBB' }}>|</span>{questionInfo}</> : null}
     </span>
   );
 }
 
 export default function ListeningTestLayout2026({ headerLeft, headerRight, subHeaderLeft, subHeaderRight, children }: Props) {
+  const isStudy = useContext(ListeningStudyContext);
   return (
     <ListeningETSFrame>
       {/* ── ETS Header ── */}
       <header style={{
         height: 60,
-        backgroundColor: '#1A2B4C',
+        backgroundColor: '#1E7B7D',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between',
+        justifyContent: 'flex-end',
         padding: '0 24px',
         flexShrink: 0,
         gap: 16,
       }}>
         {headerLeft}
-        {headerRight}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {isStudy && (
+            <StudyLangToggle className="h-8 rounded-full border border-white/40 bg-transparent px-3 text-xs font-medium text-white hover:bg-white/10" />
+          )}
+          {headerRight}
+        </div>
       </header>
 
       {/* ── Sub-header ── */}
       {subHeaderLeft && (
         <div style={{
-          height: 44,
+          height: 40,
           backgroundColor: '#FFFFFF',
           borderBottom: '1px solid #E0E0E0',
           display: 'flex',
@@ -91,7 +98,7 @@ export default function ListeningTestLayout2026({ headerLeft, headerRight, subHe
         flex: 1,
         overflowY: 'auto',
         backgroundColor: '#FFFFFF',
-        padding: '32px 36px',
+        padding: '22px 36px',
         position: 'relative',
       }}>
         {children}

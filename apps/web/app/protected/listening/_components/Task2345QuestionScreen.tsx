@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import ListeningTestLayout2026, { ListeningHeaderLabel, ListeningSubHeaderLabel } from "@/components/listening/ListeningTestLayout2026";
+import ListeningTestLayout2026, { ListeningHeaderLabel, ListeningSubHeaderLabel, useListeningTx } from "@/components/listening/ListeningTestLayout2026";
 import VolumeControl from "@/components/listening/VolumeControl";
 import SpeakerVisual from "@/components/listening/SpeakerVisual";
 import StudyAudioPlayer from "./StudyAudioPlayer";
@@ -41,14 +41,14 @@ interface Task2345QuestionScreenProps {
 }
 
 const nextButtonStyle: React.CSSProperties = {
-  height: 32,
-  padding: "0 16px",
-  fontSize: 12,
+  height: 36,
+  padding: "0 18px",
+  fontSize: 13,
   fontWeight: 700,
   border: "none",
-  borderRadius: 4,
-  backgroundColor: "#0073E6",
-  color: "#FFFFFF",
+  borderRadius: 6,
+  backgroundColor: "#FFFFFF",
+  color: "#1E7B7D",
   cursor: "pointer",
 };
 
@@ -74,6 +74,7 @@ export default function Task2345QuestionScreen({
   onVolumeChange,
 }: Task2345QuestionScreenProps) {
   const isStudy = mode === "study";
+  const tx = useListeningTx();
   const [selectedChoiceIndex, setSelectedChoiceIndex] = useState<number | null>(initialChoiceIndex);
   const [timeLeft, setTimeLeft] = useState(maxTime);
 
@@ -119,17 +120,17 @@ export default function Task2345QuestionScreen({
       subHeaderLeft={<ListeningSubHeaderLabel questionInfo={`Question ${currentQuestion} of ${totalQuestions}`} />}
       subHeaderRight={
         !isStudy ? (
-          <span style={{ fontSize: 13, fontWeight: 700, fontFamily: "monospace", color: timeLeft <= 10 ? "#DC2626" : "#333" }}>
+          <span style={{ fontSize: 13, fontWeight: 700, fontVariantNumeric: "tabular-nums", color: timeLeft <= 10 ? "#DC2626" : "#333" }}>
             {formatTime(timeLeft)}
           </span>
         ) : (
-          <span style={{ fontSize: 11, fontWeight: 700, color: "#0F9D58" }}>Study — no time limit</span>
+          <span style={{ fontSize: 12, color: "#444" }}>{tx("No time limit", "시간 제한 없음")}</span>
         )
       }
     >
-      <div style={{ display: "flex", gap: 40, alignItems: "flex-start", height: "100%" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 36, alignItems: "start", paddingTop: 18 }}>
         {/* 좌: 화자 이미지 (conversation은 2명, 그 외는 1명) — study는 재청취/스크립트로 대체 */}
-        <div style={{ flexShrink: 0 }}>
+        <div style={{ display: "flex", justifyContent: "center" }}>
           {isStudy && audioUrl ? (
             <StudyAudioPlayer audioUrl={audioUrl} transcript={transcript} scriptSegments={scriptSegments} />
           ) : (
@@ -138,7 +139,7 @@ export default function Task2345QuestionScreen({
         </div>
 
         {/* 우: 질문 + 선택지 */}
-        <div style={{ flex: 1 }}>
+        <div>
           {tableData && (
             <table style={{ borderCollapse: "collapse", marginBottom: 16, fontSize: 13 }}>
               <thead>
@@ -164,32 +165,21 @@ export default function Task2345QuestionScreen({
             </table>
           )}
 
-          <p style={{ fontSize: 16, fontWeight: 700, color: "#111", marginBottom: 20, lineHeight: 1.5 }}>
+          <p style={{ fontSize: 14, fontWeight: 700, color: "#222", marginBottom: 14, lineHeight: 1.4 }}>
             {question}
           </p>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {choices.map((choice, index) => (
-              <label
-                key={choice.id}
-                style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: 10,
-                  padding: "8px 6px",
-                  cursor: "pointer",
-                }}
-              >
+              <label key={choice.id} style={{ display: "flex", alignItems: "flex-start", gap: 12, cursor: "pointer" }}>
                 <input
                   type="radio"
                   name="choice"
                   checked={selectedChoiceIndex === index}
                   onChange={() => setSelectedChoiceIndex(index)}
-                  style={{ width: 16, height: 16, marginTop: 2, accentColor: "#0073E6", cursor: "pointer" }}
+                  style={{ width: 17, height: 17, marginTop: 1, accentColor: "#1E7B7D", cursor: "pointer" }}
                 />
-                <span style={{ fontSize: 15, lineHeight: 1.5, color: selectedChoiceIndex === index ? "#0073E6" : "#222", fontWeight: selectedChoiceIndex === index ? 600 : 400 }}>
-                  {choice.text}
-                </span>
+                <span style={{ fontSize: 14, lineHeight: 1.4, color: "#333" }}>{choice.text}</span>
               </label>
             ))}
           </div>

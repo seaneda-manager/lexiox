@@ -42,14 +42,14 @@ function getHeading(taskKind: ListeningScreenProps["taskKind"], title: string) {
 }
 
 const nextButtonStyle: React.CSSProperties = {
-  height: 32,
-  padding: "0 16px",
-  fontSize: 12,
+  height: 36,
+  padding: "0 18px",
+  fontSize: 13,
   fontWeight: 700,
   border: "none",
-  borderRadius: 4,
-  backgroundColor: "#0073E6",
-  color: "#FFFFFF",
+  borderRadius: 6,
+  backgroundColor: "#FFFFFF",
+  color: "#1E7B7D",
   cursor: "pointer",
 };
 
@@ -120,8 +120,8 @@ export default function ListeningScreen({
       }
       subHeaderLeft={<ListeningSubHeaderLabel />}
     >
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", gap: 32 }}>
-        <h2 style={{ fontSize: 20, fontWeight: 800, color: "#111", textAlign: "center" }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", height: "100%", gap: 26 }}>
+        <h2 style={{ fontSize: 21, fontWeight: 700, color: "#222", textAlign: "center" }}>
           {getHeading(taskKind, title)}
         </h2>
 
@@ -134,14 +134,7 @@ export default function ListeningScreen({
             scriptSegments={scriptSegments}
             autoPlay
           />
-        ) : (
-          isPlaying && (
-            <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#0073E6" }}>
-              <span style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: "#DC2626" }} className="animate-pulse" />
-              <span style={{ fontSize: 13, fontWeight: 600 }}>Now playing...</span>
-            </div>
-          )
-        )}
+        ) : null}
       </div>
 
       {onBack && isStudy && (
