@@ -8,22 +8,25 @@ interface ResponseTimeBadgeProps {
 }
 
 function formatTime(seconds: number) {
-  const m = Math.floor(seconds / 60);
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
   const s = seconds % 60;
-  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
-/** 실제 ETS 응답시간 위젯 — "RESPONSE TIME" 라벨 + 마이크 아이콘 + 카운트다운. */
+/** 실제 ETS 응답시간 위젯 — 청록 "RESPONSE TIME" 헤더 + 마이크 아이콘 + 00:00:44 카운트다운. */
 export default function ResponseTimeBadge({ secondsLeft, urgent = false }: ResponseTimeBadgeProps) {
   return (
-    <div style={{ borderRadius: 8, overflow: "hidden", border: "1px solid #E0E0E0", width: 200 }}>
-      <div style={{ backgroundColor: "#1A2B4C", color: "#FFFFFF", textAlign: "center", padding: "6px 0", fontSize: 11, fontWeight: 700, letterSpacing: 1 }}>
+    <div style={{ borderRadius: 8, overflow: "hidden", border: "1px solid #9FB8BA", width: 210, backgroundColor: "#FFFFFF" }}>
+      <div style={{ backgroundColor: "#1E7B7D", color: "#FFFFFF", textAlign: "center", padding: "8px 0", fontSize: 13, fontWeight: 700 }}>
         RESPONSE TIME
       </div>
-      <div style={{ backgroundColor: "#FFFFFF", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "10px 0" }}>
-        <span style={{ fontSize: 16 }}>{secondsLeft === null ? "🔇" : "🎙️"}</span>
-        <span style={{ fontFamily: "monospace", fontSize: 16, fontWeight: 700, color: urgent ? "#DC2626" : "#333" }}>
-          {secondsLeft === null ? "--:--" : formatTime(secondsLeft)}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, padding: "10px 0" }}>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="#8A9A9B" aria-hidden="true">
+          <path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V22h2v-3.1A7 7 0 0 0 19 12h-2z" />
+        </svg>
+        <span style={{ fontSize: 17, fontVariantNumeric: "tabular-nums", color: urgent ? "#DC2626" : "#333" }}>
+          {secondsLeft === null ? "00:00:00" : formatTime(secondsLeft)}
         </span>
       </div>
     </div>

@@ -12,6 +12,19 @@ export default function Speaking2026StudyPage() {
         </p>
       </div>
 
+      {/* 시험 화면 그대로 연습 */}
+      <section className="space-y-3">
+        <Link
+          href="/speaking-2026/study/test"
+          className="block rounded-lg border border-blue-200 bg-blue-50 px-4 py-4 shadow-sm transition hover:bg-blue-100"
+        >
+          <div className="text-sm font-semibold text-blue-900">🎤 Practice the full test (Study mode)</div>
+          <div className="mt-1 text-xs text-blue-800">
+            Same screens as the real test, with preparation time, audio replay, and an English/Korean switch.
+          </div>
+        </Link>
+      </section>
+
       {/* 드릴 섹션 */}
       <section className="space-y-3">
         <div>

@@ -51,14 +51,14 @@ const MODE_CONFIG = {
 };
 
 const nextButtonStyle: React.CSSProperties = {
-  height: 32,
-  padding: "0 16px",
-  fontSize: 12,
+  height: 36,
+  padding: "0 18px",
+  fontSize: 13,
   fontWeight: 700,
   border: "none",
-  borderRadius: 4,
-  backgroundColor: "#0073E6",
-  color: "#FFFFFF",
+  borderRadius: 6,
+  backgroundColor: "#FFFFFF",
+  color: "#1E7B7D",
   cursor: "pointer",
 };
 
@@ -189,7 +189,7 @@ export default function InterviewRunner({
         });
       }, 1000);
     } catch {
-      alert("마이크 권한을 확인해 주세요.");
+      alert("Please check your microphone permission.");
     }
   }, [current, answerSeconds, stopRecording]);
 
@@ -263,15 +263,19 @@ export default function InterviewRunner({
       }
       subHeaderLeft={<SpeakingSubHeaderLabel questionInfo={`Question ${questionNumber} of ${totalQuestions}`} />}
     >
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", gap: 20 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 800, color: "#111", textAlign: "center" }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-start", height: "100%", gap: 26 }}>
+        <h2 style={{ fontSize: 21, fontWeight: 700, color: "#222", textAlign: "center" }}>
           Please answer the interviewer&apos;s questions.
         </h2>
 
         <SpeakingVisual imageUrl={interviewerImageUrl} isPerson size={220} />
 
+        {mode === "study" && (
+
         <p style={{
+
           fontSize: 14,
+
           fontWeight: 600,
           color: phase === "recording" ? "#D9383A" : "#1A2B4C",
         }}>
@@ -280,6 +284,8 @@ export default function InterviewRunner({
             : phase === "done" ? "Response complete"
             : "Preparing..."}
         </p>
+
+        )}
 
         {(phase === "recording" || phase === "prepare") && (
           <ResponseTimeBadge secondsLeft={phase === "recording" ? timeLeft : null} urgent={phase === "recording" && timeLeft <= 5} />

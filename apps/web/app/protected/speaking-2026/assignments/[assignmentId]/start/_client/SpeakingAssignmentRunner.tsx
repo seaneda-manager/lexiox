@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import InterviewRunner from "@/app/protected/speaking-2026/components/InterviewRunner";
 import ListenAndRepeatRunner from "@/app/protected/speaking-2026/components/ListenAndRepeatRunner";
-import SpeakingTestLayout2026, { SpeakingHeaderLabel, SpeakingSubHeaderLabel } from "@/components/speaking/SpeakingTestLayout2026";
+import SpeakingTestLayout2026, { SpeakingHeaderLabel, SpeakingSubHeaderLabel, SpeakingStudyContext, useSpeakingTx } from "@/components/speaking/SpeakingTestLayout2026";
 import VolumeControl from "@/components/speaking/VolumeControl";
+import { loadStudy, saveStudy, clearStudy } from "@/lib/ui/studyProgress";
 import type {
   SpeakingTest2026,
   SpeakingTaskListenRepeat2026,
@@ -18,6 +19,8 @@ type Props = {
   assignmentId?: string;
   test: SpeakingTest2026;
   testLabel: string;
+  /** "test"(기본): 실전과 동일, 영어 고정. "study": 준비 시간·재청취·텍스트 표시 + 한/영 전환. 결과는 study로 기록하고 배정 완료 처리는 하지 않는다. */
+  mode?: "test" | "study";
 };
 
 type LrRec = { itemId: string; blob: Blob | null; transcript?: string; audioUrl?: string | null };
@@ -93,14 +96,14 @@ type Phase =
   | "done";
 
 const nextButtonStyle: React.CSSProperties = {
-  height: 32,
-  padding: "0 16px",
-  fontSize: 12,
+  height: 36,
+  padding: "0 18px",
+  fontSize: 13,
   fontWeight: 700,
   border: "none",
-  borderRadius: 4,
-  backgroundColor: "#0073E6",
-  color: "#FFFFFF",
+  borderRadius: 6,
+  backgroundColor: "#FFFFFF",
+  color: "#1E7B7D",
   cursor: "pointer",
 };
 
@@ -170,7 +173,7 @@ function AudioCheckStep({ onNext, volume, onVolumeChange }: { onNext: () => void
       }
       subHeaderLeft={<SpeakingSubHeaderLabel />}
     >
-      <h2 style={{ fontSize: 22, fontWeight: 800, color: "#111", marginBottom: 20 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 400, color: "#333", paddingBottom: 8, marginBottom: 20, borderBottom: "1px solid #DDD" }}>
         Audio &amp; Microphone Check
       </h2>
 
@@ -247,13 +250,39 @@ function AboutToBeginStep({ onNext, volume, onVolumeChange }: { onNext: () => vo
   );
 }
 
-export default function SpeakingAssignmentRunner({ assignmentId, test, testLabel }: Props) {
+export default function SpeakingAssignmentRunner(props: Props) {
+  return (
+    <SpeakingStudyContext.Provider value={props.mode === "study"}>
+      <SpeakingAssignmentRunnerInner {...props} />
+    </SpeakingStudyContext.Provider>
+  );
+}
+
+function SpeakingAssignmentRunnerInner({ assignmentId, test, testLabel, mode = "test" }: Props) {
+  const tx = useSpeakingTx();
+  const isStudy = mode === "study";
+  const [endAck, setEndAck] = useState(false);
+
+  // ── Study 이어 하기: 진행 위치(과제)만 저장한다. 녹음 파일은 브라우저 메모리에만 있어 저장하지 않는다. ──
+  const [resumeOffer, setResumeOffer] = useState<{ phase: Phase; savedAt: string } | null>(null);
+  const [resumeChecked, setResumeChecked] = useState(false);
+  useEffect(() => {
+    if (!isStudy) return;
+    const saved = loadStudy<{ phase: Phase }>("speaking", test.id);
+    setResumeOffer(saved ? { phase: saved.data.phase, savedAt: saved.savedAt } : null);
+    setResumeChecked(true);
+  }, [isStudy, test.id]);
   const router = useRouter();
   const listenRepeat = test.tasks.find((t) => t.type === "listen_repeat") as SpeakingTaskListenRepeat2026 | undefined;
   const interview = test.tasks.find((t) => t.type === "interview") as SpeakingTaskInterview2026 | undefined;
 
   // 시험 절차: directions → audio_check → about_to_begin → task1_intro → listen_repeat → task2_intro → interview → done
   const [phase, setPhase] = useState<Phase>("directions");
+  useEffect(() => {
+    if (!isStudy || !resumeChecked || resumeOffer) return;
+    if (phase === "directions" || phase === "done") return;
+    saveStudy("speaking", test.id, { phase });
+  }, [isStudy, resumeChecked, resumeOffer, phase, test.id]);
   // 실제 ETS는 전용 볼륨 조절 화면이 없다 — 헤더의 Volume 버튼으로 시험 내내 조절한다.
   const [volume, setVolume] = useState(70);
 
@@ -306,6 +335,7 @@ export default function SpeakingAssignmentRunner({ assignmentId, test, testLabel
     );
 
     setPhase("done");
+    if (isStudy) clearStudy("speaking", test.id);
 
     // 채점·분석용 결과 기록. 배정 여부와 무관하게 남긴다.
     await Promise.all([
@@ -317,7 +347,7 @@ export default function SpeakingAssignmentRunner({ assignmentId, test, testLabel
           script: rec.transcript ?? "",
           audioUrl: rec.audioUrl,  // ← 오디오 URL 추가
           prompt: sentence?.text,
-          mode: "test",
+          mode,
           meta: { itemId: rec.itemId, assignmentId: assignmentId ?? null },
         });
       }),
@@ -329,14 +359,14 @@ export default function SpeakingAssignmentRunner({ assignmentId, test, testLabel
           script: rec.transcript ?? "",
           audioUrl: rec.audioUrl,  // ← 오디오 URL 추가
           prompt: question?.text,
-          mode: "test",
+          mode,
           meta: { questionId: rec.questionId, assignmentId: assignmentId ?? null },
         });
       }),
     ]);
 
     // 배정을 통해 들어온 경우에만 완료 기록 (Test Mode 등 배정 없는 경우는 스킵)
-    if (assignmentId) {
+    if (assignmentId && !isStudy) {
       const json = await markCompleted(assignmentId, {
         listenRepeat: listenRepeatBase64,
         interview: interviewBase64,
@@ -351,6 +381,38 @@ export default function SpeakingAssignmentRunner({ assignmentId, test, testLabel
     }
   };
 
+  if (isStudy && resumeOffer && phase === "directions") {
+    const target: Phase =
+      resumeOffer.phase === "listen_repeat" || resumeOffer.phase === "task1_intro" ? "task1_intro"
+      : resumeOffer.phase === "interview" || resumeOffer.phase === "task2_intro" ? "task2_intro"
+      : "about_to_begin";
+    return (
+      <SpeakingTestLayout2026
+        headerLeft={<SpeakingHeaderLabel />}
+        headerRight={<span />}
+        subHeaderLeft={<SpeakingSubHeaderLabel />}
+      >
+        <div style={{ maxWidth: 620, margin: "6px auto 0" }}>
+          <h2 style={{ fontSize: 22, fontWeight: 400, color: "#333", paddingBottom: 8, marginBottom: 20, borderBottom: "1px solid #DDD" }}>
+            {tx("Resume your study session?", "이어서 학습할까요?")}
+          </h2>
+          <p style={{ fontSize: 14, lineHeight: 1.7, color: "#444", marginBottom: 6 }}>
+            {tx("You can continue from the task you were on. Earlier recordings are not kept.", "하던 과제부터 이어서 할 수 있습니다. 이전 녹음은 보관되지 않습니다.")}
+          </p>
+          <p style={{ fontSize: 12, color: "#888", marginBottom: 22 }}>{tx("Last saved: ", "마지막 저장: ")}{new Date(resumeOffer.savedAt).toLocaleString()}</p>
+          <div style={{ display: "flex", gap: 10 }}>
+            <button onClick={() => { setPhase(target); setResumeOffer(null); }} style={{ height: 36, padding: "0 18px", fontSize: 13, fontWeight: 700, border: "none", borderRadius: 6, backgroundColor: "#1E7B7D", color: "#FFFFFF", cursor: "pointer" }}>
+              {tx("Resume", "이어서 하기")}
+            </button>
+            <button onClick={() => { clearStudy("speaking", test.id); setResumeOffer(null); }} style={{ height: 36, padding: "0 18px", fontSize: 13, fontWeight: 700, borderRadius: 6, backgroundColor: "#FFFFFF", color: "#1E7B7D", border: "1px solid #1E7B7D", cursor: "pointer" }}>
+              {tx("Start over", "처음부터")}
+            </button>
+          </div>
+        </div>
+      </SpeakingTestLayout2026>
+    );
+  }
+
   if (phase === "directions") {
     const totalQuestions = (listenRepeat?.sentences.length ?? 0) + (interview?.questions.length ?? 0);
     return (
@@ -360,29 +422,28 @@ export default function SpeakingAssignmentRunner({ assignmentId, test, testLabel
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <VolumeControl volume={volume} onVolumeChange={setVolume} />
             <button onClick={() => setPhase("audio_check")} style={nextButtonStyle}>
-              Begin &gt;
+              {tx("Begin >", "시작 >")}
             </button>
           </div>
         }
         subHeaderLeft={<SpeakingSubHeaderLabel />}
       >
-        <h2 style={{ fontSize: 22, fontWeight: 800, color: "#111", marginBottom: 20 }}>
-          Speaking Section
+        <h2 style={{ fontSize: 22, fontWeight: 400, color: "#333", paddingBottom: 8, marginBottom: 20, borderBottom: "1px solid #DDD" }}>
+          {tx("Speaking Section", "Speaking 섹션")}
         </h2>
 
-        <p style={{ fontSize: 15, lineHeight: 1.7, color: "#333", marginBottom: 20 }}>
-          In the speaking section, you will answer {totalQuestions} questions to demonstrate how well you can
-          speak English. There are two types of tasks.
+        <p style={{ fontSize: 14, lineHeight: 1.7, color: "#444", marginBottom: 14 }}>
+          {tx(`In the speaking section, you will answer ${totalQuestions} questions to demonstrate how well you can speak English. There are two types of tasks.`, `Speaking 섹션에서는 ${totalQuestions}개 문항으로 영어 말하기 능력을 평가합니다. 문제 유형은 두 가지입니다.`)}
         </p>
 
-        <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 24, fontSize: 14 }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 24, fontSize: 13 }}>
           <thead>
             <tr>
-              <th style={{ backgroundColor: "#1A2B4C", color: "#FFFFFF", textAlign: "left", padding: "10px 14px", fontWeight: 700 }}>
-                Type of Task
+              <th style={{ backgroundColor: "#1E7B7D", color: "#FFFFFF", textAlign: "left", padding: "10px 14px", fontWeight: 700 }}>
+                {tx("Type of Task", "문제 유형")}
               </th>
-              <th style={{ backgroundColor: "#1A2B4C", color: "#FFFFFF", textAlign: "left", padding: "10px 14px", fontWeight: 700 }}>
-                Description
+              <th style={{ backgroundColor: "#1E7B7D", color: "#FFFFFF", textAlign: "left", padding: "10px 14px", fontWeight: 700 }}>
+                {tx("Description", "설명")}
               </th>
             </tr>
           </thead>
@@ -390,20 +451,22 @@ export default function SpeakingAssignmentRunner({ assignmentId, test, testLabel
             {listenRepeat && (
               <tr style={{ borderBottom: "1px solid #E0E0E0" }}>
                 <td style={{ padding: "10px 14px", fontWeight: 700, color: "#222" }}>Listen and Repeat</td>
-                <td style={{ padding: "10px 14px", color: "#333" }}>Listen and repeat what you heard.</td>
+                <td style={{ padding: "10px 14px", color: "#333" }}>{tx("Listen and repeat what you heard.", "들은 문장을 그대로 따라 말합니다.")}</td>
               </tr>
             )}
             {interview && (
               <tr style={{ borderBottom: "1px solid #E0E0E0" }}>
                 <td style={{ padding: "10px 14px", fontWeight: 700, color: "#222" }}>Take an Interview</td>
-                <td style={{ padding: "10px 14px", color: "#333" }}>Answer questions from the interviewer.</td>
+                <td style={{ padding: "10px 14px", color: "#333" }}>{tx("Answer questions from the interviewer.", "면접관의 질문에 답합니다.")}</td>
               </tr>
             )}
           </tbody>
         </table>
 
-        <p style={{ fontSize: 15, color: "#333" }}>
-          You <strong>WILL NOT</strong> be able to return to previous questions. No preparation time is provided.
+        <p style={{ fontSize: 14, color: "#444" }}>
+          {isStudy
+            ? tx("Study mode gives you extra preparation time and lets you replay the audio.", "Study 모드에서는 준비 시간이 주어지고 오디오를 다시 들을 수 있습니다.")
+            : <>You <strong>WILL NOT</strong> be able to return to previous questions. No preparation time is provided.</>}
         </p>
       </SpeakingTestLayout2026>
     );
@@ -431,21 +494,20 @@ export default function SpeakingAssignmentRunner({ assignmentId, test, testLabel
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <VolumeControl volume={volume} onVolumeChange={setVolume} />
             <button onClick={() => setPhase("listen_repeat")} style={nextButtonStyle}>
-              Begin &gt;
+              {tx("Begin >", "시작 >")}
             </button>
           </div>
         }
         subHeaderLeft={<SpeakingSubHeaderLabel />}
       >
-        <h2 style={{ fontSize: 22, fontWeight: 800, color: "#111", marginBottom: 20 }}>
+        <h2 style={{ fontSize: 22, fontWeight: 400, color: "#333", paddingBottom: 8, marginBottom: 20, borderBottom: "1px solid #DDD" }}>
           Listen and Repeat
         </h2>
-        <p style={{ fontSize: 15, lineHeight: 1.7, color: "#333", marginBottom: 14 }}>
-          You will listen as someone speaks to you. Listen carefully and then repeat what you have heard.
-          The clock will indicate how much time you have to speak.
+        <p style={{ fontSize: 14, lineHeight: 1.7, color: "#444", marginBottom: 14 }}>
+          {tx("You will listen as someone speaks to you. Listen carefully and then repeat what you have heard. The clock will indicate how much time you have to speak.", "누군가 말하는 것을 듣고, 주의 깊게 들은 뒤 들은 내용을 그대로 따라 말합니다. 말할 수 있는 시간은 시계로 표시됩니다.")}
         </p>
-        <p style={{ fontSize: 15, lineHeight: 1.7, color: "#333" }}>
-          No time for preparation will be provided.
+        <p style={{ fontSize: 14, lineHeight: 1.7, color: "#444" }}>
+          {isStudy ? tx("In Study mode, preparation time is provided.", "Study 모드에서는 준비 시간이 주어집니다.") : "No time for preparation will be provided."}
         </p>
       </SpeakingTestLayout2026>
     );
@@ -459,21 +521,20 @@ export default function SpeakingAssignmentRunner({ assignmentId, test, testLabel
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <VolumeControl volume={volume} onVolumeChange={setVolume} />
             <button onClick={() => setPhase("interview")} style={nextButtonStyle}>
-              Begin &gt;
+              {tx("Begin >", "시작 >")}
             </button>
           </div>
         }
         subHeaderLeft={<SpeakingSubHeaderLabel />}
       >
-        <h2 style={{ fontSize: 22, fontWeight: 800, color: "#111", marginBottom: 20 }}>
+        <h2 style={{ fontSize: 22, fontWeight: 400, color: "#333", paddingBottom: 8, marginBottom: 20, borderBottom: "1px solid #DDD" }}>
           Take an Interview
         </h2>
-        <p style={{ fontSize: 15, lineHeight: 1.7, color: "#333", marginBottom: 14 }}>
-          An interviewer will ask you questions. Answer the questions and be sure to say as much
-          as you can in the time allowed.
+        <p style={{ fontSize: 14, lineHeight: 1.7, color: "#444", marginBottom: 14 }}>
+          {tx("An interviewer will ask you questions. Answer the questions and be sure to say as much as you can in the time allowed.", "면접관이 질문을 합니다. 주어진 시간 안에 최대한 많이 답하세요.")}
         </p>
-        <p style={{ fontSize: 15, lineHeight: 1.7, color: "#333" }}>
-          No time for preparation will be provided.
+        <p style={{ fontSize: 14, lineHeight: 1.7, color: "#444" }}>
+          {isStudy ? tx("In Study mode, preparation time is provided.", "Study 모드에서는 준비 시간이 주어집니다.") : "No time for preparation will be provided."}
         </p>
       </SpeakingTestLayout2026>
     );
@@ -490,7 +551,7 @@ export default function SpeakingAssignmentRunner({ assignmentId, test, testLabel
           region: s.region,
         }))}
         globalImageUrl={listenRepeat.imageUrl}
-        mode="test"
+        mode={mode}
         totalQuestionOffset={1}
         totalQuestions={11}
         volume={volume}
@@ -511,7 +572,7 @@ export default function SpeakingAssignmentRunner({ assignmentId, test, testLabel
           topic: q.topic,
         }))}
         interviewerImageUrl={interview.interviewerImageUrl || interview.interviewerGifUrl}
-        mode="test"
+        mode={mode}
         defaultAnswerSeconds={45}
         totalQuestionOffset={8}
         totalQuestions={11}
@@ -524,6 +585,22 @@ export default function SpeakingAssignmentRunner({ assignmentId, test, testLabel
 
   // done - 결과 페이지
   if (phase === "done") {
+    if (!endAck) {
+      return (
+        <SpeakingTestLayout2026
+          headerLeft={<SpeakingHeaderLabel />}
+          headerRight={<button onClick={() => setEndAck(true)} style={nextButtonStyle}>{tx("Next >", "다음 >")}</button>}
+          subHeaderLeft={<SpeakingSubHeaderLabel />}
+        >
+          <div style={{ maxWidth: 620, margin: "6px auto 0" }}>
+            <h2 style={{ fontSize: 22, fontWeight: 400, color: "#333", paddingBottom: 8, marginBottom: 20, borderBottom: "1px solid #DDD" }}>
+              {tx("End of Speaking Section", "Speaking 섹션 종료")}
+            </h2>
+            <p style={{ fontSize: 14, lineHeight: 1.7, color: "#444" }}>{tx("Thank you for completing the speaking section.", "Speaking 섹션을 마쳤습니다.")}</p>
+          </div>
+        </SpeakingTestLayout2026>
+      );
+    }
     return (
       <main className="mx-auto max-w-2xl space-y-6 px-4 py-10">
         <div className="text-center space-y-2 mb-8">
