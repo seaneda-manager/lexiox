@@ -7,7 +7,7 @@
  * Task 3: Academic Discussion (1문항 Q12, 10분 독립 타이머, 120+ 단어)
  */
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, useContext } from "react";
 import type {
   WWritingTest2026,
   WBuildSentenceItem,
@@ -17,7 +17,9 @@ import type {
 } from "@/models/writing";
 import { normalizeBuildSentenceQuestion } from "@/lib/writing/build-sentence-parser";
 import Avatar from "@/components/Avatar";
-import { ETSLayout } from "./ETSLayout";
+import { ETSLayout, WritingStudyContext } from "./ETSLayout";
+import { useStudyLang } from "@/lib/ui/studyLang";
+import { loadStudy, saveStudy, clearStudy } from "@/lib/ui/studyProgress";
 import { WritingIntroScreen, TaskBeginScreen, LeaveConfirmScreen } from "./WritingInterstitials";
 
 // ── 타입 ──────────────────────────────────────────────────────────────
@@ -30,6 +32,10 @@ type TestPhase =
 
 type Props = {
   test: WWritingTest2026;
+  /** "test"(기본): 실제 시험처럼 영어 고정 + 타이머. "study": 시간 제한 없음 + 한/영 전환. */
+  mode?: "test" | "study";
+  /** Study 이어 풀기 저장 키(시험 id) */
+  storageId?: string;
   onFinish?: (answers: {
     task1Scores: { questionId: string; correct: boolean; userSequence: string[] }[];
     task2Text: string;
@@ -46,6 +52,7 @@ function countWords(text: string) {
 
 // ── 글로벌 타이머 훅 ──────────────────────────────────────────────────
 function useCountdown(initialSeconds: number, onExpire: () => void) {
+  const isStudy = useContext(WritingStudyContext);
   const [timeLeft, setTimeLeft] = useState(initialSeconds);
   const expiredRef = useRef(false);
 
@@ -59,6 +66,7 @@ function useCountdown(initialSeconds: number, onExpire: () => void) {
   useEffect(() => {
     expiredRef.current = false;
     setTimeLeft(initialSeconds);
+    if (isStudy) return; // Study 모드: 시간 제한 없음
     const id = window.setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
@@ -75,7 +83,7 @@ function useCountdown(initialSeconds: number, onExpire: () => void) {
 
   const mins = String(Math.floor(timeLeft / 60)).padStart(2, "0");
   const secs = String(timeLeft % 60).padStart(2, "0");
-  return { timeLeft, display: `${mins}:${secs}` };
+  return { timeLeft, display: isStudy ? "No time limit" : `${mins}:${secs}` };
 }
 
 // ETSLayout은 components/writing/ETSLayout.tsx로 분리됨 (WritingInterstitials와 공유, 순환 참조 방지)
@@ -182,141 +190,176 @@ function BuildASentence({
       questionLabel={`Question ${questionNumber} of ${item.questions.length}`}
       totalQuestions={12}
       currentQuestion={questionNumber}
-      onBack={handleBack}
-      backDisabled={qIndex === 0}
       onNext={handleNext}
     >
-      <div style={{ maxWidth: 1200, margin: "24px auto", padding: "0 24px", display: "flex", flexDirection: "column", gap: 24 }}>
+      <div style={{ maxWidth: 760, margin: "0 auto", padding: "16px 24px" }}>
+        <h2 style={{ textAlign: "center", fontSize: 21, fontWeight: 700, color: "#222", marginBottom: 40 }}>
+          Make an appropriate sentence.
+        </h2>
 
-        {/* 지시문 + 문맥 카드 */}
-        <div style={{ backgroundColor: "#FFFFFF", borderRadius: 8, padding: 24, boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
-          <p style={{ fontSize: 13, color: "#888", marginBottom: 16 }}>
-            {item.instruction ?? "Read the context below and arrange the words to complete the response."}
-          </p>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            {/* Turn 1: 질문/발화 */}
-            <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-              <Avatar name="A" size="md" />
-              <p style={{ fontSize: 18, color: "#333333", lineHeight: 1.7, margin: 0, paddingTop: 6 }}>
-                {q.contextLeadIn}
-              </p>
-            </div>
-
-            {/* Turn 2: 조각별 빈칸 응답 */}
-            <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-              <Avatar name="B" size="md" />
-              <p style={{ fontSize: 18, color: "#333333", lineHeight: 1.7, margin: 0, paddingTop: 6 }}>
-                {Array.from({ length: current?.correctOrder.length ?? 0 }).map((_, i) => {
-                  const tokenId = selected[i];
-                  const text = tokenId ? tokenById.get(tokenId) ?? "" : "";
-                  return (
-                    <span
-                      key={i}
-                      style={{
-                        display: "inline-block",
-                        minWidth: 48,
-                        margin: "0 4px",
-                        borderBottom: "2px solid #0073E6",
-                        color: "#0073E6",
-                        fontStyle: "italic",
-                        textAlign: "center",
-                      }}
-                    >
-                      {text || " "}
-                    </span>
-                  );
-                })}
-                <span>{current?.punctuation ?? ""}</span>
-                <span> {q.contextLeadOut}</span>
-              </p>
-            </div>
-          </div>
+        {/* Turn 1: 질문/발화 */}
+        <div style={{ display: "flex", gap: 10, alignItems: "flex-end", marginBottom: 26 }}>
+          <Avatar2 name="A" size={52} tone="#B07A8C" />
+          <p style={{ fontSize: 14, color: "#222", margin: 0, paddingBottom: 2 }}>{q.contextLeadIn}</p>
         </div>
 
-        {/* Word Bank */}
-        <div style={{ maxWidth: 1200, margin: "0 auto", width: "100%" }}>
-          <p style={{ fontSize: 12, color: "#888", marginBottom: 12 }}>Word Bank — 클릭해서 선택하세요</p>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
-            {shuffled.map((tokenId) => {
-              const used = selected.includes(tokenId);
-              const text = tokenById.get(tokenId) ?? "";
+        {/* Turn 2: 빈칸 응답 — 칸을 누르면 단어가 빠진다 */}
+        <div style={{ display: "flex", gap: 10, alignItems: "flex-end", marginBottom: 40 }}>
+          <Avatar2 name="B" size={52} tone="#4A6FA5" />
+          <p style={{ fontSize: 14, color: "#222", margin: 0, lineHeight: 2.3, flex: 1 }}>
+            {Array.from({ length: current?.correctOrder.length ?? 0 }).map((_, i) => {
+              const tokenId = selected[i];
+              const text = tokenId ? tokenById.get(tokenId) ?? "" : "";
               return (
                 <button
-                  key={tokenId}
-                  onClick={() => handleChunkClick(tokenId)}
-                  disabled={used}
+                  key={i}
+                  type="button"
+                  onClick={() => tokenId && handleRemove(tokenId)}
                   style={{
-                    // 단어("you")와 구절("to the airport")의 길이가 다르므로
-                    // 고정 폭이 아니라 내용에 맞춘다.
-                    width: "fit-content",
-                    minHeight: 46,
-                    padding: "8px 16px",
-                    border: "1px solid #C0C8D0",
-                    borderRadius: 23,
-                    backgroundColor: "#FFFFFF",
-                    fontSize: 15,
-                    lineHeight: 1.6,
-                    whiteSpace: "nowrap",
-                    color: used ? "#AAA" : "#333",
-                    opacity: used ? 0.4 : 1,
-                    cursor: used ? "default" : "pointer",
-                    transition: "opacity 0.2s",
+                    display: "inline-block", minWidth: 108, margin: "0 4px", padding: "0 4px",
+                    border: "none", borderBottom: "1px solid #333", background: "none",
+                    textAlign: "center", fontSize: 14, color: "#222", cursor: tokenId ? "pointer" : "default",
+                    height: 24, verticalAlign: "bottom",
                   }}
                 >
-                  {text}
+                  {text || " "}
                 </button>
               );
             })}
-          </div>
+            <span>{current?.punctuation ?? ""}</span>
+            <span> {q.contextLeadOut}</span>
+          </p>
         </div>
 
-        {/* Drop Zone */}
-        <div style={{ maxWidth: 1200, margin: "0 auto", width: "100%" }}>
-          <p style={{ fontSize: 12, color: "#888", marginBottom: 8 }}>선택된 순서 — 클릭하면 제거됩니다</p>
-          <div style={{
-            minHeight: 100,
-            padding: 20,
-            border: "2px dashed #0073E6",
-            backgroundColor: "#EBF3FC",
-            borderRadius: 8,
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 12,
-            alignItems: "center",
-          }}>
-            {selected.length === 0 ? (
-              <span style={{ color: "#9BB5D0", fontSize: 14 }}>조각을 클릭해 여기에 배치하세요…</span>
-            ) : selected.map((tokenId) => (
+        {/* Word chips — 박스 없이 글자만 */}
+        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "10px 26px", padding: "0 20px" }}>
+          {shuffled.map((tokenId) => {
+            const used = selected.includes(tokenId);
+            return (
               <button
                 key={tokenId}
-                onClick={() => handleRemove(tokenId)}
-                style={{
-                  width: "fit-content",
-                  minHeight: 46,
-                  padding: "8px 16px",
-                  border: "1px solid #0073E6",
-                  borderRadius: 23,
-                  backgroundColor: "#FFFFFF",
-                  fontSize: 15,
-                  lineHeight: 1.6,
-                  whiteSpace: "nowrap",
-                  color: "#0073E6",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                }}
+                type="button"
+                onClick={() => handleChunkClick(tokenId)}
+                disabled={used}
+                style={{ background: "none", border: "none", padding: "2px 0", fontSize: 14, color: "#222", cursor: used ? "default" : "pointer", visibility: used ? "hidden" : "visible" }}
               >
-                {tokenById.get(tokenId) ?? ""} <span style={{ fontSize: 12, opacity: 0.6 }}>✕</span>
+                {tokenById.get(tokenId) ?? ""}
               </button>
-            ))}
-          </div>
+            );
+          })}
         </div>
       </div>
     </ETSLayout>
   );
 }
+
+
+// ── ETS 에디터: Cut / Paste / Undo / Redo + Hide Word Count (사진 기준) ───────────
+const ETS_TEAL = "#1E7B7D";
+
+function EtsEditor({
+  text, onTextChange, minHeight = 300, placeholder,
+}: { text: string; onTextChange: (t: string) => void; minHeight?: number; placeholder?: string }) {
+  const taRef = useRef<HTMLTextAreaElement>(null);
+  const clipRef = useRef("");
+  const undoRef = useRef<string[]>([]);
+  const redoRef = useRef<string[]>([]);
+  const [hideCount, setHideCount] = useState(false);
+  const wc = countWords(text);
+
+  const commit = (next: string) => {
+    undoRef.current.push(text);
+    redoRef.current = [];
+    onTextChange(next);
+  };
+  const sel = () => {
+    const el = taRef.current;
+    return { a: el?.selectionStart ?? 0, b: el?.selectionEnd ?? 0 };
+  };
+  const cut = () => {
+    const { a, b } = sel();
+    if (a === b) return;
+    clipRef.current = text.slice(a, b);
+    commit(text.slice(0, a) + text.slice(b));
+  };
+  const paste = () => {
+    if (!clipRef.current) return; // 시험 중에는 외부 클립보드를 쓰지 못한다(앱 안에서 자른 글만 붙여넣기)
+    const { a, b } = sel();
+    commit(text.slice(0, a) + clipRef.current + text.slice(b));
+  };
+  const undo = () => {
+    const prev = undoRef.current.pop();
+    if (prev === undefined) return;
+    redoRef.current.push(text);
+    onTextChange(prev);
+  };
+  const redo = () => {
+    const nxt = redoRef.current.pop();
+    if (nxt === undefined) return;
+    undoRef.current.push(text);
+    onTextChange(nxt);
+  };
+
+  const btn = (label: string, onClick: () => void, primary?: boolean) => (
+    <button
+      type="button"
+      onMouseDown={(e) => e.preventDefault()}
+      onClick={onClick}
+      style={{
+        height: 30, padding: "0 14px", fontSize: 12, fontWeight: 600, border: "none", borderRadius: 4, cursor: "pointer",
+        backgroundColor: primary ? ETS_TEAL : "#E9ECEF", color: primary ? "#FFFFFF" : "#555",
+      }}
+    >
+      {label}
+    </button>
+  );
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 4px" }}>
+        {btn("Cut", cut, true)}
+        {btn("Paste", paste)}
+        {btn("Undo", undo)}
+        {btn("Redo", redo)}
+        <span style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 10, fontSize: 12, color: "#555" }}>
+          <button type="button" onClick={() => setHideCount((v) => !v)} style={{ background: "none", border: "none", color: "#555", cursor: "pointer", fontSize: 12 }}>
+            {hideCount ? "Show Word Count" : "Hide Word Count"}
+          </button>
+          {!hideCount && <span style={{ fontSize: 13, fontVariantNumeric: "tabular-nums" }}>{wc}</span>}
+        </span>
+      </div>
+      <textarea
+        ref={taRef}
+        value={text}
+        onChange={(e) => { undoRef.current.push(text); redoRef.current = []; onTextChange(e.target.value); }}
+        spellCheck={false}
+        autoCorrect="off"
+        autoCapitalize="off"
+        onCopy={(e) => e.preventDefault()}
+        onPaste={(e) => e.preventDefault()}
+        onCut={(e) => e.preventDefault()}
+        onContextMenu={(e) => e.preventDefault()}
+        placeholder={placeholder}
+        style={{
+          flex: 1, minHeight, width: "100%", padding: 14, border: "none", outline: "none", resize: "none",
+          fontSize: 14, lineHeight: 1.6, color: "#222", fontFamily: "Arial, Helvetica, sans-serif",
+          backgroundColor: "#FFFFFF", boxSizing: "border-box",
+        }}
+      />
+    </div>
+  );
+}
+
+function Avatar2({ name, size = 56, tone = "#8B9DC3" }: { name: string; size?: number; tone?: string }) {
+  return (
+    <div style={{ width: size, height: size, borderRadius: "50%", backgroundColor: tone, color: "#FFFFFF", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: size * 0.4, flexShrink: 0, border: "2px solid #E4E7EB" }}>
+      {name.charAt(0).toUpperCase()}
+    </div>
+  );
+}
+
+const leftPanel: React.CSSProperties = { overflowY: "auto", padding: "14px 16px", fontSize: 14, lineHeight: 1.45, color: "#222", border: "1px solid #E4E7EB", borderRadius: 6, backgroundColor: "#FAFBFC" };
+const rightPanel: React.CSSProperties = { display: "flex", flexDirection: "column", minHeight: 0, padding: "0 4px", overflowY: "auto" };
 
 // ══════════════════════════════════════════════════════════════════════
 // Task 2: Write an Email
@@ -345,103 +388,31 @@ function WriteAnEmail({
   return (
     <ETSLayout
       timerDisplay={timerDisplay}
-      questionLabel="Question 11 of 12"
+      questionLabel="Question 1 of 2"
       totalQuestions={12}
       currentQuestion={11}
       onNext={() => onComplete(text)}
     >
-      {/* 좁은 화면(사이드바 있는 창 등)에서는 에디터가 아래로 내려오도록 wrap.
-          이전에는 좌측 650px 고정 + wrap 없음이라 에디터가 화면 밖으로 밀려 안 보였다. */}
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 24, maxWidth: 1200, margin: "0 auto", padding: "24px 40px", height: "100%", boxSizing: "border-box" }}>
-
-        {/* 좌측: Scenario Card */}
-        <div style={{
-          flex: "1 1 460px", maxWidth: 650, minWidth: 0,
-          backgroundColor: "#FFFFFF", borderRadius: 8, padding: 32,
-          boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-          alignSelf: "flex-start",
-        }}>
-          <p style={{ fontSize: 13, fontWeight: 700, color: "#0073E6", marginBottom: 16, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-            Situation
-          </p>
-          <p style={{ fontSize: 16, color: "#333333", lineHeight: 1.8, marginBottom: 24 }}>
-            {item.situation}
-          </p>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1.25fr", gap: 14, padding: "14px 22px", height: "100%", boxSizing: "border-box" }}>
+        <div style={leftPanel}>
+          <p style={{ marginBottom: 12 }}>{item.situation}</p>
+          <p style={{ fontWeight: 700, marginBottom: 8 }}>In your email, do the following.</p>
           {item.hints && item.hints.length > 0 && (
-            <>
-              <p style={{ fontSize: 14, fontWeight: 700, color: "#333333", marginBottom: 12 }}>
-                Your email should:
-              </p>
-              <ul style={{ paddingLeft: 20, fontSize: 16, color: "#333333", lineHeight: 1.9 }}>
-                {item.hints.map((h, i) => (
-                  <li key={i} style={{ marginBottom: 8 }}>{h}</li>
-                ))}
-              </ul>
-            </>
+            <ul style={{ margin: "0 0 14px 6px", paddingLeft: 18 }}>
+              {item.hints.map((h, i) => (<li key={i} style={{ marginBottom: 6 }}>{h}</li>))}
+            </ul>
           )}
-          <p style={{ marginTop: 24, fontSize: 13, color: "#888" }}>
-            Recommended: {min}–{max} words
-          </p>
+          <p>Write as much as you can and in complete sentences.</p>
         </div>
-
-        {/* 우측: Email Editor */}
-        <div style={{
-          flex: "1 1 460px", minWidth: 0, minHeight: 700,
-          backgroundColor: "#FFFFFF", borderRadius: 8,
-          boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-          display: "flex", flexDirection: "column",
-          overflow: "hidden",
-        }}>
-          {/* To / Subject */}
-          <div style={{ padding: "16px 24px", borderBottom: "1px solid #E0E0E0" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
-              <span style={{ fontSize: 13, color: "#888", width: 56 }}>To:</span>
-              <input readOnly value={recipient} style={{ flex: 1, border: "none", fontSize: 14, color: "#333", background: "transparent", outline: "none" }} />
+        <div style={rightPanel}>
+          <p style={{ fontWeight: 700, fontSize: 14, marginBottom: 14 }}>Your Response:</p>
+          {(recipient || subjectLine) && (
+            <div style={{ fontSize: 13, marginBottom: 6, lineHeight: 1.5 }}>
+              {recipient && <div><strong>To:</strong> {recipient}</div>}
+              {subjectLine && <div><strong>Subject:</strong> {subjectLine}</div>}
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ fontSize: 13, color: "#888", width: 56 }}>Subject:</span>
-              <input readOnly value={subjectLine} style={{ flex: 1, border: "none", fontSize: 14, color: "#333", background: "transparent", outline: "none" }} />
-            </div>
-          </div>
-
-          {/* Textarea */}
-          <div style={{ flex: 1, position: "relative" }}>
-            <textarea
-              value={text}
-              onChange={(e) => onTextChange(e.target.value)}
-              spellCheck={false}
-              onCopy={(e) => e.preventDefault()}
-              onPaste={(e) => e.preventDefault()}
-              onCut={(e) => e.preventDefault()}
-              onContextMenu={(e) => e.preventDefault()}
-              placeholder="Begin writing your email here..."
-              style={{
-                width: "100%",
-                height: "100%",
-                minHeight: 550,
-                padding: 20,
-                border: "none",
-                outline: "none",
-                resize: "none",
-                fontSize: 15,
-                lineHeight: 1.6,
-                color: "#333333",
-                fontFamily: "Arial, Helvetica, sans-serif",
-                backgroundColor: "transparent",
-                boxSizing: "border-box",
-              }}
-            />
-            {/* Word Count */}
-            <div style={{
-              position: "absolute", right: 16, bottom: 16,
-              fontSize: 13, color: wordCount < min ? "#D9383A" : wordCount > max ? "#D9383A" : "#0073E6",
-              fontWeight: 600,
-            }}>
-              Word Count: {wordCount}
-              {wordCount < min && ` (min ${min})`}
-              {wordCount > max && ` (max ${max})`}
-            </div>
-          </div>
+          )}
+          <EtsEditor text={text} onTextChange={onTextChange} minHeight={260} />
         </div>
       </div>
     </ETSLayout>
@@ -475,90 +446,33 @@ function AcademicDiscussion({
   return (
     <ETSLayout
       timerDisplay={timerDisplay}
-      questionLabel="Question 12 of 12"
+      questionLabel="Question 2 of 2"
       totalQuestions={12}
       currentQuestion={12}
       onNext={() => onComplete(text)}
     >
-      <div style={{ maxWidth: 1200, margin: "24px auto", padding: "0 24px", display: "flex", flexDirection: "column", gap: 20 }}>
-
-        {/* 1단: Professor */}
-        <div style={{
-          backgroundColor: "#E8EBF0", borderRadius: 8, padding: 20,
-          display: "flex", alignItems: "flex-start", gap: 16,
-        }}>
-          <div style={{
-            width: 50, height: 50, borderRadius: "50%",
-            backgroundColor: "#1A2B4C", display: "flex", alignItems: "center", justifyContent: "center",
-            color: "#fff", fontSize: 18, fontWeight: 700, flexShrink: 0,
-          }}>
-            {professor.charAt(0)}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1.25fr", gap: 14, padding: "14px 22px", height: "100%", boxSizing: "border-box" }}>
+        <div style={leftPanel}>
+          <p style={{ marginBottom: 12 }}>Your professor is teaching a class. Write a post responding to the professor&apos;s question.</p>
+          <p style={{ fontWeight: 700, marginBottom: 8 }}>In your response, you should do the following.</p>
+          <ul style={{ margin: "0 0 12px 6px", paddingLeft: 18 }}>
+            <li style={{ marginBottom: 6 }}>Express and support your opinion.</li>
+            <li style={{ marginBottom: 6 }}>Make a contribution to the discussion in your own words.</li>
+          </ul>
+          <p style={{ marginBottom: 14 }}>An effective response will contain at least {min} words.</p>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 10 }}>
+            <Avatar2 name={professor} size={92} tone="#6B7C93" />
           </div>
-          <div>
-            <p style={{ fontSize: 15, fontWeight: 700, color: "#1A2B4C", marginBottom: 8 }}>{professor}</p>
-            <p style={{ fontSize: 16, color: "#333333", lineHeight: 1.7 }}>{item.professorPrompt}</p>
-          </div>
+          <p>{item.professorPrompt}</p>
         </div>
-
-        {/* 2단: Student Responses */}
-        {studentPosts.length > 0 && (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
-            {studentPosts.map((s) => (
-              <div key={s.id} style={{
-                backgroundColor: "#FFFFFF", borderRadius: 8, padding: 20,
-                boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-                  <div style={{
-                    width: 36, height: 36, borderRadius: "50%",
-                    backgroundColor: "#EBF3FC", display: "flex", alignItems: "center", justifyContent: "center",
-                    color: "#0073E6", fontSize: 14, fontWeight: 700,
-                  }}>
-                    {s.author.charAt(0)}
-                  </div>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: "#333" }}>{s.author}</span>
-                </div>
-                <p style={{ fontSize: 15, color: "#444", lineHeight: 1.7 }}>{s.content}</p>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* 3단: User Editor */}
-        <div style={{ position: "relative", backgroundColor: "#FFFFFF", borderRadius: 8, boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
-          <textarea
-            value={text}
-            onChange={(e) => onTextChange(e.target.value)}
-            spellCheck={false}
-            onCopy={(e) => e.preventDefault()}
-            onPaste={(e) => e.preventDefault()}
-            onCut={(e) => e.preventDefault()}
-            onContextMenu={(e) => e.preventDefault()}
-            placeholder="Write your response to the discussion here..."
-            style={{
-              width: "100%",
-              height: 350,
-              padding: 20,
-              border: "1px solid #999",
-              borderRadius: 8,
-              outline: "none",
-              resize: "none",
-              fontSize: 15,
-              lineHeight: 1.6,
-              color: "#333333",
-              fontFamily: "Arial, Helvetica, sans-serif",
-              boxSizing: "border-box",
-            }}
-          />
-          <div style={{
-            position: "absolute", right: 16, bottom: 16,
-            fontSize: 13, fontWeight: 600,
-            color: wordCount < min ? "#D9383A" : "#0073E6",
-          }}>
-            Word Count: {wordCount}
-            {wordCount < min && ` (min ${min})`}
-            {wordCount > max && ` (max ${max})`}
-          </div>
+        <div style={rightPanel}>
+          {studentPosts.map((s2, idx) => (
+            <div key={s2.id} style={{ display: "flex", gap: 14, alignItems: "flex-start", marginBottom: 14 }}>
+              <Avatar2 name={s2.author} size={52} tone={idx % 2 === 0 ? "#B07A8C" : "#4A8F8C"} />
+              <p style={{ fontSize: 13, lineHeight: 1.45, color: "#222", textAlign: "justify", margin: 0 }}>{s2.content}</p>
+            </div>
+          ))}
+          <EtsEditor text={text} onTextChange={onTextChange} minHeight={200} />
         </div>
       </div>
     </ETSLayout>
@@ -568,11 +482,41 @@ function AcademicDiscussion({
 // ══════════════════════════════════════════════════════════════════════
 // 메인 Runner
 // ══════════════════════════════════════════════════════════════════════
-export default function WritingRunnerETS({ test, onFinish }: Props) {
+export default function WritingRunnerETS({ test, mode = "test", storageId, onFinish }: Props) {
+  const isStudy = mode === "study";
+  return (
+    <WritingStudyContext.Provider value={isStudy}>
+      <WritingRunnerETSInner test={test} onFinish={onFinish} storageId={storageId} />
+    </WritingStudyContext.Provider>
+  );
+}
+
+function WritingRunnerETSInner({ test, onFinish, storageId }: Omit<Props, "mode">) {
+  const isStudy = useContext(WritingStudyContext);
+  const { t } = useStudyLang();
+  const tx = (en: string, ko: string) => (isStudy ? t(en, ko) : en);
   const [phase, setPhase] = useState<TestPhase>("intro");
   const [task1Scores, setTask1Scores] = useState<{ questionId: string; correct: boolean; userSequence: string[] }[]>([]);
   const [task2Text, setTask2Text] = useState("");
   const [task3Text, setTask3Text] = useState("");
+
+  // ── Study 이어 풀기: 과제 위치와 이메일·토론 초안을 저장 (Build a Sentence 진행은 과제 처음부터) ──
+  type WritingSaved = { phase: TestPhase; task2Text: string; task3Text: string };
+  const sid = storageId ?? (test as any)?.meta?.id ?? "writing";
+  const [resumeOffer, setResumeOffer] = useState<{ data: WritingSaved; savedAt: string } | null>(null);
+  const [resumeChecked, setResumeChecked] = useState(false);
+  useEffect(() => {
+    if (!isStudy) return;
+    setResumeOffer(loadStudy<WritingSaved>("writing", sid));
+    setResumeChecked(true);
+  }, [isStudy, sid]);
+  useEffect(() => {
+    if (!isStudy || !resumeChecked || resumeOffer || phase === "intro" || phase === "done") return;
+    saveStudy<WritingSaved>("writing", sid, { phase, task2Text, task3Text });
+  }, [isStudy, resumeChecked, resumeOffer, phase, task2Text, task3Text, sid]);
+  useEffect(() => {
+    if (isStudy && phase === "done") clearStudy("writing", sid);
+  }, [isStudy, phase, sid]);
 
   const buildItem = test.items.find((i) => i.taskKind === "build_a_sentence") as WBuildSentenceItem | undefined;
   const emailItem = test.items.find((i) => i.taskKind === "email") as WEmailWritingItem | undefined;
@@ -605,6 +549,38 @@ export default function WritingRunnerETS({ test, onFinish }: Props) {
     onFinish?.({ task1Scores, task2Text, task3Text: text });
   }, [task1Scores, task2Text, onFinish]);
 
+  if (isStudy && resumeOffer && phase === "intro") {
+    const d = resumeOffer.data;
+    return (
+      <ETSLayout hideFooter onNext={() => {
+        setTask2Text(d.task2Text ?? "");
+        setTask3Text(d.task3Text ?? "");
+        // Build a Sentence 중이었다면 그 과제 처음부터
+        setPhase(d.phase === "task1" ? "task1_begin" : d.phase);
+        setResumeOffer(null);
+      }} nextLabel={tx("Resume >", "이어서 하기 >")}>
+        <div style={{ padding: "6px 36px", backgroundColor: "#FFFFFF", minHeight: "100%" }}>
+          <div style={{ maxWidth: 620, margin: "0 auto" }}>
+            <h1 style={{ fontSize: 22, fontWeight: 400, color: "#333", borderBottom: "1px solid #DDD", paddingBottom: 8, marginBottom: 20 }}>
+              {tx("Resume your study session?", "이어서 학습할까요?")}
+            </h1>
+            <p style={{ fontSize: 14, lineHeight: 1.7, color: "#444", marginBottom: 6 }}>
+              {tx("Your drafts are saved. Build a Sentence restarts from the first question.", "작성한 초안이 저장되어 있습니다. Build a Sentence는 첫 문항부터 다시 시작합니다.")}
+            </p>
+            <p style={{ fontSize: 12, color: "#888", marginBottom: 22 }}>{tx("Last saved: ", "마지막 저장: ")}{new Date(resumeOffer.savedAt).toLocaleString()}</p>
+            <button
+              type="button"
+              onClick={() => { clearStudy("writing", sid); setResumeOffer(null); }}
+              style={{ height: 36, padding: "0 18px", fontSize: 13, fontWeight: 700, borderRadius: 6, backgroundColor: "#FFFFFF", color: "#1E7B7D", border: "1px solid #1E7B7D", cursor: "pointer" }}
+            >
+              {tx("Start over", "처음부터")}
+            </button>
+          </div>
+        </div>
+      </ETSLayout>
+    );
+  }
+
   if (phase === "done") {
     return (
       <div className="flex flex-col items-center justify-center gap-6 text-center" style={{ height: "100%", backgroundColor: "#F4F6F9", fontFamily: "Arial, Helvetica, sans-serif" }}>
@@ -620,9 +596,9 @@ export default function WritingRunnerETS({ test, onFinish }: Props) {
   if (phase === "intro") {
     const totalQuestions = (buildItem?.questions.length ?? 0) + (emailItem ? 1 : 0) + (academicItem ? 1 : 0);
     const taskTypes = [
-      buildItem && { title: "Build a Sentence", description: "Create a grammatical sentence." },
-      emailItem && { title: "Write an Email", description: "Write an email using information provided." },
-      academicItem && { title: "Write for an Academic Discussion", description: "Participate in an online discussion." },
+      buildItem && { title: "Build a Sentence", description: tx("Create a grammatical sentence.", "단어를 배열해 문법에 맞는 문장을 만듭니다.") },
+      emailItem && { title: "Write an Email", description: tx("Write an email using information provided.", "주어진 정보를 사용해 이메일을 씁니다.") },
+      academicItem && { title: "Write for an Academic Discussion", description: tx("Participate in an online discussion.", "온라인 토론에 참여해 글을 씁니다.") },
     ].filter((t): t is { title: string; description: string } => Boolean(t));
 
     return (
@@ -639,7 +615,7 @@ export default function WritingRunnerETS({ test, onFinish }: Props) {
     return (
       <TaskBeginScreen
         title="Build a Sentence"
-        body="Move the words in the boxes to create grammatical sentences. In an actual test, a clock will show you how much time you have to complete this task."
+        body={tx("Move the words in the boxes to create grammatical sentences. In an actual test, a clock will show you how much time you have to complete this task.", "상자 속 단어를 움직여 문법에 맞는 문장을 만드세요. 실제 시험에서는 이 과제를 끝낼 수 있는 남은 시간이 시계로 표시됩니다.")}
         onBegin={() => setPhase("task1")}
       />
     );
@@ -660,7 +636,7 @@ export default function WritingRunnerETS({ test, onFinish }: Props) {
     return (
       <TaskBeginScreen
         title="Write an Email"
-        body={`You will read some information and use the information to write an email. You will have ${minutes} minutes to write the email.`}
+        body={tx(`You will read some information and use the information to write an email. You will have ${minutes} minutes to write the email.`, `제시된 정보를 읽고 그 정보를 사용해 이메일을 쓰세요. 이메일을 쓸 시간은 ${minutes}분입니다.`)}
         onBegin={() => setPhase("task2")}
       />
     );
@@ -683,7 +659,7 @@ export default function WritingRunnerETS({ test, onFinish }: Props) {
     return (
       <TaskBeginScreen
         title="Write for an Academic Discussion"
-        body={`A professor has posted a question about a topic and students have responded with their thoughts and ideas. Make a contribution to the discussion. You will have ${minutes} minutes to write.`}
+        body={tx(`A professor has posted a question about a topic and students have responded with their thoughts and ideas. Make a contribution to the discussion. You will have ${minutes} minutes to write.`, `교수가 어떤 주제에 대해 질문을 올렸고 학생들이 자신의 생각을 답했습니다. 토론에 의견을 보태세요. 글을 쓸 시간은 ${minutes}분입니다.`)}
         onBegin={() => setPhase("task3")}
       />
     );

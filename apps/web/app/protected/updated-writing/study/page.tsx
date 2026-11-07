@@ -1,92 +1,109 @@
-﻿'use client';
-
 import Link from 'next/link';
-import { BookOpen, Lightbulb, Video } from 'lucide-react';
+import { BookOpen, Clock, Zap, AlertCircle } from 'lucide-react';
+import { getServerSupabase } from '@/lib/supabase/server';
 
-export default function WritingStudyPage() {
-  const modules = [
-    {
-      id: 1,
-      title: 'Task 1: Build a Sentence',
-      description: 'Learn how to construct grammatically correct sentences from word tokens in 35-45 seconds',
-      lessons: 5,
-      icon: '📝',
-      topics: ['Sentence Structure', 'Grammar', 'Word Order', 'Punctuation'],
-    },
-    {
-      id: 2,
-      title: 'Task 2: Integrated Writing',
-      description: 'Master synthesizing reading and listening information into cohesive essays',
-      lessons: 6,
-      icon: '🔗',
-      topics: ['Summarization', 'Paraphrasing', 'Integration', 'Organization'],
-    },
-    {
-      id: 3,
-      title: 'Task 3: Academic Discussion',
-      description: 'Develop skills for participating in scholarly conversations with clear arguments',
-      lessons: 5,
-      icon: '💬',
-      topics: ['Argument Development', 'Evidence', 'Academic Tone', 'Counterarguments'],
-    },
-    {
-      id: 4,
-      title: 'Writing Strategies',
-      description: 'Essential techniques for TOEFL writing: time management, revision, and scoring',
-      lessons: 4,
-      icon: '⚡',
-      topics: ['Time Management', 'Essay Structure', 'Proofreading', 'Common Mistakes'],
-    },
-  ];
+export const dynamic = 'force-dynamic';
+
+type WritingTest = {
+  id: string;
+  label: string;
+  payload?: { items?: Array<{ taskKind?: string }> };
+};
+
+export default async function WritingStudyListPage() {
+  const supabase = await getServerSupabase();
+
+  const { data: tests, error } = await supabase
+    .from('writing_tests')
+    .select('id, label, payload')
+    .order('created_at', { ascending: false });
+
+  const availableTests = (tests ?? []) as WritingTest[];
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-6">
       <div>
         <h1 className="text-2xl font-bold">Writing Study Mode</h1>
-        <p className="text-sm text-gray-600 mt-1">Learn writing strategies and techniques at your own pace</p>
+        <p className="text-sm text-gray-600 mt-1">
+          {availableTests.length > 0
+            ? `${availableTests.length}개의 Writing 시험을 선택할 수 있습니다.`
+            : '이용 가능한 Writing Test가 없습니다.'}
+        </p>
       </div>
 
-      <div className="grid gap-4">
-        {modules.map((module) => (
-          <div
-            key={module.id}
-            className="rounded-lg border bg-white p-6 hover:border-indigo-400 hover:shadow-md transition"
-          >
-            <div className="space-y-4">
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="text-3xl mb-2">{module.icon}</div>
-                  <h3 className="text-lg font-semibold">{module.title}</h3>
-                  <p className="text-sm text-gray-600 mt-1">{module.description}</p>
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+          <div className="text-sm text-red-800">{error.message}</div>
+        </div>
+      )}
+
+      {availableTests.length === 0 ? (
+        <div className="rounded-lg border border-gray-200 bg-gray-50 p-8 text-center">
+          <p className="text-gray-600">아직 준비된 Writing Test가 없습니다.</p>
+          <p className="text-xs text-gray-500 mt-2">잠시 후 다시 확인해주세요.</p>
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2">
+          {availableTests.map((test) => {
+            const itemCount = test.payload?.items?.length ?? 0;
+            const hasEmail = test.payload?.items?.some(i => i.taskKind === 'email');
+            const hasAcademic = test.payload?.items?.some(i => i.taskKind === 'academic_discussion');
+
+            let taskDesc = '';
+            if (hasEmail && hasAcademic) {
+              taskDesc = 'Build a Sentence · Email Writing · Academic Discussion';
+            } else if (hasEmail) {
+              taskDesc = 'Build a Sentence · Email Writing';
+            } else if (hasAcademic) {
+              taskDesc = 'Build a Sentence · Academic Discussion';
+            } else {
+              taskDesc = `${itemCount > 0 ? itemCount : 3} tasks`;
+            }
+
+            return (
+              <Link
+                key={test.id}
+                href={`/updated-writing/study/${test.id}`}
+                className="rounded-lg border bg-white hover:border-teal-400 hover:shadow-md transition cursor-pointer p-6"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div className="text-3xl">✍️</div>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-semibold">{test.label}</h3>
+                    <p className="text-xs text-gray-600 mt-1">{taskDesc}</p>
+                  </div>
+
+                  <div className="flex items-center gap-4 text-xs text-gray-600 pt-2 border-t">
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-4 h-4" />
+                      <span>No time limit</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <BookOpen className="w-4 h-4" />
+                      <span>{itemCount > 0 ? itemCount : 3} tasks</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Zap className="w-4 h-4" />
+                      <span>TOEFL iBT</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="text-xs font-semibold bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full whitespace-nowrap">
-                  {module.lessons} lessons
-                </div>
-              </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
 
-              <div className="flex flex-wrap gap-2">
-                {module.topics.map((topic) => (
-                  <span key={topic} className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
-                    {topic}
-                  </span>
-                ))}
-              </div>
-
-              <button className="w-full px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition">
-                Start Learning
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 space-y-2">
-        <p className="text-xs font-semibold text-amber-700 uppercase">📚 Study Mode Advantage</p>
-        <ul className="text-xs text-amber-900 space-y-1 list-inside list-disc">
-          <li>Learn at your own pace with detailed explanations</li>
-          <li>Practice exercises for each writing task</li>
-          <li>Real examples from official TOEFL exams</li>
-          <li>No time pressure: Focus on understanding</li>
+      <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-4 space-y-2">
+        <p className="text-xs font-semibold text-indigo-700 uppercase">💡 Study Mode Tips</p>
+        <ul className="text-xs text-indigo-900 space-y-1 list-inside list-disc">
+          <li>Same screens as the real test, with no time limit</li>
+          <li>Switch the directions between English and Korean with the button at the top</li>
+          <li>Practice answers are not submitted or graded</li>
         </ul>
       </div>
     </div>

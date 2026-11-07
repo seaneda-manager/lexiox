@@ -11,24 +11,16 @@
 
 import { ETSLayout } from "./ETSLayout";
 
-// 창 배경(#F4F6F9) 위에 떠 있는 흰색 카드 — 문항 화면(BuildASentence 등)과 같은 패턴.
+// Listening/Speaking 안내 화면과 같은 평면 흰 본문(카드 없음).
 const OUTER_STYLE: React.CSSProperties = {
-  height: "100%",
+  minHeight: "100%",
   boxSizing: "border-box",
-  padding: 32,
-  display: "flex",
-  flexDirection: "column",
-  justifyContent: "center",
+  padding: "6px 36px",
+  backgroundColor: "#FFFFFF",
 };
 
 const CARD_STYLE: React.CSSProperties = {
-  maxWidth: 760,
-  margin: "0 auto",
-  width: "100%",
-  backgroundColor: "#FFFFFF",
-  borderRadius: 8,
-  padding: 32,
-  boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+  maxWidth: 620, margin: "0 auto", width: "100%",
   boxSizing: "border-box",
 };
 
@@ -48,20 +40,20 @@ export function WritingIntroScreen({
     <ETSLayout title="Writing" hideFooter onNext={onContinue} nextLabel="Continue >">
       <div style={OUTER_STYLE}>
         <div style={CARD_STYLE}>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: "#333333", borderBottom: "1px solid #E0E0E0", paddingBottom: 12, marginBottom: 20 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 400, color: "#333333", borderBottom: "1px solid #DDDDDD", paddingBottom: 8, marginBottom: 20 }}>
             Writing
           </h1>
-          <p style={{ fontSize: 15, color: "#333333", lineHeight: 1.8, marginBottom: 20 }}>
+          <p style={{ fontSize: 14, color: "#444444", lineHeight: 1.7, marginBottom: 20 }}>
             In the writing section, you will answer {totalQuestions} questions to demonstrate how
             well you can write in English. There are three types of tasks.
           </p>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
+          <table style={{ borderCollapse: "collapse", fontSize: 13, width: "auto", maxWidth: 420 }}>
             <thead>
               <tr>
-                <th style={{ textAlign: "left", padding: "10px 12px", backgroundColor: "#F4A97A", border: "1px solid #C0C8D0", fontWeight: 700 }}>
+                <th style={{ textAlign: "left", padding: "10px 12px", backgroundColor: "#F4A97A", color: "#222222", border: "1px solid #222222", fontWeight: 500 }}>
                   Type of Task
                 </th>
-                <th style={{ textAlign: "left", padding: "10px 12px", backgroundColor: "#F4A97A", border: "1px solid #C0C8D0", fontWeight: 700 }}>
+                <th style={{ textAlign: "left", padding: "10px 12px", backgroundColor: "#F4A97A", color: "#222222", border: "1px solid #222222", fontWeight: 500 }}>
                   Description
                 </th>
               </tr>
@@ -69,8 +61,8 @@ export function WritingIntroScreen({
             <tbody>
               {taskTypes.map((t) => (
                 <tr key={t.title}>
-                  <td style={{ padding: "10px 12px", border: "1px solid #C0C8D0", color: "#333333" }}>{t.title}</td>
-                  <td style={{ padding: "10px 12px", border: "1px solid #C0C8D0", color: "#333333" }}>{t.description}</td>
+                  <td style={{ padding: "10px 12px", border: "1px solid #222222", color: "#222222" }}>{t.title}</td>
+                  <td style={{ padding: "10px 12px", border: "1px solid #222222", color: "#222222" }}>{t.description}</td>
                 </tr>
               ))}
             </tbody>
@@ -97,10 +89,10 @@ export function TaskBeginScreen({
     <ETSLayout title="Writing" hideFooter onNext={onBegin} nextLabel="Begin >">
       <div style={OUTER_STYLE}>
         <div style={CARD_STYLE}>
-          <h1 style={{ fontSize: 20, fontWeight: 700, color: "#333333", borderBottom: "1px solid #E0E0E0", paddingBottom: 12, marginBottom: 20 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 400, color: "#333333", borderBottom: "1px solid #DDDDDD", paddingBottom: 8, marginBottom: 20 }}>
             {title}
           </h1>
-          <p style={{ fontSize: 15, color: "#333333", lineHeight: 1.8 }}>{body}</p>
+          <p style={{ fontSize: 14, color: "#444444", lineHeight: 1.7 }}>{body}</p>
         </div>
       </div>
     </ETSLayout>
@@ -130,20 +122,20 @@ export function LeaveConfirmScreen({
     >
       <div style={OUTER_STYLE}>
         <div style={CARD_STYLE}>
-          <h1 style={{ fontSize: 20, fontWeight: 700, color: "#333333", borderBottom: "1px solid #E0E0E0", paddingBottom: 12, marginBottom: 20 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 400, color: "#333333", borderBottom: "1px solid #DDDDDD", paddingBottom: 8, marginBottom: 20 }}>
             Time Remaining
           </h1>
-          <p style={{ fontSize: 15, color: "#333333", lineHeight: 1.8, marginBottom: 16 }}>
+          <p style={{ fontSize: 14, color: "#444444", lineHeight: 1.7, marginBottom: 16 }}>
             You still have time to respond. As long as there is time remaining, you can keep
             writing or revise your response.
           </p>
-          <p style={{ fontSize: 15, color: "#333333", lineHeight: 1.8, marginBottom: 8 }}>
+          <p style={{ fontSize: 14, color: "#444444", lineHeight: 1.7, marginBottom: 8 }}>
             Select <strong>Back</strong> to keep writing or revising.
           </p>
-          <p style={{ fontSize: 15, color: "#333333", lineHeight: 1.8, marginBottom: 16 }}>
+          <p style={{ fontSize: 14, color: "#444444", lineHeight: 1.7, marginBottom: 16 }}>
             Select <strong>Continue</strong> to leave this question.
           </p>
-          <p style={{ fontSize: 15, color: "#333333", lineHeight: 1.8 }}>
+          <p style={{ fontSize: 14, color: "#444444", lineHeight: 1.7 }}>
             Once you leave this question, you WILL NOT be able to return to it.
           </p>
         </div>

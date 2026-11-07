@@ -9,7 +9,9 @@ export default function WritingTestClient({
   test,
   testId,
   assignmentId,
+  mode = "test",
 }: {
+  mode?: "test" | "study";
   test: WWritingTest2026;
   testId: string;
   assignmentId?: string;
@@ -68,7 +70,7 @@ export default function WritingTestClient({
 
       if (!res.ok) {
         console.error(`[Writing Save] API error: ${res.status} ${res.statusText}`);
-        alert(`저장 실패: ${res.status} 서버 오류. 잠시 후 다시 시도해주세요.`);
+        alert(`Save failed (${res.status}). Please try again in a moment.`);
         return;
       }
 
@@ -83,13 +85,15 @@ export default function WritingTestClient({
         }
       } else {
         console.error('[Writing Save] No sessionId in response:', data);
-        alert('저장에 실패했습니다. 잠시 후 다시 시도해주세요.');
+        alert('Your responses could not be saved. Please try again in a moment.');
       }
     } catch (err) {
       console.error('[Writing Save] Error:', err);
-      alert('저장 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+      alert('An error occurred while saving. Please try again in a moment.');
     }
   }
 
+  // Study 모드: 같은 시험 화면, 시간 제한 없음. 연습이라 제출/저장은 하지 않는다.
+  if (mode === "study") return <WritingRunnerETS test={test} mode="study" storageId={testId} />;
   return <WritingRunnerETS test={test} onFinish={handleFinish} />;
 }

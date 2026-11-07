@@ -1,6 +1,11 @@
 "use client";
 
+import { createContext, useContext, useState } from "react";
 import { useRouter } from "next/navigation";
+import { StudyLangToggle } from "@/lib/ui/studyLang";
+
+/** true이면 Study 모드: 시간 제한 없음 + 한/영 전환 버튼 표시 */
+export const WritingStudyContext = createContext(false);
 
 /**
  * Writing 화면 전반에서 재사용하는 ETS 스타일 레이아웃 래퍼.
@@ -37,6 +42,8 @@ export function ETSLayout({
   const progressPct = totalQuestions && currentQuestion
     ? (currentQuestion / totalQuestions) * 100 : 0;
   const router = useRouter();
+  const isStudy = useContext(WritingStudyContext);
+  const [hideTime, setHideTime] = useState(false);
 
   const handleExit = () => {
     const confirmed = window.confirm(
@@ -92,58 +99,49 @@ export function ETSLayout({
           boxShadow: "0 12px 40px rgba(0,0,0,0.3)",
         }}
       >
-        {/* Header */}
-        <header className="flex items-center justify-between px-6 shrink-0" style={{ height: 60, backgroundColor: "#1A2B4C" }}>
-          <span style={{ fontSize: 16, fontWeight: 700, color: "#FFFFFF" }}>
-            {title ?? "Updated TOEFL iBT - Writing"}
-          </span>
-          <div className="flex items-center" style={{ gap: 8 }}>
-            {onBack && (
-              <button
-                onClick={onBack}
-                disabled={backDisabled}
-                className="rounded border border-slate-400 bg-transparent text-white disabled:opacity-30"
-                style={{ width: 90, height: 36, fontSize: 13 }}
-              >
-                &lt; Back
-              </button>
-            )}
+        {/* Header — 실제 ETS: 왼쪽 비움, 오른쪽에 Back(테두리) / Next(흰색) */}
+        <header className="flex items-center shrink-0 px-6" style={{ height: 60, backgroundColor: "#1E7B7D", justifyContent: "flex-end", gap: 8 }}>
+          {isStudy && (
+            <StudyLangToggle className="h-9 rounded-md border border-white/80 bg-transparent px-3 text-xs font-bold text-white hover:bg-white/10" />
+          )}
+          {onBack && (
             <button
-              onClick={onNext}
-              disabled={nextDisabled}
-              className="rounded font-semibold text-white disabled:opacity-40"
-              style={{ width: 100, height: 36, fontSize: 13, backgroundColor: "#0073E6", border: "none", borderRadius: 4 }}
+              onClick={onBack}
+              disabled={backDisabled}
+              style={{ height: 36, padding: "0 18px", fontSize: 13, fontWeight: 700, color: "#FFFFFF", backgroundColor: "transparent", border: "1px solid rgba(255,255,255,0.85)", borderRadius: 6, cursor: "pointer", opacity: backDisabled ? 0.4 : 1 }}
             >
-              {nextLabel ?? "Next >"}
+              &lt; Back
             </button>
-          </div>
+          )}
+          <button
+            onClick={onNext}
+            disabled={nextDisabled}
+            style={{ height: 36, padding: "0 18px", fontSize: 13, fontWeight: 700, color: "#1E7B7D", backgroundColor: "#FFFFFF", border: "none", borderRadius: 6, cursor: "pointer", opacity: nextDisabled ? 0.5 : 1 }}
+          >
+            {nextLabel ?? "Next >"}
+          </button>
         </header>
 
+        {/* Sub-header: "Writing | Question X of Y" + 남은 시간(Hide Time) */}
+        <div className="shrink-0 flex items-center justify-between" style={{ height: 40, backgroundColor: "#FFFFFF", borderBottom: "1px solid #E0E0E0", padding: "0 36px", fontSize: 12, color: "#444" }}>
+          <span>
+            <strong style={{ fontSize: 14, color: "#222" }}>Writing</strong>
+            {questionLabel ? <><span style={{ margin: "0 10px", color: "#BBB" }}>|</span>{questionLabel}</> : null}
+          </span>
+          {timerDisplay ? (
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 10, fontVariantNumeric: "tabular-nums" }}>
+              {!hideTime && <span style={{ fontWeight: 700 }}>{timerDisplay.length === 5 ? `00:${timerDisplay}` : timerDisplay}</span>}
+              <button type="button" onClick={() => setHideTime((v) => !v)} style={{ background: "none", border: "none", color: "#666", fontSize: 12, cursor: "pointer" }}>
+                {hideTime ? "Show Time" : "Hide Time"}
+              </button>
+            </span>
+          ) : null}
+        </div>
+
         {/* Body */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden" style={{ backgroundColor: "#FFFFFF" }}>
           {children}
         </main>
-
-        {/* Footer */}
-        {!hideFooter && (
-          <footer className="flex items-center justify-between shrink-0 border-t px-6"
-            style={{ height: 60, backgroundColor: "#FFFFFF", borderColor: "#E0E0E0" }}>
-            <span style={{ fontSize: 15, fontWeight: 500, color: "#333333" }}>
-              {questionLabel ?? ""}
-            </span>
-            <div className="flex items-center gap-4">
-              {totalQuestions && currentQuestion ? (
-                <div className="overflow-hidden rounded-full" style={{ width: 240, height: 8, backgroundColor: "#E0E0E0" }}>
-                  <div className="h-full rounded-full transition-all duration-500"
-                    style={{ width: `${progressPct}%`, backgroundColor: "#0073E6" }} />
-                </div>
-              ) : null}
-              <span className="font-mono font-semibold" style={{ fontSize: 15, color: "#333333" }}>
-                {timerDisplay}
-              </span>
-            </div>
-          </footer>
-        )}
       </div>
     </div>
   );
