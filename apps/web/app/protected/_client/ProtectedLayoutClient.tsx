@@ -64,7 +64,7 @@ export default function ProtectedLayoutClient({
   }, []);
 
   // Hide sidebar and topbar for test/assignment routes
-  const isFullscreenTest = /\/(updated-reading|updated-writing|updated-listening|updated-speaking|reading|listening|speaking|writing|speaking-2026).*(test|assignments)/.test(pathname);
+  const isFullscreenTest = /\/(updated-reading|updated-writing|updated-listening|updated-speaking|reading|listening|speaking|writing|speaking-2026).*(test|assignments)/.test(pathname) || /\/updated-(reading|writing)\/study\/./.test(pathname) || /\/updated-(reading|listening)\/study$/.test(pathname);
 
   if (isFullscreenTest) {
     return <>{children}</>;
