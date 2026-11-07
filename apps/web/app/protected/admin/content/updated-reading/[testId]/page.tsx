@@ -65,6 +65,12 @@ export default async function Reading2026EditPage({ params }: PageProps) {
             >
               📝 설명 관리
             </Link>
+            <Link
+              href={`/admin/content/updated-reading/${testId}/evidence`}
+              className="rounded-full border border-yellow-300 bg-yellow-50 px-3 py-1 text-[11px] font-medium text-yellow-800 hover:border-yellow-400 hover:bg-yellow-100"
+            >
+              🔎 정답 근거 검수
+            </Link>
             <span>·</span>
             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-medium text-emerald-700">
               <BookOpenCheck className="h-3.5 w-3.5" />

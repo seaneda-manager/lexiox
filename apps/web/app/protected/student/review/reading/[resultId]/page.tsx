@@ -102,6 +102,10 @@ function buildFlatQuestions(items: RReadingItem[]): FlatQuestion[] {
         choices,
         rationale: (q as any).explanation?.rationale ?? null,
         clueQuote: (q as any).explanation?.clue_quote ?? null,
+        // 선생님이 승인한 근거만 학생에게 노출 (AI 초안·반려는 숨김)
+        evidence: (((q as any).explanation?.evidence ?? []) as { quote: string; status: string }[])
+          .filter((e) => e.status === "approved" && e.quote)
+          .map((e) => e.quote),
       });
     });
   });

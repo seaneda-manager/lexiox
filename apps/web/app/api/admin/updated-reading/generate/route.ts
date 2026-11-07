@@ -5,6 +5,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { randomUUID } from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 import { shuffleAllChoicesInPayload } from '@/lib/utils/validateAnswerDistribution';
+import { verifyQuestionsAndAttachEvidence } from '@/lib/reading/questionQA';
 import { extractReadingTestToBank } from '@/lib/utils/problemBankExtract';
 import { logAnthropicUsage } from '@/lib/ai/logAnthropicUsage';
 import { findBlankCountIssues } from '@/lib/utils/ensureCompleteWordsBlanks';
@@ -290,6 +291,10 @@ Return ONLY this JSON structure (NO markdown, NO explanations, NO extra text):
     // 원래 정답 글자 묶음 자체를 안 바꾸니 셔플해도 못 고침 — shuffleAllChoicesInPayload로 교체)
     shuffleAllChoicesInPayload(payload);
 
+    // ✅ 정답 블라인드 검증 + 근거 문장 초안 (실패해도 생성은 성공 처리)
+    let qa: unknown = null;
+    try { qa = await verifyQuestionsAndAttachEvidence(payload, client); } catch (e) { console.error('[QA] verify failed', e); }
+
     const id = randomUUID();
     payload.meta.id = id;
     payload.meta.usedTopics = {
@@ -303,7 +308,7 @@ Return ONLY this JSON structure (NO markdown, NO explanations, NO extra text):
       console.error('[ProblemBank] Failed to extract Module1:', err);
     });
 
-    return NextResponse.json({ ok: true, id, payload });
+    return NextResponse.json({ ok: true, id, payload, qa });
   } catch (err: any) {
     console.error('MODULE 1 GENERATE ERROR', err);
     return NextResponse.json({ ok: false, error: err?.message ?? 'Unknown error' }, { status: 500 });
@@ -525,6 +530,10 @@ Return ONLY this JSON structure (NO markdown, NO explanations):
     shuffleAllChoicesInPayload(module2Data.stage2Pool.hard);
     shuffleAllChoicesInPayload(module2Data.stage2Pool.easy);
 
+    // ✅ 정답 블라인드 검증 + 근거 문장 초안 (hard/easy 모두)
+    let qa: unknown = null;
+    try { qa = await verifyQuestionsAndAttachEvidence(module2Data, client); } catch (e) { console.error('[QA] verify failed', e); }
+
     const id = randomUUID();
     module2Data.meta = {
       id,
@@ -536,7 +545,7 @@ Return ONLY this JSON structure (NO markdown, NO explanations):
       console.error('[ProblemBank] Failed to extract Module2:', err);
     });
 
-    return NextResponse.json({ ok: true, id, payload: module2Data });
+    return NextResponse.json({ ok: true, id, payload: module2Data, qa });
   } catch (err: any) {
     console.error('MODULE 2 GENERATE ERROR', err);
     return NextResponse.json({ ok: false, error: err?.message ?? 'Unknown error' }, { status: 500 });

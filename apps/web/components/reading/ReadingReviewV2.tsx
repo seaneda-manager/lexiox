@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ChevronDown, ChevronUp, Sparkles, Loader2, BookOpen, Languages, Bookmark, Dumbbell, Lock, Pin } from "lucide-react";
 import type { RQuestion, RChoice } from "@/models/reading";
+import { highlightHtml } from "@/lib/reading/evidence";
 
 // 정답이어도 이 유형들은 추측으로 맞혔을 가능성이 있어 핵심 요지 확인을 필수로 요구한다.
 const MANDATORY_TYPES = new Set(["inference", "negative_detail", "insertion", "insert_sentence"]);
@@ -81,6 +82,8 @@ export type FlatQuestion = {
   choices: { id: string; text: string; isCorrect: boolean; explain?: string | null }[];
   rationale?: string | null;
   clueQuote?: string | null;
+  /** 선생님이 승인한 정답 근거 문장(지문 원문 인용). 있으면 지문에 형광펜으로 표시한다. */
+  evidence?: string[];
   /** 필수 확인 팝업 퀴즈용 AI 생성 콘텐츠. 없으면 rationale/clueQuote 등으로 대체한다. */
   keyPointSummary?: string | null;
   keyPointDistractors?: string[] | null;
@@ -312,6 +315,12 @@ function PassageGroup({
   const [translation, setTranslation] = useState<string | null>(null);
   const [transLoading, setTransLoading] = useState(false);
   const [showTrans, setShowTrans] = useState(false);
+  // 어떤 문항의 근거를 지문에 표시할지 (한 번에 한 문항)
+  const [evidenceQid, setEvidenceQid] = useState<string | null>(null);
+  const passageShown = useMemo(() => {
+    const q = group.questions.find((x) => x.id === evidenceQid);
+    return q?.evidence?.length ? highlightHtml(group.passageHtml, q.evidence) : group.passageHtml;
+  }, [group.passageHtml, group.questions, evidenceQid]);
 
   async function fetchTranslation() {
     if (translation) { setShowTrans((v) => !v); return; }
@@ -369,8 +378,11 @@ function PassageGroup({
         {showPassage && (
           <div
             className="prose prose-sm max-h-[50vh] overflow-auto px-4 py-3 text-sm leading-relaxed"
-            dangerouslySetInnerHTML={{ __html: group.passageHtml }}
+            dangerouslySetInnerHTML={{ __html: passageShown }}
           />
+        )}
+        {showPassage && (
+          <style>{".evidence-mark{background:#FEF08A;padding:0 1px;border-radius:2px;box-shadow:0 0 0 2px #FEF08A}"}</style>
         )}
 
         {showTrans && translation && (
@@ -394,6 +406,8 @@ function PassageGroup({
             isCleared={clearedMandatory.has(q.id)}
             isLocked={mandatoryIds.includes(q.id) && !clearedMandatory.has(q.id) && q.id !== activeMandatoryId}
             onOpenGate={() => onOpenGate(q.id)}
+            evidenceActive={evidenceQid === q.id}
+            onToggleEvidence={() => setEvidenceQid((cur) => (cur === q.id ? null : q.id))}
           />
         ))}
       </div>
@@ -412,7 +426,11 @@ function QuestionCard({
   isCleared,
   isLocked,
   onOpenGate,
+  evidenceActive,
+  onToggleEvidence,
 }: {
+  evidenceActive: boolean;
+  onToggleEvidence: () => void;
   q: FlatQuestion;
   chosenId: string | null;
   resultId: string;
@@ -552,6 +570,17 @@ function QuestionCard({
               <Dumbbell className="h-3 w-3" />
               드릴로 연습하기
             </Link>
+          )}
+          {q.evidence && q.evidence.length > 0 && (
+            <button
+              onClick={onToggleEvidence}
+              className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-[10px] font-semibold ${
+                evidenceActive ? "border-yellow-400 bg-yellow-100 text-yellow-900" : "border-yellow-300 bg-white text-yellow-800 hover:bg-yellow-50"
+              }`}
+            >
+              <Bookmark className="h-3 w-3" />
+              {evidenceActive ? "근거 숨기기" : "정답 근거 보기"}
+            </button>
           )}
           <button
             onClick={fetchQuestionTranslation}

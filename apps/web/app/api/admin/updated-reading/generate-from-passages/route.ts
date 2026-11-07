@@ -6,6 +6,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { randomUUID } from "crypto";
 import { findBlankCountIssues } from "@/lib/utils/ensureCompleteWordsBlanks";
 import { shuffleAllChoicesInPayload } from "@/lib/utils/validateAnswerDistribution";
+import { verifyQuestionsAndAttachEvidence } from "@/lib/reading/questionQA";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -165,7 +166,11 @@ Return ONLY valid JSON, no markdown fences. "items" must have exactly ${items.le
     // ✅ 정답 위치 무작위화 — 매 문제 choices를 무조건 섞어서 A/B/C/D 쏠림 방지
     shuffleAllChoicesInPayload(merged);
 
-    return NextResponse.json({ ok: true, items: merged });
+    // ✅ 정답 블라인드 검증 + 근거 문장 초안 (실패해도 생성은 성공 처리)
+    let qa: unknown = null;
+    try { qa = await verifyQuestionsAndAttachEvidence(merged, client); } catch (e) { console.error('[QA] verify failed', e); }
+
+    return NextResponse.json({ ok: true, items: merged, qa });
   } catch (err: any) {
     console.error("GENERATE-FROM-PASSAGES ERROR", err);
     return NextResponse.json({ ok: false, error: err?.message ?? "Unknown error" }, { status: 500 });
