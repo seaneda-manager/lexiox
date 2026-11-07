@@ -69,39 +69,6 @@ export default async function Reading2026StudyPage() {
     },
   };
 
-  return (
-    <main className="mx-auto max-w-5xl space-y-6 px-4 py-6">
-      {/* 헤더 */}
-      <header className="space-y-2">
-        <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-medium text-emerald-700">
-          <BookOpenCheck className="h-3.5 w-3.5" />
-          Reading 2026 · Study Mode
-        </div>
-        <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
-          <div>
-            <h1 className="text-xl font-bold tracking-tight text-gray-900">
-              {test.meta.label ?? "Reading 2026 – Practice"}
-            </h1>
-            <p className="mt-1 text-xs text-gray-600">
-              ETS Sampler처럼 한 번에 하나의 문제를 보면서 연습하는 모드입니다.
-            </p>
-          </div>
-          <div className="text-right text-[11px] text-gray-500">
-            <div>
-              Test ID:{" "}
-              <code className="rounded bg-gray-100 px-1 py-0.5 text-[10px]">
-                {test.meta.id}
-              </code>
-            </div>
-            <div>Exam Era: {test.meta.examEra}</div>
-          </div>
-        </div>
-      </header>
-
-      {/* 실제 Study Client */}
-      <section className="rounded-xl border bg-white p-4 shadow-sm">
-        <ReadingStudyClient test={test} />
-      </section>
-    </main>
-  );
+  // Study 모드도 시험과 같은 ETS 화면(MockTestPlayer)을 그대로 사용한다.
+  return <ReadingStudyClient test={test} />;
 }

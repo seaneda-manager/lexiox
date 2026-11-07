@@ -2,10 +2,10 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import ReadingTestLayout2026 from "./ReadingTestLayout2026";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type CSSProperties } from "react";
 import { ReadingETSFrame } from "./ReadingETSFrame";
 import { DailyLifeContent } from "./DailyLifeCards";
+import { StudyLangToggle, useStudyLang } from "@/lib/ui/studyLang";
 import type {
   RReadingTest2026,
   RReadingModule,
@@ -66,7 +66,7 @@ type ScoreRow = {
 // ── Constants ──────────────────────────────────────────────────────────
 
 const STAGE1_SECONDS = 18 * 60;
-const STAGE2_SECONDS = 17 * 60;
+const STAGE2_SECONDS = 9 * 60;
 
 const Q_TYPE_LABELS: Record<string, string> = {
   vocab: "어휘",
@@ -117,7 +117,7 @@ function flattenModule(
           passageHtml: passage.passageHtml ?? "",
           passageKind: "academic_passage",
           id: q.id,
-          number: q.number,
+          number: q.number ?? globalIdx + 1,
           stem: q.stem,
           type: q.type,
           choices: (q.choices ?? []).map((c: RChoice) => ({
@@ -154,7 +154,7 @@ function flattenModule(
           passageContextType: dl.contextType,
           passageKind: "daily_life",
           id: q.id,
-          number: q.number,
+          number: q.number ?? globalIdx + 1,
           stem: q.stem,
           type: q.type,
           choices: (q.choices ?? []).map((c: RChoice) => ({
@@ -256,6 +256,55 @@ function scoreAnswers(
 
 // ── Props ──────────────────────────────────────────────────────────────
 
+// ── 실제 ETS 시험 화면 스타일(사진 기준): 청록 헤더, 흰색 둥근 버튼, 가는 제목 + 구분선 ──
+const ETS_TEAL = "#1E7B7D";
+
+function EtsVolumeButton() {
+  return (
+    <span
+      style={{
+        display: "inline-flex", alignItems: "center", gap: 8, height: 36, padding: "0 16px",
+        border: "1px solid rgba(255,255,255,0.85)", borderRadius: 6, color: "#FFFFFF",
+        fontSize: 13, fontWeight: 700,
+      }}
+    >
+      Volume
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="#FFFFFF" aria-hidden="true">
+        <path d="M3 9v6h4l5 4V5L7 9H3zm13.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z" />
+      </svg>
+    </span>
+  );
+}
+
+function EtsHeaderButtonDark({ onClick, children }: { onClick: () => void; children: ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{ height: 36, padding: "0 18px", fontSize: 13, fontWeight: 700, borderRadius: 6, cursor: "pointer", border: "none", backgroundColor: ETS_TEAL, color: "#FFFFFF" }}
+    >
+      {children}
+    </button>
+  );
+}
+
+function EtsHeaderButton({ onClick, children, outline }: { onClick: () => void; children: ReactNode; outline?: boolean }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        height: 36, padding: "0 18px", fontSize: 13, fontWeight: 700, borderRadius: 6, cursor: "pointer",
+        border: outline ? "1px solid rgba(255,255,255,0.85)" : "none",
+        backgroundColor: outline ? "transparent" : "#FFFFFF",
+        color: outline ? "#FFFFFF" : ETS_TEAL,
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
 type Props = {
   testId: string;
   label: string;
@@ -264,6 +313,8 @@ type Props = {
   adaptiveConfig?: AdaptiveConfig;
   /** Present when launched from a student assignment — threaded through to onFinish's caller. */
   assignmentId?: string;
+  /** "test"(기본): 실제 시험처럼 영어 고정 + 타이머. "study": 같은 화면, 시간 제한 없음 + 정답 확인 + 한/영 전환. */
+  mode?: "test" | "study";
   onFinish?: (payload: {
     testId: string;
     assignmentId?: string;
@@ -290,6 +341,35 @@ function loadAutosave(testId: string): { answers: Record<string, string | string
   }
 }
 
+// ── Study 진행 저장 (이어 풀기) ──────────────────────────────────────────
+// 시험 자동저장과 키를 분리한다. 서버 저장은 SQL 초안(docs/sql)이 적용되면 이 헬퍼 뒤에 붙인다.
+type StudyProgress = {
+  v: 1;
+  savedAt: string;
+  phase: "direction" | "complete_words" | "stage1_testing" | "stage_break" | "stage2_testing" | "review";
+  currentIdx: number;
+  cwIdx: number;
+  stage2Difficulty: "easy" | "hard" | null;
+  answers: Record<string, string | string[]>;
+  flagged: string[];
+  checked: string[];
+};
+
+function studyKey(testId: string) {
+  return `reading2026_study__${testId}`;
+}
+
+function loadStudyProgress(testId: string): StudyProgress | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(studyKey(testId));
+    const parsed = raw ? (JSON.parse(raw) as StudyProgress) : null;
+    return parsed && parsed.v === 1 ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
 // ── Main Component ─────────────────────────────────────────────────────
 
 export default function MockTestPlayer({
@@ -298,8 +378,14 @@ export default function MockTestPlayer({
   test,
   adaptiveConfig,
   assignmentId,
+  mode = "test",
   onFinish,
 }: Props) {
+  const isStudy = mode === "study";
+  const { t: studyT, lang } = useStudyLang();
+  /** 시험 모드는 항상 영어, Study 모드는 선택한 언어 */
+  const tx = (en: string, ko: string) => (isStudy ? studyT(en, ko) : en);
+  const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
   // test.stage2Pool이 있으면 adaptive, 없으면 non-adaptive
   const resolvedAdaptiveConfig = adaptiveConfig ?? (test.stage2Pool ? {
     cutScore: test.stage2Pool.cutScore,
@@ -326,19 +412,20 @@ export default function MockTestPlayer({
   );
 
   const [phase, setPhase] = useState<Phase>(cwItems.length > 0 ? "direction" : "direction");
-  const [introStep, setIntroStep] = useState(0); // 0,1,2 — ETS-style multi-screen directions
+  const [introStep, setIntroStep] = useState(0); // 0~4: Hardware Check → Volume → Microphone → Reading Section → Module 1
+  const [breakStep, setBreakStep] = useState(0); // 0: End of Module 1, 1: Module 2 안내
   const [cwIdx, setCwIdx] = useState(0); // which complete_words item we're on
   const [currentIdx, setCurrentIdx] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string | string[]>>(
-    () => loadAutosave(testId)?.answers ?? {}
+    () => (mode === "study" ? {} : loadAutosave(testId)?.answers ?? {})
   );
   const [flagged, setFlagged] = useState<Set<string>>(
-    () => new Set(loadAutosave(testId)?.flagged ?? [])
+    () => new Set(mode === "study" ? [] : loadAutosave(testId)?.flagged ?? [])
   );
 
   // 새로고침/탭 크래시 대비 자동저장 — 답이 바뀔 때마다 로컬에 저장
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || isStudy) return; // Study는 별도 저장(studyKey)
     if (Object.keys(answers).length === 0 && flagged.size === 0) return;
     try {
       window.localStorage.setItem(
@@ -348,14 +435,76 @@ export default function MockTestPlayer({
     } catch {
       // storage full/unavailable — silently skip, in-memory state is still authoritative
     }
-  }, [answers, flagged, testId]);
+  }, [answers, flagged, testId, isStudy]);
   const [secondsLeft, setSecondsLeft] = useState(STAGE1_SECONDS);
   const [showNavGrid, setShowNavGrid] = useState(false);
+  // Study 이어 풀기: 저장된 진행이 있으면 시작 전에 "이어서 / 처음부터"를 묻는다.
+  const [resumeOffer, setResumeOffer] = useState<StudyProgress | null>(null);
+  const [resumeChecked, setResumeChecked] = useState(false);
+  useEffect(() => {
+    if (!isStudy) return;
+    setResumeOffer(loadStudyProgress(testId));
+    setResumeChecked(true);
+  }, [isStudy, testId]);
   const [submitting, setSubmitting] = useState(false);
 
   // Adaptive: which stage2 module was selected
   const [stage2Difficulty, setStage2Difficulty] = useState<"easy" | "hard" | null>(null);
   const [stage2Questions, setStage2Questions] = useState<FlatQuestion[]>([]);
+
+  // Study: 답·위치·깃발·정답확인 상태를 바뀔 때마다 저장 (resume 선택 전에는 덮어쓰지 않는다)
+  useEffect(() => {
+    if (!isStudy || !resumeChecked || resumeOffer) return;
+    const savable =
+      phase === "complete_words" || phase === "stage1_testing" || phase === "stage_break" ||
+      phase === "stage2_testing" || phase === "review";
+    if (!savable) return;
+    try {
+      const data: StudyProgress = {
+        v: 1,
+        savedAt: new Date().toISOString(),
+        phase: phase as StudyProgress["phase"],
+        currentIdx,
+        cwIdx,
+        stage2Difficulty,
+        answers,
+        flagged: Array.from(flagged),
+        checked: Array.from(checkedIds),
+      };
+      window.localStorage.setItem(studyKey(testId), JSON.stringify(data));
+    } catch {
+      /* 저장 공간 부족 등 — 메모리 상태가 기준이므로 무시 */
+    }
+  }, [isStudy, resumeChecked, resumeOffer, phase, currentIdx, cwIdx, stage2Difficulty, answers, flagged, checkedIds, testId]);
+
+  /** 저장된 진행으로 복원한다. 2단계 문항은 저장된 난이도로 다시 만든다. */
+  function applyResume(saved: StudyProgress) {
+    setAnswers(saved.answers ?? {});
+    setFlagged(new Set(saved.flagged ?? []));
+    setCheckedIds(new Set(saved.checked ?? []));
+    setCwIdx(saved.cwIdx ?? 0);
+
+    const needsStage2 = saved.phase === "stage_break" || saved.phase === "stage2_testing" || saved.phase === "review";
+    if (needsStage2) {
+      const passageOffset = (stage1Questions.at(-1)?.passageIdx ?? -1) + 1;
+      const qOffset = stage1Questions.length;
+      let mod = test.modules[1];
+      if (resolvedAdaptiveConfig) {
+        mod = saved.stage2Difficulty === "easy" ? resolvedAdaptiveConfig.stage2Easy : resolvedAdaptiveConfig.stage2Hard;
+      }
+      if (mod) setStage2Questions(flattenModule(mod, 2, passageOffset, qOffset));
+      setStage2Difficulty(saved.stage2Difficulty ?? null);
+    }
+    setCurrentIdx(saved.currentIdx ?? 0);
+    setBreakStep(saved.phase === "stage_break" ? 1 : 0);
+    setPhase(saved.phase);
+    setResumeOffer(null);
+  }
+
+  function discardResume() {
+    try { window.localStorage.removeItem(studyKey(testId)); } catch { /* noop */ }
+    setResumeOffer(null);
+  }
 
   // Final flat list (stage1 + decided stage2)
   const allQuestions = useMemo<FlatQuestion[]>(
@@ -385,6 +534,7 @@ export default function MockTestPlayer({
   // Timer — resets when stage changes
   useEffect(() => {
     if (phase !== "stage1_testing" && phase !== "stage2_testing") return;
+    if (isStudy) return; // Study 모드: 시간 제한 없음
 
     setSecondsLeft(phase === "stage1_testing" ? STAGE1_SECONDS : STAGE2_SECONDS);
 
@@ -497,7 +647,7 @@ export default function MockTestPlayer({
         }
       }
       if (typeof window !== "undefined") {
-        try { window.localStorage.removeItem(autosaveKey(testId)); } catch { /* noop */ }
+        try { window.localStorage.removeItem(autosaveKey(testId)); window.localStorage.removeItem(studyKey(testId)); } catch { /* noop */ }
       }
     } catch {
       // silent
@@ -565,9 +715,43 @@ export default function MockTestPlayer({
   const answeredCount = Object.keys(answers).filter((id) =>
     activeQuestions.some((q) => q.id === id)
   ).length;
-  const isWarning = secondsLeft <= 300 && (phase === "stage1_testing" || phase === "stage2_testing");
+  const isWarning = !isStudy && secondsLeft <= 300 && (phase === "stage1_testing" || phase === "stage2_testing");
 
   // ── Direction Screen ───────────────────────────────────────────────
+
+  if (phase === "direction" && isStudy && resumeOffer) {
+    const answeredN = Object.keys(resumeOffer.answers ?? {}).length;
+    const when = new Date(resumeOffer.savedAt).toLocaleString();
+    return (
+      <ReadingETSFrame>
+        <header style={{ height: 60, backgroundColor: ETS_TEAL, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8, padding: "0 24px", flexShrink: 0 }}>
+          <StudyLangToggle className="h-9 rounded-md border border-white/80 bg-transparent px-3 text-xs font-bold text-white hover:bg-white/10" />
+        </header>
+        <div style={{ height: 40, backgroundColor: "#FFFFFF", borderBottom: "1px solid #E0E0E0", display: "flex", alignItems: "center", padding: "0 36px", fontSize: 14, fontWeight: 700, color: "#222", flexShrink: 0 }}>Reading</div>
+        <main style={{ flex: 1, backgroundColor: "#FFFFFF", padding: "28px 36px" }}>
+          <div style={{ maxWidth: 620, margin: "0 auto" }}>
+            <h2 style={{ fontSize: 22, fontWeight: 400, color: "#333", paddingBottom: 8, marginBottom: 20, borderBottom: "1px solid #DDD" }}>
+              {tx("Resume your study session?", "이어서 학습할까요?")}
+            </h2>
+            <p style={{ fontSize: 14, lineHeight: 1.7, color: "#444", marginBottom: 6 }}>
+              {tx(`You have a saved session (${answeredN} answers saved).`, `저장된 학습이 있습니다 (답 ${answeredN}개 저장).`)}
+            </p>
+            <p style={{ fontSize: 12, color: "#888", marginBottom: 22 }}>{tx("Last saved: ", "마지막 저장: ")}{when}</p>
+            <div style={{ display: "flex", gap: 10 }}>
+              <EtsHeaderButtonDark onClick={() => applyResume(resumeOffer)}>{tx("Resume", "이어서 하기")}</EtsHeaderButtonDark>
+              <button
+                type="button"
+                onClick={discardResume}
+                style={{ height: 36, padding: "0 18px", fontSize: 13, fontWeight: 700, color: ETS_TEAL, backgroundColor: "#FFFFFF", border: `1px solid ${ETS_TEAL}`, borderRadius: 6, cursor: "pointer" }}
+              >
+                {tx("Start over", "처음부터")}
+              </button>
+            </div>
+          </div>
+        </main>
+      </ReadingETSFrame>
+    );
+  }
 
   if (phase === "direction") {
     const beginTest = () => {
@@ -581,157 +765,129 @@ export default function MockTestPlayer({
     };
 
     const Shell = ({
-      badge,
-      title,
+      heading,
       children,
       onBack,
       onNext,
       nextLabel,
+      showLang,
     }: {
-      badge: string;
-      title: string;
+      heading: string;
       children: ReactNode;
       onBack?: () => void;
       onNext: () => void;
       nextLabel: string;
+      showLang?: boolean;
     }) => (
       <ReadingETSFrame>
         <header style={{
-          height: 60, backgroundColor: "#1A2B4C", display: "flex",
-          alignItems: "center", justifyContent: "space-between", padding: "0 24px", flexShrink: 0,
+          height: 60, backgroundColor: ETS_TEAL, display: "flex",
+          alignItems: "center", justifyContent: "flex-end", gap: 8, padding: "0 24px", flexShrink: 0,
         }}>
-          <span style={{ fontSize: 15, fontWeight: 700, color: "#FFFFFF" }}>{label}</span>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            {onBack && (
-              <button
-                onClick={onBack}
-                className="rounded border border-slate-400 bg-transparent text-white"
-                style={{ width: 90, height: 36, fontSize: 13 }}
-              >
-                &lt; 이전
-              </button>
-            )}
-            <button
-              onClick={onNext}
-              className="rounded font-semibold text-white"
-              style={{ height: 36, padding: "0 18px", fontSize: 13, backgroundColor: "#0073E6", border: "none", borderRadius: 4 }}
-            >
-              {nextLabel}
-            </button>
-          </div>
+          {isStudy && showLang !== false && (
+            <StudyLangToggle className="h-9 rounded-md border border-white/80 bg-transparent px-3 text-xs font-bold text-white hover:bg-white/10" />
+          )}
+          {isStudy && onBack && <EtsHeaderButton outline onClick={onBack}>{tx("< Back", "< 이전")}</EtsHeaderButton>}
+          {introStep > 0 && <EtsVolumeButton />}
+          <EtsHeaderButton onClick={onNext}>{nextLabel}</EtsHeaderButton>
         </header>
-
-        <main style={{ flex: 1, overflowY: "auto", backgroundColor: "#F4F6F9", padding: 32 }}>
-          <div style={{ maxWidth: 760, margin: "0 auto", backgroundColor: "#FFFFFF", borderRadius: 8, padding: 32, boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
-            <div className="mb-1 flex items-center gap-2">
-              <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-[11px] font-semibold text-gray-500">
-                {badge}
-              </span>
-            </div>
-            <h1 className="mb-1 text-xl font-bold">{label}</h1>
-            <p className="mb-6 text-sm text-gray-500">{title}</p>
-
+        <div style={{ height: 40, backgroundColor: "#FFFFFF", borderBottom: "1px solid #E0E0E0", display: "flex", alignItems: "center", padding: "0 36px", flexShrink: 0, fontSize: 14, fontWeight: 700, color: "#222" }}>
+          Reading
+        </div>
+        <main style={{ flex: 1, overflowY: "auto", backgroundColor: "#FFFFFF", padding: "28px 36px" }}>
+          <div style={{ maxWidth: 620, margin: "0 auto" }}>
+            <h2 style={{ fontSize: 22, fontWeight: 400, color: "#333", paddingBottom: 8, marginBottom: 20, borderBottom: "1px solid #DDD" }}>{heading}</h2>
             {children}
           </div>
         </main>
       </ReadingETSFrame>
     );
 
+    const P = ({ children }: { children: ReactNode }) => (
+      <p style={{ fontSize: 14, lineHeight: 1.7, color: "#444", marginBottom: 14 }}>{children}</p>
+    );
+    const th: CSSProperties = { backgroundColor: ETS_TEAL, color: "#FFFFFF", textAlign: "left", padding: "6px 10px", fontWeight: 500, border: "1px solid #222" };
+    const td: CSSProperties = { padding: "6px 10px", color: "#222", border: "1px solid #222", verticalAlign: "top" };
+
+    // 시험 시작 전 순서(실제 화면 기준): Hardware Check → Volume → Microphone → Reading Section → Module 1
     if (introStep === 0) {
       return (
-        <Shell
-          badge="Reading Section · 안내 1/3"
-          title="TOEFL Reading — 시험 개요"
-          onNext={() => setIntroStep(1)}
-          nextLabel="다음 →"
-        >
-          <ul className="space-y-2.5 text-sm text-gray-700">
-            <li className="flex items-start gap-2">
-              <span className="mt-0.5 text-gray-400">•</span>
-              이 섹션은 학술적인 영어 지문을 읽고 이해하는 능력을 측정합니다.
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="mt-0.5 text-gray-400">•</span>
-              Reading Section은 <strong>Module 1 · Module 2</strong> 2개로 구성되며, 총 소요 시간은 약 <strong>35분</strong>입니다 (Module 1: 18분 · Module 2: 17분).
-            </li>
-            {isAdaptive && (
-              <li className="flex items-start gap-2">
-                <span className="mt-0.5 text-gray-400">•</span>
-                모든 응시자는 동일한 <strong>Module 1</strong>을 풀며, 그 성적에 따라 <strong>Module 2</strong>의 난이도가 자동으로 결정됩니다 (적응형 시험).
-              </li>
-            )}
-            <li className="flex items-start gap-2">
-              <span className="mt-0.5 text-gray-400">•</span>
-              각 Module의 제한 시간은 개별적으로 작동하며, 한 Module을 완료하면 이전 Module로 돌아갈 수 없습니다.
-            </li>
-          </ul>
+        <Shell heading={tx("Hardware Check", "하드웨어 점검")} onNext={() => setIntroStep(1)} nextLabel={tx("Continue >", "계속 >")}>
+          <P>{tx("Before the test begins, we will check the microphone and headset volume.", "시험이 시작되기 전에 마이크와 헤드셋 볼륨을 점검합니다.")}</P>
+          <div style={{ display: "flex", gap: 36, margin: "18px 0 22px 10px" }}>
+            {[
+              <path key="m" d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V22h2v-3.1A7 7 0 0 0 19 12h-2z" />,
+              <path key="h" d="M12 3a9 9 0 0 0-9 9v6a3 3 0 0 0 3 3h2v-8H5v-1a7 7 0 0 1 14 0v1h-3v8h2a3 3 0 0 0 3-3v-6a9 9 0 0 0-9-9z" />,
+              <path key="s" d="M3 9v6h4l5 4V5L7 9H3zm13.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z" />,
+            ].map((p, i) => (
+              <svg key={i} width="54" height="54" viewBox="0 0 24 24" fill={ETS_TEAL} aria-hidden="true">{p}</svg>
+            ))}
+          </div>
+          <P>{tx("Please make sure your headset is on. Follow the instructions on each screen. Be sure that your microphone is properly positioned and adjusted to allow for the best possible recording. Speak directly into the microphone and in your normal speaking voice.", "헤드셋이 켜져 있는지 확인하세요. 각 화면의 안내를 따르고, 최상의 녹음을 위해 마이크 위치를 알맞게 조정하세요. 마이크에 직접, 평소 목소리로 말하세요.")}</P>
         </Shell>
       );
     }
 
     if (introStep === 1) {
       return (
-        <Shell
-          badge="Reading Section · 안내 2/3"
-          title="문제 유형 안내"
-          onBack={() => setIntroStep(0)}
-          onNext={() => setIntroStep(2)}
-          nextLabel="다음 →"
-        >
-          <div className="space-y-3 text-sm text-gray-700">
-            <div className="rounded-lg border bg-gray-50 p-3">
-              <p className="mb-1 font-semibold text-gray-900">📝 Complete the Words</p>
-              <p className="text-xs leading-relaxed text-gray-600">
-                지문 속 단어의 앞부분 철자는 고정되어 있고, 나머지 어미만 직접 입력해 완성합니다. Module 시작 전 별도 화면에서 진행됩니다.
-              </p>
-            </div>
-            <div className="rounded-lg border bg-gray-50 p-3">
-              <p className="mb-1 font-semibold text-gray-900">📧 Read in Daily Life</p>
-              <p className="text-xs leading-relaxed text-gray-600">
-                이메일, 공지, SNS 게시물 등 실생활 지문을 읽고 4지선다 문제를 풉니다.
-              </p>
-            </div>
-            <div className="rounded-lg border bg-gray-50 p-3">
-              <p className="mb-1 font-semibold text-gray-900">📖 Read an Academic Passage</p>
-              <p className="text-xs leading-relaxed text-gray-600">
-                학술 지문을 읽고 세부사항·추론·어휘·수사적 목적 등을 묻는 문제를 풉니다. <strong>문장 삽입(Insert Text)</strong> 문제는 지문 속 검정 사각형[■]을 클릭하면 제시문이 그 위치에 삽입되어 미리보기가 가능하며, 우측 선택지가 자동으로 선택됩니다.
-              </p>
-            </div>
+        <Shell heading={tx("Adjusting the Volume", "볼륨 조절")} onBack={() => setIntroStep(0)} onNext={() => setIntroStep(2)} nextLabel={tx("Continue >", "계속 >")}>
+          <P>{tx("To adjust the volume, select the Volume icon at the top of the screen. The volume control will appear. Move the volume indicator to the left or the right to change the volume.", "볼륨을 조절하려면 화면 위쪽의 Volume 아이콘을 선택하세요. 볼륨 조절 막대가 나타나면 좌우로 움직여 볼륨을 바꿉니다.")}</P>
+          <P>{tx("To close the volume control, select the Volume icon again.", "볼륨 조절을 닫으려면 Volume 아이콘을 다시 선택하세요.")}</P>
+          <P>{tx("You will be able to change the volume during the test if you need to.", "필요하면 시험 중에도 볼륨을 바꿀 수 있습니다.")}</P>
+          <div style={{ display: "flex", alignItems: "center", gap: 18, marginTop: 6 }}>
+            <svg width="44" height="44" viewBox="0 0 24 24" fill={ETS_TEAL} aria-hidden="true">
+              <path d="M3 9v6h4l5 4V5L7 9H3zm13.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z" />
+            </svg>
+            <span style={{ fontSize: 13, color: "#444" }}>{tx("You now have the option to adjust the volume.", "이제 볼륨을 조절할 수 있습니다.")}</span>
           </div>
         </Shell>
       );
     }
 
+    if (introStep === 2) {
+      const bars = (color: string, lit: number) => (
+        <div style={{ display: "flex", gap: 3 }}>
+          {Array.from({ length: 22 }).map((_, i) => (
+            <span key={i} style={{ width: 9, height: 24, border: `1px solid ${color}`, backgroundColor: i < lit ? color : "transparent" }} />
+          ))}
+        </div>
+      );
+      return (
+        <Shell heading={tx("Adjusting the Microphone", "마이크 조절")} onBack={() => setIntroStep(1)} onNext={() => setIntroStep(3)} nextLabel={tx("Continue >", "계속 >")}>
+          <P>{tx("In order to check your microphone volume, you will speak into the microphone using your normal tone and volume. For best recording results, your voice level should remain generally within the Good Range. While you speak the microphone will adjust automatically.", "마이크 볼륨을 확인하기 위해 평소 목소리 크기로 마이크에 말합니다. 최상의 녹음을 위해 목소리 크기는 대체로 Good 범위 안에 있어야 합니다. 말하는 동안 마이크는 자동으로 조정됩니다.")}</P>
+          <p style={{ fontSize: 13, fontWeight: 700, color: "#444", margin: "14px 0 8px" }}>{tx("Example:", "예시:")}</p>
+          <div style={{ display: "flex", gap: 40, flexWrap: "wrap" }}>
+            <div>{bars(ETS_TEAL, 11)}<div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#555", marginTop: 4 }}><span>Too Quiet</span><span>Good</span><span>Too Loud</span></div>
+              <div style={{ marginTop: 26, fontSize: 22, color: ETS_TEAL }}>✓ <span style={{ color: "#444" }}>Good</span></div></div>
+            <div>{bars("#D94B4B", 21)}<div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#555", marginTop: 4 }}><span>Too Quiet</span><span>Good</span><span>Too Loud</span></div>
+              <div style={{ marginTop: 26, fontSize: 22, color: "#D94B4B" }}>✗ <span style={{ color: "#444" }}>Too Loud</span></div></div>
+          </div>
+        </Shell>
+      );
+    }
+
+    if (introStep === 3) {
+      return (
+        <Shell heading={tx("Reading Section", "Reading 섹션")} onBack={() => setIntroStep(2)} onNext={() => setIntroStep(4)} nextLabel={tx("Begin >", "시작 >")}>
+          <P>{tx("In the Reading section, you will answer 35-48 questions to demonstrate how well you understand academic and non-academic texts in English. There are three types of tasks.", "Reading 섹션에서는 35-48개 문항으로 학술적·비학술적 영어 글을 얼마나 잘 이해하는지 평가합니다. 문제 유형은 세 가지입니다.")}</P>
+          <table style={{ borderCollapse: "collapse", fontSize: 13, marginTop: 4 }}>
+            <thead>
+              <tr><th style={th}>{tx("Type of Task", "문제 유형")}</th><th style={th}>{tx("Description", "설명")}</th></tr>
+            </thead>
+            <tbody>
+              <tr><td style={td}>Complete the Words</td><td style={td}>{tx("Fill in the missing letters in a paragraph.", "문단 속 단어의 빠진 철자를 채웁니다.")}</td></tr>
+              <tr><td style={td}>Read in Daily Life</td><td style={td}>{tx("Answer questions about everyday reading material.", "일상 읽기 자료에 대한 문제에 답합니다.")}</td></tr>
+              <tr><td style={td}>Read an Academic Passage</td><td style={td}>{tx("Answer questions about academic passages.", "학술 지문에 대한 문제에 답합니다.")}</td></tr>
+            </tbody>
+          </table>
+        </Shell>
+      );
+    }
+
     return (
-      <Shell
-        badge="Reading Section · 안내 3/3"
-        title="진행 방법"
-        onBack={() => setIntroStep(1)}
-        onNext={beginTest}
-        nextLabel="Module 1 시작 →"
-      >
-        <ul className="space-y-2.5 text-sm text-gray-700">
-          <li className="flex items-start gap-2">
-            <span className="mt-0.5 text-gray-400">•</span>
-            지문은 왼쪽, 문제는 오른쪽에 표시됩니다 (Complete the Words는 전체 화면).
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="mt-0.5 text-gray-400">•</span>
-            <strong>Back / Next</strong>로 같은 Module 내 문제를 자유롭게 이동할 수 있습니다.
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="mt-0.5 text-gray-400">•</span>
-            상단 <strong>문제 목록</strong> 버튼으로 전체 문항의 응답 여부를 한눈에 보고 바로 이동할 수 있습니다. ⚑ 로 나중에 다시 볼 문제를 표시해두세요.
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="mt-0.5 text-gray-400">•</span>
-            Module 1을 완료(또는 시간 종료)하면 <strong>Module 2로 자동 전환</strong>되며, 이전 Module로는 돌아갈 수 없습니다.
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="mt-0.5 text-gray-400">•</span>
-            <strong>Module 1 시작</strong>을 누르는 즉시 타이머가 시작됩니다.
-          </li>
-        </ul>
+      <Shell heading="Module 1" onBack={() => setIntroStep(3)} onNext={beginTest} nextLabel={tx("Begin >", "시작 >")}>
+        <P>{isStudy ? tx("In Study mode there is no clock, so you can take as much time as you need. In an actual test, the clock will show you how much time you have to complete Module 1.", "Study 모드에는 시계가 없어 시간을 충분히 쓸 수 있습니다. 실제 시험에서는 Module 1을 끝낼 수 있는 남은 시간이 시계로 표시됩니다.") : "In an actual test, the clock will show you how much time you have to complete Module 1."}</P>
+        <P>{tx("In an actual test, you WILL NOT be able to return to Module 1 once you have begun Module 2.", "실제 시험에서는 Module 2를 시작한 뒤에는 Module 1로 돌아갈 수 없습니다.")}</P>
       </Shell>
     );
   }
@@ -769,7 +925,7 @@ export default function MockTestPlayer({
       const plain = cwItem.paragraphHtml.replace(/<[^>]+>/g, "");
       const parts = plain.split("__");
       return (
-        <p style={{ fontSize: 16, lineHeight: 2, color: "#1A1A1A", whiteSpace: "pre-wrap" }}>
+        <p style={{ fontSize: 14, lineHeight: 1.7, color: "#333", whiteSpace: "pre-wrap" }}>
           {parts.map((part, i) => {
             const blank = cwItem.blanks[i];
             const val = (answers[cwKey(blank?.id ?? "")] ?? "") as string;
@@ -785,19 +941,11 @@ export default function MockTestPlayer({
                     onChange={(e) => setCwAnswer(blank.id, e.target.value)}
                     style={{
                       display: "inline-block",
-                      width: Math.max(blank.correctToken.length * 11, 36),
-                      height: 24,
-                      borderTop: "none", borderLeft: "none", borderRight: "none",
-                      borderBottom: `2px solid ${isCorrectLen ? "#22C55E" : "#1A2B4C"}`,
-                      backgroundColor: "#F4F6F9",
-                      textAlign: "center",
-                      fontSize: 14,
-                      fontWeight: 700,
-                      color: "#1A2B4C",
-                      outline: "none",
-                      margin: "0 2px",
-                      verticalAlign: "middle",
-                      letterSpacing: 2,
+                      width: Math.max(blank.correctToken.length * 11 + 8, 30),
+                      height: 22, border: "none", borderRadius: 0,
+                      backgroundColor: "#E4E4E4", textAlign: "left", padding: "0 3px",
+                      fontSize: 14, color: "#222", outline: "none",
+                      margin: "0 1px", verticalAlign: "baseline", letterSpacing: 1,
                     }}
                   />
                 )}
@@ -808,76 +956,35 @@ export default function MockTestPlayer({
       );
     }
 
+    const cwBlanksBefore = cwItems.slice(0, cwIdx).reduce((n, it) => n + it.blanks.length, 0);
+    const cwBlanksTotal = cwItems.reduce((n, it) => n + it.blanks.length, 0);
+    const module1Total = cwBlanksTotal + stage1Questions.length;
+
     return (
       <ReadingETSFrame>
-        {/* ETS Header */}
         <header style={{
-          height: 60, backgroundColor: "#1A2B4C",
-          display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px",
+          height: 60, backgroundColor: ETS_TEAL, display: "flex",
+          alignItems: "center", justifyContent: "flex-end", gap: 8, padding: "0 24px", flexShrink: 0,
         }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <span style={{ fontSize: 15, fontWeight: 700, color: "#FFFFFF" }}>{label}</span>
-            <span style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "#FFFFFF", fontSize: 11, fontWeight: 700, padding: "2px 10px", borderRadius: 20 }}>
-              COMPLETE THE WORDS {cwIdx + 1}/{cwItems.length}
-            </span>
-          </div>
-          <span style={{ fontSize: 13, color: "rgba(255,255,255,0.6)" }}>Reading 시작 전</span>
+          {isStudy && <StudyLangToggle className="h-9 rounded-md border border-white/80 bg-transparent px-3 text-xs font-bold text-white hover:bg-white/10" />}
+          <EtsVolumeButton />
+          {isStudy && <EtsHeaderButton outline onClick={() => (cwIdx > 0 ? setCwIdx((i) => i - 1) : setPhase("direction"))}>{tx("< Back", "< 이전")}</EtsHeaderButton>}
+          <EtsHeaderButton onClick={goNextCw}>{tx("Next >", "다음 >")}</EtsHeaderButton>
         </header>
-
-        {/* Body */}
-        <div style={{ flex: 1, overflowY: "auto", backgroundColor: "#F4F6F9", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: 40 }}>
-          <div style={{ width: "100%", maxWidth: 900, backgroundColor: "#FFFFFF", borderRadius: 8, padding: 48, boxShadow: "0 1px 6px rgba(0,0,0,0.08)" }}>
-
-            <div style={{ marginBottom: 24 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 800, color: "#1A2B4C", marginBottom: 6 }}>Complete the Words</h2>
-              <p style={{ fontSize: 14, color: "#666" }}>
-                각 빈칸에 단어의 나머지 철자를 입력하세요. 빈칸을 모두 채운 뒤 다음으로 이동합니다.
-              </p>
-            </div>
-
-            {/* 지문 + 인라인 인풋 */}
-            <div style={{ backgroundColor: "#F8F9FB", border: "1px solid #E8ECF0", borderRadius: 6, padding: "24px 28px", marginBottom: 32 }}>
-              {renderParagraph()}
-            </div>
-
-            {/* 진행률 */}
-            <div style={{ marginBottom: 28 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#888", marginBottom: 6 }}>
-                <span>진행률</span>
-                <span>{cwItem.blanks.filter((b) => !!((answers[cwKey(b.id)] as string) ?? "").trim()).length} / {cwItem.blanks.length}</span>
-              </div>
-              <div style={{ height: 6, backgroundColor: "#E8ECF0", borderRadius: 3, overflow: "hidden" }}>
-                <div style={{
-                  height: "100%", borderRadius: 3, backgroundColor: "#0073E6",
-                  width: `${(cwItem.blanks.filter((b) => !!((answers[cwKey(b.id)] as string) ?? "").trim()).length / cwItem.blanks.length) * 100}%`,
-                  transition: "width 0.3s",
-                }} />
-              </div>
-            </div>
-
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <button
-                onClick={() => cwIdx > 0 ? setCwIdx((i) => i - 1) : setPhase("direction")}
-                style={{ height: 40, padding: "0 20px", fontSize: 13, fontWeight: 600, border: "1px solid #D0D5DD", borderRadius: 4, backgroundColor: "#FFFFFF", cursor: "pointer" }}
-              >
-                ← 이전
-              </button>
-              <button
-                onClick={goNextCw}
-                style={{ height: 40, padding: "0 28px", fontSize: 13, fontWeight: 700, border: "none", borderRadius: 4, backgroundColor: "#0073E6", color: "#FFFFFF", cursor: "pointer" }}
-              >
-                {cwIdx < cwItems.length - 1 ? "다음 →" : "Reading 시작 →"}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* ETS Footer */}
-        <footer style={{ height: 60, backgroundColor: "#F4F6F9", borderTop: "1px solid #E0E0E0", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px" }}>
-          <span style={{ fontSize: 14, color: "#555" }}>
-            {allFilled ? "✓ 모든 빈칸 완료" : `빈칸 ${cwItem.blanks.filter((b) => !((answers[cwKey(b.id)] as string) ?? "").trim()).length}개 남음`}
+        <div style={{ height: 40, backgroundColor: "#FFFFFF", borderBottom: "1px solid #E0E0E0", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 36px", flexShrink: 0, fontSize: 12, color: "#444" }}>
+          <span>
+            <strong style={{ fontSize: 14, color: "#222" }}>Reading</strong>
+            <span style={{ margin: "0 10px", color: "#BBB" }}>|</span>
+            {`Questions ${cwBlanksBefore + 1}–${cwBlanksBefore + cwItem.blanks.length} of ${module1Total}`}
           </span>
-        </footer>
+          <span style={{ fontVariantNumeric: "tabular-nums" }}>{isStudy ? tx("No time limit", "시간 제한 없음") : ""}</span>
+        </div>
+        <div style={{ flex: 1, overflowY: "auto", backgroundColor: "#FFFFFF", padding: "22px 44px" }}>
+          <h2 style={{ textAlign: "center", fontSize: 21, fontWeight: 700, color: "#222", marginBottom: 70 }}>
+            {tx("Fill in the missing letters in the paragraph.", "문단에서 빠진 글자를 채우세요.")}
+          </h2>
+          <div style={{ maxWidth: 860, margin: "0 auto" }}>{renderParagraph()}</div>
+        </div>
       </ReadingETSFrame>
     );
   }
@@ -885,111 +992,49 @@ export default function MockTestPlayer({
   // ── Stage Break Screen ─────────────────────────────────────────────
 
   if (phase === "stage_break") {
-    const s1Answered = stage1Questions.filter((q) => !!answers[q.id]).length;
-    const s1Total = stage1Questions.length;
-    const s1Flagged = stage1Questions.filter((q) => flagged.has(q.id)).length;
+    // 실제 화면 순서: "End of Module 1" → "Module 2" 안내 → 시작
+    const BreakShell = ({
+      heading, children, nextLabel, onNext,
+    }: { heading: string; children: ReactNode; nextLabel: string; onNext: () => void }) => (
+      <ReadingETSFrame>
+        <header style={{ height: 60, backgroundColor: ETS_TEAL, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8, padding: "0 24px", flexShrink: 0 }}>
+          {isStudy && <StudyLangToggle className="h-9 rounded-md border border-white/80 bg-transparent px-3 text-xs font-bold text-white hover:bg-white/10" />}
+          {breakStep === 1 && <EtsVolumeButton />}
+          <EtsHeaderButton onClick={onNext}>{nextLabel}</EtsHeaderButton>
+        </header>
+        <div style={{ height: 40, backgroundColor: "#FFFFFF", borderBottom: "1px solid #E0E0E0", display: "flex", alignItems: "center", padding: "0 36px", flexShrink: 0, fontSize: 14, fontWeight: 700, color: "#222" }}>
+          Reading
+        </div>
+        <main style={{ flex: 1, overflowY: "auto", backgroundColor: "#FFFFFF", padding: "28px 36px" }}>
+          <div style={{ maxWidth: 620, margin: "0 auto" }}>
+            <h2 style={{ fontSize: 22, fontWeight: 400, color: "#333", paddingBottom: 8, marginBottom: 20, borderBottom: "1px solid #DDD" }}>{heading}</h2>
+            {children}
+          </div>
+        </main>
+      </ReadingETSFrame>
+    );
+    const bp: CSSProperties = { fontSize: 14, lineHeight: 1.7, color: "#444", marginBottom: 14 };
+
+    if (breakStep === 0) {
+      return (
+        <BreakShell heading={tx("End of Module 1", "Module 1 종료")} nextLabel={tx("Next >", "다음 >")} onNext={() => setBreakStep(1)}>
+          <p style={bp}>
+            {isStudy && lang === "ko"
+              ? <>Module 2로 계속하려면 <strong>Next</strong>를 선택하세요.</>
+              : <>Select <strong>Next</strong> to continue to Module 2.</>}
+          </p>
+        </BreakShell>
+      );
+    }
 
     return (
-      <ReadingETSFrame>
-      <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto px-4 py-12" style={{ backgroundColor: "#F4F6F9" }}>
-        <div className="w-full max-w-lg">
-
-          {/* 완료 배지 */}
-          <div className="mb-6 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
-              <svg className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">완료</p>
-              <p className="text-lg font-bold leading-tight">Module 1</p>
-            </div>
-          </div>
-
-          {/* Module 1 요약 카드 */}
-          <div className="mb-4 rounded-xl border bg-white p-5 shadow-sm">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Module 1 요약</p>
-            <div className="grid grid-cols-3 gap-3 text-center">
-              <div className="rounded-lg bg-gray-50 py-3">
-                <p className="text-2xl font-black">{s1Answered}</p>
-                <p className="text-[11px] text-gray-500">응답</p>
-              </div>
-              <div className={[
-                "rounded-lg py-3",
-                s1Total - s1Answered > 0 ? "bg-amber-50" : "bg-gray-50",
-              ].join(" ")}>
-                <p className={[
-                  "text-2xl font-black",
-                  s1Total - s1Answered > 0 ? "text-amber-600" : "",
-                ].join(" ")}>
-                  {s1Total - s1Answered}
-                </p>
-                <p className="text-[11px] text-gray-500">미응답</p>
-              </div>
-              <div className={[
-                "rounded-lg py-3",
-                s1Flagged > 0 ? "bg-amber-50" : "bg-gray-50",
-              ].join(" ")}>
-                <p className={[
-                  "text-2xl font-black",
-                  s1Flagged > 0 ? "text-amber-500" : "",
-                ].join(" ")}>
-                  {s1Flagged}
-                </p>
-                <p className="text-[11px] text-gray-500">플래그</p>
-              </div>
-            </div>
-
-            {/* Module 1으로 돌아가기 — 미응답이 있을 때만 강조 */}
-            {(s1Total - s1Answered > 0 || s1Flagged > 0) && (
-              <button
-                onClick={() => {
-                  const firstUnanswered = stage1Questions.find((q) => !answers[q.id]);
-                  setCurrentIdx(firstUnanswered ? firstUnanswered.globalIdx : 0);
-                  setPhase("stage1_testing");
-                }}
-                className="mt-3 w-full rounded-lg border border-amber-300 bg-amber-50 py-2 text-xs font-medium text-amber-800 hover:bg-amber-100"
-              >
-                ← Module 1로 돌아가기
-              </button>
-            )}
-          </div>
-
-          {/* Module 2 예고 카드 */}
-          <div className="mb-6 rounded-xl border bg-white p-5 shadow-sm">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">다음</p>
-            <div className="mb-4 flex items-center justify-between">
-              <p className="text-lg font-bold">Module 2</p>
-              <span className="rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-700">
-                17:00
-              </span>
-            </div>
-            <ul className="space-y-1.5 text-sm text-gray-600">
-              <li className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
-                새로운 지문 1개 · {stage2Questions.length}문항
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
-                시작 버튼을 누르는 즉시 타이머가 시작됩니다.
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
-                Module 2 진행 중에는 Module 1으로 돌아갈 수 없습니다.
-              </li>
-            </ul>
-          </div>
-
-          <button
-            onClick={startStage2}
-            className="w-full rounded-xl bg-black py-3 text-sm font-bold text-white hover:bg-gray-800"
-          >
-            Module 2 시작 →
-          </button>
-        </div>
-      </div>
-      </ReadingETSFrame>
+      <BreakShell heading="Module 2" nextLabel={tx("Begin >", "시작 >")} onNext={() => { setBreakStep(0); startStage2(); }}>
+        <p style={bp}>
+          {isStudy
+            ? tx("In Study mode there is no clock, so you can take as much time as you need. In an actual test, the clock will show you how much time you have to complete Module 2.", "Study 모드에는 시계가 없어 시간을 충분히 쓸 수 있습니다. 실제 시험에서는 Module 2를 끝낼 수 있는 남은 시간이 시계로 표시됩니다.")
+            : "In an actual test, the clock will show you how much time you have to complete Module 2."}
+        </p>
+      </BreakShell>
     );
   }
 
@@ -1123,14 +1168,14 @@ export default function MockTestPlayer({
       <div className="flex-1 overflow-y-auto" style={{ backgroundColor: "#F4F6F9" }}>
       <div className="mx-auto max-w-2xl px-4 py-10">
         <div className="rounded-xl border bg-white p-8 shadow-sm">
-          <h2 className="mb-1 text-xl font-bold">검토</h2>
+          <h2 className="mb-1 text-xl font-bold">Review</h2>
           <p className="mb-6 text-sm text-gray-500">
-            제출 전 최종 확인. 미응답 또는 플래그 문제를 확인하세요.
+            Check your answers before submitting. Review any unanswered or flagged questions.
           </p>
 
           {unanswered.length > 0 && (
             <div className="mb-4 rounded-md bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              미응답 {unanswered.length}문항:{" "}
+              Unanswered ({unanswered.length}):{" "}
               {unanswered.map((q) => q.number).join(", ")}
             </div>
           )}
@@ -1201,13 +1246,13 @@ export default function MockTestPlayer({
               }}
               className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-gray-50"
             >
-              돌아가기
+              Back
             </button>
             <button
               onClick={triggerFinish}
               className="ml-auto rounded-lg bg-black px-6 py-2 text-sm font-semibold text-white hover:bg-gray-800"
             >
-              제출하기
+              Submit
             </button>
           </div>
         </div>
@@ -1262,7 +1307,7 @@ export default function MockTestPlayer({
                       <button
                         type="button"
                         onClick={() => choice && handleSelect(choice.id)}
-                        title="여기에 문장 삽입"
+                        title="Insert sentence here"
                         style={{
                           display: "inline-block",
                           margin: "0 3px",
@@ -1296,267 +1341,177 @@ export default function MockTestPlayer({
     );
   }
 
-  const header = (
-    <>
-      {/* 좌: 라벨 + 모듈 배지 */}
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <span style={{ fontSize: 15, fontWeight: 700, color: "#FFFFFF" }}>{label}</span>
-        <span style={{
-          backgroundColor: isStage1 ? "rgba(255,255,255,0.15)" : "#4F6BCD",
-          color: "#FFFFFF", fontSize: 11, fontWeight: 700,
-          padding: "2px 10px", borderRadius: 20, letterSpacing: 1,
-        }}>
-          MODULE {isStage1 ? "1" : "2"}
-        </span>
-      </div>
+  // ── 실제 ETS 문제 화면: 청록 헤더(Volume/Back/Next), "Reading | Question X of Y", 가운데 제목, 좌 지문 / 우 문제 ──
+  const cwBlankCount = cwItems.reduce((n, it) => n + it.blanks.length, 0);
+  const questionOffset = isStage1 ? cwBlankCount : 0;
+  const questionTotal = questionOffset + stageTotal;
+  const questionNo = questionOffset + stageLocalIdx + 1;
 
-      {/* 우: 버튼들 */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <button
-          onClick={() => setShowNavGrid((v) => !v)}
-          style={{
-            height: 32, padding: "0 14px", fontSize: 12, fontWeight: 500,
-            border: "1px solid rgba(255,255,255,0.3)", borderRadius: 4,
-            backgroundColor: "transparent", color: "#FFFFFF", cursor: "pointer",
-          }}
-        >
-          문제 목록
-        </button>
-        {isStage1 ? (
-          <button
-            onClick={advanceToBreak}
-            style={{
-              height: 32, padding: "0 16px", fontSize: 12, fontWeight: 700,
-              border: "none", borderRadius: 4,
-              backgroundColor: "#0073E6", color: "#FFFFFF", cursor: "pointer",
-            }}
-          >
-            Module 1 완료 →
-          </button>
-        ) : (
-          <button
-            onClick={() => setPhase("review")}
-            style={{
-              height: 32, padding: "0 16px", fontSize: 12, fontWeight: 700,
-              border: "none", borderRadius: 4,
-              backgroundColor: "#0073E6", color: "#FFFFFF", cursor: "pointer",
-            }}
-          >
-            검토 / 제출
-          </button>
-        )}
-      </div>
-    </>
-  );
+  const DAILY_TITLES: Record<string, string> = {
+    email: "Read an email.",
+    notice: "Read a notice.",
+    social_post: "Read a social media post.",
+    text_message: "Read a text message chain.",
+    advertisement: "Read an advertisement.",
+    web_article: "Read a web page.",
+  };
+  const passageHeading =
+    currentQ.passageKind === "daily_life"
+      ? DAILY_TITLES[currentQ.passageContextType ?? ""] ?? "Read the text."
+      : currentQ.passageTitle ?? "";
 
-  const passagePane = (
-    <div ref={passagePaneRef} style={{ height: "100%", overflowY: "auto" }}>
-      <p style={{ fontSize: 11, fontWeight: 700, color: "#888", letterSpacing: 1, textTransform: "uppercase", marginBottom: 16 }}>
-        Module {isStage1 ? "1" : "2"} · {currentQ.passageKind === "daily_life" ? "Daily Life" : "Academic Passage"}
-      </p>
-
-      {currentQ.passageKind === "daily_life" ? (
-        /* Daily Life: 형식(이메일/공지/SNS/문자/광고)에 맞는 그래픽 카드로 렌더 */
-        <DailyLifeContent
-          contextType={currentQ.passageContextType ?? "other"}
-          contentHtml={currentQ.passageContentHtml ?? ""}
-        />
-      ) : (
-        /* Academic Passage: 기존 prose 렌더 (Insert Text 문제일 땐 인터랙티브 렌더) */
-        <>
-          {currentQ.passageTitle && (
-            <h2 style={{ fontSize: 18, fontWeight: 800, color: "#111", marginBottom: 20 }}>
-              {currentQ.passageTitle}
-            </h2>
-          )}
-          {isInsertionActive ? (
-            <div style={{ color: "#222" }}>{renderInsertionPassage()}</div>
-          ) : (
-            <div
-              style={{ fontSize: 16, lineHeight: 1.75, color: "#222" }}
-              dangerouslySetInnerHTML={{ __html: currentQ.passageHtml.replace(/\[\[INS:\d\]\]/g, "") }}
-            />
-          )}
-        </>
-      )}
-    </div>
-  );
-
-  const questionPane = (
-    <div className="flex h-full flex-col">
-      {/* Nav grid overlay */}
-      {showNavGrid && (
-        <div className="mb-4 rounded-lg border bg-gray-50 p-3">
-          <p className="mb-2 text-xs font-medium text-gray-500">
-            Module {isStage1 ? "1" : "2"} 문제 이동
-          </p>
-          <div className="grid grid-cols-10 gap-1">
-            {stageQuestions.map((q) => {
-              const answered = !!answers[q.id];
-              const isCurrentQ = q.globalIdx === currentIdx;
-              const qFlagged = flagged.has(q.id);
-              return (
-                <button
-                  key={q.id}
-                  onClick={() => goTo(q.globalIdx)}
-                  className={[
-                    "flex h-7 w-full items-center justify-center rounded text-xs font-medium transition",
-                    isCurrentQ
-                      ? "bg-black text-white"
-                      : answered
-                      ? isStage1
-                        ? "bg-blue-100 text-blue-700"
-                        : "bg-indigo-100 text-indigo-700"
-                      : "border bg-white text-gray-500",
-                    qFlagged ? "ring-2 ring-amber-400" : "",
-                  ].join(" ")}
-                >
-                  {q.number}
-                </button>
-              );
-            })}
-          </div>
-          <div className="mt-2 flex gap-3 text-xs text-gray-400">
-            <span className="flex items-center gap-1">
-              <span className={[
-                "inline-block h-3 w-3 rounded",
-                isStage1 ? "bg-blue-100" : "bg-indigo-100",
-              ].join(" ")} /> 응답
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="inline-block h-3 w-3 rounded border bg-white" /> 미응답
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="inline-block h-3 w-3 rounded ring-2 ring-amber-400" /> 플래그
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* Question header */}
-      <div className="mb-4 flex items-start justify-between gap-2">
-        <div>
-          <p className="mb-0.5 text-xs text-gray-400">
-            Q{currentQ.number} · {Q_TYPE_LABELS[currentQ.type] ?? currentQ.type}
-          </p>
-          <p className="text-sm font-medium leading-snug">{currentQ.stem}</p>
-        </div>
-        <button
-          onClick={toggleFlag}
-          title={isFlagged ? "플래그 제거" : "플래그"}
-          className={[
-            "mt-0.5 shrink-0 rounded-full p-1 text-lg leading-none transition",
-            isFlagged ? "text-amber-500" : "text-gray-300 hover:text-amber-400",
-          ].join(" ")}
-        >
-          ⚑
-        </button>
-      </div>
-
-      {currentQ.isSummary && (
-        <p className="mb-3 text-xs text-blue-600">
-          {currentQ.summarySelectionCount}개를 선택하세요 (현재{" "}
-          {((currentAnswer as string[]) ?? []).length}개)
-        </p>
-      )}
-
-      {isInsertionActive && (
-        <p className="mb-3 text-xs text-blue-600">
-          왼쪽 지문에서 검정 사각형[■]을 클릭해 문장이 삽입될 위치를 선택하세요.
-        </p>
-      )}
-
-      {/* Choices */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        {currentQ.choices.map((choice, idx) => {
-          const letter = String.fromCharCode(65 + idx);
-          const isSelected = currentQ.isSummary
-            ? ((currentAnswer as string[]) ?? []).includes(choice.id)
-            : currentAnswer === choice.id;
-
-          return (
-            <button
-              key={choice.id}
-              type="button"
-              onClick={() =>
-                currentQ.isSummary
-                  ? handleSummaryToggle(choice.id)
-                  : handleSelect(choice.id)
-              }
-              style={{
-                display: "flex", alignItems: "flex-start", gap: 12,
-                padding: "14px 18px", textAlign: "left",
-                border: `1px solid ${isSelected ? "#0073E6" : "#E0E0E0"}`,
-                borderRadius: 6,
-                backgroundColor: isSelected ? "#E6F0FA" : "#FFFFFF",
-                color: "#333333", cursor: "pointer",
-                fontSize: 15, fontWeight: isSelected ? 600 : 400,
-                transition: "background-color 0.15s, border-color 0.15s",
-              }}
-            >
-              <span style={{ flexShrink: 0, fontWeight: 700, color: isSelected ? "#0073E6" : "#888", fontSize: 14, marginTop: 1 }}>
-                {letter}.
-              </span>
-              <span style={{ lineHeight: 1.5 }}>{choice.text}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Navigation */}
-      <div style={{ marginTop: "auto", display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 32 }}>
-        <button
-          onClick={goPrev}
-          disabled={stageLocalIdx === 0}
-          style={{
-            height: 36, padding: "0 18px", fontSize: 13, fontWeight: 600,
-            border: "1px solid #D0D5DD", borderRadius: 4,
-            backgroundColor: "#FFFFFF", color: stageLocalIdx === 0 ? "#C0C8D0" : "#333",
-            cursor: stageLocalIdx === 0 ? "default" : "pointer", opacity: stageLocalIdx === 0 ? 0.5 : 1,
-          }}
-        >
-          &lt; Back
-        </button>
-
-        <button
-          onClick={goNext}
-          style={{
-            height: 36, padding: "0 24px", fontSize: 13, fontWeight: 700,
-            border: "none", borderRadius: 4,
-            backgroundColor: "#0073E6", color: "#FFFFFF", cursor: "pointer",
-          }}
-        >
-          {isLastInStage
-            ? isStage1 ? "Module 2 >" : "검토 >"
-            : "Next >"}
-        </button>
-      </div>
-    </div>
-  );
-
-  const footer = (
-    <>
-      <span style={{ fontSize: 15, color: "#333" }}>
-        Question {stageLocalIdx + 1} of {stageTotal}
-        <span style={{ marginLeft: 8, fontSize: 13, color: "#999" }}>
-          (Module {isStage1 ? "1" : "2"})
-        </span>
-      </span>
-      <span style={{
-        fontSize: 18, fontWeight: 700, color: isWarning ? "#DC2626" : "#333",
-        fontFamily: "monospace",
-      }}>
-        Time Remaining: {formatTime(secondsLeft)}
-      </span>
-    </>
-  );
+  const canGoBack = stageLocalIdx > 0;
+  const nextClick = goNext;
 
   return (
-    <ReadingTestLayout2026
-      header={header}
-      left={passagePane}
-      right={questionPane}
-      footer={footer}
-    />
+    <ReadingETSFrame>
+      <header style={{
+        height: 60, backgroundColor: ETS_TEAL, display: "flex",
+        alignItems: "center", justifyContent: "flex-end", gap: 8, padding: "0 24px", flexShrink: 0,
+      }}>
+        {isStudy && <StudyLangToggle className="h-9 rounded-md border border-white/80 bg-transparent px-3 text-xs font-bold text-white hover:bg-white/10" />}
+        {isStudy && <EtsHeaderButton outline onClick={() => setShowNavGrid((v) => !v)}>{tx("Questions", "문제 목록")}</EtsHeaderButton>}
+        {isStudy && <EtsHeaderButton outline onClick={() => { window.location.href = "/student"; }}>{tx("Save & Exit", "저장하고 나가기")}</EtsHeaderButton>}
+        <EtsVolumeButton />
+        {canGoBack && <EtsHeaderButton outline onClick={goPrev}>{tx("< Back", "< 이전")}</EtsHeaderButton>}
+        <EtsHeaderButton onClick={nextClick}>{tx("Next >", "다음 >")}</EtsHeaderButton>
+      </header>
+
+      <div style={{ height: 40, backgroundColor: "#FFFFFF", borderBottom: "1px solid #E0E0E0", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 36px", flexShrink: 0, fontSize: 12, color: "#444" }}>
+        <span>
+          <strong style={{ fontSize: 14, color: "#222" }}>Reading</strong>
+          <span style={{ margin: "0 10px", color: "#BBB" }}>|</span>
+          {`Question ${questionNo} of ${questionTotal}`}
+        </span>
+        <span style={{ fontWeight: 700, fontVariantNumeric: "tabular-nums", color: isWarning ? "#DC2626" : "#444" }}>
+          {isStudy ? tx("No time limit", "시간 제한 없음") : formatTime(secondsLeft)}
+        </span>
+      </div>
+
+      <div style={{ flex: 1, minHeight: 0, backgroundColor: "#FFFFFF", padding: "18px 36px 0", display: "flex", flexDirection: "column", position: "relative" }}>
+        {isStudy && showNavGrid && (
+          <div style={{ position: "absolute", top: 8, right: 36, zIndex: 10, width: 330, backgroundColor: "#FFFFFF", border: "1px solid #D0D5DD", borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.18)", padding: 14 }}>
+            <p style={{ fontSize: 12, fontWeight: 700, color: "#333", marginBottom: 8 }}>
+              {tx(`Module ${isStage1 ? 1 : 2} questions`, `Module ${isStage1 ? 1 : 2} 문제 목록`)}
+            </p>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(8, 1fr)", gap: 5 }}>
+              {stageQuestions.map((q, qi) => {
+                const done = !!answers[q.id];
+                const cur = q.globalIdx === currentIdx;
+                const fl = flagged.has(q.id);
+                return (
+                  <button
+                    key={q.id}
+                    type="button"
+                    onClick={() => goTo(q.globalIdx)}
+                    style={{
+                      height: 28, fontSize: 12, fontWeight: 700, borderRadius: 4, cursor: "pointer",
+                      border: fl ? "2px solid #F59E0B" : "1px solid #C9D1D9",
+                      backgroundColor: cur ? ETS_TEAL : done ? "#D7ECEC" : "#FFFFFF",
+                      color: cur ? "#FFFFFF" : "#333",
+                    }}
+                  >
+                    {questionOffset + qi + 1}
+                  </button>
+                );
+              })}
+            </div>
+            <p style={{ fontSize: 11, color: "#777", marginTop: 8 }}>
+              {tx("Teal = current · light = answered · orange = flagged", "청록 = 현재 · 연한색 = 답함 · 주황 테두리 = 깃발")}
+            </p>
+          </div>
+        )}
+        <h2 style={{ textAlign: "center", fontSize: 21, fontWeight: 700, color: "#222", marginBottom: 18, flexShrink: 0 }}>
+          {passageHeading}
+        </h2>
+
+        <div style={{ flex: 1, minHeight: 0, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 36 }}>
+          {/* 좌: 지문 */}
+          <div ref={passagePaneRef} style={{ minHeight: 0, overflowY: "auto", paddingRight: 14, paddingBottom: 16 }}>
+            {currentQ.passageKind === "daily_life" ? (
+              <DailyLifeContent
+                contextType={currentQ.passageContextType ?? "other"}
+                contentHtml={currentQ.passageContentHtml ?? ""}
+              />
+            ) : isInsertionActive ? (
+              <div style={{ color: "#333" }}>{renderInsertionPassage()}</div>
+            ) : (
+              <div
+                className="ets-passage"
+                style={{ fontSize: 14, lineHeight: 1.45, color: "#333" }}
+                dangerouslySetInnerHTML={{ __html: currentQ.passageHtml.replace(/\[\[INS:\d\]\]/g, "") }}
+              />
+            )}
+          </div>
+
+          {/* 우: 문제 */}
+          <div style={{ minHeight: 0, overflowY: "auto", paddingBottom: 16 }}>
+            <p style={{ fontSize: 14, fontWeight: 700, lineHeight: 1.4, color: "#222", marginBottom: 14 }}>{currentQ.stem}</p>
+
+            {currentQ.isSummary && (
+              <p style={{ fontSize: 12, color: "#0A6C74", marginBottom: 10 }}>
+                Select {currentQ.summarySelectionCount} answers ({((currentAnswer as string[]) ?? []).length} selected)
+              </p>
+            )}
+            {isInsertionActive && (
+              <p style={{ fontSize: 12, color: "#0A6C74", marginBottom: 10 }}>
+                Click a black square [■] in the passage to place the sentence.
+              </p>
+            )}
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              {currentQ.choices.map((choice, idx) => {
+                const isSelected = currentQ.isSummary
+                  ? ((currentAnswer as string[]) ?? []).includes(choice.id)
+                  : currentAnswer === choice.id;
+                const isChecked = isStudy && checkedIds.has(currentQ.id);
+                const isRight = currentQ.isSummary
+                  ? currentQ.summaryCorrectIndices.includes(idx)
+                  : choice.isCorrect;
+                const textColor = isChecked && isRight ? "#15803D" : isChecked && isSelected ? "#DC2626" : "#333";
+                return (
+                  <button
+                    key={choice.id}
+                    type="button"
+                    onClick={() => (currentQ.isSummary ? handleSummaryToggle(choice.id) : handleSelect(choice.id))}
+                    style={{ display: "flex", alignItems: "flex-start", gap: 12, background: "none", border: "none", padding: 0, textAlign: "left", cursor: "pointer", color: textColor, fontSize: 14, lineHeight: 1.4, fontWeight: isChecked && (isRight || isSelected) ? 700 : 400 }}
+                  >
+                    <span
+                      aria-hidden="true"
+                      style={{
+                        flexShrink: 0, width: 17, height: 17, borderRadius: currentQ.isSummary ? 3 : "50%",
+                        border: `1.5px solid ${isSelected ? ETS_TEAL : "#555"}`, marginTop: 1,
+                        backgroundColor: isSelected ? ETS_TEAL : "#FFFFFF",
+                        boxShadow: isSelected ? "inset 0 0 0 3px #FFFFFF" : "none",
+                      }}
+                    />
+                    <span>{choice.text}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {isStudy && (
+              <div style={{ marginTop: 22 }}>
+                <button
+                  type="button"
+                  onClick={() => setCheckedIds((prev) => new Set(prev).add(currentQ.id))}
+                  style={{ height: 34, padding: "0 16px", fontSize: 13, fontWeight: 700, border: `1px solid ${ETS_TEAL}`, borderRadius: 6, backgroundColor: "#FFFFFF", color: ETS_TEAL, cursor: "pointer" }}
+                >
+                  {tx("Check Answer", "정답 확인")}
+                </button>
+                <button
+                  type="button"
+                  onClick={toggleFlag}
+                  style={{ marginLeft: 8, height: 34, padding: "0 14px", fontSize: 13, fontWeight: 700, border: `1px solid ${isFlagged ? "#F59E0B" : "#C9D1D9"}`, borderRadius: 6, backgroundColor: isFlagged ? "#FEF3C7" : "#FFFFFF", color: "#8A5A00", cursor: "pointer" }}
+                >
+                  {isFlagged ? tx("Flagged", "깃발 표시됨") : tx("Flag for review", "나중에 볼 문제")}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </ReadingETSFrame>
   );
 }

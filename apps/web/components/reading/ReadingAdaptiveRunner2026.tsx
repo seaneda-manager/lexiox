@@ -2,6 +2,7 @@
 "use client";
 
 import { useMemo, useState, useCallback, useEffect, useRef } from "react";
+import { StudyLangToggle, useStudyLang } from "@/lib/ui/studyLang";
 import type {
   RReadingTest2026,
   RReadingModule,
@@ -28,6 +29,7 @@ type Props = {
 type Phase = "intro" | "items" | "stageSummary" | "final";
 
 export default function ReadingAdaptiveRunner2026({ test, onFinish, autoFill }: Props) {
+  const { t } = useStudyLang();
   const [currentStage, setCurrentStage] = useState<1 | 2>(1);
   const [phase, setPhase] = useState<Phase>("intro");
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -243,6 +245,7 @@ export default function ReadingAdaptiveRunner2026({ test, onFinish, autoFill }: 
           <span className="hidden text-xs text-gray-500 sm:block">{test.meta.label}</span>
         </div>
         <div className="flex items-center gap-3">
+          <StudyLangToggle />
           {/* 진행률 */}
           <div className="flex items-center gap-2 text-xs text-gray-500">
             <div className="hidden h-1.5 w-24 overflow-hidden rounded-full bg-gray-200 sm:block">
@@ -321,7 +324,7 @@ export default function ReadingAdaptiveRunner2026({ test, onFinish, autoFill }: 
             onClick={() => setItemIndex((i) => i - 1)}
             className="rounded-lg border px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-30"
           >
-            ← 이전 항목
+            {t("< Previous Passage", "← 이전 항목")}
           </button>
           <span className="text-xs text-gray-400">{itemIndex + 1} / {items.length}</span>
           <button
@@ -330,12 +333,12 @@ export default function ReadingAdaptiveRunner2026({ test, onFinish, autoFill }: 
             onClick={() => setItemIndex((i) => i + 1)}
             className="rounded-lg border border-emerald-400 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-50 disabled:opacity-30"
           >
-            다음 항목 →
+            {t("Next Passage >", "다음 항목 →")}
           </button>
         </div>
         <div className="flex items-center gap-3">
           <span className="text-xs text-gray-400">
-            {answeredQ < totalQ ? `${totalQ - answeredQ}문항 미답변` : "모든 문항 답변 완료"}
+            {answeredQ < totalQ ? t(`${totalQ - answeredQ} unanswered`, `${totalQ - answeredQ}문항 미답변`) : t("All questions answered", "모든 문항 답변 완료")}
           </span>
           <button
             type="button"
@@ -370,6 +373,7 @@ function AcademicPassageSplitView({
   onAnswer: (item: RReadingItem, questionId: string, choiceId: string) => void;
 }) {
   const questions = item.questions;
+  const { t } = useStudyLang();
   const [qIndex, setQIndex] = useState(0);
   const passageRef = useRef<HTMLDivElement>(null);
 
@@ -476,7 +480,7 @@ function AcademicPassageSplitView({
             onClick={() => setQIndex((i) => i - 1)}
             className="rounded-lg border px-4 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-30"
           >
-            ← 이전
+            {t("< Back", "← 이전")}
           </button>
           <span className="text-xs text-gray-400">{qIndex + 1} / {questions.length}</span>
           <button
@@ -485,7 +489,7 @@ function AcademicPassageSplitView({
             onClick={() => setQIndex((i) => i + 1)}
             className="rounded-lg border border-emerald-400 px-4 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-50 disabled:opacity-30"
           >
-            다음 →
+            {t("Next >", "다음 →")}
           </button>
         </div>
       </div>
@@ -507,6 +511,7 @@ function DailyLifeSplitView({
   onAnswer: (item: RReadingItem, questionId: string, choiceId: string) => void;
 }) {
   const questions = item.questions;
+  const { t } = useStudyLang();
   const [qIndex, setQIndex] = useState(0);
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -650,7 +655,7 @@ function DailyLifeSplitView({
             onClick={() => setQIndex((i) => i - 1)}
             className="rounded-lg border px-4 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-30"
           >
-            ← 이전
+            {t("< Back", "← 이전")}
           </button>
           <span className="text-xs text-gray-400">{qIndex + 1} / {questions.length}</span>
           <button
@@ -659,7 +664,7 @@ function DailyLifeSplitView({
             onClick={() => setQIndex((i) => i + 1)}
             className="rounded-lg border border-emerald-400 px-4 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-50 disabled:opacity-30"
           >
-            다음 →
+            {t("Next >", "다음 →")}
           </button>
         </div>
       </div>

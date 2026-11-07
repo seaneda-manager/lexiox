@@ -36,7 +36,7 @@ function EmailCard({ raw }: { raw: string }) {
           ))}
         </div>
       )}
-      <div style={{ padding: "20px 20px", fontSize: 15, lineHeight: 1.8, color: "#222" }}>
+      <div style={{ padding: "18px 20px", fontSize: 13.5, lineHeight: 1.55, color: "#222" }}>
         {salutation && <p style={{ margin: "0 0 12px", fontWeight: 600 }}>{salutation}</p>}
         {bodyParagraphs.map((p, i) => (
           <p key={i} style={{ margin: "0 0 12px" }}>{p}</p>
@@ -60,9 +60,9 @@ function NoticeCard({ raw }: { raw: string }) {
   if (!heading && bodyParagraphs.length === 0) return <PlainTextCard raw={raw} />;
 
   return (
-    <div style={{ fontFamily: FONT, border: "1.5px solid #4A5568", borderRadius: 4, padding: "28px 32px", backgroundColor: "#FFFFFF", textAlign: "center" }}>
+    <div style={{ fontFamily: FONT, border: "1px solid #222", borderRadius: 2, padding: "24px 28px", backgroundColor: "#FFFFFF", textAlign: "center" }}>
       {heading && (
-        <h3 style={{ margin: "0 0 16px", fontSize: 18, fontWeight: 800, color: "#1A2B4C" }}>{heading}</h3>
+        <h3 style={{ margin: "0 0 16px", fontSize: 18, fontWeight: 700, color: "#222" }}>{heading}</h3>
       )}
       <div style={{ textAlign: "left", fontSize: 15, lineHeight: 1.8, color: "#222" }}>
         {bodyParagraphs.map((p, i) => (
@@ -113,24 +113,24 @@ function SocialPostCard({ raw }: { raw: string }) {
   const body = looksLikeName ? paragraphs.slice(1) : paragraphs;
 
   return (
-    <div style={{ fontFamily: FONT, maxWidth: 380, margin: "0 auto", border: "1px solid #D0D5DD", borderRadius: 14, overflow: "hidden", backgroundColor: "#FFFFFF", boxShadow: "0 2px 10px rgba(0,0,0,0.06)" }}>
+    <div style={{ fontFamily: FONT, maxWidth: 360, margin: "0 auto", border: "6px solid #3A3F44", borderRadius: 26, overflow: "hidden", backgroundColor: "#FFFFFF", boxShadow: "0 2px 10px rgba(0,0,0,0.12)" }}>
       {/* 상단 미니 상태바 (실제 폰 화면 흉내) */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 14px", backgroundColor: "#F4F6F9", borderBottom: "1px solid #E8ECF0" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "9px 14px", backgroundColor: "#1E7B7D" }}>
         <span style={{ fontSize: 13 }}>📷</span>
-        <div style={{ flex: 1, height: 5, margin: "0 10px", borderRadius: 3, backgroundColor: "#D8DEE6" }} />
-        <span style={{ fontSize: 12, color: "#9AA5B1" }}>•••</span>
+        <div style={{ flex: 1, height: 8, margin: "0 10px", borderRadius: 4, backgroundColor: "#0F4F51" }} />
+        <span style={{ width: 10, height: 10, borderRadius: "50%", backgroundColor: "#FFFFFF" }} />
       </div>
 
       {/* 작성자 */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 16px 8px" }}>
-        <div style={{ width: 36, height: 36, borderRadius: "50%", backgroundColor: "#0073E6", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 15, flexShrink: 0 }}>
+        <div style={{ width: 36, height: 36, borderRadius: "50%", backgroundColor: "#E58B5B", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 15, flexShrink: 0 }}>
           {author.charAt(0)}
         </div>
         <span style={{ fontWeight: 700, fontSize: 14, color: "#222" }}>{author}</span>
       </div>
 
       {/* 본문 */}
-      <div style={{ padding: "0 16px 14px", fontSize: 14, lineHeight: 1.7, color: "#333" }}>
+      <div style={{ padding: "0 16px 14px", fontSize: 12.5, lineHeight: 1.4, color: "#222" }}>
         {body.map((p, i) => (
           <p key={i} style={{ margin: i === 0 ? 0 : "10px 0 0" }}>{p}</p>
         ))}
@@ -138,8 +138,8 @@ function SocialPostCard({ raw }: { raw: string }) {
 
       {/* Like / Comment */}
       <div style={{ display: "flex", gap: 20, padding: "10px 16px", borderTop: "1px solid #EAECEF", fontSize: 13, color: "#666" }}>
-        <span>👍 Like</span>
-        <span>💬 Comment</span>
+        <span>Like</span>
+        <span style={{ marginLeft: "auto" }}>Comment</span>
       </div>
     </div>
   );
@@ -153,8 +153,8 @@ function TextMessageCard({ raw }: { raw: string }) {
   const firstSender = messages[0].sender;
 
   return (
-    <div style={{ fontFamily: FONT, maxWidth: 360, margin: "0 auto", border: "6px solid #1A2B4C", borderRadius: 24, overflow: "hidden", backgroundColor: "#FFFFFF", boxShadow: "0 4px 16px rgba(0,0,0,0.15)" }}>
-      <div style={{ backgroundColor: "#1A2B4C", color: "#fff", textAlign: "center", padding: "8px 0", fontSize: 12, fontWeight: 700, letterSpacing: 0.5 }}>
+    <div style={{ fontFamily: FONT, maxWidth: 360, margin: "0 auto", border: "6px solid #3A3F44", borderRadius: 24, overflow: "hidden", backgroundColor: "#FFFFFF", boxShadow: "0 4px 16px rgba(0,0,0,0.15)" }}>
+      <div style={{ backgroundColor: "#1E7B7D", color: "#fff", textAlign: "center", padding: "8px 0", fontSize: 12, fontWeight: 700, letterSpacing: 0.5 }}>
         MESSAGES
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "16px 12px", backgroundColor: "#EFF2F6" }}>
@@ -172,7 +172,7 @@ function TextMessageCard({ raw }: { raw: string }) {
                   fontSize: 14,
                   lineHeight: 1.5,
                   color: isMe ? "#FFFFFF" : "#222",
-                  backgroundColor: isMe ? "#0073E6" : "#FFFFFF",
+                  backgroundColor: isMe ? "#1E7B7D" : "#FFFFFF",
                   border: isMe ? "none" : "1px solid #E0E0E0",
                   borderRadius: 16,
                   borderBottomRightRadius: isMe ? 4 : 16,

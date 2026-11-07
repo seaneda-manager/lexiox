@@ -8,6 +8,8 @@ export function htmlToPlainText(html: string): string {
     .replace(/<br\s*\/?>/gi, "\n")
     .replace(/<\/p>/gi, "\n\n")
     .replace(/<\/div>/gi, "\n")
+    .replace(/<\/(h[1-6]|li|tr|ul|ol|table|section|article|blockquote)>/gi, "\n")
+    .replace(/<(h[1-6]|li|tr)(\s[^>]*)?>/gi, "\n")
     .replace(/<[^>]+>/g, "")
     .replace(/&nbsp;/gi, " ")
     .replace(/&amp;/gi, "&")

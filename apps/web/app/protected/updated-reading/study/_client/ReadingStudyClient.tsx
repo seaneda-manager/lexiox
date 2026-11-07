@@ -1,78 +1,47 @@
-// apps/web/app/(protected)/updated-reading/study/_client/ReadingStudyClient.tsx
+// apps/web/app/protected/updated-reading/study/_client/ReadingStudyClient.tsx
 "use client";
 
-import { useState } from "react";
-import ReadingAdaptiveRunner2026 from "@/components/reading/ReadingAdaptiveRunner2026";
+import MockTestPlayer from "@/components/reading/MockTestPlayer";
 import type { RReadingTest2026 } from "@/models/reading";
 
 type Props = {
   test: RReadingTest2026;
 };
 
+/**
+ * Study 모드 = 시험 화면(MockTestPlayer)과 동일한 UI + 시간 제한 없음 / 정답 확인 / 한·영 전환.
+ * 결과는 기존 Study 저장 API(save-result)로 남긴다.
+ */
 export default function ReadingStudyClient({ test }: Props) {
-  const [saving, setSaving] = useState(false);
-
-  const handleFinish = async (result: {
-    testId: string;
-    answers: Record<string, string>;
-    stage1Correct: number;
-    stage1Total: number;
-    stage2Correct: number;
-    stage2Total: number;
-  }) => {
-    try {
-      setSaving(true);
-
-      const totalQuestions = Object.keys(result.answers ?? {}).length;
-
-      const res = await fetch("/api/updated-reading/save-result", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          testId: result.testId,
-          totalQuestions,
-          answers: result.answers,
-        }),
-      });
-
-      const json = await res.json().catch(() => null);
-
-      if (!res.ok) {
-        console.error(
-          "READING-2026 SAVE RESULT FAILED",
-          res.status,
-          json,
-        );
-        alert("결과 저장 중 오류가 발생했습니다. (콘솔 확인)");
-        return;
-      }
-
-      console.log("READING-2026 SAVE RESULT OK", json);
-
-      // ✅ 결과 페이지로 이동
-      if (json.resultId) {
-        window.location.href = `/updated-reading/result/${json.resultId}`;
-      } else {
-        alert("수고했어요! 이번 세션 결과가 저장되었습니다 ✅");
-      }
-    } catch (e) {
-      console.error("READING-2026 SAVE RESULT ERROR", e);
-      alert("네트워크 오류로 결과를 저장하지 못했습니다.");
-    } finally {
-      setSaving(false);
-    }
-  };
-
   return (
-    <div className="space-y-3">
-      {saving && (
-        <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11px] text-emerald-800">
-          Saving your result...
-        </div>
-      )}
-
-      {/* ✅ onFinish 에 handleFinish 그대로 전달 */}
-      <ReadingAdaptiveRunner2026 test={test} onFinish={handleFinish} />
-    </div>
+    <MockTestPlayer
+      mode="study"
+      testId={test.meta.id}
+      label={test.meta.label ?? "Reading Practice"}
+      test={test}
+      onFinish={async (payload) => {
+        const answers: Record<string, string> = {};
+        for (const a of payload.answers) {
+          if (a.chosenChoiceId != null) {
+            answers[a.questionId] = Array.isArray(a.chosenChoiceId)
+              ? a.chosenChoiceId.join(",")
+              : a.chosenChoiceId;
+          }
+        }
+        try {
+          await fetch("/api/updated-reading/save-result", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              testId: payload.testId,
+              totalQuestions: payload.answers.length,
+              answers,
+            }),
+          });
+        } catch {
+          /* 저장 실패해도 결과 화면은 그대로 보여준다 */
+        }
+      }}
+    />
   );
 }

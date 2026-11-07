@@ -25,7 +25,7 @@ export default function ReadingTestLayout2026({ header, left, right, footer }: P
       {/* ── ETS Header ── */}
       <header style={{
         height: 60,
-        backgroundColor: '#1A2B4C',
+        backgroundColor: '#1E7B7D',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
