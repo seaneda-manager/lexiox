@@ -49,6 +49,11 @@ export type SessionWord = {
   meanings_ko?: string[];
   meanings_en_simple?: string[];
 
+  /** 한글 발음 */
+  pronunciation_ko?: string | null;
+  /** 뜻별 품사 (meanings_ko 각 항목에 대응) */
+  meaning_pos?: string[] | null;
+
   /** legacy single fields (still tolerated) */
   meaning_ko?: string | null;
   meaning_en_simple?: string | null;
