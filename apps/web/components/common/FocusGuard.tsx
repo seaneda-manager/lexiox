@@ -23,7 +23,7 @@ function report(context: string, event: string, durationMs?: number) {
 }
 
 export default function FocusGuard({ context, children }: Props) {
-  const [enforce, setEnforce] = useState(true);
+  const [enforce, setEnforce] = useState(false);
   const [isFull, setIsFull] = useState(true);
   const [leaveCount, setLeaveCount] = useState(0);
   const [showWarn, setShowWarn] = useState(false);
@@ -90,6 +90,8 @@ export default function FocusGuard({ context, children }: Props) {
   const goFull = useCallback(async () => {
     try {
       await document.documentElement.requestFullscreen();
+      // 요청은 성공했는데 전체화면 상태가 안 되는 환경(임베디드 뷰 등)에서 학생이 모달에 갇히지 않게 한다
+      if (!document.fullscreenElement) setIsFull(true);
     } catch {
       /* 지원 안 하는 기기: 기록만 유지 */
       setIsFull(true);
