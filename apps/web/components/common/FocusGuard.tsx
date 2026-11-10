@@ -23,7 +23,7 @@ function report(context: string, event: string, durationMs?: number) {
 }
 
 export default function FocusGuard({ context, children }: Props) {
-  const [enforce, setEnforce] = useState(false);
+  const [enforce, setEnforce] = useState(true);
   const [isFull, setIsFull] = useState(true);
   const [leaveCount, setLeaveCount] = useState(0);
   const [showWarn, setShowWarn] = useState(false);
