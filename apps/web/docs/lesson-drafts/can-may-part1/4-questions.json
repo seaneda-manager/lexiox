@@ -1,0 +1,264 @@
+{
+  "questions": [
+    {
+      "kind": "pick_correct",
+      "stem": "Choose the correct sentence.",
+      "level": "basic",
+      "stemKo": "문법적으로 올바른 문장을 고르세요.",
+      "choices": [
+        {
+          "en": "He cans swim very well.",
+          "ko": "그는 수영을 매우 잘할 수 있다."
+        },
+        {
+          "en": "He can swimming very well.",
+          "ko": "그는 수영을 매우 잘할 수 있다."
+        },
+        {
+          "en": "He can swim very well.",
+          "ko": "그는 수영을 매우 잘할 수 있다."
+        },
+        {
+          "en": "He can swims very well.",
+          "ko": "그는 수영을 매우 잘할 수 있다."
+        }
+      ],
+      "answerIndex": 2,
+      "explanationKo": "조동사 can 뒤에는 주어에 상관없이 s나 ing가 붙지 않는 동사원형 swim을 써야 합니다."
+    },
+    {
+      "kind": "pick_different",
+      "stem": "Choose the sentence in which the bold word has a different meaning from the others.",
+      "level": "basic",
+      "stemKo": "굵게 표시된 can의 의미가 나머지 셋과 다른 것을 고르세요.",
+      "choices": [
+        {
+          "en": "You [b]can[/b] use my computer.",
+          "ko": "너는 내 컴퓨터를 사용해도 된다."
+        },
+        {
+          "en": "I [b]can[/b] ride a bicycle.",
+          "ko": "나는 자전거를 탈 수 있다."
+        },
+        {
+          "en": "She [b]can[/b] speak English well.",
+          "ko": "그녀는 영어를 잘 말할 수 있다."
+        },
+        {
+          "en": "They [b]can[/b] bake delicious cookies.",
+          "ko": "그들은 맛있는 쿠키를 구울 수 있다."
+        }
+      ],
+      "answerIndex": 0,
+      "explanationKo": "나머지는 모두 능력을 나타내지만 첫 번째 문장은 해도 된다라는 허락을 나타냅니다."
+    },
+    {
+      "kind": "count_wrong",
+      "stem": "How many sentences are grammatically incorrect?\n① I can run fast.\n② You may sit here.\n③ She mays go now.\n④ He can cook well.",
+      "level": "basic",
+      "stemKo": "어법상 틀린 문장의 개수를 고르세요.",
+      "choices": [
+        {
+          "en": "None",
+          "ko": "없음"
+        },
+        {
+          "en": "One",
+          "ko": "1개"
+        },
+        {
+          "en": "Two",
+          "ko": "2개"
+        },
+        {
+          "en": "Three",
+          "ko": "3개"
+        }
+      ],
+      "answerIndex": 1,
+      "explanationKo": "①, ②, ④는 맞는 문장이고 ③ She mays go now는 조동사 may에 s를 붙여서 틀렸으므로 1개입니다."
+    },
+    {
+      "kind": "reason",
+      "stem": "Why is the sentence 'They can playing soccer.' wrong?",
+      "level": "intermediate",
+      "stemKo": "이 문장이 틀린 이유로 올바른 설명을 고르세요.",
+      "choices": [
+        {
+          "en": "They should change to He.",
+          "ko": "주어를 They에서 He로 바꾸어야 하기 때문에"
+        },
+        {
+          "en": "Can should change right after playing.",
+          "ko": "can을 playing 바로 뒤로 보내야 하기 때문에"
+        },
+        {
+          "en": "Can needs an s because of the verb.",
+          "ko": "동사 때문에 can 뒤에 s를 붙여야 하기 때문에"
+        },
+        {
+          "en": "Playing should change to the base form play.",
+          "ko": "조동사 can 뒤에는 동사원형 play를 써야 하기 때문에"
+        }
+      ],
+      "answerIndex": 3,
+      "explanationKo": "조동사 can 바로 뒤에는 ing 형태가 아니라 원래 모양인 동사원형 play를 써야 합니다."
+    },
+    {
+      "kind": "pick_correct",
+      "stem": "Choose the grammatically correct negative sentence.",
+      "level": "intermediate",
+      "stemKo": "문법적으로 올바른 부정문을 고르세요.",
+      "choices": [
+        {
+          "en": "You not may watch TV.",
+          "ko": "너는 TV를 보면 안 된다."
+        },
+        {
+          "en": "You may not watch TV.",
+          "ko": "너는 TV를 보면 안 된다."
+        },
+        {
+          "en": "You may watch not TV.",
+          "ko": "너는 TV를 보면 안 된다."
+        },
+        {
+          "en": "You don't may watch TV.",
+          "ko": "너는 TV를 보면 안 된다."
+        }
+      ],
+      "answerIndex": 1,
+      "explanationKo": "조동사 may의 부정문은 may 바로 뒤에 부정어 not을 붙여서 만듭니다."
+    },
+    {
+      "kind": "pick_different",
+      "stem": "Choose the question that is grammatically different from the others.",
+      "level": "intermediate",
+      "stemKo": "나머지 셋과 달리 어법상 틀린 문장을 고르세요.",
+      "choices": [
+        {
+          "en": "May I opens the door?",
+          "ko": "제가 문을 열어도 될까요?"
+        },
+        {
+          "en": "Can I use your pen?",
+          "ko": "제가 당신의 펜을 사용해도 될까요?"
+        },
+        {
+          "en": "May I sit here?",
+          "ko": "제가 여기 앉아도 될까요?"
+        },
+        {
+          "en": "Can I go home now?",
+          "ko": "저 지금 집에 가도 될까요?"
+        }
+      ],
+      "answerIndex": 0,
+      "explanationKo": "May 뒤에도 주어 I 다음에는 동사원형이 와야 하므로 opens가 아니라 open이어야 합니다. 나머지 셋은 맞는 문장입니다."
+    },
+    {
+      "kind": "reason",
+      "stem": "Why is the sentence 'She can cooks pasta.' incorrect?",
+      "level": "intermediate",
+      "stemKo": "이 문장이 어법상 틀린 이유를 가장 잘 설명한 것을 고르세요.",
+      "choices": [
+        {
+          "en": "Because can should change to cans.",
+          "ko": "주어가 She이므로 조동사를 cans로 고쳐야 하므로"
+        },
+        {
+          "en": "Because pasta should come before cooks.",
+          "ko": "단어 pasta를 cooks 앞으로 보내야 하므로"
+        },
+        {
+          "en": "Because cooks should change to cook.",
+          "ko": "조동사 can 뒤에는 s를 뺀 동사원형 cook을 써야 하므로"
+        },
+        {
+          "en": "Because the sentence needs the word not.",
+          "ko": "문장에 부정어인 not을 무조건 넣어야 하므로"
+        }
+      ],
+      "answerIndex": 2,
+      "explanationKo": "주어가 3인칭 단수(She)라 하더라도 조동사 can 뒤에 오는 동사는 반드시 원래 형태인 동사원형 cook이어야 합니다."
+    },
+    {
+      "kind": "pick_correct",
+      "stem": "Choose the correct sentence.",
+      "level": "advanced",
+      "stemKo": "문법적으로 올바른 문장을 고르세요.",
+      "choices": [
+        {
+          "en": "We can't solved this puzzle.",
+          "ko": "우리는 이 퍼즐을 풀 수 없다."
+        },
+        {
+          "en": "We can't solve this puzzle.",
+          "ko": "우리는 이 퍼즐을 풀 수 없다."
+        },
+        {
+          "en": "We can't solving this puzzle.",
+          "ko": "우리는 이 퍼즐을 풀 수 없다."
+        },
+        {
+          "en": "We can't solves this puzzle.",
+          "ko": "우리는 이 퍼즐을 풀 수 없다."
+        }
+      ],
+      "answerIndex": 1,
+      "explanationKo": "부정 축약형인 can't 뒤에도 예외 없이 동사의 원래 모양인 동사원형 solve가 와야 합니다."
+    },
+    {
+      "kind": "count_wrong",
+      "stem": "How many sentences are grammatically incorrect?\n① Can he speak English?\n② Cans he speak English?\n③ Tom mays watch TV.\n④ She can swim well.",
+      "level": "advanced",
+      "stemKo": "어법상 틀린 문장의 개수를 고르세요.",
+      "choices": [
+        {
+          "en": "None",
+          "ko": "없음"
+        },
+        {
+          "en": "One",
+          "ko": "1개"
+        },
+        {
+          "en": "Two",
+          "ko": "2개"
+        },
+        {
+          "en": "Three",
+          "ko": "3개"
+        }
+      ],
+      "answerIndex": 2,
+      "explanationKo": "② Cans he speak English는 Can he, ③ Tom mays watch TV는 Tom may로 고쳐야 합니다. 조동사 자체에 s를 붙인 두 문장이 틀렸으므로 2개입니다."
+    },
+    {
+      "kind": "pick_correct",
+      "stem": "Choose the correct sentence to ask for permission politely.",
+      "level": "advanced",
+      "stemKo": "공손하게 허락을 구하는 문장으로 올바른 것을 고르세요.",
+      "choices": [
+        {
+          "en": "May I borrows your pen?",
+          "ko": "제가 당신의 펜을 빌려도 될까요?"
+        },
+        {
+          "en": "Do I may borrow your pen?",
+          "ko": "제가 당신의 펜을 빌려도 될까요?"
+        },
+        {
+          "en": "May borrow I your pen?",
+          "ko": "제가 당신의 펜을 빌려도 될까요?"
+        },
+        {
+          "en": "May I borrow your pen?",
+          "ko": "제가 당신의 펜을 빌려도 될까요?"
+        }
+      ],
+      "answerIndex": 3,
+      "explanationKo": "허락을 구할 때는 May를 맨 앞에 두고, 주어 I, 동사원형 borrow 순서로 씁니다."
+    }
+  ]
+}

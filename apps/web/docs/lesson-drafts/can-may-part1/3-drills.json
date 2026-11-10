@@ -1,0 +1,155 @@
+{
+  "drillFill": [
+    {
+      "ko": "나는 피아노를 연주할 수 있다.",
+      "hint": "원래 형태의 동사를 고르세요.",
+      "level": "basic",
+      "answer": "play",
+      "noteKo": "조동사 can 뒤에는 동사원형을 써야 합니다.",
+      "choices": [
+        "plays",
+        "play",
+        "playing"
+      ],
+      "sentence": "I can ___ the piano."
+    },
+    {
+      "ko": "그녀는 매우 빨리 수영할 수 있다.",
+      "hint": "할 수 있다의 뜻을 가진 변하지 않는 조동사입니다.",
+      "level": "basic",
+      "answer": "can",
+      "noteKo": "할 수 있다라는 능력을 나타내며 주어가 She여도 s를 붙이지 않는 조동사를 고릅니다.",
+      "choices": [
+        "cans",
+        "is",
+        "can"
+      ],
+      "sentence": "She ___ swim very fast."
+    },
+    {
+      "ko": "너는 지금 집에 가도 된다.",
+      "hint": "허락의 의미를 가진 조동사입니다.",
+      "level": "intermediate",
+      "answer": "may",
+      "noteKo": "해도 된다라는 허락을 나타내는 조동사입니다.",
+      "choices": [
+        "may",
+        "mays",
+        "are"
+      ],
+      "sentence": "You ___ go home now."
+    },
+    {
+      "ko": "그는 이 큰 상자를 들 수 없다.",
+      "hint": "동사의 원래 형태를 고르세요.",
+      "level": "intermediate",
+      "answer": "lift",
+      "noteKo": "부정문인 cannot 뒤에도 항상 동사원형이 옵니다.",
+      "choices": [
+        "lifts",
+        "lifted",
+        "lift"
+      ],
+      "sentence": "He cannot ___ this big box."
+    },
+    {
+      "ko": "내가 당신의 펜을 사용해도 될까요?",
+      "hint": "제가 ~해도 될까요?라고 물어보는 표현입니다.",
+      "level": "intermediate",
+      "answer": "May",
+      "noteKo": "정중하게 허락을 구할 때 문장 맨 앞에 쓰는 조동사입니다.",
+      "choices": [
+        "Are",
+        "May",
+        "Do"
+      ],
+      "sentence": "___ I use your pen?"
+    },
+    {
+      "ko": "그들은 영어를 말할 수 없다.",
+      "hint": "아니다를 뜻하는 말입니다.",
+      "level": "intermediate",
+      "answer": "not",
+      "noteKo": "조동사 can의 부정문은 can 바로 뒤에 not을 넣습니다.",
+      "choices": [
+        "not",
+        "no",
+        "don't"
+      ],
+      "sentence": "They can ___ speak English."
+    },
+    {
+      "ko": "당신은 안에서 먹으면 안 됩니다.",
+      "hint": "조동사 뒤에 붙이는 부정어입니다.",
+      "level": "advanced",
+      "answer": "not",
+      "noteKo": "해도 된다의 반대인 하면 안 된다는 금지는 may 뒤에 not을 붙입니다.",
+      "choices": [
+        "no",
+        "don't",
+        "not"
+      ],
+      "sentence": "You may ___ eat inside."
+    },
+    {
+      "ko": "그 아기는 이제 걸을 수 있다.",
+      "hint": "원래 모양 그대로의 동사를 고르세요.",
+      "level": "advanced",
+      "answer": "walk",
+      "noteKo": "조동사 can 뒤에는 주어의 인칭이나 명사의 단수/복수 여부와 상관없이 동사원형을 씁니다.",
+      "choices": [
+        "walks",
+        "walk",
+        "walking"
+      ],
+      "sentence": "The baby can ___ now."
+    }
+  ],
+  "drillFix": [
+    {
+      "ko": "그는 매우 빨리 달릴 수 있다.",
+      "level": "basic",
+      "wrong": "cans",
+      "correct": [
+        "can"
+      ],
+      "sentence": "He cans run very fast.",
+      "reasonIndex": 0,
+      "reasonChoices": [
+        "주어가 He여도 조동사에는 s를 붙이지 않습니다.",
+        "조동사 뒤에는 동사원형을 써야 합니다.",
+        "부정문에는 not이 필요합니다."
+      ]
+    },
+    {
+      "ko": "그녀는 영어를 잘 말할 수 있다.",
+      "level": "intermediate",
+      "wrong": "speaks",
+      "correct": [
+        "speak"
+      ],
+      "sentence": "She can speaks English well.",
+      "reasonIndex": 2,
+      "reasonChoices": [
+        "조동사 자체에 s를 붙여야 합니다.",
+        "의문문에서는 주어와 동사 위치가 바뀝니다.",
+        "조동사 뒤에는 s가 붙지 않은 동사원형을 써야 합니다."
+      ]
+    },
+    {
+      "ko": "너는 여기서 먹으면 안 된다.",
+      "level": "advanced",
+      "wrong": "eating",
+      "correct": [
+        "eat"
+      ],
+      "sentence": "You may not eating here.",
+      "reasonIndex": 1,
+      "reasonChoices": [
+        "may 뒤에는 not이 올 수 없습니다.",
+        "조동사 뒤에는 ing 형태가 아니라 동사원형을 써야 합니다.",
+        "주어 뒤에 be동사가 필요합니다."
+      ]
+    }
+  ]
+}

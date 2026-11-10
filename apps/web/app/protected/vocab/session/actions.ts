@@ -796,6 +796,22 @@ export async function loadSessionWordsAction(
       wordRows = reorderByIds(fallback.rows, wordIds);
     }
 
+    // 5.5) 품사/한글 발음 (words 테이블의 신규 컬럼. 마이그레이션 전이면 조용히 건너뜀)
+    const enrichById: Record<string, { pron: string | null; meaningPos: string[] | null }> = {};
+    {
+      const en = await trySelectManyIn(client, "words", "id,pronunciation_ko,meaning_pos", "id", wordIds);
+      if (en.ok) {
+        for (const r of en.rows as any[]) {
+          const wid = cleanStr(r?.id);
+          if (!wid) continue;
+          enrichById[wid] = {
+            pron: cleanStr(r?.pronunciation_ko) || null,
+            meaningPos: Array.isArray(r?.meaning_pos) ? r.meaning_pos.map((p: any) => cleanStr(p)) : null,
+          };
+        }
+      }
+    }
+
     // 6) optional word_forms
     const wfMap: Record<string, WordFormRowLike> = {};
     {
@@ -845,6 +861,8 @@ export async function loadSessionWordsAction(
           lemma: cleanStr(r?.lemma) || null,
           pos: cleanStr(r?.pos) || null,
           meanings_ko: meanings_ko.length ? meanings_ko : ["(뜻 미입력)"],
+          pronunciation_ko: enrichById[id]?.pron ?? null,
+          meaning_pos: enrichById[id]?.meaningPos ?? null,
           // 아래 4개는 SessionWord SSOT에서 쓰는 필드들
           examples: examples.length ? examples : undefined,
           synonyms: synonyms.length ? synonyms.slice(0, 12) : undefined,

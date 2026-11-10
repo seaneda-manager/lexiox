@@ -18,6 +18,12 @@ export type LearningWord = {
   text: string;
   meanings_ko: string[];
 
+  // 품사 (데이터가 있을 때만 표시)
+  pos?: string | null;
+  // 한글 발음 (따라쓰기용) / 뜻별 품사 (뜻을 ';'로 펼친 순서와 1:1)
+  pronunciation_ko?: string | null;
+  meaning_pos?: string[] | null;
+
   // ✅ optional enrich (있으면 보여주고 없으면 무시)
   phonetic?: string | null;
   audioUrl?: string | null;

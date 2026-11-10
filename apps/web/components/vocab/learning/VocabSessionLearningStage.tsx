@@ -4,6 +4,7 @@ import { normEnglish, cleanTypedEnglish } from '@/lib/vocab/test/englishMatch';
 import { playWordAudio } from '@/lib/vocab/audio/wordAudio';
 import React, { useState, useMemo, useEffect, useLayoutEffect, useRef } from 'react';
 import type { LearningWord } from './learning.types';
+import { flattenMeanings, groupMeaningsByPos, matchMeaning, coreMeaning } from '@/lib/vocab/learning/meaningMatch';
 
 interface VocabSessionLearningStageProps {
   words: LearningWord[];
@@ -37,14 +38,10 @@ export default function VocabSessionLearningStage({
   const [currentWordIdx, setCurrentWordIdx] = useState(0);
   const [spellingInput, setSpellingInput] = useState('');
   const [spellingDone, setSpellingDone] = useState(false);
-  const [meaning1Input, setMeaning1Input] = useState('');
-  const [meaning2Input, setMeaning2Input] = useState('');
   const [meaningDone, setMeaningDone] = useState(false);
   const [completedWords, setCompletedWords] = useState<LearningWord[]>([]);
   const [streakDays] = useState(7);
   const inputRef = useRef<HTMLInputElement>(null);
-  const meaning1Ref = useRef<HTMLInputElement>(null);
-  const meaning2Ref = useRef<HTMLInputElement>(null);
 
   const currentWord = useMemo(() => {
     return words[currentWordIdx];
@@ -77,7 +74,6 @@ export default function VocabSessionLearningStage({
   }, [spellingDone, currentWordIdx]);
 
   const progress = `${currentWordIdx + 1}/${words.length}`;
-  const canProceedToNextWord = spellingDone && meaningDone;
 
   // Check if spelling is correct (independent of onChange)
   useEffect(() => {
@@ -97,7 +93,7 @@ export default function VocabSessionLearningStage({
       playAudio(currentWord.text);
       // Auto focus to meaning field
       setTimeout(() => {
-        meaning1Ref.current?.focus();
+        (pronRef.current ?? meaningRefs.current[0])?.focus();
       }, 100);
     }
   }, [spellingDone, currentWord?.text]);
@@ -115,10 +111,86 @@ export default function VocabSessionLearningStage({
     }
   };
 
-  const handleMeaningComplete = () => {
-    if (meaning1Input.trim() || meaning2Input.trim()) {
-      setMeaningDone(true);
+  // 한글 발음 따라쓰기 (데이터가 없으면 이 단계는 건너뜀)
+  const pron = (currentWord?.pronunciation_ko ?? '').trim();
+  const [pronInput, setPronInput] = useState('');
+  const [pronDone, setPronDone] = useState(false);
+  const pronRef = useRef<HTMLInputElement>(null);
+  const pronStepDone = !pron || pronDone;
+  const canProceedToNextWord = spellingDone && pronStepDone && meaningDone;
+
+  // 뜻 채점: 괄호 안 설명·~ 는 무시, 엉뚱한 글자는 통과 못 함
+  const meaningList = useMemo(() => flattenMeanings(currentWord?.meanings_ko), [currentWord]);
+  // 품사 데이터가 있으면 같은 품사끼리 한 칸, 품사가 다르면 칸을 나눈다
+  const posGroups = useMemo(
+    () => groupMeaningsByPos(currentWord?.meanings_ko, currentWord?.meaning_pos),
+    [currentWord],
+  );
+  const boxes = useMemo(() => {
+    if (posGroups) {
+      return posGroups.slice(0, 3).map((g) => ({ pos: g.pos, items: g.items, required: true }));
     }
+    // 품사 데이터가 없으면 기존처럼 두 칸. 뜻이 하나뿐이면 둘째 칸은 비워도 된다
+    return [
+      { pos: '', items: meaningList, required: true },
+      { pos: '', items: meaningList, required: meaningList.length >= 2 },
+    ];
+  }, [posGroups, meaningList]);
+
+  const [meaningInputs, setMeaningInputs] = useState<string[]>(['', '', '']);
+  const [meaningMsg, setMeaningMsg] = useState('');
+  const meaningRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  const evaluateMeanings = (inputs: string[]) => {
+    let ok = true;
+    let exact = true;
+    const cores: string[] = [];
+    boxes.forEach((b, i) => {
+      const t = (inputs[i] ?? '').trim();
+      if (!t) {
+        if (b.required) {
+          ok = false;
+          exact = false;
+        }
+        return;
+      }
+      const r = matchMeaning(t, b.items);
+      if (r === 'none') {
+        ok = false;
+        exact = false;
+      } else if (r === 'close') exact = false;
+      cores.push(coreMeaning(t));
+    });
+    // 같은 답을 여러 칸에 넣는 꼼수 방지
+    if (new Set(cores).size !== cores.length) {
+      ok = false;
+      exact = false;
+    }
+    if (!(inputs[0] ?? '').trim()) {
+      ok = false;
+      exact = false;
+    }
+    return { ok, exact };
+  };
+
+  const allRequired = boxes.every((b) => b.required);
+
+  const handleMeaningComplete = () => {
+    if (evaluateMeanings(meaningInputs).ok) {
+      setMeaningMsg('');
+      setMeaningDone(true);
+    } else {
+      setMeaningMsg('뜻이 아직 달라요. 단어의 뜻을 다시 확인해서 써 보세요.');
+    }
+  };
+
+  const changeMeaning = (i: number, v: string) => {
+    const next = [...meaningInputs];
+    next[i] = v;
+    setMeaningInputs(next);
+    setMeaningMsg('');
+    // 자동 진행은 모든 칸이 필수이고 전부 정확할 때만 (선택 칸이 있으면 Enter로 확정)
+    if (allRequired && evaluateMeanings(next).exact) setMeaningDone(true);
   };
 
   const handleNextWord = () => {
@@ -140,8 +212,10 @@ export default function VocabSessionLearningStage({
       console.log('[NEXT] Moving to word:', nextIdx, words[nextIdx]?.text);
       setCurrentWordIdx(nextIdx);
       setSpellingInput('');
-      setMeaning1Input('');
-      setMeaning2Input('');
+      setMeaningInputs(['', '', '']);
+      setPronInput('');
+      setPronDone(false);
+      setMeaningMsg('');
       setSpellingDone(false);
       setMeaningDone(false);
     } else {
@@ -224,6 +298,21 @@ export default function VocabSessionLearningStage({
                   </div>
                 </div>
 
+                {/* 입력한 철자 피드백: 맞는 글자는 초록, 틀린/남는 글자는 빨강 */}
+                <div className="min-h-[2.5rem] text-center" aria-live="polite">
+                  <span style={{ fontFamily: 'monospace', fontSize: '1.6rem', letterSpacing: '0.15em' }}>
+                    {spellingInput.split('').map((ch, i) => {
+                      const target = currentWord.text[i];
+                      const ok = target !== undefined && ch.toLowerCase() === target.toLowerCase();
+                      return (
+                        <span key={i} className={ok ? 'font-bold text-emerald-600' : 'font-bold text-rose-600 underline decoration-rose-400'}>
+                          {ch === ' ' ? ' ' : ch}
+                        </span>
+                      );
+                    })}
+                  </span>
+                </div>
+
                 {/* Input field - auto advance on correct spelling */}
                 <div className="space-y-2">
                   <input
@@ -265,60 +354,95 @@ export default function VocabSessionLearningStage({
               <div className="bg-emerald-50 border border-emerald-300 rounded-xl px-4 py-2.5 text-center">
                 <p className="text-sm font-semibold text-emerald-700">✅ 철자 완료!</p>
                 <p className="text-3xl font-bold text-slate-900">{currentWord.text}</p>
+                {currentWord.pos && (
+                  <span className="mt-1 inline-block rounded-full bg-slate-200 px-3 py-0.5 text-sm font-semibold text-slate-700">
+                    {currentWord.pos}
+                  </span>
+                )}
               </div>
             )}
           </div>
 
+          {/* Pronunciation (한글 발음 따라쓰기) */}
+          {spellingDone && pron && (
+            <div className="space-y-2 border-t-2 border-slate-200 pt-3">
+              <div className="text-lg font-bold text-slate-700">🔊 발음 따라쓰기</div>
+              {pronDone ? (
+                <div className="rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-2 text-center">
+                  <span className="text-xl font-bold text-slate-900">{pron}</span>
+                  <span className="ml-2 text-sm font-semibold text-emerald-700">✅</span>
+                </div>
+              ) : (
+                <>
+                  <div className="rounded-xl bg-slate-100 py-2 text-center text-3xl font-bold text-slate-800">{pron}</div>
+                  <input
+                    ref={pronRef}
+                    type="text"
+                    value={pronInput}
+                    lang="ko"
+                    autoComplete="off"
+                    spellCheck={false}
+                    placeholder="위 발음을 그대로 따라 쓰세요"
+                    onChange={(e) => {
+                      setPronInput(e.target.value);
+                      if (coreMeaning(e.target.value) === coreMeaning(pron)) {
+                        setPronDone(true);
+                        setTimeout(() => meaningRefs.current[0]?.focus(), 100);
+                      }
+                    }}
+                    className="w-full rounded-xl border-2 border-slate-300 px-4 py-3 text-center text-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </>
+              )}
+            </div>
+          )}
+
           {/* Meaning Section */}
-          {spellingDone && (
+          {spellingDone && pronStepDone && (
             <div className="space-y-3 border-t-2 border-slate-200 pt-3">
               <div className="text-lg font-bold text-slate-700">뜻 입력</div>
 
               <div className="space-y-2.5">
-                <input
-                  ref={meaning1Ref}
-                  type="text"
-                  value={meaning1Input}
-                  onChange={(e) => {
-                    setMeaning1Input(e.target.value);
-                    // 자동 진행: 두 뜻이 모두 채워지면 다음 단계로
-                    if (e.target.value.trim() && meaning2Input.trim()) {
-                      setMeaningDone(true);
-                    }
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') e.preventDefault();
-                    if (e.key === 'Tab') {
-                      e.preventDefault();
-                      meaning2Ref.current?.focus();
-                    }
-                  }}
-                  lang="ko"
-                  autoFocus
-                  placeholder={currentWord.meanings_ko?.[0] || '한국어 뜻을 입력하세요...'}
-                  className="w-full px-4 py-3 text-xl border-2 border-slate-300 rounded-xl placeholder-slate-400 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <input
-                  ref={meaning2Ref}
-                  type="text"
-                  value={meaning2Input}
-                  onChange={(e) => {
-                    setMeaning2Input(e.target.value);
-                    // 자동 진행: 두 뜻이 모두 채워지면 다음 단계로
-                    if (meaning1Input.trim() && e.target.value.trim()) {
-                      setMeaningDone(true);
-                    }
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleMeaningComplete();
-                    }
-                  }}
-                  lang="ko"
-                  placeholder={currentWord.meanings_ko?.[1] || '또 다른 뜻을 입력하세요...'}
-                  className="w-full px-4 py-3 text-xl border-2 border-slate-300 rounded-xl placeholder-slate-400 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                {boxes.map((b, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    {b.pos && (
+                      <span className="w-14 shrink-0 rounded-full bg-slate-200 px-2 py-1 text-center text-sm font-bold text-slate-700">
+                        {b.pos}
+                      </span>
+                    )}
+                    <input
+                      ref={(el) => {
+                        meaningRefs.current[i] = el;
+                      }}
+                      type="text"
+                      value={meaningInputs[i] ?? ''}
+                      onChange={(e) => changeMeaning(i, e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (e.nativeEvent.isComposing) return;
+                          const nextEmpty = i + 1 < boxes.length && boxes[i + 1].required && !(meaningInputs[i + 1] ?? '').trim();
+                          if (nextEmpty) meaningRefs.current[i + 1]?.focus();
+                          else handleMeaningComplete();
+                        }
+                        if (e.key === 'Tab' && i + 1 < boxes.length) {
+                          e.preventDefault();
+                          meaningRefs.current[i + 1]?.focus();
+                        }
+                      }}
+                      lang="ko"
+                      autoFocus={i === 0 && !pron}
+                      placeholder={
+                        i === 0
+                          ? b.items.join('; ') || '한국어 뜻을 입력하세요...'
+                          : b.required
+                            ? (b.pos ? b.items.join('; ') : '또 다른 뜻을 입력하세요...')
+                            : '(뜻이 하나뿐이면 비워 둬도 돼요)'
+                      }
+                      className="w-full px-4 py-3 text-xl border-2 border-slate-300 rounded-xl placeholder-slate-400 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                ))}
               </div>
 
               {meaningDone ? (
@@ -326,7 +450,23 @@ export default function VocabSessionLearningStage({
                   <p className="text-base font-semibold text-blue-700">✅ 뜻 완료!</p>
                 </div>
               ) : (
-                <p className="text-sm text-slate-500 text-center">두 뜻을 모두 입력하면 다음으로 넘어가요</p>
+                <div className="space-y-1 text-center">
+                  <p className="text-sm text-slate-500">
+                    {posGroups && boxes.length > 1
+                      ? '품사별로 칸이 나뉘어 있어요. 같은 품사의 뜻은 한 칸에 함께 써도 돼요.'
+                      : boxes.length > 1 && !allRequired
+                        ? '뜻이 하나예요. 첫 칸만 쓰고 Enter를 누르세요.'
+                        : '뜻을 써 보세요. 괄호 안 설명이나 ~ 는 안 써도 돼요.'}
+                  </p>
+                  {meaningMsg && <p className="text-sm font-semibold text-rose-600">{meaningMsg}</p>}
+                  <button
+                    type="button"
+                    onClick={handleMeaningComplete}
+                    className="mt-1 rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-bold text-white hover:bg-blue-700"
+                  >
+                    확인 (Enter)
+                  </button>
+                </div>
               )}
             </div>
           )}
