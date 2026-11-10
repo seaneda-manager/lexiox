@@ -8,6 +8,7 @@ import { createClient } from "@supabase/supabase-js";
 import type { SessionWord, VocabExample, VocabCollocation } from "@/models/vocab/SessionWord";
 import type { WordFormRowLike } from "@/lib/vocab/drill/buildBlockDrillTasksV1";
 import { registerReviewItemsForDay } from "@/lib/vocab/review/reviewItems";
+import { pickReviewWordIds, reviewWindowDays } from "@/lib/vocab/review/dayWindowReview";
 
 export type LoadSessionWordsActionInput = {
   /** Optional: force a specific setId (debug / admin / shortcut) */
@@ -1380,5 +1381,126 @@ export async function saveVocabSessionProgressAction(input: {
   } catch (e: any) {
     console.error("saveVocabSessionProgressAction exception:", toErrMsg(e));
     return { ok: false };
+  }
+}
+
+/* =========================================================
+ * 복습 (Day N 학습 시작 전, 직전 3회차의 틀린 단어 + 랜덤 보충)
+ * ======================================================= */
+
+export type ReviewWord = {
+  id: string;
+  text: string;
+  meanings_ko: string[];
+  pos?: string | null;
+  meaning_pos?: string[] | null;
+  wasWrong: boolean;
+};
+
+export type LoadReviewWordsResult = {
+  ok: boolean;
+  words: ReviewWord[];
+  windowDays: number[];
+  error?: string;
+};
+
+export async function loadReviewWordsAction(input: { setId: string }): Promise<LoadReviewWordsResult> {
+  const empty: LoadReviewWordsResult = { ok: true, words: [], windowDays: [] };
+  try {
+    const setId = cleanStr(input?.setId);
+    if (!setId) return empty;
+
+    const authed = await createAuthedServerClient();
+    const admin = createAdminClient();
+    const client = admin ?? authed;
+
+    const { data: userData } = await authed.auth.getUser();
+    const userId = userData?.user?.id;
+    if (!userId) return { ...empty, ok: false, error: "NOT_LOGGED_IN" };
+
+    const studentId = await resolveAcademyStudentId(client, userId);
+    if (!studentId) return empty;
+
+    // 지금 하려는 Day (이 set 의 배정)
+    const { data: cur } = await client
+      .from("student_vocab_assignments")
+      .select("track_id, day_index")
+      .eq("student_id", studentId)
+      .eq("set_id", setId)
+      .is("canceled_at", null)
+      .order("day_index", { ascending: true })
+      .limit(1);
+    const row = Array.isArray(cur) ? cur[0] : null;
+    if (!row?.track_id) return empty;
+
+    const days = reviewWindowDays(row.day_index);
+    if (days.length === 0) return empty;
+
+    const { data: prev } = await client
+      .from("student_vocab_assignments")
+      .select("set_id, day_index")
+      .eq("student_id", studentId)
+      .eq("track_id", row.track_id)
+      .in("day_index", days)
+      .is("canceled_at", null);
+    const prevSetIds = uniqKeepOrder(((prev as any[]) ?? []).map((r) => cleanStr(r?.set_id)).filter(Boolean));
+    if (prevSetIds.length === 0) return { ...empty, windowDays: days };
+
+    // 범위 안의 모든 단어
+    const items = await trySelectManyIn(client, "vocab_set_items", "set_id, word_id", "set_id", prevSetIds);
+    if (!items.ok) return { ...empty, ok: false, windowDays: days, error: toErrMsg((items as any).error) };
+    const windowIds = uniqKeepOrder((items.rows as any[]).map((r) => cleanStr(r?.word_id)).filter(Boolean));
+    if (windowIds.length === 0) return { ...empty, windowDays: days };
+
+    // 틀린 단어: 각 set 의 know / speed 가장 최근 시도의 오답
+    const { data: attempts } = await client
+      .from("vocab_learning_attempts")
+      .select("set_id, stage, wrong_word_ids, attempted_at")
+      .eq("student_id", studentId)
+      .in("set_id", prevSetIds)
+      .in("stage", ["know", "speed"])
+      .order("attempted_at", { ascending: false });
+    const seen = new Set<string>();
+    const wrongIds: string[] = [];
+    for (const a of (attempts as any[]) ?? []) {
+      const key = `${a.set_id}:${a.stage}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      for (const id of Array.isArray(a.wrong_word_ids) ? a.wrong_word_ids : []) wrongIds.push(String(id));
+    }
+
+    const picked = pickReviewWordIds({ wrongIds, windowIds });
+    if (picked.ids.length === 0) return { ...empty, windowDays: days };
+
+    // 단어 정보 (품사 컬럼은 마이그레이션 전이면 없을 수 있어 단계적으로 조회)
+    let rows: any[] = [];
+    const full = await trySelectManyIn(client, "words", "id, text, pos, meanings_ko, meaning_pos", "id", picked.ids);
+    if (full.ok) rows = full.rows as any[];
+    else {
+      const basic = await trySelectManyIn(client, "words", "id, text, pos, meanings_ko", "id", picked.ids);
+      if (!basic.ok) return { ...empty, ok: false, windowDays: days, error: toErrMsg((basic as any).error) };
+      rows = basic.rows as any[];
+    }
+
+    const byId = new Map(rows.map((r) => [cleanStr(r?.id), r]));
+    const wrongSet = new Set(picked.wrongIds);
+    const words: ReviewWord[] = [];
+    for (const id of picked.ids) {
+      const r = byId.get(id);
+      const text = cleanStr(r?.text);
+      if (!r || !text) continue;
+      words.push({
+        id,
+        text,
+        meanings_ko: normalizeStringArray(r?.meanings_ko),
+        pos: cleanStr(r?.pos) || null,
+        meaning_pos: Array.isArray(r?.meaning_pos) ? r.meaning_pos.map((p: any) => cleanStr(p)) : null,
+        wasWrong: wrongSet.has(id),
+      });
+    }
+    return { ok: true, words, windowDays: days };
+  } catch (e: any) {
+    console.warn("loadReviewWordsAction exception:", toErrMsg(e));
+    return { ...empty, ok: false, error: toErrMsg(e) };
   }
 }

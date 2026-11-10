@@ -39,7 +39,10 @@ import {
   saveVocabAttemptAction,
   getVocabSessionProgressAction,
   saveVocabSessionProgressAction,
+  loadReviewWordsAction,
 } from "./actions";
+import type { ReviewWord } from "./actions";
+import VocabReviewStage from "@/components/vocab/learning/VocabReviewStage";
 import type { LoadSessionWordsActionResult, VocabSessionProgressData } from "./actions";
 
 import type { PrescreenResult } from "@/models/vocab/session/prescreen";
@@ -667,6 +670,11 @@ export default function VocabSessionPage() {
   // ✅ Cumulative Quiz: 전체 기간 오답 단어들
   const [cumulativeWeakWords, setCumulativeWeakWords] = useState<SessionWord[]>([]);
   const [quizAnswers, setQuizAnswers] = useState<Record<string, boolean>>({});
+
+  // ✅ 복습: Day N 학습 전에 직전 3회차의 틀린 단어 + 랜덤을 먼저 푼다
+  const [reviewState, setReviewState] = useState<"checking" | "active" | "done">("checking");
+  const [reviewWords, setReviewWords] = useState<ReviewWord[]>([]);
+  const [reviewWindowDays, setReviewWindowDays] = useState<number[]>([]);
 
   // ✅ SPEED 최종점검 + 완료
   const [sessionSetId, setSessionSetId] = useState<string | null>(null);
@@ -1672,6 +1680,45 @@ export default function VocabSessionPage() {
     })();
   }, [stage, debugInfo?.academyStudentId, allWords, supabase]);
 
+  // ✅ 복습 대상 조회: 첫 화면(PRESCREEN)에 들어올 때 한 번만
+  useEffect(() => {
+    if (stage !== "PRESCREEN" || reviewState !== "checking") return;
+    if (!sessionSetId) {
+      setReviewState("done");
+      return;
+    }
+    const devJump = process.env.NODE_ENV !== "production" && !!shortcut.jump;
+    let doneKey = "";
+    try {
+      doneKey = `vocab-review-done:${sessionSetId}`;
+      if (devJump || window.sessionStorage.getItem(doneKey)) {
+        setReviewState("done");
+        return;
+      }
+    } catch {
+      /* sessionStorage 사용 불가 시 그냥 진행 */
+    }
+    let alive = true;
+    (async () => {
+      try {
+        const r = await loadReviewWordsAction({ setId: sessionSetId });
+        if (!alive) return;
+        if (r.ok && r.words.length > 0) {
+          setReviewWords(r.words);
+          setReviewWindowDays(r.windowDays);
+          setReviewState("active");
+        } else {
+          setReviewState("done");
+        }
+      } catch {
+        if (alive) setReviewState("done");
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [stage, reviewState, sessionSetId, shortcut.jump]);
+
   // ✅ stage renderer
   const renderStage = () => {
     const Debug = null; // DebugPanel 비활성화
@@ -1691,6 +1738,30 @@ export default function VocabSessionPage() {
 
     if (stage === "LOADING") {
       return <div className="mx-auto max-w-xl p-6 text-center text-slate-700">Loading session...</div>;
+    }
+
+    if (stage === "PRESCREEN" && reviewState === "checking") {
+      return <div className="mx-auto max-w-xl p-6 text-center text-slate-700">복습 준비 중...</div>;
+    }
+
+    if (stage === "PRESCREEN" && reviewState === "active") {
+      return (
+        <CardWrap>
+          {headerBlock}
+          <VocabReviewStage
+            words={reviewWords}
+            windowDays={reviewWindowDays}
+            onFinish={() => {
+              try {
+                window.sessionStorage.setItem(`vocab-review-done:${sessionSetId}`, "1");
+              } catch {
+                /* 무시 */
+              }
+              setReviewState("done");
+            }}
+          />
+        </CardWrap>
+      );
     }
 
     if (stage === "PRESCREEN") {
