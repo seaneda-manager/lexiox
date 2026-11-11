@@ -86,7 +86,7 @@ export default async function HiNaesinDashboard() {
   // ── 3. 지문 기본 정보 ─────────────────────────────────────
   const { data: passages } = await supabase
     .from('hi_naesin_passages')
-    .select('id, title, source_type, grade, school_name, textbook_name, unit_label, exam_year, exam_month, question_number')
+    .select('id, title, source_type, grade, school_name, textbook_name, unit_label, book_name, book_unit, exam_year, exam_month, question_number')
     .in('id', assignedIds);
 
   const passageMap = new Map((passages ?? []).map((p: any) => [p.id as string, p]));
