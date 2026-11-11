@@ -95,15 +95,23 @@ export default function ListeningReviewPage() {
                     )}
                   </div>
                 </div>
-                <div className="whitespace-nowrap text-right">
-                  <div
-                    className={`text-sm font-bold ${pct >= 70 ? "text-emerald-700" : "text-rose-700"}`}
+                <div className="flex items-center gap-4">
+                  <div className="whitespace-nowrap text-right">
+                    <div
+                      className={`text-sm font-bold ${pct >= 70 ? "text-emerald-700" : "text-rose-700"}`}
+                    >
+                      {pct}%
+                    </div>
+                    <div className="text-[11px] text-neutral-400">
+                      {r.correctCount}/{r.totalQuestions}
+                    </div>
+                  </div>
+                  <Link
+                    href={`/updated-listening/result/${r.id}`}
+                    className="whitespace-nowrap rounded-lg border px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-sky-50"
                   >
-                    {pct}%
-                  </div>
-                  <div className="text-[11px] text-neutral-400">
-                    {r.correctCount}/{r.totalQuestions}
-                  </div>
+                    해설 보기
+                  </Link>
                 </div>
               </div>
             );

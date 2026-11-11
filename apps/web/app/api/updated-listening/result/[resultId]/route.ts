@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from "next/server";
 import { getServiceRoleClient } from "@/lib/supabase/server";
+import { getResultViewer, scopeToViewer } from "@/lib/auth/resultViewer";
 import { isChoiceCorrect } from "@/lib/utils/listeningChoice";
 
 export async function GET(
@@ -12,13 +13,17 @@ export async function GET(
     const { resultId } = await params;
     console.log("[API] GET /api/updated-listening/result/", resultId);
     const supabase = getServiceRoleClient();
+    const viewer = await getResultViewer();
+    if (!viewer) {
+      return NextResponse.json({ ok: false, error: "Not authenticated" }, { status: 401 });
+    }
 
     let resultData, resultError;
 
     const idNum = parseInt(resultId, 10);
-    let { data: byId, error: byIdError } = await supabase
+    let { data: byId, error: byIdError } = await scopeToViewer(supabase
       .from("listening_results_2026")
-      .select("*")
+      .select("*"), viewer)
       .eq("id", !isNaN(idNum) ? idNum : resultId)
       .single();
 
@@ -26,9 +31,9 @@ export async function GET(
       resultData = byId;
       resultError = null;
     } else {
-      const { data: byAssignmentId, error: byAssignmentError } = await supabase
+      const { data: byAssignmentId, error: byAssignmentError } = await scopeToViewer(supabase
         .from("listening_results_2026")
-        .select("*")
+        .select("*"), viewer)
         .eq("assignment_id", resultId)
         .order("created_at", { ascending: false })
         .limit(1)
@@ -38,9 +43,9 @@ export async function GET(
         resultData = byAssignmentId;
         resultError = null;
       } else {
-        const { data: byTestId, error: byTestIdError } = await supabase
+        const { data: byTestId, error: byTestIdError } = await scopeToViewer(supabase
           .from("listening_results_2026")
-          .select("*")
+          .select("*"), viewer)
           .eq("test_id", resultId)
           .order("created_at", { ascending: false })
           .limit(1)

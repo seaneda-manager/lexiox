@@ -672,6 +672,12 @@ export default async function AdminStudentsPage({
         <p className="text-sm text-neutral-500">
           학생 생성, 수정, 임시비밀번호 재설정, 활성/비활성 토글까지 한 화면에서 관리합니다.
         </p>
+        <Link
+          href="/admin/students/promote"
+          className="inline-block rounded-xl border border-neutral-300 px-3 py-1.5 text-sm font-semibold hover:bg-neutral-50"
+        >
+          🎓 학년 일괄 진급
+        </Link>
       </header>
 
       {created ? (

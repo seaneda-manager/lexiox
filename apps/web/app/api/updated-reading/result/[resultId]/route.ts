@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 // apps/web/app/api/updated-reading/result/[resultId]/route.ts
 import { NextResponse } from "next/server";
 import { getServiceRoleClient } from "@/lib/supabase/server";
+import { getResultViewer, scopeToViewer } from "@/lib/auth/resultViewer";
 import type { RReadingTest2026 } from "@/models/reading";
 
 function stripHtml(html: string): string {
@@ -48,6 +49,10 @@ export async function GET(
     const { resultId } = await params;
     console.log("[API] GET /api/updated-reading/result/", resultId);
     const supabase = getServiceRoleClient();
+    const viewer = await getResultViewer();
+    if (!viewer) {
+      return NextResponse.json({ ok: false, error: "Not authenticated" }, { status: 401 });
+    }
 
     // 1. 결과 데이터 조회 (id 또는 assignment_id로 조회)
     let resultData;
@@ -56,9 +61,9 @@ export async function GET(
     // 먼저 id로 조회 시도 (숫자)
     const idNum = parseInt(resultId, 10);
     console.log("[API] Trying numeric id:", idNum, "or string:", resultId);
-    let { data: byId, error: byIdError } = await supabase
+    let { data: byId, error: byIdError } = await scopeToViewer(supabase
       .from("reading_results_2026")
-      .select("*")
+      .select("*"), viewer)
       .eq("id", !isNaN(idNum) ? idNum : resultId)
       .single();
 
@@ -70,9 +75,9 @@ export async function GET(
     } else {
       console.log("[API] Trying assignment_id:", resultId);
       // id 조회 실패 시 assignment_id로 조회
-      const { data: byAssignmentId, error: byAssignmentError } = await supabase
+      const { data: byAssignmentId, error: byAssignmentError } = await scopeToViewer(supabase
         .from("reading_results_2026")
-        .select("*")
+        .select("*"), viewer)
         .eq("assignment_id", resultId)
         .order("created_at", { ascending: false })
         .limit(1)
@@ -85,9 +90,9 @@ export async function GET(
       } else {
         console.log("[API] Assignment query failed, trying test_id:", resultId);
         // assignment_id로도 실패 시 test_id로 조회
-        const { data: byTestId, error: byTestIdError } = await supabase
+        const { data: byTestId, error: byTestIdError } = await scopeToViewer(supabase
           .from("reading_results_2026")
-          .select("*")
+          .select("*"), viewer)
           .eq("test_id", resultId)
           .order("created_at", { ascending: false })
           .limit(1)

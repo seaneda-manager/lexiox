@@ -1,4 +1,4 @@
-import { headers } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { ReadingDrillClient } from './_client/ReadingDrillClient';
 
 export const dynamic = 'force-dynamic';
@@ -36,7 +36,7 @@ export default async function ReadingDrillPage({ params }: PageProps) {
     const protocol = headerList.get('x-forwarded-proto') ?? (host?.includes('localhost') ? 'http' : 'https');
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || `${protocol}://${host}`;
     const response = await fetch(`${baseUrl}/api/updated-reading/result/${params.resultId}`, {
-      credentials: 'include',
+      headers: { cookie: cookies().toString() },
       cache: 'no-store',
     });
 

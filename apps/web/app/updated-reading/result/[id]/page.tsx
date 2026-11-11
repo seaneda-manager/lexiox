@@ -1,3 +1,4 @@
+import { cookies } from 'next/headers';
 import { ReadingReviewClient } from '@/app/protected/student/reading/review/[resultId]/_client/ReadingReviewClient';
 
 export const dynamic = 'force-dynamic';
@@ -35,7 +36,7 @@ export default async function ReadingResultPage({ params }: PageProps) {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const response = await fetch(`${baseUrl}/api/updated-reading/result/${params.id}`, {
-      credentials: 'include',
+      headers: { cookie: cookies().toString() },
       cache: 'no-store',
     });
 

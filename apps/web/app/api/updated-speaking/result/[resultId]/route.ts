@@ -2,6 +2,11 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from "next/server";
 import { getServiceRoleClient } from "@/lib/supabase/server";
+import { getResultViewer, scopeToViewer } from "@/lib/auth/resultViewer";
+
+// speaking_results_2026 은 "과제(task) 1개 = 행 1개"다. 같은 test_id·같은 사용자의 행을 모아
+// 하나의 시험 결과(문항 목록)로 돌려준다. 점수는 ETS rubric 0~4 → 화면용 0~10 으로 환산한다.
+const toTen = (v: number | null | undefined) => Math.round(Number(v ?? 0) * 2.5 * 10) / 10;
 
 export async function GET(
   req: Request,
@@ -9,87 +14,66 @@ export async function GET(
 ) {
   try {
     const { resultId } = await params;
-    console.log('[SPEAKING API] GET /api/updated-speaking/result/', resultId);
     const supabase = getServiceRoleClient();
-
-    let resultData;
-    const idNum = parseInt(resultId, 10);
-    let { data: byId, error: byIdError } = await supabase
-      .from("speaking_results_2026")
-      .select("*")
-      .eq("id", !isNaN(idNum) ? idNum : resultId)
-      .single();
-
-    if (!byIdError && byId) {
-      resultData = byId;
-    } else {
-      const { data: byTestId } = await supabase
-        .from("speaking_results_2026")
-        .select("*")
-        .eq("test_id", resultId)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
-
-      resultData = byTestId;
-      if (!resultData) {
-        // 테스트 데이터 반환 (정답/오답 혼합)
-        return NextResponse.json({
-          testId: resultId,
-          testLabel: "Speaking Test",
-          score: 7.5,
-          band: "High",
-          questions: [
-            {
-              id: "q1",
-              number: 1,
-              type: "independent",
-              prompt: "Describe a memorable trip you took.",
-              prepTime: 15,
-              responseTime: 45,
-              userRecordingUrl: null,
-              modelAnswer: "I took a trip to Tokyo. It was memorable because I visited Shibuya Crossing and tried authentic street food.",
-              isCorrect: true,
-              score: 8,
-              feedback: "Excellent pronunciation and fluency.",
-            },
-            {
-              id: "q2",
-              number: 2,
-              type: "independent",
-              prompt: "If you could change one thing about your city, what would it be?",
-              prepTime: 15,
-              responseTime: 45,
-              userRecordingUrl: null,
-              modelAnswer: "I would improve public transportation. Better buses would reduce traffic.",
-              isCorrect: false,
-              score: 6,
-              feedback: "Grammar could be clearer. Try more complex sentence structures.",
-            },
-            {
-              id: "q3",
-              number: 3,
-              type: "independent",
-              prompt: "Describe your favorite food and why you like it.",
-              prepTime: 15,
-              responseTime: 45,
-              userRecordingUrl: null,
-              modelAnswer: "My favorite food is sushi. I love it because it's fresh and delicious.",
-              isCorrect: true,
-              score: 7.5,
-              feedback: "Clear and well-organized response.",
-            },
-          ],
-        });
-      }
+    const viewer = await getResultViewer();
+    if (!viewer) {
+      return NextResponse.json({ ok: false, error: "Not authenticated" }, { status: 401 });
     }
 
+    // id 는 uuid 문자열. (예전 숫자 파싱은 "12ab…" 같은 uuid 를 12 로 잘라 엉뚱한 행을 찾았다)
+    const { data: anchor } = await scopeToViewer(
+      supabase.from("speaking_results_2026").select("*"),
+      viewer
+    )
+      .eq("id", resultId)
+      .maybeSingle();
+
+    if (!anchor) {
+      return NextResponse.json({ ok: false, error: "Result not found" }, { status: 404 });
+    }
+
+    // 같은 시험·같은 사용자의 다른 과제 행들
+    let sibQuery = supabase
+      .from("speaking_results_2026")
+      .select("*")
+      .eq("test_id", anchor.test_id)
+      .order("created_at", { ascending: true });
+    sibQuery = anchor.user_id ? sibQuery.eq("user_id", anchor.user_id) : sibQuery.eq("id", anchor.id);
+    const { data: siblings } = await sibQuery;
+
+    // 과제별 최신 1건만
+    const latestByTask = new Map<string, any>();
+    for (const r of (siblings ?? []) as any[]) latestByTask.set(String(r.task_id), r);
+    const rows = Array.from(latestByTask.values());
+
+    const questions = rows.map((r, i) => {
+      const meta = (r.meta ?? {}) as Record<string, any>;
+      const score = toTen(r.final_total_score ?? r.ai_total_score);
+      return {
+        id: String(r.id),
+        number: i + 1,
+        type: String(meta.task_type ?? r.mode ?? "speaking"),
+        prompt: String(r.prompt ?? ""),
+        prepTime: Number(meta.prep_time ?? meta.prepTime ?? 15),
+        responseTime: Number(meta.response_time ?? meta.responseTime ?? 45),
+        userRecordingUrl: r.audio_url ?? undefined,
+        modelAnswer: String(meta.model_answer ?? meta.modelAnswer ?? ""),
+        isCorrect: score >= 6.25, // rubric 2.5/4 이상
+        score,
+        feedback: String(r.final_feedback ?? r.ai_feedback ?? ""),
+      };
+    });
+
+    const avg = questions.length ? questions.reduce((a, q) => a + q.score, 0) / questions.length : 0;
+    const score = Math.round(avg * 10) / 10;
+    const band = score >= 8 ? "High" : score >= 5 ? "Medium" : "Low";
+
     return NextResponse.json({
-      testId: resultData.test_id,
+      testId: anchor.test_id,
       testLabel: "Speaking Test",
-      score: resultData.score || 0,
-      band: "Medium",
-      questions: [],
+      score,
+      band,
+      questions,
     });
   } catch (err: any) {
     console.error("[updated-speaking/result] error:", err);
