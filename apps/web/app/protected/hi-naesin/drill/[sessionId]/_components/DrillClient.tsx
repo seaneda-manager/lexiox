@@ -37,7 +37,7 @@ type ResponseRow = {
 type TypeInfo = { total: number; done: number; firstUnanswered: number };
 
 const TYPE_ORDER = [
-  'vocab', 'identify_categorize', 'structure_svo', 'translation_arrange', 'translation', 'translation_choice',
+  'vocab', 'structure_svo', 'translation_arrange', 'translation', 'translation_choice',
   'fill_blank', 'writing_arrange', 'writing', 'grammar_choice',
 ] as const;
 
@@ -52,7 +52,7 @@ const DRILL_LABEL: Record<string, string> = {
   summary:              '요약',
   grammar_choice:       '문법',
   identify_categorize:  '구조 분석',
-  structure_svo:        '문장 성분',
+  structure_svo:        '문장구조분석',
 };
 
 // 해석/작문 계열 문제를 푸는 동안엔 지문 번역을 보여주면 정답을 그대로 알려주는 셈이라

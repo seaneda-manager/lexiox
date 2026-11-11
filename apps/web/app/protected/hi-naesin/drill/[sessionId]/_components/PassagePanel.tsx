@@ -148,7 +148,12 @@ export default function PassagePanel({
   const canShowTranslation = !hideTranslationToggle && showTranslation;
   const bodyRef = useRef<HTMLDivElement>(null);
 
-  const parts = useMemo(() => splitPassage(passageText), [passageText]);
+  const parts = useMemo(() => {
+    const sp = splitPassage(passageText);
+    // 문장이 끝나지 않았는데 줄바꿈된 곳(원문 줄 나눔)은 이어 붙인다. 문장부호로 끝난 줄 뒤의 줄바꿈만 문단으로 유지.
+    const body = sp.body.replace(/([^.!?"'”’)\s])[ \t]*\n[ \t]*(?=\S)/g, '$1 ');
+    return { ...sp, body };
+  }, [passageText]);
   const titleText = parts.title ?? passageTitle;
 
   const savedRe = useMemo(() => {

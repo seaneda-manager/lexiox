@@ -25,7 +25,6 @@ import {
   generateDrillsFromSentencesAction,
   generateGrammarDrillsAction,
   generateThoughtUnitDrillsAction,
-  generateStructureDrillsAction,
   generateSentenceAnalysisDrillsAction,
 } from './sentence-actions';
 import {
@@ -375,23 +374,12 @@ export default async function HiNaesinPassageEditPage({
             )}
 
             {sentences.length > 0 && (
-              <form action={generateStructureDrillsAction.bind(null, id)}>
-                <ConfirmSubmitButton
-                  message={regenConfirm(['identify_categorize'])}
-                  className="rounded-xl border border-indigo-300 bg-indigo-50 px-5 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100"
-                >
-                  5단계: AI 구조분석(지칭추론) 생성
-                </ConfirmSubmitButton>
-              </form>
-            )}
-
-            {sentences.length > 0 && (
               <form action={generateSentenceAnalysisDrillsAction.bind(null, id)}>
                 <ConfirmSubmitButton
                   message={regenConfirm(['structure_svo'])}
                   className="rounded-xl border border-violet-300 bg-violet-50 px-5 py-2 text-sm font-semibold text-violet-700 hover:bg-violet-100"
                 >
-                  6단계: AI 문장 분석(주어·동사 지시형) 생성
+                  5단계: AI 문장구조분석(주어·동사 지시형) 생성
                 </ConfirmSubmitButton>
               </form>
             )}

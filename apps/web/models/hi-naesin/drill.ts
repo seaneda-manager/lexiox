@@ -256,6 +256,6 @@ export function drillTypeLabel(t: HiNaesinDrillType): string {
     case 'grammar_choice':        return '문법 고르기';
     case 'vocab':                 return '단어';
     case 'identify_categorize':   return '구조 분석';
-    case 'structure_svo':         return '문장 성분';
+    case 'structure_svo':         return '문장구조분석';
   }
 }
