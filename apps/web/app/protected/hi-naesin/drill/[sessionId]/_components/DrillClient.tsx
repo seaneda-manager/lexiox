@@ -1572,10 +1572,11 @@ function StructureSvoDrill({
       return; // targetType은 유지한 채 다시 클릭할 기회를 준다
     }
 
-    setModifierLinks((prev) => [
-      ...prev,
-      { span: match.span, subtypeLabel: SVO_MODIFIER_SUBTYPE_LABEL[match.subtype], target: match.target },
-    ]);
+    setModifierLinks((prev) =>
+      prev.some((l) => svoNormalize(l.span) === spanNorm)
+        ? prev // 같은 수식어를 두 번 연결하지 않는다
+        : [...prev, { span: match.span, subtypeLabel: SVO_MODIFIER_SUBTYPE_LABEL[match.subtype], target: match.target }],
+    );
     setFeedback((prev) => ({ ...prev, modifier: { state: 'correct', message: '정답' } }));
     setPendingModifier(null);
     clearSelection();
@@ -1596,6 +1597,18 @@ function StructureSvoDrill({
     if (!isSelecting || pendingModifier) return;
     setSelectionFocus(wordIndex);
   }
+
+  // ⚠️ 훅은 early return(isAnswered) 보다 위에 있어야 한다 — 제출 직후 훅 개수가 달라지면 화면이 크래시한다
+  const remainingModifierTypes = useMemo(() => {
+    const linkedSpans = new Set(modifierLinks.map((l) => svoNormalize(l.span)));
+    const remaining = requiredModifiers.filter((m) => !linkedSpans.has(svoNormalize(m.span)));
+    const counts = new Map<string, number>();
+    for (const m of remaining) {
+      const label = SVO_MODIFIER_SUBTYPE_LABEL[m.subtype];
+      counts.set(label, (counts.get(label) ?? 0) + 1);
+    }
+    return Array.from(counts.entries());
+  }, [requiredModifiers, modifierLinks]);
 
   if (isAnswered) {
     return (
@@ -1635,17 +1648,6 @@ function StructureSvoDrill({
       </>
     );
   }
-
-  const remainingModifierTypes = useMemo(() => {
-    const linkedSpans = new Set(modifierLinks.map((l) => svoNormalize(l.span)));
-    const remaining = requiredModifiers.filter((m) => !linkedSpans.has(svoNormalize(m.span)));
-    const counts = new Map<string, number>();
-    for (const m of remaining) {
-      const label = SVO_MODIFIER_SUBTYPE_LABEL[m.subtype];
-      counts.set(label, (counts.get(label) ?? 0) + 1);
-    }
-    return Array.from(counts.entries());
-  }, [requiredModifiers, modifierLinks]);
 
   return (
     <>
@@ -1841,8 +1843,16 @@ function StructureSvoDrill({
               </div>
             ) : (
               modifierLinks.map((l, i) => (
-                <div key={i} className="rounded-lg border bg-white px-2 py-1.5 text-xs text-neutral-700">
-                  [{l.subtypeLabel}] {l.span} → {l.target}
+                <div key={i} className="flex items-center justify-between gap-2 rounded-lg border bg-white px-2 py-1.5 text-xs text-neutral-700">
+                  <span>[{l.subtypeLabel}] {l.span} → {l.target}</span>
+                  <button
+                    type="button"
+                    onClick={() => setModifierLinks((prev) => prev.filter((_, idx) => idx !== i))}
+                    aria-label="이 수식어 연결 해제"
+                    className="shrink-0 rounded-md px-1.5 py-0.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700"
+                  >
+                    ✕
+                  </button>
                 </div>
               ))
             )}

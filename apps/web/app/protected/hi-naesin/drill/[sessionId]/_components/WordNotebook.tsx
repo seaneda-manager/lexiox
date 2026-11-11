@@ -69,7 +69,12 @@ export function useWordNotebook(passageId: string) {
   useEffect(() => {
     let alive = true;
     let local: SavedWord[] = [];
-    try { local = JSON.parse(localStorage.getItem(lsKey) ?? '[]') as SavedWord[]; } catch { /* ignore */ }
+    try {
+      const parsed = JSON.parse(localStorage.getItem(lsKey) ?? '[]');
+      local = Array.isArray(parsed)
+        ? (parsed as SavedWord[]).filter((w) => w && typeof w.term === 'string' && typeof w.key === 'string')
+        : [];
+    } catch { /* ignore */ }
     if (local.length) setWords(local);
     fetch(`/api/hi-naesin/words?passageId=${passageId}`)
       .then((r) => r.json())
@@ -176,7 +181,20 @@ function useKeyTerms(passageId: string) {
       .then((r) => r.json())
       .then((j) => {
         if (!j.ok) throw new Error('x');
-        setItems(j.items as KeyTermItem[]);
+        // AI 생성 결과에 필드가 빠져 있어도 화면이 죽지 않게 정규화
+        const raw = Array.isArray(j.items) ? (j.items as Array<Partial<KeyTermItem>>) : [];
+        setItems(
+          raw
+            .filter((i) => typeof i?.term === 'string' && i.term.trim())
+            .map((i) => ({
+              term: i.term as string,
+              surface: typeof i.surface === 'string' ? i.surface : (i.term as string),
+              kind: (i.kind as TermKind) ?? 'word',
+              pos: i.pos ?? '',
+              meaningKo: i.meaningKo ?? '',
+              reason: i.reason,
+            })),
+        );
         setState('ready');
       })
       .catch(() => setState('error'));

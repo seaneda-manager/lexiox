@@ -152,7 +152,7 @@ export default function PassagePanel({
   const titleText = parts.title ?? passageTitle;
 
   const savedRe = useMemo(() => {
-    const ts = savedTerms.map((t) => t.trim()).filter((t) => t.length >= 2).sort((a, b) => b.length - a.length);
+    const ts = savedTerms.map((t) => (typeof t === 'string' ? t.trim() : '')).filter((t) => t.length >= 2).sort((a, b) => b.length - a.length);
     if (ts.length === 0) return null;
     return new RegExp(`\\b(${ts.map(escapeRe).join('|')})\\b`, 'gi');
   }, [savedTerms]);
