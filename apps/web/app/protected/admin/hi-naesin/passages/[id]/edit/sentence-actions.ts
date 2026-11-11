@@ -20,6 +20,7 @@ import {
   generateConnectiveQuestions,
 } from '@/lib/hi-naesin/grammar-generator';
 import { generateThoughtUnitDrills } from '@/lib/hi-naesin/thought-unit-generator';
+import { generateSentenceAnalysisQuestions } from '@/lib/hi-naesin/sentence-analysis-generator';
 import {
   generateReferenceQuestions,
   generateStructureSvoQuestions,
@@ -579,6 +580,62 @@ export async function generateStructureSvoDrillsAction(
     const { error: iErr } = await adminDb.from('hi_naesin_drills').insert(rows);
     if (iErr) {
       redirect(`/admin/hi-naesin/passages/${passageId}/edit?tab=drill&err=structure_svo_insert:${encodeURIComponent(iErr.message)}`);
+    }
+    count = rows.length;
+  }
+
+  revalidate(passageId);
+  redirect(`/admin/hi-naesin/passages/${passageId}/edit?tab=drill&ok=structure_svo&sv=${count}`);
+}
+
+// ── 문장 분석 v2 (structure_svo version 2) Drill 생성 ──────────────────
+// (passage_id, drill_type, order_index) unique 라서 v1 과 공존할 수 없다 → 기존 structure_svo 를 교체한다.
+
+export async function generateSentenceAnalysisDrillsAction(
+  passageId: string,
+): Promise<void> {
+  const supabase = await getServerSupabase();
+  const adminDb  = getServiceSupabase();
+
+  const { data: sentences, error: sErr } = await supabase
+    .from('hi_naesin_passage_sentences')
+    .select('sentence_en')
+    .eq('passage_id', passageId)
+    .order('order_index');
+
+  if (sErr || !sentences || sentences.length === 0) {
+    redirect(`/admin/hi-naesin/passages/${passageId}/edit?tab=sentences&err=no_sentences`);
+  }
+
+  const sentenceInputs = (sentences ?? []).map((s) => ({ sentenceEn: (s.sentence_en as string) ?? '' }));
+  const result = await generateSentenceAnalysisQuestions(sentenceInputs);
+
+  if ('error' in result) {
+    redirect(
+      `/admin/hi-naesin/passages/${passageId}/edit?tab=drill&err=${encodeURIComponent('AI 오류 (문장 분석): ' + result.error)}`,
+    );
+  }
+
+  // 생성 성공 후에만 기존 것을 지운다(실패 시 기존 드릴 보존)
+  await adminDb
+    .from('hi_naesin_drills')
+    .delete()
+    .eq('passage_id', passageId)
+    .eq('drill_type', 'structure_svo');
+
+  const rows = result.results.map(({ orderIndex, payload }) => ({
+    passage_id:   passageId,
+    drill_type:   'structure_svo',
+    order_index:  orderIndex,
+    payload,
+    is_published: false,
+  }));
+
+  let count = 0;
+  if (rows.length > 0) {
+    const { error: iErr } = await adminDb.from('hi_naesin_drills').insert(rows);
+    if (iErr) {
+      redirect(`/admin/hi-naesin/passages/${passageId}/edit?tab=drill&err=sentence_analysis_insert:${encodeURIComponent(iErr.message)}`);
     }
     count = rows.length;
   }

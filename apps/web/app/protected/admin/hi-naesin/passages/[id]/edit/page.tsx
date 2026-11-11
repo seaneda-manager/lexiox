@@ -26,7 +26,7 @@ import {
   generateGrammarDrillsAction,
   generateThoughtUnitDrillsAction,
   generateStructureDrillsAction,
-  generateStructureSvoDrillsAction,
+  generateSentenceAnalysisDrillsAction,
 } from './sentence-actions';
 import {
   assignPassageAction,
@@ -34,6 +34,8 @@ import {
   updateEnabledDrillTypesAction,
 } from './assign-actions';
 import { startHiNaesinDrillSessionAction } from '@/app/protected/hi-naesin/passages/actions';
+import { tokenizeSentence, spanText } from '@/lib/hi-naesin/sentenceAnalysis';
+import type { SentenceAnalysisPayload, SaSpan } from '@/models/hi-naesin/drill';
 import ConfirmSubmitButton from '@/components/admin/hi-naesin/ConfirmSubmitButton';
 
 export const dynamic = 'force-dynamic';
@@ -384,12 +386,12 @@ export default async function HiNaesinPassageEditPage({
             )}
 
             {sentences.length > 0 && (
-              <form action={generateStructureSvoDrillsAction.bind(null, id)}>
+              <form action={generateSentenceAnalysisDrillsAction.bind(null, id)}>
                 <ConfirmSubmitButton
                   message={regenConfirm(['structure_svo'])}
                   className="rounded-xl border border-violet-300 bg-violet-50 px-5 py-2 text-sm font-semibold text-violet-700 hover:bg-violet-100"
                 >
-                  6단계: AI 문장성분(5형식+수식어) 생성
+                  6단계: AI 문장 분석(주어·동사 지시형) 생성
                 </ConfirmSubmitButton>
               </form>
             )}
@@ -1086,6 +1088,30 @@ function DrillPreview({ drill }: { drill: { drill_type: string; order_index: num
   }
 
   if (drill.drill_type === 'structure_svo') {
+    if (p.version === 2) {
+      const sa = p as unknown as SentenceAnalysisPayload;
+      const toks = tokenizeSentence(sa.sentence);
+      const c0 = sa.key?.clauses?.[0];
+      const txt = (sp?: SaSpan) => (sp ? spanText(toks, sp) : '');
+      return (
+        <div className="flex-1 space-y-1.5 min-w-0">
+          <div className="flex items-center gap-2">
+            {idx}
+            <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-700">
+              문장 분석 · {sa.level}
+            </span>
+          </div>
+          <p className="text-sm font-medium text-neutral-800">{sa.sentence}</p>
+          {c0 && (
+            <div className="flex flex-wrap gap-1 text-xs">
+              <span className="rounded bg-blue-50 px-1.5 py-0.5 text-blue-700">완전 주어: {c0.fullS.map(txt).join(' / ')}</span>
+              <span className="rounded bg-blue-50 px-1.5 py-0.5 text-blue-700">핵심 주어: {c0.coreS.map(txt).join(' / ')}</span>
+              <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-emerald-700">V: {txt(c0.V)}</span>
+            </div>
+          )}
+        </div>
+      );
+    }
     const modifiers = Array.isArray(p.modifiers) ? (p.modifiers as Array<Record<string, unknown>>) : [];
     const field = (key: string) => {
       const f = p[key] as { accepted?: string[] } | undefined;

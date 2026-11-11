@@ -3,6 +3,8 @@
 import { redirect } from 'next/navigation';
 import { getServerSupabase } from '@/lib/supabase/server';
 import { gradeTranslation, gradeWriting } from '@/lib/hi-naesin/translation-grader';
+import { gradeSentenceAnalysis, validateSentenceAnalysis } from '@/lib/hi-naesin/sentenceAnalysis';
+import type { SentenceAnalysisPayload, SaResponse } from '@/models/hi-naesin/drill';
 
 type Fail = { ok: false; error: string };
 
@@ -43,6 +45,23 @@ function gradeStructureSvo(mistakeCount: number): { isCorrect: boolean; scorePct
   return { isCorrect: true, scorePct };
 }
 
+// ── 문장 분석 v2 채점 — 정답키는 클라이언트 값을 믿지 않고 DB payload 에서 읽는다.
+// 항목별 결과(items)를 응답 JSON 에 함께 저장해 오답 분석/복습에 쓴다.
+async function gradeSentenceAnalysisFromDb(
+  supabase: Awaited<ReturnType<typeof getServerSupabase>>,
+  drillId: string,
+  responseChoice: string,
+): Promise<{ isCorrect: boolean; scorePct: number; responseChoice: string } | null> {
+  const { data } = await supabase.from('hi_naesin_drills').select('payload').eq('id', drillId).maybeSingle();
+  const payload = data?.payload as SentenceAnalysisPayload | undefined;
+  if (!payload || payload.version !== 2 || validateSentenceAnalysis(payload)) return null;
+  let resp: Partial<SaResponse> = {};
+  try { resp = JSON.parse(responseChoice) ?? {}; } catch { /* noop */ }
+  const g = gradeSentenceAnalysis(payload, Array.isArray(resp.steps) ? resp.steps : []);
+  const stored: SaResponse = { v: 2, steps: Array.isArray(resp.steps) ? resp.steps : [], items: g.items };
+  return { isCorrect: g.isCorrect, scorePct: g.scorePct, responseChoice: JSON.stringify(stored) };
+}
+
 // ── 드릴 답변 제출 ────────────────────────────────────────
 // type  = 현재 블록 타입 (translation | fill_blank | writing | grammar_choice)
 // step  = 블록 내 인덱스 (0-based)
@@ -59,7 +78,7 @@ export async function submitDrillAnswerAction(
 
   const drillType      = (fd.get('drill_type') as string)?.trim();
   const responseText   = (fd.get('response_text') as string)?.trim() ?? '';
-  const responseChoice = (fd.get('response_choice') as string)?.trim() ?? '';
+  let responseChoice = (fd.get('response_choice') as string)?.trim() ?? '';
 
   let isCorrect:    boolean | null = null;
   let scorePct:     number  | null = null;
@@ -97,10 +116,19 @@ export async function submitDrillAnswerAction(
     scorePct  = g.scorePct;
 
   } else if (drillType === 'structure_svo') {
-    const mistakeCount = parseInt((fd.get('mistake_count') as string) ?? '0', 10) || 0;
-    const g = gradeStructureSvo(mistakeCount);
-    isCorrect = g.isCorrect;
-    scorePct  = g.scorePct;
+    const sa = fd.get('sa_version') === '2'
+      ? await gradeSentenceAnalysisFromDb(supabase, drillId, responseChoice)
+      : null;
+    if (sa) {
+      isCorrect      = sa.isCorrect;
+      scorePct       = sa.scorePct;
+      responseChoice = sa.responseChoice;
+    } else {
+      const mistakeCount = parseInt((fd.get('mistake_count') as string) ?? '0', 10) || 0;
+      const g = gradeStructureSvo(mistakeCount);
+      isCorrect = g.isCorrect;
+      scorePct  = g.scorePct;
+    }
   }
 
   // translation/writing(AI 채점 타입)은 여기서 채점하지 않고 is_correct=null 로 저장.
@@ -212,7 +240,7 @@ export async function submitAnswerClientAction(
 
   const drillType      = (fd.get('drill_type') as string)?.trim();
   const responseText   = (fd.get('response_text') as string)?.trim() ?? '';
-  const responseChoice = (fd.get('response_choice') as string)?.trim() ?? '';
+  let responseChoice = (fd.get('response_choice') as string)?.trim() ?? '';
 
   let isCorrect:    boolean | null = null;
   let scorePct:     number  | null = null;
@@ -249,10 +277,19 @@ export async function submitAnswerClientAction(
     scorePct  = g.scorePct;
 
   } else if (drillType === 'structure_svo') {
-    const mistakeCount = parseInt((fd.get('mistake_count') as string) ?? '0', 10) || 0;
-    const g = gradeStructureSvo(mistakeCount);
-    isCorrect = g.isCorrect;
-    scorePct  = g.scorePct;
+    const sa = fd.get('sa_version') === '2'
+      ? await gradeSentenceAnalysisFromDb(supabase, drillId, responseChoice)
+      : null;
+    if (sa) {
+      isCorrect      = sa.isCorrect;
+      scorePct       = sa.scorePct;
+      responseChoice = sa.responseChoice;
+    } else {
+      const mistakeCount = parseInt((fd.get('mistake_count') as string) ?? '0', 10) || 0;
+      const g = gradeStructureSvo(mistakeCount);
+      isCorrect = g.isCorrect;
+      scorePct  = g.scorePct;
+    }
   }
 
   // translation/writing 은 여기서 AI 채점하지 않는다(응답 블로킹 방지).

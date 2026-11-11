@@ -4,7 +4,10 @@ import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import WritingHintReveal from '../WritingHintReveal';
-import PassagePanel from './PassagePanel';
+import SentenceAnalysisDrill from './SentenceAnalysisDrill';
+import type { SentenceAnalysisPayload } from '@/models/hi-naesin/drill';
+import PassagePanel, { type PassageMask } from './PassagePanel';
+import WordNotebook, { useWordNotebook } from './WordNotebook';
 import {
   submitAnswerClientAction,
   selfCheckClientAction,
@@ -78,6 +81,7 @@ const DRILL_INSTRUCTION: Record<string, string> = {
 
 export default function DrillClient({
   sessionId,
+  passageId,
   passageTitle,
   passageText,
   passageTranslation,
@@ -88,6 +92,7 @@ export default function DrillClient({
   enabledDrillTypes,
 }: {
   sessionId: string;
+  passageId: string;
   passageTitle: string;
   passageText: string;
   passageTranslation: string | null;
@@ -99,6 +104,8 @@ export default function DrillClient({
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const notebook = useWordNotebook(passageId);
+  const [passageOpen, setPassageOpen] = useState(false); // 모바일에서 지문 접기/펼치기
 
   // ── 응답 상태 ─────────────────────────────────────────
   const [responses, setResponses] = useState<Map<string, ResponseRow>>(
@@ -235,64 +242,90 @@ export default function DrillClient({
   const p = drill.payload;
   let highlightText: string | null = null;
   let highlightType: 'sentence' | 'word' | null = null;
+  // 정답이 지문에 그대로 드러나는 유형은 풀이 중에 해당 문장을 가린다 (제출 후엔 공개)
+  let passageMask: PassageMask | null = null;
+  const sentenceOf = (key: string) => (p as Record<string, string | undefined>)[key] ?? null;
   if (currentType === 'translation' || currentType === 'translation_arrange' || currentType === 'translation_choice') {
-    highlightText = (p as { sentenceEn?: string }).sentenceEn ?? null;
+    highlightText = sentenceOf('sentenceEn');
     highlightType = 'sentence';
   } else if (currentType === 'fill_blank') {
-    highlightText = (p as { sentenceTemplate?: string }).sentenceTemplate ?? null;
-    highlightType = 'sentence';
+    // 지문에는 빈칸이 채워진 원문이 있으므로, 풀이 중엔 빈칸 템플릿으로 바꿔 보여준다
+    highlightText = null;
+    const tpl = sentenceOf('sentenceTemplate');
+    if (tpl && !isAnswered) passageMask = { target: tpl, mode: 'blank' };
+    else { highlightText = tpl; highlightType = 'sentence'; }
   } else if (currentType === 'writing') {
-    highlightText = (p as { answerEn?: string }).answerEn ?? null;
-    highlightType = 'sentence';
+    // 작문할 영어 문장(answerEn)은 지문에 그대로 있으므로 풀이 중엔 가린다
+    const ans = sentenceOf('answerEn');
+    if (ans && !isAnswered) passageMask = { target: ans, mode: 'mask' };
+    else { highlightText = ans; highlightType = 'sentence'; }
   } else if (currentType === 'writing_arrange') {
-    highlightText = (p as { koPrompt?: string }).koPrompt ?? null;
-    highlightType = 'sentence';
+    const chunks = (p as { chunks?: Array<{ en?: string }> }).chunks ?? [];
+    const ans = chunks.map((c) => c.en ?? '').join(' ').trim();
+    if (ans && !isAnswered) passageMask = { target: ans, mode: 'mask' };
+    else if (ans) { highlightText = ans; highlightType = 'sentence'; }
   } else if (currentType === 'vocab') {
-    highlightText = (p as { word?: string }).word ?? null;
+    highlightText = sentenceOf('word');
     highlightType = 'word';
   } else if (currentType === 'grammar_choice') {
-    highlightText = (p as { sentenceTemplate?: string }).sentenceTemplate ?? null;
-    highlightType = 'sentence';
-  } else if (currentType === 'identify_categorize') {
-    highlightText = (p as { sentence?: string }).sentence ?? null;
-    highlightType = 'sentence';
-  } else if (currentType === 'structure_svo') {
-    highlightText = (p as { sentence?: string }).sentence ?? null;
+    const tpl = sentenceOf('sentenceTemplate');
+    if (tpl && !isAnswered) passageMask = { target: tpl, mode: 'blank' };
+    else { highlightText = tpl; highlightType = 'sentence'; }
+  } else if (currentType === 'identify_categorize' || currentType === 'structure_svo') {
+    highlightText = sentenceOf('sentence');
     highlightType = 'sentence';
   }
+  const vocabLocked = currentType === 'vocab';
 
   return (
     <div className="mx-auto max-w-[1600px] px-4 py-4 space-y-4" suppressHydrationWarning>
-      {/* 상단 바: 목록 버튼 + 제목 */}
+      {/* 상단 바: 목록 버튼 + 지문 출처 */}
       <div className="flex items-center gap-3">
         <Link
           href="/hi-naesin"
-          className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 transition-colors shrink-0"
+          className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-neutral-500 hover:bg-neutral-100 hover:text-neutral-700 transition-colors shrink-0"
         >
           ← 목록
         </Link>
         <div className="h-4 w-px bg-neutral-200 shrink-0" />
-        <h1 className="text-lg font-semibold text-neutral-900 truncate">{passageTitle}</h1>
+        <h1 className="text-sm font-medium text-neutral-500 truncate">{passageTitle}</h1>
       </div>
 
-      {/* 2-column layout */}
-      <div className="grid grid-cols-1 gap-6 justify-center" style={{ gridTemplateColumns: 'min(720px, 100%) 480px' }}>
+      {/* 모바일: 지문은 접어 두고 문제를 먼저 보이게 */}
+      <button
+        type="button"
+        onClick={() => setPassageOpen((v) => !v)}
+        aria-expanded={passageOpen}
+        className="flex w-full items-center justify-between rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm font-semibold text-neutral-700 lg:hidden"
+      >
+        <span>📖 지문 · 단어장 {passageOpen ? '접기' : '펼치기'}</span>
+        <span className="text-neutral-400">{passageOpen ? '▲' : '▼'}</span>
+      </button>
 
-        {/* Left: Passage Panel (sticky) */}
-        <div className="lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto">
+      {/* 2-column layout (lg 이상) / 1-column (모바일) */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,720px)_minmax(0,480px)] lg:justify-center">
+
+        {/* Left: Passage Panel (sticky) + 단어장 */}
+        <div className={`${passageOpen ? 'block' : 'hidden'} space-y-4 lg:block lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto lg:pr-1`}>
           <PassagePanel
+            passageTitle={passageTitle}
             passageText={passageText}
             passageTranslation={passageTranslation}
             highlightText={highlightText}
             highlightType={highlightType}
             hideTranslationToggle={TRANSLATION_REVEALING_TYPES.has(currentType)}
+            mask={passageMask}
+            savedTerms={notebook.words.map((w) => w.term)}
+            onPickTerm={notebook.pick}
+            pickDisabledReason={vocabLocked ? '🔒 단어 문제를 푸는 동안엔 뜻 조회가 잠겨요. 다른 문제에서 단어를 드래그해 보세요.' : null}
           />
+          <WordNotebook passageId={passageId} notebook={notebook} hideMeanings={vocabLocked} />
         </div>
 
         {/* Right: Drill content */}
         <div className="space-y-4">
           {/* 블록 탭 바 */}
-          <div className="flex gap-1 rounded-2xl border bg-white p-1">
+          <div className="flex gap-1 overflow-x-auto rounded-2xl border bg-white p-1">
             {availableTypes.map((t) => {
               const info      = typeInfoMap[t];
               const isActive  = t === currentType;
@@ -306,7 +339,7 @@ export default function DrillClient({
                     setCurrentStep(info.firstUnanswered);
                   }}
                   className={[
-                    'flex flex-1 flex-col items-center gap-0.5 rounded-xl px-2 py-2 text-center transition-colors',
+                    'flex min-w-[64px] flex-1 flex-col items-center gap-0.5 whitespace-nowrap rounded-xl px-2 py-2 text-center transition-colors',
                     isActive
                       ? 'bg-neutral-900 text-white'
                       : 'text-neutral-500 hover:bg-neutral-50',
@@ -337,7 +370,7 @@ export default function DrillClient({
           </div>
 
           {/* 드릴 카드 */}
-          <div className="rounded-2xl border bg-white p-6 space-y-5">
+          <div className="space-y-5 break-keep rounded-2xl border bg-white p-4 sm:p-6">
             {(currentType === 'translation_arrange' || currentType === 'writing_arrange') && (
               <ArrangeDrill
                 key={drill.id}
@@ -431,7 +464,19 @@ export default function DrillClient({
                 nextType={nextType}
               />
             )}
-            {currentType === 'structure_svo' && (
+            {currentType === 'structure_svo' && (drill.payload as { version?: number }).version === 2 && (
+              <SentenceAnalysisDrill
+                key={drill.id}
+                payload={drill.payload as unknown as SentenceAnalysisPayload}
+                response={response}
+                isAnswered={isAnswered}
+                onSubmit={handleSubmit}
+                onNext={goNext}
+                isLast={currentStep + 1 >= typeTotal}
+                nextLabel={nextType ? DRILL_LABEL[nextType] : null}
+              />
+            )}
+            {currentType === 'structure_svo' && (drill.payload as { version?: number }).version !== 2 && (
               <StructureSvoDrill
                 key={drill.id}
                 drill={drill}

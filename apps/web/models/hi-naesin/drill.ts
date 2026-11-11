@@ -166,6 +166,46 @@ export type StructureSvoPayload = {
   modifiers?: StructureModifierAnswer[];
 };
 
+// ── 문장 분석 v2 (structure_svo, payload.version === 2) ──────────
+// 문장 하나만 주고 지시를 순서대로 준다(지문 맥락 불필요). 위치는 단어 토큰 인덱스.
+
+export type SaSpan = [number, number]; // [startWord, endWord], 양끝 포함
+export type SaLevel = 'basic' | 'intermediate' | 'advanced';
+export type SaItemId = 'fullS' | 'coreS' | 'V'; // 중급·고급 단계에서 확장
+export type SaReason = 'missing' | 'wrong_span' | 'too_short' | 'too_long';
+
+export type SaClause = {
+  id: string;
+  kind: 'main';          // 고급 단계에서 noun/relative/adverbial... 확장
+  span?: SaSpan;
+  fullS: SaSpan[];       // 완전 주어 (수식어 포함)
+  coreS: SaSpan[];       // 핵심 주어 (수식어 제외) — 병치면 여러 개
+  V: SaSpan;
+};
+
+export type SentenceAnalysisPayload = {
+  version: 2;
+  sentence: string;
+  level: SaLevel;
+  key: { clauses: SaClause[] };
+  accepted?: Partial<Record<SaItemId, SaSpan[]>>; // 경계 차이 허용
+};
+
+export type SaItemResult = {
+  id: SaItemId;
+  ok: boolean;
+  weight: number;
+  reason?: SaReason;
+  student: SaSpan | null;
+};
+
+// 학생 응답 (response_choice JSON). items 는 서버가 채점 후 채워 저장한다.
+export type SaResponse = {
+  v: 2;
+  steps: Array<{ id: SaItemId; span: SaSpan | null }>;
+  items?: SaItemResult[];
+};
+
 // ── 통합 타입 ────────────────────────────
 
 export type DrillPayloadMap = {
@@ -179,7 +219,7 @@ export type DrillPayloadMap = {
   grammar_choice:       GrammarChoicePayload;
   vocab:                VocabPayload;
   identify_categorize:  IdentifyCategorizePayload;
-  structure_svo:        StructureSvoPayload;
+  structure_svo:        StructureSvoPayload | SentenceAnalysisPayload;
 };
 
 export type HiNaesinDrill<T extends HiNaesinDrillType = HiNaesinDrillType> = {

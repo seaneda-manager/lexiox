@@ -106,6 +106,7 @@ export default async function HiNaesinDrillPage({
   return (
     <DrillClient
       sessionId={sessionId}
+      passageId={session.passage_id}
       passageTitle={passageData?.title ?? '지문'}
       passageText={passageData?.passage_text ?? ''}
       passageTranslation={passageData?.translation_ko ?? null}
