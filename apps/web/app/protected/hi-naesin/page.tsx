@@ -5,7 +5,7 @@ import { HI_NAESIN_DRILL_TYPES, sourceTypeLabel } from '@/models/hi-naesin';
 import type { HiNaesinDrillType, HiNaesinSourceType } from '@/models/hi-naesin';
 import { startHiNaesinDrillSessionAction } from './passages/actions';
 import SectionGuide from '@/app/components/SectionGuide';
-import { passageSourceLabel } from '@/lib/hi-naesin/passageLabel';
+import { passageSourceLabel, passageGroup, passageUnitLabel } from '@/lib/hi-naesin/passageLabel';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,6 +25,10 @@ type PassageProgress = {
   passageId:     string;
   title:         string;
   sourceLabel:   string;
+  unitLabel:     string;
+  groupKey:      string;
+  groupTitle:    string;
+  groupSort:     string;
   sourceType:    HiNaesinSourceType | string;
   grade:         string;
   sessionId:     string | null;
@@ -38,8 +42,6 @@ type PassageProgress = {
   totalDrills: number;
 };
 
-// 출처별 그룹 순서
-const SOURCE_ORDER: string[] = ['mock_exam', 'textbook', 'external_book'];
 
 const SOURCE_BADGE: Record<string, string> = {
   mock_exam:     'border-sky-200 bg-sky-50 text-sky-700',
@@ -195,6 +197,10 @@ export default async function HiNaesinDashboard() {
       passageId:     pid,
       title:         passage?.title ?? '(지문)',
       sourceLabel:   passageSourceLabel(passage),
+      unitLabel:     passageUnitLabel(passage),
+      groupKey:      passageGroup(passage).key,
+      groupTitle:    passageGroup(passage).title,
+      groupSort:     passageGroup(passage).sortKey,
       sourceType:    passage?.source_type ?? 'external_book',
       grade:         passage?.grade ?? '',
       sessionId:     session?.id ?? null,
@@ -205,18 +211,21 @@ export default async function HiNaesinDashboard() {
     };
   });
 
-  // 출처별 그룹핑
-  const grouped = SOURCE_ORDER.map((src) => ({
-    sourceType: src,
-    items: progressList.filter((p) => p.sourceType === src),
-  })).filter((g) => g.items.length > 0);
-
-  // 분류 안 된 것도 포함
-  const knownSources = new Set(SOURCE_ORDER);
-  const otherItems = progressList.filter((p) => !knownSources.has(p.sourceType));
-  if (otherItems.length > 0) {
-    grouped.push({ sourceType: 'external_book', items: otherItems });
+  // 교재별 / 모의고사 회차별 그룹핑 (그룹 안은 단원·번호 자연 정렬)
+  const groupMap = new Map<string, { key: string; title: string; sortKey: string; sourceType: string; items: PassageProgress[] }>();
+  for (const p of progressList) {
+    const g = groupMap.get(p.groupKey) ?? { key: p.groupKey, title: p.groupTitle, sortKey: p.groupSort, sourceType: p.sourceType as string, items: [] };
+    g.items.push(p);
+    groupMap.set(p.groupKey, g);
   }
+  const grouped = [...groupMap.values()]
+    .sort((a, b) => a.sortKey.localeCompare(b.sortKey, 'ko', { numeric: true }))
+    .map((g) => ({
+      ...g,
+      items: [...g.items].sort((a, b) =>
+        (a.unitLabel || a.title).localeCompare(b.unitLabel || b.title, 'ko', { numeric: true }),
+      ),
+    }));
 
   // ── 8. "이어하기" 타겟 — 첫 번째 미완성 지문 ─────────────
   const nextPassage =
@@ -377,13 +386,14 @@ export default async function HiNaesinDashboard() {
 
       {/* ── 진도 목록 ──────────────────────────────────────── */}
       <section id="drill-table" className="space-y-6">
-        {grouped.map(({ sourceType: src, items }) => (
-          <div key={src} className="space-y-3">
+        {grouped.map(({ key, title: groupTitle, sourceType: src, items }) => (
+          <div key={key} className="space-y-3">
             {/* 출처 그룹 헤더 */}
             <div className="flex items-center gap-2">
               <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${SOURCE_BADGE[src] ?? SOURCE_BADGE.external_book}`}>
                 {sourceTypeLabel(src as HiNaesinSourceType)}
               </span>
+              <h2 className="text-sm font-bold text-neutral-800">{groupTitle}</h2>
               <span className="text-[11px] text-neutral-400">{items.length}개 지문</span>
             </div>
 
@@ -400,23 +410,27 @@ export default async function HiNaesinDashboard() {
                 const gradeLabel = p.grade === 'H1' ? '고1' : p.grade === 'H2' ? '고2' : p.grade === 'H3' ? '고3'
                   : p.grade === 'M1' ? '중1' : p.grade === 'M2' ? '중2' : p.grade === 'M3' ? '중3' : '';
 
-                const btnLabel = isAllDone ? '다시 하기'
-                  : p.sessionStatus === 'started' ? '이어하기'
-                  : p.totalDone > 0 ? '계속하기'
+                const inProgress = !isAllDone && (p.totalDone > 0 || p.sessionStatus === 'started');
+                const btnLabel = isAllDone ? '✓ 완료 · 다시 하기'
+                  : inProgress ? `이어하기 · ${pct}%`
                   : '시작하기';
 
                 return (
                   <div
                     key={p.passageId}
                     className={[
-                      'flex flex-col rounded-2xl border bg-white p-5 gap-4 transition',
-                      isAllDone ? 'opacity-55' : 'hover:border-neutral-300 hover:shadow-sm',
+                      'flex flex-col rounded-2xl border p-5 gap-4 transition',
+                      isAllDone
+                        ? 'border-emerald-300 bg-emerald-50/70'
+                        : inProgress
+                        ? 'border-amber-200 bg-white hover:shadow-sm'
+                        : 'bg-white hover:border-neutral-300 hover:shadow-sm',
                     ].join(' ')}
                   >
                     {/* 제목 + 메타 */}
                     <div className="flex-1 space-y-1">
-                      {p.sourceLabel && (
-                        <p className="text-[11px] font-semibold text-emerald-700">{p.sourceLabel}</p>
+                      {(p.unitLabel || p.sourceLabel) && (
+                        <p className="text-[11px] font-semibold text-emerald-700">{p.unitLabel || p.sourceLabel}</p>
                       )}
                       <p className="text-sm font-semibold leading-snug text-neutral-800">
                         {displayTitle}
@@ -487,11 +501,9 @@ export default async function HiNaesinDashboard() {
                             className={[
                               'w-full rounded-xl py-2 text-sm font-semibold transition',
                               isAllDone
-                                ? 'border border-neutral-200 text-neutral-400 hover:bg-neutral-50'
-                                : p.sessionStatus === 'started'
+                                ? 'border border-emerald-400 bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
+                                : inProgress
                                 ? 'bg-amber-500 text-white hover:bg-amber-600'
-                                : p.totalDone > 0
-                                ? 'bg-emerald-600 text-white hover:bg-emerald-700'
                                 : 'bg-neutral-900 text-white hover:bg-neutral-800',
                             ].join(' ')}
                           >

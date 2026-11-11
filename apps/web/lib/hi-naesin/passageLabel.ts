@@ -31,3 +31,37 @@ export function passageSourceLabel(p: PassageSourceMeta | null | undefined): str
   }
   return parts.map((s) => (s ?? '').trim()).filter(Boolean).join(' · ');
 }
+
+// ── 목록 그룹핑: 교재별 / 모의고사 회차별 ─────────────────────
+export type PassageGroup = {
+  key: string;
+  title: string;      // 그룹 헤더 (예: "올림포스 영어독해 기본1", "2026년 10월 모의고사")
+  sortKey: string;    // 그룹 정렬용
+};
+
+export function passageGroup(p: PassageSourceMeta | null | undefined): PassageGroup {
+  if (p?.source_type === 'mock_exam') {
+    const y = p.exam_year ?? 0;
+    const m = p.exam_month ?? 0;
+    return {
+      key: `mock:${y}-${m}`,
+      title: `${y ? `${y}년 ` : ''}${m ? `${m}월 ` : ''}모의고사`.trim(),
+      // 최신 회차가 위로 (내림차순)
+      sortKey: `0:${String(9999 - y).padStart(4, '0')}-${String(99 - m).padStart(2, '0')}`,
+    };
+  }
+  if (p?.source_type === 'textbook') {
+    const title = [p.school_name, p.textbook_name].map((s) => (s ?? '').trim()).filter(Boolean).join(' · ') || '교과서';
+    return { key: `tb:${title}`, title, sortKey: `1:${title}` };
+  }
+  const book = (p?.book_name ?? '').trim() || '기타 교재';
+  return { key: `bk:${book}`, title: book, sortKey: `2:${book}` };
+}
+
+/** 그룹 안에서 카드에 보여줄 짧은 위치 (단원/유닛/문제 번호) */
+export function passageUnitLabel(p: PassageSourceMeta | null | undefined): string {
+  if (!p) return '';
+  if (p.source_type === 'mock_exam') return p.question_number ? `${p.question_number}번` : '';
+  if (p.source_type === 'textbook') return (p.unit_label ?? '').trim();
+  return (p.book_unit ?? '').trim();
+}
