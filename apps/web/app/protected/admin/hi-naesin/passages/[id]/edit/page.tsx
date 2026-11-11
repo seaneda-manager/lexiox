@@ -32,6 +32,8 @@ import {
   removeAssignmentAction,
   updateEnabledDrillTypesAction,
 } from './assign-actions';
+import { generateVariantQuestionsAction } from './variant-actions';
+import { AI_VARIANT_TYPES, aiTypeLabel } from '@/lib/hi-naesin/variant-generator';
 import { startHiNaesinDrillSessionAction } from '@/app/protected/hi-naesin/passages/actions';
 import { tokenizeSentence, spanText } from '@/lib/hi-naesin/sentenceAnalysis';
 import type { SentenceAnalysisPayload, SaSpan } from '@/models/hi-naesin/drill';
@@ -44,6 +46,7 @@ type SearchParams = Promise<{
   tab?: string;
   ok?: string;    // '2step' | '3step' | '4step'
   err?: string;   // error message
+  vn?: string; vf?: string; vr?: string; vs?: string;
   t?: string; w?: string; fb?: string; v?: string; g?: string; d?: string;
   ta?: string; wa?: string; tc?: string;
 }>;
@@ -56,7 +59,7 @@ export default async function HiNaesinPassageEditPage({
   searchParams: SearchParams;
 }) {
   const { id } = await params;
-  const { tab = 'passage', ok, err, t, w, fb, v, g, d, ta, wa, tc } = await searchParams;
+  const { tab = 'passage', ok, err, vn, vf, vr, vs, t, w, fb, v, g, d, ta, wa, tc } = await searchParams;
   const supabase = await getServerSupabase();
 
   const questionIds = (
@@ -213,6 +216,14 @@ export default async function HiNaesinPassageEditPage({
           해석 배열 <strong>{ta ?? 0}</strong>개 · 작문 배열 <strong>{wa ?? 0}</strong>개 ·
           해석 3지선다 <strong>{tc ?? 0}</strong>개 · 자유해석 <strong>{t ?? 0}</strong>개 · 자유작문 <strong>{w ?? 0}</strong>개
           {Number(ta) === 0 && <span className="ml-2 text-xs text-sky-600">(AI 응답 없음 — 잠시 후 재시도)</span>}
+        </div>
+      )}
+      {ok === 'variant_ai' && (
+        <div className="space-y-1 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          <div>✓ 변형문제 AI 초안 <strong>{vn ?? 0}</strong>개 생성 — 아래에서 검수 후 <strong>공개</strong>하세요.</div>
+          {vs && <div className="text-xs text-neutral-600">지문에 어울리지 않아 건너뜀: {decodeURIComponent(vs)}</div>}
+          {vf && <div className="text-xs text-amber-700">검증 실패로 건너뜀: {decodeURIComponent(vf)}</div>}
+          {vr && <div className="text-xs text-emerald-700">추천 이유 — {decodeURIComponent(vr)}</div>}
         </div>
       )}
       {err && (
@@ -498,6 +509,51 @@ export default async function HiNaesinPassageEditPage({
       {/* ── 탭: 변형문제 ── */}
       {tab === 'variant' && (
         <div className="space-y-4">
+          {/* AI 자동 출제 */}
+          <section className="space-y-3 rounded-2xl border border-violet-200 bg-violet-50/50 p-5">
+            <div>
+              <h2 className="text-sm font-semibold text-violet-900">AI 변형문제 자동 출제</h2>
+              <p className="mt-0.5 text-xs text-violet-700">
+                지문에서 실제 시험 유형의 문제를 만들어 <b>비공개 초안</b>으로 저장합니다. 검수 후 공개하세요.
+                모든 유형을 만들 필요는 없어요 — 지문에 어울리는 유형만 고르세요. 어울리지 않는 유형은 AI가 스스로 건너뜁니다.
+                (문제마다 &quot;정답인 이유 고르기&quot;와 보기별 해설이 함께 만들어집니다)
+              </p>
+            </div>
+            <form action={generateVariantQuestionsAction.bind(null, id)} className="space-y-3">
+              <div className="grid gap-1.5 sm:grid-cols-2">
+                {AI_VARIANT_TYPES.map((t) => (
+                  <label key={t} className="flex items-center gap-2 text-xs text-neutral-700">
+                    <input type="checkbox" name="types" value={t} />
+                    {aiTypeLabel(t)}
+                  </label>
+                ))}
+                <label className="flex items-center gap-2 text-xs text-neutral-700">
+                  <input type="checkbox" name="text_ordering" value="1" />
+                  지문 배열 (4등분 · 문장 분리 필요)
+                </label>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="submit"
+                  name="mode"
+                  value="auto"
+                  className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-700"
+                >
+                  지문에 맞는 유형 추천받아 출제
+                </button>
+                <button
+                  type="submit"
+                  name="mode"
+                  value="pick"
+                  className="rounded-xl border border-violet-300 bg-white px-4 py-2 text-sm font-semibold text-violet-700 hover:bg-violet-50"
+                >
+                  선택한 유형으로 출제
+                </button>
+              </div>
+              <p className="text-[11px] text-neutral-500">같은 유형의 기존 비공개 초안은 새로 만든 것으로 교체됩니다. 공개된 문제는 그대로 둡니다. 20~60초 걸릴 수 있어요.</p>
+            </form>
+          </section>
+
           {/* 기존 변형문제 목록 */}
           {questions.map((q) => {
             const qChoices = (choicesByQuestion[q.id] ?? []).sort(
@@ -552,7 +608,7 @@ export default async function HiNaesinPassageEditPage({
                     const existing = qChoices.find((c) => c.order_index === i);
                     return (
                       <div key={i} className="flex items-center gap-2">
-                        <span className="w-5 text-xs text-neutral-400">①②③④⑤'[i-1]</span>
+                        <span className="w-5 text-xs text-neutral-400">{'①②③④⑤'[i - 1]}</span>
                         <input
                           name={`choice_${i}`}
                           defaultValue={existing?.text ?? ''}

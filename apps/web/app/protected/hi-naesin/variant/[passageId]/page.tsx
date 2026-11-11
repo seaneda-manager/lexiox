@@ -3,6 +3,9 @@ import Link from 'next/link';
 import { getServerSupabase } from '@/lib/supabase/server';
 import { startVariantSessionAction, submitVariantAnswerAction } from './actions';
 import TextOrderingClient from './TextOrderingClient';
+import VariantMcqClient, { type McqAnswered, type McqView } from './VariantMcqClient';
+import { getServiceSupabase } from '@/lib/supabase/service';
+import { passageForQuestions } from '@/lib/hi-naesin/variant-generator';
 
 export const dynamic = 'force-dynamic';
 
@@ -58,7 +61,7 @@ export default async function HiNaesinVariantPage({
   // ── 이미 답한 문제 조회 ────────────────────────────────
   const { data: answers } = await supabase
     .from('hi_naesin_variant_answers')
-    .select('question_id, selected_order, is_correct')
+    .select('question_id, selected_order, selected_choice_id, is_correct, reason_choice_index, reason_is_correct')
     .eq('session_id', sessionId);
 
   const answerMap = new Map(
@@ -66,6 +69,21 @@ export default async function HiNaesinVariantPage({
   );
 
   const allAnswered = questions.every((q) => answerMap.has(q.id));
+
+  // 보기는 서비스 키로 읽어 정답 표시(is_correct)를 학생 화면에서 분리한다
+  const db = getServiceSupabase();
+  const { data: allChoices } = await db
+    .from('hi_naesin_variant_choices')
+    .select('id, question_id, order_index, text, is_correct')
+    .in('question_id', questions.map((q) => q.id))
+    .order('order_index');
+  const choicesByQ = new Map<string, NonNullable<typeof allChoices>>();
+  for (const c of allChoices ?? []) {
+    const arr = choicesByQ.get(c.question_id) ?? [];
+    arr.push(c);
+    choicesByQ.set(c.question_id, arr);
+  }
+  const fallbackPassage = passageForQuestions(passage.passage_text ?? '');
 
   return (
     <main className="mx-auto max-w-2xl space-y-8 px-4 py-10">
@@ -82,14 +100,6 @@ export default async function HiNaesinVariantPage({
           </div>
         )}
       </header>
-
-      {/* 지문 원문 */}
-      <section className="rounded-2xl border bg-neutral-50 p-5">
-        <p className="text-xs font-semibold text-neutral-500 mb-2">원문 지문</p>
-        <p className="text-sm leading-7 text-neutral-700 whitespace-pre-line">
-          {passage.passage_text}
-        </p>
-      </section>
 
       {/* 변형문제 목록 */}
       {questions.map((q, qi) => {
@@ -112,8 +122,51 @@ export default async function HiNaesinVariantPage({
               )}
             </div>
 
-            {/* text_ordering */}
-            {q.question_type === 'text_ordering' && (() => {
+            {/* 5지선다형 (AI 출제 포함): 보기가 있으면 공용 풀이 화면 */}
+            {(choicesByQ.get(q.id)?.length ?? 0) > 0 && (() => {
+              const cs = choicesByQ.get(q.id)!;
+              const pl = payload as {
+                markedPassage?: string; passage?: string; numberedPassage?: string; summaryTemplate?: string;
+                fixedSegment?: { text: string }; segments?: Array<{ id: string; text: string }>;
+                reason?: { options?: string[]; correct?: number }; choiceNotes?: string[];
+              };
+              // 정답·이유 정답·보기별 해설은 클라이언트로 내리지 않는다 (제출 후 서버 액션이 돌려줌)
+              const view: McqView = {
+                markedPassage: pl.markedPassage, passage: pl.passage, numberedPassage: pl.numberedPassage,
+                summaryTemplate: pl.summaryTemplate, fixedSegment: pl.fixedSegment, segments: pl.segments,
+              };
+              const hasReason = Array.isArray(pl.reason?.options) && typeof pl.reason?.correct === 'number';
+              const correct = cs.find((c) => c.is_correct);
+              const reasonDone = answer?.reason_choice_index != null;
+              const initial: McqAnswered | null = answer && correct
+                ? {
+                    selectedChoiceId: answer.selected_choice_id ?? null,
+                    isCorrect: answer.is_correct,
+                    correctChoiceId: correct.id,
+                    reasonIndex: answer.reason_choice_index ?? null,
+                    reasonIsCorrect: answer.reason_is_correct ?? null,
+                    correctReasonIndex: reasonDone && hasReason ? pl.reason!.correct! : null,
+                    choiceNotes: (!hasReason || reasonDone) ? (pl.choiceNotes ?? null) : null,
+                  }
+                : null;
+              return (
+                <VariantMcqClient
+                  passageId={passageId}
+                  sessionId={sessionId!}
+                  questionId={q.id}
+                  view={view}
+                  fallbackPassage={fallbackPassage}
+                  choices={cs.map((c) => ({ id: c.id, order: c.order_index, text: c.text }))}
+                  hasReason={hasReason}
+                  initial={initial}
+                  reasonOptions={answer && hasReason ? pl.reason!.options! : null}
+                  explanation={q.explanation ?? null}
+                />
+              );
+            })()}
+
+            {/* text_ordering (보기 없는 수동 문제) */}
+            {q.question_type === 'text_ordering' && (choicesByQ.get(q.id)?.length ?? 0) === 0 && (() => {
               type TOPayload = {
                 fixedSegment: { text: string };
                 segments: Array<{ id: string; text: string }>;
@@ -148,7 +201,7 @@ export default async function HiNaesinVariantPage({
             })()}
 
             {/* 해설 */}
-            {answer && q.explanation && (
+            {answer && q.explanation && (choicesByQ.get(q.id)?.length ?? 0) === 0 && (
               <div className="rounded-xl border border-neutral-100 bg-neutral-50 px-4 py-3">
                 <p className="text-xs font-semibold text-neutral-500 mb-1">해설</p>
                 <p className="text-sm text-neutral-600">{q.explanation}</p>

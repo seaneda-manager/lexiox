@@ -83,6 +83,7 @@ export default function DrillClient({
   sessionId,
   passageId,
   passageTitle,
+  passageSource = '',
   passageText,
   passageTranslation,
   allDrills,
@@ -94,6 +95,7 @@ export default function DrillClient({
   sessionId: string;
   passageId: string;
   passageTitle: string;
+  passageSource?: string;
   passageText: string;
   passageTranslation: string | null;
   allDrills: DrillRow[];
@@ -288,7 +290,10 @@ export default function DrillClient({
           ← 목록
         </Link>
         <div className="h-4 w-px bg-neutral-200 shrink-0" />
-        <h1 className="text-sm font-medium text-neutral-500 truncate">{passageTitle}</h1>
+        <h1 className="min-w-0 truncate text-sm font-medium text-neutral-500">
+          {passageSource && <span className="mr-1.5 font-semibold text-emerald-700">{passageSource} ·</span>}
+          {passageTitle}
+        </h1>
       </div>
 
       {/* 모바일: 지문은 접어 두고 문제를 먼저 보이게 */}

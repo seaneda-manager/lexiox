@@ -1,6 +1,7 @@
 import { notFound, redirect } from 'next/navigation';
 import { getServerSupabase } from '@/lib/supabase/server';
 import DrillClient from './_components/DrillClient';
+import { passageSourceLabel } from '@/lib/hi-naesin/passageLabel';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,7 +55,7 @@ export default async function HiNaesinDrillPage({
     { data: allResponsesRaw },
     { data: assignmentData },
   ] = await Promise.all([
-    supabase.from('hi_naesin_passages').select('title, passage_text, translation_ko').eq('id', session.passage_id).single(),
+    supabase.from('hi_naesin_passages').select('title, passage_text, translation_ko, source_type, school_name, textbook_name, unit_label, book_name, book_unit, exam_year, exam_month, question_number').eq('id', session.passage_id).single(),
     supabase.from('hi_naesin_drills')
       .select('id, drill_type, order_index, payload')
       .eq('passage_id', session.passage_id)
@@ -108,6 +109,7 @@ export default async function HiNaesinDrillPage({
       sessionId={sessionId}
       passageId={session.passage_id}
       passageTitle={passageData?.title ?? '지문'}
+      passageSource={passageSourceLabel(passageData)}
       passageText={passageData?.passage_text ?? ''}
       passageTranslation={passageData?.translation_ko ?? null}
       allDrills={allDrills}

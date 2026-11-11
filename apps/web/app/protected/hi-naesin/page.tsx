@@ -5,6 +5,7 @@ import { HI_NAESIN_DRILL_TYPES, sourceTypeLabel } from '@/models/hi-naesin';
 import type { HiNaesinDrillType, HiNaesinSourceType } from '@/models/hi-naesin';
 import { startHiNaesinDrillSessionAction } from './passages/actions';
 import SectionGuide from '@/app/components/SectionGuide';
+import { passageSourceLabel } from '@/lib/hi-naesin/passageLabel';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,6 +24,7 @@ type CellStatus = 'done' | 'partial' | 'empty' | 'none'; // none = 해당 드릴
 type PassageProgress = {
   passageId:     string;
   title:         string;
+  sourceLabel:   string;
   sourceType:    HiNaesinSourceType | string;
   grade:         string;
   sessionId:     string | null;
@@ -192,6 +194,7 @@ export default async function HiNaesinDashboard() {
     return {
       passageId:     pid,
       title:         passage?.title ?? '(지문)',
+      sourceLabel:   passageSourceLabel(passage),
       sourceType:    passage?.source_type ?? 'external_book',
       grade:         passage?.grade ?? '',
       sessionId:     session?.id ?? null,
@@ -351,6 +354,9 @@ export default async function HiNaesinDashboard() {
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-xs text-neutral-400">다음 학습</p>
+                {nextPassage.sourceLabel && (
+                  <p className="text-[11px] font-semibold text-emerald-700 truncate">{nextPassage.sourceLabel}</p>
+                )}
                 <p className="text-sm font-semibold text-neutral-800 truncate">
                   {nextPassage.title}
                 </p>
@@ -409,6 +415,9 @@ export default async function HiNaesinDashboard() {
                   >
                     {/* 제목 + 메타 */}
                     <div className="flex-1 space-y-1">
+                      {p.sourceLabel && (
+                        <p className="text-[11px] font-semibold text-emerald-700">{p.sourceLabel}</p>
+                      )}
                       <p className="text-sm font-semibold leading-snug text-neutral-800">
                         {displayTitle}
                       </p>
