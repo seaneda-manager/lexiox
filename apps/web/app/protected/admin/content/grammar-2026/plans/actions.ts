@@ -30,8 +30,6 @@ export async function savePlanAction(input: {
   unitsPerSession: number;
   level: string;
   startUnitId: string | null;
-  textbookId?: string | null;
-  textbookUnitNo?: number | null;
 }): Promise<Result> {
   const who = await requireStaff();
   if ('error' in who) return who;
@@ -43,8 +41,6 @@ export async function savePlanAction(input: {
   if (!Number.isInteger(input.unitsPerSession) || input.unitsPerSession < 1 || input.unitsPerSession > 10)
     return { error: '회당 챕터 수는 1~10 입니다.' };
   if (!LEVELS.includes(input.level)) return { error: '레벨 값이 올바르지 않습니다.' };
-  if (input.textbookId && (!Number.isInteger(input.textbookUnitNo) || (input.textbookUnitNo as number) < 0))
-    return { error: '교재의 현재 단원을 선택하세요.' };
 
   const db = getServiceSupabase();
   const { data: stu } = await db.from('profiles').select('id, role').eq('id', input.studentId).maybeSingle();
@@ -55,10 +51,7 @@ export async function savePlanAction(input: {
     weekdays,
     units_per_session: input.unitsPerSession,
     level: input.level,
-    // 교재를 지정하면 교재 진도가 시작 위치를 정하므로 시작 챕터는 쓰지 않는다.
-    start_unit_id: input.textbookId ? null : input.startUnitId || null,
-    textbook_id: input.textbookId || null,
-    textbook_unit_no: input.textbookId ? input.textbookUnitNo ?? null : null,
+    start_unit_id: input.startUnitId || null,
     is_enabled: true,
   };
   const { data: existing } = await db.from('student_grammar_plans').select('id').eq('student_id', input.studentId).maybeSingle();

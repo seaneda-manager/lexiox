@@ -4,35 +4,6 @@ import { planGrammarSchedule, todayKst, type PlanUnit } from "@/lib/grammar/plan
 
 type Result = { created: number } | { error: string };
 
-/** 교재의 현재 단원(unitNo)부터 교재 순서대로 매핑된 챕터 id 를 펼친다. 교재가 지정되지 않았으면 null. */
-async function loadTextbookChapterOrder(textbookId: string | null, unitNo: number | null): Promise<string[] | null> {
-  if (!textbookId) return null;
-  const db = getServiceSupabase();
-  const { data: tbUnits } = await db
-    .from("grammar_textbook_units")
-    .select("id, unit_no")
-    .eq("textbook_id", textbookId)
-    .gte("unit_no", unitNo ?? 0)
-    .order("unit_no");
-  const ids = (tbUnits ?? []).map((u: { id: string }) => u.id);
-  if (ids.length === 0) return [];
-  const { data: maps } = await db
-    .from("grammar_textbook_unit_chapters")
-    .select("textbook_unit_id, unit_id, position")
-    .in("textbook_unit_id", ids);
-  const byTbUnit = new Map<string, { unit_id: string; position: number }[]>();
-  for (const m of (maps ?? []) as { textbook_unit_id: string; unit_id: string; position: number }[]) {
-    const arr = byTbUnit.get(m.textbook_unit_id) ?? [];
-    arr.push(m);
-    byTbUnit.set(m.textbook_unit_id, arr);
-  }
-  const order: string[] = [];
-  for (const id of ids) {
-    for (const m of (byTbUnit.get(id) ?? []).sort((a, b) => a.position - b.position)) order.push(m.unit_id);
-  }
-  return order;
-}
-
 /**
  * 학생의 문법 플랜에 맞춰, 아직 날짜가 없는 챕터에 날짜를 붙여 저장한다.
  * 여러 번 불러도 이미 있는 배정은 건드리지 않고 모자란 것만 추가한다(멱등).
@@ -50,12 +21,9 @@ export async function syncGrammarPlan(planId: string): Promise<Result> {
     db.from("student_grammar_assignments").select("unit_id, scheduled_date, seq").eq("plan_id", planId),
   ]);
 
-  const textbookOrder = await loadTextbookChapterOrder(plan.textbook_id ?? null, plan.textbook_unit_no ?? null);
-
   const rows = planGrammarSchedule({
     units: (units ?? []) as PlanUnit[],
     plan: {
-      textbook_chapter_order: textbookOrder,
       start_date: plan.start_date,
       weekdays: plan.weekdays ?? [],
       units_per_session: plan.units_per_session ?? 1,

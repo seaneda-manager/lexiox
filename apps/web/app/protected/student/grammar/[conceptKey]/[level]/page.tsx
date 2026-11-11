@@ -4,6 +4,7 @@ import { getServerSupabase } from "@/lib/supabase/server";
 import type { GrammarLesson } from "@/models/middle-naesin/grammar-lesson";
 import { normalizeLesson } from "@/lib/grammar-engine/sections";
 import LessonStudentPreview from "@/components/grammar-engine/LessonStudentPreview";
+import DoneButton from "../../_client/DoneButton";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,13 @@ export default async function StudentGrammarLessonPage({ params }: Props) {
   if (!row) notFound();
 
   const lesson = normalizeLesson(row.lesson) as unknown as GrammarLesson;
+  const { data: doneRow } = await supabase
+    .from("student_grammar_concept_done")
+    .select("concept_id")
+    .eq("student_id", user.id)
+    .eq("concept_id", concept.id)
+    .eq("level", level)
+    .maybeSingle();
 
   return (
     <main className="mx-auto max-w-3xl space-y-4 px-4 py-6 sm:px-6">
@@ -33,9 +41,10 @@ export default async function StudentGrammarLessonPage({ params }: Props) {
         <h1 className="text-xl font-semibold text-neutral-900">
           {concept.title_ko} <span className="text-sm font-normal text-neutral-500">L{level}</span>
         </h1>
-        <p className="text-xs text-neutral-400">연습 모드 · 풀이 기록은 아직 저장되지 않아요.</p>
+        <p className="text-xs text-neutral-400">풀이 기록은 아직 저장되지 않아요. 끝나면 아래 "레슨 완료"를 눌러 주세요.</p>
       </header>
       <LessonStudentPreview lesson={lesson} />
+      <DoneButton conceptId={concept.id} level={level} initialDone={!!doneRow} />
     </main>
   );
 }

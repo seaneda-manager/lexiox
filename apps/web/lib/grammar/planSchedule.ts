@@ -9,7 +9,7 @@ export type PlanSettings = {
   units_per_session: number;
   level: string; // 'all' | 'ms' | 'hs' | 'toefl'
   start_unit_id: string | null;
-  /** 교재 진도 기준 배정: 현재 교재 단원부터 교재 순서대로 펼친 챕터 id. 있으면 레벨 순서 대신 이걸 따른다. */
+  /** 배정 순서를 직접 지정한 id 목록(예: 교재 진도 순서로 펼친 개념). 있으면 order_index 순서 대신 이걸 따른다. */
   textbook_chapter_order?: string[] | null;
 };
 

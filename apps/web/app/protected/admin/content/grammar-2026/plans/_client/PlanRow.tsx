@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { togglePauseAction, resyncPlanAction, reschedulePlanAction, deletePlanAction } from '../actions';
-import PlanForm, { type PlanFormInitial, type TextbookOption } from './PlanForm';
+import PlanForm, { type PlanFormInitial } from './PlanForm';
 
 const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'];
 const LEVEL_LABEL: Record<string, string> = { all: '전체', ms: '중등', hs: '고등', toefl: 'TOEFL' };
@@ -22,16 +22,12 @@ export default function PlanRow(props: {
   lastDate: string | null;
   upcoming: UpcomingItem[];
   units: { id: string; label: string }[];
-  textbooks?: TextbookOption[];
   today: string;
 }) {
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState('');
   const [editing, setEditing] = useState(false);
   const s = props.settings;
-  const book = props.textbooks?.find((t) => t.id === s.textbookId);
-  const bookUnit = book?.units.find((u) => u.no === s.textbookUnitNo);
-  const bookLabel = book ? `${book.name}${bookUnit ? ` · 현재 ${bookUnit.no}. ${bookUnit.title}` : ''}` : '';
   const pct = props.total > 0 ? Math.round((props.done / props.total) * 100) : 0;
 
   const run = (fn: () => Promise<{ ok: true; created: number } | { error: string }>, okText: (n: number) => string) =>
@@ -52,7 +48,6 @@ export default function PlanRow(props: {
           <div className="mt-0.5 text-xs text-neutral-500">
             {s.weekdays.map((w) => WEEKDAY_KO[w]).join('·')} · 하루 {s.unitsPerSession}챕터 · {LEVEL_LABEL[s.level] ?? s.level} · {s.startDate} 시작
           </div>
-          {bookLabel && <div className="mt-0.5 text-xs font-medium text-indigo-600">교재: {bookLabel}</div>}
         </div>
         <div className="flex flex-wrap gap-1.5">
           <button disabled={pending} onClick={() => setEditing((v) => !v)} className="rounded-lg border px-2.5 py-1 text-xs hover:bg-neutral-50">
@@ -106,7 +101,7 @@ export default function PlanRow(props: {
 
       {editing && (
         <div className="mt-3">
-          <PlanForm students={[]} units={props.units} textbooks={props.textbooks} today={props.today} initial={props.settings} onDone={() => setEditing(false)} />
+          <PlanForm students={[]} units={props.units} today={props.today} initial={props.settings} onDone={() => setEditing(false)} />
         </div>
       )}
 

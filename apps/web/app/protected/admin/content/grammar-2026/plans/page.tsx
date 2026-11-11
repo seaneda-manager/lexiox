@@ -16,8 +16,6 @@ type PlanRec = {
   units_per_session: number | null;
   level: string | null;
   start_unit_id: string | null;
-  textbook_id?: string | null;
-  textbook_unit_no?: number | null;
   is_paused: boolean | null;
 };
 type AssignRec = { plan_id: string; student_id: string; unit_id: string; scheduled_date: string; seq: number };
@@ -44,19 +42,6 @@ export default async function GrammarPlansPage() {
     db.from('grammar_2026_unit_completions').select('student_id, unit_id'),
     db.from('profiles').select('id, full_name, name, email').eq('role', 'student').in('program', ['toefl', 'gap']).order('full_name', { ascending: true }),
   ]);
-
-  // 교재 목차 (교재 마이그레이션 전이면 비어 있다 — 교재 없는 기존 방식은 그대로 동작)
-  const [{ data: tbData }, { data: tbUnitData }] = await Promise.all([
-    db.from('grammar_textbooks').select('id, name').order('name'),
-    db.from('grammar_textbook_units').select('textbook_id, unit_no, title').order('unit_no'),
-  ]);
-  const textbooks = ((tbData ?? []) as { id: string; name: string }[]).map((t) => ({
-    id: t.id,
-    name: t.name,
-    units: ((tbUnitData ?? []) as { textbook_id: string; unit_no: number; title: string }[])
-      .filter((u) => u.textbook_id === t.id)
-      .map((u) => ({ no: u.unit_no, title: u.title })),
-  }));
 
   const units = (unitData ?? []) as UnitRow[];
   const assignments = (assignData ?? []) as AssignRec[];
@@ -132,9 +117,6 @@ export default async function GrammarPlansPage() {
           학생별 페이스(요일 · 하루 챕터 수 · 시작일)에 맞춰 날짜와 챕터를 자동으로 매칭합니다. 문법 챕터는 TOEFL·GAP 학생용입니다.{' '}
           <Link href="/admin/content/grammar-2026" className="underline">
             챕터(유닛) 관리 →
-          </Link>{' '}
-          <Link href="/admin/content/grammar-2026/textbooks" className="underline">
-            교재 목차·챕터 매핑 →
           </Link>
         </p>
       </header>
@@ -192,8 +174,6 @@ export default async function GrammarPlansPage() {
               unitsPerSession: plan.units_per_session ?? 1,
               level: plan.level ?? 'all',
               startUnitId: plan.start_unit_id ?? null,
-              textbookId: plan.textbook_id ?? null,
-              textbookUnitNo: plan.textbook_unit_no ?? null,
             }}
             total={sum.total}
             done={sum.done}
@@ -203,7 +183,6 @@ export default async function GrammarPlansPage() {
             lastDate={sum.lastDate}
             upcoming={upcoming}
             units={unitOptions}
-            textbooks={textbooks}
             today={today}
           />
         ))}
@@ -213,7 +192,6 @@ export default async function GrammarPlansPage() {
         <PlanForm
           students={(candidates ?? []).map((s) => ({ id: s.id as string, name: nameOf.get(s.id as string) ?? '이름 미설정' }))}
           units={unitOptions}
-          textbooks={textbooks}
           today={today}
         />
       )}
