@@ -9,6 +9,8 @@ export type PlanSettings = {
   units_per_session: number;
   level: string; // 'all' | 'ms' | 'hs' | 'toefl'
   start_unit_id: string | null;
+  /** 교재 진도 기준 배정: 현재 교재 단원부터 교재 순서대로 펼친 챕터 id. 있으면 레벨 순서 대신 이걸 따른다. */
+  textbook_chapter_order?: string[] | null;
 };
 
 export type ExistingAssignment = { unit_id: string; scheduled_date: string; seq: number };
@@ -35,7 +37,24 @@ export function occurrenceDates(startDateStr: string, weekdays: number[], count:
 }
 
 /** 이 학생 트랙에 해당하는 챕터를 순서대로 (레벨 필터 + 시작 챕터 이후). */
-export function eligibleUnits(units: PlanUnit[], plan: Pick<PlanSettings, 'level' | 'start_unit_id'>): PlanUnit[] {
+export function eligibleUnits(
+  units: PlanUnit[],
+  plan: Pick<PlanSettings, 'level' | 'start_unit_id'> & { textbook_chapter_order?: string[] | null },
+): PlanUnit[] {
+  if (plan.textbook_chapter_order) {
+    // 교재 순서를 따른다. 레벨 필터는 그대로 적용하고, 같은 챕터가 여러 단원에 걸려 있어도 한 번만 넣는다.
+    const byId = new Map(units.map((u) => [u.id, u] as const));
+    const seen = new Set<string>();
+    const out: PlanUnit[] = [];
+    for (const id of plan.textbook_chapter_order) {
+      const u = byId.get(id);
+      if (!u || seen.has(id)) continue;
+      if (plan.level !== 'all' && u.level !== plan.level && u.level !== 'all') continue;
+      seen.add(id);
+      out.push(u);
+    }
+    return out;
+  }
   const sorted = [...units].sort((a, b) => a.order_index - b.order_index);
   const byLevel = plan.level === 'all' ? sorted : sorted.filter((u) => u.level === plan.level || u.level === 'all');
   if (!plan.start_unit_id) return byLevel;

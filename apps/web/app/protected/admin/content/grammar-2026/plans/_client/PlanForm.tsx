@@ -13,19 +13,25 @@ export type PlanFormInitial = {
   unitsPerSession: number;
   level: string;
   startUnitId: string | null;
+  textbookId?: string | null;
+  textbookUnitNo?: number | null;
 };
+
+export type TextbookOption = { id: string; name: string; units: { no: number; title: string }[] };
 
 // 학생을 고르고 페이스(시작일 · 요일 · 회당 챕터 수 · 레벨 · 시작 챕터)를 정한다.
 // 이미 플랜이 있는 학생이면 설정을 바꾸고 오늘부터 일정을 다시 잡는다.
 export default function PlanForm({
   students,
   units,
+  textbooks = [],
   today,
   initial,
   onDone,
 }: {
   students: { id: string; name: string }[];
   units: { id: string; label: string }[];
+  textbooks?: TextbookOption[];
   today: string;
   initial?: PlanFormInitial;
   onDone?: () => void;
@@ -36,6 +42,9 @@ export default function PlanForm({
   const [perSession, setPerSession] = useState(initial?.unitsPerSession ?? 1);
   const [level, setLevel] = useState(initial?.level ?? 'all');
   const [startUnit, setStartUnit] = useState(initial?.startUnitId ?? '');
+  const [textbookId, setTextbookId] = useState(initial?.textbookId ?? '');
+  const [textbookUnitNo, setTextbookUnitNo] = useState<number | ''>(initial?.textbookUnitNo ?? '');
+  const book = textbooks.find((t) => t.id === textbookId);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -47,7 +56,16 @@ export default function PlanForm({
     setSaving(true);
     setError('');
     setMessage('');
-    const res = await savePlanAction({ studentId, startDate, weekdays, unitsPerSession: perSession, level, startUnitId: startUnit || null });
+    const res = await savePlanAction({
+      studentId,
+      startDate,
+      weekdays,
+      unitsPerSession: perSession,
+      level,
+      startUnitId: startUnit || null,
+      textbookId: textbookId || null,
+      textbookUnitNo: textbookId && textbookUnitNo !== '' ? textbookUnitNo : null,
+    });
     setSaving(false);
     if ('error' in res) return setError(res.error);
     setMessage(`저장했습니다 — 챕터 ${res.created}개를 일정에 배치했습니다.`);
@@ -114,7 +132,7 @@ export default function PlanForm({
         </label>
         <label className="space-y-1.5 text-xs font-semibold text-neutral-600">
           시작 챕터
-          <select value={startUnit} onChange={(e) => setStartUnit(e.target.value)} className={input}>
+          <select value={startUnit} onChange={(e) => setStartUnit(e.target.value)} disabled={!!textbookId} className={`${input} disabled:bg-neutral-50 disabled:text-neutral-400`}>
             <option value="">처음부터</option>
             {units.map((u) => (
               <option key={u.id} value={u.id}>
@@ -124,6 +142,48 @@ export default function PlanForm({
           </select>
         </label>
       </div>
+
+      {textbooks.length > 0 && (
+        <div className="grid grid-cols-1 gap-3 rounded-xl border border-indigo-100 bg-indigo-50/40 p-3 sm:grid-cols-2">
+          <label className="space-y-1.5 text-xs font-semibold text-neutral-600">
+            학생이 보는 교재 (선택)
+            <select
+              value={textbookId}
+              onChange={(e) => {
+                setTextbookId(e.target.value);
+                setTextbookUnitNo('');
+              }}
+              className={input}
+            >
+              <option value="">교재 없음 — 레벨 순서대로</option>
+              {textbooks.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="space-y-1.5 text-xs font-semibold text-neutral-600">
+            지금 나가는 단원
+            <select
+              value={textbookUnitNo}
+              onChange={(e) => setTextbookUnitNo(e.target.value === '' ? '' : Number(e.target.value))}
+              disabled={!book}
+              className={`${input} disabled:bg-neutral-50`}
+            >
+              <option value="">{book ? '선택하세요' : '교재를 먼저 고르세요'}</option>
+              {book?.units.map((u) => (
+                <option key={u.no} value={u.no}>
+                  {u.no}. {u.title}
+                </option>
+              ))}
+            </select>
+          </label>
+          <p className="text-[11px] text-neutral-500 sm:col-span-2">
+            교재를 고르면 그 단원부터 교재 순서대로, 단원에 연결된 Universal 챕터를 배정합니다(위의 시작 챕터는 쓰지 않습니다).
+          </p>
+        </div>
+      )}
 
       <p className="text-[11px] text-neutral-400">
         저장하면 오늘부터 순서대로 날짜에 챕터를 배치합니다(이미 끝낸 챕터는 건너뜀). 시작일이 과거여도 지난 날짜에는 배치하지 않습니다. 내용이 아직 없는 챕터도 일정에는 들어가며, 아래 "곧 내용이 필요한 챕터"에서 확인할 수 있습니다.
