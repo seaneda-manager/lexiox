@@ -30,7 +30,8 @@ ${ONLY_JSON}
       return `${header(c, level)}
 ${prev}
 ## 이번에 만들 것: 깜지 + 설명 빈칸
-- cramText: rules 를 학생이 따라 쓰기 좋게 정리한 원문(줄바꿈 가능).
+- cramText: 학생이 그대로 따라 쓰는 깜지 원문(줄바꿈 가능). **한글 설명을 중심**으로, 요약의 주요 부분까지 모두 담는다.
+  구성: ① 핵심 요약(summaryKo, summaryEn) ② 규칙마다 한글 설명(ko)과 영어 공식(en) ③ 대표 예문 (영어 + 한글 뜻). 설명(explanation)에 없는 내용은 넣지 않는다.
 - blanks 4~6개: cramText 속 핵심을 비운 문장 (text 에 '___' 정확히 한 곳).
 
 ${ONLY_JSON}
