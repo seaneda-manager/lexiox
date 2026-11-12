@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { ASSIGNMENT_AREA_LABEL } from "@/lib/assignments/studentAssignmentCalendar";
 import { ZONE_LABEL } from "@/lib/planner/types";
+import { PaxAvatar, levelToStage, STAGE_LABEL } from "@/components/avatar/PaxAvatar";
+import type { Tribe } from "@/components/avatar/PaxAvatar";
 import type { TodayBoard } from "@/lib/student-home/todayBoard";
 
 type Exam = { examTitle: string; dDay: number; readinessPct: number } | null;
@@ -14,6 +16,7 @@ export function StudentHomeToday({
   streak,
   points,
   level,
+  tribe,
 }: {
   name: string;
   board: TodayBoard;
@@ -21,6 +24,7 @@ export function StudentHomeToday({
   streak: number;
   points: number | null;
   level: number | null;
+  tribe: Tribe | null;
 }) {
   const { resume, todayGroups, todoCount, doneTodayCount, yesterdayDone, planToday, planExists, weekDots } = board;
   const allDone = todoCount === 0 && doneTodayCount > 0;
@@ -41,8 +45,16 @@ export function StudentHomeToday({
         className="grid gap-6 rounded-3xl bg-gradient-to-br from-slate-900 to-indigo-950 p-6 text-white md:grid-cols-[1.4fr_1fr]"
       >
         <div className="min-w-0">
-          <p className="text-sm text-indigo-200">{name} 학생, 오늘도 왔네요</p>
-          <h1 className="mt-1 text-2xl font-bold leading-tight sm:text-3xl">{headline}</h1>
+          <div className="flex items-end gap-4">
+            <div className="relative shrink-0 rounded-2xl bg-white/90 p-1.5">
+              <PaxAvatar tribe={tribe ?? "kenine"} stage={levelToStage(level ?? 1)} size={84} />
+              <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-bold text-amber-950">
+                {STAGE_LABEL[levelToStage(level ?? 1)]}
+              </span>
+            </div>
+            <p className="pb-1 text-sm text-indigo-200">{name} 학생, 오늘도 왔네요</p>
+          </div>
+          <h1 className="mt-3 text-2xl font-bold leading-tight sm:text-3xl">{headline}</h1>
           <div className="mt-4 flex flex-wrap gap-2 text-xs font-medium">
             {streak > 0 && <span className="rounded-full bg-white/10 px-3 py-1">연속 {streak}일째</span>}
             {yesterdayDone.length > 0 && (

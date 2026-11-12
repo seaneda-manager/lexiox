@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { DashboardLayout } from "@/app/protected/student/_components/DashboardLayout";
 import { getSubjectReadiness } from "@/lib/planner/readiness";
+import type { Tribe } from "@/components/avatar/PaxAvatar";
 import { StudentHomeToday } from "@/app/protected/student/_components/StudentHomeToday";
 import { getTodayBoard } from "@/lib/student-home/todayBoard";
 
@@ -120,7 +121,7 @@ export default async function StudentPage() {
   // ── 프로필 조회 ────────────────────────────────────────────
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, program, full_name, name, grade")
+    .select("role, program, full_name, name, grade, tribe")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -312,6 +313,7 @@ export default async function StudentPage() {
         streak={(gamification as any)?.current_streak ?? 0}
         points={(gamification as any)?.total_points ?? null}
         level={(gamification as any)?.level ?? null}
+        tribe={((profile as any)?.tribe ?? null) as Tribe | null}
       />
     )}
     <DashboardLayout
