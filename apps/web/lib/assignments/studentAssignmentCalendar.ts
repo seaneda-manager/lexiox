@@ -8,6 +8,7 @@ import {
   type AssignmentDateBasis,
   type AssignmentStatus,
 } from "@/lib/assignments/types";
+import { passageSourceLabel } from "@/lib/hi-naesin/passageLabel";
 import { buildMiddleNaesinItems } from "@/lib/assignments/middleNaesinItems";
 
 export {
@@ -332,9 +333,20 @@ async function collectHiNaesin(db: any, { fromIso, toIso, authId }: Ctx): Promis
   // 중학일반은 Hi-내신 시스템의 중학 학년(M1~M3) 지문이다 → 지문 학년으로 Hi-내신(H*)과 가른다.
   const passageIds = [...new Set(assigns.map((a: any) => a.passage_id).filter(Boolean))] as string[];
   const { data: passages } = passageIds.length
-    ? await db.from("hi_naesin_passages").select("id, grade").in("id", passageIds)
+    ? await db
+        .from("hi_naesin_passages")
+        .select("id, grade, title, source_type, school_name, textbook_name, unit_label, book_name, book_unit, exam_year, exam_month, question_number")
+        .in("id", passageIds)
     : { data: [] };
   const gradeByPassage = new Map<string, string>((passages ?? []).map((p: any) => [p.id as string, String(p.grade ?? "")]));
+  // 같은 "Hi-내신 드릴"이 줄줄이 나오면 구분이 안 되므로 지문 출처·제목을 제목에 붙인다
+  const labelByPassage = new Map<string, string>(
+    (passages ?? []).map((p: any) => {
+      const src = passageSourceLabel(p);
+      const t = String(p.title ?? "").trim();
+      return [p.id as string, [src, t].filter(Boolean).join(" · ")] as [string, string];
+    }),
+  );
 
   const out: AssignmentItem[] = [];
   for (const a of assigns) {
@@ -358,7 +370,7 @@ async function collectHiNaesin(db: any, { fromIso, toIso, authId }: Ctx): Promis
       id: a.id,
       kind: isMiddle ? "middle_general" : "hi_naesin",
       area: "reading",
-      title: isMiddle ? "중학일반 드릴" : "Hi-내신 드릴",
+      title: labelByPassage.get(a.passage_id) || (isMiddle ? "중학일반 드릴" : "Hi-내신 드릴"),
       date: picked.date,
       dateBasis: picked.basis,
       status,
