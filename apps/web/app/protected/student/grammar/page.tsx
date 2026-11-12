@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { getServiceSupabase } from "@/lib/supabase/service";
+import { canPreviewDrafts } from "@/lib/grammar-engine/previewAccess";
 
 export const dynamic = "force-dynamic";
 
-type Row = { level: number; concept: { key: string; title_ko: string; title_en: string; difficulty_rank: number; category: string | null } | null };
+type Row = { level: number; status?: string; concept: { key: string; title_ko: string; title_en: string; difficulty_rank: number; category: string | null } | null };
 
 // 학생에게는 확정(final)된 레슨만 보인다 — grammar_lessons RLS 가 status = 'final' 로 제한한다.
 export default async function StudentGrammarListPage() {
@@ -12,17 +14,20 @@ export default async function StudentGrammarListPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login"); // 로그인이 풀렸을 때 404 대신 로그인 화면으로
 
-  const { data } = await supabase
+  // 테스트 계정은 초안까지 모든 레벨을 본다. 그 외 학생은 RLS 로 확정(final)만 보인다.
+  const preview = canPreviewDrafts(user.email);
+  const q = (preview ? getServiceSupabase() : supabase)
     .from("grammar_lessons")
-    .select("level, concept:grammar_concepts(key, title_ko, title_en, difficulty_rank, category)")
-    .eq("status", "final");
+    .select("level, status, concept:grammar_concepts(key, title_ko, title_en, difficulty_rank, category)");
+  const { data } = await (preview ? q : q.eq("status", "final"));
   const rows = ((data ?? []) as unknown as Row[]).filter((r) => r.concept);
 
-  const byConcept = new Map<string, { c: NonNullable<Row["concept"]>; levels: number[] }>();
+  const byConcept = new Map<string, { c: NonNullable<Row["concept"]>; levels: number[]; drafts: number[] }>();
   for (const r of rows) {
     const c = r.concept!;
-    const e = byConcept.get(c.key) ?? { c, levels: [] };
+    const e = byConcept.get(c.key) ?? { c, levels: [], drafts: [] };
     e.levels.push(r.level);
+    if (r.status && r.status !== "final") e.drafts.push(r.level);
     byConcept.set(c.key, e);
   }
   const list = [...byConcept.values()].sort((a, b) => a.c.difficulty_rank - b.c.difficulty_rank);
@@ -78,7 +83,7 @@ export default async function StudentGrammarListPage() {
       )}
       {list.length === 0 && <div className="rounded-xl border bg-white p-6 text-sm text-neutral-500">아직 공개된 레슨이 없습니다.</div>}
       <div className="space-y-3">
-        {list.map(({ c, levels }) => (
+        {list.map(({ c, levels, drafts }) => (
           <div key={c.key} className="rounded-xl border bg-white p-4">
             {c.category && <div className="text-xs text-neutral-500">{c.category}</div>}
             <div className="font-medium text-neutral-900">
@@ -87,7 +92,7 @@ export default async function StudentGrammarListPage() {
             <div className="mt-2 flex flex-wrap gap-2">
               {levels.sort().map((lv) => (
                 <Link key={lv} href={`/student/grammar/${c.key}/${lv}`} className="rounded-lg border px-3 py-1 text-sm font-medium text-violet-700 hover:bg-violet-50">
-                  L{lv}
+                  L{lv}{drafts.includes(lv) && <span className="ml-1 text-xs font-normal text-amber-600">초안</span>}
                 </Link>
               ))}
             </div>
