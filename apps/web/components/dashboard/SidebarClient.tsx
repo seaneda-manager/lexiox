@@ -320,9 +320,9 @@ export default function SidebarClient({ role, permissions, program = null, hasHi
         { section: '내신' as NavSection, href: '/naesin/middle', label: '중학 내신 드릴', icon: GraduationCap },
 
         { section: 'Jr.' as NavSection, href: '/jr/drill', label: 'Jr. 드릴', icon: PlayCircle },
-        { section: 'Jr.' as NavSection, href: '/jr',       label: 'Jr. 문법·학습', icon: BookText },
-        { section: 'Jr.' as NavSection, href: '/student/grammar', label: '문법 레슨', icon: BookText },
+        { section: 'Jr.' as NavSection, href: '/jr',       label: 'Jr. 학습', icon: BookText },
 
+        { section: '학습', href: '/student/grammar', label: '문법', icon: BookText },
         { section: '학습', href: '/updated-listening/study', label: 'Listening', skill: 'listening' as SkillColor },
         { section: '학습', href: '/langgym', label: 'LXGym', icon: Gamepad2 },
 
