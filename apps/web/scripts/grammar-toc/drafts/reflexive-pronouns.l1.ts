@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'reflexive-pronouns', topic: '재귀대명사 - 1부', titleKo: '재귀대명사 — myself · yourself …',
+  summaryEn: 'Reflexive pronouns end in -self or -selves.',
+  summaryKo: '주어와 목적어가 같은 사람이면 목적어 자리에 -self / -selves로 끝나는 재귀대명사를 씁니다.',
+  rules: [
+    ['Use a reflexive pronoun when the subject and the object are the same.', '주어와 목적어가 같은 사람이면 재귀대명사를 씁니다. (I hurt myself.)'],
+    ['Learn the forms.', 'myself, yourself, himself, herself, itself, ourselves, yourselves, themselves로 주어에 맞게 고릅니다.'],
+    ['Reflexive pronouns can also add emphasis.', '"직접"이라고 강조할 때도 씁니다. (I made it myself.)'],
+    ['Learn the common phrases.', '자주 쓰는 표현: enjoy oneself(즐겁게 지내다), by oneself(혼자서), help oneself(마음껏 먹다).'],
+  ],
+  examples: [['I love myself.', '나는 나 자신을 사랑한다.'], ['She looked at herself in the mirror.', '그녀는 거울 속 자기 자신을 봤다.'], ['They enjoyed themselves.', '그들은 즐거운 시간을 보냈다.']],
+  groups: [
+    ['주어 = 목적어', '같은 사람이면 재귀대명사.', [
+      ['I hurt myself.', '나는 다쳤다.', 'I → myself', '주어와 목적어가 같습니다.'],
+      ['She looked at herself in the mirror.', '그녀는 거울 속 자기 자신을 봤다.', 'she → herself', '자기 자신을 봅니다.'],
+      ['He cut himself with a knife.', '그는 칼에 베였다.', 'he → himself', '자기 자신을 벱니다.']]],
+    ['형태 정리', '단수는 -self, 복수는 -selves.', [
+      ['We enjoyed ourselves.', '우리는 즐겁게 지냈다.', 'we → ourselves', '복수는 -selves입니다.'],
+      ['The cat washed itself.', '고양이가 몸을 씻었다.', 'it → itself', 'it의 재귀대명사입니다.'],
+      ['You should believe yourself.', '너는 너 자신을 믿어야 한다.', 'you → yourself', '단수 you는 yourself입니다.']]],
+    ['강조와 관용 표현', '직접, 혼자서.', [
+      ['I made this cake myself.', '나는 이 케이크를 직접 만들었다.', '강조', '직접 했다는 뜻입니다.'],
+      ['He did it by himself.', '그는 그것을 혼자서 했다.', 'by himself', '혼자서라는 뜻입니다.'],
+      ['Help yourself to the cake.', '케이크를 마음껏 드세요.', 'help yourself', '마음껏 먹으라는 뜻입니다.']]],
+    ['목적어가 다른 사람이면', '일반 목적격을 씁니다.', [
+      ['She looked at her.', '그녀는 (다른) 그녀를 쳐다봤다.', 'her', '다른 사람이면 her입니다.'],
+      ['He hurt him.', '그는 (다른) 그를 다치게 했다.', 'him', '다른 사람이면 him입니다.'],
+      ['I love you.', '나는 너를 사랑한다.', 'you', '다른 사람이면 you입니다.']]],
+  ],
+  wrong: [['I hurt me.', '주어와 목적어가 같으면 myself → I hurt myself.', ''], ['He looked at him in the mirror.', '자기 자신이면 himself → He looked at himself in the mirror.', ''], ['They enjoyed theirselves.', 'theirselves는 없는 말 → themselves', '']],
+  wrongNote: '주어와 목적어가 같으면 재귀대명사를 쓰고, 형태는 정해진 것만 씁니다.',
+  cram: '■ 핵심 요약\n주어와 목적어가 같은 사람이면 목적어 자리에 재귀대명사(-self / -selves)를 씁니다.\n\n■ 규칙\n1. 주어와 목적어가 같으면 재귀대명사를 씁니다.\n2. 형태는 myself, yourself, himself, herself, itself, ourselves, yourselves, themselves입니다.\n3. 직접이라고 강조할 때도 씁니다.\n4. enjoy oneself, by oneself, help oneself는 관용 표현으로 외웁니다.\n\n■ 예문 뜻\n나는 나 자신을 사랑한다.\n그녀는 거울 속 자기 자신을 봤다.\n그들은 즐거운 시간을 보냈다.',
+  blanks: [['주어와 목적어가 같으면 ___대명사를 씁니다.', '재귀', '두 글자'], ['I의 재귀대명사는 ___입니다.', 'myself', 'm으로 시작'], ['they의 재귀대명사는 ___입니다.', 'themselves', 't로 시작'], ['by oneself는 "___서"라는 뜻입니다.', '혼자', '두 글자']],
+  fill: [
+    ['basic', 'I love ___.', 'myself', ['me', 'myself', 'mine'], '나는 나 자신을 사랑한다.', '주어와 목적어가 같으므로 myself입니다.', 'I → ?'],
+    ['basic', 'She looked at ___ in the mirror.', 'herself', ['herself', 'her', 'she'], '그녀는 거울 속 자기 자신을 봤다.', '주어와 목적어가 같으므로 herself입니다.', 'she → ?'],
+    ['basic', 'He cut ___ with a knife.', 'himself', ['him', 'his', 'himself'], '그는 칼에 베였다.', '주어와 목적어가 같으므로 himself입니다.', 'he → ?'],
+    ['intermediate', 'We enjoyed ___ at the party.', 'ourselves', ['us', 'ourselves', 'our'], '우리는 파티에서 즐겁게 지냈다.', 'we의 재귀대명사는 ourselves입니다.', 'we → ?'],
+    ['intermediate', 'They taught ___ English.', 'themselves', ['themselves', 'them', 'their'], '그들은 영어를 독학했다.', 'they의 재귀대명사는 themselves입니다.', 'they → ?'],
+    ['intermediate', 'The cat washed ___.', 'itself', ['it', 'its', 'itself'], '고양이가 몸을 씻었다.', 'it의 재귀대명사는 itself입니다.', 'it → ?'],
+    ['advanced', 'I made this cake by ___.', 'myself', ['my', 'me', 'myself'], '나는 이 케이크를 혼자 만들었다.', 'by myself는 "나 혼자서"입니다.', 'by + ?'],
+    ['advanced', 'Did you hurt ___?', 'yourself', ['yourself', 'you', 'your'], '너는 다쳤니?', 'you의 재귀대명사는 yourself입니다.', 'you → ?'],
+  ],
+  fix: [
+    ['basic', 'I hurt me.', 'me', ['myself'], ['주어와 목적어가 같으면 myself를 씁니다.', 'hurt는 hurts여야 합니다.', 'I는 me여야 합니다.'], 0, 'I hurt myself. → 주어 = 목적어'],
+    ['intermediate', 'He looked at him in the mirror.', 'him', ['himself'], ['mirror 앞에 a가 필요합니다.', '자기 자신을 볼 때는 himself를 씁니다.', 'looked는 look이어야 합니다.'], 1, 'He looked at himself in the mirror. → 자기 자신'],
+    ['intermediate', 'They enjoyed theirselves.', 'theirselves', ['themselves'], ['enjoyed는 enjoy여야 합니다.', 'They는 We여야 합니다.', 'they의 재귀대명사는 themselves입니다.'], 2, 'They enjoyed themselves. → themselves'],
+  ],
+  questions: [
+    pc('Which sentence is correct?', '올바른 문장을 고르세요.', 'basic', [['I hurt me.', '나는 다쳤다.'], ['I hurt myself.', '나는 다쳤다.'], ['I hurt my.', '나는 다쳤다.'], ['I hurt mine.', '나는 다쳤다.']], 1, '주어와 목적어가 같으면 myself를 씁니다.'),
+    pc('Which sentence means "She looked at herself in the mirror"?', '"그녀는 거울 속 자기 자신을 봤다"에 맞는 문장을 고르세요.', 'basic', [['She looked at her in the mirror.', '그녀는 거울 속 자기 자신을 봤다.'], ['She looked at she in the mirror.', '그녀는 거울 속 자기 자신을 봤다.'], ['She looked at hers in the mirror.', '그녀는 거울 속 자기 자신을 봤다.'], ['She looked at herself in the mirror.', '그녀는 거울 속 자기 자신을 봤다.']], 3, '자기 자신을 볼 때는 herself를 씁니다.'),
+    pc('Which sentence means "He taught himself English"?', '"그는 영어를 독학했다"에 맞는 문장을 고르세요.', 'basic', [['He taught him English.', '그는 영어를 독학했다.'], ['He taught his English.', '그는 영어를 독학했다.'], ['He taught himself English.', '그는 영어를 독학했다.'], ['He taught hisself English.', '그는 영어를 독학했다.']], 2, 'himself가 올바른 형태입니다. hisself는 없는 말입니다.'),
+    pc('Which sentence about the party is correct?', '파티에 대한 올바른 문장을 고르세요.', 'intermediate', [['They enjoyed themselves.', '그들은 즐겁게 지냈다.'], ['They enjoyed theirselves.', '그들은 즐겁게 지냈다.'], ['They enjoyed them.', '그들은 즐겁게 지냈다.'], ['They enjoyed their.', '그들은 즐겁게 지냈다.']], 0, 'they의 재귀대명사는 themselves입니다.'),
+    pc('Which sentence about doing it alone is correct?', '혼자 한다는 올바른 문장을 고르세요.', 'intermediate', [['We can do it ourself.', '우리는 그것을 직접 할 수 있다.'], ['We can do it ourselves.', '우리는 그것을 직접 할 수 있다.'], ['We can do it us.', '우리는 그것을 직접 할 수 있다.'], ['We can do it our.', '우리는 그것을 직접 할 수 있다.']], 1, 'we의 재귀대명사는 ourselves입니다.'),
+    pc('Choose the word that is not a reflexive pronoun.', '재귀대명사가 아닌 것을 고르세요.', 'intermediate', [['myself', '나 자신'], ['herself', '그녀 자신'], ['him', '그를'], ['themselves', '그들 자신']], 2, 'him은 일반 목적격 대명사입니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['He hurt hisself.', '그는 다쳤다.'], ['I made it myself.', '나는 그것을 직접 만들었다.'], ['She is proud of herself.', '그녀는 자신이 자랑스럽다.'], ['They helped themselves.', '그들은 마음껏 먹었다.']], 0, 'hisself는 없는 말이고 himself가 맞습니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① I like myself.\n② She hurt her.\n③ They enjoyed themselves.', 'basic', 1, '②는 주어와 목적어가 같다면 herself여야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① He cut him with a knife.\n② I made it myself.\n③ She loves herself.\n④ They enjoyed theirselves.', 'advanced', 2, '①은 himself, ④는 themselves로 고쳐야 하므로 틀린 문장은 2개입니다.'),
+    pc('Why is the sentence "I hurt me." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because hurt should be hurts.', 'hurt를 hurts로 바꿔야 해서'], ['Because me should be my.', 'me를 my로 바꿔야 해서'], ['Because the subject and the object are the same person, so we use myself.', '주어와 목적어가 같은 사람이라 myself를 써야 해서'], ['Because I should be me.', 'I를 me로 바꿔야 해서']], 2, '주어와 목적어가 같으면 재귀대명사를 씁니다.', 'reason'),
+  ],
+  popup: [['I love ___.', 'myself', ['me', 'my'], 'I → ?'], ['She looked at ___.', 'herself', ['her', 'hers'], 'she → ?'], ['We enjoyed ___.', 'ourselves', ['us', 'ourself'], 'we → ?'], ['They helped ___.', 'themselves', ['them', 'theirselves'], 'they → ?']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'I hurt me.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['I hurt myself.'], noteKo: '주어와 목적어가 같으면 myself입니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'They enjoyed theirselves.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['They enjoyed themselves.'], noteKo: 'theirselves는 없는 말입니다.' },
+  ],
+  top: ['주어와 목적어가 같으면 재귀대명사(-self/-selves). hisself, theirselves, ourself 같은 형태는 없다. by oneself, enjoy oneself는 관용 표현.', 'They enjoyed themselves.', '그들은 즐거운 시간을 보냈다.'],
+  lecture: [
+    { type: 'text', text: '재귀대명사', narration: '오늘은 "자기 자신"을 나타내는 말, 재귀대명사를 배워요.' },
+    { type: 'board', title: '주어 = 목적어', lines: ['I hurt [b]myself[/b].', 'She looked at [b]herself[/b].', '같은 사람 → -self'], narration: '주어와 목적어가 같은 사람이면 재귀대명사를 써요. [en]I hurt myself.[/en] 나는 다쳤다. [en]She looked at herself.[/en] 그녀는 자기 자신을 봤다.' },
+    { type: 'board', title: '형태 정리', lines: ['I → myself, you → yourself', 'he → himself, she → herself', 'it → itself', 'we → ourselves, they → themselves'], narration: '[en]I[/en]는 [en]myself[/en], [en]you[/en]는 [en]yourself[/en], [en]he[/en]는 [en]himself[/en], [en]she[/en]는 [en]herself[/en], [en]it[/en]은 [en]itself[/en]예요. 복수는 [en]selves[/en]로 끝나요. [en]ourselves[/en], [en]themselves[/en]예요.' },
+    { type: 'board', title: '강조와 관용 표현', lines: ['I made it [b]myself[/b].', 'by [b]himself[/b] = 혼자서', 'enjoy [b]oneself[/b]'], narration: '"직접"이라고 강조할 때도 써요. [en]I made it myself.[/en] 그리고 [en]by himself[/en]는 "혼자서", [en]enjoy oneself[/en]는 "즐겁게 지내다"예요.' },
+    { type: 'board', title: '다른 사람이면', lines: ['She looked at [b]her[/b].  (다른 사람)', 'She looked at [b]herself[/b].  (자기 자신)'], narration: '목적어가 다른 사람이면 [en]her[/en]나 [en]him[/en] 같은 일반 목적격을 써요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× I hurt [b]me[/b].', '× He hurt [b]hisself[/b].', '× They enjoyed [b]theirselves[/b].'], narration: '[en]I hurt me[/en]는 틀리고 [en]I hurt myself[/en]가 맞아요. [en]hisself[/en]와 [en]theirselves[/en]는 없는 말이에요. [en]himself[/en], [en]themselves[/en]를 써요.' },
+    { type: 'text', text: '정리: 주어 = 목적어 → -self / -selves', narration: '정리할게요. 주어와 목적어가 같은 사람이면 [en]self[/en]나 [en]selves[/en]로 끝나는 재귀대명사를 써요.' },
+  ],
+});

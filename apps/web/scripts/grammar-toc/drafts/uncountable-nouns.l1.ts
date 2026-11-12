@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'uncountable-nouns', topic: '셀 수 없는 명사와 수량 표현 - 1부', titleKo: '셀 수 없는 명사와 수량 표현',
+  summaryEn: 'Uncountable nouns have no plural form and no a or an.',
+  summaryKo: '셀 수 없는 명사는 a/an을 붙이지 않고 복수형도 없으며, 단위를 써서 셉니다.',
+  rules: [
+    ['Do not use a or an, and do not add -s to uncountable nouns.', 'water, milk, money, information, advice 같은 명사는 a/an을 붙이지 않고 -s도 붙이지 않습니다.'],
+    ['Count them with a unit.', '셀 때는 단위를 씁니다. (a glass of water, a cup of tea, a piece of paper, a slice of cheese)'],
+    ['Use much and a little with uncountable nouns.', '셀 수 없는 명사에는 much, a little, little을 쓰고, 셀 수 있는 명사에는 many, a few, few를 씁니다.'],
+    ['An uncountable noun takes a singular verb.', '셀 수 없는 명사는 단수 취급해서 is, has를 씁니다. (The milk is cold.)'],
+  ],
+  examples: [['I drink a glass of water.', '나는 물 한 잔을 마신다.'], ['She gave me some advice.', '그녀는 내게 조언을 해 주었다.'], ['How much money do you have?', '너는 돈이 얼마나 있니?']],
+  groups: [
+    ['셀 수 없는 명사', 'a/an도 -s도 붙이지 않습니다.', [
+      ['I need some water.', '나는 물이 좀 필요하다.', 'water', 'water는 복수형이 없습니다.'],
+      ['She has a lot of money.', '그녀는 돈이 많다.', 'money', 'money에는 -s를 붙이지 않습니다.'],
+      ['He gave me some information.', '그는 내게 정보를 좀 주었다.', 'information', 'information은 복수형이 없습니다.']]],
+    ['단위로 세기', '단위를 복수형으로 셉니다.', [
+      ['I drink a glass of milk.', '나는 우유 한 잔을 마신다.', 'a glass of', '컵 단위로 셉니다.'],
+      ['I need two pieces of paper.', '나는 종이 두 장이 필요하다.', 'two pieces of', '단위가 복수가 됩니다.'],
+      ['She drinks a cup of tea.', '그녀는 차 한 잔을 마신다.', 'a cup of', '컵 단위로 셉니다.']]],
+    ['much / many, a little / a few', '셀 수 없으면 much·little, 셀 수 있으면 many·few.', [
+      ['How much water do you drink?', '너는 물을 얼마나 마시니?', 'much + 불가산', 'water는 셀 수 없습니다.'],
+      ['How many books do you have?', '너는 책이 몇 권 있니?', 'many + 가산 복수', 'books는 셀 수 있습니다.'],
+      ['I have a few friends.', '나는 친구가 몇 명 있다.', 'a few + 가산 복수', 'friends는 셀 수 있습니다.']]],
+    ['동사는 단수', '셀 수 없는 명사는 is로 받습니다.', [
+      ['The milk is cold.', '우유가 차갑다.', 'is', '단수 취급합니다.'],
+      ['There is some water in the glass.', '컵에 물이 좀 있다.', 'There is', '불가산에는 is를 씁니다.'],
+      ['The news is good.', '그 소식은 좋다.', 'news + is', 's로 끝나도 단수입니다.']]],
+  ],
+  wrong: [['She gave me many informations.', 'information은 복수형이 없다 → some information', ''], ['I have much friends.', 'friends는 셀 수 있다 → many friends', ''], ['There are some milk in the cup.', '불가산은 단수 → There is some milk', '']],
+  wrongNote: '셀 수 없는 명사에는 -s도, many도, are도 쓰지 않습니다.',
+  cram: '■ 핵심 요약\n셀 수 없는 명사는 a/an과 복수형 없이 쓰고, 단위로 셉니다.\n\n■ 규칙\n1. water, milk, money, information, advice는 a/an을 붙이지 않고 -s도 붙이지 않습니다.\n2. 셀 때는 a glass of, a cup of, a piece of 같은 단위를 씁니다.\n3. 셀 수 없는 명사에는 much, a little, 셀 수 있는 명사에는 many, a few를 씁니다.\n4. 셀 수 없는 명사는 단수 취급해서 is를 씁니다.\n\n■ 예문 뜻\n나는 물 한 잔을 마신다.\n그녀는 내게 조언을 해 주었다.\n너는 돈이 얼마나 있니?',
+  blanks: [['셀 수 없는 명사에는 a/an과 ___를 붙이지 않습니다.', '복수형', '세 글자'], ['물 한 잔은 a ___ of water입니다.', 'glass', 'g로 시작'], ['셀 수 없는 명사에는 many가 아니라 ___를 씁니다.', 'much', 'm로 시작'], ['셀 수 없는 명사는 ___ 취급해서 is를 씁니다.', '단수', '두 글자']],
+  fill: [
+    ['basic', 'I drink a glass of ___.', 'water', ['water', 'waters', 'a water'], '나는 물 한 잔을 마신다.', 'water는 복수형이 없습니다.', '불가산'],
+    ['basic', 'We need some ___.', 'information', ['informations', 'a information', 'information'], '우리는 정보가 좀 필요하다.', 'information은 -s도 a도 붙이지 않습니다.', '불가산'],
+    ['basic', 'There ___ milk in the fridge.', 'is', ['are', 'is', 'be'], '냉장고에 우유가 있다.', '불가산에는 is를 씁니다.', '단수'],
+    ['intermediate', 'How ___ money do you have?', 'much', ['much', 'many', 'few'], '너는 돈이 얼마나 있니?', 'money는 셀 수 없어서 much를 씁니다.', '불가산'],
+    ['intermediate', 'I have a ___ friends.', 'few', ['little', 'much', 'few'], '나는 친구가 몇 명 있다.', 'friends는 셀 수 있어서 a few를 씁니다.', '가산'],
+    ['intermediate', 'She drinks a cup of ___ every morning.', 'tea', ['teas', 'tea', 'a tea'], '그녀는 매일 아침 차 한 잔을 마신다.', 'a cup of 뒤에는 단수형 tea입니다.', '불가산'],
+    ['advanced', 'The news ___ good today.', 'is', ['are', 'be', 'is'], '오늘 소식은 좋다.', 'news는 s로 끝나도 단수입니다.', '단수'],
+    ['advanced', 'He gave me a piece of ___.', 'advice', ['advice', 'advices', 'advises'], '그는 내게 조언을 하나 해 주었다.', 'advice는 복수형이 없습니다.', '불가산'],
+  ],
+  fix: [
+    ['basic', 'She gave me an advice.', 'an', [''], ['advice는 an을 붙이지 않는 불가산입니다.', '주어가 she라서 an이 필요합니다.', 'gave는 현재형이어야 합니다.'], 0, 'She gave me advice. → a/an 없이'],
+    ['intermediate', 'I have much friends.', 'much', ['many'], ['friends는 복수라서 a가 필요합니다.', '셀 수 있는 명사에는 many를 씁니다.', 'have는 has여야 합니다.'], 1, 'I have many friends. → 가산에는 many'],
+    ['intermediate', 'There are some milk in the cup.', 'are', ['is'], ['some 뒤에는 are를 씁니다.', 'cup이 복수라서 are입니다.', '불가산 milk는 단수 취급해 is를 씁니다.'], 2, 'There is some milk in the cup. → 불가산은 is'],
+  ],
+  questions: [
+    pc('Choose the correct sentence.', '올바른 문장을 고르세요.', 'basic', [['I need some informations.', '나는 정보가 좀 필요하다.'], ['I need some information.', '나는 정보가 좀 필요하다.'], ['I need an information.', '나는 정보가 좀 필요하다.'], ['I need some a information.', '나는 정보가 좀 필요하다.']], 1, 'information은 셀 수 없어서 -s도 an도 붙이지 않습니다.'),
+    pc('Which sentence is correct about milk?', '우유에 대한 올바른 문장을 고르세요.', 'basic', [['He drinks a milk.', '그는 우유 한 잔을 마신다.'], ['He drinks milks.', '그는 우유 한 잔을 마신다.'], ['He drinks a glass of milk.', '그는 우유 한 잔을 마신다.'], ['He drinks glass milk.', '그는 우유 한 잔을 마신다.']], 2, '불가산은 a glass of 같은 단위로 셉니다.'),
+    pc('Which question about money is correct?', '돈에 대한 올바른 질문을 고르세요.', 'basic', [['How much money do you have?', '너는 돈이 얼마나 있니?'], ['How many money do you have?', '너는 돈이 얼마나 있니?'], ['How much moneys do you have?', '너는 돈이 얼마나 있니?'], ['How many moneys do you have?', '너는 돈이 얼마나 있니?']], 0, 'money는 셀 수 없어서 much를 씁니다.'),
+    pc('Which sentence about water is correct?', '물에 대한 올바른 문장을 고르세요.', 'intermediate', [['There are some water.', '물이 좀 있다.'], ['There is some water.', '물이 좀 있다.'], ['There be some water.', '물이 좀 있다.'], ['There am some water.', '물이 좀 있다.']], 1, '불가산 water는 단수 취급하므로 is를 씁니다.'),
+    pc('Which sentence about friends is correct?', '친구에 대한 올바른 문장을 고르세요.', 'intermediate', [['She has a little friends.', '그녀는 친구가 몇 명 있다.'], ['She has much friends.', '그녀는 친구가 몇 명 있다.'], ['She has few a friends.', '그녀는 친구가 몇 명 있다.'], ['She has a few friends.', '그녀는 친구가 몇 명 있다.']], 3, 'friends는 셀 수 있어서 a few를 씁니다.'),
+    pc('Choose the word that is uncountable.', '셀 수 없는 명사를 고르세요.', 'intermediate', [['book', '책'], ['apple', '사과'], ['water', '물'], ['chair', '의자']], 2, 'water는 셀 수 없는 명사입니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['We need some advices.', '우리는 조언이 좀 필요하다.'], ['I have two apples.', '나는 사과가 두 개 있다.'], ['She has much money.', '그녀는 돈이 많다.'], ['I drink a cup of tea.', '나는 차 한 잔을 마신다.']], 0, 'advice는 복수형이 없으므로 advices는 틀립니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① I need some water.\n② He gave me many advices.\n③ She has a little money.', 'basic', 1, '②만 틀렸고 some advice여야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① Much students are here.\n② The milk are cold.\n③ I need a piece of paper.\n④ He has few friends.', 'advanced', 2, '①은 Many students, ②는 The milk is로 고쳐야 하므로 틀린 문장은 2개입니다.'),
+    pc('Why is the sentence "I have much friends." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because friends is uncountable.', 'friends는 셀 수 없는 명사라서'], ['Because much should be a.', 'much를 a로 바꿔야 해서'], ['Because friends is countable, so we use many.', 'friends는 셀 수 있어서 many를 써야 해서'], ['Because have should be has.', 'have를 has로 바꿔야 해서']], 2, 'friends는 셀 수 있는 복수 명사이므로 many를 씁니다.', 'reason'),
+  ],
+  popup: [['I drink a glass of ___.', 'water', ['waters', 'a water'], '불가산'], ['How ___ money do you have?', 'much', ['many', 'few'], '불가산'], ['There ___ some milk.', 'is', ['are', 'be'], '단수'], ['He gave me some ___.', 'advice', ['advices', 'an advice'], '불가산']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'She gave me many informations.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['She gave me some information.', 'She gave me much information.'], noteKo: 'information은 복수형이 없습니다.' },
+    { kind: 'rewrite', level: 'basic', prompt: 'I drink water.', promptKo: 'a glass of를 넣어 물 한 잔을 마신다는 문장으로 쓰시오.', answers: ['I drink a glass of water.'], noteKo: '불가산은 단위로 셉니다.' },
+  ],
+  top: ['water, money, information, advice 같은 불가산 명사는 -s, a/an, many, are와 함께 쓰면 틀린다. much, a little, is로 받는다.', 'There is some milk in the cup.', '컵에 우유가 좀 있다.'],
+  lecture: [
+    { type: 'text', text: '셀 수 없는 명사', narration: '오늘은 하나, 둘 세기 어려운 명사를 배워요. 물, 우유, 돈, 정보 같은 것들이에요.' },
+    { type: 'board', title: '셀 수 없는 명사', lines: ['water, milk, money', 'information, advice', 'a / an ✗   -s ✗'], narration: '[en]water[/en], [en]milk[/en], [en]money[/en], [en]information[/en], [en]advice[/en] 같은 명사는 [en]a[/en]나 [en]an[/en]을 붙이지 않고, 끝에 [en]s[/en]도 붙이지 않아요.' },
+    { type: 'board', title: '단위로 세기', lines: ['a [b]glass of[/b] water', 'a [b]cup of[/b] tea', 'two [b]pieces of[/b] paper'], narration: '셀 때는 단위를 써요. [en]a glass of water[/en], [en]a cup of tea[/en], [en]two pieces of paper[/en]처럼요. 단위가 둘 이상이면 단위에 [en]s[/en]를 붙여요.' },
+    { type: 'board', title: 'much / many', lines: ['셀 수 없다 → [b]much[/b], a little', '셀 수 있다 → [b]many[/b], a few', 'How much money?', 'How many books?'], narration: '셀 수 없는 명사에는 [en]much[/en]와 [en]a little[/en], 셀 수 있는 명사에는 [en]many[/en]와 [en]a few[/en]를 써요. [en]How much money[/en], [en]How many books[/en]예요.' },
+    { type: 'board', title: '동사는 단수', lines: ['The milk [b]is[/b] cold.', 'There [b]is[/b] some water.'], narration: '셀 수 없는 명사는 단수로 취급해서 [en]is[/en]를 써요. [en]The milk is cold.[/en] 우유가 차갑다.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× many [b]informations[/b]', '× an [b]advice[/b]', '× I have [b]much[/b] friends.'], narration: '[en]informations[/en]나 [en]an advice[/en]는 틀려요. 친구는 셀 수 있으니까 [en]much friends[/en]가 아니라 [en]many friends[/en]예요.' },
+    { type: 'text', text: '정리: 불가산 = 단위·much·is', narration: '정리할게요. 셀 수 없는 명사는 [en]a[/en]와 [en]s[/en] 없이 쓰고, 단위로 세고, [en]much[/en]와 [en]is[/en]를 써요.' },
+  ],
+});

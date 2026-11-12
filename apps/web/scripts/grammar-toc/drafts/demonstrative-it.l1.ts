@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'demonstrative-it', topic: '지시대명사·지시형용사·비인칭 it - 1부', titleKo: 'this · that · these · those · 비인칭 it',
+  summaryEn: 'This, that, these, and those point to things. Impersonal it is used for weather, time, and days.',
+  summaryKo: 'this/that/these/those는 사람이나 물건을 가리키고, 날씨·시간·요일 같은 것은 뜻 없는 it을 주어로 씁니다.',
+  rules: [
+    ['Use this and these for near things, that and those for far things.', '가까이 있는 것은 this(단수)/these(복수), 멀리 있는 것은 that(단수)/those(복수)로 가리킵니다.'],
+    ['Demonstratives can come before a noun.', '지시어는 명사 앞에서 형용사처럼도 씁니다. (this book, those shoes) 명사의 수에 맞춰 고릅니다.'],
+    ['The verb agrees: this/that + is, these/those + are.', 'this/that 뒤에는 is, these/those 뒤에는 are를 씁니다.'],
+    ['Use it for weather, time, day, date, and distance.', '날씨, 시간, 요일, 날짜, 거리를 말할 때는 뜻이 없는 it을 주어로 씁니다. "그것"이라고 해석하지 않습니다. (It is sunny. / What time is it?)'],
+  ],
+  examples: [['This is my book.', '이것은 내 책이다.'], ['Those are my shoes.', '저것들은 내 신발이다.'], ['It is rainy today.', '오늘은 비가 온다.']],
+  groups: [
+    ['this / these', '가까이 있는 것.', [
+      ['This is my pen.', '이것은 내 펜이다.', 'this + is', '가까이 있는 한 개입니다.'],
+      ['These are my shoes.', '이것들은 내 신발이다.', 'these + are', '가까이 있는 여러 개입니다.'],
+      ['I like this bag.', '나는 이 가방이 마음에 든다.', 'this + 단수 명사', '명사 앞에서 형용사처럼 씁니다.']]],
+    ['that / those', '멀리 있는 것.', [
+      ['That is my house.', '저것은 내 집이다.', 'that + is', '멀리 있는 한 개입니다.'],
+      ['Those are my friends.', '저 사람들은 내 친구들이다.', 'those + are', '멀리 있는 여러 명입니다.'],
+      ['That boy over there is my brother.', '저기 저 소년은 내 동생이다.', 'that + 단수 명사', '명사 앞에서 형용사처럼 씁니다.']]],
+    ['비인칭 it', '날씨·시간·요일·거리.', [
+      ['It is rainy today.', '오늘은 비가 온다.', '날씨', 'it은 "그것"이 아닙니다.'],
+      ['What time is it?', '몇 시니?', '시간', '시간을 물을 때 it을 씁니다.'],
+      ['It is Monday today.', '오늘은 월요일이다.', '요일', '요일에도 it을 씁니다.']]],
+    ['거리와 밝기', '거리, 명암에도 it.', [
+      ['It is five kilometers from here to the station.', '여기서 역까지는 5킬로미터다.', '거리', '거리를 말할 때도 it입니다.'],
+      ['It is dark outside.', '밖이 어둡다.', '밝기', '밝기를 말할 때도 it입니다.'],
+      ['It is cold today.', '오늘은 춥다.', '날씨', '날씨를 말할 때도 it입니다.']]],
+  ],
+  wrong: [['This are my shoes.', 'shoes는 복수 → These are my shoes.', ''], ['Those is my friends.', 'Those는 복수라서 are → Those are my friends.', ''], ['They is cold today.', '날씨는 it → It is cold today.', '']],
+  wrongNote: '지시어는 명사의 수에 맞추고, 날씨·시간·요일은 it을 씁니다.',
+  cram: '■ 핵심 요약\nthis/that/these/those는 가리키는 말이고, 날씨·시간·요일은 뜻 없는 it을 주어로 씁니다.\n\n■ 규칙\n1. 가까운 것은 this(단수)·these(복수), 먼 것은 that(단수)·those(복수)입니다.\n2. 지시어는 명사 앞에서 형용사처럼도 쓰고, 명사의 수에 맞춥니다.\n3. this/that 뒤에는 is, these/those 뒤에는 are를 씁니다.\n4. 날씨, 시간, 요일, 날짜, 거리를 말할 때는 it을 주어로 쓰고 "그것"이라고 해석하지 않습니다.\n\n■ 예문 뜻\n이것은 내 책이다.\n저것들은 내 신발이다.\n오늘은 비가 온다.',
+  blanks: [['가까이 있는 여러 개를 가리킬 때는 ___를 씁니다.', 'these', 't로 시작'], ['멀리 있는 한 개를 가리킬 때는 ___를 씁니다.', 'that', 't로 시작'], ['these/those 뒤에는 be동사 ___를 씁니다.', 'are', '세 글자'], ['날씨를 말할 때는 ___을 주어로 씁니다.', 'it', '두 글자']],
+  fill: [
+    ['basic', '___ is my book here.', 'This', ['This', 'These', 'Those'], '여기 이것은 내 책이다.', '가까운 한 개이므로 This입니다.', '가까이 · 한 개'],
+    ['basic', '___ are my shoes.', 'These', ['This', 'These', 'That'], '이것들은 내 신발이다.', '가까운 여러 개이므로 These입니다.', '가까이 · 여러 개'],
+    ['basic', 'Look at ___ birds over there.', 'those', ['this', 'these', 'those'], '저기 저 새들을 봐.', '멀리 있는 여러 개이므로 those입니다.', '멀리 · 여러 개'],
+    ['intermediate', '___ is raining today.', 'It', ['They', 'It', 'This'], '오늘은 비가 온다.', '날씨는 it을 주어로 씁니다.', '날씨'],
+    ['intermediate', 'What time ___ it?', 'is', ['are', 'is', 'be'], '몇 시니?', 'it의 be동사는 is입니다.', 'it + ?'],
+    ['intermediate', '___ is Monday today.', 'It', ['It', 'This', 'That'], '오늘은 월요일이다.', '요일은 it을 주어로 씁니다.', '요일'],
+    ['advanced', '___ boy over there is my brother.', 'That', ['That', 'This', 'These'], '저기 저 소년은 내 동생이다.', '멀리 있는 한 명이므로 That입니다.', '멀리 · 한 명'],
+    ['advanced', '___ is five kilometers from here to the station.', 'It', ['This', 'They', 'It'], '여기서 역까지는 5킬로미터다.', '거리는 it을 주어로 씁니다.', '거리'],
+  ],
+  fix: [
+    ['basic', 'This are my friends.', 'This', ['These'], ['friends는 복수라서 These를 씁니다.', 'are는 is여야 합니다.', 'friends는 단수여야 합니다.'], 0, 'These are my friends. → 복수이면 These'],
+    ['intermediate', 'Those shoes is old.', 'is', ['are'], ['shoes는 단수라서 is를 씁니다.', 'Those 뒤에는 are를 씁니다.', 'old는 명사여야 합니다.'], 1, 'Those shoes are old. → 복수이면 are'],
+    ['intermediate', 'It are sunny today.', 'are', ['is'], ['today는 복수라서 are를 씁니다.', 'sunny는 명사여야 합니다.', 'it의 be동사는 is입니다.'], 2, 'It is sunny today. → it은 is'],
+  ],
+  questions: [
+    pc('Which sentence about shoes is correct?', '신발에 대한 올바른 문장을 고르세요.', 'basic', [['This are my shoes.', '이것들은 내 신발이다.'], ['These are my shoes.', '이것들은 내 신발이다.'], ['This is my shoes.', '이것들은 내 신발이다.'], ['These is my shoes.', '이것들은 내 신발이다.']], 1, 'shoes는 복수이므로 These are를 씁니다.'),
+    pc('Which sentence about friends is correct?', '친구들에 대한 올바른 문장을 고르세요.', 'basic', [['Those is my friends.', '저 사람들은 내 친구들이다.'], ['That are my friends.', '저 사람들은 내 친구들이다.'], ['Those are my friends.', '저 사람들은 내 친구들이다.'], ['That is my friends.', '저 사람들은 내 친구들이다.']], 2, '복수는 Those are를 씁니다.'),
+    pc('Which sentence about the weather is correct?', '날씨에 대한 올바른 문장을 고르세요.', 'basic', [['They is cold today.', '오늘은 춥다.'], ['This is cold today.', '오늘은 춥다.'], ['That is cold today.', '오늘은 춥다.'], ['It is cold today.', '오늘은 춥다.']], 3, '날씨는 it을 주어로 씁니다.'),
+    pc('Which question about time is correct?', '시간에 대한 올바른 질문을 고르세요.', 'intermediate', [['What time is it?', '몇 시니?'], ['What time it is?', '몇 시니?'], ['What time are it?', '몇 시니?'], ['What time is they?', '몇 시니?']], 0, '시간은 What time is it?으로 묻습니다.'),
+    pc('Which sentence about the day is correct?', '요일에 대한 올바른 문장을 고르세요.', 'intermediate', [['This are Sunday today.', '오늘은 일요일이다.'], ['It is Sunday today.', '오늘은 일요일이다.'], ['They is Sunday today.', '오늘은 일요일이다.'], ['These is Sunday today.', '오늘은 일요일이다.']], 1, '요일은 it을 주어로 씁니다.'),
+    pc('Choose the sentence in which it is NOT the impersonal it.', '비인칭 it이 아닌 문장을 고르세요.', 'intermediate', [['It is sunny.', '화창하다.'], ['It is five o\'clock.', '5시다.'], ['It is my cat.', '그것은 내 고양이다.'], ['It is Friday.', '금요일이다.']], 2, '세 번째의 it은 고양이를 가리키는 일반 대명사입니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['This are my pens.', '이것들은 내 펜이다.'], ['These are my books.', '이것들은 내 책이다.'], ['That is my bag.', '저것은 내 가방이다.'], ['Those are birds.', '저것들은 새다.']], 0, 'pens는 복수이므로 These are여야 합니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① This is my pen.\n② These is my pens.\n③ It is rainy.', 'basic', 1, '②만 틀렸고 These are my pens여야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① That books are old.\n② It is snowing.\n③ These is my cap.\n④ Those are my friends.', 'advanced', 2, '①은 Those books, ③은 This is my cap(또는 These are)으로 고쳐야 하므로 틀린 문장은 2개입니다.'),
+    pc('Why is the sentence "Those is my shoes." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because Those is plural, so the verb should be are.', 'Those는 복수라서 동사가 are여야 해서'], ['Because shoes should be shoe.', 'shoes를 shoe로 바꿔야 해서'], ['Because my should be me.', 'my를 me로 바꿔야 해서'], ['Because Those should be It.', 'Those를 It으로 바꿔야 해서']], 0, 'those/these 뒤에는 are를 씁니다.', 'reason'),
+  ],
+  popup: [['___ are my shoes. (가까이)', 'These', ['This', 'That'], '가까이 · 복수'], ['___ is my house. (멀리)', 'That', ['Those', 'These'], '멀리 · 단수'], ['___ is sunny today.', 'It', ['They', 'These'], '날씨'], ['What time ___ it?', 'is', ['are', 'be'], 'it']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'This are my shoes.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['These are my shoes.'], noteKo: '복수이면 These are입니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'They is cold today.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['It is cold today.'], noteKo: '날씨는 it을 주어로 씁니다.' },
+  ],
+  top: ['this/that은 단수·is, these/those는 복수·are로 짝을 맞춘다. 날씨·시간·요일·거리의 it은 해석하지 않는다.', 'It is five kilometers from here.', '여기서 5킬로미터다.'],
+  lecture: [
+    { type: 'text', text: 'this · that · these · those · it', narration: '오늘은 가리키는 말과, 해석하지 않는 [en]it[/en]을 배워요.' },
+    { type: 'board', title: 'this / these', lines: ['[b]This[/b] is my pen.', '[b]These[/b] are my shoes.', '가까이 → this, these'], narration: '가까이 있는 것은 하나면 [en]this[/en], 여러 개면 [en]these[/en]예요. [en]This is my pen.[/en] 이것은 내 펜이에요. [en]These are my shoes.[/en] 이것들은 내 신발이에요.' },
+    { type: 'board', title: 'that / those', lines: ['[b]That[/b] is my house.', '[b]Those[/b] are my friends.', '멀리 → that, those'], narration: '멀리 있는 것은 하나면 [en]that[/en], 여러 개면 [en]those[/en]예요. [en]That is my house.[/en] 저것은 내 집이에요.' },
+    { type: 'board', title: '명사 앞에서', lines: ['[b]this[/b] book', '[b]those[/b] shoes', '명사의 수에 맞춰서'], narration: '명사 앞에서 형용사처럼도 써요. [en]this book[/en], [en]those shoes[/en]처럼 명사의 수에 맞춰요.' },
+    { type: 'board', title: '비인칭 it', lines: ['[b]It[/b] is rainy.', 'What time is [b]it[/b]?', '[b]It[/b] is Monday.'], narration: '날씨, 시간, 요일을 말할 때는 [en]it[/en]을 주어로 써요. 이때 [en]it[/en]은 "그것"이라는 뜻이 아니에요. [en]It is rainy today.[/en] 오늘은 비가 와요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× [b]This[/b] are my shoes.', '× Those [b]is[/b] my friends.', '× [b]They[/b] is cold today.'], narration: '[en]This are[/en]는 틀리고 [en]These are[/en]가 맞아요. [en]Those is[/en]는 틀리고 [en]Those are[/en]가 맞아요. 날씨는 [en]They is[/en]가 아니라 [en]It is[/en]예요.' },
+    { type: 'text', text: '정리: this·that = is / these·those = are / 날씨 = it', narration: '정리할게요. 단수는 [en]this[/en]와 [en]that[/en]에 [en]is[/en], 복수는 [en]these[/en]와 [en]those[/en]에 [en]are[/en]를 써요. 날씨와 시간과 요일은 [en]it[/en]이에요.' },
+  ],
+});

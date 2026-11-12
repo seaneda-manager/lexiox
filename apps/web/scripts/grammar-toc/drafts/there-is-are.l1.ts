@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'there-is-are', topic: 'There is / are - 1부', titleKo: 'There is / There are',
+  summaryEn: 'We use There is or There are to say that something exists.',
+  summaryKo: '「There is / There are ~」는 "~이 있다"라고 말할 때 쓰고, 뒤에 오는 명사에 따라 is와 are를 고릅니다.',
+  rules: [
+    ['Use There is with one thing or an uncountable noun.', '뒤에 오는 명사가 하나이거나 셀 수 없는 명사이면 There is를 씁니다. (There is a book. / There is some milk.)'],
+    ['Use There are with two or more things.', '뒤에 오는 명사가 둘 이상이면 There are를 씁니다. (There are two cats.)'],
+    ['Put not after is or are for a negative sentence.', '부정문은 is/are 뒤에 not을 붙입니다. (There isn\'t / There aren\'t)'],
+    ['Put is or are before there to ask a question.', '의문문은 Is there ~? / Are there ~?로 쓰고, Yes, there is. / No, there isn\'t.처럼 대답합니다.'],
+  ],
+  examples: [['There is a book on the desk.', '책상 위에 책이 한 권 있다.'], ['There are two cats in the garden.', '정원에 고양이가 두 마리 있다.'], ['Is there a bank near here?', '이 근처에 은행이 있니?']],
+  groups: [
+    ['There is', '하나 또는 셀 수 없는 명사.', [
+      ['There is a pen on the desk.', '책상 위에 펜이 하나 있다.', 'There is + 단수', '펜이 하나이므로 is입니다.'],
+      ['There is some water in the glass.', '컵에 물이 좀 있다.', 'There is + 불가산', 'water는 셀 수 없어서 is입니다.'],
+      ['There is a cat under the table.', '탁자 아래에 고양이가 있다.', 'There is + 단수', '고양이가 한 마리입니다.']]],
+    ['There are', '둘 이상의 복수 명사.', [
+      ['There are two cats in the garden.', '정원에 고양이가 두 마리 있다.', 'There are + 복수', 'cats가 복수이므로 are입니다.'],
+      ['There are many people in the park.', '공원에 사람이 많다.', 'There are + 복수', 'people은 복수입니다.'],
+      ['There are five books on the shelf.', '선반에 책이 다섯 권 있다.', 'There are + 복수', 'books가 복수입니다.']]],
+    ['부정문', 'is/are 뒤에 not.', [
+      ['There is not a cat in the room.', '방에 고양이가 없다.', 'is not', 'is 뒤에 not을 붙입니다.'],
+      ["There isn't any milk.", '우유가 하나도 없다.', "isn't", 'is not의 줄임말입니다.'],
+      ["There aren't any students.", '학생이 한 명도 없다.', "aren't", 'are not의 줄임말입니다.']]],
+    ['의문문과 대답', 'Is there / Are there.', [
+      ['Is there a bank near here?', '이 근처에 은행이 있니?', 'Is there', '하나이면 Is there입니다.'],
+      ['Are there any eggs?', '달걀이 있니?', 'Are there', '복수이면 Are there입니다.'],
+      ['Is there a cat? — Yes, there is.', '고양이가 있니? — 응, 있어.', 'Yes, there is.', '대답에도 there를 씁니다.']]],
+  ],
+  wrong: [['There is two books on the desk.', '책이 둘 이상이면 are → There are two books', ''], ['There are a cat in the room.', '고양이가 하나이면 is → There is a cat', ''], ['Are there a pen?', '펜이 하나이면 Is → Is there a pen?', '']],
+  wrongNote: 'There 뒤의 명사가 하나인지 둘 이상인지 보고 is와 are를 고르세요.',
+  cram: '■ 핵심 요약\nThere is / There are는 "~이 있다"는 뜻이고, 뒤에 오는 명사에 따라 is와 are를 고릅니다.\n\n■ 규칙\n1. 하나이거나 셀 수 없는 명사 앞에는 There is를 씁니다.\n2. 둘 이상의 명사 앞에는 There are를 씁니다.\n3. 부정문은 is/are 뒤에 not을 붙입니다.\n4. 의문문은 Is there ~? / Are there ~?로 쓰고 Yes, there is.로 대답합니다.\n\n■ 예문 뜻\n책상 위에 책이 한 권 있다.\n정원에 고양이가 두 마리 있다.\n이 근처에 은행이 있니?',
+  blanks: [['하나인 명사 앞에는 There ___를 씁니다.', 'is', '두 글자'], ['둘 이상인 명사 앞에는 There ___를 씁니다.', 'are', '세 글자'], ['부정문은 is/are 뒤에 ___을 붙입니다.', 'not', 'n으로 시작'], ['의문문은 is나 are를 ___ 앞으로 보냅니다.', 'there', 't로 시작']],
+  fill: [
+    ['basic', 'There ___ a book on the desk.', 'is', ['are', 'is', 'am'], '책상 위에 책이 한 권 있다.', '책이 하나이므로 is입니다.', '하나'],
+    ['basic', 'There ___ two cats in the garden.', 'are', ['are', 'is', 'be'], '정원에 고양이가 두 마리 있다.', 'cats가 복수이므로 are입니다.', '둘 이상'],
+    ['basic', 'There ___ some water in the glass.', 'is', ['are', 'am', 'is'], '컵에 물이 좀 있다.', '셀 수 없는 명사는 is를 씁니다.', '불가산'],
+    ['intermediate', 'There ___ not any students.', 'are', ['is', 'are', 'am'], '학생이 한 명도 없다.', 'students가 복수이므로 are not입니다.', '복수'],
+    ['intermediate', '___ there a bank near here?', 'Is', ['Is', 'Are', 'Do'], '이 근처에 은행이 있니?', 'a bank는 하나이므로 Is there입니다.', '하나'],
+    ['intermediate', '___ there any eggs?', 'Are', ['Is', 'Do', 'Are'], '달걀이 좀 있니?', 'eggs가 복수이므로 Are there입니다.', '복수'],
+    ['advanced', 'There ___ many people in the park.', 'are', ['is', 'are', 'be'], '공원에 사람이 많다.', 'people은 복수이므로 are입니다.', '복수'],
+    ['advanced', 'Is there a cat? — Yes, there ___.', 'is', ['are', 'does', 'is'], '고양이가 있니? — 응, 있어.', 'Is there ~?에는 Yes, there is.로 대답합니다.', '대답'],
+  ],
+  fix: [
+    ['basic', 'There is two books on the desk.', 'is', ['are'], ['two books는 복수라서 are를 씁니다.', 'desk 앞에 a가 필요합니다.', 'books는 단수여야 합니다.'], 0, 'There are two books on the desk. → 복수이면 are'],
+    ['intermediate', 'There are a cat in the room.', 'are', ['is'], ['room 앞에 an이 필요합니다.', 'a cat은 하나이므로 is를 씁니다.', 'cat은 복수여야 합니다.'], 1, 'There is a cat in the room. → 하나이면 is'],
+    ['intermediate', 'Are there a pen on the desk?', 'Are', ['Is'], ['pen이 복수라서 Are를 씁니다.', 'desk가 단수라서 Are를 씁니다.', 'a pen은 하나이므로 Is로 시작합니다.'], 2, 'Is there a pen on the desk? → 하나이면 Is'],
+  ],
+  questions: [
+    pc('Which sentence about a dog is correct?', '개에 대한 올바른 문장을 고르세요.', 'basic', [['There are a dog in the park.', '공원에 개가 한 마리 있다.'], ['There is a dog in the park.', '공원에 개가 한 마리 있다.'], ['There be a dog in the park.', '공원에 개가 한 마리 있다.'], ['It is a dog in the park.', '공원에 개가 한 마리 있다.']], 1, '개가 한 마리이므로 There is를 씁니다.'),
+    pc('Which sentence about apples is correct?', '사과에 대한 올바른 문장을 고르세요.', 'basic', [['There is three apples.', '사과가 세 개 있다.'], ['There be three apples.', '사과가 세 개 있다.'], ['There am three apples.', '사과가 세 개 있다.'], ['There are three apples.', '사과가 세 개 있다.']], 3, 'apples가 복수이므로 There are를 씁니다.'),
+    pc('Which sentence about milk is correct?', '우유에 대한 올바른 문장을 고르세요.', 'basic', [['There aren\'t any milk.', '우유가 하나도 없다.'], ['There not is any milk.', '우유가 하나도 없다.'], ['There isn\'t any milk.', '우유가 하나도 없다.'], ['There doesn\'t any milk.', '우유가 하나도 없다.']], 2, '불가산 milk는 단수 취급하고, 부정문은 is 뒤에 not을 씁니다.'),
+    pc('Which question about a bank is correct?', '은행에 대한 올바른 질문을 고르세요.', 'intermediate', [['Is there a bank near here?', '이 근처에 은행이 있니?'], ['Are there a bank near here?', '이 근처에 은행이 있니?'], ['Do there a bank near here?', '이 근처에 은행이 있니?'], ['There is a bank near here?', '이 근처에 은행이 있니?']], 0, '하나이면 Is there ~?로 묻습니다.'),
+    pc('Which question about eggs is correct?', '달걀에 대한 올바른 질문을 고르세요.', 'intermediate', [['Is there any eggs?', '달걀이 있니?'], ['Are there any eggs?', '달걀이 있니?'], ['Do there any eggs?', '달걀이 있니?'], ['There are any eggs?', '달걀이 있니?']], 1, 'eggs가 복수이므로 Are there ~?로 묻습니다.'),
+    pc('Choose the sentence that is not a question.', '의문문이 아닌 것을 고르세요.', 'intermediate', [['Is there a cat?', '고양이가 있니?'], ['Are there any books?', '책이 있니?'], ['There are some pens.', '펜이 몇 개 있다.'], ['Is there any milk?', '우유가 있니?']], 2, '세 번째는 평서문입니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['There is two pens.', '펜이 두 개 있다.'], ['There is a pen.', '펜이 하나 있다.'], ['There are two pens.', '펜이 두 개 있다.'], ['Are there any pens?', '펜이 있니?']], 0, 'two pens는 복수이므로 There are여야 합니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① There is a cat.\n② There are a boy.\n③ There are two cats.', 'basic', 1, '②만 틀렸고 There is a boy여야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① There is two eggs.\n② Are there a pen?\n③ There are some milk.\n④ There is a bag.', 'advanced', 3, '①은 There are, ②는 Is there, ③은 There is로 고쳐야 하므로 틀린 문장은 3개입니다.'),
+    pc('Why is the sentence "There is two books." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because books should be book.', 'books를 book으로 바꿔야 해서'], ['Because there should be it.', 'there를 it으로 바꿔야 해서'], ['Because two should be a.', 'two를 a로 바꿔야 해서'], ['Because two books is plural, so we use are.', 'two books는 복수라서 are를 써야 해서']], 3, '뒤에 오는 명사가 복수이면 There are를 씁니다.', 'reason'),
+  ],
+  popup: [['There ___ a pen on the desk.', 'is', ['are', 'be'], '하나'], ['There ___ two dogs.', 'are', ['is', 'am'], '복수'], ['___ there a bank near here?', 'Is', ['Are', 'Do'], '하나'], ['There ___ any students. (부정)', "aren't", ["isn't", "don't"], '복수']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'There is two books on the desk.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['There are two books on the desk.'], noteKo: '복수이면 There are입니다.' },
+    { kind: 'rewrite', level: 'basic', prompt: 'There is a bank near here.', promptKo: '의문문으로 바꿔 쓰시오.', answers: ['Is there a bank near here?'], noteKo: 'is를 there 앞으로 보냅니다.' },
+  ],
+  top: ['There is/are 뒤의 명사에 동사를 맞춘다. 불가산(water, milk)은 is, 복수는 are. 의문문은 Is there / Are there.', 'There are many people in the park.', '공원에 사람이 많다.'],
+  lecture: [
+    { type: 'text', text: 'There is / There are', narration: '오늘은 "~이 있다"라고 말하는 방법을 배워요. [en]There is[/en]와 [en]There are[/en]예요.' },
+    { type: 'board', title: 'There is', lines: ['There [b]is[/b] a pen.', 'There [b]is[/b] some water.', '하나 / 셀 수 없는 명사'], narration: '하나이거나 셀 수 없는 명사 앞에는 [en]There is[/en]를 써요. [en]There is a pen on the desk.[/en] 책상 위에 펜이 있다.' },
+    { type: 'board', title: 'There are', lines: ['There [b]are[/b] two cats.', 'There [b]are[/b] many people.', '둘 이상 → are'], narration: '둘 이상의 명사 앞에는 [en]There are[/en]를 써요. [en]There are two cats in the garden.[/en] 정원에 고양이가 두 마리 있다.' },
+    { type: 'board', title: '부정문', lines: ["There [b]isn't[/b] any milk.", "There [b]aren't[/b] any students."], narration: '부정문은 [en]is[/en]나 [en]are[/en] 뒤에 [en]not[/en]을 붙여요. [en]There isn\'t any milk.[/en] 우유가 하나도 없다.' },
+    { type: 'board', title: '의문문', lines: ['[b]Is[/b] there a bank?', '[b]Are[/b] there any eggs?', 'Yes, there is.'], narration: '의문문은 [en]is[/en]나 [en]are[/en]를 [en]there[/en] 앞으로 보내요. [en]Is there a bank near here?[/en] 대답은 [en]Yes, there is.[/en]예요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× There [b]is[/b] two books.', '× There [b]are[/b] a cat.', '× [b]Are[/b] there a pen?'], narration: '[en]There is two books[/en]는 틀리고 [en]There are two books[/en]가 맞아요. 반대로 [en]There are a cat[/en]은 틀리고 [en]There is a cat[/en]이 맞아요.' },
+    { type: 'text', text: '정리: 뒤의 명사에 맞춰 is / are', narration: '정리할게요. 뒤에 오는 명사가 하나이거나 셀 수 없으면 [en]is[/en], 둘 이상이면 [en]are[/en]를 써요.' },
+  ],
+});

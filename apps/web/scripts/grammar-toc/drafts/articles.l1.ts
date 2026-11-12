@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'articles', topic: '관사 - 1부', titleKo: '관사 — a(n) · the · 관사 없음',
+  summaryEn: 'We use a, an, or the before nouns. Sometimes we use no article.',
+  summaryKo: '명사 앞에는 a, an, the를 붙이고, 어떤 경우에는 아무것도 붙이지 않습니다.',
+  rules: [
+    ['Use a or an for one of something.', '처음 말하는 셀 수 있는 하나의 명사에는 a나 an을 씁니다. 모음 소리로 시작하면 an, 아니면 a입니다. (a dog, an apple)'],
+    ['Use the for something both people know.', '이미 말했거나 서로 알고 있는 것에는 the를 씁니다. (I saw a cat. The cat was cute.)'],
+    ['Use the for one-of-a-kind things.', '세상에 하나뿐인 것에도 the를 씁니다. (the sun, the moon)'],
+    ['Use no article for meals, sports, and subjects.', '식사, 운동, 과목 앞에는 관사를 쓰지 않습니다. (have lunch, play soccer, study English)'],
+  ],
+  examples: [['I have an apple.', '나는 사과가 하나 있다.'], ['I saw a cat. The cat was cute.', '나는 고양이를 봤다. 그 고양이는 귀여웠다.'], ['We play soccer after school.', '우리는 방과 후에 축구를 한다.']],
+  groups: [
+    ['a와 an', '소리가 모음으로 시작하면 an.', [
+      ['She is a teacher.', '그녀는 선생님이다.', 'a + 자음', 'teacher는 자음 소리로 시작합니다.'],
+      ['I have an umbrella.', '나는 우산이 있다.', 'an + 모음', 'umbrella는 모음 소리로 시작합니다.'],
+      ['We waited for an hour.', '우리는 한 시간 기다렸다.', 'an + hour', 'h가 소리 나지 않아 an을 씁니다.']]],
+    ['the를 쓰는 경우', '서로 아는 것, 이미 말한 것.', [
+      ['I saw a dog. The dog was big.', '나는 개를 봤다. 그 개는 컸다.', 'a → the', '처음엔 a, 두 번째부터 the입니다.'],
+      ['Please close the door.', '문을 닫아 주세요.', 'the', '둘 다 아는 문입니다.'],
+      ['The sun is hot.', '태양은 뜨겁다.', 'the', '하나뿐인 것에는 the를 씁니다.']]],
+    ['관사를 쓰지 않는 경우', '식사·운동·과목.', [
+      ['I have lunch at noon.', '나는 정오에 점심을 먹는다.', '식사', '식사 이름 앞에는 관사가 없습니다.'],
+      ['He plays soccer.', '그는 축구를 한다.', '운동', '운동 이름 앞에는 관사가 없습니다.'],
+      ['She studies English.', '그녀는 영어를 공부한다.', '과목', '과목 이름 앞에는 관사가 없습니다.']]],
+    ['a university, an honest', '철자가 아니라 소리로 판단합니다.', [
+      ['She is a university student.', '그녀는 대학생이다.', 'a + 유', 'university는 [유] 소리로 시작합니다.'],
+      ['He is an honest boy.', '그는 정직한 소년이다.', 'an + 오', 'honest의 h는 소리가 나지 않습니다.'],
+      ['I need an egg.', '나는 달걀이 하나 필요하다.', 'an + 에', 'egg는 모음 소리로 시작합니다.']]],
+  ],
+  wrong: [['She is a engineer.', '모음 소리로 시작하면 an → She is an engineer.', ''], ['I have an book.', '자음 소리로 시작하면 a → I have a book.', ''], ['I play the soccer.', '운동 이름 앞에는 관사가 없다 → I play soccer.', '']],
+  wrongNote: '철자가 아니라 소리로 a/an을 고르고, 운동·식사 앞에는 관사를 쓰지 않습니다.',
+  cram: '■ 핵심 요약\n명사 앞에는 a, an, the를 붙이거나 아무것도 붙이지 않습니다.\n\n■ 규칙\n1. 처음 말하는 하나의 명사에는 a/an을 씁니다. 모음 소리로 시작하면 an입니다.\n2. 이미 말했거나 서로 아는 것에는 the를 씁니다.\n3. 세상에 하나뿐인 것(sun, moon)에는 the를 씁니다.\n4. 식사, 운동, 과목 앞에는 관사를 쓰지 않습니다.\n\n■ 예문 뜻\n나는 사과가 하나 있다.\n나는 고양이를 봤다. 그 고양이는 귀여웠다.\n우리는 방과 후에 축구를 한다.',
+  blanks: [['처음 말하는 하나의 명사에는 ___ 또는 an을 씁니다.', 'a', '한 글자'], ['이미 말했거나 서로 아는 것에는 ___를 씁니다.', 'the', 't로 시작'], ['모음 ___로 시작하는 명사에는 an을 씁니다.', '소리', '두 글자'], ['운동 이름 앞에는 ___를 쓰지 않습니다.', '관사', '두 글자']],
+  fill: [
+    ['basic', 'I have ___ apple.', 'an', ['a', 'an', 'the'], '나는 사과가 하나 있다.', 'apple은 모음 소리로 시작합니다.', '모음'],
+    ['basic', 'She is ___ teacher.', 'a', ['a', 'an', 'the'], '그녀는 선생님이다.', 'teacher는 자음 소리로 시작합니다.', '자음'],
+    ['basic', '___ sun is hot.', 'The', ['A', 'An', 'The'], '태양은 뜨겁다.', '하나뿐인 것에는 the를 씁니다.', '하나뿐'],
+    ['intermediate', 'I saw a dog. ___ dog was big.', 'The', ['The', 'A', 'An'], '나는 개를 봤다. 그 개는 컸다.', '이미 말한 것에는 the를 씁니다.', '두 번째'],
+    ['intermediate', 'He is ___ honest boy.', 'an', ['a', 'an', 'the'], '그는 정직한 소년이다.', 'honest의 h는 소리가 나지 않아 an을 씁니다.', 'h 묵음'],
+    ['intermediate', 'She is ___ university student.', 'a', ['an', 'a', 'the'], '그녀는 대학생이다.', 'university는 [유] 소리로 시작해 a를 씁니다.', '유 소리'],
+    ['advanced', 'Please close ___ door.', 'the', ['a', 'an', 'the'], '문을 닫아 주세요.', '서로 아는 문이므로 the를 씁니다.', '서로 앎'],
+    ['advanced', 'I need ___ umbrella.', 'an', ['an', 'a', 'the'], '나는 우산이 필요하다.', 'umbrella는 모음 소리로 시작합니다.', '모음'],
+  ],
+  fix: [
+    ['basic', 'She is a engineer.', 'a', ['an'], ['engineer는 모음 소리로 시작해 an을 씁니다.', 'She 뒤에는 an을 씁니다.', 'engineer 뒤에 s가 필요합니다.'], 0, 'She is an engineer. → 모음 소리는 an'],
+    ['intermediate', 'I have an book.', 'an', ['a'], ['book은 복수라서 an을 씁니다.', 'book은 자음 소리로 시작해 a를 씁니다.', 'have는 has여야 합니다.'], 1, 'I have a book. → 자음 소리는 a'],
+    ['intermediate', 'I play the soccer.', 'the', [''], ['soccer는 복수라서 the가 필요합니다.', 'play 뒤에는 항상 the를 씁니다.', '운동 이름 앞에는 관사를 쓰지 않습니다.'], 2, 'I play soccer. → 운동 앞에는 관사 없음'],
+  ],
+  questions: [
+    pc('Which sentence about an orange is correct?', '오렌지에 대한 올바른 문장을 고르세요.', 'basic', [['He has a orange.', '그는 오렌지가 하나 있다.'], ['He has an orange.', '그는 오렌지가 하나 있다.'], ['He has an oranges.', '그는 오렌지가 하나 있다.'], ['He has orange a.', '그는 오렌지가 하나 있다.']], 1, 'orange는 모음 소리로 시작하므로 an을 씁니다.'),
+    pc('Which sentence about a teacher is correct?', '선생님에 대한 올바른 문장을 고르세요.', 'basic', [['She is an teacher.', '그녀는 선생님이다.'], ['She is teachers.', '그녀는 선생님이다.'], ['She are a teacher.', '그녀는 선생님이다.'], ['She is a teacher.', '그녀는 선생님이다.']], 3, 'teacher는 자음 소리로 시작해 a를 씁니다.'),
+    pc('Which sentence about an hour is correct?', '한 시간에 대한 올바른 문장을 고르세요.', 'basic', [['We waited for a hour.', '우리는 한 시간 기다렸다.'], ['We waited for the an hour.', '우리는 한 시간 기다렸다.'], ['We waited for an hour.', '우리는 한 시간 기다렸다.'], ['We waited for hour a.', '우리는 한 시간 기다렸다.']], 2, 'hour의 h는 소리가 나지 않아 an을 씁니다.'),
+    pc('Which pair of sentences about a cat is correct?', '고양이에 대한 올바른 문장을 고르세요.', 'intermediate', [['I saw a cat. The cat was cute.', '나는 고양이를 봤다. 그 고양이는 귀여웠다.'], ['I saw a cat. A cat was cute.', '나는 고양이를 봤다. 그 고양이는 귀여웠다.'], ['I saw a cat. An cat was cute.', '나는 고양이를 봤다. 그 고양이는 귀여웠다.'], ['I saw the cat. Cat was cute.', '나는 고양이를 봤다. 그 고양이는 귀여웠다.']], 0, '이미 말한 고양이는 the를 씁니다.'),
+    pc('Which sentence about the moon is correct?', '달에 대한 올바른 문장을 고르세요.', 'intermediate', [['A moon is bright.', '달이 밝다.'], ['The moon is bright.', '달이 밝다.'], ['An moon is bright.', '달이 밝다.'], ['Moon are bright.', '달이 밝다.']], 1, '하나뿐인 것에는 the를 씁니다.'),
+    pc('Choose the word that needs a, not an.', 'an이 아니라 a를 쓰는 것을 고르세요.', 'intermediate', [['apple', '사과'], ['egg', '달걀'], ['umbrella', '우산'], ['university', '대학']], 3, 'university는 [유] 소리로 시작해 a를 씁니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['I play soccer.', '나는 축구를 한다.'], ['She has an apple.', '그녀는 사과가 하나 있다.'], ['He is a honest man.', '그는 정직한 사람이다.'], ['The sun is hot.', '태양은 뜨겁다.']], 2, 'honest의 h는 소리가 나지 않으므로 an honest입니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① She is a doctor.\n② I have an book.\n③ He eats an egg.', 'basic', 1, '②만 틀렸고 a book이어야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① An elephant is big.\n② I play the soccer.\n③ She has a umbrella.\n④ The moon is bright.', 'advanced', 2, '②는 play soccer, ③은 an umbrella로 고쳐야 하므로 틀린 문장은 2개입니다.'),
+    pc('Why is the sentence "She has a umbrella." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because umbrella starts with a vowel sound, so we use an.', 'umbrella는 모음 소리로 시작해 an을 써야 하기 때문에'], ['Because umbrella is plural.', 'umbrella가 복수라서'], ['Because she should be he.', 'she를 he로 바꿔야 해서'], ['Because the is always needed.', '항상 the가 필요해서']], 0, '모음 소리로 시작하는 명사 앞에는 an을 씁니다.', 'reason'),
+  ],
+  popup: [['I have ___ egg.', 'an', ['a', 'the'], '모음'], ['I saw a bird. ___ bird was small.', 'The', ['A', 'An'], '두 번째'], ['She is ___ university student.', 'a', ['an', 'the'], '유 소리'], ['He is ___ honest boy.', 'an', ['a', 'the'], 'h 묵음']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'I have an book.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['I have a book.'], noteKo: 'book은 자음 소리로 시작합니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'I play the soccer.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['I play soccer.'], noteKo: '운동 이름 앞에는 관사가 없습니다.' },
+  ],
+  top: ['a/an은 철자가 아니라 발음으로 고른다(an hour, an honest, a university). 운동·식사·과목 앞에는 관사를 쓰지 않는다.', 'He is an honest boy.', '그는 정직한 소년이다.'],
+  lecture: [
+    { type: 'text', text: '관사 — a · an · the', narration: '오늘은 명사 앞에 붙는 작은 말, 관사를 배워요.' },
+    { type: 'board', title: 'a와 an', lines: ['[b]a[/b] teacher', '[b]an[/b] apple', '모음 소리 → an'], narration: '처음 말하는 하나의 명사에는 [en]a[/en]나 [en]an[/en]을 써요. 모음 소리로 시작하면 [en]an[/en]이에요. [en]an apple[/en], [en]a teacher[/en]예요.' },
+    { type: 'board', title: '철자가 아니라 소리', lines: ['an [b]hour[/b]  (h 묵음)', 'an [b]honest[/b] boy', 'a [b]university[/b]  (유 소리)'], narration: '철자가 아니라 소리로 정해요. [en]hour[/en]는 [en]h[/en]가 소리 나지 않아서 [en]an hour[/en], [en]university[/en]는 유 소리라서 [en]a university[/en]예요.' },
+    { type: 'board', title: 'the', lines: ['I saw a dog.', '[b]The[/b] dog was big.', '[b]The[/b] sun, [b]the[/b] moon'], narration: '이미 말한 것이나 서로 아는 것에는 [en]the[/en]를 써요. 처음엔 [en]a dog[/en], 두 번째부터는 [en]the dog[/en]예요. 하나뿐인 [en]sun[/en]과 [en]moon[/en]에도 [en]the[/en]를 써요.' },
+    { type: 'board', title: '관사를 쓰지 않는 경우', lines: ['have lunch', 'play soccer', 'study English'], narration: '식사, 운동, 과목 앞에는 관사를 쓰지 않아요. [en]I play soccer.[/en] 나는 축구를 해요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× She is [b]a[/b] engineer.', '× I have [b]an[/b] book.', '× I play [b]the[/b] soccer.'], narration: '[en]a engineer[/en]는 틀리고 [en]an engineer[/en]가 맞아요. [en]an book[/en]은 틀리고 [en]a book[/en]이에요. [en]play the soccer[/en]도 틀려요.' },
+    { type: 'text', text: '정리: a/an · the · 관사 없음', narration: '정리할게요. 처음 말하는 하나에는 [en]a[/en]나 [en]an[/en], 서로 아는 것에는 [en]the[/en], 식사와 운동과 과목에는 관사가 없어요.' },
+  ],
+});

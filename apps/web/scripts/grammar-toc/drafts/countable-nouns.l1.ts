@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'countable-nouns', topic: '셀 수 있는 명사와 복수형 - 1부', titleKo: '셀 수 있는 명사와 복수형',
+  summaryEn: 'Countable nouns have a singular and a plural form.',
+  summaryKo: '셀 수 있는 명사는 하나일 때는 단수형, 둘 이상일 때는 복수형으로 씁니다.',
+  rules: [
+    ['For one thing use a or an. For two or more use the plural form.', '하나일 때는 a/an을 쓰고, 둘 이상이면 복수형으로 씁니다. 대부분은 끝에 -s를 붙입니다. (a book → two books)'],
+    ['Add -es to nouns ending in s, x, ch, sh.', 's, x, ch, sh로 끝나는 명사는 -es를 붙입니다. (box → boxes, dish → dishes)'],
+    ['Change consonant + y to -ies.', '자음 + y로 끝나는 명사는 y를 i로 바꾸고 -es를 붙입니다. (baby → babies)'],
+    ['Some nouns change in special ways.', '불규칙하게 바뀌는 명사는 따로 외웁니다. (child → children, foot → feet, man → men, mouse → mice, sheep → sheep)'],
+  ],
+  examples: [['I have two books.', '나는 책이 두 권 있다.'], ['She has three boxes.', '그녀는 상자가 세 개 있다.'], ['The children are happy.', '아이들은 행복하다.']],
+  groups: [
+    ['대부분은 -s', '하나면 단수, 둘 이상이면 끝에 -s.', [
+      ['I have a dog.', '나는 개가 한 마리 있다.', '단수', 'a와 함께 단수형을 씁니다.'],
+      ['I have two dogs.', '나는 개가 두 마리 있다.', '복수 -s', '둘 이상이면 -s를 붙입니다.'],
+      ['She has many pens.', '그녀는 펜이 많다.', '복수 -s', 'many 뒤에는 복수형입니다.']]],
+    ['-es로 끝나는 복수', 's, x, ch, sh로 끝나면 -es.', [
+      ['There are three boxes.', '상자가 세 개 있다.', 'x + es', 'box는 -es를 붙입니다.'],
+      ['He washes two dishes.', '그는 접시 두 개를 씻는다.', 'sh + es', 'dish는 dishes가 됩니다.'],
+      ['I need two watches.', '나는 시계가 두 개 필요하다.', 'ch + es', 'watch는 watches가 됩니다.']]],
+    ['자음 + y → -ies', 'y를 i로 바꾸고 -es를 붙입니다.', [
+      ['Two babies are crying.', '아기 두 명이 울고 있다.', 'baby → babies', 'y를 i로 바꿉니다.'],
+      ['She has three cherries.', '그녀는 체리가 세 개 있다.', 'cherry → cherries', '자음 + y입니다.'],
+      ['They visit two cities.', '그들은 도시 두 곳을 방문한다.', 'city → cities', 'y를 i로 바꿉니다.']]],
+    ['불규칙 복수', '모양이 완전히 바뀌거나 그대로인 명사.', [
+      ['Three children are playing.', '아이 세 명이 놀고 있다.', 'child → children', '불규칙 복수입니다.'],
+      ['My feet are cold.', '내 발이 차갑다.', 'foot → feet', '불규칙 복수입니다.'],
+      ['I see two sheep.', '나는 양 두 마리를 본다.', 'sheep → sheep', '단수와 복수가 같습니다.']]],
+  ],
+  wrong: [['I have two cat.', 'two 뒤에는 복수형 → two cats', ''], ['Three boxs are here.', 'x로 끝나면 -es → three boxes', ''], ['Two childs are playing.', 'child의 복수는 children → Two children', '']],
+  wrongNote: '둘 이상이면 복수형을 쓰고, 복수형 만드는 방법을 지켜야 합니다.',
+  cram: '■ 핵심 요약\n셀 수 있는 명사는 하나면 단수형, 둘 이상이면 복수형으로 씁니다.\n\n■ 규칙\n1. 하나일 때는 a/an, 둘 이상일 때는 끝에 -s를 붙입니다.\n2. s, x, ch, sh로 끝나는 명사는 -es를 붙입니다.\n3. 자음 + y로 끝나는 명사는 y를 i로 바꾸고 -es를 붙입니다.\n4. child → children, foot → feet, man → men처럼 불규칙한 복수는 따로 외웁니다.\n\n■ 예문 뜻\n나는 책이 두 권 있다.\n아기 두 명이 울고 있다.\n아이들은 행복하다.',
+  blanks: [['둘 이상일 때는 명사의 끝에 보통 ___를 붙입니다.', '-s', '한 글자'], ['s, x, ch, sh로 끝나는 명사는 ___를 붙입니다.', '-es', '두 글자'], ['자음 + y로 끝나는 명사는 y를 ___로 바꾸고 -es를 붙입니다.', 'i', '한 글자'], ['child의 복수형은 ___입니다.', 'children', 'c로 시작']],
+  fill: [
+    ['basic', 'I have two ___.', 'books', ['book', 'books', 'a book'], '나는 책이 두 권 있다.', 'two 뒤에는 복수형입니다.', '둘 이상'],
+    ['basic', 'She has three ___.', 'boxes', ['boxes', 'boxs', 'boxies'], '그녀는 상자가 세 개 있다.', 'x로 끝나면 -es를 붙입니다.', 'x로 끝남'],
+    ['basic', 'There are five ___ in the room.', 'children', ['childs', 'childrens', 'children'], '방에 아이가 다섯 명 있다.', 'child는 불규칙 복수입니다.', '불규칙'],
+    ['intermediate', 'Two ___ are in the garden.', 'babies', ['babys', 'babyes', 'babies'], '아기 두 명이 정원에 있다.', '자음 + y는 y를 i로 바꿉니다.', '자음 + y'],
+    ['intermediate', 'The farmer has ten ___.', 'sheep', ['sheep', 'sheeps', 'sheepes'], '농부는 양이 열 마리 있다.', 'sheep은 단수와 복수가 같습니다.', '그대로'],
+    ['intermediate', 'My ___ hurt after the game.', 'feet', ['foots', 'feet', 'feets'], '경기 후 내 발이 아프다.', 'foot의 복수는 feet입니다.', '불규칙'],
+    ['advanced', 'There are many ___ on the table.', 'dishes', ['dishs', 'dishies', 'dishes'], '식탁 위에 접시가 많다.', 'sh로 끝나면 -es를 붙입니다.', 'sh로 끝남'],
+    ['advanced', 'Three ___ are eating cheese.', 'mice', ['mice', 'mouses', 'mouse'], '쥐 세 마리가 치즈를 먹고 있다.', 'mouse의 복수는 mice입니다.', '불규칙'],
+  ],
+  fix: [
+    ['basic', 'She has two cat.', 'cat', ['cats'], ['two 뒤에는 복수형을 씁니다.', '주어가 she라서 has를 씁니다.', 'cat은 셀 수 없는 명사입니다.'], 0, 'She has two cats. → 둘 이상이면 복수형'],
+    ['intermediate', 'Two childs are playing.', 'childs', ['children'], ['child 앞에 a가 필요합니다.', 'child의 복수는 children입니다.', 'playing은 명사여야 합니다.'], 1, 'Two children are playing. → 불규칙 복수'],
+    ['intermediate', 'There are three boxs.', 'boxs', ['boxes'], ['box는 셀 수 없는 명사입니다.', 'three 앞에 the가 필요합니다.', 'x로 끝나는 명사는 -es를 붙입니다.'], 2, 'There are three boxes. → -es'],
+  ],
+  questions: [
+    pc('Choose the correct sentence.', '올바른 문장을 고르세요.', 'basic', [['I have two dog.', '나는 개가 두 마리 있다.'], ['I have two dogs.', '나는 개가 두 마리 있다.'], ['I have two dogses.', '나는 개가 두 마리 있다.'], ['I have two a dog.', '나는 개가 두 마리 있다.']], 1, 'two 뒤에는 복수형 dogs를 씁니다.'),
+    pc('Which sentence is correct about boxes?', '상자에 대한 올바른 문장을 고르세요.', 'basic', [['There are three boxs.', '상자가 세 개 있다.'], ['There are three boxies.', '상자가 세 개 있다.'], ['There are three box.', '상자가 세 개 있다.'], ['There are three boxes.', '상자가 세 개 있다.']], 3, 'x로 끝나는 명사는 -es를 붙입니다.'),
+    pc('Which sentence is correct about children?', '아이들에 대한 올바른 문장을 고르세요.', 'basic', [['Two childs are here.', '아이 두 명이 여기 있다.'], ['Two childrens are here.', '아이 두 명이 여기 있다.'], ['Two children are here.', '아이 두 명이 여기 있다.'], ['Two child are here.', '아이 두 명이 여기 있다.']], 2, 'child의 복수는 children입니다.'),
+    pc('Which sentence is correct about babies?', '아기들에 대한 올바른 문장을 고르세요.', 'intermediate', [['The babies are cute.', '아기들은 귀엽다.'], ['The babys are cute.', '아기들은 귀엽다.'], ['The babyes are cute.', '아기들은 귀엽다.'], ['The babis are cute.', '아기들은 귀엽다.']], 0, '자음 + y는 y를 i로 바꾸고 -es를 붙입니다.'),
+    pc('Which sentence is correct about feet?', '발에 대한 올바른 문장을 고르세요.', 'intermediate', [['He has two foots.', '그는 발이 두 개다.'], ['He has two feet.', '그는 발이 두 개다.'], ['He has two feets.', '그는 발이 두 개다.'], ['He has two foot.', '그는 발이 두 개다.']], 1, 'foot의 복수는 feet입니다.'),
+    pc('Choose the noun whose plural is made in a different way.', '복수형을 만드는 방법이 나머지와 다른 것을 고르세요.', 'intermediate', [['book → books', '책'], ['cat → cats', '고양이'], ['box → boxes', '상자'], ['dog → dogs', '개']], 2, '나머지는 -s를 붙이고, box는 x로 끝나서 -es를 붙입니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['She has two bus.', '그녀는 버스가 두 대 있다.'], ['I see two sheep.', '나는 양 두 마리를 본다.'], ['Three men are here.', '남자 세 명이 여기 있다.'], ['The children are happy.', '아이들은 행복하다.']], 0, 'two 뒤에는 복수형이어야 하므로 bus는 buses로 고쳐야 합니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① I have two cats.\n② She has three boxs.\n③ Four childrens are here.', 'basic', 2, '②는 boxes, ③은 children으로 고쳐야 하므로 틀린 문장은 2개입니다.'),
+    cw('How many sentences are wrong?\n① Two babys are crying.\n② I have three sheeps.\n③ Four men are here.\n④ Two mice are small.', 'advanced', 2, '①은 babies, ②는 sheep으로 고쳐야 하므로 틀린 문장은 2개입니다.'),
+    pc('Why is the sentence "She has two box." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because she should be they.', 'she를 they로 바꿔야 하기 때문에'], ['Because two needs the plural form boxes.', 'two 뒤에는 복수형 boxes를 써야 하기 때문에'], ['Because has should be have.', 'has를 have로 바꿔야 하기 때문에'], ['Because box should be a box.', 'box를 a box로 바꿔야 하기 때문에']], 1, '둘 이상이면 복수형을 씁니다. x로 끝나는 box는 boxes입니다.', 'reason'),
+  ],
+  popup: [['Two ___ are playing.', 'children', ['childs', 'childrens'], '불규칙'], ['I have three ___.', 'boxes', ['boxs', 'boxies'], 'x로 끝남'], ['Two ___ are crying.', 'babies', ['babys', 'babyes'], '자음 + y'], ['I see two ___.', 'sheep', ['sheeps', 'sheepes'], '그대로']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'She has two cat.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['She has two cats.'], noteKo: 'two 뒤에는 복수형입니다.' },
+    { kind: 'rewrite', level: 'basic', prompt: 'I have a box.', promptKo: 'a box를 three boxes로 바꿔 문장 전체를 쓰시오.', answers: ['I have three boxes.'], noteKo: 'x로 끝나면 -es입니다.' },
+  ],
+  top: ['복수형 규칙(-s / -es / y→ies)과 불규칙 복수(children, feet, men, mice)는 내신에 자주 나온다. two, many 뒤에는 반드시 복수형을 쓴다.', 'Two children are in the garden.', '아이 두 명이 정원에 있다.'],
+  lecture: [
+    { type: 'text', text: '셀 수 있는 명사와 복수형', narration: '오늘은 하나일 때와 둘 이상일 때 모양이 달라지는 명사를 배워요.' },
+    { type: 'board', title: '대부분은 -s', lines: ['a dog → two dog[b]s[/b]', 'a book → many book[b]s[/b]', '둘 이상 → 복수형'], narration: '하나면 [en]a dog[/en], 둘 이상이면 [en]two dogs[/en]처럼 끝에 [en]s[/en]를 붙여요.' },
+    { type: 'board', title: '-es를 붙이는 명사', lines: ['box → box[b]es[/b]', 'dish → dish[b]es[/b]', 'watch → watch[b]es[/b]'], narration: '[en]s[/en], [en]x[/en], [en]ch[/en], [en]sh[/en]로 끝나는 명사는 [en]es[/en]를 붙여요. [en]box[/en]는 [en]boxes[/en]예요.' },
+    { type: 'board', title: '자음 + y', lines: ['baby → bab[b]ies[/b]', 'city → cit[b]ies[/b]', 'y를 i로 바꾸고 es'], narration: '자음 다음에 [en]y[/en]가 오면 [en]y[/en]를 [en]i[/en]로 바꾸고 [en]es[/en]를 붙여요. [en]baby[/en]는 [en]babies[/en]예요.' },
+    { type: 'board', title: '불규칙 복수', lines: ['child → [b]children[/b]', 'foot → [b]feet[/b]', 'mouse → [b]mice[/b]', 'sheep → [b]sheep[/b]'], narration: '모양이 완전히 바뀌는 명사도 있어요. [en]child[/en]는 [en]children[/en], [en]foot[/en]는 [en]feet[/en], [en]mouse[/en]는 [en]mice[/en]예요. [en]sheep[/en]은 그대로예요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× I have two [b]cat[/b].', '× Three [b]boxs[/b] are here.', '× Two [b]childs[/b] are here.'], narration: '[en]two[/en] 뒤에는 복수형이에요. [en]two cat[/en]은 틀리고 [en]two cats[/en]가 맞아요. [en]boxs[/en]는 [en]boxes[/en], [en]childs[/en]는 [en]children[/en]이 맞아요.' },
+    { type: 'text', text: '정리: -s / -es / y→ies / 불규칙', narration: '정리할게요. 둘 이상이면 복수형을 써요. 기본은 [en]s[/en], 끝소리에 따라 [en]es[/en], [en]ies[/en], 그리고 불규칙은 따로 외워요.' },
+  ],
+});
