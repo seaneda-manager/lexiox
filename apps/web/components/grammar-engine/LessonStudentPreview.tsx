@@ -231,9 +231,9 @@ function Lecture({ segs }: { segs: NonNullable<GrammarLesson["lecture"]> }) {
       </div>
 
       {seg.type === "board" ? (
-        <div className="min-h-[200px] rounded-2xl border-4 border-amber-900/70 bg-emerald-900 p-5 text-emerald-50 shadow-inner">
-          {seg.title && <div className="mb-3 border-b border-emerald-50/30 pb-2 text-base font-bold text-yellow-200"><ChalkLine text={seg.title} /></div>}
-          <ul className="space-y-2.5 text-[17px] font-medium leading-relaxed">
+        <div className="min-h-[360px] rounded-2xl border-4 border-amber-900/70 bg-emerald-900 p-6 text-emerald-50 shadow-inner sm:min-h-[440px] sm:p-8">
+          {seg.title && <div className="mb-4 border-b border-emerald-50/30 pb-3 text-lg font-bold text-yellow-200 sm:text-xl"><ChalkLine text={seg.title} /></div>}
+          <ul className="space-y-3.5 text-[18px] font-medium leading-relaxed sm:text-[20px]">
             {lines.map((l, k) => (
               <li key={k} className={`transition-all duration-500 ${k < shownEff ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"}`}>
                 <ChalkLine text={l} />
