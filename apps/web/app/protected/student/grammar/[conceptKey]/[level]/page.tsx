@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getServerSupabase } from "@/lib/supabase/server";
 import type { GrammarLesson } from "@/models/middle-naesin/grammar-lesson";
 import { normalizeLesson } from "@/lib/grammar-engine/sections";
@@ -17,7 +17,7 @@ export default async function StudentGrammarLessonPage({ params }: Props) {
 
   const supabase = await getServerSupabase();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) notFound();
+  if (!user) redirect("/login"); // 로그인이 풀렸을 때 404 대신 로그인 화면으로
 
   const { data: concept } = await supabase.from("grammar_concepts").select("id, key, title_ko, title_en").eq("key", conceptKey).maybeSingle();
   if (!concept) notFound();

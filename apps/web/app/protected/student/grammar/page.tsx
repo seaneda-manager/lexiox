@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getServerSupabase } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +10,7 @@ type Row = { level: number; concept: { key: string; title_ko: string; title_en: 
 export default async function StudentGrammarListPage() {
   const supabase = await getServerSupabase();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) notFound();
+  if (!user) redirect("/login"); // 로그인이 풀렸을 때 404 대신 로그인 화면으로
 
   const { data } = await supabase
     .from("grammar_lessons")
