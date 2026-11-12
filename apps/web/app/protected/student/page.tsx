@@ -293,6 +293,8 @@ export default async function StudentPage() {
     supabase,
     authUserId: user.id,
     academyStudentId,
+    // 중학·JR(lexiox 프로그램의 고등 외 학년)은 정규/내신으로 나눠 보여 준다
+    splitNaesin: curriculum.key === "lexiox_ms" || curriculum.key === "lexiox_jr",
     streak: gamification
       ? {
           current: (gamification as any).current_streak ?? 0,

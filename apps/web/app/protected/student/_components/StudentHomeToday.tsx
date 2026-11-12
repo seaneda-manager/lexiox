@@ -26,7 +26,7 @@ export function StudentHomeToday({
   level: number | null;
   tribe: Tribe | null;
 }) {
-  const { resume, todayGroups, todoCount, doneTodayCount, yesterdayDone, planToday, planExists, weekDots } = board;
+  const { resume, todayGroups, sections, todoCount, doneTodayCount, yesterdayDone, planToday, planExists, weekDots } = board;
   const allDone = todoCount === 0 && doneTodayCount > 0;
 
   const headline = exam
@@ -140,40 +140,56 @@ export function StudentHomeToday({
               오늘 배정된 일이 없어요. 시험 계획을 세우면 이곳에 매일 할 일이 채워져요.
             </p>
           ) : (
-            <div className="mt-3 space-y-4">
-              {todayGroups.map((g) => (
-                <div key={g.area}>
-                  <div className="mb-1.5 flex justify-between text-xs font-bold text-neutral-500">
-                    <span>{ASSIGNMENT_AREA_LABEL[g.area]}</span>
-                    <span>
-                      {g.done} / {g.total}
-                    </span>
-                  </div>
-                  <ul className="space-y-1.5">
-                    {g.items.map((it) => (
-                      <li key={it.key}>
-                        <Link
-                          href={it.href}
-                          className="flex items-center gap-3 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-sm hover:border-indigo-400 hover:bg-indigo-50"
-                        >
-                          <span
-                            className={`h-5 w-5 flex-none rounded-full border-2 ${it.status === "in_progress" ? "border-amber-400 bg-amber-100" : "border-neutral-300"}`}
-                            aria-hidden="true"
-                          />
-                          <span className="min-w-0 flex-1 truncate font-medium text-neutral-800">{it.title}</span>
-                          {it.overdue ? (
-                            <span className="flex-none rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-bold text-rose-600">
-                              밀림
-                            </span>
-                          ) : it.status === "in_progress" ? (
-                            <span className="flex-none rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-700">
-                              이어하기
-                            </span>
-                          ) : null}
-                        </Link>
-                      </li>
+            <div className="mt-3 space-y-5">
+              {sections.map((sec) => (
+                <div key={sec.key} className={sec.label ? "rounded-xl border border-neutral-200 p-3" : ""}>
+                  {sec.label && (
+                    <div className="mb-2 flex items-baseline justify-between">
+                      <h3 className="text-sm font-black text-indigo-700">{sec.label}</h3>
+                      <span className="text-xs text-neutral-500">{sec.todo}개 남음</span>
+                    </div>
+                  )}
+                  {sec.groups.length === 0 ? (
+                    <p className="text-sm text-neutral-500">오늘 할 일이 없어요.</p>
+                  ) : (
+                  <div className="space-y-4">
+                    {sec.groups.map((g) => (
+                      <div key={g.area}>
+                        <div className="mb-1.5 flex justify-between text-xs font-bold text-neutral-500">
+                          <span>{ASSIGNMENT_AREA_LABEL[g.area]}</span>
+                          <span>
+                            {g.done} / {g.total}
+                          </span>
+                        </div>
+                        <ul className="space-y-1.5">
+                          {g.items.map((it) => (
+                            <li key={it.key}>
+                              <Link
+                                href={it.href}
+                                className="flex items-center gap-3 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-sm hover:border-indigo-400 hover:bg-indigo-50"
+                              >
+                                <span
+                                  className={`h-5 w-5 flex-none rounded-full border-2 ${it.status === "in_progress" ? "border-amber-400 bg-amber-100" : "border-neutral-300"}`}
+                                  aria-hidden="true"
+                                />
+                                <span className="min-w-0 flex-1 truncate font-medium text-neutral-800">{it.title}</span>
+                                {it.overdue ? (
+                                  <span className="flex-none rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-bold text-rose-600">
+                                    밀림
+                                  </span>
+                                ) : it.status === "in_progress" ? (
+                                  <span className="flex-none rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-700">
+                                    이어하기
+                                  </span>
+                                ) : null}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
+                  )}
                 </div>
               ))}
             </div>

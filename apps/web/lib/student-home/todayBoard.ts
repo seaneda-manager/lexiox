@@ -42,6 +42,9 @@ export type BoardItem = {
 
 export type AreaGroup = { area: AssignmentArea; items: BoardItem[]; done: number; total: number };
 
+/** 중학·JR 학생은 오늘 할 일을 정규 / 내신 두 덩어리로 나눠 보여 준다 */
+export type TodaySection = { key: "regular" | "naesin" | "all"; label: string | null; groups: AreaGroup[]; todo: number };
+
 export type PlanBlock = {
   id: string;
   zone: PlannerZone;
@@ -55,6 +58,7 @@ export type TodayBoard = {
   resume: BoardItem | null;
   yesterdayDone: BoardItem[];
   todayGroups: AreaGroup[];
+  sections: TodaySection[];
   todoCount: number;
   doneTodayCount: number;
   planToday: PlanBlock[];
@@ -85,6 +89,8 @@ export async function getTodayBoard(opts: {
   authUserId: string;
   academyStudentId: string | null;
   streak: { current: number; lastActivityDate: string | null } | null;
+  /** 중학·JR 학생이면 true: 정규/내신으로 나눈다 */
+  splitNaesin?: boolean;
 }): Promise<TodayBoard> {
   const todayIso = toIsoDate(new Date());
   const yesterdayIso = addDays(todayIso, -1);
@@ -105,13 +111,25 @@ export async function getTodayBoard(opts: {
     .sort((a, b) => (a.date < b.date ? 1 : -1))[0];
   const resumeSrc = inProgress ?? null;
 
-  const groups: AreaGroup[] = [];
-  for (const area of ASSIGNMENT_AREA_ORDER) {
-    const pending = open.filter((i) => (i.area ?? "other") === area).map((i) => toBoardItem(i, todayIso));
-    const doneN = doneToday.filter((i) => (i.area ?? "other") === area).length;
-    if (pending.length === 0 && doneN === 0) continue;
-    groups.push({ area, items: pending.slice(0, 5), done: doneN, total: pending.length + doneN });
-  }
+  const isNaesin = (i: AssignmentItem) => i.kind === "middle_naesin" || i.kind === "hi_naesin";
+  const buildGroups = (pred: (i: AssignmentItem) => boolean): AreaGroup[] => {
+    const out: AreaGroup[] = [];
+    for (const area of ASSIGNMENT_AREA_ORDER) {
+      const inArea = (i: AssignmentItem) => pred(i) && (i.area ?? "other") === area;
+      const pending = open.filter(inArea).map((i) => toBoardItem(i, todayIso));
+      const doneN = doneToday.filter(inArea).length;
+      if (pending.length === 0 && doneN === 0) continue;
+      out.push({ area, items: pending.slice(0, 5), done: doneN, total: pending.length + doneN });
+    }
+    return out;
+  };
+  const groups = buildGroups(() => true);
+  const sections: TodaySection[] = opts.splitNaesin
+    ? [
+        { key: "regular", label: "정규 수업", groups: buildGroups((i) => !isNaesin(i)), todo: open.filter((i) => !isNaesin(i)).length },
+        { key: "naesin", label: "내신 대비", groups: buildGroups(isNaesin), todo: open.filter(isNaesin).length },
+      ]
+    : [{ key: "all", label: null, groups, todo: open.length }];
 
   let planToday: PlanBlock[] = [];
   let planExists = false;
@@ -156,6 +174,7 @@ export async function getTodayBoard(opts: {
     resume: resumeSrc ? toBoardItem(resumeSrc, todayIso) : null,
     yesterdayDone: doneYesterday.slice(0, 4).map((i) => toBoardItem(i, todayIso)),
     todayGroups: groups,
+    sections,
     todoCount: open.length,
     doneTodayCount: doneToday.length,
     planToday,
