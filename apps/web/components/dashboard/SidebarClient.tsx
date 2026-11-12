@@ -352,7 +352,8 @@ export default function SidebarClient({ role, permissions, program = null, hasHi
         { section: '공부하기', href: '/updated-listening', label: 'Listening', icon: Headphones },
         { section: '공부하기', href: '/speaking-2026',     label: 'Speaking',  icon: Mic },
         { section: '공부하기', href: '/updated-writing',   label: 'Writing',   icon: PenLine },
-        { section: '공부하기', href: '/grammar-2026',      label: '문법',      icon: BookText },
+        { section: '공부하기', href: '/student/grammar',   label: '문법 레슨', icon: BookText },
+        { section: '공부하기', href: '/grammar-2026',      label: 'Lexiox Gram', icon: BookText },
 
         // 예상문제·시험 목록·선생님 단어 시험·Daily Tests 는 "시험" 한 곳에서 (아직 안 본 개수도 표시)
         { section: '시험·복습', href: '/student/test-center', label: '시험', icon: ClipboardList,
