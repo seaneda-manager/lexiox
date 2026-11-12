@@ -141,6 +141,7 @@ function allItems(role: StaffRole): StaffNavItem[] {
     { section: S.toefl, href: "/admin/content/updated-writing", label: "Writing", icon: PenLine, perm: "content.produce" },
     { section: S.toefl, href: "/admin/content/grammar-2026", label: "Grammar", icon: BookText, perm: "content.produce" },
     { section: S.toefl, href: "/admin/grammar-engine", label: "문법 엔진(개념×레벨)", icon: BookText, perm: "content.produce" },
+    { section: S.toefl, href: "/admin/grammar-engine/schedule", label: "문법 레슨 스케줄(학생 배정)", icon: Calendar, perm: "content.produce" },
     { section: S.toefl, href: "/admin/content/grammar-2026/plans", label: "문법 스케줄", icon: Calendar, perm: "content.produce" },
     { section: S.toefl, href: "/admin/voice-lab", label: "강의 음성 시험대", icon: Mic, perm: "content.produce" },
     { section: S.toefl, href: "/admin/grammar-quiz", label: "문법 퀴즈 뱅크", icon: CheckSquare, perm: "content.produce" },

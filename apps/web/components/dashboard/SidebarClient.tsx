@@ -321,6 +321,7 @@ export default function SidebarClient({ role, permissions, program = null, hasHi
 
         { section: 'Jr.' as NavSection, href: '/jr/drill', label: 'Jr. 드릴', icon: PlayCircle },
         { section: 'Jr.' as NavSection, href: '/jr',       label: 'Jr. 문법·학습', icon: BookText },
+        { section: 'Jr.' as NavSection, href: '/student/grammar', label: '문법 레슨', icon: BookText },
         ...(hasGrammarPlan ? [{ section: 'Jr.' as NavSection, href: '/grammar-2026', label: '개념 문법', icon: BookText }] : []),
 
         { section: '학습', href: '/updated-listening/study', label: 'Listening', skill: 'listening' as SkillColor },
