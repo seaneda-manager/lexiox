@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { DashboardLayout } from "@/app/protected/student/_components/DashboardLayout";
 import { getSubjectReadiness } from "@/lib/planner/readiness";
+import { StudentHomeToday } from "@/app/protected/student/_components/StudentHomeToday";
+import { getTodayBoard } from "@/lib/student-home/todayBoard";
 
 export const dynamic = "force-dynamic";
 
@@ -246,7 +248,7 @@ export default async function StudentPage() {
   // ── 게임화 & 시험 일정 ──────────────────────────────────────
   const { data: gamification } = await supabase
     .from('student_gamification')
-    .select('total_points, level, current_streak, longest_streak')
+    .select('total_points, level, current_streak, longest_streak, last_activity_date')
     .eq('student_id', user.id)
     .maybeSingle();
 
@@ -286,7 +288,32 @@ export default async function StudentPage() {
     { name: 'Grammar', progress: 0, color: 'emerald' },
   ];
 
+  const board = await getTodayBoard({
+    supabase,
+    authUserId: user.id,
+    academyStudentId,
+    streak: gamification
+      ? {
+          current: (gamification as any).current_streak ?? 0,
+          lastActivityDate: (gamification as any).last_activity_date ?? null,
+        }
+      : null,
+  }).catch(() => null);
+
+  const nearestExam = [...(examReadiness as any[])].sort((a, b) => a.dDay - b.dDay)[0] ?? null;
+
   return (
+    <>
+    {board && (
+      <StudentHomeToday
+        name={studentName}
+        board={board}
+        exam={nearestExam ? { examTitle: nearestExam.examTitle, dDay: nearestExam.dDay, readinessPct: nearestExam.readinessPct } : null}
+        streak={(gamification as any)?.current_streak ?? 0}
+        points={(gamification as any)?.total_points ?? null}
+        level={(gamification as any)?.level ?? null}
+      />
+    )}
     <DashboardLayout
       userId={user.id}
       studentName={studentName}
@@ -316,5 +343,6 @@ export default async function StudentPage() {
       moduleProgress={moduleProgress}
       examReadiness={examReadiness}
     />
+    </>
   );
 }
