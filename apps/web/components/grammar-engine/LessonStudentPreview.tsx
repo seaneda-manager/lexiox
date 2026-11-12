@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { GRAMMAR_LEVEL_LABEL, GRAMMAR_QUESTION_KIND_LABEL, GRAMMAR_WRITTEN_KIND_LABEL, findWrongTokenIndex, type GrammarLesson } from "@/models/middle-naesin/grammar-lesson";
 import { stripTags } from "@/lib/elevenlabs/mixedText";
 import { acceptedAnswers, buildOptions, isCorrectAnswer } from "@/lib/grammar/gate";
@@ -149,29 +149,127 @@ function Question({ q, n }: { q: GrammarLesson["questions"][number]; n: number }
   );
 }
 
+// 칠판 한 줄: [b]…[/b] 는 노란 분필로 강조
+function ChalkLine({ text }: { text: string }) {
+  const parts = String(text ?? "").split(/\[b\](.+?)\[\/b\]/g);
+  return <>{parts.map((x, i) => (i % 2 ? <span key={i} className="rounded bg-yellow-300/90 px-1 font-bold text-emerald-950">{x}</span> : <span key={i}>{x}</span>))}</>;
+}
+
+// 강의: 음성이 있으면 자동 재생 → 칠판이 한 줄씩 써지고 → 끝나면 다음 장면으로 저절로 넘어간다.
+// 음성이 없으면 판서만 한 줄씩 써지고 "다음"으로 직접 넘긴다.
 function Lecture({ segs }: { segs: NonNullable<GrammarLesson["lecture"]> }) {
-  const [n, setN] = useState(1);
+  const [c, setC] = useState(0);
+  const [shown, setShown] = useState(0); // 칠판에 써진 줄 수
+  const [playing, setPlaying] = useState(false);
+  const [needTap, setNeedTap] = useState(false); // 브라우저가 자동재생을 막았을 때
+  const [subs, setSubs] = useState(true);
+  const [finished, setFinished] = useState(false);
+  const [t, setT] = useState(0); // 현재 재생 시간(초) — 음성에 문장별 시간(timings)이 있으면 자막·칠판을 이걸로 맞춘다
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const seg = segs[c];
+  const lines = seg.type === "board" ? seg.lines ?? [] : [];
+  const hasAudioAny = segs.some((x) => x.audioUrl);
+  const timings = seg.audioUrl && seg.timings && seg.timings.length > 0 ? seg.timings : null;
+  // 칠판 줄은 문장 수에 비례해 문장 시작 시각에 나타난다. 시간 정보가 없으면 위의 일정 간격 방식을 쓴다.
+  const lineStart = (k: number) => (timings ? timings[Math.min(timings.length - 1, Math.floor((k * timings.length) / Math.max(1, lines.length)))].start : 0);
+  const shownEff = timings ? lines.filter((_, k) => lineStart(k) <= t + 0.05).length : shown;
+  const curSent = timings ? Math.max(0, timings.findIndex((x, k) => t < x.end || k === timings.length - 1)) : -1;
+
+  // 장면이 바뀌면 처음부터. 판서 줄 수를 음성 길이에 맞춰 나눠 쓴다(길이를 모르면 줄당 1.4초).
+  useEffect(() => {
+    setShown(0);
+    setT(0);
+    setFinished(false);
+    setNeedTap(false);
+    const el = audioRef.current;
+    let timer: number | undefined;
+    const startWriting = (durMs: number) => {
+      if (lines.length === 0 || timings) return; // 시간 정보가 있으면 t 로 그린다
+      const step = Math.max(900, Math.min(4000, durMs / (lines.length + 0.5)));
+      let k = 0;
+      const tick = () => {
+        k += 1;
+        setShown(k);
+        if (k < lines.length) timer = window.setTimeout(tick, step);
+      };
+      timer = window.setTimeout(tick, 300);
+    };
+    if (seg.audioUrl && el) {
+      el.src = seg.audioUrl;
+      el.currentTime = 0;
+      let started = false;
+      const onMeta = () => { if (!started) { started = true; startWriting((el.duration || 0) * 1000 || lines.length * 1400); } };
+      el.addEventListener("loadedmetadata", onMeta);
+      el.play().then(() => setPlaying(true)).catch(() => { setPlaying(false); setNeedTap(true); });
+      // 메타데이터가 안 오는 경우 대비
+      const fb = window.setTimeout(onMeta, 1500);
+      return () => { el.removeEventListener("loadedmetadata", onMeta); window.clearTimeout(fb); if (timer) window.clearTimeout(timer); el.pause(); };
+    }
+    setPlaying(false);
+    startWriting(lines.length * 1400);
+    return () => { if (timer) window.clearTimeout(timer); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [c]);
+
+  const next = () => (c + 1 < segs.length ? setC(c + 1) : setFinished(true));
+  const toggle = () => {
+    const el = audioRef.current;
+    if (!el || !seg.audioUrl) return;
+    if (el.paused) el.play().then(() => { setPlaying(true); setNeedTap(false); }).catch(() => {});
+    else { el.pause(); setPlaying(false); }
+  };
+
   return (
     <div className="space-y-3">
-      <div className="text-xs text-neutral-500">강의 {Math.min(n, segs.length)} / {segs.length}{segs.some((x) => x.audioUrl) ? "" : " · 음성이 아직 없어 대본을 글로 보여 줍니다."}</div>
-      {segs.slice(0, n).map((s, i) => (
-        <div key={i} className="space-y-2">
-          {s.type === "board" ? (
-            <div className="rounded-xl bg-emerald-900 p-4 text-emerald-50">
-              {s.title && <div className="mb-2 text-sm font-bold text-yellow-200"><T>{s.title}</T></div>}
-              <ul className="space-y-1 font-medium">
-                {(s.lines ?? []).map((l, k) => <li key={k}><T>{l}</T></li>)}
-              </ul>
-            </div>
-          ) : (
-            <div className="rounded-xl border bg-white p-4 text-base font-medium"><T>{s.text}</T></div>
-          )}
-          {s.audioUrl && i === n - 1 && <audio key={s.audioUrl} src={s.audioUrl} controls autoPlay className="w-full" />}
-          <div className="px-1 text-xs text-neutral-500">🔊 {stripTags(s.narration)}</div>
+      <audio ref={audioRef} onTimeUpdate={(e) => setT(e.currentTarget.currentTime)} onEnded={() => { setPlaying(false); setShown(lines.length); next(); }} preload="auto" />
+      <div className="flex items-center justify-between text-xs text-neutral-500">
+        <span>
+          강의 {c + 1} / {segs.length}
+          {!hasAudioAny && " · 음성이 아직 없어 판서만 보여 줍니다."}
+        </span>
+        <button onClick={() => setSubs((v) => !v)} className="hover:text-neutral-800">자막 {subs ? "끄기" : "켜기"}</button>
+      </div>
+
+      {seg.type === "board" ? (
+        <div className="min-h-[200px] rounded-2xl border-4 border-amber-900/70 bg-emerald-900 p-5 text-emerald-50 shadow-inner">
+          {seg.title && <div className="mb-3 border-b border-emerald-50/30 pb-2 text-base font-bold text-yellow-200"><ChalkLine text={seg.title} /></div>}
+          <ul className="space-y-2.5 text-[17px] font-medium leading-relaxed">
+            {lines.map((l, k) => (
+              <li key={k} className={`transition-all duration-500 ${k < shownEff ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"}`}>
+                <ChalkLine text={l} />
+              </li>
+            ))}
+          </ul>
         </div>
-      ))}
-      {n < segs.length && (
-        <button onClick={() => setN(n + 1)} className="rounded-xl bg-violet-700 px-4 py-2 text-sm font-semibold text-white">다음 설명 ▶</button>
+      ) : (
+        <div className="min-h-[120px] rounded-2xl border bg-white p-5 text-lg font-medium leading-relaxed"><T>{seg.text}</T></div>
+      )}
+
+      {subs && (
+        <div className="rounded-lg bg-neutral-50 px-3 py-2 text-sm text-neutral-500">
+          🔊{" "}
+          {timings
+            ? timings.map((x, k) => (
+                <span key={k} className={k === curSent ? "rounded bg-yellow-100 px-0.5 font-medium text-neutral-900" : k < curSent ? "text-neutral-400" : ""}>{x.text}{" "}</span>
+              ))
+            : stripTags(seg.narration)}
+        </div>
+      )}
+
+      {needTap && (
+        <button onClick={toggle} className="w-full rounded-xl bg-violet-700 py-2.5 text-sm font-semibold text-white">▶ 눌러서 강의 듣기 (이후는 자동으로 넘어갑니다)</button>
+      )}
+
+      {finished ? (
+        <div className="rounded-xl bg-emerald-50 px-4 py-2.5 text-center text-sm font-medium text-emerald-700">강의가 끝났어요. 아래 “다음 →”으로 계속하세요.</div>
+      ) : (
+        <div className="flex items-center gap-2">
+          {seg.audioUrl && !needTap && (
+            <button onClick={toggle} className="rounded-full bg-violet-100 px-3 py-1.5 text-sm font-semibold text-violet-700">{playing ? "⏸ 일시정지" : "▶ 재생"}</button>
+          )}
+          {c > 0 && <button onClick={() => setC(c - 1)} className="rounded-xl px-3 py-2 text-sm text-neutral-500 hover:bg-neutral-100">← 이전 장면</button>}
+          <button onClick={next} className="ml-auto rounded-xl border px-4 py-2 text-sm text-neutral-600 hover:bg-neutral-50">건너뛰기 ▶</button>
+        </div>
       )}
     </div>
   );

@@ -29,6 +29,7 @@ type Props = {
   showMobileTabBar: boolean;
   hasHiNaesin: boolean;
   hasMiddleNaesin: boolean;
+  hasGrammarPlan: boolean;
 };
 
 export default function ProtectedLayoutClient({
@@ -44,6 +45,7 @@ export default function ProtectedLayoutClient({
   showMobileTabBar,
   hasHiNaesin,
   hasMiddleNaesin,
+  hasGrammarPlan,
 }: Props) {
   const pathname = usePathname();
   const examRoute = isExamRoute(pathname);
@@ -87,7 +89,7 @@ export default function ProtectedLayoutClient({
           ].join(' ')}
         >
           <div className="flex-1 min-h-0 overflow-hidden">
-            <SidebarClient key={role} role={role} permissions={permissions} program={program} hasHiNaesin={hasHiNaesin} hasMiddleNaesin={hasMiddleNaesin} collapsed={collapsed} />
+            <SidebarClient key={role} role={role} permissions={permissions} program={program} hasHiNaesin={hasHiNaesin} hasMiddleNaesin={hasMiddleNaesin} hasGrammarPlan={hasGrammarPlan} collapsed={collapsed} />
           </div>
           {!collapsed && (
             <div className="shrink-0">

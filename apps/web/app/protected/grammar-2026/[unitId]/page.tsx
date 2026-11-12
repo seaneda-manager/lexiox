@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { lexioxHasGrammarPlan } from "@/lib/grammar/lexioxGrammarAccess";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { MOCK_GRAMMAR_UNIT } from "@/models/grammar/mock";
 import type { GrammarUnitFull } from "@/models/grammar/types";
@@ -23,7 +24,7 @@ export default async function GrammarUnitPage({
         .select("program")
         .eq("id", authUser.id)
         .maybeSingle();
-      if (prof?.program === "lexiox") redirect("/jr");
+      if (prof?.program === "lexiox" && !(await lexioxHasGrammarPlan(authUser.id))) redirect("/jr");
     }
   }
 

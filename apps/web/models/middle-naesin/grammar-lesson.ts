@@ -77,12 +77,15 @@ export type GrammarLessonQuestion = {
 
 // ── 강의형 확장 (모두 선택. 없으면 기존 레슨 그대로 동작) ─────────────────────────
 // 강의: 음성(narration) + 판서가 순서대로 나타나는 세그먼트. 판서는 lines 가 한 줄씩 나타난다. docs/GRAMMAR_STYLE_GUIDE.md 6절
+export type GrammarLectureTiming = { text: string; start: number; end: number }; // 자막 문장 하나와 그 문장이 읽히는 구간(초)
 export type GrammarLectureSegment = {
   type: 'text' | 'board';
   text?: string; // type=text
   title?: string; // type=board
   lines?: string[]; // type=board
+  speech?: string; // 있으면 음성은 narration 대신 이 문장으로 한 번에 합성한다(영어 단어를 한글 발음으로 바꿔 쓴 버전). 자막은 narration 을 보여 준다
   narration: string; // TTS 로 읽을 대본. 한국어 문장 속 영어는 [en]…[/en] 로 감싼다 (lib/elevenlabs 와 같은 규칙)
+  timings?: GrammarLectureTiming[]; // 음성에서 문장별 시작/끝(초). 자막·칠판을 음성과 맞추는 데 쓴다. 음성을 다시 만들면 같이 바뀐다
   audioUrl?: string; // ElevenLabs(선생님 클론 목소리)로 만든 음성. 대본을 고치면 다시 만들어야 한다
 };
 export type GrammarTopPoint = { text: string; example?: GrammarLessonBilingual };
@@ -277,6 +280,7 @@ export function validateGrammarLesson(
   optArr(raw.lecture, 'lecture', (s) => {
     if (!isObj(s) || !isStr(s.narration) || !s.narration.trim()) return '에는 narration 이 필요합니다.';
     if (s.audioUrl !== undefined && !isStr(s.audioUrl)) return 'audioUrl 은 문자열이어야 합니다.';
+    if (s.speech !== undefined && !isStr(s.speech)) return 'speech 는 문자열이어야 합니다.';
     if (s.type === 'text') return isStr(s.text) && s.text.trim() ? null : '(text) 에는 text 가 필요합니다.';
     if (s.type === 'board') return Array.isArray(s.lines) && s.lines.length > 0 && s.lines.every(isStr) ? null : '(board) 에는 lines[] 가 필요합니다.';
     return 'type 은 text | board 여야 합니다.';

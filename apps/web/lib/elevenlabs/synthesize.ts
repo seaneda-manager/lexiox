@@ -81,8 +81,73 @@ async function synthPart(text: string, voiceId: string, o: SynthOptions, prev?: 
   throw new Error("ElevenLabs 요청 실패");
 }
 
+// ── 발음 보정 ─────────────────────────────────────────────────────────────────────
+// 한국어 클론 목소리는 한 단어짜리 영어를 한국식으로("he"→"헤", "she"→"쉐") 읽는 일이 있다.
+// 아래 단어가 영어 구간 하나로 단독 등장하면, 한글 발음으로 바꿔 한국어 구간처럼 읽는다.
+// 화면 자막(대본)은 그대로 영어로 보이고, 소리만 바뀐다. 필요한 단어는 여기에 추가한다.
+export const SOLO_WORD_PRONUNCIATION: Record<string, string> = {
+  he: "히", she: "쉬", we: "위", me: "미", be: "비",
+};
+
+function applyPronunciation(p: LangPart): LangPart {
+  if (p.lang !== "en") return p;
+  const w = p.text.toLowerCase().replace(/[^a-z]/g, "");
+  const ko = SOLO_WORD_PRONUNCIATION[w];
+  return ko && w.length === p.text.replace(/[^A-Za-z]/g, "").length && p.text.trim().split(/\s+/).length === 1 ? { lang: "ko", text: ko } : p;
+}
+
+// ── 짧은 영어 구간 검증 ───────────────────────────────────────────────────────────
+// 한 단어짜리 영어("he", "can")는 모델이 언어를 잘못 짐작해 "헤", "켄"처럼 읽는 일이 가끔 있다.
+// 합성 직후 음성 인식(STT, 영어 지정)으로 다시 받아 적어 보고, 대본과 다르면 다시 합성한다(최대 3번).
+// STT 호출이 실패하면 검증을 건너뛰고 그대로 쓴다. ELEVENLABS_VERIFY_EN=0 이면 끈다.
+const HOMOPHONES: Record<string, string[]> = { to: ["two", "too"], too: ["to", "two"], two: ["to", "too"], for: ["four"], be: ["bee"], no: ["know"], are: ["r"], i: ["eye"] };
+const normEn = (s: string) => s.toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+
+function needsVerify(p: LangPart): boolean {
+  if (p.lang !== "en" || process.env.ELEVENLABS_VERIFY_EN === "0") return false;
+  const words = normEn(p.text).split(" ").filter(Boolean);
+  return words.length >= 1 && words.length <= 3;
+}
+
+async function transcribeEn(audio: Buffer): Promise<string | null> {
+  const key = process.env.ELEVENLABS_API_KEY;
+  if (!key) return null;
+  try {
+    const form = new FormData();
+    form.append("model_id", "scribe_v1");
+    form.append("language_code", "eng");
+    form.append("file", new Blob([new Uint8Array(audio)], { type: "audio/mpeg" }), "part.mp3");
+    const res = await fetch("https://api.elevenlabs.io/v1/speech-to-text", { method: "POST", headers: { "xi-api-key": key }, body: form });
+    if (!res.ok) return null;
+    const j = (await res.json()) as { text?: string };
+    return typeof j.text === "string" ? j.text : null;
+  } catch {
+    return null;
+  }
+}
+
+function sameEn(expected: string, heard: string): boolean {
+  const e = normEn(expected).split(" ");
+  const h = normEn(heard).split(" ");
+  if (e.length !== h.length) return false;
+  return e.every((w, i) => w === h[i] || (HOMOPHONES[w] ?? []).includes(h[i]));
+}
+
+async function synthEnVerified(p: LangPart, voice: string, o: SynthOptions, lang: "en"): Promise<Buffer> {
+  let last: Buffer | null = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    // 재시도할 때는 안정도를 조금씩 바꿔 같은 오독이 반복되지 않게 한다
+    const oo = attempt === 0 ? o : { ...o, stability: Math.min(0.9, (o.stability ?? 0.5) + 0.2 * attempt) };
+    const audio = await synthPart(p.text, voice, oo, undefined, undefined, lang);
+    last = audio;
+    const heard = await transcribeEn(audio);
+    if (heard === null || sameEn(p.text, heard)) return audio;
+  }
+  return last as Buffer;
+}
+
 export async function synthesizeNarration(text: string, o: SynthOptions): Promise<SynthResult> {
-  const parts = planParts(text, o.mode);
+  const parts = planParts(text, o.mode).map(applyPronunciation);
   if (parts.length === 0) throw new Error("읽을 텍스트가 없습니다.");
 
   const buffers: Buffer[] = [];
@@ -94,7 +159,11 @@ export async function synthesizeNarration(text: string, o: SynthOptions): Promis
     const prev = p.lang === "en" ? "" : parts.slice(Math.max(0, i - 2), i).filter(sameLang).map((x) => x.text).join(" ").slice(-200);
     const next = p.lang === "en" ? "" : parts.slice(i + 1, i + 3).filter(sameLang).map((x) => x.text).join(" ").slice(0, 200);
     const lang = p.lang === "en" ? "en" : p.lang === "ko" ? "ko" : undefined;
-    buffers.push(await synthPart(p.text, voice, o, prev || undefined, next || undefined, lang));
+    buffers.push(
+      needsVerify(p)
+        ? await synthEnVerified(p, voice, o, "en")
+        : await synthPart(p.text, voice, o, prev || undefined, next || undefined, lang),
+    );
   }
   return { audio: Buffer.concat(buffers), parts };
 }

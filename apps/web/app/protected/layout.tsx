@@ -12,6 +12,7 @@ import { LangProvider } from '@/contexts/LangContext';
 import ProtectedLayoutClient from './_client/ProtectedLayoutClient';
 import { VIEW_AS_COOKIE, parseViewAs, resolveEffectiveRole } from '@/lib/auth/viewAs';
 import { defaultPermissionsForRole, type AppRole } from '@/lib/auth/permissions';
+import { lexioxHasGrammarPlan } from '@/lib/grammar/lexioxGrammarAccess';
 
 type Role = AppRole;
 type Program = 'gap' | 'toefl' | 'lexiox' | null;
@@ -94,6 +95,12 @@ export default async function ProtectedLayout({ children }: { children: ReactNod
     hasMiddleNaesin = !!middleNaesinRow;
   }
 
+  // LEXiOX 학생은 선생님이 문법 플랜을 배정한 경우에만 grammar-2026(문법) 메뉴가 보인다.
+  let hasGrammarPlan = false;
+  if (user && role === 'student' && program === 'lexiox') {
+    hasGrammarPlan = await lexioxHasGrammarPlan(user.id);
+  }
+
   return (
     <LangProvider>
       <ProtectedLayoutClient
@@ -108,6 +115,7 @@ export default async function ProtectedLayout({ children }: { children: ReactNod
         showMobileTabBar={showMobileTabBar}
         hasHiNaesin={hasHiNaesin}
         hasMiddleNaesin={hasMiddleNaesin}
+        hasGrammarPlan={hasGrammarPlan}
       >
         {children}
       </ProtectedLayoutClient>

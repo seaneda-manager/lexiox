@@ -11,6 +11,8 @@ import { loadCtx } from "@/lib/grammar-engine/ctx";
 import { lintLesson } from "@/lib/grammar-engine/lint";
 import { synthesizeNarration } from "@/lib/elevenlabs/synthesize";
 import { saveSpeechAudio } from "@/lib/elevenlabs/generate-speech";
+import { toSpeech } from "@/lib/grammar-engine/speech";
+import { buildTimings, synthesizeWithTimestamps } from "@/lib/elevenlabs/timestamps";
 import { collectObjects, isSectionKey, mergeSection, normalizeLesson, parsePasted } from "@/lib/grammar-engine/sections";
 
 type Db = ReturnType<typeof getServiceRoleClient>;
@@ -174,9 +176,21 @@ export async function POST(req: Request) {
         const tagged = String(segs[i].narration ?? "").trim();
         if (!tagged || (segs[i].audioUrl && !force)) continue;
         try {
-          const mode = /\[en\]/i.test(tagged) ? "tags" : "auto";
-          const synth = await synthesizeNarration(tagged, { koVoiceId: voiceId, enVoiceId, modelId, mode });
-          segs[i].audioUrl = (await saveSpeechAudio(synth.audio)).url;
+          // speech 가 있으면(영어 단어를 한글 발음으로 바꿔 쓴 문장) 조각내지 않고 한 번에 합성한다 → 끊김 없음
+          const speech = String(segs[i].speech ?? "").trim() || toSpeech(tagged);
+          if (speech) {
+            // 글자별 시간도 같이 받아, 영어가 들어간 자막 문장을 음성과 맞춘다(문장 수가 다르면 timings 없이 저장)
+            const r = await synthesizeWithTimestamps(speech, voiceId, modelId);
+            segs[i].audioUrl = (await saveSpeechAudio(r.audio)).url;
+            const plain = tagged.replace(/\[\/?en\]/gi, "");
+            const t = buildTimings(speech, plain, r.alignment);
+            if (t) segs[i].timings = t;
+            else delete segs[i].timings;
+          } else {
+            const synth = await synthesizeNarration(tagged, { koVoiceId: voiceId, enVoiceId, modelId, mode: /\[en\]/i.test(tagged) ? "tags" : "auto" });
+            segs[i].audioUrl = (await saveSpeechAudio(synth.audio)).url;
+            delete segs[i].timings;
+          }
           made++;
         } catch (e) {
           console.error(`lecture-audio 실패 (seg ${i}):`, e);

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { lexioxHasGrammarPlan } from "@/lib/grammar/lexioxGrammarAccess";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { MOCK_GRAMMAR_UNITS_LIST } from "@/models/grammar/mock";
 import SectionGuide from "@/app/components/SectionGuide";
@@ -22,7 +23,7 @@ export default async function Grammar2026Page() {
         .select("program")
         .eq("id", authUser.id)
         .maybeSingle();
-      if (prof?.program === "lexiox") redirect("/jr");
+      if (prof?.program === "lexiox" && !(await lexioxHasGrammarPlan(authUser.id))) redirect("/jr");
     }
   }
 
