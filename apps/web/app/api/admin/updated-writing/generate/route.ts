@@ -25,7 +25,8 @@ export async function POST(req: Request) {
     const prompt = `You are an expert Updated TOEFL Writing content creator. Generate a complete Updated TOEFL Writing test JSON with exactly 3 tasks.
 
 Task 1 — Build a Sentence (10 questions, 6 min 50 sec global timer):
-Optional theme hint from the teacher (may be empty — if so, choose freely): "${buildSentenceTopic}"
+Optional setting hint (may be empty): "${buildSentenceTopic}" — use it for AT MOST ONE of the 10 questions (e.g. q1). The other 9 questions must use completely different settings. Never build the whole task around this hint.
+Pick 10 DIFFERENT settings, e.g.: campus library, flight delay, dorm roommate, lab report, restaurant order, bank/phone plan, job fair, gym membership, museum trip, group project, apartment repair, weather/commute, online shopping return, doctor appointment.
 
 This task is NOT one themed essay. EVERY question is an independent mini-conversation:
 - Each of the 10 questions has its OWN situation and topic (e.g. a library, a flight delay, a lab, a roommate, a job fair...). Do NOT reuse one situation across questions; the 10 contexts must all differ.

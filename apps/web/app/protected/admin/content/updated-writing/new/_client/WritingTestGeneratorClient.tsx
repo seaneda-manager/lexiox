@@ -136,12 +136,12 @@ export default function WritingTestGeneratorClient() {
         <div className="space-y-1.5">
           <div className="flex items-center gap-2">
             <span className="rounded-full bg-sky-100 px-2.5 py-0.5 text-[11px] font-semibold text-sky-700">Task 1</span>
-            <span className="text-xs font-medium text-slate-700">Build a Sentence — 상황/맥락 (자동 선택)</span>
+            <span className="text-xs font-medium text-slate-700">Build a Sentence — 참고 상황 (1문항에만 사용)</span>
           </div>
           <div className="rounded-lg border bg-sky-50 px-3 py-2 text-sm text-slate-700 font-medium">
             {loadingTopics ? "주제 선택 중…" : buildSentenceTopic || "주제 준비 중…"}
           </div>
-          <p className="text-[11px] text-slate-500">매번 다른 주제로 자동 생성됩니다.</p>
+          <p className="text-[11px] text-slate-500">10문항은 각각 서로 다른 상황의 독립된 대화로 생성됩니다. 위 상황은 그중 1문항에만 쓰입니다.</p>
         </div>
 
         {/* Task 2 - 추천값 제시 */}
