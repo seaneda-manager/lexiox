@@ -31,7 +31,7 @@ export default mk({
   wrong: [['I enjoy to read books.', 'reading → I enjoy reading books. — enjoy 뒤에는 동명사입니다.', ''], ['She decided leaving early.', 'to leave → She decided to leave early. — decide 뒤에는 to부정사입니다.', ''], ['He finished to do his homework.', 'doing → He finished doing his homework. — finish 뒤에는 동명사입니다.', '']],
   wrongNote: '동사마다 뒤에 오는 형태가 정해져 있습니다.',
   cram: '■ 핵심 요약\nenjoy, finish는 -ing, want, decide는 to부정사, start, begin은 둘 다 씁니다.\n\n■ 규칙\n1. enjoy, finish, avoid + -ing.\n2. want, hope, decide + to + 동사원형.\n3. start, begin, like, love는 둘 다 가능.\n4. remember/forget + to = 할 것, + -ing = 한 것.\n\n■ 예문 뜻\n나는 책 읽는 것을 즐긴다.\n나는 책을 읽고 싶다.\n나는 문을 잠근 것을 기억한다.',
-  blanks: [['enjoy 뒤에는 ___을 씁니다.', '동명사', '세 글자'], ['want 뒤에는 ___를 씁니다.', 'to부정사', '다섯 글자'], ['start 뒤에는 둘 다 쓸 수 ___.', '있다', '두 글자'], ['remember + -ing는 이미 ___ 일입니다.', '한', '한 글자']],
+  blanks: [['enjoy 뒤에는 ___을 씁니다.', '동명사', '세 글자'], ['want 뒤에는 ___를 씁니다.', 'to부정사', '다섯 글자'], ['start 뒤에는 둘 다 쓸 수 ___.', '있다', '두 글자'], ['remember + -ing는 이미 ___ 일입니다.', '한', '과거']],
   fill: [
     ['basic', 'I enjoy ___ books.', 'reading', ['read', 'to read', 'reading'], '나는 책 읽는 것을 즐긴다.', 'enjoy 뒤에는 동명사입니다.', '동명사'],
     ['basic', 'I want ___ read books.', 'to', ['to', 'of', 'for'], '나는 책을 읽고 싶다.', 'want 뒤에는 to부정사입니다.', '부정사 표시'],
