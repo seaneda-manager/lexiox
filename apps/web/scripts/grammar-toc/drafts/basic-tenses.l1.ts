@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'basic-tenses', topic: '기본시제(현재·과거·미래) - 1부', titleKo: '현재 · 과거 · 미래 시제',
+  summaryEn: 'The present tense is for habits and facts, the past tense is for finished actions, and will + verb is for the future.',
+  summaryKo: '현재시제는 습관·사실, 과거시제는 이미 끝난 일, 미래는 will + 동사원형으로 말합니다.',
+  rules: [
+    ['Use the present tense for habits and facts. Add -s or -es for he, she, it.', '반복되는 습관이나 사실은 현재시제로 씁니다. 주어가 he, she, it(3인칭 단수)이면 동사에 -s/-es를 붙입니다.'],
+    ['Use the past tense for finished actions: verb + -ed or an irregular form.', '이미 끝난 일은 과거시제로 씁니다. 동사 + -ed 또는 불규칙 변화(go → went)를 씁니다.'],
+    ['Use will + base verb for the future.', '앞으로 일어날 일은 will + 동사원형으로 씁니다. will 뒤에는 -s를 붙이지 않습니다.'],
+    ['Time words show the tense: every day, yesterday, tomorrow.', '시간 표현이 시제의 단서입니다. every day(현재), yesterday·last(과거), tomorrow·next(미래)를 함께 씁니다.'],
+  ],
+  examples: [['She goes to school every day.', '그녀는 매일 학교에 간다.'], ['I watched TV yesterday.', '나는 어제 TV를 봤다.'], ['He will go tomorrow.', '그는 내일 갈 것이다.']],
+  groups: [
+    ['현재시제', '습관과 사실.', [
+      ['I play soccer every day.', '나는 매일 축구를 한다.', '습관', 'I 뒤에는 동사 그대로입니다.'],
+      ['She goes to school by bus.', '그녀는 버스로 학교에 간다.', '3인칭 단수', 'she 뒤에는 -es를 붙입니다.'],
+      ['The sun rises in the east.', '해는 동쪽에서 뜬다.', '사실', '변하지 않는 사실도 현재시제입니다.']]],
+    ['과거시제', '이미 끝난 일.', [
+      ['I watched TV yesterday.', '나는 어제 TV를 봤다.', '규칙 변화', 'watch → watched입니다.'],
+      ['He went to the park last Sunday.', '그는 지난 일요일에 공원에 갔다.', '불규칙 변화', 'go → went입니다.'],
+      ['We ate pizza last night.', '우리는 어젯밤에 피자를 먹었다.', '불규칙 변화', 'eat → ate입니다.']]],
+    ['미래: will + 동사원형', '앞으로 할 일.', [
+      ['He will go tomorrow.', '그는 내일 갈 것이다.', 'will + 원형', 'will 뒤에는 동사원형입니다.'],
+      ['I will call you tonight.', '나는 오늘 밤에 너에게 전화할 것이다.', 'will + 원형', '주어가 I여도 will + 원형입니다.'],
+      ['It will rain next week.', '다음 주에는 비가 올 것이다.', 'will + 원형', 'it 뒤에도 -s 없이 원형을 씁니다.']]],
+    ['시간 표현', '시간 단서로 시제를 고릅니다.', [
+      ['She studies every day.', '그녀는 매일 공부한다.', 'every day', '현재시제의 단서입니다.'],
+      ['She studied last night.', '그녀는 어젯밤에 공부했다.', 'last night', '과거시제의 단서입니다.'],
+      ['She will study tomorrow.', '그녀는 내일 공부할 것이다.', 'tomorrow', '미래시제의 단서입니다.']]],
+  ],
+  wrong: [['She go to school every day.', '3인칭 단수 → She goes to school every day. — 그녀는 매일 학교에 간다.', ''], ['I watch TV yesterday.', 'yesterday는 과거 → I watched TV yesterday. — 나는 어제 TV를 봤다.', ''], ['He will goes tomorrow.', 'will 뒤에는 원형 → He will go tomorrow. — 그는 내일 갈 것이다.', '']],
+  wrongNote: '주어에 맞는 -s, 시간 표현에 맞는 시제, will 뒤 동사원형을 확인합니다.',
+  cram: '■ 핵심 요약\n습관·사실은 현재시제, 끝난 일은 과거시제, 앞으로의 일은 will + 동사원형으로 씁니다.\n\n■ 규칙\n1. 현재시제: 습관·사실. he/she/it 뒤에는 -s/-es를 붙입니다.\n2. 과거시제: 끝난 일. -ed 또는 불규칙 변화를 씁니다.\n3. 미래: will + 동사원형. will 뒤에는 -s를 붙이지 않습니다.\n4. every day는 현재, yesterday·last는 과거, tomorrow·next는 미래의 단서입니다.\n\n■ 예문 뜻\n그녀는 매일 학교에 간다.\n나는 어제 TV를 봤다.\n그는 내일 갈 것이다.',
+  blanks: [['yesterday가 있으면 ___시제를 씁니다.', '과거', '두 글자'], ['will 뒤에는 동사 ___을 씁니다.', '원형', '두 글자'], ['she 뒤의 현재시제 동사에는 ___나 -es를 붙입니다.', '-s', '한 글자'], ['go의 과거형은 ___입니다.', 'went', 'w로 시작']],
+  fill: [
+    ['basic', 'She ___ to school every day.', 'goes', ['go', 'goes', 'went'], '그녀는 매일 학교에 간다.', 'every day + she이므로 현재시제 goes입니다.', 'every day · she'],
+    ['basic', 'I ___ TV yesterday.', 'watched', ['watch', 'will watch', 'watched'], '나는 어제 TV를 봤다.', 'yesterday는 과거이므로 watched입니다.', 'yesterday'],
+    ['basic', 'He will ___ tomorrow.', 'go', ['go', 'goes', 'went'], '그는 내일 갈 것이다.', 'will 뒤에는 동사원형 go입니다.', 'will 뒤'],
+    ['intermediate', 'We ___ pizza last night.', 'ate', ['eat', 'ate', 'will eat'], '우리는 어젯밤에 피자를 먹었다.', 'last night는 과거이므로 ate입니다.', 'last night'],
+    ['intermediate', 'My dad ___ coffee every morning.', 'drinks', ['drinks', 'drink', 'drank'], '아빠는 매일 아침 커피를 마신다.', 'every morning + 3인칭 단수이므로 drinks입니다.', 'every morning'],
+    ['intermediate', 'It ___ rain next week.', 'will', ['rained', 'will', 'rains'], '다음 주에는 비가 올 것이다.', 'next week는 미래이므로 will + 원형입니다.', 'next week'],
+    ['advanced', 'The sun ___ in the east.', 'rises', ['rose', 'rises', 'will rise'], '해는 동쪽에서 뜬다.', '변하지 않는 사실은 현재시제입니다.', '사실'],
+    ['advanced', 'They ___ soccer last Sunday.', 'played', ['play', 'will play', 'played'], '그들은 지난 일요일에 축구를 했다.', 'last Sunday는 과거이므로 played입니다.', 'last Sunday'],
+  ],
+  fix: [
+    ['basic', 'She go to school every day.', 'go', ['goes'], ['she 뒤에는 -es를 붙여야 합니다.', 'school은 복수여야 합니다.', 'every day는 과거 표현입니다.'], 0, 'She goes to school every day. → 3인칭 단수 -es'],
+    ['intermediate', 'I watch TV yesterday.', 'watch', ['watched'], ['I 뒤에는 watches를 씁니다.', 'yesterday가 있으면 과거시제를 씁니다.', 'TV 앞에 the가 필요합니다.'], 1, 'I watched TV yesterday. → 과거시제'],
+    ['intermediate', 'He will goes tomorrow.', 'goes', ['go'], ['tomorrow는 과거 표현입니다.', 'He는 they로 바꿔야 합니다.', 'will 뒤에는 동사원형을 씁니다.'], 2, 'He will go tomorrow. → will + 원형'],
+  ],
+  questions: [
+    pc('Which sentence about school is correct?', '학교에 대한 올바른 문장을 고르세요.', 'basic', [['She go to school every day.', '그녀는 매일 학교에 간다.'], ['She goes to school every day.', '그녀는 매일 학교에 간다.'], ['She going to school every day.', '그녀는 매일 학교에 간다.'], ['She gone to school every day.', '그녀는 매일 학교에 간다.']], 1, 'she 뒤 현재시제는 goes입니다.'),
+    pc('Which sentence about TV is correct?', 'TV에 대한 올바른 문장을 고르세요.', 'basic', [['I watch TV yesterday.', '나는 어제 TV를 봤다.'], ['I will watch TV yesterday.', '나는 어제 TV를 봤다.'], ['I watched TV yesterday.', '나는 어제 TV를 봤다.'], ['I watches TV yesterday.', '나는 어제 TV를 봤다.']], 2, 'yesterday는 과거이므로 watched입니다.'),
+    pc('Which sentence about tomorrow is correct?', '내일에 대한 올바른 문장을 고르세요.', 'basic', [['He will goes tomorrow.', '그는 내일 갈 것이다.'], ['He goes will tomorrow.', '그는 내일 갈 것이다.'], ['He went tomorrow.', '그는 내일 갈 것이다.'], ['He will go tomorrow.', '그는 내일 갈 것이다.']], 3, 'will 뒤에는 동사원형 go입니다.'),
+    pc('Which sentence about last night is correct?', '어젯밤에 대한 올바른 문장을 고르세요.', 'intermediate', [['We ate pizza last night.', '우리는 어젯밤에 피자를 먹었다.'], ['We eat pizza last night.', '우리는 어젯밤에 피자를 먹었다.'], ['We will ate pizza last night.', '우리는 어젯밤에 피자를 먹었다.'], ['We eats pizza last night.', '우리는 어젯밤에 피자를 먹었다.']], 0, 'last night는 과거이므로 ate입니다.'),
+    pc('Which sentence about coffee is correct?', '커피에 대한 올바른 문장을 고르세요.', 'intermediate', [['My dad drink coffee every morning.', '아빠는 매일 아침 커피를 마신다.'], ['My dad drinks coffee every morning.', '아빠는 매일 아침 커피를 마신다.'], ['My dad drank coffee every morning.', '아빠는 매일 아침 커피를 마신다.'], ['My dad will drinks coffee every morning.', '아빠는 매일 아침 커피를 마신다.']], 1, '습관(every morning) + 3인칭 단수이므로 drinks입니다.'),
+    pc('Choose the sentence that is in the future tense.', '미래시제인 문장을 고르세요.', 'intermediate', [['She studies every day.', '그녀는 매일 공부한다.'], ['She studied last night.', '그녀는 어젯밤에 공부했다.'], ['She will study tomorrow.', '그녀는 내일 공부할 것이다.'], ['She is a student.', '그녀는 학생이다.']], 2, 'will + 동사원형이 미래입니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['The sun rises in the east.', '해는 동쪽에서 뜬다.'], ['I will call you tonight.', '나는 오늘 밤에 전화할 것이다.'], ['They play soccer yesterday.', '그들은 어제 축구를 했다.'], ['He went to the park.', '그는 공원에 갔다.']], 2, 'yesterday가 있으므로 played여야 합니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① She goes to school.\n② I watch TV yesterday.\n③ He will go tomorrow.', 'basic', 1, '②만 틀렸으므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① She go to school every day.\n② They played soccer last Sunday.\n③ I will meets him tomorrow.\n④ We eat lunch at noon.', 'advanced', 2, '①은 goes, ③은 will meet으로 고쳐야 하므로 틀린 문장은 2개입니다.'),
+    pc('Why is the sentence "He will goes tomorrow." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because will is followed by the base verb.', 'will 뒤에는 동사원형이 와야 해서'], ['Because tomorrow is a past word.', 'tomorrow는 과거 표현이라서'], ['Because He should be They.', 'He를 They로 바꿔야 해서'], ['Because goes should be went.', 'goes를 went로 바꿔야 해서']], 0, 'will 뒤에는 -s 없이 동사원형을 씁니다.', 'reason'),
+  ],
+  popup: [['She ___ to school every day.', 'goes', ['go', 'went'], 'she · 현재'], ['I ___ TV yesterday.', 'watched', ['watch', 'watches'], '과거'], ['He will ___ tomorrow.', 'go', ['goes', 'went'], 'will 뒤'], ['We ___ pizza last night.', 'ate', ['eat', 'eats'], '과거']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'She go to school every day.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['She goes to school every day.'], noteKo: 'she 뒤 현재시제에는 -es를 붙입니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'I watch TV yesterday.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['I watched TV yesterday.'], noteKo: 'yesterday는 과거시제입니다.' },
+  ],
+  top: ['시간 표현을 보고 시제를 고른다: every day = 현재, yesterday = 과거, tomorrow = will + 원형.', 'He will go tomorrow.', '그는 내일 갈 것이다.'],
+  lecture: [
+    { type: 'text', text: '현재 · 과거 · 미래', narration: '오늘은 가장 기본이 되는 세 가지 시제를 배워요.' },
+    { type: 'board', title: '현재시제', lines: ['I play soccer every day. — 나는 매일 축구를 한다.', 'She [b]goes[/b] to school. — 그녀는 학교에 간다.', 'he, she, it → -s / -es'], narration: '습관이나 사실은 현재시제예요. [en]I play soccer every day.[/en] 나는 매일 축구를 해요. [en]She goes to school.[/en] 그녀는 학교에 가요. [en]he, she, it[/en] 뒤에는 에스를 붙여요.' },
+    { type: 'board', title: '과거시제', lines: ['I [b]watched[/b] TV yesterday. — 나는 어제 TV를 봤다.', 'He [b]went[/b] to the park. — 그는 공원에 갔다.', '끝난 일 → -ed / 불규칙'], narration: '이미 끝난 일은 과거시제예요. [en]I watched TV yesterday.[/en] 나는 어제 텔레비전을 봤어요. [en]He went to the park.[/en] 그는 공원에 갔어요. [en]go[/en]는 [en]went[/en]로 바뀌는 불규칙 동사예요.' },
+    { type: 'board', title: '미래: will + 동사원형', lines: ['He [b]will go[/b] tomorrow. — 그는 내일 갈 것이다.', 'I [b]will call[/b] you tonight. — 나는 오늘 밤에 전화할 것이다.', 'will 뒤 → 동사원형'], narration: '앞으로 할 일은 [en]will[/en] 뒤에 동사원형을 써요. [en]He will go tomorrow.[/en] 그는 내일 갈 거예요. [en]will[/en] 뒤에는 에스를 붙이지 않아요.' },
+    { type: 'board', title: '시간 표현이 단서', lines: ['every day → 현재', 'yesterday, last night → 과거', 'tomorrow, next week → 미래'], narration: '시간 표현이 시제의 단서예요. [en]every day[/en]는 현재, [en]yesterday[/en]와 [en]last night[/en]은 과거, [en]tomorrow[/en]와 [en]next week[/en]은 미래예요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× She [b]go[/b] to school. — 그녀는 학교에 간다.', '× I [b]watch[/b] TV yesterday. — 나는 어제 TV를 봤다.', '× He will [b]goes[/b]. — 그는 갈 것이다.'], narration: '[en]She go[/en]는 틀리고 [en]She goes[/en]가 맞아요. [en]yesterday[/en]가 있으면 [en]I watched TV yesterday.[/en]예요. [en]will goes[/en]는 틀리고 [en]will go[/en]가 맞아요.' },
+    { type: 'text', text: '정리: 현재 -s / 과거 -ed / 미래 will + 원형', narration: '정리할게요. 현재는 습관과 사실, 과거는 끝난 일, 미래는 [en]will[/en] 뒤에 동사원형이에요. 시간 표현을 꼭 확인하세요.' },
+  ],
+});

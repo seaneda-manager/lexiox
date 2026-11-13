@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'progressive-tenses', topic: '진행시제 - 1부', titleKo: '현재진행 · 과거진행 (be + -ing)',
+  summaryEn: 'Use be + verb-ing for actions in progress: am/is/are + -ing now, was/were + -ing in the past.',
+  summaryKo: '지금 한창 하고 있는 일은 am/is/are + -ing, 과거의 어느 때 한창 하고 있던 일은 was/were + -ing로 씁니다.',
+  rules: [
+    ['Present progressive: am/is/are + verb-ing.', '현재진행은 am/is/are + 동사-ing로 "지금 ~하고 있다"는 뜻입니다.'],
+    ['Past progressive: was/were + verb-ing.', '과거진행은 was/were + 동사-ing로 "그때 ~하고 있었다"는 뜻입니다.'],
+    ['Do not drop be. Do not use the base verb alone.', 'be동사를 빼면 안 됩니다. (× She watching TV.) 주어에 맞는 be동사를 꼭 씁니다.'],
+    ['Some verbs are not used in the progressive: know, like, have (own).', 'know, like, love, want처럼 상태를 나타내는 동사는 보통 진행형으로 쓰지 않습니다. (× I am knowing)'],
+  ],
+  examples: [['She is watching TV now.', '그녀는 지금 TV를 보고 있다.'], ['They were playing soccer.', '그들은 축구를 하고 있었다.'], ['I know him.', '나는 그를 안다.']],
+  groups: [
+    ['현재진행: am/is/are + -ing', '지금 하고 있는 일.', [
+      ['I am reading a book now.', '나는 지금 책을 읽고 있다.', 'am + -ing', 'I 뒤에는 am입니다.'],
+      ['She is watching TV now.', '그녀는 지금 TV를 보고 있다.', 'is + -ing', '3인칭 단수 뒤에는 is입니다.'],
+      ['They are playing outside.', '그들은 밖에서 놀고 있다.', 'are + -ing', '복수 뒤에는 are입니다.']]],
+    ['과거진행: was/were + -ing', '그때 하고 있던 일.', [
+      ['I was sleeping at ten.', '나는 10시에 자고 있었다.', 'was + -ing', 'I 뒤에는 was입니다.'],
+      ['They were playing soccer.', '그들은 축구를 하고 있었다.', 'were + -ing', '복수 뒤에는 were입니다.'],
+      ['He was cooking dinner.', '그는 저녁을 요리하고 있었다.', 'was + -ing', '3인칭 단수 뒤에는 was입니다.']]],
+    ['-ing 만드는 법', '철자가 바뀌는 동사.', [
+      ['She is making cookies.', '그녀는 쿠키를 만들고 있다.', 'e 빼고 -ing', 'make → making입니다.'],
+      ['He is running fast.', '그는 빠르게 달리고 있다.', '자음 한 번 더', 'run → running입니다.'],
+      ['We are studying English.', '우리는 영어를 공부하고 있다.', '그대로 -ing', 'study → studying입니다.']]],
+    ['진행형을 쓰지 않는 동사', '상태 동사는 그대로.', [
+      ['I know him.', '나는 그를 안다.', 'know', '진행형으로 쓰지 않습니다.'],
+      ['She likes music.', '그녀는 음악을 좋아한다.', 'like', '진행형으로 쓰지 않습니다.'],
+      ['We want some water.', '우리는 물을 원한다.', 'want', '진행형으로 쓰지 않습니다.']]],
+  ],
+  wrong: [['She watching TV now.', 'be동사 필요 → She is watching TV now. — 그녀는 지금 TV를 보고 있다.', ''], ['They was playing soccer.', 'They는 복수 → They were playing soccer. — 그들은 축구를 하고 있었다.', ''], ['I am knowing him.', 'know는 진행형 불가 → I know him. — 나는 그를 안다.', '']],
+  wrongNote: 'be동사 생략, be동사의 수 일치, 상태 동사의 진행형을 조심합니다.',
+  cram: '■ 핵심 요약\n지금 하고 있는 일은 am/is/are + -ing, 그때 하고 있던 일은 was/were + -ing로 씁니다.\n\n■ 규칙\n1. 현재진행: am/is/are + 동사-ing.\n2. 과거진행: was/were + 동사-ing.\n3. be동사를 빼먹지 않고 주어에 맞게 씁니다.\n4. know, like, want 같은 상태 동사는 진행형으로 쓰지 않습니다.\n\n■ 예문 뜻\n그녀는 지금 TV를 보고 있다.\n그들은 축구를 하고 있었다.\n나는 그를 안다.',
+  blanks: [['현재진행은 am/is/are + ___입니다.', '-ing', '네 글자'], ['과거진행에서 복수 주어 뒤에는 ___를 씁니다.', 'were', 'w로 시작'], ['make의 -ing 형태는 ___입니다.', 'making', 'm으로 시작'], ['know는 ___ 동사라서 진행형으로 쓰지 않습니다.', '상태', '두 글자']],
+  fill: [
+    ['basic', 'She is ___ TV now.', 'watching', ['watches', 'watching', 'watch'], '그녀는 지금 TV를 보고 있다.', 'is 뒤에는 -ing 형태입니다.', 'is + -ing'],
+    ['basic', 'I ___ reading a book now.', 'am', ['am', 'is', 'are'], '나는 지금 책을 읽고 있다.', 'I 뒤에는 am입니다.', 'I'],
+    ['basic', 'They ___ playing outside.', 'are', ['is', 'am', 'are'], '그들은 밖에서 놀고 있다.', '복수 주어 뒤에는 are입니다.', 'They'],
+    ['intermediate', 'I ___ sleeping at ten.', 'was', ['am', 'was', 'were'], '나는 10시에 자고 있었다.', '과거진행에서 I 뒤에는 was입니다.', '과거 · I'],
+    ['intermediate', 'They ___ playing soccer then.', 'were', ['were', 'was', 'are'], '그때 그들은 축구를 하고 있었다.', '과거진행에서 복수 주어 뒤에는 were입니다.', '과거 · They'],
+    ['intermediate', 'She is ___ cookies.', 'making', ['maked', 'make', 'making'], '그녀는 쿠키를 만들고 있다.', 'make는 e를 빼고 -ing를 붙여 making입니다.', 'e 빼기'],
+    ['advanced', 'He is ___ fast.', 'running', ['runing', 'running', 'runs'], '그는 빠르게 달리고 있다.', 'run은 자음을 한 번 더 써서 running입니다.', '자음 중복'],
+    ['advanced', 'I ___ him very well.', 'know', ['am knowing', 'know', 'knowing'], '나는 그를 아주 잘 안다.', 'know는 상태 동사라서 진행형으로 쓰지 않습니다.', '상태 동사'],
+  ],
+  fix: [
+    ['basic', 'She watching TV now.', 'watching', ['is watching'], ['be동사 is가 빠졌습니다.', 'TV는 복수여야 합니다.', 'now는 과거 표현입니다.'], 0, 'She is watching TV now. → be + -ing'],
+    ['intermediate', 'They was playing soccer.', 'was', ['were'], ['playing은 plays여야 합니다.', 'They는 복수라서 were를 씁니다.', 'soccer는 복수여야 합니다.'], 1, 'They were playing soccer. → 복수는 were'],
+    ['intermediate', 'They is playing soccer now.', 'is', ['are'], ['playing은 plays여야 합니다.', 'soccer는 복수여야 합니다.', 'They는 복수라서 are를 씁니다.'], 2, 'They are playing soccer now. → 복수는 are'],
+  ],
+  questions: [
+    pc('Which sentence about watching TV is correct?', 'TV 보기에 대한 올바른 문장을 고르세요.', 'basic', [['She watching TV now.', '그녀는 지금 TV를 보고 있다.'], ['She is watching TV now.', '그녀는 지금 TV를 보고 있다.'], ['She are watching TV now.', '그녀는 지금 TV를 보고 있다.'], ['She watches TV now is.', '그녀는 지금 TV를 보고 있다.']], 1, 'is + -ing 형태를 씁니다.'),
+    pc('Which sentence about playing is correct?', '노는 것에 대한 올바른 문장을 고르세요.', 'basic', [['They is playing outside.', '그들은 밖에서 놀고 있다.'], ['They am playing outside.', '그들은 밖에서 놀고 있다.'], ['They are playing outside.', '그들은 밖에서 놀고 있다.'], ['They playing are outside.', '그들은 밖에서 놀고 있다.']], 2, '복수 주어 뒤에는 are + -ing입니다.'),
+    pc('Which sentence about reading is correct?', '독서에 대한 올바른 문장을 고르세요.', 'basic', [['I is reading a book now.', '나는 지금 책을 읽고 있다.'], ['I are reading a book now.', '나는 지금 책을 읽고 있다.'], ['I read am a book now.', '나는 지금 책을 읽고 있다.'], ['I am reading a book now.', '나는 지금 책을 읽고 있다.']], 3, 'I 뒤에는 am + -ing입니다.'),
+    pc('Which sentence about sleeping is correct?', '잠자기에 대한 올바른 문장을 고르세요.', 'intermediate', [['I was sleeping at ten.', '나는 10시에 자고 있었다.'], ['I were sleeping at ten.', '나는 10시에 자고 있었다.'], ['I am sleeping at ten ago.', '나는 10시에 자고 있었다.'], ['I was sleep at ten.', '나는 10시에 자고 있었다.']], 0, '과거진행은 was + -ing입니다.'),
+    pc('Which sentence about soccer is correct?', '축구에 대한 올바른 문장을 고르세요.', 'intermediate', [['They was playing soccer then.', '그때 그들은 축구를 하고 있었다.'], ['They were playing soccer then.', '그때 그들은 축구를 하고 있었다.'], ['They were play soccer then.', '그때 그들은 축구를 하고 있었다.'], ['They are playing soccer then.', '그때 그들은 축구를 하고 있었다.']], 1, '과거진행 복수는 were + -ing입니다.'),
+    pc('Choose the sentence that is NOT in the progressive form.', '진행형이 아닌 문장을 고르세요.', 'intermediate', [['She is making cookies.', '그녀는 쿠키를 만들고 있다.'], ['He is running fast.', '그는 빠르게 달리고 있다.'], ['I know him.', '나는 그를 안다.'], ['We are studying English.', '우리는 영어를 공부하고 있다.']], 2, '세 번째는 현재시제 상태 동사입니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['He is cooking dinner.', '그는 저녁을 요리하고 있다.'], ['I am liking music.', '나는 음악을 좋아한다.'], ['They are running.', '그들은 달리고 있다.'], ['She was sleeping.', '그녀는 자고 있었다.']], 1, 'like는 상태 동사라서 I like music이어야 합니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① She is watching TV.\n② They was playing soccer.\n③ I am reading a book.', 'basic', 1, '②만 틀렸고 They were playing이어야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① He is runing fast.\n② I am knowing him.\n③ We are studying English.\n④ She watching TV now.', 'advanced', 3, '①은 running, ②는 know, ④는 is watching이어야 하므로 틀린 문장은 3개입니다.'),
+    pc('Why is the sentence "She watching TV now." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because TV should be plural.', 'TV를 복수로 바꿔야 해서'], ['Because the be verb is missing.', 'be동사가 빠져 있어서'], ['Because now is a past word.', 'now는 과거 표현이라서'], ['Because She should be They.', 'She를 They로 바꿔야 해서']], 1, '진행형은 be동사 + -ing이므로 is가 필요합니다.', 'reason'),
+  ],
+  popup: [['She is ___ TV now.', 'watching', ['watches', 'watch'], 'is 뒤'], ['I ___ reading a book now.', 'am', ['is', 'are'], 'I'], ['They ___ playing soccer then.', 'were', ['was', 'is'], '과거 · 복수'], ['He is ___ fast.', 'running', ['runing', 'runs'], '자음 중복']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'She watching TV now.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['She is watching TV now.'], noteKo: '진행형에는 be동사가 필요합니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'They was playing soccer.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['They were playing soccer.'], noteKo: '복수 주어 뒤에는 were입니다.' },
+  ],
+  top: ['진행형은 be동사 + -ing. 지금이면 am/is/are, 그때면 was/were, 상태 동사(know, like)는 진행형을 쓰지 않는다.', 'She is watching TV now.', '그녀는 지금 TV를 보고 있다.'],
+  lecture: [
+    { type: 'text', text: '진행시제: be + -ing', narration: '오늘은 지금 한창 하고 있는 일을 말하는 진행시제를 배워요.' },
+    { type: 'board', title: '현재진행', lines: ['I [b]am reading[/b] a book. — 나는 책을 읽고 있다.', 'She [b]is watching[/b] TV. — 그녀는 TV를 보고 있다.', 'They [b]are playing[/b]. — 그들은 놀고 있다.'], narration: '지금 하고 있는 일은 [en]am, is, are[/en] 뒤에 [en]ing[/en]를 붙여요. [en]She is watching TV.[/en] 그녀는 지금 텔레비전을 보고 있어요. [en]They are playing.[/en] 그들은 놀고 있어요.' },
+    { type: 'board', title: '과거진행', lines: ['I [b]was sleeping[/b] at ten. — 나는 10시에 자고 있었다.', 'They [b]were playing[/b] soccer. — 그들은 축구를 하고 있었다.', 'was / were + -ing'], narration: '그때 하고 있던 일은 [en]was[/en]나 [en]were[/en] 뒤에 [en]ing[/en]를 써요. [en]I was sleeping at ten.[/en] 나는 열 시에 자고 있었어요. [en]They were playing soccer.[/en] 그들은 축구를 하고 있었어요.' },
+    { type: 'board', title: '-ing 만드는 법', lines: ['make → [b]making[/b] — 만들다', 'run → [b]running[/b] — 달리다', 'study → [b]studying[/b] — 공부하다'], narration: '[en]make[/en]는 [en]e[/en]를 빼고 [en]making[/en], [en]run[/en]은 [en]n[/en]을 한 번 더 써서 [en]running[/en]이에요. [en]study[/en]는 그대로 [en]studying[/en]이에요.' },
+    { type: 'board', title: '진행형을 안 쓰는 동사', lines: ['I [b]know[/b] him. — 나는 그를 안다.', 'She [b]likes[/b] music. — 그녀는 음악을 좋아한다.', '× I am knowing him.'], narration: '[en]know[/en], [en]like[/en], [en]want[/en] 같은 상태 동사는 진행형으로 쓰지 않아요. [en]I know him.[/en] 나는 그를 알아요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× She [b]watching[/b] TV now. — 그녀는 지금 TV를 보고 있다.', '× They [b]was[/b] playing. — 그들은 놀고 있었다.', '× I [b]am knowing[/b] him. — 나는 그를 안다.'], narration: '[en]She watching[/en]은 [en]is[/en]가 빠져서 틀려요. [en]They was[/en]는 [en]They were[/en]가 맞아요. [en]I am knowing[/en]은 틀리고 [en]I know[/en]가 맞아요.' },
+    { type: 'text', text: '정리: 지금 am/is/are + -ing / 그때 was/were + -ing', narration: '정리할게요. 진행시제는 [en]be[/en]동사에 [en]ing[/en]를 붙여요. 지금이면 [en]am, is, are[/en], 그때면 [en]was, were[/en]예요.' },
+  ],
+});

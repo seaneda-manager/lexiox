@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'wh-questions', topic: '의문사 의문문 - 1부', titleKo: 'who · what · when · where · why · how',
+  summaryEn: 'A wh-question starts with a question word. Then use do/does/did or be before the subject.',
+  summaryKo: '의문사 의문문은 의문사로 시작하고, 그 뒤에 do/does/did나 be동사를 주어 앞에 씁니다. 의문사가 주어이면 do 없이 바로 동사를 씁니다.',
+  rules: [
+    ['Question words: what, who, when, where, why, how.', '의문사는 what(무엇), who(누구), when(언제), where(어디서), why(왜), how(어떻게)입니다.'],
+    ['Word order: question word + do/does/did + subject + base verb.', '일반동사 문장은 의문사 + do/does/did + 주어 + 동사원형 순서입니다. (Where do you live?)'],
+    ['With be: question word + be + subject.', 'be동사 문장은 의문사 + be동사 + 주어 순서입니다. (Where is the station?)'],
+    ['When the question word is the subject, do not use do/does/did.', '의문사가 주어일 때는 do를 쓰지 않고 바로 동사를 씁니다. (Who called you?)'],
+  ],
+  examples: [['Where do you live?', '너는 어디에 사니?'], ['What does she like?', '그녀는 무엇을 좋아하니?'], ['Who called you?', '누가 너에게 전화했니?']],
+  groups: [
+    ['where / when', '장소와 시간을 묻습니다.', [
+      ['Where do you live?', '너는 어디에 사니?', 'where + do', '장소를 묻습니다.'],
+      ['When is your birthday?', '네 생일은 언제니?', 'when + be', '시간을 묻습니다.'],
+      ['When does the class start?', '수업은 언제 시작하니?', 'when + does', '3인칭 단수는 does입니다.']]],
+    ['who / what', '사람과 사물을 묻습니다.', [
+      ['Who is that boy?', '저 소년은 누구니?', 'who + be', '사람을 묻습니다.'],
+      ['What does she like?', '그녀는 무엇을 좋아하니?', 'what + does', 'does 뒤에는 동사원형입니다.'],
+      ['What did you eat?', '너는 무엇을 먹었니?', 'what + did', '과거는 did를 씁니다.']]],
+    ['why / how', '이유와 방법을 묻습니다.', [
+      ['Why are you late?', '너는 왜 늦었니?', 'why + be', '이유를 묻습니다.'],
+      ['How did you go to the park?', '너는 공원에 어떻게 갔니?', 'how + did', '방법을 묻습니다.'],
+      ['How old are you?', '너는 몇 살이니?', 'how + 형용사', 'how old는 나이를 묻습니다.']]],
+    ['의문사가 주어일 때', 'do/does/did를 쓰지 않습니다.', [
+      ['Who called you last night?', '어젯밤에 누가 너에게 전화했니?', 'who = 주어', 'did 없이 과거형 동사를 씁니다.'],
+      ['What happened?', '무슨 일이 있었니?', 'what = 주어', 'did 없이 바로 동사입니다.'],
+      ['Who lives here?', '누가 여기에 사니?', 'who = 주어', 'who는 3인칭 단수 취급이라 lives입니다.']]],
+  ],
+  wrong: [['Where you live?', 'do가 필요 → Where do you live? — 너는 어디에 사니?', ''], ['What does she likes?', 'does 뒤에는 원형 → What does she like? — 그녀는 무엇을 좋아하니?', ''], ['Why you are late?', 'be동사가 주어 앞 → Why are you late? — 너는 왜 늦었니?', '']],
+  wrongNote: 'do/does/did와 be동사의 자리, does 뒤 동사원형을 확인합니다.',
+  cram: '■ 핵심 요약\n의문사 + do/does/did(또는 be) + 주어 + 동사원형 순서로 묻습니다.\n\n■ 규칙\n1. 의문사: what, who, when, where, why, how.\n2. 일반동사: 의문사 + do/does/did + 주어 + 동사원형.\n3. be동사: 의문사 + be + 주어.\n4. 의문사가 주어이면 do 없이 바로 동사를 씁니다.\n\n■ 예문 뜻\n너는 어디에 사니?\n그녀는 무엇을 좋아하니?\n누가 너에게 전화했니?',
+  blanks: [['시간을 물을 때는 ___를 씁니다.', 'when', 'w로 시작'], ['장소를 물을 때는 ___를 씁니다.', 'where', 'w로 시작'], ['does 뒤에는 동사 ___을 씁니다.', '원형', '두 글자'], ['의문사가 주어이면 ___를 쓰지 않습니다.', 'do', '두 글자']],
+  fill: [
+    ['basic', 'Where ___ you live?', 'do', ['does', 'do', 'are'], '너는 어디에 사니?', '주어 you와 일반동사이므로 do입니다.', 'you'],
+    ['basic', '___ is your birthday?', 'When', ['Where', 'Who', 'When'], '네 생일은 언제니?', '시간을 묻는 말은 When입니다.', '시간'],
+    ['basic', '___ is that boy?', 'Who', ['Who', 'What', 'When'], '저 소년은 누구니?', '사람을 묻는 말은 Who입니다.', '사람'],
+    ['intermediate', 'What does she ___?', 'like', ['likes', 'liking', 'like'], '그녀는 무엇을 좋아하니?', 'does 뒤에는 동사원형 like입니다.', 'does 뒤'],
+    ['intermediate', '___ are you late?', 'Why', ['Why', 'Who', 'Where'], '너는 왜 늦었니?', '이유를 묻는 말은 Why입니다.', '이유'],
+    ['intermediate', '___ did you go to the park? By bus.', 'How', ['Where', 'How', 'Why'], '너는 공원에 어떻게 갔니? 버스로.', '방법을 묻는 말은 How입니다.', '방법'],
+    ['advanced', '___ called you last night?', 'Who', ['Who', 'Who did', 'Where did'], '어젯밤에 누가 너에게 전화했니?', '의문사가 주어일 때는 did 없이 바로 동사를 씁니다.', '의문사 = 주어'],
+    ['advanced', 'What time ___ the class start?', 'does', ['do', 'does', 'is'], '수업은 몇 시에 시작하니?', '주어 the class는 3인칭 단수이므로 does입니다.', 'the class'],
+  ],
+  fix: [
+    ['basic', 'Where does you live?', 'does', ['do'], ['live는 lives여야 합니다.', '주어 you 뒤에는 do를 씁니다.', 'Where는 When이어야 합니다.'], 1, 'Where do you live? → you는 do'],
+    ['intermediate', 'What does she likes?', 'likes', ['like'], ['does 뒤에는 동사원형을 씁니다.', 'she는 they여야 합니다.', 'does는 do여야 합니다.'], 0, 'What does she like? → does 뒤 원형'],
+    ['intermediate', 'Why do you late?', 'do', ['are'], ['Why는 What이어야 합니다.', 'late는 lately여야 합니다.', 'be동사 문장에서는 do가 아니라 are를 씁니다.'], 2, 'Why are you late? → be동사 의문문'],
+  ],
+  questions: [
+    pc('Which question about a home is correct?', '사는 곳에 대한 올바른 질문을 고르세요.', 'basic', [['Where you live?', '너는 어디에 사니?'], ['Where do you live?', '너는 어디에 사니?'], ['Where does you live?', '너는 어디에 사니?'], ['Where you do live?', '너는 어디에 사니?']], 1, '의문사 + do + 주어 + 동사원형 순서입니다.'),
+    pc('Which question about a birthday is correct?', '생일에 대한 올바른 질문을 고르세요.', 'basic', [['Where is your birthday?', '네 생일은 언제니?'], ['Who is your birthday?', '네 생일은 언제니?'], ['When is your birthday?', '네 생일은 언제니?'], ['What is your birthday when?', '네 생일은 언제니?']], 2, '시간을 묻는 말은 When입니다.'),
+    pc('Which question about a boy is correct?', '소년에 대한 올바른 질문을 고르세요.', 'basic', [['What is that boy?', '저 소년은 누구니?'], ['Where is that boy?', '저 소년은 누구니?'], ['When is that boy?', '저 소년은 누구니?'], ['Who is that boy?', '저 소년은 누구니?']], 3, '사람을 묻는 말은 Who입니다.'),
+    pc('Which question about liking is correct?', '좋아하는 것에 대한 올바른 질문을 고르세요.', 'intermediate', [['What does she like?', '그녀는 무엇을 좋아하니?'], ['What does she likes?', '그녀는 무엇을 좋아하니?'], ['What she likes?', '그녀는 무엇을 좋아하니?'], ['What do she like?', '그녀는 무엇을 좋아하니?']], 0, 'does 뒤에는 동사원형 like를 씁니다.'),
+    pc('Which question about being late is correct?', '늦은 것에 대한 올바른 질문을 고르세요.', 'intermediate', [['Why you are late?', '너는 왜 늦었니?'], ['Why are you late?', '너는 왜 늦었니?'], ['Why do you are late?', '너는 왜 늦었니?'], ['Why late are you?', '너는 왜 늦었니?']], 1, 'be동사는 주어 앞에 옵니다.'),
+    pc('Choose the question that does NOT ask about a place.', '장소를 묻는 질문이 아닌 것을 고르세요.', 'intermediate', [['Where do you live?', '너는 어디에 사니?'], ['Where is the station?', '역은 어디에 있니?'], ['When is your birthday?', '네 생일은 언제니?'], ['Where did you go?', '너는 어디에 갔니?']], 2, '세 번째는 시간을 묻습니다.', 'pick_different'),
+    pc('Choose the question that is wrong.', '틀린 질문을 고르세요.', 'intermediate', [['Who called you?', '누가 너에게 전화했니?'], ['What did you eat?', '너는 무엇을 먹었니?'], ['How do you go to school?', '너는 학교에 어떻게 가니?'], ['Where does he lives?', '그는 어디에 사니?']], 3, 'does 뒤에는 lives가 아니라 live여야 합니다.', 'pick_different'),
+    cw('How many questions are wrong?\n① Where do you live?\n② What does she likes?\n③ Why are you late?', 'basic', 1, '②만 틀렸으므로 틀린 질문은 1개입니다.'),
+    cw('How many questions are wrong?\n① Where you live?\n② Who did call you last night?\n③ When does the class start?\n④ Why you are late?', 'advanced', 3, '①은 do 필요, ②는 Who called, ④는 Why are you여야 하므로 틀린 질문은 3개입니다.'),
+    pc('Why is the question "What does she likes?" wrong?', '이 질문이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because does should be do.', 'does를 do로 바꿔야 해서'], ['Because What should be Where.', 'What을 Where로 바꿔야 해서'], ['Because she should be he.', 'she를 he로 바꿔야 해서'], ['Because the verb after does is the base form.', 'does 뒤에는 동사원형을 써야 해서']], 3, 'does 뒤에는 -s 없이 동사원형을 씁니다.', 'reason'),
+  ],
+  popup: [['Where ___ you live?', 'do', ['does', 'are'], 'you'], ['___ is your birthday?', 'When', ['Where', 'Who'], '시간'], ['What does she ___?', 'like', ['likes', 'liking'], 'does 뒤'], ['___ are you late?', 'Why', ['Who', 'Where'], '이유']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'Where you live?', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['Where do you live?'], noteKo: '의문사 뒤에는 do가 필요합니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'What does she likes?', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['What does she like?'], noteKo: 'does 뒤에는 동사원형입니다.' },
+  ],
+  top: ['의문사 + do/does/did(또는 be) + 주어 + 동사원형. 의문사가 주어일 때만 do를 빼고 바로 동사를 쓴다.', 'Where do you live?', '너는 어디에 사니?'],
+  lecture: [
+    { type: 'text', text: '의문사 의문문', narration: '오늘은 무엇, 누구, 언제, 어디서, 왜, 어떻게를 묻는 의문사 의문문을 배워요.' },
+    { type: 'board', title: '의문사 6개', lines: ['[b]what[/b] 무엇 · [b]who[/b] 누구', '[b]when[/b] 언제 · [b]where[/b] 어디서', '[b]why[/b] 왜 · [b]how[/b] 어떻게'], narration: '의문사는 [en]what[/en] 무엇, [en]who[/en] 누구, [en]when[/en] 언제, [en]where[/en] 어디서, [en]why[/en] 왜, [en]how[/en] 어떻게예요.' },
+    { type: 'board', title: '일반동사 의문문', lines: ['Where [b]do[/b] you live? — 너는 어디에 사니?', 'What [b]does[/b] she like? — 그녀는 무엇을 좋아하니?', '의문사 + do/does + 주어 + 원형'], narration: '의문사 뒤에 [en]do[/en]나 [en]does[/en]를 쓰고, 주어, 동사원형 순서예요. [en]Where do you live?[/en] 너는 어디에 사니? [en]What does she like?[/en] 그녀는 무엇을 좋아하니?' },
+    { type: 'board', title: 'be동사 의문문', lines: ['When [b]is[/b] your birthday? — 네 생일은 언제니?', 'Why [b]are[/b] you late? — 너는 왜 늦었니?', '의문사 + be + 주어'], narration: '[en]be[/en]동사는 의문사 뒤에 바로 와요. [en]When is your birthday?[/en] 네 생일은 언제니? [en]Why are you late?[/en] 너는 왜 늦었니?' },
+    { type: 'board', title: '의문사가 주어일 때', lines: ['[b]Who[/b] called you? — 누가 너에게 전화했니?', '[b]What[/b] happened? — 무슨 일이 있었니?', 'do / did 없이 바로 동사'], narration: '의문사가 주어일 때는 [en]did[/en] 없이 바로 동사를 써요. [en]Who called you?[/en] 누가 너에게 전화했니? [en]What happened?[/en] 무슨 일이 있었니?' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× Where [b]you live[/b]? — 너는 어디에 사니?', '× What does she [b]likes[/b]? — 그녀는 무엇을 좋아하니?', '× Why [b]you are[/b] late? — 너는 왜 늦었니?'], narration: '[en]Where you live[/en]는 [en]do[/en]가 빠졌어요. [en]does[/en] 뒤에는 [en]like[/en]가 맞아요. [en]Why you are[/en]는 [en]Why are you[/en]가 맞아요.' },
+    { type: 'text', text: '정리: 의문사 + do/does/did(be) + 주어 + 원형', narration: '정리할게요. 의문사 뒤에 [en]do[/en]나 [en]be[/en]를 먼저 쓰고 주어를 써요. 의문사가 주어일 때만 [en]do[/en]를 빼요.' },
+  ],
+});

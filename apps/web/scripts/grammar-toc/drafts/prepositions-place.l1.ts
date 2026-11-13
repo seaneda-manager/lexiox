@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'prepositions-place', topic: '장소·위치·방향·주요 전치사 - 1부', titleKo: 'in · on · at · under · next to · between',
+  summaryEn: 'Place prepositions show where something is: in, on, at, under, next to, between, in front of, behind.',
+  summaryKo: '장소 전치사는 어디에 있는지를 말합니다. in(안), on(위에 닿아), at(한 지점), under(아래), next to(옆), between(사이), in front of(앞), behind(뒤)를 씁니다.',
+  rules: [
+    ['Use in for inside a place, on for touching a surface, at for a point.', 'in은 공간의 안, on은 표면에 닿은 위, at은 한 지점에 씁니다. (in the box, on the desk, at the bus stop)'],
+    ['Use under, next to, between, in front of, and behind for position.', '위치는 under(아래), next to(옆), between(사이), in front of(앞), behind(뒤)로 말합니다.'],
+    ['Use between for two things.', 'between은 둘 사이, among은 셋 이상 사이에 씁니다. (between A and B)'],
+    ['Use to for direction and from for the starting point.', '방향은 to(~로), 출발점은 from(~에서)으로 말합니다. (go to school, from home)'],
+  ],
+  examples: [['The book is on the desk.', '책은 책상 위에 있다.'], ['The cat is under the table.', '고양이는 탁자 아래에 있다.'], ['I go to school by bus.', '나는 버스로 학교에 간다.']],
+  groups: [
+    ['in / on / at', '안, 위, 지점.', [
+      ['The pen is in the box.', '펜은 상자 안에 있다.', 'in', '공간의 안입니다.'],
+      ['The book is on the desk.', '책은 책상 위에 있다.', 'on', '표면에 닿은 위입니다.'],
+      ['He is waiting at the bus stop.', '그는 버스 정류장에서 기다리고 있다.', 'at', '한 지점입니다.']]],
+    ['under / next to / between', '아래, 옆, 사이.', [
+      ['The cat is under the table.', '고양이는 탁자 아래에 있다.', 'under', '아래에 있습니다.'],
+      ['The bank is next to the school.', '은행은 학교 옆에 있다.', 'next to', '바로 옆입니다.'],
+      ['The park is between the bank and the school.', '공원은 은행과 학교 사이에 있다.', 'between A and B', '둘 사이입니다.']]],
+    ['in front of / behind', '앞과 뒤.', [
+      ['A car is in front of the house.', '차 한 대가 집 앞에 있다.', 'in front of', '바로 앞입니다.'],
+      ['The garden is behind the house.', '정원은 집 뒤에 있다.', 'behind', '뒤에 있습니다.'],
+      ['She sits behind me.', '그녀는 내 뒤에 앉는다.', 'behind', '대명사는 me처럼 목적격입니다.']]],
+    ['방향: to / from', '가는 곳과 출발점.', [
+      ['I go to school by bus.', '나는 버스로 학교에 간다.', 'to', '가는 곳입니다.'],
+      ['He comes from Korea.', '그는 한국 출신이다.', 'from', '출신·출발점입니다.'],
+      ['She walks from home to the station.', '그녀는 집에서 역까지 걸어간다.', 'from A to B', '출발점에서 도착점까지입니다.']]],
+  ],
+  wrong: [['The book is in the desk.', '책상 위는 on → The book is on the desk. — 책은 책상 위에 있다.', ''], ['The park is between the bank.', 'between은 둘이 필요 → The park is between the bank and the school. — 공원은 은행과 학교 사이에 있다.', ''], ['I go school by bus.', 'to 필요 → I go to school by bus. — 나는 버스로 학교에 간다.', '']],
+  wrongNote: '표면 위는 on, 둘 사이는 between A and B, 방향에는 to를 씁니다.',
+  cram: '■ 핵심 요약\n안은 in, 표면 위는 on, 한 지점은 at이고, 아래·옆·사이·앞·뒤와 방향은 전치사로 말합니다.\n\n■ 규칙\n1. in: 안 / on: 표면 위 / at: 한 지점.\n2. under 아래, next to 옆, between 사이, in front of 앞, behind 뒤.\n3. between은 between A and B처럼 둘이 필요합니다.\n4. 방향은 to, 출발점은 from입니다.\n\n■ 예문 뜻\n책은 책상 위에 있다.\n고양이는 탁자 아래에 있다.\n나는 버스로 학교에 간다.',
+  blanks: [['상자 안에 있을 때는 ___을 씁니다.', 'in', '두 글자'], ['책상 표면 위에 닿아 있을 때는 ___을 씁니다.', 'on', '두 글자'], ['between 뒤에는 A ___ B 형태가 옵니다.', 'and', '세 글자'], ['가는 곳을 나타낼 때는 ___를 씁니다.', 'to', '두 글자']],
+  fill: [
+    ['basic', 'The pen is ___ the box.', 'in', ['in', 'on', 'at'], '펜은 상자 안에 있다.', '공간의 안이므로 in입니다.', '안'],
+    ['basic', 'The book is ___ the desk.', 'on', ['in', 'on', 'under'], '책은 책상 위에 있다.', '표면에 닿은 위이므로 on입니다.', '위'],
+    ['basic', 'The cat is ___ the table.', 'under', ['under', 'on', 'at'], '고양이는 탁자 아래에 있다.', '아래는 under입니다.', '아래'],
+    ['intermediate', 'The bank is ___ to the school.', 'next', ['near', 'next', 'behind'], '은행은 학교 옆에 있다.', 'next to는 바로 옆입니다.', '옆'],
+    ['intermediate', 'He is waiting ___ the bus stop.', 'at', ['in', 'on', 'at'], '그는 버스 정류장에서 기다리고 있다.', '한 지점이므로 at입니다.', '지점'],
+    ['intermediate', 'The garden is ___ the house.', 'behind', ['behind', 'between', 'under'], '정원은 집 뒤에 있다.', '뒤는 behind입니다.', '뒤'],
+    ['advanced', 'The park is between the bank ___ the school.', 'and', ['to', 'and', 'with'], '공원은 은행과 학교 사이에 있다.', 'between A and B 형태입니다.', 'between A ___ B'],
+    ['advanced', 'I go ___ school by bus.', 'to', ['to', 'at', 'in'], '나는 버스로 학교에 간다.', '가는 곳 앞에는 to를 씁니다.', '방향'],
+  ],
+  fix: [
+    ['basic', 'The book is in the desk.', 'in', ['on'], ['책상 표면 위는 on을 씁니다.', 'book은 복수여야 합니다.', 'desk는 desks여야 합니다.'], 0, 'The book is on the desk. → 표면 위는 on'],
+    ['intermediate', 'He is waiting in the bus stop.', 'in', ['at'], ['waiting은 waits여야 합니다.', '한 지점에는 at을 씁니다.', 'bus stop은 복수여야 합니다.'], 1, 'He is waiting at the bus stop. → 지점은 at'],
+    ['intermediate', 'I go in school by bus.', 'in', ['to'], ['bus는 buses여야 합니다.', 'I는 he여야 합니다.', '가는 곳 앞에는 to를 씁니다.'], 2, 'I go to school by bus. → 방향 to'],
+  ],
+  questions: [
+    pc('Which sentence about a box is correct?', '상자에 대한 올바른 문장을 고르세요.', 'basic', [['The pen is at the box.', '펜은 상자 안에 있다.'], ['The pen is in the box.', '펜은 상자 안에 있다.'], ['The pen is on the box in.', '펜은 상자 안에 있다.'], ['The pen is the box in.', '펜은 상자 안에 있다.']], 1, '공간의 안은 in입니다.'),
+    pc('Which sentence about a desk is correct?', '책상에 대한 올바른 문장을 고르세요.', 'basic', [['The book is in the desk.', '책은 책상 위에 있다.'], ['The book is at the desk top.', '책은 책상 위에 있다.'], ['The book is on the desk.', '책은 책상 위에 있다.'], ['The book is the desk on.', '책은 책상 위에 있다.']], 2, '표면에 닿은 위는 on입니다.'),
+    pc('Which sentence about a cat is correct?', '고양이에 대한 올바른 문장을 고르세요.', 'basic', [['The cat is on the table under.', '고양이는 탁자 아래에 있다.'], ['The cat is the table under.', '고양이는 탁자 아래에 있다.'], ['The cat is at the table under.', '고양이는 탁자 아래에 있다.'], ['The cat is under the table.', '고양이는 탁자 아래에 있다.']], 3, '아래는 under입니다.'),
+    pc('Which sentence about a bus stop is correct?', '버스 정류장에 대한 올바른 문장을 고르세요.', 'intermediate', [['He is waiting at the bus stop.', '그는 버스 정류장에서 기다리고 있다.'], ['He is waiting on the bus stop.', '그는 버스 정류장에서 기다리고 있다.'], ['He is waiting between the bus stop.', '그는 버스 정류장에서 기다리고 있다.'], ['He is waiting the bus stop at.', '그는 버스 정류장에서 기다리고 있다.']], 0, '한 지점은 at입니다.'),
+    pc('Which sentence about a park is correct?', '공원에 대한 올바른 문장을 고르세요.', 'intermediate', [['The park is between the bank.', '공원은 은행과 학교 사이에 있다.'], ['The park is between the bank and the school.', '공원은 은행과 학교 사이에 있다.'], ['The park is between the bank or the school.', '공원은 은행과 학교 사이에 있다.'], ['The park is between of the bank and school.', '공원은 은행과 학교 사이에 있다.']], 1, 'between A and B 형태입니다.'),
+    pc('Choose the sentence that does NOT show position.', '위치를 나타내지 않는 문장을 고르세요.', 'intermediate', [['The cat is under the table.', '고양이는 탁자 아래에 있다.'], ['The bank is next to the school.', '은행은 학교 옆에 있다.'], ['I go to school by bus.', '나는 버스로 학교에 간다.'], ['The garden is behind the house.', '정원은 집 뒤에 있다.']], 2, '세 번째는 방향(가는 곳)을 나타냅니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['A car is in front of the house.', '차 한 대가 집 앞에 있다.'], ['He comes from Korea.', '그는 한국 출신이다.'], ['The book is in the desk.', '책은 책상 위에 있다.'], ['She sits behind me.', '그녀는 내 뒤에 앉는다.']], 2, '책상 표면 위이므로 on the desk여야 합니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① The pen is in the box.\n② The book is in the desk.\n③ The cat is under the table.', 'basic', 1, '②만 틀렸고 on the desk여야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① I go school by bus.\n② The park is between the bank.\n③ He is waiting at the bus stop.\n④ She sits behind me.', 'advanced', 2, '①은 go to school, ②는 between A and B여야 하므로 틀린 문장은 2개입니다.'),
+    pc('Why is the sentence "I go school by bus." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because bus should be buses.', 'bus를 buses로 바꿔야 해서'], ['Because I should be He.', 'I를 He로 바꿔야 해서'], ['Because go should be goes.', 'go를 goes로 바꿔야 해서'], ['Because to is needed before school.', 'school 앞에 방향 to가 필요해서']], 3, '가는 곳 앞에는 to를 씁니다.', 'reason'),
+  ],
+  popup: [['The pen is ___ the box.', 'in', ['on', 'at'], '안'], ['The book is ___ the desk.', 'on', ['in', 'at'], '위'], ['The cat is ___ the table.', 'under', ['on', 'at'], '아래'], ['I go ___ school by bus.', 'to', ['at', 'in'], '방향']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'The book is in the desk.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['The book is on the desk.'], noteKo: '표면 위에는 on을 씁니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'I go school by bus.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['I go to school by bus.'], noteKo: '가는 곳 앞에는 to를 씁니다.' },
+  ],
+  top: ['안 = in, 표면 위 = on, 지점 = at. 사이는 between A and B, 방향은 to를 쓴다.', 'The book is on the desk.', '책은 책상 위에 있다.'],
+  lecture: [
+    { type: 'text', text: '장소 전치사', narration: '오늘은 물건이 어디에 있는지 말하는 장소 전치사를 배워요.' },
+    { type: 'board', title: 'in / on / at', lines: ['The pen is [b]in[/b] the box. — 펜은 상자 안에 있다.', 'The book is [b]on[/b] the desk. — 책은 책상 위에 있다.', 'He waits [b]at[/b] the bus stop. — 그는 버스 정류장에서 기다린다.'], narration: '안은 [en]in[/en], 표면 위는 [en]on[/en], 한 지점은 [en]at[/en]이에요. [en]The pen is in the box.[/en] 펜은 상자 안에 있어요. [en]The book is on the desk.[/en] 책은 책상 위에 있어요.' },
+    { type: 'board', title: 'under / next to / between', lines: ['The cat is [b]under[/b] the table. — 고양이는 탁자 아래에 있다.', 'The bank is [b]next to[/b] the school. — 은행은 학교 옆에 있다.', 'between A [b]and[/b] B — A와 B 사이'], narration: '[en]under[/en]는 아래, [en]next to[/en]는 옆이에요. [en]The cat is under the table.[/en] 고양이는 탁자 아래에 있어요. [en]between[/en]은 [en]A and B[/en]처럼 둘이 필요해요.' },
+    { type: 'board', title: 'in front of / behind', lines: ['A car is [b]in front of[/b] the house. — 차가 집 앞에 있다.', 'The garden is [b]behind[/b] the house. — 정원은 집 뒤에 있다.'], narration: '[en]in front of[/en]는 앞, [en]behind[/en]는 뒤예요. [en]The garden is behind the house.[/en] 정원은 집 뒤에 있어요.' },
+    { type: 'board', title: '방향 to / from', lines: ['I go [b]to[/b] school by bus. — 나는 버스로 학교에 간다.', 'He comes [b]from[/b] Korea. — 그는 한국 출신이다.'], narration: '가는 곳에는 [en]to[/en], 출발점에는 [en]from[/en]을 써요. [en]I go to school by bus.[/en] 나는 버스로 학교에 가요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× The book is [b]in[/b] the desk. — 책은 책상 위에 있다.', '× The park is between [b]the bank[/b]. — 공원은 은행과 학교 사이에 있다.', '× I go [b]school[/b] by bus. — 나는 버스로 학교에 간다.'], narration: '책상 위는 [en]on[/en]이에요. [en]between[/en]은 둘이 필요해요. 학교에 갈 때는 [en]go to school[/en]이에요.' },
+    { type: 'text', text: '정리: in 안 / on 위 / at 지점 / between A and B / to 방향', narration: '정리할게요. 안은 [en]in[/en], 위는 [en]on[/en], 지점은 [en]at[/en], 사이는 [en]between A and B[/en], 방향은 [en]to[/en]예요.' },
+  ],
+});

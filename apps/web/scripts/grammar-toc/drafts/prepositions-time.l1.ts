@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'prepositions-time', topic: '시간 전치사 - 1부', titleKo: 'at · on · in (시간)',
+  summaryEn: 'Use at for exact times, on for days and dates, and in for months, years, seasons, and parts of the day.',
+  summaryKo: '정확한 시각은 at, 요일·날짜는 on, 월·연도·계절·하루의 때(아침·오후)는 in을 씁니다.',
+  rules: [
+    ['Use at for exact times: at 7, at noon, at night.', '정확한 시각에는 at을 씁니다. (at 7 o\'clock, at noon, at night)'],
+    ['Use on for days and dates: on Monday, on May 5.', '요일과 날짜에는 on을 씁니다. (on Monday, on May 5, on my birthday)'],
+    ['Use in for months, years, seasons, and parts of the day.', '월, 연도, 계절, 아침·오후·저녁에는 in을 씁니다. (in May, in 2025, in summer, in the morning)'],
+    ['Do not use a preposition with every day, tomorrow, yesterday, last, next.', 'every, last, next, tomorrow, yesterday 앞에는 전치사를 쓰지 않습니다. (× on tomorrow)'],
+  ],
+  examples: [['I get up at 7.', '나는 7시에 일어난다.'], ['We have a test on Monday.', '우리는 월요일에 시험이 있다.'], ['It is hot in summer.', '여름에는 덥다.']],
+  groups: [
+    ['at: 시각', '시각과 정해진 때.', [
+      ['I get up at 7.', '나는 7시에 일어난다.', 'at + 시각', '정확한 시각입니다.'],
+      ['We eat lunch at noon.', '우리는 정오에 점심을 먹는다.', 'at noon', '정오에는 at입니다.'],
+      ['I sleep at night.', '나는 밤에 잔다.', 'at night', '밤에는 at입니다.']]],
+    ['on: 요일·날짜', '날과 날짜.', [
+      ['We have a test on Monday.', '우리는 월요일에 시험이 있다.', 'on + 요일', '요일에는 on입니다.'],
+      ['My birthday is on May 5.', '내 생일은 5월 5일이다.', 'on + 날짜', '날짜에는 on입니다.'],
+      ['I go to church on Sunday morning.', '나는 일요일 아침에 교회에 간다.', 'on + 요일+아침', '요일이 붙으면 on입니다.']]],
+    ['in: 월·연도·계절·하루의 때', '긴 시간.', [
+      ['It is hot in summer.', '여름에는 덥다.', 'in + 계절', '계절에는 in입니다.'],
+      ['I was born in 2012.', '나는 2012년에 태어났다.', 'in + 연도', '연도에는 in입니다.'],
+      ['I study in the morning.', '나는 아침에 공부한다.', 'in the morning', '아침·오후·저녁에는 in입니다.']]],
+    ['전치사를 쓰지 않는 말', 'every, last, next, tomorrow.', [
+      ['I see him every day.', '나는 매일 그를 본다.', 'every day', '전치사가 필요 없습니다.'],
+      ['We met last Sunday.', '우리는 지난 일요일에 만났다.', 'last Sunday', '전치사가 필요 없습니다.'],
+      ['I will go tomorrow.', '나는 내일 갈 것이다.', 'tomorrow', '전치사가 필요 없습니다.']]],
+  ],
+  wrong: [['I get up in 7.', '시각은 at → I get up at 7. — 나는 7시에 일어난다.', ''], ['We have a test in Monday.', '요일은 on → We have a test on Monday. — 우리는 월요일에 시험이 있다.', ''], ['I will go on tomorrow.', 'tomorrow 앞에는 전치사 없음 → I will go tomorrow. — 나는 내일 갈 것이다.', '']],
+  wrongNote: '시각 at, 요일·날짜 on, 월·연도·계절 in을 구분하고 tomorrow 앞에는 쓰지 않습니다.',
+  cram: '■ 핵심 요약\n시각은 at, 요일·날짜는 on, 월·연도·계절·하루의 때는 in입니다.\n\n■ 규칙\n1. at: 시각 (at 7, at noon, at night).\n2. on: 요일·날짜 (on Monday, on May 5).\n3. in: 월·연도·계절·아침/오후 (in May, in 2025, in summer, in the morning).\n4. every, last, next, tomorrow, yesterday 앞에는 전치사를 쓰지 않습니다.\n\n■ 예문 뜻\n나는 7시에 일어난다.\n우리는 월요일에 시험이 있다.\n여름에는 덥다.',
+  blanks: [['시각 앞에는 전치사 ___을 씁니다.', 'at', '두 글자'], ['요일 앞에는 전치사 ___을 씁니다.', 'on', '두 글자'], ['계절 앞에는 전치사 ___을 씁니다.', 'in', '두 글자'], ['tomorrow 앞에는 전치사를 ___ 않습니다.', '쓰지', '두 글자']],
+  fill: [
+    ['basic', 'I get up ___ 7.', 'at', ['in', 'at', 'on'], '나는 7시에 일어난다.', '시각에는 at을 씁니다.', '시각'],
+    ['basic', 'We have a test ___ Monday.', 'on', ['on', 'at', 'in'], '우리는 월요일에 시험이 있다.', '요일에는 on을 씁니다.', '요일'],
+    ['basic', 'It is hot ___ summer.', 'in', ['on', 'at', 'in'], '여름에는 덥다.', '계절에는 in을 씁니다.', '계절'],
+    ['intermediate', 'My birthday is ___ May 5.', 'on', ['in', 'on', 'at'], '내 생일은 5월 5일이다.', '날짜에는 on을 씁니다.', '날짜'],
+    ['intermediate', 'I was born ___ 2012.', 'in', ['in', 'on', 'at'], '나는 2012년에 태어났다.', '연도에는 in을 씁니다.', '연도'],
+    ['intermediate', 'I study ___ the morning.', 'in', ['at', 'in', 'on'], '나는 아침에 공부한다.', 'the morning 앞에는 in을 씁니다.', '아침'],
+    ['advanced', 'I sleep ___ night.', 'at', ['at', 'in', 'on'], '나는 밤에 잔다.', 'night 앞에는 at을 씁니다.', '밤'],
+    ['advanced', 'I will go ___ tomorrow.', '—', ['at', 'on', '—'], '나는 내일 갈 것이다.', 'tomorrow 앞에는 전치사를 쓰지 않습니다.', '전치사 없음'],
+  ],
+  fix: [
+    ['basic', 'I get up in 7.', 'in', ['at'], ['시각에는 at을 씁니다.', 'get up은 gets up이어야 합니다.', '7은 seven이어야 합니다.'], 0, 'I get up at 7. → 시각은 at'],
+    ['intermediate', 'We have a test in Monday.', 'in', ['on'], ['test는 복수여야 합니다.', '요일에는 on을 씁니다.', 'have는 has여야 합니다.'], 1, 'We have a test on Monday. → 요일은 on'],
+    ['intermediate', 'I will go on tomorrow.', 'on', [''], ['go는 goes여야 합니다.', 'I는 we여야 합니다.', 'tomorrow 앞에는 전치사를 쓰지 않습니다.'], 2, 'I will go tomorrow. → 전치사 없음'],
+  ],
+  questions: [
+    pc('Which sentence about time is correct?', '시각에 대한 올바른 문장을 고르세요.', 'basic', [['I get up in 7.', '나는 7시에 일어난다.'], ['I get up on 7.', '나는 7시에 일어난다.'], ['I get up at 7.', '나는 7시에 일어난다.'], ['I get up 7 at.', '나는 7시에 일어난다.']], 2, '시각에는 at을 씁니다.'),
+    pc('Which sentence about a test is correct?', '시험에 대한 올바른 문장을 고르세요.', 'basic', [['We have a test at Monday.', '우리는 월요일에 시험이 있다.'], ['We have a test in Monday.', '우리는 월요일에 시험이 있다.'], ['We have a test Monday on.', '우리는 월요일에 시험이 있다.'], ['We have a test on Monday.', '우리는 월요일에 시험이 있다.']], 3, '요일에는 on을 씁니다.'),
+    pc('Which sentence about summer is correct?', '여름에 대한 올바른 문장을 고르세요.', 'basic', [['It is hot in summer.', '여름에는 덥다.'], ['It is hot on summer.', '여름에는 덥다.'], ['It is hot at summer.', '여름에는 덥다.'], ['It is hot summer in.', '여름에는 덥다.']], 0, '계절에는 in을 씁니다.'),
+    pc('Which sentence about a birthday is correct?', '생일에 대한 올바른 문장을 고르세요.', 'intermediate', [['My birthday is in May 5.', '내 생일은 5월 5일이다.'], ['My birthday is on May 5.', '내 생일은 5월 5일이다.'], ['My birthday is at May 5.', '내 생일은 5월 5일이다.'], ['My birthday is May on 5.', '내 생일은 5월 5일이다.']], 1, '날짜에는 on을 씁니다.'),
+    pc('Which sentence about the morning is correct?', '아침에 대한 올바른 문장을 고르세요.', 'intermediate', [['I study on the morning.', '나는 아침에 공부한다.'], ['I study at the morning.', '나는 아침에 공부한다.'], ['I study in the morning.', '나는 아침에 공부한다.'], ['I study the morning in.', '나는 아침에 공부한다.']], 2, 'the morning 앞에는 in을 씁니다.'),
+    pc('Choose the sentence that does NOT need a preposition.', '전치사가 필요 없는 문장을 고르세요.', 'intermediate', [['I get up ___ 7.', '나는 7시에 일어난다.'], ['We have a test ___ Monday.', '우리는 월요일에 시험이 있다.'], ['It is hot ___ summer.', '여름에는 덥다.'], ['I will go ___ tomorrow.', '나는 내일 갈 것이다.']], 3, 'tomorrow 앞에는 전치사를 쓰지 않습니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['I was born in 2012.', '나는 2012년에 태어났다.'], ['We met on Sunday.', '우리는 일요일에 만났다.'], ['We eat lunch in noon.', '우리는 정오에 점심을 먹는다.'], ['I sleep at night.', '나는 밤에 잔다.']], 2, 'noon은 at noon입니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① I get up at 7.\n② We have a test in Monday.\n③ It is hot in summer.', 'basic', 1, '②만 틀렸고 on Monday여야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① I was born on 2012.\n② I will go on tomorrow.\n③ We eat lunch at noon.\n④ I study at the morning.', 'advanced', 3, '①은 in 2012, ②는 전치사 없이 tomorrow, ④는 in the morning이어야 하므로 틀린 문장은 3개입니다.'),
+    pc('Why is the sentence "I get up in 7." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because get up should be gets up.', 'get up을 gets up으로 바꿔야 해서'], ['Because 7 should be seven.', '7을 seven으로 바꿔야 해서'], ['Because we use at for an exact time.', '정확한 시각에는 at을 쓰기 때문에'], ['Because I should be We.', 'I를 We로 바꿔야 해서']], 2, '시각 앞에는 at을 씁니다.', 'reason'),
+  ],
+  popup: [['I get up ___ 7.', 'at', ['in', 'on'], '시각'], ['We have a test ___ Monday.', 'on', ['in', 'at'], '요일'], ['It is hot ___ summer.', 'in', ['on', 'at'], '계절'], ['My birthday is ___ May 5.', 'on', ['in', 'at'], '날짜']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'I get up in 7.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['I get up at 7.'], noteKo: '시각에는 at을 씁니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'We have a test in Monday.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['We have a test on Monday.'], noteKo: '요일에는 on을 씁니다.' },
+  ],
+  top: ['시각 = at, 요일·날짜 = on, 월·연도·계절·아침/오후 = in. every·last·next·tomorrow 앞에는 전치사를 쓰지 않는다.', 'I get up at 7.', '나는 7시에 일어난다.'],
+  lecture: [
+    { type: 'text', text: '시간 전치사: at · on · in', narration: '오늘은 때를 나타내는 [en]at, on, in[/en]을 구분해서 써 볼게요.' },
+    { type: 'board', title: 'at: 시각', lines: ['I get up [b]at[/b] 7. — 나는 7시에 일어난다.', 'We eat lunch [b]at[/b] noon. — 우리는 정오에 점심을 먹는다.', 'at night — 밤에'], narration: '정확한 시각에는 [en]at[/en]을 써요. [en]I get up at 7.[/en] 나는 7시에 일어나요. [en]We eat lunch at noon.[/en] 우리는 정오에 점심을 먹어요.' },
+    { type: 'board', title: 'on: 요일·날짜', lines: ['We have a test [b]on[/b] Monday. — 우리는 월요일에 시험이 있다.', 'My birthday is [b]on[/b] May 5. — 내 생일은 5월 5일이다.'], narration: '요일과 날짜에는 [en]on[/en]을 써요. [en]We have a test on Monday.[/en] 우리는 월요일에 시험이 있어요. [en]My birthday is on May 5.[/en] 내 생일은 오월 오일이에요.' },
+    { type: 'board', title: 'in: 월·연도·계절·하루의 때', lines: ['It is hot [b]in[/b] summer. — 여름에는 덥다.', 'I was born [b]in[/b] 2012. — 나는 2012년에 태어났다.', 'in the morning — 아침에'], narration: '계절, 연도, 월, 그리고 아침이나 오후에는 [en]in[/en]을 써요. [en]It is hot in summer.[/en] 여름에는 더워요. [en]I was born in 2012.[/en] 나는 이천십이 년에 태어났어요.' },
+    { type: 'board', title: '전치사를 쓰지 않는 말', lines: ['I see him [b]every day[/b]. — 나는 매일 그를 본다.', 'We met [b]last Sunday[/b]. — 우리는 지난 일요일에 만났다.', 'I will go [b]tomorrow[/b]. — 나는 내일 갈 것이다.'], narration: '[en]every, last, next, tomorrow[/en] 앞에는 전치사를 쓰지 않아요. [en]I will go tomorrow.[/en] 나는 내일 갈 거예요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× I get up [b]in[/b] 7. — 나는 7시에 일어난다.', '× We have a test [b]in[/b] Monday. — 우리는 월요일에 시험이 있다.', '× I will go [b]on[/b] tomorrow. — 나는 내일 갈 것이다.'], narration: '시각은 [en]at[/en], 요일은 [en]on[/en]이에요. [en]tomorrow[/en] 앞에는 [en]on[/en]을 쓰지 않아요.' },
+    { type: 'text', text: '정리: 시각 at / 요일·날짜 on / 월·연도·계절 in', narration: '정리할게요. 시각은 [en]at[/en], 요일과 날짜는 [en]on[/en], 월과 연도와 계절은 [en]in[/en]이에요.' },
+  ],
+});

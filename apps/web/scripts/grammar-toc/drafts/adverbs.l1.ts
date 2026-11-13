@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'adverbs', topic: '부사 (역할·형태·빈도부사) - 1부', titleKo: '부사: -ly · 빈도부사',
+  summaryEn: 'Adverbs describe verbs, adjectives, and other adverbs. Many end in -ly. Frequency adverbs go before the verb but after be.',
+  summaryKo: '부사는 동사·형용사·다른 부사를 꾸며 줍니다. 형용사에 -ly를 붙여 만드는 경우가 많고, 빈도부사는 일반동사 앞·be동사 뒤에 옵니다.',
+  rules: [
+    ['An adjective describes a noun. An adverb describes a verb.', '형용사는 명사를, 부사는 동사를 꾸며 줍니다. (a quick runner / runs quickly)'],
+    ['Most adverbs: adjective + -ly.', '대부분 형용사 + -ly로 만듭니다. (slow → slowly, careful → carefully) -y로 끝나면 y를 i로 바꿉니다. (easy → easily)'],
+    ['Some adverbs have the same form as adjectives: fast, hard, late, early.', 'fast, hard, late, early는 형용사와 모양이 같습니다. (hard는 "열심히", hardly는 "거의 ~않는")'],
+    ['Frequency adverbs: always, usually, often, sometimes, never.', 'always, usually, often, sometimes, never는 일반동사 앞, be동사 뒤에 씁니다. (I often play. / He is always late.)'],
+  ],
+  examples: [['She runs quickly.', '그녀는 빨리 달린다.'], ['He is always late.', '그는 항상 늦는다.'], ['I often play soccer.', '나는 자주 축구를 한다.']],
+  groups: [
+    ['형용사 + -ly', '부사 만들기.', [
+      ['She runs quickly.', '그녀는 빨리 달린다.', 'quick → quickly', '동사를 꾸밉니다.'],
+      ['He speaks slowly.', '그는 천천히 말한다.', 'slow → slowly', '동사를 꾸밉니다.'],
+      ['She solved the problem easily.', '그녀는 그 문제를 쉽게 풀었다.', 'easy → easily', 'y를 i로 바꿉니다.']]],
+    ['형용사와 모양이 같은 부사', 'fast, hard, late, early.', [
+      ['He runs fast.', '그는 빨리 달린다.', 'fast', '부사도 fast입니다.'],
+      ['She studies hard.', '그녀는 열심히 공부한다.', 'hard', '부사도 hard입니다.'],
+      ['I got up late.', '나는 늦게 일어났다.', 'late', '부사도 late입니다.']]],
+    ['빈도부사 위치', '일반동사 앞, be동사 뒤.', [
+      ['I often play soccer.', '나는 자주 축구를 한다.', '일반동사 앞', 'often은 play 앞에 옵니다.'],
+      ['He is always late.', '그는 항상 늦는다.', 'be동사 뒤', 'always는 is 뒤에 옵니다.'],
+      ['She never eats breakfast.', '그녀는 아침을 절대 먹지 않는다.', '일반동사 앞', 'never는 eats 앞에 옵니다.']]],
+    ['형용사 vs 부사', '명사 앞은 형용사, 동사 뒤는 부사.', [
+      ['She is a quick runner.', '그녀는 빠른 주자다.', '형용사', '명사 runner를 꾸밉니다.'],
+      ['She works quickly.', '그녀는 빠르게 일한다.', '부사', '동사 works를 꾸밉니다.'],
+      ['He is a careful driver.', '그는 조심스러운 운전자다.', '형용사', '명사 driver를 꾸밉니다.']]],
+  ],
+  wrong: [['She runs quick.', '동사를 꾸미면 부사 → She runs quickly. — 그녀는 빨리 달린다.', ''], ['I play often soccer.', '빈도부사는 동사 앞 → I often play soccer. — 나는 자주 축구를 한다.', ''], ['He always is late.', 'be동사 뒤 → He is always late. — 그는 항상 늦는다.', '']],
+  wrongNote: '동사를 꾸미는 말은 부사로 쓰고, 빈도부사는 일반동사 앞·be동사 뒤에 둡니다.',
+  cram: '■ 핵심 요약\n동사를 꾸미는 말은 부사(대부분 형용사 + -ly)이고, 빈도부사는 일반동사 앞·be동사 뒤에 씁니다.\n\n■ 규칙\n1. 형용사는 명사를, 부사는 동사를 꾸밉니다.\n2. 대부분 형용사 + -ly (slow → slowly, easy → easily).\n3. fast, hard, late, early는 형용사와 부사가 같은 모양입니다.\n4. always, usually, often, sometimes, never는 일반동사 앞, be동사 뒤에 씁니다.\n\n■ 예문 뜻\n그녀는 빨리 달린다.\n그는 항상 늦는다.\n나는 자주 축구를 한다.',
+  blanks: [['slow의 부사형은 ___입니다.', 'slowly', 's로 시작'], ['동사를 꾸며 주는 말은 ___입니다.', '부사', '두 글자'], ['빈도부사는 be동사의 ___에 씁니다.', '뒤', '한 글자'], ['fast의 부사형은 ___입니다.', 'fast', 'f로 시작']],
+  fill: [
+    ['basic', 'She runs ___.', 'quickly', ['quick', 'quickly', 'quicker'], '그녀는 빨리 달린다.', '동사를 꾸미므로 부사 quickly입니다.', '동사 꾸밈'],
+    ['basic', 'He speaks ___.', 'slowly', ['slowly', 'slow', 'slows'], '그는 천천히 말한다.', '동사를 꾸미므로 부사 slowly입니다.', '동사 꾸밈'],
+    ['basic', 'I ___ play soccer.', 'often', ['often', 'plays', 'quickly'], '나는 자주 축구를 한다.', '빈도부사 often은 일반동사 앞에 씁니다.', '자주'],
+    ['intermediate', 'He is ___ late.', 'always', ['late', 'always', 'slowly'], '그는 항상 늦는다.', '빈도부사는 be동사 뒤에 씁니다.', '항상'],
+    ['intermediate', 'She solved the problem ___.', 'easily', ['easy', 'easier', 'easily'], '그녀는 그 문제를 쉽게 풀었다.', 'easy는 y를 i로 바꿔 easily입니다.', 'y → i'],
+    ['intermediate', 'She studies ___.', 'hard', ['hard', 'hardly', 'harder'], '그녀는 열심히 공부한다.', '"열심히"는 hard입니다. hardly는 "거의 ~않는"입니다.', '열심히'],
+    ['advanced', 'She is a ___ runner.', 'quick', ['quickly', 'quick', 'quicker'], '그녀는 빠른 주자다.', '명사 runner를 꾸미므로 형용사 quick입니다.', '명사 꾸밈'],
+    ['advanced', 'She ___ eats breakfast.', 'never', ['eats', 'never', 'sometime'], '그녀는 아침을 절대 먹지 않는다.', '빈도부사 never는 일반동사 앞에 씁니다.', '절대 ~않다'],
+  ],
+  fix: [
+    ['basic', 'She runs quick.', 'quick', ['quickly'], ['runs는 run이어야 합니다.', '동사를 꾸미므로 부사 quickly를 씁니다.', 'She는 He여야 합니다.'], 1, 'She runs quickly. → 동사 꾸밈은 부사'],
+    ['intermediate', 'She is a quickly runner.', 'quickly', ['quick'], ['명사 runner를 꾸미므로 형용사 quick을 씁니다.', 'runner는 run이어야 합니다.', 'She는 He여야 합니다.'], 0, 'She is a quick runner. → 명사 꾸밈은 형용사'],
+    ['intermediate', 'She studies hardly.', 'hardly', ['hard'], ['studies는 study여야 합니다.', 'She는 He여야 합니다.', '"열심히"는 hard이고 hardly는 "거의 ~않는"입니다.'], 2, 'She studies hard. → 열심히 = hard'],
+  ],
+  questions: [
+    pc('Which sentence about running is correct?', '달리기에 대한 올바른 문장을 고르세요.', 'basic', [['She runs quick.', '그녀는 빨리 달린다.'], ['She runs quickly.', '그녀는 빨리 달린다.'], ['She quickly is run.', '그녀는 빨리 달린다.'], ['She run quickly.', '그녀는 빨리 달린다.']], 1, '동사를 꾸미므로 부사 quickly입니다.'),
+    pc('Which sentence about speaking is correct?', '말하기에 대한 올바른 문장을 고르세요.', 'basic', [['He speaks slow.', '그는 천천히 말한다.'], ['He slowly speak.', '그는 천천히 말한다.'], ['He speaks slowly.', '그는 천천히 말한다.'], ['He speaks slowness.', '그는 천천히 말한다.']], 2, '동사를 꾸미므로 부사 slowly입니다.'),
+    pc('Which sentence about soccer is correct?', '축구에 대한 올바른 문장을 고르세요.', 'basic', [['I play often soccer.', '나는 자주 축구를 한다.'], ['I play soccer often the.', '나는 자주 축구를 한다.'], ['I plays often soccer.', '나는 자주 축구를 한다.'], ['I often play soccer.', '나는 자주 축구를 한다.']], 3, '빈도부사는 일반동사 앞에 씁니다.'),
+    pc('Which sentence about being late is correct?', '지각에 대한 올바른 문장을 고르세요.', 'intermediate', [['He is always late.', '그는 항상 늦는다.'], ['He always is late.', '그는 항상 늦는다.'], ['He is late always the.', '그는 항상 늦는다.'], ['He always late is.', '그는 항상 늦는다.']], 0, '빈도부사는 be동사 뒤에 씁니다.'),
+    pc('Which sentence about a problem is correct?', '문제에 대한 올바른 문장을 고르세요.', 'intermediate', [['She solved the problem easy.', '그녀는 그 문제를 쉽게 풀었다.'], ['She solved the problem easily.', '그녀는 그 문제를 쉽게 풀었다.'], ['She solved easily problem the.', '그녀는 그 문제를 쉽게 풀었다.'], ['She solved the problem easiest.', '그녀는 그 문제를 쉽게 풀었다.']], 1, 'easy는 y를 i로 바꿔 easily입니다.'),
+    pc('Choose the sentence in which the underlined word is an adverb.', '꾸미는 말이 부사인 문장을 고르세요.', 'intermediate', [['She is a quick runner.', '그녀는 빠른 주자다.'], ['He is a careful driver.', '그는 조심스러운 운전자다.'], ['She runs quickly.', '그녀는 빨리 달린다.'], ['It is a fast car.', '그것은 빠른 차다.']], 2, '세 번째의 quickly는 동사 runs를 꾸미는 부사입니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['She never eats breakfast.', '그녀는 아침을 절대 먹지 않는다.'], ['He speaks slowly.', '그는 천천히 말한다.'], ['I always am happy.', '나는 항상 행복하다.'], ['She studies hard.', '그녀는 열심히 공부한다.']], 2, '빈도부사는 be동사 뒤에 와야 하므로 I am always happy입니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① She runs quickly.\n② He speaks slow.\n③ I often play soccer.', 'basic', 1, '②만 틀렸고 slowly여야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① I play often soccer.\n② He always is late.\n③ She studies hard.\n④ She solved the problem easy.', 'advanced', 3, '①은 often play, ②는 is always, ④는 easily여야 하므로 틀린 문장은 3개입니다.'),
+    pc('Why is the sentence "She runs quick." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because runs should be run.', 'runs를 run으로 바꿔야 해서'], ['Because She should be He.', 'She를 He로 바꿔야 해서'], ['Because an adverb is needed to describe the verb.', '동사를 꾸미려면 부사가 필요해서'], ['Because quick should come first.', 'quick이 앞에 와야 해서']], 2, '동사를 꾸미는 말은 부사(quickly)입니다.', 'reason'),
+  ],
+  popup: [['She runs ___.', 'quickly', ['quick', 'quicker'], '동사 꾸밈'], ['He is ___ late.', 'always', ['late', 'quickly'], 'be 뒤'], ['I ___ play soccer.', 'often', ['plays', 'slowly'], '동사 앞'], ['She studies ___.', 'hard', ['hardly', 'harder'], '열심히']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'She runs quick.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['She runs quickly.'], noteKo: '동사를 꾸미려면 부사를 씁니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'He always is late.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['He is always late.'], noteKo: '빈도부사는 be동사 뒤에 씁니다.' },
+  ],
+  top: ['동사를 꾸미면 부사(대부분 -ly). 빈도부사는 일반동사 앞, be동사 뒤에 쓴다.', 'She runs quickly.', '그녀는 빨리 달린다.'],
+  lecture: [
+    { type: 'text', text: '부사', narration: '오늘은 동사를 꾸며 주는 부사를 배워요.' },
+    { type: 'board', title: '형용사 + -ly', lines: ['She runs [b]quickly[/b]. — 그녀는 빨리 달린다.', 'He speaks [b]slowly[/b]. — 그는 천천히 말한다.', 'easy → [b]easily[/b] — 쉽게'], narration: '동사를 꾸미는 말은 부사예요. 보통 형용사에 [en]ly[/en]를 붙여요. [en]She runs quickly.[/en] 그녀는 빨리 달려요. [en]easy[/en]는 [en]easily[/en]로 바뀌어요.' },
+    { type: 'board', title: '모양이 같은 부사', lines: ['He runs [b]fast[/b]. — 그는 빨리 달린다.', 'She studies [b]hard[/b]. — 그녀는 열심히 공부한다.', 'I got up [b]late[/b]. — 나는 늦게 일어났다.'], narration: '[en]fast, hard, late[/en]는 부사도 같은 모양이에요. [en]She studies hard.[/en] 그녀는 열심히 공부해요.' },
+    { type: 'board', title: '빈도부사 위치', lines: ['I [b]often[/b] play soccer. — 나는 자주 축구를 한다.', 'He is [b]always[/b] late. — 그는 항상 늦는다.', '일반동사 앞 / be동사 뒤'], narration: '빈도부사는 일반동사 앞, [en]be[/en]동사 뒤에 써요. [en]I often play soccer.[/en] 나는 자주 축구를 해요. [en]He is always late.[/en] 그는 항상 늦어요.' },
+    { type: 'board', title: '형용사 vs 부사', lines: ['She is a [b]quick[/b] runner. — 그녀는 빠른 주자다.', 'She runs [b]quickly[/b]. — 그녀는 빨리 달린다.', '명사 꾸밈 = 형용사 / 동사 꾸밈 = 부사'], narration: '명사를 꾸미면 형용사, 동사를 꾸미면 부사예요. [en]She is a quick runner.[/en] 그녀는 빠른 주자예요. [en]She runs quickly.[/en] 그녀는 빨리 달려요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× She runs [b]quick[/b]. — 그녀는 빨리 달린다.', '× I play [b]often[/b] soccer. — 나는 자주 축구를 한다.', '× He [b]always is[/b] late. — 그는 항상 늦는다.'], narration: '[en]She runs quick[/en]은 [en]quickly[/en]가 맞아요. 빈도부사는 동사 앞이에요. [en]He is always late.[/en]처럼 [en]be[/en] 뒤에 써요.' },
+    { type: 'text', text: '정리: 동사 꾸밈 = 부사 / 빈도부사 = 일반동사 앞, be 뒤', narration: '정리할게요. 동사를 꾸미면 부사, 빈도부사는 일반동사 앞과 [en]be[/en]동사 뒤에 써요.' },
+  ],
+});

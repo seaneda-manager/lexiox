@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'comparison-forms', topic: '비교급·최상급 만드는 법 - 1부', titleKo: '-er / -est · more / most',
+  summaryEn: 'Short words add -er and -est. Long words use more and most. Some words change completely.',
+  summaryKo: '짧은 단어는 -er/-est를 붙이고, 긴 단어는 more/most를 앞에 씁니다. good·bad처럼 완전히 바뀌는 불규칙 단어도 있습니다.',
+  rules: [
+    ['Short words: add -er (comparative) and -est (superlative).', '짧은 단어는 -er(비교급), -est(최상급)를 붙입니다. (tall – taller – tallest)'],
+    ['Words ending in -y: change y to i and add -er/-est.', '-y로 끝나면 y를 i로 바꾸고 -er/-est를 붙입니다. (easy – easier – easiest) 자음 하나로 끝나면 자음을 한 번 더 씁니다. (big – bigger – biggest)'],
+    ['Long words: use more and most.', '길고 어려운 단어는 앞에 more(비교급), most(최상급)를 씁니다. (beautiful – more beautiful – most beautiful)'],
+    ['Irregular: good – better – best, bad – worse – worst.', '불규칙 변화는 외웁니다. (good – better – best, bad – worse – worst, many/much – more – most)'],
+  ],
+  examples: [['Tom is taller than Jim.', 'Tom은 Jim보다 키가 크다.'], ['This book is more interesting than that one.', '이 책은 저 책보다 더 재미있다.'], ['She is the best student.', '그녀는 가장 뛰어난 학생이다.']],
+  groups: [
+    ['-er / -est', '짧은 단어.', [
+      ['Tom is taller than Jim.', 'Tom은 Jim보다 키가 크다.', 'tall → taller', '짧은 단어는 -er입니다.'],
+      ['Mt. Halla is the highest mountain in Korea.', '한라산은 한국에서 가장 높은 산이다.', 'high → highest', '짧은 단어의 최상급은 -est입니다.'],
+      ['My bag is bigger than yours.', '내 가방은 네 것보다 더 크다.', 'big → bigger', '자음을 한 번 더 씁니다.']]],
+    ['-y로 끝나는 단어', 'y를 i로 바꿉니다.', [
+      ['This test is easier than that one.', '이 시험은 저 시험보다 쉽다.', 'easy → easier', 'y를 i로 바꾸고 -er입니다.'],
+      ['She is the happiest girl in the class.', '그녀는 반에서 가장 행복한 소녀다.', 'happy → happiest', 'y를 i로 바꾸고 -est입니다.'],
+      ['Today is busier than yesterday.', '오늘은 어제보다 더 바쁘다.', 'busy → busier', 'y를 i로 바꾸고 -er입니다.']]],
+    ['more / most', '길고 어려운 단어.', [
+      ['This book is more interesting than that one.', '이 책은 저 책보다 더 재미있다.', 'more + 형용사', '긴 단어는 more를 앞에 씁니다.'],
+      ['She is the most beautiful girl.', '그녀는 가장 아름다운 소녀다.', 'most + 형용사', '긴 단어의 최상급은 most입니다.'],
+      ['English is more difficult than math.', '영어는 수학보다 더 어렵다.', 'more + 형용사', '긴 단어는 more를 씁니다.']]],
+    ['불규칙 변화', '외워야 하는 단어.', [
+      ['This pizza is better than that one.', '이 피자는 저 피자보다 더 맛있다.', 'good → better', '불규칙입니다.'],
+      ['She is the best student.', '그녀는 가장 뛰어난 학생이다.', 'good → best', '불규칙입니다.'],
+      ['My cold is worse today.', '내 감기는 오늘 더 심하다.', 'bad → worse', '불규칙입니다.']]],
+  ],
+  wrong: [['Tom is more tall than Jim.', '짧은 단어는 -er → Tom is taller than Jim. — Tom은 Jim보다 키가 크다.', ''], ['This book is interestinger than that one.', '긴 단어는 more → This book is more interesting than that one. — 이 책은 저 책보다 더 재미있다.', ''], ['She is the goodest student.', '불규칙 → She is the best student. — 그녀는 가장 뛰어난 학생이다.', '']],
+  wrongNote: '짧은 단어는 -er/-est, 긴 단어는 more/most, 불규칙은 따로 외웁니다.',
+  cram: '■ 핵심 요약\n짧은 단어는 -er/-est, 긴 단어는 more/most, good·bad는 불규칙으로 바뀝니다.\n\n■ 규칙\n1. 짧은 단어: tall – taller – tallest.\n2. -y로 끝나면 y를 i로: easy – easier – easiest. 자음 하나면 한 번 더: big – bigger – biggest.\n3. 긴 단어: more/most + 형용사 (beautiful – more beautiful – most beautiful).\n4. 불규칙: good – better – best, bad – worse – worst.\n\n■ 예문 뜻\nTom은 Jim보다 키가 크다.\n이 책은 저 책보다 더 재미있다.\n그녀는 가장 뛰어난 학생이다.',
+  blanks: [['tall의 비교급은 ___입니다.', 'taller', 't로 시작'], ['긴 단어의 비교급은 ___ + 형용사입니다.', 'more', '네 글자'], ['good의 최상급은 ___입니다.', 'best', 'b로 시작'], ['easy의 비교급은 ___입니다.', 'easier', 'e로 시작']],
+  fill: [
+    ['basic', 'Tom is ___ than Jim.', 'taller', ['tall', 'taller', 'tallest'], 'Tom은 Jim보다 키가 크다.', 'than과 함께 쓰는 비교급 taller입니다.', 'than'],
+    ['basic', 'Mt. Halla is the ___ mountain in Korea.', 'highest', ['highest', 'higher', 'high'], '한라산은 한국에서 가장 높은 산이다.', 'the 뒤에는 최상급 highest입니다.', 'the ___'],
+    ['basic', 'My bag is ___ than yours.', 'bigger', ['big', 'biggest', 'bigger'], '내 가방은 네 것보다 더 크다.', 'big은 g를 한 번 더 써서 bigger입니다.', 'than'],
+    ['intermediate', 'This test is ___ than that one.', 'easier', ['easier', 'more easy', 'easiest'], '이 시험은 저 시험보다 쉽다.', 'y를 i로 바꾸고 -er을 붙여 easier입니다.', 'y → i'],
+    ['intermediate', 'She is the ___ girl in the class.', 'happiest', ['happier', 'happiest', 'most happy'], '그녀는 반에서 가장 행복한 소녀다.', 'y를 i로 바꾸고 -est를 붙여 happiest입니다.', 'the ___'],
+    ['intermediate', 'This book is ___ interesting than that one.', 'more', ['more', 'most', 'very'], '이 책은 저 책보다 더 재미있다.', '긴 단어의 비교급은 more + 형용사입니다.', '긴 단어'],
+    ['advanced', 'This pizza is ___ than that one.', 'better', ['gooder', 'more good', 'better'], '이 피자는 저 피자보다 더 맛있다.', 'good의 비교급은 better입니다.', 'good'],
+    ['advanced', 'She is the ___ student in our school.', 'best', ['best', 'goodest', 'most good'], '그녀는 우리 학교에서 가장 뛰어난 학생이다.', 'good의 최상급은 best입니다.', 'good'],
+  ],
+  fix: [
+    ['basic', 'Tom is more taller than Jim.', 'more', [''], ['비교급 앞에 more를 또 붙이면 안 됩니다.', 'Tom은 Tim이어야 합니다.', 'than은 then이어야 합니다.'], 0, 'Tom is taller than Jim. → more 삭제'],
+    ['intermediate', 'This book is interestinger than that one.', 'interestinger', ['more interesting'], ['book은 books여야 합니다.', '긴 단어는 more를 앞에 씁니다.', 'than은 that이어야 합니다.'], 1, 'This book is more interesting than that one. → 긴 단어는 more'],
+    ['intermediate', 'She is the goodest student.', 'goodest', ['best'], ['She는 He여야 합니다.', 'student는 students여야 합니다.', 'good의 최상급은 best입니다.'], 2, 'She is the best student. → 불규칙'],
+  ],
+  questions: [
+    pc('Which sentence about height is correct?', '키에 대한 올바른 문장을 고르세요.', 'basic', [['Tom is more tall than Jim.', 'Tom은 Jim보다 키가 크다.'], ['Tom is taller than Jim.', 'Tom은 Jim보다 키가 크다.'], ['Tom is tallest than Jim.', 'Tom은 Jim보다 키가 크다.'], ['Tom is tall than Jim.', 'Tom은 Jim보다 키가 크다.']], 1, '짧은 단어는 -er + than입니다.'),
+    pc('Which sentence about a mountain is correct?', '산에 대한 올바른 문장을 고르세요.', 'basic', [['Mt. Halla is the higher mountain in Korea.', '한라산은 한국에서 가장 높은 산이다.'], ['Mt. Halla is the most high mountain in Korea.', '한라산은 한국에서 가장 높은 산이다.'], ['Mt. Halla is the highest mountain in Korea.', '한라산은 한국에서 가장 높은 산이다.'], ['Mt. Halla is the high mountain in Korea.', '한라산은 한국에서 가장 높은 산이다.']], 2, 'the 뒤에는 최상급 highest입니다.'),
+    pc('Which sentence about a bag is correct?', '가방에 대한 올바른 문장을 고르세요.', 'basic', [['My bag is biger than yours.', '내 가방은 네 것보다 더 크다.'], ['My bag is more big than yours.', '내 가방은 네 것보다 더 크다.'], ['My bag is bigest than yours.', '내 가방은 네 것보다 더 크다.'], ['My bag is bigger than yours.', '내 가방은 네 것보다 더 크다.']], 3, 'big은 g를 한 번 더 써서 bigger입니다.'),
+    pc('Which sentence about a book is correct?', '책에 대한 올바른 문장을 고르세요.', 'intermediate', [['This book is more interesting than that one.', '이 책은 저 책보다 더 재미있다.'], ['This book is interestinger than that one.', '이 책은 저 책보다 더 재미있다.'], ['This book is most interesting than that one.', '이 책은 저 책보다 더 재미있다.'], ['This book is more interestinger than that one.', '이 책은 저 책보다 더 재미있다.']], 0, '긴 단어는 more + 형용사입니다.'),
+    pc('Which sentence about a test is correct?', '시험에 대한 올바른 문장을 고르세요.', 'intermediate', [['This test is easyer than that one.', '이 시험은 저 시험보다 쉽다.'], ['This test is easier than that one.', '이 시험은 저 시험보다 쉽다.'], ['This test is more easy than that one.', '이 시험은 저 시험보다 쉽다.'], ['This test is easiest than that one.', '이 시험은 저 시험보다 쉽다.']], 1, 'y를 i로 바꾸고 -er입니다.'),
+    pc('Choose the word that is NOT correct.', '틀린 형태를 고르세요.', 'intermediate', [['tall – taller – tallest', 'tall – taller – tallest'], ['easy – easier – easiest', 'easy – easier – easiest'], ['good – gooder – goodest', 'good – gooder – goodest'], ['big – bigger – biggest', 'big – bigger – biggest']], 2, 'good은 good – better – best로 불규칙 변화입니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['She is the happiest girl.', '그녀는 가장 행복한 소녀다.'], ['My cold is worse today.', '내 감기는 오늘 더 심하다.'], ['English is difficulter than math.', '영어는 수학보다 더 어렵다.'], ['This pizza is better than that one.', '이 피자는 저 피자보다 더 맛있다.']], 2, 'difficult는 긴 단어라서 more difficult여야 합니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① Tom is taller than Jim.\n② She is the goodest student.\n③ This book is more interesting than that one.', 'basic', 1, '②만 틀렸고 the best student여야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① Tom is more tall than Jim.\n② This test is easier than that one.\n③ English is difficulter than math.\n④ My cold is worse today.', 'advanced', 2, '①은 taller, ③은 more difficult여야 하므로 틀린 문장은 2개입니다.'),
+    pc('Why is the sentence "This book is interestinger than that one." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because than should be then.', 'than을 then으로 바꿔야 해서'], ['Because book should be books.', 'book을 books로 바꿔야 해서'], ['Because interesting is a long word, so we use more.', 'interesting은 긴 단어라서 more를 쓰기 때문에'], ['Because This should be That.', 'This를 That으로 바꿔야 해서']], 2, '긴 단어의 비교급은 more + 형용사입니다.', 'reason'),
+  ],
+  popup: [['Tom is ___ than Jim.', 'taller', ['tall', 'tallest'], 'than'], ['This test is ___ than that one.', 'easier', ['easyer', 'easiest'], 'y → i'], ['This book is ___ interesting.', 'more', ['most', 'very'], '긴 단어'], ['She is the ___ student.', 'best', ['goodest', 'better'], 'good']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'Tom is more tall than Jim.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['Tom is taller than Jim.'], noteKo: '짧은 단어는 -er을 붙입니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'She is the goodest student.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['She is the best student.'], noteKo: 'good의 최상급은 best입니다.' },
+  ],
+  top: ['짧은 단어는 -er/-est, 긴 단어는 more/most, good·bad는 불규칙(better·best, worse·worst).', 'Tom is taller than Jim.', 'Tom은 Jim보다 키가 크다.'],
+  lecture: [
+    { type: 'text', text: '비교급과 최상급 만드는 법', narration: '오늘은 비교급과 최상급을 만드는 법을 배워요.' },
+    { type: 'board', title: '짧은 단어: -er / -est', lines: ['Tom is [b]taller[/b] than Jim. — Tom은 Jim보다 키가 크다.', 'Mt. Halla is the [b]highest[/b]. — 한라산이 가장 높다.', 'tall – taller – tallest'], narration: '짧은 단어는 [en]er[/en]과 [en]est[/en]를 붙여요. [en]Tom is taller than Jim.[/en] [en]Tom[/en]은 [en]Jim[/en]보다 키가 커요. [en]Mt. Halla is the highest.[/en] 한라산이 가장 높아요.' },
+    { type: 'board', title: 'y로 끝나거나 자음 하나', lines: ['easy → [b]easier[/b] — 더 쉬운', 'happy → [b]happiest[/b] — 가장 행복한', 'big → [b]bigger[/b] — 더 큰'], narration: '[en]y[/en]로 끝나는 단어는 [en]y[/en]를 [en]i[/en]로 바꿔요. [en]easy[/en]는 [en]easier[/en]예요. [en]big[/en]은 [en]g[/en]를 한 번 더 써서 [en]bigger[/en]예요.' },
+    { type: 'board', title: '긴 단어: more / most', lines: ['This book is [b]more interesting[/b]. — 이 책이 더 재미있다.', 'She is the [b]most beautiful[/b] girl. — 그녀는 가장 아름다운 소녀다.'], narration: '긴 단어는 앞에 [en]more[/en]나 [en]most[/en]를 써요. [en]This book is more interesting.[/en] 이 책이 더 재미있어요.' },
+    { type: 'board', title: '불규칙 변화', lines: ['good – [b]better[/b] – [b]best[/b] — 좋은', 'bad – [b]worse[/b] – [b]worst[/b] — 나쁜', 'She is the [b]best[/b] student. — 그녀는 가장 뛰어난 학생이다.'], narration: '[en]good[/en]은 [en]better[/en], [en]best[/en]로 바뀌어요. [en]bad[/en]는 [en]worse[/en], [en]worst[/en]예요. [en]She is the best student.[/en] 그녀는 가장 뛰어난 학생이에요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× Tom is [b]more tall[/b] than Jim. — Tom은 Jim보다 키가 크다.', '× This book is [b]interestinger[/b]. — 이 책이 더 재미있다.', '× She is the [b]goodest[/b] student. — 그녀는 가장 뛰어난 학생이다.'], narration: '짧은 단어에 [en]more[/en]를 붙이면 틀려요. 긴 단어에 [en]er[/en]를 붙여도 틀려요. [en]good[/en]의 최상급은 [en]goodest[/en]가 아니라 [en]best[/en]예요.' },
+    { type: 'text', text: '정리: 짧은 -er/-est / 긴 more/most / good-better-best', narration: '정리할게요. 짧은 단어는 [en]er[/en]과 [en]est[/en], 긴 단어는 [en]more[/en]와 [en]most[/en], [en]good[/en]은 [en]better[/en]와 [en]best[/en]예요.' },
+  ],
+});
