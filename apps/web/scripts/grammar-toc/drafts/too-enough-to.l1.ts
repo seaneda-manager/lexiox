@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'too-enough-to', topic: 'too ~ to / enough to - 1부', titleKo: 'too ~ to · enough to',
+  summaryEn: 'Too + adjective + to means "too ... to do". Adjective + enough + to means "... enough to do".',
+  summaryKo: 'too + 형용사 + to + 동사원형은 "너무 ~해서 ~할 수 없다", 형용사 + enough + to + 동사원형은 "~할 만큼 충분히 ~하다"입니다.',
+  rules: [
+    ['too + adjective + to + base verb: too ... to do (cannot).', 'too ~ to는 "너무 ~해서 …할 수 없다"는 부정의 뜻입니다. (He is too young to drive.)'],
+    ['adjective + enough + to + base verb: ... enough to do.', '형용사 + enough + to는 "…할 만큼 충분히 ~하다"입니다. enough는 형용사 뒤에 옵니다. (He is old enough to drive.)'],
+    ['Use too before the adjective. Do not use very instead of too.', 'too는 형용사 앞에 씁니다. 이 구문에서는 very를 쓰지 않습니다.'],
+    ['too ~ to = so ~ that ... can\'t', 'too ~ to는 so ~ that ~ can\'t와 같은 뜻입니다. (so tired that I can\'t walk)'],
+  ],
+  examples: [['He is too young to drive.', '그는 너무 어려서 운전할 수 없다.'], ['He is old enough to drive.', '그는 운전할 수 있을 만큼 나이가 들었다.'], ['I am too tired to walk.', '나는 너무 피곤해서 걸을 수 없다.']],
+  groups: [
+    ['too ~ to', '너무 ~해서 할 수 없다.', [
+      ['He is too young to drive.', '그는 너무 어려서 운전할 수 없다.', 'too + 형용사 + to', '운전할 수 없습니다.'],
+      ['I am too tired to walk.', '나는 너무 피곤해서 걸을 수 없다.', 'too + 형용사 + to', '걸을 수 없습니다.'],
+      ['The box is too heavy to carry.', '그 상자는 너무 무거워서 들 수 없다.', 'too + 형용사 + to', '들 수 없습니다.']]],
+    ['enough to', '~할 만큼 충분히.', [
+      ['He is old enough to drive.', '그는 운전할 수 있을 만큼 나이가 들었다.', '형용사 + enough + to', 'enough는 형용사 뒤입니다.'],
+      ['She is smart enough to solve it.', '그녀는 그것을 풀 만큼 충분히 똑똑하다.', '형용사 + enough + to', 'enough는 형용사 뒤입니다.'],
+      ['The room is big enough to hold ten people.', '그 방은 열 명을 수용할 만큼 충분히 크다.', '형용사 + enough + to', 'enough는 형용사 뒤입니다.']]],
+    ['so ~ that 바꿔 쓰기', '같은 뜻의 다른 표현.', [
+      ['He is so young that he can\'t drive.', '그는 너무 어려서 운전할 수 없다.', 'so ~ that ~ can\'t', 'too ~ to와 같은 뜻입니다.'],
+      ['I am so tired that I can\'t walk.', '나는 너무 피곤해서 걸을 수 없다.', 'so ~ that ~ can\'t', 'too ~ to와 같은 뜻입니다.'],
+      ['The tea is so hot that I can\'t drink it.', '차가 너무 뜨거워서 마실 수 없다.', 'so ~ that ~ can\'t', 'too ~ to와 같은 뜻입니다.']]],
+    ['부정 + enough', '충분하지 않다.', [
+      ['He is not old enough to drive.', '그는 운전할 만큼 나이가 많지 않다.', 'not + 형용사 + enough', '아직 부족합니다.'],
+      ['I am not strong enough to lift it.', '나는 그것을 들 만큼 힘이 세지 않다.', 'not + 형용사 + enough', '아직 부족합니다.'],
+      ['The water is not warm enough to swim.', '물이 수영할 만큼 따뜻하지 않다.', 'not + 형용사 + enough', '아직 부족합니다.']]],
+  ],
+  wrong: [['He is too young driving.', 'to + 원형 → He is too young to drive. — 그는 너무 어려서 운전할 수 없다.', ''], ['He is old enough drive a car.', 'to 필요 → He is old enough to drive a car. — 그는 차를 운전할 만큼 나이가 들었다.', ''], ['This bag is very heavy to carry.', 'too 사용 → This bag is too heavy to carry. — 이 가방은 너무 무거워서 들 수 없다.', '']],
+  wrongNote: 'too ~ to, 형용사 + enough + to 형태와 순서를 지킵니다.',
+  cram: '■ 핵심 요약\ntoo ~ to는 "너무 ~해서 할 수 없다", enough to는 "~할 만큼 충분히"입니다.\n\n■ 규칙\n1. too + 형용사 + to + 동사원형: 너무 ~해서 …할 수 없다.\n2. 형용사 + enough + to + 동사원형: …할 만큼 충분히 ~하다.\n3. 이 구문에서는 very가 아니라 too를 씁니다.\n4. too ~ to = so ~ that ~ can\'t.\n\n■ 예문 뜻\n그는 너무 어려서 운전할 수 없다.\n그는 운전할 수 있을 만큼 나이가 들었다.\n나는 너무 피곤해서 걸을 수 없다.',
+  blanks: [['"너무 ~해서 할 수 없다"는 ___ ~ to입니다.', 'too', '세 글자'], ['enough는 형용사의 ___에 옵니다.', '뒤', '한 글자'], ['too ~ to 뒤에는 동사 ___이 옵니다.', '원형', '두 글자'], ['too ~ to는 so ~ that ~ ___과 같은 뜻입니다.', "can't", '조동사 부정']],
+  fill: [
+    ['basic', 'He is ___ young to drive.', 'too', ['too', 'very', 'so'], '그는 너무 어려서 운전할 수 없다.', '"너무 ~해서 할 수 없다"는 too ~ to입니다.', '너무 ~해서'],
+    ['basic', 'He is old ___ to drive.', 'enough', ['too', 'enough', 'very'], '그는 운전할 수 있을 만큼 나이가 들었다.', '형용사 뒤에 enough를 씁니다.', '충분히'],
+    ['basic', 'I am too tired ___ walk.', 'to', ['for', 'to', 'of'], '나는 너무 피곤해서 걸을 수 없다.', 'too ~ 뒤에는 to + 동사원형입니다.', '부정사 표시'],
+    ['intermediate', 'The box is too heavy to ___.', 'carry', ['carry', 'carrying', 'carries'], '그 상자는 너무 무거워서 들 수 없다.', 'to 뒤에는 동사원형을 씁니다.', '동사원형'],
+    ['intermediate', 'She is smart ___ to solve it.', 'enough', ['too', 'very', 'enough'], '그녀는 그것을 풀 만큼 충분히 똑똑하다.', '형용사 뒤에 enough를 씁니다.', '충분히'],
+    ['intermediate', 'I am so tired ___ I can\'t walk.', 'that', ['that', 'to', 'for'], '나는 너무 피곤해서 걸을 수 없다.', 'so ~ that 형태입니다.', 'so ~'],
+    ['advanced', 'He is not old enough ___ drive.', 'to', ['for', 'to', 'at'], '그는 운전할 만큼 나이가 많지 않다.', 'enough 뒤에는 to + 동사원형입니다.', '부정사 표시'],
+    ['advanced', 'This bag is ___ heavy to carry.', 'too', ['very', 'so', 'too'], '이 가방은 너무 무거워서 들 수 없다.', 'to carry와 함께 쓰는 말은 too입니다.', '너무 ~해서'],
+  ],
+  fix: [
+    ['basic', 'He is too young driving.', 'driving', ['to drive'], ['He는 They여야 합니다.', 'too ~ 뒤에는 to + 동사원형을 씁니다.', 'young은 youngest여야 합니다.'], 1, 'He is too young to drive. → too ~ to'],
+    ['intermediate', 'He is old enough drive a car.', 'drive', ['to drive'], ['old는 older여야 합니다.', 'car는 cars여야 합니다.', 'enough 뒤에는 to + 동사원형을 씁니다.'], 2, 'He is old enough to drive a car. → enough to'],
+    ['intermediate', 'This bag is very heavy to carry.', 'very', ['too'], ['"너무 ~해서 할 수 없다"는 too를 씁니다.', 'heavy는 heavily여야 합니다.', 'carry는 carrying이어야 합니다.'], 0, 'This bag is too heavy to carry. → too ~ to'],
+  ],
+  questions: [
+    pc('Which sentence about driving is correct?', '운전에 대한 올바른 문장을 고르세요.', 'basic', [['He is too young driving.', '그는 너무 어려서 운전할 수 없다.'], ['He is too young to drive.', '그는 너무 어려서 운전할 수 없다.'], ['He is very young to drive.', '그는 너무 어려서 운전할 수 없다.'], ['He is too young for drive.', '그는 너무 어려서 운전할 수 없다.']], 1, 'too + 형용사 + to + 동사원형입니다.'),
+    pc('Which sentence about age is correct?', '나이에 대한 올바른 문장을 고르세요.', 'basic', [['He is enough old to drive.', '그는 운전할 수 있을 만큼 나이가 들었다.'], ['He is old to enough drive.', '그는 운전할 수 있을 만큼 나이가 들었다.'], ['He is old enough to drive.', '그는 운전할 수 있을 만큼 나이가 들었다.'], ['He is old enough drive.', '그는 운전할 수 있을 만큼 나이가 들었다.']], 2, 'enough는 형용사 뒤에 옵니다.'),
+    pc('Which sentence about walking is correct?', '걷기에 대한 올바른 문장을 고르세요.', 'basic', [['I am too tired walk.', '나는 너무 피곤해서 걸을 수 없다.'], ['I am too tired walking.', '나는 너무 피곤해서 걸을 수 없다.'], ['I am too tired to walks.', '나는 너무 피곤해서 걸을 수 없다.'], ['I am too tired to walk.', '나는 너무 피곤해서 걸을 수 없다.']], 3, 'too ~ to + 동사원형입니다.'),
+    pc('Which sentence about a box is correct?', '상자에 대한 올바른 문장을 고르세요.', 'intermediate', [['The box is too heavy to carry.', '그 상자는 너무 무거워서 들 수 없다.'], ['The box is very heavy to carry.', '그 상자는 너무 무거워서 들 수 없다.'], ['The box is too heavy carry.', '그 상자는 너무 무거워서 들 수 없다.'], ['The box is heavy too to carry.', '그 상자는 너무 무거워서 들 수 없다.']], 0, 'too ~ to + 동사원형입니다.'),
+    pc('Which sentence has the same meaning as "He is too young to drive."?', '"He is too young to drive."와 같은 뜻의 문장을 고르세요.', 'intermediate', [['He is so young that he can drive.', '그는 너무 어려서 운전할 수 있다.'], ['He is so young that he can\'t drive.', '그는 너무 어려서 운전할 수 없다.'], ['He is young enough to drive.', '그는 운전할 만큼 어리다.'], ['He is not young to drive.', '그는 운전하기엔 어리지 않다.']], 1, 'too ~ to는 so ~ that ~ can\'t와 같은 뜻입니다.'),
+    pc('Choose the sentence that means the person CAN do it.', '그 일을 할 수 있다는 뜻의 문장을 고르세요.', 'intermediate', [['I am too tired to walk.', '나는 너무 피곤해서 걸을 수 없다.'], ['He is too young to drive.', '그는 너무 어려서 운전할 수 없다.'], ['She is smart enough to solve it.', '그녀는 그것을 풀 만큼 충분히 똑똑하다.'], ['The box is too heavy to carry.', '그 상자는 너무 무거워서 들 수 없다.']], 2, 'enough to는 할 수 있다는 뜻입니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['He is not old enough to drive.', '그는 운전할 만큼 나이가 많지 않다.'], ['I am too tired to walk.', '나는 너무 피곤해서 걸을 수 없다.'], ['The room is big enough to hold ten people.', '그 방은 열 명을 수용할 만큼 충분히 크다.'], ['This bag is very heavy to carry.', '이 가방은 너무 무거워서 들 수 없다.']], 3, '"너무 ~해서 할 수 없다"는 too를 써야 합니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① He is too young to drive.\n② He is too young driving.\n③ He is old enough to drive.', 'basic', 1, '②만 틀렸고 to drive여야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① He is enough old to drive.\n② This bag is very heavy to carry.\n③ I am too tired to walk.\n④ She is smart enough to solve it.', 'advanced', 2, '①은 old enough, ②는 too heavy여야 하므로 틀린 문장은 2개입니다.'),
+    pc('Why is the sentence "This bag is very heavy to carry." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because bag should be bags.', 'bag을 bags로 바꿔야 해서'], ['Because carry should be carrying.', 'carry를 carrying으로 바꿔야 해서'], ['Because heavy should be heavily.', 'heavy를 heavily로 바꿔야 해서'], ['Because too is used in the pattern too ~ to.', 'too ~ to 구문에서는 too를 써야 해서']], 3, '"너무 ~해서 할 수 없다"는 too ~ to로 말합니다.', 'reason'),
+  ],
+  popup: [['He is ___ young to drive.', 'too', ['very', 'so'], '너무 ~해서'], ['He is old ___ to drive.', 'enough', ['too', 'very'], '충분히'], ['I am too tired ___ walk.', 'to', ['for', 'of'], '부정사 표시'], ['The box is too heavy to ___.', 'carry', ['carrying', 'carries'], '동사원형']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'He is too young driving.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['He is too young to drive.'], noteKo: 'too ~ 뒤에는 to + 동사원형을 씁니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'This bag is very heavy to carry.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['This bag is too heavy to carry.'], noteKo: '"너무 ~해서 할 수 없다"는 too를 씁니다.' },
+  ],
+  top: ['too + 형용사 + to + 원형 = 너무 ~해서 할 수 없다, 형용사 + enough + to + 원형 = ~할 만큼 충분히. enough는 형용사 뒤에 둔다.', 'He is too young to drive.', '그는 너무 어려서 운전할 수 없다.'],
+  lecture: [
+    { type: 'text', text: 'too ~ to / enough to', narration: '오늘은 너무 해서 못한다는 [en]too to[/en]와, 충분히 한다는 [en]enough to[/en]를 배워요.' },
+    { type: 'board', title: 'too ~ to', lines: ['He is [b]too[/b] young [b]to[/b] drive. — 그는 너무 어려서 운전할 수 없다.', 'I am too tired to walk. — 나는 너무 피곤해서 걸을 수 없다.', '너무 ~해서 …할 수 없다'], narration: '[en]too[/en] 형용사 [en]to[/en] 동사원형은 너무 해서 할 수 없다는 뜻이에요. [en]He is too young to drive.[/en] 그는 너무 어려서 운전할 수 없어요.' },
+    { type: 'board', title: 'enough to', lines: ['He is old [b]enough to[/b] drive. — 그는 운전할 수 있을 만큼 나이가 들었다.', 'She is smart enough to solve it. — 그녀는 그것을 풀 만큼 충분히 똑똑하다.', 'enough는 형용사 뒤'], narration: '[en]enough[/en]는 형용사 뒤에 와요. [en]He is old enough to drive.[/en] 그는 운전할 수 있을 만큼 나이가 들었어요.' },
+    { type: 'board', title: 'so ~ that 바꿔 쓰기', lines: ['He is [b]so young that he can\'t[/b] drive. — 그는 너무 어려서 운전할 수 없다.', 'too ~ to = so ~ that ~ can\'t'], narration: '[en]too to[/en]는 [en]so that can\'t[/en]로 바꿔 쓸 수 있어요. [en]He is so young that he can\'t drive.[/en] 그는 너무 어려서 운전할 수 없어요.' },
+    { type: 'board', title: '부정 + enough', lines: ['He is [b]not[/b] old enough to drive. — 그는 운전할 만큼 나이가 많지 않다.', 'The water is not warm enough to swim. — 물이 수영할 만큼 따뜻하지 않다.'], narration: '[en]not[/en]을 붙이면 충분하지 않다는 뜻이에요. [en]He is not old enough to drive.[/en] 그는 운전할 만큼 나이가 많지 않아요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× He is too young [b]driving[/b]. — 그는 너무 어려서 운전할 수 없다.', '× He is old enough [b]drive[/b]. — 그는 운전할 나이다.', '× This bag is [b]very[/b] heavy to carry. — 이 가방은 너무 무거워 들 수 없다.'], narration: '[en]to[/en] 뒤에는 동사원형이에요. [en]enough[/en] 뒤에도 [en]to[/en]가 필요해요. 이 구문에서는 [en]very[/en]가 아니라 [en]too[/en]를 써요.' },
+    { type: 'text', text: '정리: too ~ to = 못한다 / enough to = 충분히 한다', narration: '정리할게요. [en]too[/en]는 형용사 앞에서 못한다는 뜻이고, [en]enough[/en]는 형용사 뒤에서 충분히 한다는 뜻이에요.' },
+  ],
+});

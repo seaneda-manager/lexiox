@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'superlative', topic: '최상급과 최상급 표현 - 1부', titleKo: 'the + 최상급 + in/of',
+  summaryEn: 'Use the + superlative to say something is number one. Use in for a place or group and of for a number of things.',
+  summaryKo: '"가장 ~한"은 the + 최상급으로 말합니다. 범위는 장소·집단이면 in, 비교 대상이 여러 개면 of를 씁니다.',
+  rules: [
+    ['Use the before a superlative.', '최상급 앞에는 보통 the를 붙입니다. (the tallest, the most beautiful)'],
+    ['Use in + place/group, of + plural number.', '범위를 말할 때 장소·집단 앞에는 in, 복수·수 앞에는 of를 씁니다. (in the class, of the three)'],
+    ['Long words: the most + adjective.', '긴 단어는 the most + 형용사입니다. (the most interesting) 이미 -est가 붙었으면 most를 같이 쓰지 않습니다.'],
+    ['One of the + superlative + plural noun.', '"가장 ~한 것 중 하나"는 one of the + 최상급 + 복수명사입니다. (one of the best players)'],
+  ],
+  examples: [['She is the tallest girl in the class.', '그녀는 반에서 가장 키가 큰 소녀다.'], ['Tom is the tallest of the three boys.', 'Tom은 세 소년 중 가장 키가 크다.'], ['He is one of the best players.', '그는 가장 뛰어난 선수들 중 한 명이다.']],
+  groups: [
+    ['the + -est', '짧은 단어.', [
+      ['She is the tallest girl in the class.', '그녀는 반에서 가장 키가 큰 소녀다.', 'the tallest', 'tall → tallest입니다.'],
+      ['This is the biggest house in town.', '이것은 마을에서 가장 큰 집이다.', 'the biggest', 'big → biggest입니다.'],
+      ['Today is the happiest day of my life.', '오늘은 내 인생에서 가장 행복한 날이다.', 'the happiest', 'happy → happiest입니다.']]],
+    ['the most + 형용사', '긴 단어.', [
+      ['This is the most interesting book.', '이것은 가장 재미있는 책이다.', 'the most + 형용사', '긴 단어는 most를 씁니다.'],
+      ['She is the most beautiful girl in school.', '그녀는 학교에서 가장 아름다운 소녀다.', 'the most + 형용사', '긴 단어는 most를 씁니다.'],
+      ['English is the most difficult subject for me.', '영어는 나에게 가장 어려운 과목이다.', 'the most + 형용사', '긴 단어는 most를 씁니다.']]],
+    ['in vs of', '범위 표현.', [
+      ['Tom is the tallest in his family.', 'Tom은 가족 중에서 키가 가장 크다.', 'in + 집단', '집단 앞에는 in입니다.'],
+      ['Tom is the tallest of the three boys.', 'Tom은 세 소년 중 가장 키가 크다.', 'of + 복수', '복수·수 앞에는 of입니다.'],
+      ['Seoul is the largest city in Korea.', '서울은 한국에서 가장 큰 도시다.', 'in + 장소', '장소 앞에는 in입니다.']]],
+    ['one of the + 최상급', '~ 중 하나.', [
+      ['He is one of the best players.', '그는 가장 뛰어난 선수들 중 한 명이다.', 'one of the + 최상급 + 복수', '뒤 명사는 복수입니다.'],
+      ['This is one of the oldest buildings.', '이것은 가장 오래된 건물들 중 하나다.', 'one of the + 최상급 + 복수', '뒤 명사는 복수입니다.'],
+      ['She is one of the smartest students.', '그녀는 가장 똑똑한 학생들 중 한 명이다.', 'one of the + 최상급 + 복수', '뒤 명사는 복수입니다.']]],
+  ],
+  wrong: [['She is the most tall girl.', '짧은 단어는 -est → She is the tallest girl. — 그녀는 가장 키가 큰 소녀다.', ''], ['Tom is the tallest of his class.', '집단 앞은 in → Tom is the tallest in his class. — Tom은 반에서 가장 키가 크다.', ''], ['He is one of the best player.', 'one of 뒤는 복수 → He is one of the best players. — 그는 가장 뛰어난 선수들 중 한 명이다.', '']],
+  wrongNote: '최상급 형태, in/of 구분, one of 뒤 복수를 확인합니다.',
+  cram: '■ 핵심 요약\n"가장 ~한"은 the + 최상급으로 말하고, 범위는 in/of로 나타냅니다.\n\n■ 규칙\n1. the + 최상급 (the tallest).\n2. in + 장소·집단, of + 복수·수.\n3. 긴 단어는 the most + 형용사.\n4. one of the + 최상급 + 복수명사.\n\n■ 예문 뜻\n그녀는 반에서 가장 키가 큰 소녀다.\nTom은 세 소년 중 가장 키가 크다.\n그는 가장 뛰어난 선수들 중 한 명이다.',
+  blanks: [['최상급 앞에는 보통 ___를 붙입니다.', 'the', '세 글자'], ['장소·집단 앞의 범위 전치사는 ___입니다.', 'in', '두 글자'], ['복수 앞의 범위 전치사는 ___입니다.', 'of', '두 글자'], ['one of the 뒤 명사는 ___입니다.', '복수', '두 글자']],
+  fill: [
+    ['basic', 'She is the ___ girl in the class.', 'tallest', ['taller', 'tallest', 'tall'], '그녀는 반에서 가장 키가 큰 소녀다.', 'the 뒤에는 최상급 tallest입니다.', 'the ___'],
+    ['basic', 'This is the ___ house in town.', 'biggest', ['bigger', 'big', 'biggest'], '이것은 마을에서 가장 큰 집이다.', 'big은 g를 한 번 더 써서 biggest입니다.', 'the ___'],
+    ['basic', 'Today is the ___ day of my life.', 'happiest', ['happiest', 'happier', 'most happy'], '오늘은 내 인생에서 가장 행복한 날이다.', 'y를 i로 바꾸고 -est를 붙입니다.', 'the ___'],
+    ['intermediate', 'This is the ___ interesting book.', 'most', ['more', 'most', 'very'], '이것은 가장 재미있는 책이다.', '긴 단어의 최상급은 the most입니다.', '긴 단어'],
+    ['intermediate', 'Tom is the tallest ___ his family.', 'in', ['of', 'in', 'on'], 'Tom은 가족 중에서 키가 가장 크다.', '집단 앞에는 in을 씁니다.', '집단'],
+    ['intermediate', 'Tom is the tallest ___ the three boys.', 'of', ['in', 'at', 'of'], 'Tom은 세 소년 중 가장 키가 크다.', '복수·수 앞에는 of를 씁니다.', '복수'],
+    ['advanced', 'He is one of the best ___.', 'players', ['player', 'players', 'playing'], '그는 가장 뛰어난 선수들 중 한 명이다.', 'one of the 뒤에는 복수명사입니다.', 'one of'],
+    ['advanced', 'Seoul is the largest city ___ Korea.', 'in', ['in', 'of', 'to'], '서울은 한국에서 가장 큰 도시다.', '장소 앞에는 in을 씁니다.', '장소'],
+  ],
+  fix: [
+    ['basic', 'She is the taller girl in the class.', 'taller', ['tallest'], ['girl은 girls여야 합니다.', 'the 뒤에는 최상급 tallest를 씁니다.', 'She는 He여야 합니다.'], 1, 'She is the tallest girl in the class. → the + 최상급'],
+    ['intermediate', 'Tom is the tallest of his class.', 'of', ['in'], ['tallest는 taller여야 합니다.', 'class는 classes여야 합니다.', '집단 앞에는 in을 씁니다.'], 2, 'Tom is the tallest in his class. → 집단은 in'],
+    ['intermediate', 'He is one of the best player.', 'player', ['players'], ['best는 better여야 합니다.', 'one of 뒤에는 복수명사를 씁니다.', 'He는 They여야 합니다.'], 1, 'He is one of the best players. → 복수'],
+  ],
+  questions: [
+    pc('Which sentence about a class is correct?', '반에 대한 올바른 문장을 고르세요.', 'basic', [['She is the taller girl in the class.', '그녀는 반에서 가장 키가 큰 소녀다.'], ['She is the tallest girl in the class.', '그녀는 반에서 가장 키가 큰 소녀다.'], ['She is tallest girl in the class.', '그녀는 반에서 가장 키가 큰 소녀다.'], ['She is the most tall girl in the class.', '그녀는 반에서 가장 키가 큰 소녀다.']], 1, 'the + 최상급(tallest)입니다.'),
+    pc('Which sentence about a house is correct?', '집에 대한 올바른 문장을 고르세요.', 'basic', [['This is the bigest house in town.', '이것은 마을에서 가장 큰 집이다.'], ['This is the most big house in town.', '이것은 마을에서 가장 큰 집이다.'], ['This is the biggest house in town.', '이것은 마을에서 가장 큰 집이다.'], ['This is the bigger house in town.', '이것은 마을에서 가장 큰 집이다.']], 2, 'big은 biggest입니다.'),
+    pc('Which sentence about a day is correct?', '날에 대한 올바른 문장을 고르세요.', 'basic', [['Today is the happyest day of my life.', '오늘은 내 인생에서 가장 행복한 날이다.'], ['Today is the most happiest day of my life.', '오늘은 내 인생에서 가장 행복한 날이다.'], ['Today is the happier day of my life.', '오늘은 내 인생에서 가장 행복한 날이다.'], ['Today is the happiest day of my life.', '오늘은 내 인생에서 가장 행복한 날이다.']], 3, 'y를 i로 바꿔 happiest입니다.'),
+    pc('Which sentence about a book is correct?', '책에 대한 올바른 문장을 고르세요.', 'intermediate', [['This is the most interesting book.', '이것은 가장 재미있는 책이다.'], ['This is the interestingest book.', '이것은 가장 재미있는 책이다.'], ['This is the more interesting book.', '이것은 가장 재미있는 책이다.'], ['This is most interesting the book.', '이것은 가장 재미있는 책이다.']], 0, '긴 단어는 the most + 형용사입니다.'),
+    pc('Which sentence about a family is correct?', '가족에 대한 올바른 문장을 고르세요.', 'intermediate', [['Tom is the tallest of his family.', 'Tom은 가족 중에서 키가 가장 크다.'], ['Tom is the tallest in his family.', 'Tom은 가족 중에서 키가 가장 크다.'], ['Tom is the tallest at his family.', 'Tom은 가족 중에서 키가 가장 크다.'], ['Tom is the taller in his family.', 'Tom은 가족 중에서 키가 가장 크다.']], 1, '집단 앞에는 in을 씁니다.'),
+    pc('Choose the sentence that uses "of" correctly.', '"of"를 바르게 쓴 문장을 고르세요.', 'intermediate', [['Seoul is the largest city of Korea.', '서울은 한국에서 가장 큰 도시다.'], ['Tom is the tallest of his class.', 'Tom은 반에서 가장 키가 크다.'], ['Tom is the tallest of the three boys.', 'Tom은 세 소년 중 가장 키가 크다.'], ['She is the best of the school.', '그녀는 학교에서 가장 뛰어나다.']], 2, '복수·수(the three boys) 앞에서 of를 씁니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['This is one of the oldest buildings.', '이것은 가장 오래된 건물들 중 하나다.'], ['She is one of the smartest students.', '그녀는 가장 똑똑한 학생들 중 한 명이다.'], ['English is the most difficult subject for me.', '영어는 나에게 가장 어려운 과목이다.'], ['He is one of the best player.', '그는 가장 뛰어난 선수들 중 한 명이다.']], 3, 'one of 뒤에는 복수명사 players여야 합니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① She is the tallest girl.\n② She is the most tall girl.\n③ This is the biggest house.', 'basic', 1, '②만 틀렸고 the tallest여야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① Tom is the tallest of his class.\n② He is one of the best player.\n③ This is the most interesting book.\n④ Seoul is the largest city in Korea.', 'advanced', 2, '①은 in his class, ②는 players여야 하므로 틀린 문장은 2개입니다.'),
+    pc('Why is the sentence "Tom is the tallest of his class." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because tallest should be taller.', 'tallest를 taller로 바꿔야 해서'], ['Because his class is a group, so in is used.', '반은 집단이라서 in을 써야 해서'], ['Because Tom should be They.', 'Tom을 They로 바꿔야 해서'], ['Because the should be a.', 'the를 a로 바꿔야 해서']], 1, '장소·집단 앞에는 in을 씁니다.', 'reason'),
+  ],
+  popup: [['She is the ___ girl in the class.', 'tallest', ['taller', 'tall'], 'the ___'], ['This is the ___ interesting book.', 'most', ['more', 'very'], '긴 단어'], ['Tom is the tallest ___ his family.', 'in', ['of', 'at'], '집단'], ['He is one of the best ___.', 'players', ['player', 'playing'], 'one of']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'Tom is the tallest of his class.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['Tom is the tallest in his class.'], noteKo: '집단 앞에는 in을 씁니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'He is one of the best player.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['He is one of the best players.'], noteKo: 'one of 뒤에는 복수명사를 씁니다.' },
+  ],
+  top: ['최상급은 the + -est/most. 범위는 집단·장소 in, 복수·수 of, 그리고 one of the + 최상급 + 복수명사.', 'She is the tallest girl in the class.', '그녀는 반에서 가장 키가 큰 소녀다.'],
+  lecture: [
+    { type: 'text', text: '최상급', narration: '오늘은 가장 ~한이라고 말하는 최상급 표현을 배워요.' },
+    { type: 'board', title: 'the + -est', lines: ['She is [b]the tallest[/b] girl in the class. — 그녀는 반에서 가장 키가 큰 소녀다.', 'This is [b]the biggest[/b] house in town. — 이것은 마을에서 가장 큰 집이다.'], narration: '짧은 단어는 [en]the[/en] 뒤에 [en]est[/en]를 붙여요. [en]She is the tallest girl in the class.[/en] 그녀는 반에서 가장 키가 큰 소녀예요.' },
+    { type: 'board', title: 'the most + 형용사', lines: ['This is [b]the most interesting[/b] book. — 이것은 가장 재미있는 책이다.', 'English is the most difficult subject. — 영어는 가장 어려운 과목이다.'], narration: '긴 단어는 [en]the most[/en]를 앞에 써요. [en]This is the most interesting book.[/en] 이것은 가장 재미있는 책이에요.' },
+    { type: 'board', title: 'in vs of', lines: ['the tallest [b]in[/b] his family — 가족 중에서', 'the tallest [b]of[/b] the three boys — 세 소년 중에서', 'in + 장소·집단 / of + 복수'], narration: '장소나 집단 앞에는 [en]in[/en], 복수 앞에는 [en]of[/en]를 써요. [en]Tom is the tallest of the three boys.[/en] 톰은 세 소년 중 가장 키가 커요.' },
+    { type: 'board', title: 'one of the + 최상급', lines: ['He is [b]one of the best players[/b]. — 그는 가장 뛰어난 선수들 중 한 명이다.', '뒤 명사는 복수'], narration: '[en]one of the[/en] 뒤에는 최상급과 복수 명사를 써요. [en]He is one of the best players.[/en] 그는 가장 뛰어난 선수들 중 한 명이에요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× the [b]most tall[/b] girl — 가장 키가 큰 소녀', '× the tallest [b]of[/b] his class — 반에서 가장 키가 큰', '× one of the best [b]player[/b] — 가장 뛰어난 선수들 중 하나'], narration: '짧은 단어에 [en]most[/en]를 붙이면 틀려요. 집단 앞에는 [en]in[/en]이에요. [en]one of[/en] 뒤에는 복수예요.' },
+    { type: 'text', text: '정리: the + 최상급 + in/of', narration: '정리할게요. 최상급은 [en]the[/en]를 붙이고, 범위는 [en]in[/en]이나 [en]of[/en]로 나타내요.' },
+  ],
+});

@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'equal-comparison', topic: '원급 비교 - 1부', titleKo: 'as ~ as: 같은 정도',
+  summaryEn: 'Use as + adjective/adverb + as to say two things are equal. Use not as ... as to say one is less.',
+  summaryKo: '"A는 B만큼 ~하다"는 as + 원급 + as로 말합니다. 부정은 not as ~ as이며 "B만큼 ~하지 않다"입니다.',
+  rules: [
+    ['Form: as + adjective + as.', '형용사 비교는 as + 형용사 원급 + as입니다. (Tom is as tall as Jim.)'],
+    ['Use an adverb for actions: as + adverb + as.', '동작을 비교할 때는 as + 부사 원급 + as입니다. (She runs as fast as he.)'],
+    ['Negative: not as + 원급 + as.', '부정은 not as ~ as입니다. (This bag is not as heavy as that one.)'],
+    ['as ~ as possible: as ... as you can.', 'as ~ as possible은 "가능한 한 ~하게"입니다. (Come as soon as possible.)'],
+  ],
+  examples: [['Tom is as tall as Jim.', 'Tom은 Jim만큼 키가 크다.'], ['She runs as fast as he.', '그녀는 그만큼 빨리 달린다.'], ['This bag is not as heavy as that one.', '이 가방은 저 가방만큼 무겁지 않다.']],
+  groups: [
+    ['as + 형용사 + as', '같은 정도.', [
+      ['Tom is as tall as Jim.', 'Tom은 Jim만큼 키가 크다.', 'as tall as', '두 사람의 키가 같습니다.'],
+      ['My bag is as big as yours.', '내 가방은 네 것만큼 크다.', 'as big as', '크기가 같습니다.'],
+      ['This book is as interesting as that one.', '이 책은 저 책만큼 재미있다.', 'as interesting as', '재미가 같습니다.']]],
+    ['as + 부사 + as', '동작의 정도.', [
+      ['She runs as fast as he.', '그녀는 그만큼 빨리 달린다.', 'as fast as', 'fast는 형용사와 부사가 같습니다.'],
+      ['He speaks as slowly as she.', '그는 그녀만큼 천천히 말한다.', 'as slowly as', '동사를 꾸미므로 부사입니다.'],
+      ['I study as hard as my brother.', '나는 내 형만큼 열심히 공부한다.', 'as hard as', '부사 hard입니다.']]],
+    ['not as ~ as', '~만큼 ~하지 않다.', [
+      ['This bag is not as heavy as that one.', '이 가방은 저 가방만큼 무겁지 않다.', 'not as ~ as', '이 가방이 더 가볍습니다.'],
+      ['I am not as tall as my father.', '나는 아버지만큼 키가 크지 않다.', 'not as ~ as', '내가 더 작습니다.'],
+      ['Math is not as difficult as English.', '수학은 영어만큼 어렵지 않다.', 'not as ~ as', '수학이 더 쉽습니다.']]],
+    ['as ~ as possible', '가능한 한.', [
+      ['Come as soon as possible.', '가능한 한 빨리 와라.', 'as soon as possible', '가능한 한 빨리입니다.'],
+      ['Speak as clearly as possible.', '가능한 한 또렷하게 말해라.', 'as clearly as possible', '가능한 한 또렷하게입니다.'],
+      ['Read as many books as possible.', '가능한 한 많은 책을 읽어라.', 'as many ~ as possible', '가능한 한 많이입니다.']]],
+  ],
+  wrong: [['Tom is as taller as Jim.', '원급을 씁니다 → Tom is as tall as Jim. — Tom은 Jim만큼 키가 크다.', ''], ['She is as tall than me.', 'as ~ as → She is as tall as me. — 그녀는 나만큼 키가 크다.', ''], ['Tom runs as fastly as Jim.', 'fast는 부사도 fast → Tom runs as fast as Jim. — Tom은 Jim만큼 빨리 달린다.', '']],
+  wrongNote: 'as와 as 사이에는 -er이 붙지 않은 원급을 쓰고, 뒤에는 than이 아니라 as를 씁니다.',
+  cram: '■ 핵심 요약\nas + 원급 + as는 같은 정도를 말하고, not as ~ as는 B만큼 ~하지 않다는 뜻입니다.\n\n■ 규칙\n1. as + 형용사 + as: 같은 정도.\n2. 동작은 as + 부사 + as.\n3. 부정은 not as ~ as.\n4. as ~ as possible: 가능한 한 ~하게.\n\n■ 예문 뜻\nTom은 Jim만큼 키가 크다.\n그녀는 그만큼 빨리 달린다.\n이 가방은 저 가방만큼 무겁지 않다.',
+  blanks: [['같은 정도의 비교는 as + 원급 + ___입니다.', 'as', '두 글자'], ['as ~ as 사이에는 ___ 형태를 씁니다.', '원급', '두 글자'], ['부정은 ___ as ~ as입니다.', 'not', '세 글자'], ['"가능한 한 빨리"는 as soon as ___입니다.', 'possible', 'p로 시작']],
+  fill: [
+    ['basic', 'Tom is as ___ as Jim.', 'tall', ['taller', 'tall', 'tallest'], 'Tom은 Jim만큼 키가 크다.', 'as ~ as 사이에는 원급을 씁니다.', '원급'],
+    ['basic', 'My bag is as big ___ yours.', 'as', ['than', 'as', 'to'], '내 가방은 네 것만큼 크다.', '뒤에는 as를 씁니다.', '뒤 단어'],
+    ['basic', 'She runs as ___ as he.', 'fast', ['fastest', 'faster', 'fast'], '그녀는 그만큼 빨리 달린다.', 'as ~ as 사이에는 원급 fast를 씁니다.', '원급'],
+    ['intermediate', 'He speaks as ___ as she.', 'slowly', ['slow', 'slowly', 'slower'], '그는 그녀만큼 천천히 말한다.', '동사를 꾸미므로 부사 slowly입니다.', '부사'],
+    ['intermediate', 'This bag is ___ as heavy as that one.', 'not', ['not', 'no', 'never'], '이 가방은 저 가방만큼 무겁지 않다.', '부정은 not as ~ as입니다.', '부정'],
+    ['intermediate', 'I study as ___ as my brother.', 'hard', ['hardly', 'hard', 'harder'], '나는 내 형만큼 열심히 공부한다.', '"열심히"는 부사 hard입니다.', '열심히'],
+    ['advanced', 'Come as soon as ___.', 'possible', ['possible', 'possibly', 'possibility'], '가능한 한 빨리 와라.', 'as soon as possible 표현입니다.', '가능한 한'],
+    ['advanced', 'Math is not as ___ as English.', 'difficult', ['more difficult', 'difficultly', 'difficult'], '수학은 영어만큼 어렵지 않다.', 'as ~ as 사이에는 원급 difficult를 씁니다.', '원급'],
+  ],
+  fix: [
+    ['basic', 'Tom is as taller as Jim.', 'taller', ['tall'], ['Tom은 Tim이어야 합니다.', 'as ~ as 사이에는 원급을 씁니다.', 'Jim은 Jam이어야 합니다.'], 1, 'Tom is as tall as Jim. → 원급'],
+    ['intermediate', 'She is as tall than me.', 'than', ['as'], ['tall은 taller여야 합니다.', 'me는 my여야 합니다.', 'as ~ as의 뒤에는 as를 씁니다.'], 2, 'She is as tall as me. → as ~ as'],
+    ['intermediate', 'Tom runs as fastly as Jim.', 'fastly', ['fast'], ['fast는 부사도 fast입니다.', 'runs는 run이어야 합니다.', 'Tom은 They여야 합니다.'], 0, 'Tom runs as fast as Jim. → fast'],
+  ],
+  questions: [
+    pc('Which sentence about height is correct?', '키에 대한 올바른 문장을 고르세요.', 'basic', [['Tom is as taller as Jim.', 'Tom은 Jim만큼 키가 크다.'], ['Tom is as tall as Jim.', 'Tom은 Jim만큼 키가 크다.'], ['Tom is as tall than Jim.', 'Tom은 Jim만큼 키가 크다.'], ['Tom is as tallest as Jim.', 'Tom은 Jim만큼 키가 크다.']], 1, 'as ~ as 사이에는 원급을 씁니다.'),
+    pc('Which sentence about a bag is correct?', '가방에 대한 올바른 문장을 고르세요.', 'basic', [['My bag is as big than yours.', '내 가방은 네 것만큼 크다.'], ['My bag is as bigger as yours.', '내 가방은 네 것만큼 크다.'], ['My bag is as big as yours.', '내 가방은 네 것만큼 크다.'], ['My bag is so big as yours.', '내 가방은 네 것만큼 크다.']], 2, 'as + 원급 + as입니다.'),
+    pc('Which sentence about running is correct?', '달리기에 대한 올바른 문장을 고르세요.', 'basic', [['She runs as faster as he.', '그녀는 그만큼 빨리 달린다.'], ['She runs as fastly as he.', '그녀는 그만큼 빨리 달린다.'], ['She runs as fast than he.', '그녀는 그만큼 빨리 달린다.'], ['She runs as fast as he.', '그녀는 그만큼 빨리 달린다.']], 3, 'as ~ as 사이에는 원급 fast를 씁니다.'),
+    pc('Which sentence about weight is correct?', '무게 비교에 대한 올바른 문장을 고르세요.', 'intermediate', [['This bag is not as heavy as that one.', '이 가방은 저 가방만큼 무겁지 않다.'], ['This bag is not as heavier as that one.', '이 가방은 저 가방만큼 무겁지 않다.'], ['This bag is as not heavy as that one.', '이 가방은 저 가방만큼 무겁지 않다.'], ['This bag is not as heavy than that one.', '이 가방은 저 가방만큼 무겁지 않다.']], 0, '부정은 not as ~ as입니다.'),
+    pc('Which sentence about studying is correct?', '공부에 대한 올바른 문장을 고르세요.', 'intermediate', [['I study as hardly as my brother.', '나는 내 형만큼 열심히 공부한다.'], ['I study as hard as my brother.', '나는 내 형만큼 열심히 공부한다.'], ['I study as harder as my brother.', '나는 내 형만큼 열심히 공부한다.'], ['I study as hardest as my brother.', '나는 내 형만큼 열심히 공부한다.']], 1, '"열심히"는 부사 hard입니다.'),
+    pc('Choose the sentence that does NOT mean "equal".', '"같은 정도"가 아닌 뜻의 문장을 고르세요.', 'intermediate', [['Tom is as tall as Jim.', 'Tom은 Jim만큼 키가 크다.'], ['My bag is as big as yours.', '내 가방은 네 것만큼 크다.'], ['I am not as tall as my father.', '나는 아버지만큼 키가 크지 않다.'], ['She runs as fast as he.', '그녀는 그만큼 빨리 달린다.']], 2, '세 번째는 not as ~ as라서 같지 않다는 뜻입니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['Come as soon as possible.', '가능한 한 빨리 와라.'], ['He speaks as slowly as she.', '그는 그녀만큼 천천히 말한다.'], ['Math is not as difficult as English.', '수학은 영어만큼 어렵지 않다.'], ['She is as tall than me.', '그녀는 나만큼 키가 크다.']], 3, 'as ~ as 형태이므로 than이 아니라 as여야 합니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① Tom is as tall as Jim.\n② She is as tall than me.\n③ My bag is as big as yours.', 'basic', 1, '②만 틀렸고 as tall as여야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① Tom is as taller as Jim.\n② Tom runs as fastly as Jim.\n③ Come as soon as possible.\n④ This bag is not as heavy as that one.', 'advanced', 2, '①은 as tall as, ②는 as fast as여야 하므로 틀린 문장은 2개입니다.'),
+    pc('Why is the sentence "Tom is as taller as Jim." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because Tom should be They.', 'Tom을 They로 바꿔야 해서'], ['Because the base form tall is used between as and as.', 'as와 as 사이에는 원급 tall을 써야 해서'], ['Because Jim should be him.', 'Jim을 him으로 바꿔야 해서'], ['Because is should be are.', 'is를 are로 바꿔야 해서']], 1, '원급 비교에서는 as와 as 사이에 -er이 붙지 않은 원급을 씁니다.', 'reason'),
+  ],
+  popup: [['Tom is as ___ as Jim.', 'tall', ['taller', 'tallest'], '원급'], ['My bag is as big ___ yours.', 'as', ['than', 'to'], '뒤'], ['I am ___ as tall as my father.', 'not', ['no', 'never'], '부정'], ['Come as soon as ___.', 'possible', ['possibly', 'possibility'], '가능한 한']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'Tom is as taller as Jim.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['Tom is as tall as Jim.'], noteKo: 'as ~ as 사이에는 원급을 씁니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'She is as tall than me.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['She is as tall as me.'], noteKo: '뒤에는 than이 아니라 as를 씁니다.' },
+  ],
+  top: ['as + 원급 + as = 같은 정도, not as ~ as = ~만큼 ~하지 않다. 사이에는 -er 없이 원급을 쓴다.', 'Tom is as tall as Jim.', 'Tom은 Jim만큼 키가 크다.'],
+  lecture: [
+    { type: 'text', text: '원급 비교: as ~ as', narration: '오늘은 같은 정도를 말하는 [en]as as[/en] 비교를 배워요.' },
+    { type: 'board', title: 'as + 형용사 + as', lines: ['Tom is [b]as tall as[/b] Jim. — Tom은 Jim만큼 키가 크다.', 'My bag is [b]as big as[/b] yours. — 내 가방은 네 것만큼 크다.', '사이에는 원급'], narration: '같은 정도는 [en]as[/en]와 [en]as[/en] 사이에 원급을 써요. [en]Tom is as tall as Jim.[/en] 톰은 짐만큼 키가 커요.' },
+    { type: 'board', title: 'as + 부사 + as', lines: ['She runs [b]as fast as[/b] he. — 그녀는 그만큼 빨리 달린다.', 'He speaks [b]as slowly as[/b] she. — 그는 그녀만큼 천천히 말한다.'], narration: '동작을 비교할 때는 부사를 써요. [en]She runs as fast as he.[/en] 그녀는 그만큼 빨리 달려요.' },
+    { type: 'board', title: 'not as ~ as', lines: ['This bag is [b]not as[/b] heavy [b]as[/b] that one. — 이 가방은 저 가방만큼 무겁지 않다.', 'I am not as tall as my father. — 나는 아버지만큼 키가 크지 않다.'], narration: '부정은 [en]not as as[/en]예요. [en]I am not as tall as my father.[/en] 나는 아버지만큼 키가 크지 않아요.' },
+    { type: 'board', title: 'as ~ as possible', lines: ['Come [b]as soon as possible[/b]. — 가능한 한 빨리 와라.', 'Speak as clearly as possible. — 가능한 한 또렷하게 말해라.'], narration: '[en]as soon as possible[/en]은 가능한 한 빨리라는 뜻이에요. [en]Come as soon as possible.[/en] 가능한 한 빨리 오세요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× Tom is as [b]taller[/b] as Jim. — Tom은 Jim만큼 키가 크다.', '× She is as tall [b]than[/b] me. — 그녀는 나만큼 키가 크다.', '× Tom runs as [b]fastly[/b] as Jim. — Tom은 Jim만큼 빨리 달린다.'], narration: '사이에는 [en]taller[/en]가 아니라 [en]tall[/en]이에요. 뒤에는 [en]than[/en]이 아니라 [en]as[/en]예요. [en]fast[/en]는 부사도 [en]fast[/en]예요.' },
+    { type: 'text', text: '정리: as + 원급 + as', narration: '정리할게요. 같은 정도는 [en]as[/en] 원급 [en]as[/en], 부정은 [en]not as[/en] 원급 [en]as[/en]예요.' },
+  ],
+});

@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'to-inf-noun', topic: 'to부정사 명사적 용법 - 1부', titleKo: 'to + 동사원형: ~하는 것',
+  summaryEn: 'To + base verb can work as a noun meaning "to do something". It can be a subject, a complement, or an object.',
+  summaryKo: 'to + 동사원형은 "~하는 것"이라는 명사 역할을 합니다. 주어·보어·목적어로 쓰입니다.',
+  rules: [
+    ['As a subject: To read is fun. (It is fun to read.)', '주어: "~하는 것은"이라는 뜻입니다. 보통 가주어 It을 앞에 쓰고 to부정사를 뒤로 보냅니다. (It is fun to read books.)'],
+    ['As a complement: My dream is to be a doctor.', '보어: be동사 뒤에서 주어를 설명합니다. (My dream is to be a doctor.)'],
+    ['As an object after want, hope, plan, decide, need.', '목적어: want, hope, plan, decide, need 뒤에서 "~하기를"의 뜻으로 씁니다. (I want to eat pizza.)'],
+    ['Question word + to: how to swim, what to do.', '의문사 + to부정사는 "~하는 법, 무엇을 ~할지"입니다. (I know how to swim.)'],
+  ],
+  examples: [['It is fun to read books.', '책을 읽는 것은 재미있다.'], ['My dream is to be a doctor.', '내 꿈은 의사가 되는 것이다.'], ['I want to eat pizza.', '나는 피자를 먹고 싶다.']],
+  groups: [
+    ['주어', 'It ~ to부정사.', [
+      ['It is fun to read books.', '책을 읽는 것은 재미있다.', 'It ~ to + 원형', '가주어 It을 씁니다.'],
+      ['It is important to sleep well.', '잘 자는 것은 중요하다.', 'It ~ to + 원형', '진주어는 to sleep입니다.'],
+      ['To learn English is useful.', '영어를 배우는 것은 유용하다.', 'To + 원형 주어', '주어 자리에도 올 수 있습니다.']]],
+    ['보어', 'be동사 뒤.', [
+      ['My dream is to be a doctor.', '내 꿈은 의사가 되는 것이다.', 'be + to + 원형', '주어를 설명합니다.'],
+      ['His plan is to travel alone.', '그의 계획은 혼자 여행하는 것이다.', 'be + to + 원형', '주어를 설명합니다.'],
+      ['Her goal is to win the game.', '그녀의 목표는 경기에서 이기는 것이다.', 'be + to + 원형', '주어를 설명합니다.']]],
+    ['목적어', 'want · hope · plan · decide.', [
+      ['I want to eat pizza.', '나는 피자를 먹고 싶다.', 'want + to', 'want 뒤에는 to부정사입니다.'],
+      ['She hopes to visit Japan.', '그녀는 일본을 방문하기를 희망한다.', 'hope + to', 'hope 뒤에는 to부정사입니다.'],
+      ['He decided to go home.', '그는 집에 가기로 결정했다.', 'decide + to', 'decide 뒤에는 to부정사입니다.']]],
+    ['의문사 + to', '~하는 법 / 무엇을 ~할지.', [
+      ['I know how to swim.', '나는 수영하는 법을 안다.', 'how to + 원형', '~하는 법입니다.'],
+      ['Tell me what to do.', '내가 무엇을 해야 할지 말해 줘.', 'what to + 원형', '무엇을 ~할지입니다.'],
+      ['I don\'t know where to go.', '나는 어디로 가야 할지 모르겠다.', 'where to + 원형', '어디로 ~할지입니다.']]],
+  ],
+  wrong: [['I want eat pizza.', 'to 필요 → I want to eat pizza. — 나는 피자를 먹고 싶다.', ''], ['My dream is be a doctor.', 'to 필요 → My dream is to be a doctor. — 내 꿈은 의사가 되는 것이다.', ''], ['He decided going home.', 'to + 원형 → He decided to go home. — 그는 집에 가기로 결정했다.', '']],
+  wrongNote: 'want·decide 뒤와 보어 자리에는 to + 동사원형을 씁니다.',
+  cram: '■ 핵심 요약\nto + 동사원형은 "~하는 것"이라는 명사 역할을 합니다.\n\n■ 규칙\n1. 주어: It is fun to read books.\n2. 보어: My dream is to be a doctor.\n3. 목적어: want, hope, plan, decide, need + to + 원형.\n4. 의문사 + to + 원형: ~하는 법, 무엇을 ~할지.\n\n■ 예문 뜻\n책을 읽는 것은 재미있다.\n내 꿈은 의사가 되는 것이다.\n나는 피자를 먹고 싶다.',
+  blanks: [['to부정사는 to + 동사 ___입니다.', '원형', '두 글자'], ['주어 자리에는 가주어 ___을 씁니다.', 'It', '두 글자'], ['want 뒤에는 ___ 부정사를 씁니다.', 'to', '두 글자'], ['"수영하는 법"은 how ___ swim입니다.', 'to', '두 글자']],
+  fill: [
+    ['basic', 'I want ___ pizza.', 'to eat', ['eat', 'eating', 'to eat'], '나는 피자를 먹고 싶다.', 'want 뒤에는 to + 동사원형입니다.', 'want 뒤'],
+    ['basic', 'My dream is ___ a doctor.', 'to be', ['to be', 'be', 'being'], '내 꿈은 의사가 되는 것이다.', '보어 자리에는 to + 동사원형을 씁니다.', 'be동사 뒤'],
+    ['basic', 'It is fun ___ books.', 'to read', ['reading', 'to read', 'read'], '책을 읽는 것은 재미있다.', '가주어 It 뒤에는 to + 동사원형이 옵니다.', '가주어'],
+    ['intermediate', 'She hopes ___ Japan.', 'to visit', ['visiting', 'visit', 'to visit'], '그녀는 일본을 방문하기를 희망한다.', 'hope 뒤에는 to + 동사원형입니다.', 'hope 뒤'],
+    ['intermediate', 'He decided ___ home.', 'to go', ['to go', 'going', 'go'], '그는 집에 가기로 결정했다.', 'decide 뒤에는 to + 동사원형입니다.', 'decide 뒤'],
+    ['intermediate', 'I know how ___ swim.', 'to', ['to', 'for', 'of'], '나는 수영하는 법을 안다.', 'how to + 동사원형입니다.', '법'],
+    ['advanced', 'Tell me what ___ do.', 'to', ['for', 'to', 'by'], '내가 무엇을 해야 할지 말해 줘.', 'what to + 동사원형입니다.', '무엇을'],
+    ['advanced', '___ is important to sleep well.', 'It', ['This', 'It', 'That'], '잘 자는 것은 중요하다.', '가주어는 It을 씁니다.', '가주어'],
+  ],
+  fix: [
+    ['basic', 'I want eat pizza.', 'eat', ['to eat'], ['want는 wants여야 합니다.', 'want 뒤에는 to + 동사원형을 씁니다.', 'pizza는 pizzas여야 합니다.'], 1, 'I want to eat pizza. → want + to + 원형'],
+    ['intermediate', 'My dream is be a doctor.', 'be', ['to be'], ['dream은 dreams여야 합니다.', 'doctor는 doctors여야 합니다.', '보어 자리에는 to + 동사원형을 씁니다.'], 2, 'My dream is to be a doctor. → 보어는 to + 원형'],
+    ['intermediate', 'He decided going home.', 'going', ['to go'], ['decide 뒤에는 to + 동사원형을 씁니다.', 'home은 house여야 합니다.', 'He는 They여야 합니다.'], 0, 'He decided to go home. → decide + to + 원형'],
+  ],
+  questions: [
+    pc('Which sentence about pizza is correct?', '피자에 대한 올바른 문장을 고르세요.', 'basic', [['I want eat pizza.', '나는 피자를 먹고 싶다.'], ['I want to eat pizza.', '나는 피자를 먹고 싶다.'], ['I want eating pizza.', '나는 피자를 먹고 싶다.'], ['I want to eats pizza.', '나는 피자를 먹고 싶다.']], 1, 'want 뒤에는 to + 동사원형입니다.'),
+    pc('Which sentence about a dream is correct?', '꿈에 대한 올바른 문장을 고르세요.', 'basic', [['My dream is be a doctor.', '내 꿈은 의사가 되는 것이다.'], ['My dream is being a doctors.', '내 꿈은 의사가 되는 것이다.'], ['My dream is to be a doctor.', '내 꿈은 의사가 되는 것이다.'], ['My dream is to is a doctor.', '내 꿈은 의사가 되는 것이다.']], 2, '보어 자리에는 to + 동사원형입니다.'),
+    pc('Which sentence about reading is correct?', '독서에 대한 올바른 문장을 고르세요.', 'basic', [['It is fun reading books.', '책을 읽는 것은 재미있다.'], ['It is fun read books.', '책을 읽는 것은 재미있다.'], ['It is fun for books.', '책을 읽는 것은 재미있다.'], ['It is fun to read books.', '책을 읽는 것은 재미있다.']], 3, '가주어 It 뒤에 to + 동사원형입니다.'),
+    pc('Which sentence about Japan is correct?', '일본에 대한 올바른 문장을 고르세요.', 'intermediate', [['She hopes to visit Japan.', '그녀는 일본을 방문하기를 희망한다.'], ['She hopes visit Japan.', '그녀는 일본을 방문하기를 희망한다.'], ['She hopes visiting Japan.', '그녀는 일본을 방문하기를 희망한다.'], ['She hope to visit Japan.', '그녀는 일본을 방문하기를 희망한다.']], 0, 'hope 뒤에는 to + 동사원형입니다.'),
+    pc('Which sentence about going home is correct?', '집에 가는 것에 대한 올바른 문장을 고르세요.', 'intermediate', [['He decided going home.', '그는 집에 가기로 결정했다.'], ['He decided to go home.', '그는 집에 가기로 결정했다.'], ['He decided go home.', '그는 집에 가기로 결정했다.'], ['He decided to going home.', '그는 집에 가기로 결정했다.']], 1, 'decide 뒤에는 to + 동사원형입니다.'),
+    pc('Choose the sentence in which to is NOT part of a to-infinitive.', 'to가 to부정사가 아닌 문장을 고르세요.', 'intermediate', [['I want to eat pizza.', '나는 피자를 먹고 싶다.'], ['My dream is to be a doctor.', '내 꿈은 의사가 되는 것이다.'], ['I go to school by bus.', '나는 버스로 학교에 간다.'], ['I know how to swim.', '나는 수영하는 법을 안다.']], 2, '세 번째의 to는 방향을 나타내는 전치사입니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['It is important to sleep well.', '잘 자는 것은 중요하다.'], ['Tell me what to do.', '내가 무엇을 해야 할지 말해 줘.'], ['He decided going home.', '그는 집에 가기로 결정했다.'], ['I know how to swim.', '나는 수영하는 법을 안다.']], 2, 'decide 뒤에는 to go여야 합니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① I want to eat pizza.\n② My dream is be a doctor.\n③ It is fun to read books.', 'basic', 1, '②만 틀렸고 to be여야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① I want eat pizza.\n② She hopes visiting Japan.\n③ I know how to swim.\n④ He decided to go home.', 'advanced', 2, '①은 to eat, ②는 to visit이어야 하므로 틀린 문장은 2개입니다.'),
+    pc('Why is the sentence "I want eat pizza." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because want should be wants.', 'want를 wants로 바꿔야 해서'], ['Because pizza should be pizzas.', 'pizza를 pizzas로 바꿔야 해서'], ['Because I should be He.', 'I를 He로 바꿔야 해서'], ['Because to is needed before the base verb.', '동사원형 앞에 to가 필요해서']], 3, 'want 뒤에는 to + 동사원형을 씁니다.', 'reason'),
+  ],
+  popup: [['I want ___ pizza.', 'to eat', ['eat', 'eating'], 'want 뒤'], ['My dream is ___ a doctor.', 'to be', ['be', 'being'], '보어'], ['It is fun ___ books.', 'to read', ['reading', 'read'], '가주어'], ['I know how ___ swim.', 'to', ['for', 'of'], '법']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'I want eat pizza.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['I want to eat pizza.'], noteKo: 'want 뒤에는 to + 동사원형입니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'My dream is be a doctor.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['My dream is to be a doctor.'], noteKo: '보어 자리에는 to + 동사원형을 씁니다.' },
+  ],
+  top: ['to + 동사원형은 "~하는 것"이다. 주어는 It ~ to, 보어는 be + to, 목적어는 want/hope/decide + to로 쓴다.', 'I want to eat pizza.', '나는 피자를 먹고 싶다.'],
+  lecture: [
+    { type: 'text', text: 'to부정사: ~하는 것', narration: '오늘은 [en]to[/en] 뒤에 동사원형을 쓰는 부정사를 배워요.' },
+    { type: 'board', title: '주어', lines: ['[b]It[/b] is fun [b]to read[/b] books. — 책을 읽는 것은 재미있다.', 'It is important to sleep well. — 잘 자는 것은 중요하다.', '가주어 It + to + 원형'], narration: '주어 자리에서는 가주어 [en]It[/en]을 먼저 써요. [en]It is fun to read books.[/en] 책을 읽는 것은 재미있어요.' },
+    { type: 'board', title: '보어', lines: ['My dream is [b]to be[/b] a doctor. — 내 꿈은 의사가 되는 것이다.', 'His plan is [b]to travel[/b] alone. — 그의 계획은 혼자 여행하는 것이다.'], narration: '[en]be[/en]동사 뒤에서 주어를 설명해요. [en]My dream is to be a doctor.[/en] 내 꿈은 의사가 되는 거예요.' },
+    { type: 'board', title: '목적어', lines: ['I want [b]to eat[/b] pizza. — 나는 피자를 먹고 싶다.', 'She hopes [b]to visit[/b] Japan. — 그녀는 일본을 방문하기를 희망한다.', 'He decided [b]to go[/b] home. — 그는 집에 가기로 결정했다.'], narration: '[en]want, hope, decide[/en] 뒤에는 [en]to[/en] 부정사를 써요. [en]I want to eat pizza.[/en] 나는 피자를 먹고 싶어요.' },
+    { type: 'board', title: '의문사 + to', lines: ['I know [b]how to[/b] swim. — 나는 수영하는 법을 안다.', 'Tell me [b]what to[/b] do. — 내가 무엇을 해야 할지 말해 줘.'], narration: '의문사 뒤에도 쓸 수 있어요. [en]I know how to swim.[/en] 나는 수영하는 법을 알아요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× I want [b]eat[/b] pizza. — 나는 피자를 먹고 싶다.', '× My dream is [b]be[/b] a doctor. — 내 꿈은 의사가 되는 것이다.', '× He decided [b]going[/b] home. — 그는 집에 가기로 결정했다.'], narration: '[en]to[/en]를 빼먹으면 틀려요. [en]want to eat[/en], [en]is to be[/en], [en]decided to go[/en]가 맞아요.' },
+    { type: 'text', text: '정리: to + 동사원형 = ~하는 것', narration: '정리할게요. [en]to[/en] 뒤에 동사원형을 쓰면 하는 것이라는 뜻이고, 주어, 보어, 목적어로 써요.' },
+  ],
+});

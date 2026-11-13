@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'causative-verbs', topic: '사역동사 - 1부', titleKo: 'make · have · let + 목적어 + 동사원형',
+  summaryEn: 'Causative verbs make, have, and let take an object and a base verb: someone makes/has/lets someone do something.',
+  summaryKo: '사역동사 make, have, let은 "~가 …하게 하다"라는 뜻으로, 목적어 뒤에 동사원형을 씁니다. to를 붙이지 않습니다.',
+  rules: [
+    ['make + object + base verb: force someone to do something.', 'make는 "(억지로) ~하게 만들다"입니다. (Mom made me clean my room.)'],
+    ['have + object + base verb: ask someone to do something.', 'have는 "~하게 시키다·부탁하다"입니다. (She had me carry the box.)'],
+    ['let + object + base verb: allow someone to do something.', 'let은 "~하게 허락하다"입니다. (He let me go home.)'],
+    ['Do not use to or -ing after the object.', '목적어 뒤에는 to나 -ing를 쓰지 않고 동사원형을 씁니다. (× made me to clean)'],
+  ],
+  examples: [['Mom made me clean my room.', '엄마는 내가 방을 청소하게 하셨다.'], ['She had me carry the box.', '그녀는 내게 상자를 나르게 했다.'], ['He let me go home.', '그는 내가 집에 가게 해 주었다.']],
+  groups: [
+    ['make: 억지로 시키다', '강제.', [
+      ['Mom made me clean my room.', '엄마는 내가 방을 청소하게 하셨다.', 'make + 목적어 + 원형', '강제로 시키는 느낌입니다.'],
+      ['The teacher made us study hard.', '선생님은 우리가 열심히 공부하게 하셨다.', 'make + 목적어 + 원형', '강제로 시키는 느낌입니다.'],
+      ['The movie made me cry.', '그 영화는 나를 울게 만들었다.', 'make + 목적어 + 원형', '사물이 주어여도 됩니다.']]],
+    ['have: 시키다·부탁하다', '당연한 부탁.', [
+      ['She had me carry the box.', '그녀는 내게 상자를 나르게 했다.', 'have + 목적어 + 원형', '부탁하거나 시킵니다.'],
+      ['I had him fix my bike.', '나는 그에게 내 자전거를 고치게 했다.', 'have + 목적어 + 원형', '부탁하거나 시킵니다.'],
+      ['The doctor had me rest.', '의사는 내게 쉬게 했다.', 'have + 목적어 + 원형', '부탁하거나 시킵니다.']]],
+    ['let: 허락하다', '허용.', [
+      ['He let me go home.', '그는 내가 집에 가게 해 주었다.', 'let + 목적어 + 원형', '허락하는 느낌입니다.'],
+      ['Dad let me play games.', '아빠는 내가 게임을 하게 해 주셨다.', 'let + 목적어 + 원형', '허락하는 느낌입니다.'],
+      ['Please let me know.', '제게 알려 주세요.', 'let + 목적어 + 원형', '자주 쓰는 표현입니다.']]],
+    ['to를 쓰지 않는 이유', '동사원형만.', [
+      ['Mom made me eat vegetables.', '엄마는 내가 채소를 먹게 하셨다.', 'made me eat', 'to eat이 아닙니다.'],
+      ['She had me wait outside.', '그녀는 내게 밖에서 기다리게 했다.', 'had me wait', 'to wait이 아닙니다.'],
+      ['He let me use his phone.', '그는 내가 그의 전화기를 쓰게 해 주었다.', 'let me use', 'to use가 아닙니다.']]],
+  ],
+  wrong: [['Mom made me to clean my room.', 'to를 쓰지 않음 → Mom made me clean my room. — 엄마는 내가 방을 청소하게 하셨다.', ''], ['He let me going home.', '동사원형 → He let me go home. — 그는 내가 집에 가게 해 주었다.', ''], ['She had me carried the box.', '동사원형 → She had me carry the box. — 그녀는 내게 상자를 나르게 했다.', '']],
+  wrongNote: '사역동사의 목적어 뒤에는 to/-ing/과거형이 아니라 동사원형을 씁니다.',
+  cram: '■ 핵심 요약\nmake, have, let은 목적어 뒤에 동사원형을 써서 "~가 …하게 하다"를 나타냅니다.\n\n■ 규칙\n1. make: 억지로 ~하게 하다.\n2. have: ~하게 시키다·부탁하다.\n3. let: ~하게 허락하다.\n4. 목적어 뒤에는 to나 -ing 없이 동사원형을 씁니다.\n\n■ 예문 뜻\n엄마는 내가 방을 청소하게 하셨다.\n그녀는 내게 상자를 나르게 했다.\n그는 내가 집에 가게 해 주었다.',
+  blanks: [['"억지로 ~하게 하다"는 ___입니다.', 'make', 'm으로 시작'], ['"허락하다"는 ___입니다.', 'let', 'l로 시작'], ['사역동사의 목적어 뒤에는 동사 ___을 씁니다.', '원형', '두 글자'], ['사역동사 뒤 목적어 다음에는 ___를 쓰지 않습니다.', 'to', '두 글자']],
+  fill: [
+    ['basic', 'Mom made me ___ my room.', 'clean', ['to clean', 'cleaning', 'clean'], '엄마는 내가 방을 청소하게 하셨다.', 'made me 뒤에는 동사원형입니다.', '원형'],
+    ['basic', 'He let me ___ home.', 'go', ['go', 'to go', 'going'], '그는 내가 집에 가게 해 주었다.', 'let me 뒤에는 동사원형입니다.', '원형'],
+    ['basic', 'She had me ___ the box.', 'carry', ['carried', 'to carry', 'carry'], '그녀는 내게 상자를 나르게 했다.', 'had me 뒤에는 동사원형입니다.', '원형'],
+    ['intermediate', 'The teacher made us ___ hard.', 'study', ['study', 'to study', 'studying'], '선생님은 우리가 열심히 공부하게 하셨다.', 'made us 뒤에는 동사원형입니다.', '원형'],
+    ['intermediate', 'Dad ___ me play games.', 'let', ['made', 'let', 'wanted'], '아빠는 내가 게임을 하게 해 주셨다.', '"허락"의 뜻은 let입니다.', '허락'],
+    ['intermediate', 'The movie made me ___.', 'cry', ['to cry', 'crying', 'cry'], '그 영화는 나를 울게 만들었다.', 'made me 뒤에는 동사원형입니다.', '원형'],
+    ['advanced', 'I had him ___ my bike.', 'fix', ['fix', 'fixed', 'to fix'], '나는 그에게 내 자전거를 고치게 했다.', 'had him 뒤에는 동사원형입니다.', '원형'],
+    ['advanced', 'Please ___ me know.', 'let', ['make', 'let', 'have'], '제게 알려 주세요.', 'let me know는 자주 쓰는 표현입니다.', '알려 주세요'],
+  ],
+  fix: [
+    ['basic', 'Mom made me to clean my room.', 'to', [''], ['made me 뒤에는 to를 쓰지 않습니다.', 'room은 rooms여야 합니다.', 'clean은 cleaned여야 합니다.'], 0, 'Mom made me clean my room. → to 삭제'],
+    ['intermediate', 'He let me going home.', 'going', ['go'], ['home은 house여야 합니다.', 'let me 뒤에는 동사원형을 씁니다.', 'He는 They여야 합니다.'], 1, 'He let me go home. → 동사원형'],
+    ['intermediate', 'She had me carried the box.', 'carried', ['carry'], ['box는 boxes여야 합니다.', 'She는 He여야 합니다.', 'had me 뒤에는 동사원형을 씁니다.'], 2, 'She had me carry the box. → 동사원형'],
+  ],
+  questions: [
+    pc('Which sentence about cleaning is correct?', '청소에 대한 올바른 문장을 고르세요.', 'basic', [['Mom made me to clean my room.', '엄마는 내가 방을 청소하게 하셨다.'], ['Mom made me clean my room.', '엄마는 내가 방을 청소하게 하셨다.'], ['Mom made me cleaning my room.', '엄마는 내가 방을 청소하게 하셨다.'], ['Mom made me cleaned my room.', '엄마는 내가 방을 청소하게 하셨다.']], 1, 'made me 뒤에는 동사원형을 씁니다.'),
+    pc('Which sentence about going home is correct?', '집에 가는 것에 대한 올바른 문장을 고르세요.', 'basic', [['He let me to go home.', '그는 내가 집에 가게 해 주었다.'], ['He let me going home.', '그는 내가 집에 가게 해 주었다.'], ['He let me go home.', '그는 내가 집에 가게 해 주었다.'], ['He let me went home.', '그는 내가 집에 가게 해 주었다.']], 2, 'let me 뒤에는 동사원형을 씁니다.'),
+    pc('Which sentence about a box is correct?', '상자에 대한 올바른 문장을 고르세요.', 'basic', [['She had me carried the box.', '그녀는 내게 상자를 나르게 했다.'], ['She had me to carry the box.', '그녀는 내게 상자를 나르게 했다.'], ['She had me carrying the box.', '그녀는 내게 상자를 나르게 했다.'], ['She had me carry the box.', '그녀는 내게 상자를 나르게 했다.']], 3, 'had me 뒤에는 동사원형을 씁니다.'),
+    pc('Which sentence about studying is correct?', '공부에 대한 올바른 문장을 고르세요.', 'intermediate', [['The teacher made us study hard.', '선생님은 우리가 열심히 공부하게 하셨다.'], ['The teacher made us to study hard.', '선생님은 우리가 열심히 공부하게 하셨다.'], ['The teacher made us studying hard.', '선생님은 우리가 열심히 공부하게 하셨다.'], ['The teacher made us studied hard.', '선생님은 우리가 열심히 공부하게 하셨다.']], 0, 'made us 뒤에는 동사원형을 씁니다.'),
+    pc('Which sentence means "allow"?', '"허락"의 뜻인 문장을 고르세요.', 'intermediate', [['Mom made me eat vegetables.', '엄마는 내가 채소를 먹게 하셨다.'], ['Dad let me play games.', '아빠는 내가 게임을 하게 해 주셨다.'], ['She had me wait outside.', '그녀는 내게 밖에서 기다리게 했다.'], ['The movie made me cry.', '그 영화는 나를 울게 만들었다.']], 1, 'let은 허락의 뜻입니다.'),
+    pc('Choose the sentence that is NOT a causative sentence.', '사역 구문이 아닌 문장을 고르세요.', 'intermediate', [['Mom made me clean my room.', '엄마는 내가 방을 청소하게 하셨다.'], ['He let me go home.', '그는 내가 집에 가게 해 주었다.'], ['I made a cake for him.', '나는 그를 위해 케이크를 만들었다.'], ['She had me carry the box.', '그녀는 내게 상자를 나르게 했다.']], 2, '세 번째의 made는 "만들었다"는 일반 동사입니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['I had him fix my bike.', '나는 그에게 내 자전거를 고치게 했다.'], ['Please let me know.', '제게 알려 주세요.'], ['The doctor had me rest.', '의사는 내게 쉬게 했다.'], ['He let me to use his phone.', '그는 내가 그의 전화기를 쓰게 해 주었다.']], 3, 'let me 뒤에는 to 없이 동사원형 use입니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① Mom made me clean my room.\n② He let me going home.\n③ She had me carry the box.', 'basic', 1, '②만 틀렸고 let me go여야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① Mom made me to clean my room.\n② She had me carried the box.\n③ The movie made me cry.\n④ Dad let me play games.', 'advanced', 2, '①은 clean, ②는 carry여야 하므로 틀린 문장은 2개입니다.'),
+    pc('Why is the sentence "Mom made me to clean my room." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because made should be make.', 'made를 make로 바꿔야 해서'], ['Because room should be rooms.', 'room을 rooms로 바꿔야 해서'], ['Because to is not used after the object of made.', 'made의 목적어 뒤에는 to를 쓰지 않아서'], ['Because me should be my.', 'me를 my로 바꿔야 해서']], 2, '사역동사의 목적어 뒤에는 to 없이 동사원형을 씁니다.', 'reason'),
+  ],
+  popup: [['Mom made me ___ my room.', 'clean', ['to clean', 'cleaning'], '원형'], ['He let me ___ home.', 'go', ['to go', 'going'], '원형'], ['She had me ___ the box.', 'carry', ['carried', 'to carry'], '원형'], ['Dad ___ me play games.', 'let', ['made', 'wanted'], '허락']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'Mom made me to clean my room.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['Mom made me clean my room.'], noteKo: '목적어 뒤에는 to 없이 동사원형을 씁니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'He let me going home.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['He let me go home.'], noteKo: 'let me 뒤에는 동사원형을 씁니다.' },
+  ],
+  top: ['make(강제)·have(시킴)·let(허락) + 목적어 + 동사원형. 목적어 뒤에 to나 -ing를 쓰지 않는다.', 'Mom made me clean my room.', '엄마는 내가 방을 청소하게 하셨다.'],
+  lecture: [
+    { type: 'text', text: '사역동사', narration: '오늘은 누구에게 무엇을 하게 시키는 사역동사를 배워요.' },
+    { type: 'board', title: 'make: 억지로 시키다', lines: ['Mom [b]made me clean[/b] my room. — 엄마는 내가 방을 청소하게 하셨다.', 'The movie made me cry. — 그 영화는 나를 울게 만들었다.', 'make + 목적어 + 동사원형'], narration: '[en]make[/en]는 억지로 시킨다는 뜻이에요. [en]Mom made me clean my room.[/en] 엄마는 내가 방을 청소하게 하셨어요.' },
+    { type: 'board', title: 'have: 시키다', lines: ['She [b]had me carry[/b] the box. — 그녀는 내게 상자를 나르게 했다.', 'I had him fix my bike. — 나는 그에게 자전거를 고치게 했다.'], narration: '[en]have[/en]는 부탁하거나 시킨다는 뜻이에요. [en]She had me carry the box.[/en] 그녀는 내게 상자를 나르게 했어요.' },
+    { type: 'board', title: 'let: 허락하다', lines: ['He [b]let me go[/b] home. — 그는 내가 집에 가게 해 주었다.', 'Dad let me play games. — 아빠는 내가 게임을 하게 해 주셨다.'], narration: '[en]let[/en]은 허락한다는 뜻이에요. [en]He let me go home.[/en] 그는 내가 집에 가게 해 주었어요.' },
+    { type: 'board', title: 'to를 쓰지 않는다', lines: ['Mom made me [b]eat[/b] vegetables. — 엄마는 내가 채소를 먹게 하셨다.', '× made me [b]to eat[/b]', '목적어 뒤 = 동사원형'], narration: '목적어 뒤에는 [en]to[/en]를 쓰지 않고 동사원형만 써요. [en]Mom made me eat vegetables.[/en] 엄마는 내가 채소를 먹게 하셨어요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× Mom made me [b]to clean[/b]. — 엄마는 내가 청소하게 하셨다.', '× He let me [b]going[/b] home. — 그는 내가 집에 가게 해 주었다.', '× She had me [b]carried[/b] the box. — 그녀는 내게 상자를 나르게 했다.'], narration: '[en]to[/en], [en]ing[/en], 과거형을 쓰면 틀려요. 목적어 뒤에는 동사원형이에요.' },
+    { type: 'text', text: '정리: make · have · let + 목적어 + 동사원형', narration: '정리할게요. [en]make, have, let[/en] 뒤에 목적어와 동사원형을 써요. [en]to[/en]는 쓰지 않아요.' },
+  ],
+});

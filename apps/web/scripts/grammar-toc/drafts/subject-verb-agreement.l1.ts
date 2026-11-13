@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'subject-verb-agreement', topic: '수의 일치 - 1부', titleKo: '주어와 동사의 수 일치',
+  summaryEn: 'The verb must agree with the subject: a singular subject takes a singular verb, and a plural subject takes a plural verb.',
+  summaryKo: '동사는 주어의 수에 맞춥니다. 단수 주어에는 단수 동사(-s), 복수 주어에는 복수 동사(원형)를 씁니다.',
+  rules: [
+    ['Singular subject (he, she, it): verb + -s. Plural subject: base verb.', '단수 주어(he, she, it, 한 명·한 개)에는 동사에 -s를, 복수 주어에는 동사원형을 씁니다.'],
+    ['Ignore the words between the subject and the verb.', '주어와 동사 사이의 꾸며 주는 말은 건너뛰고 진짜 주어에 맞춥니다. (The books on the desk are mine.)'],
+    ['Each, every, and one of + plural noun take a singular verb.', 'each, every, one of ~ 뒤에는 단수 동사를 씁니다. (Each student has a book.)'],
+    ['A and B take a plural verb.', 'A and B는 둘이므로 복수 동사를 씁니다. (Tom and Jim are friends.)'],
+  ],
+  examples: [['He plays soccer every day.', '그는 매일 축구를 한다.'], ['The books on the desk are mine.', '책상 위의 책들은 내 것이다.'], ['Each student has a book.', '각 학생은 책이 한 권씩 있다.']],
+  groups: [
+    ['기본 일치', '단수는 -s, 복수는 원형.', [
+      ['He plays soccer every day.', '그는 매일 축구를 한다.', '단수 + -s', '3인칭 단수입니다.'],
+      ['They play soccer every day.', '그들은 매일 축구를 한다.', '복수 + 원형', '복수 주어입니다.'],
+      ['My sister likes music.', '내 여동생은 음악을 좋아한다.', '단수 + -s', 'sister는 한 명입니다.']]],
+    ['꾸며 주는 말 건너뛰기', '진짜 주어를 찾습니다.', [
+      ['The boy with glasses is my friend.', '안경을 쓴 소년은 내 친구다.', 'boy → is', '주어는 boy(단수)입니다.'],
+      ['The books on the desk are mine.', '책상 위의 책들은 내 것이다.', 'books → are', '주어는 books(복수)입니다.'],
+      ['The girl in red lives next door.', '빨간 옷을 입은 소녀는 옆집에 산다.', 'girl → lives', '주어는 girl(단수)입니다.']]],
+    ['each · every · one of', '단수 동사를 씁니다.', [
+      ['Each student has a book.', '각 학생은 책이 한 권씩 있다.', 'each + 단수 동사', 'each는 단수입니다.'],
+      ['Every child needs love.', '모든 아이는 사랑이 필요하다.', 'every + 단수 동사', 'every는 단수입니다.'],
+      ['One of my friends lives in Busan.', '내 친구들 중 한 명은 부산에 산다.', 'one of ~ + 단수 동사', '주어는 one입니다.']]],
+    ['A and B', '복수 동사를 씁니다.', [
+      ['Tom and Jim are friends.', 'Tom과 Jim은 친구다.', 'A and B + 복수 동사', '둘이므로 복수입니다.'],
+      ['My mom and dad are at home.', '엄마와 아빠는 집에 계신다.', 'A and B + 복수 동사', '둘이므로 복수입니다.'],
+      ['The cat and the dog sleep here.', '고양이와 개는 여기서 잔다.', 'A and B + 복수 동사', '둘이므로 복수입니다.']]],
+  ],
+  wrong: [['He play soccer every day.', '3인칭 단수 → He plays soccer every day. — 그는 매일 축구를 한다.', ''], ['The books on the desk is mine.', '주어는 books → The books on the desk are mine. — 책상 위의 책들은 내 것이다.', ''], ['Each student have a book.', 'each는 단수 → Each student has a book. — 각 학생은 책이 한 권씩 있다.', '']],
+  wrongNote: '진짜 주어를 찾아 그 수에 동사를 맞춥니다.',
+  cram: '■ 핵심 요약\n동사는 진짜 주어의 수에 맞춥니다.\n\n■ 규칙\n1. 단수 주어는 동사에 -s, 복수 주어는 원형입니다.\n2. 주어와 동사 사이의 꾸미는 말은 건너뜁니다.\n3. each, every, one of ~ 뒤에는 단수 동사입니다.\n4. A and B는 복수 동사입니다.\n\n■ 예문 뜻\n그는 매일 축구를 한다.\n책상 위의 책들은 내 것이다.\n각 학생은 책이 한 권씩 있다.',
+  blanks: [['he, she, it 뒤의 현재 동사에는 ___를 붙입니다.', '-s', '한 글자'], ['each 뒤에는 ___ 동사를 씁니다.', '단수', '두 글자'], ['A and B 뒤에는 ___ 동사를 씁니다.', '복수', '두 글자'], ['주어와 동사 사이의 꾸미는 말은 ___합니다.', '무시', '두 글자']],
+  fill: [
+    ['basic', 'He ___ soccer every day.', 'plays', ['play', 'plays', 'playing'], '그는 매일 축구를 한다.', '3인칭 단수이므로 동사에 -s를 붙입니다.', 'he'],
+    ['basic', 'They ___ soccer every day.', 'play', ['plays', 'playing', 'play'], '그들은 매일 축구를 한다.', '복수 주어이므로 동사원형입니다.', 'they'],
+    ['basic', 'My sister ___ music.', 'likes', ['likes', 'like', 'liking'], '내 여동생은 음악을 좋아한다.', '한 명이므로 단수 동사입니다.', '한 명'],
+    ['intermediate', 'The boy with glasses ___ my friend.', 'is', ['are', 'is', 'be'], '안경을 쓴 소년은 내 친구다.', '진짜 주어는 boy(단수)입니다.', '주어 찾기'],
+    ['intermediate', 'The books on the desk ___ mine.', 'are', ['is', 'be', 'are'], '책상 위의 책들은 내 것이다.', '진짜 주어는 books(복수)입니다.', '주어 찾기'],
+    ['intermediate', 'Each student ___ a book.', 'has', ['has', 'have', 'having'], '각 학생은 책이 한 권씩 있다.', 'each는 단수 취급합니다.', 'each'],
+    ['advanced', 'One of my friends ___ in Busan.', 'lives', ['live', 'lives', 'living'], '내 친구들 중 한 명은 부산에 산다.', '주어는 one(단수)입니다.', 'one of'],
+    ['advanced', 'Tom and Jim ___ friends.', 'are', ['are', 'is', 'was'], 'Tom과 Jim은 친구다.', 'A and B는 복수 동사를 씁니다.', 'A and B'],
+  ],
+  fix: [
+    ['basic', 'He play soccer every day.', 'play', ['plays'], ['He는 They여야 합니다.', '3인칭 단수 뒤에는 -s를 붙입니다.', 'soccer는 복수여야 합니다.'], 1, 'He plays soccer every day. → 3인칭 단수'],
+    ['intermediate', 'The books on the desk is mine.', 'is', ['are'], ['주어는 books(복수)라서 복수 동사를 씁니다.', 'desk는 desks여야 합니다.', 'mine은 my여야 합니다.'], 0, 'The books on the desk are mine. → 진짜 주어는 books'],
+    ['intermediate', 'Each student have a book.', 'have', ['has'], ['student는 students여야 합니다.', 'book은 books여야 합니다.', 'each는 단수라서 has를 씁니다.'], 2, 'Each student has a book. → each는 단수'],
+  ],
+  questions: [
+    pc('Which sentence about playing soccer is correct?', '축구에 대한 올바른 문장을 고르세요.', 'basic', [['He play soccer every day.', '그는 매일 축구를 한다.'], ['He plays soccer every day.', '그는 매일 축구를 한다.'], ['He playing soccer every day.', '그는 매일 축구를 한다.'], ['He are soccer every day.', '그는 매일 축구를 한다.']], 1, '3인칭 단수는 동사에 -s를 붙입니다.'),
+    pc('Which sentence about a sister is correct?', '여동생에 대한 올바른 문장을 고르세요.', 'basic', [['My sister like music.', '내 여동생은 음악을 좋아한다.'], ['My sister are music.', '내 여동생은 음악을 좋아한다.'], ['My sister likes music.', '내 여동생은 음악을 좋아한다.'], ['My sister liking music.', '내 여동생은 음악을 좋아한다.']], 2, '한 명이므로 likes입니다.'),
+    pc('Which sentence about two pets is correct?', '두 마리 동물에 대한 올바른 문장을 고르세요.', 'basic', [['The cat and the dog sleeps here.', '고양이와 개는 여기서 잔다.'], ['The cat and the dog is here.', '고양이와 개는 여기서 잔다.'], ['The cat and the dog sleeping here.', '고양이와 개는 여기서 잔다.'], ['The cat and the dog sleep here.', '고양이와 개는 여기서 잔다.']], 3, 'A and B는 복수 동사를 씁니다.'),
+    pc('Which sentence about a boy is correct?', '소년에 대한 올바른 문장을 고르세요.', 'intermediate', [['The boy with glasses is my friend.', '안경을 쓴 소년은 내 친구다.'], ['The boy with glasses are my friend.', '안경을 쓴 소년은 내 친구다.'], ['The boy with glasses be my friend.', '안경을 쓴 소년은 내 친구다.'], ['The boy with glasses were my friend.', '안경을 쓴 소년은 내 친구다.']], 0, '진짜 주어는 boy(단수)입니다.'),
+    pc('Which sentence about books is correct?', '책에 대한 올바른 문장을 고르세요.', 'intermediate', [['The books on the desk is mine.', '책상 위의 책들은 내 것이다.'], ['The books on the desk are mine.', '책상 위의 책들은 내 것이다.'], ['The books on the desk am mine.', '책상 위의 책들은 내 것이다.'], ['The books on the desk be mine.', '책상 위의 책들은 내 것이다.']], 1, '진짜 주어는 books(복수)입니다.'),
+    pc('Choose the sentence that needs a PLURAL verb.', '복수 동사가 필요한 문장을 고르세요.', 'intermediate', [['Each student ___ a book.', '각 학생은 책이 한 권씩 있다.'], ['Every child ___ love.', '모든 아이는 사랑이 필요하다.'], ['Tom and Jim ___ friends.', 'Tom과 Jim은 친구다.'], ['One of my friends ___ in Busan.', '내 친구들 중 한 명은 부산에 산다.']], 2, 'A and B는 복수 동사를 씁니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['Every child needs love.', '모든 아이는 사랑이 필요하다.'], ['One of my friends live in Busan.', '내 친구들 중 한 명은 부산에 산다.'], ['The girl in red lives next door.', '빨간 옷을 입은 소녀는 옆집에 산다.'], ['My mom and dad are at home.', '엄마와 아빠는 집에 계신다.']], 1, 'one이 주어이므로 lives여야 합니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① He plays soccer.\n② Each student have a book.\n③ Tom and Jim are friends.', 'basic', 1, '②만 틀렸고 Each student has여야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① The books on the desk is mine.\n② They plays soccer.\n③ Every child needs love.\n④ Tom and Jim is friends.', 'advanced', 3, '①은 are, ②는 play, ④는 are여야 하므로 틀린 문장은 3개입니다.'),
+    pc('Why is the sentence "The books on the desk is mine." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because the verb must agree with books, which is plural.', '동사는 복수인 books에 맞춰야 해서'], ['Because desk should be desks.', 'desk를 desks로 바꿔야 해서'], ['Because mine should be my.', 'mine을 my로 바꿔야 해서'], ['Because the should be a.', 'the를 a로 바꿔야 해서']], 0, '주어와 동사 사이의 말은 건너뛰고 진짜 주어 books에 맞춥니다.', 'reason'),
+  ],
+  popup: [['He ___ soccer every day.', 'plays', ['play', 'playing'], 'he'], ['The books on the desk ___ mine.', 'are', ['is', 'be'], '진짜 주어'], ['Each student ___ a book.', 'has', ['have', 'having'], 'each'], ['Tom and Jim ___ friends.', 'are', ['is', 'was'], 'A and B']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'He play soccer every day.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['He plays soccer every day.'], noteKo: '3인칭 단수는 동사에 -s를 붙입니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'Each student have a book.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['Each student has a book.'], noteKo: 'each는 단수 취급합니다.' },
+  ],
+  top: ['동사는 진짜 주어의 수에 맞춘다. each·every·one of는 단수, A and B는 복수, 꾸미는 말은 건너뛴다.', 'The books on the desk are mine.', '책상 위의 책들은 내 것이다.'],
+  lecture: [
+    { type: 'text', text: '수의 일치', narration: '오늘은 주어와 동사의 수를 맞추는 법을 배워요.' },
+    { type: 'board', title: '기본 일치', lines: ['He [b]plays[/b] soccer. — 그는 축구를 한다.', 'They [b]play[/b] soccer. — 그들은 축구를 한다.', '단수 → -s / 복수 → 원형'], narration: '단수 주어에는 동사에 에스를 붙이고, 복수 주어에는 원형을 써요. [en]He plays soccer.[/en] 그는 축구를 해요. [en]They play soccer.[/en] 그들은 축구를 해요.' },
+    { type: 'board', title: '꾸며 주는 말 건너뛰기', lines: ['The boy with glasses [b]is[/b] my friend. — 안경을 쓴 소년은 내 친구다.', 'The books on the desk [b]are[/b] mine. — 책상 위의 책들은 내 것이다.'], narration: '주어와 동사 사이의 말은 건너뛰어요. [en]The boy with glasses is my friend.[/en] 안경을 쓴 소년은 내 친구예요. 진짜 주어는 [en]boy[/en]예요.' },
+    { type: 'board', title: 'each · every · one of', lines: ['Each student [b]has[/b] a book. — 각 학생은 책이 한 권씩 있다.', 'Every child [b]needs[/b] love. — 모든 아이는 사랑이 필요하다.', 'One of my friends [b]lives[/b] in Busan. — 내 친구 중 한 명은 부산에 산다.'], narration: '[en]each, every, one of[/en]는 단수 동사를 써요. [en]Each student has a book.[/en] 각 학생은 책이 한 권씩 있어요.' },
+    { type: 'board', title: 'A and B', lines: ['Tom and Jim [b]are[/b] friends. — Tom과 Jim은 친구다.', 'My mom and dad [b]are[/b] at home. — 엄마와 아빠는 집에 계신다.'], narration: '[en]A and B[/en]는 둘이라서 복수 동사를 써요. [en]Tom and Jim are friends.[/en] [en]Tom[/en]과 [en]Jim[/en]은 친구예요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× He [b]play[/b] soccer. — 그는 축구를 한다.', '× The books on the desk [b]is[/b] mine. — 책상 위의 책들은 내 것이다.', '× Each student [b]have[/b] a book. — 각 학생은 책이 있다.'], narration: '[en]He play[/en]는 틀리고 [en]He plays[/en]가 맞아요. 진짜 주어 [en]books[/en]에는 [en]are[/en]를 써요. [en]each[/en]에는 [en]has[/en]가 맞아요.' },
+    { type: 'text', text: '정리: 진짜 주어를 찾아 수를 맞춘다', narration: '정리할게요. 진짜 주어를 찾아서 단수면 에스를 붙이고 복수면 원형을 써요.' },
+  ],
+});

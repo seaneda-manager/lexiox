@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'relative-subject', topic: '주격 관계대명사 - 1부', titleKo: '주격 관계대명사: who · which · that',
+  summaryEn: 'A subject relative pronoun joins two sentences. Use who for people, which for things, and that for both.',
+  summaryKo: '주격 관계대명사는 두 문장을 이어 주면서 뒤 문장의 주어 역할을 합니다. 사람은 who, 사물은 which, 둘 다 that을 쓸 수 있습니다.',
+  rules: [
+    ['Use who for people.', '사람을 설명할 때는 who를 씁니다. (a boy who plays the piano)'],
+    ['Use which for things and animals.', '사물·동물을 설명할 때는 which를 씁니다. (a book which helps me)'],
+    ['That can replace who or which.', 'that은 who나 which 대신 쓸 수 있습니다. (a dog that runs fast)'],
+    ['The verb agrees with the word before the relative pronoun.', '관계대명사 뒤 동사는 앞에 있는 명사(선행사)의 수에 맞춥니다. 관계대명사 뒤에 주어를 또 쓰지 않습니다.'],
+  ],
+  examples: [['I know a boy who plays the piano.', '나는 피아노를 치는 소년을 안다.'], ['This is the book which helps me.', '이것은 나를 도와주는 책이다.'], ['She has a dog that runs fast.', '그녀는 빨리 달리는 개를 키운다.']],
+  groups: [
+    ['who: 사람', '사람을 설명합니다.', [
+      ['I know a boy who plays the piano.', '나는 피아노를 치는 소년을 안다.', 'who', '사람 a boy를 설명합니다.'],
+      ['She is a teacher who loves children.', '그녀는 아이들을 사랑하는 선생님이다.', 'who', '사람 a teacher를 설명합니다.'],
+      ['The man who lives next door is kind.', '옆집에 사는 남자는 친절하다.', 'who', '사람 The man을 설명합니다.']]],
+    ['which: 사물·동물', '사물이나 동물을 설명합니다.', [
+      ['This is the book which helps me.', '이것은 나를 도와주는 책이다.', 'which', '사물 the book을 설명합니다.'],
+      ['I have a bag which is very light.', '나는 아주 가벼운 가방이 있다.', 'which', '사물 a bag을 설명합니다.'],
+      ['The cat which sleeps there is mine.', '저기서 자는 고양이는 내 것이다.', 'which', '동물 The cat을 설명합니다.']]],
+    ['that', 'who·which 대신.', [
+      ['She has a dog that runs fast.', '그녀는 빨리 달리는 개를 키운다.', 'that', '동물에도 쓸 수 있습니다.'],
+      ['I know a girl that speaks French.', '나는 프랑스어를 하는 소녀를 안다.', 'that', '사람에도 쓸 수 있습니다.'],
+      ['He bought a car that looks new.', '그는 새것처럼 보이는 차를 샀다.', 'that', '사물에도 쓸 수 있습니다.']]],
+    ['동사의 수 일치', '선행사에 맞춥니다.', [
+      ['The girls who sing well are my friends.', '노래를 잘하는 소녀들은 내 친구들이다.', 'girls → sing', '복수 선행사라서 원형입니다.'],
+      ['The girl who sings well is my friend.', '노래를 잘하는 소녀는 내 친구다.', 'girl → sings', '단수 선행사라서 -s입니다.'],
+      ['The books which are on the desk are mine.', '책상 위에 있는 책들은 내 것이다.', 'books → are', '복수 선행사라서 are입니다.']]],
+  ],
+  wrong: [['I know a boy which plays the piano.', '사람은 who → I know a boy who plays the piano. — 나는 피아노를 치는 소년을 안다.', ''], ['This is the book who helps me.', '사물은 which → This is the book which helps me. — 이것은 나를 도와주는 책이다.', ''], ['The girls who sings well are kind.', '복수 선행사 → The girls who sing well are kind. — 노래를 잘하는 소녀들은 친절하다.', '']],
+  wrongNote: '선행사가 사람이면 who, 사물이면 which이고 동사는 선행사에 맞춥니다.',
+  cram: '■ 핵심 요약\n관계대명사는 두 문장을 이어 주고 뒤 문장의 주어 역할을 합니다.\n\n■ 규칙\n1. 사람은 who.\n2. 사물·동물은 which.\n3. that은 who/which 대신 쓸 수 있습니다.\n4. 뒤 동사는 선행사의 수에 맞추고, 주어를 또 쓰지 않습니다.\n\n■ 예문 뜻\n나는 피아노를 치는 소년을 안다.\n이것은 나를 도와주는 책이다.\n그녀는 빨리 달리는 개를 키운다.',
+  blanks: [['사람을 설명하는 관계대명사는 ___입니다.', 'who', 'w로 시작'], ['사물을 설명하는 관계대명사는 ___입니다.', 'which', 'w로 시작'], ['who나 which 대신 쓸 수 있는 말은 ___입니다.', 'that', 't로 시작'], ['관계대명사 뒤 동사는 ___에 수를 맞춥니다.', '선행사', '세 글자']],
+  fill: [
+    ['basic', 'I know a boy ___ plays the piano.', 'who', ['who', 'which', 'what'], '나는 피아노를 치는 소년을 안다.', '사람이므로 who입니다.', '사람'],
+    ['basic', 'This is the book ___ helps me.', 'which', ['who', 'which', 'whose'], '이것은 나를 도와주는 책이다.', '사물이므로 which입니다.', '사물'],
+    ['basic', 'She has a dog ___ runs fast.', 'that', ['who', 'what', 'that'], '그녀는 빨리 달리는 개를 키운다.', 'that은 동물에도 쓸 수 있습니다.', '모두 가능'],
+    ['intermediate', 'She is a teacher ___ loves children.', 'who', ['which', 'who', 'where'], '그녀는 아이들을 사랑하는 선생님이다.', '사람이므로 who입니다.', '사람'],
+    ['intermediate', 'I have a bag ___ is very light.', 'which', ['which', 'who', 'what'], '나는 아주 가벼운 가방이 있다.', '사물이므로 which입니다.', '사물'],
+    ['intermediate', 'The girls who ___ well are my friends.', 'sing', ['sings', 'singing', 'sing'], '노래를 잘하는 소녀들은 내 친구들이다.', '선행사 girls가 복수이므로 원형입니다.', '복수 선행사'],
+    ['advanced', 'The girl who ___ well is my friend.', 'sings', ['sing', 'sings', 'singing'], '노래를 잘하는 소녀는 내 친구다.', '선행사 girl이 단수이므로 -s를 붙입니다.', '단수 선행사'],
+    ['advanced', 'The books which ___ on the desk are mine.', 'are', ['is', 'are', 'be'], '책상 위에 있는 책들은 내 것이다.', '선행사 books가 복수이므로 are입니다.', '복수 선행사'],
+  ],
+  fix: [
+    ['basic', 'I know a boy which plays the piano.', 'which', ['who'], ['boy는 boys여야 합니다.', '사람이므로 who를 씁니다.', 'plays는 play여야 합니다.'], 1, 'I know a boy who plays the piano. → 사람은 who'],
+    ['intermediate', 'This is the book who helps me.', 'who', ['which'], ['book은 books여야 합니다.', 'helps는 help여야 합니다.', '사물이므로 which를 씁니다.'], 2, 'This is the book which helps me. → 사물은 which'],
+    ['intermediate', 'The girls who sings well are kind.', 'sings', ['sing'], ['선행사 girls가 복수라서 원형 sing을 씁니다.', 'are는 is여야 합니다.', 'kind는 kindly여야 합니다.'], 0, 'The girls who sing well are kind. → 선행사에 일치'],
+  ],
+  questions: [
+    pc('Which sentence about a pianist is correct?', '피아노를 치는 소년에 대한 올바른 문장을 고르세요.', 'basic', [['I know a boy which plays the piano.', '나는 피아노를 치는 소년을 안다.'], ['I know a boy who plays the piano.', '나는 피아노를 치는 소년을 안다.'], ['I know a boy who he plays the piano.', '나는 피아노를 치는 소년을 안다.'], ['I know a boy who play the piano.', '나는 피아노를 치는 소년을 안다.']], 1, '사람은 who이고 단수 선행사라서 plays입니다.'),
+    pc('Which sentence about a book is correct?', '책에 대한 올바른 문장을 고르세요.', 'basic', [['This is the book who helps me.', '이것은 나를 도와주는 책이다.'], ['This is the book which it helps me.', '이것은 나를 도와주는 책이다.'], ['This is the book which helps me.', '이것은 나를 도와주는 책이다.'], ['This is the book who help me.', '이것은 나를 도와주는 책이다.']], 2, '사물은 which를 씁니다.'),
+    pc('Which sentence about a dog is correct?', '개에 대한 올바른 문장을 고르세요.', 'basic', [['She has a dog who runs fast.', '그녀는 빨리 달리는 개를 키운다.'], ['She has a dog that it runs fast.', '그녀는 빨리 달리는 개를 키운다.'], ['She has a dog that run fast.', '그녀는 빨리 달리는 개를 키운다.'], ['She has a dog that runs fast.', '그녀는 빨리 달리는 개를 키운다.']], 3, 'that은 동물에도 쓸 수 있습니다.'),
+    pc('Which sentence about a teacher is correct?', '선생님에 대한 올바른 문장을 고르세요.', 'intermediate', [['She is a teacher who loves children.', '그녀는 아이들을 사랑하는 선생님이다.'], ['She is a teacher which loves children.', '그녀는 아이들을 사랑하는 선생님이다.'], ['She is a teacher who love children.', '그녀는 아이들을 사랑하는 선생님이다.'], ['She is a teacher who she loves children.', '그녀는 아이들을 사랑하는 선생님이다.']], 0, '사람은 who이고 뒤에 주어를 또 쓰지 않습니다.'),
+    pc('Which sentence about girls is correct?', '소녀들에 대한 올바른 문장을 고르세요.', 'intermediate', [['The girls who sings well are my friends.', '노래를 잘하는 소녀들은 내 친구들이다.'], ['The girls who sing well are my friends.', '노래를 잘하는 소녀들은 내 친구들이다.'], ['The girls who sing well is my friends.', '노래를 잘하는 소녀들은 내 친구들이다.'], ['The girls which sing well are my friends.', '노래를 잘하는 소녀들은 내 친구들이다.']], 1, '복수 선행사이므로 sing, are입니다.'),
+    pc('Choose the sentence in which that CANNOT replace who or which.', 'who/which를 that으로 바꿀 수 없는 문장을 고르세요.', 'intermediate', [['I know a boy who plays the piano.', '나는 피아노를 치는 소년을 안다.'], ['This is the book which helps me.', '이것은 나를 도와주는 책이다.'], ['I met a man, who is a doctor.', '나는 한 남자를 만났는데, 그는 의사다.'], ['I have a bag which is light.', '나는 가벼운 가방이 있다.']], 2, '계속적 용법(쉼표 뒤)은 that으로 바꿀 수 없습니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['The man who lives next door is kind.', '옆집에 사는 남자는 친절하다.'], ['The cat which sleeps there is mine.', '저기서 자는 고양이는 내 것이다.'], ['He bought a car that looks new.', '그는 새것처럼 보이는 차를 샀다.'], ['The girl who sing well is my friend.', '노래를 잘하는 소녀는 내 친구다.']], 3, '선행사 girl이 단수이므로 sings여야 합니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① I know a boy who plays the piano.\n② This is the book who helps me.\n③ She has a dog that runs fast.', 'basic', 1, '②만 틀렸고 which여야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① I know a boy which plays the piano.\n② The girls who sings well are kind.\n③ The man who lives next door is kind.\n④ She is a teacher who she loves children.', 'advanced', 3, '①은 who, ②는 sing, ④는 주어 she 삭제가 필요하므로 틀린 문장은 3개입니다.'),
+    pc('Why is the sentence "This is the book who helps me." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because the book is a thing, so which is needed.', 'book은 사물이라서 which를 써야 해서'], ['Because helps should be help.', 'helps를 help로 바꿔야 해서'], ['Because This should be That.', 'This를 That으로 바꿔야 해서'], ['Because me should be I.', 'me를 I로 바꿔야 해서']], 0, '사물 선행사에는 which를 씁니다.', 'reason'),
+  ],
+  popup: [['I know a boy ___ plays the piano.', 'who', ['which', 'what'], '사람'], ['This is the book ___ helps me.', 'which', ['who', 'whose'], '사물'], ['She has a dog ___ runs fast.', 'that', ['who', 'what'], '모두 가능'], ['The girls who ___ well are kind.', 'sing', ['sings', 'singing'], '복수 선행사']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'I know a boy which plays the piano.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['I know a boy who plays the piano.'], noteKo: '사람에는 who를 씁니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'This is the book who helps me.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['This is the book which helps me.'], noteKo: '사물에는 which를 씁니다.' },
+  ],
+  top: ['주격 관계대명사: 사람 who, 사물 which, 둘 다 that. 뒤 동사는 선행사의 수에 맞추고 주어를 또 쓰지 않는다.', 'I know a boy who plays the piano.', '나는 피아노를 치는 소년을 안다.'],
+  lecture: [
+    { type: 'text', text: '주격 관계대명사', narration: '오늘은 두 문장을 하나로 이어 주는 관계대명사를 배워요.' },
+    { type: 'board', title: 'who: 사람', lines: ['I know a boy [b]who[/b] plays the piano. — 나는 피아노를 치는 소년을 안다.', 'She is a teacher [b]who[/b] loves children. — 그녀는 아이들을 사랑하는 선생님이다.'], narration: '사람을 설명할 때는 [en]who[/en]를 써요. [en]I know a boy who plays the piano.[/en] 나는 피아노를 치는 소년을 알아요.' },
+    { type: 'board', title: 'which: 사물·동물', lines: ['This is the book [b]which[/b] helps me. — 이것은 나를 도와주는 책이다.', 'I have a bag [b]which[/b] is very light. — 나는 아주 가벼운 가방이 있다.'], narration: '사물이나 동물은 [en]which[/en]를 써요. [en]This is the book which helps me.[/en] 이것은 나를 도와주는 책이에요.' },
+    { type: 'board', title: 'that', lines: ['She has a dog [b]that[/b] runs fast. — 그녀는 빨리 달리는 개를 키운다.', 'who, which 대신 that'], narration: '[en]that[/en]은 [en]who[/en]나 [en]which[/en] 대신 쓸 수 있어요. [en]She has a dog that runs fast.[/en] 그녀는 빨리 달리는 개를 키워요.' },
+    { type: 'board', title: '동사의 수 일치', lines: ['The girls who [b]sing[/b] well are my friends. — 노래를 잘하는 소녀들은 내 친구들이다.', 'The girl who [b]sings[/b] well is my friend. — 노래를 잘하는 소녀는 내 친구다.'], narration: '관계대명사 뒤 동사는 앞 명사의 수에 맞춰요. [en]girls[/en]는 복수라서 [en]sing[/en], [en]girl[/en]은 단수라서 [en]sings[/en]예요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× a boy [b]which[/b] plays. — 연주하는 소년', '× the book [b]who[/b] helps me. — 나를 도와주는 책', '× The girls who [b]sings[/b]. — 노래하는 소녀들'], narration: '사람에 [en]which[/en]를 쓰면 틀려요. 사물에 [en]who[/en]를 써도 틀려요. 복수 선행사에는 [en]sing[/en]이에요.' },
+    { type: 'text', text: '정리: 사람 who / 사물 which / that / 선행사에 일치', narration: '정리할게요. 사람은 [en]who[/en], 사물은 [en]which[/en], [en]that[/en]은 둘 다 돼요. 동사는 앞 명사에 맞춰요.' },
+  ],
+});
