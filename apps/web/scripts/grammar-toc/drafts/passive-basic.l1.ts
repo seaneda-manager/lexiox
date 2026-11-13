@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'passive-basic', topic: '수동태의 의미·형식·시제 - 1부', titleKo: '수동태: be + p.p. (+ by ~)',
+  summaryEn: 'The passive voice is be + past participle. The subject receives the action. The doer can be added with by.',
+  summaryKo: '수동태는 be동사 + 과거분사로 "~되다, ~당하다"를 나타냅니다. 행동한 사람은 by ~로 덧붙일 수 있습니다.',
+  rules: [
+    ['Form: be + past participle (p.p.).', '수동태는 be동사 + 과거분사(p.p.)입니다. 주어가 동작을 받는 쪽입니다.'],
+    ['The tense is shown by be: is/are (present), was/were (past), will be (future).', '시제는 be동사로 나타냅니다. 현재는 is/are, 과거는 was/were, 미래는 will be입니다.'],
+    ['Use by + doer when you want to say who did it.', '누가 했는지 말하고 싶을 때만 by + 행위자를 씁니다. 중요하지 않거나 모르면 생략합니다.'],
+    ['Active object becomes passive subject.', '능동문의 목적어가 수동문의 주어가 됩니다. (Tom broke the window. → The window was broken by Tom.)'],
+  ],
+  examples: [['English is spoken in many countries.', '영어는 많은 나라에서 사용된다.'], ['The window was broken by Tom.', '창문은 Tom에 의해 깨졌다.'], ['The room will be cleaned tomorrow.', '그 방은 내일 청소될 것이다.']],
+  groups: [
+    ['현재: is / are + p.p.', '지금 ~된다.', [
+      ['English is spoken in many countries.', '영어는 많은 나라에서 사용된다.', 'is + p.p.', '단수 주어는 is입니다.'],
+      ['These cars are made in Korea.', '이 차들은 한국에서 만들어진다.', 'are + p.p.', '복수 주어는 are입니다.'],
+      ['The door is locked at night.', '그 문은 밤에 잠긴다.', 'is + p.p.', '동작을 받는 쪽이 주어입니다.']]],
+    ['과거: was / were + p.p.', '~되었다.', [
+      ['The window was broken by Tom.', '창문은 Tom에 의해 깨졌다.', 'was + p.p.', 'by + 행위자로 누가 했는지 말합니다.'],
+      ['The letters were sent yesterday.', '그 편지들은 어제 보내졌다.', 'were + p.p.', '복수 주어는 were입니다.'],
+      ['This song was written in 1990.', '이 노래는 1990년에 쓰였다.', 'was + p.p.', 'write의 p.p.는 written입니다.']]],
+    ['미래: will be + p.p.', '~될 것이다.', [
+      ['The room will be cleaned tomorrow.', '그 방은 내일 청소될 것이다.', 'will be + p.p.', 'will 뒤에는 be입니다.'],
+      ['The test will be given on Friday.', '시험은 금요일에 치러질 것이다.', 'will be + p.p.', '미래의 수동입니다.'],
+      ['The dinner will be cooked by Mom.', '저녁은 엄마가 만들어 주실 것이다.', 'will be + p.p.', 'by + 행위자도 붙일 수 있습니다.']]],
+    ['능동 → 수동', '목적어가 주어로.', [
+      ['Tom broke the window.', 'Tom이 창문을 깼다.', '능동', '주어가 행동합니다.'],
+      ['This song is loved by many people.', '이 노래는 많은 사람들에게 사랑받는다.', '수동', '목적어였던 song이 주어입니다.'],
+      ['Many people love this song.', '많은 사람들이 이 노래를 좋아한다.', '능동', '주어가 행동합니다.']]],
+  ],
+  wrong: [['The window was broke by Tom.', 'p.p. 필요 → The window was broken by Tom. — 창문은 Tom에 의해 깨졌다.', ''], ['English is speak here.', 'p.p. 필요 → English is spoken here. — 영어는 여기서 사용된다.', ''], ['The room is cleaned yesterday.', 'yesterday는 과거 → The room was cleaned yesterday. — 그 방은 어제 청소되었다.', '']],
+  wrongNote: 'be동사 뒤에는 과거분사를 쓰고, 시제는 be동사로 맞춥니다.',
+  cram: '■ 핵심 요약\n수동태는 be동사 + 과거분사이고, 시제는 be동사로 나타냅니다.\n\n■ 규칙\n1. 형태: be + p.p.\n2. 현재 is/are, 과거 was/were, 미래 will be.\n3. 행위자는 by로 덧붙이고, 중요하지 않으면 생략합니다.\n4. 능동문의 목적어가 수동문의 주어가 됩니다.\n\n■ 예문 뜻\n영어는 많은 나라에서 사용된다.\n창문은 Tom에 의해 깨졌다.\n그 방은 내일 청소될 것이다.',
+  blanks: [['수동태의 형태는 be + ___입니다.', '과거분사', '네 글자'], ['미래 수동태는 will ___ + p.p.입니다.', 'be', '두 글자'], ['행위자 앞에는 ___를 씁니다.', 'by', '두 글자'], ['write의 과거분사는 ___입니다.', 'written', 'w로 시작']],
+  fill: [
+    ['basic', 'English ___ spoken in many countries.', 'is', ['is', 'are', 'was'], '영어는 많은 나라에서 사용된다.', '단수 주어 + 현재이므로 is입니다.', '현재 · 단수'],
+    ['basic', 'These cars ___ made in Korea.', 'are', ['is', 'are', 'was'], '이 차들은 한국에서 만들어진다.', '복수 주어 + 현재이므로 are입니다.', '현재 · 복수'],
+    ['basic', 'The window was ___ by Tom.', 'broken', ['broke', 'break', 'broken'], '창문은 Tom에 의해 깨졌다.', 'was 뒤에는 과거분사 broken입니다.', 'p.p.'],
+    ['intermediate', 'The letters ___ sent yesterday.', 'were', ['was', 'were', 'are'], '그 편지들은 어제 보내졌다.', '복수 + 과거이므로 were입니다.', '과거 · 복수'],
+    ['intermediate', 'This song was ___ in 1990.', 'written', ['written', 'wrote', 'write'], '이 노래는 1990년에 쓰였다.', 'write의 p.p.는 written입니다.', 'p.p.'],
+    ['intermediate', 'The room will ___ cleaned tomorrow.', 'be', ['is', 'be', 'been'], '그 방은 내일 청소될 것이다.', '미래 수동태는 will be + p.p.입니다.', 'will 뒤'],
+    ['advanced', 'The dinner will be cooked ___ Mom.', 'by', ['by', 'with', 'from'], '저녁은 엄마가 만들어 주실 것이다.', '행위자 앞에는 by를 씁니다.', '행위자'],
+    ['advanced', 'The door ___ locked at night.', 'is', ['was', 'will be', 'is'], '그 문은 밤에 잠긴다.', '습관·사실은 현재 수동태 is locked입니다.', 'at night'],
+  ],
+  fix: [
+    ['basic', 'The window was broke by Tom.', 'broke', ['broken'], ['was 뒤에는 과거분사 broken을 씁니다.', 'by는 from이어야 합니다.', 'window는 windows여야 합니다.'], 0, 'The window was broken by Tom. → be + p.p.'],
+    ['intermediate', 'English is speak here.', 'speak', ['spoken'], ['English는 Englishes여야 합니다.', 'here는 there여야 합니다.', 'is 뒤에는 과거분사 spoken을 씁니다.'], 2, 'English is spoken here. → be + p.p.'],
+    ['intermediate', 'The room is cleaned yesterday.', 'is', ['was'], ['room은 rooms여야 합니다.', 'yesterday가 있으면 과거 was를 씁니다.', 'cleaned는 clean이어야 합니다.'], 1, 'The room was cleaned yesterday. → 과거 수동태'],
+  ],
+  questions: [
+    pc('Which sentence about a window is correct?', '창문에 대한 올바른 문장을 고르세요.', 'basic', [['The window was broke by Tom.', '창문은 Tom에 의해 깨졌다.'], ['The window was broken by Tom.', '창문은 Tom에 의해 깨졌다.'], ['The window broken by Tom.', '창문은 Tom에 의해 깨졌다.'], ['The window is break by Tom.', '창문은 Tom에 의해 깨졌다.']], 1, 'was + 과거분사(broken)입니다.'),
+    pc('Which sentence about English is correct?', '영어에 대한 올바른 문장을 고르세요.', 'basic', [['English speaks in many countries.', '영어는 많은 나라에서 사용된다.'], ['English is speak in many countries.', '영어는 많은 나라에서 사용된다.'], ['English is spoken in many countries.', '영어는 많은 나라에서 사용된다.'], ['English spoken in many countries.', '영어는 많은 나라에서 사용된다.']], 2, 'is + 과거분사(spoken)입니다.'),
+    pc('Which sentence about cars is correct?', '자동차에 대한 올바른 문장을 고르세요.', 'basic', [['These cars is made in Korea.', '이 차들은 한국에서 만들어진다.'], ['These cars made are in Korea.', '이 차들은 한국에서 만들어진다.'], ['These cars are make in Korea.', '이 차들은 한국에서 만들어진다.'], ['These cars are made in Korea.', '이 차들은 한국에서 만들어진다.']], 3, '복수 주어는 are + p.p.입니다.'),
+    pc('Which sentence about letters is correct?', '편지에 대한 올바른 문장을 고르세요.', 'intermediate', [['The letters were sent yesterday.', '그 편지들은 어제 보내졌다.'], ['The letters was sent yesterday.', '그 편지들은 어제 보내졌다.'], ['The letters were send yesterday.', '그 편지들은 어제 보내졌다.'], ['The letters are sent yesterday.', '그 편지들은 어제 보내졌다.']], 0, '복수 + 과거는 were + p.p.입니다.'),
+    pc('Which sentence about a room is correct?', '방에 대한 올바른 문장을 고르세요.', 'intermediate', [['The room will cleaned tomorrow.', '그 방은 내일 청소될 것이다.'], ['The room will be cleaned tomorrow.', '그 방은 내일 청소될 것이다.'], ['The room will be clean tomorrow by.', '그 방은 내일 청소될 것이다.'], ['The room will is cleaned tomorrow.', '그 방은 내일 청소될 것이다.']], 1, '미래 수동태는 will be + p.p.입니다.'),
+    pc('Choose the sentence that is NOT in the passive voice.', '수동태가 아닌 문장을 고르세요.', 'intermediate', [['The window was broken by Tom.', '창문은 Tom에 의해 깨졌다.'], ['English is spoken here.', '영어는 여기서 사용된다.'], ['Tom broke the window.', 'Tom이 창문을 깼다.'], ['The room will be cleaned.', '그 방은 청소될 것이다.']], 2, '세 번째는 주어가 직접 행동하는 능동문입니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['This song was written in 1990.', '이 노래는 1990년에 쓰였다.'], ['The door is locked at night.', '그 문은 밤에 잠긴다.'], ['The test will be given on Friday.', '시험은 금요일에 치러질 것이다.'], ['The room is cleaned yesterday.', '그 방은 어제 청소되었다.']], 3, 'yesterday가 있으므로 was cleaned여야 합니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① English is spoken here.\n② The window was broke by Tom.\n③ The room will be cleaned.', 'basic', 1, '②만 틀렸고 was broken이어야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① The letters was sent yesterday.\n② This song was wrote in 1990.\n③ The test will be given on Friday.\n④ These cars are made in Korea.', 'advanced', 2, '①은 were sent, ②는 was written이어야 하므로 틀린 문장은 2개입니다.'),
+    pc('Why is the sentence "English is speak here." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because here should be there.', 'here를 there로 바꿔야 해서'], ['Because is should be are.', 'is를 are로 바꿔야 해서'], ['Because a past participle is needed after is.', 'is 뒤에는 과거분사가 와야 해서'], ['Because English should be english.', 'English를 소문자로 써야 해서']], 2, '수동태는 be동사 + 과거분사(spoken)입니다.', 'reason'),
+  ],
+  popup: [['English is ___ in many countries.', 'spoken', ['speak', 'spoke'], 'p.p.'], ['The window was ___ by Tom.', 'broken', ['broke', 'break'], 'p.p.'], ['The room will ___ cleaned.', 'be', ['is', 'been'], 'will 뒤'], ['The letters ___ sent yesterday.', 'were', ['was', 'are'], '과거 · 복수']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'The window was broke by Tom.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['The window was broken by Tom.'], noteKo: 'be동사 뒤에는 과거분사를 씁니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'English is speak here.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['English is spoken here.'], noteKo: 'be동사 뒤에는 과거분사를 씁니다.' },
+  ],
+  top: ['수동태 = be + p.p. 시제는 be동사로 맞추고(is/are, was/were, will be), 행위자는 by로 덧붙인다.', 'The window was broken by Tom.', '창문은 Tom에 의해 깨졌다.'],
+  lecture: [
+    { type: 'text', text: '수동태: be + p.p.', narration: '오늘은 동작을 받는 쪽이 주어가 되는 수동태를 배워요.' },
+    { type: 'board', title: '능동 → 수동', lines: ['Tom broke the window. — Tom이 창문을 깼다.', 'The window [b]was broken[/b] by Tom. — 창문은 Tom에 의해 깨졌다.', 'be + p.p.'], narration: '능동문의 목적어가 수동문의 주어가 돼요. [en]Tom broke the window.[/en] 톰이 창문을 깼어요. [en]The window was broken by Tom.[/en] 창문은 톰에 의해 깨졌어요.' },
+    { type: 'board', title: '현재 수동태', lines: ['English [b]is spoken[/b] in many countries. — 영어는 많은 나라에서 사용된다.', 'These cars [b]are made[/b] in Korea. — 이 차들은 한국에서 만들어진다.'], narration: '현재는 [en]is[/en]나 [en]are[/en] 뒤에 과거분사를 써요. [en]English is spoken in many countries.[/en] 영어는 많은 나라에서 사용돼요.' },
+    { type: 'board', title: '과거 수동태', lines: ['The letters [b]were sent[/b] yesterday. — 그 편지들은 어제 보내졌다.', 'This song [b]was written[/b] in 1990. — 이 노래는 1990년에 쓰였다.'], narration: '과거는 [en]was[/en]나 [en]were[/en] 뒤에 과거분사를 써요. [en]This song was written in 1990.[/en] 이 노래는 천구백구십 년에 쓰였어요.' },
+    { type: 'board', title: '미래 수동태', lines: ['The room [b]will be cleaned[/b] tomorrow. — 그 방은 내일 청소될 것이다.', 'will be + p.p.'], narration: '미래는 [en]will be[/en] 뒤에 과거분사를 써요. [en]The room will be cleaned tomorrow.[/en] 그 방은 내일 청소될 거예요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× The window was [b]broke[/b] by Tom. — 창문은 Tom에 의해 깨졌다.', '× English is [b]speak[/b] here. — 영어는 여기서 사용된다.', '× The room [b]is[/b] cleaned yesterday. — 그 방은 어제 청소되었다.'], narration: '[en]be[/en]동사 뒤에는 과거분사를 써요. [en]was broken[/en], [en]is spoken[/en]이 맞아요. [en]yesterday[/en]가 있으면 [en]was cleaned[/en]예요.' },
+    { type: 'text', text: '정리: be + p.p. / by + 행위자', narration: '정리할게요. 수동태는 [en]be[/en]동사 뒤에 과거분사를 써요. 누가 했는지는 [en]by[/en]로 덧붙여요.' },
+  ],
+});

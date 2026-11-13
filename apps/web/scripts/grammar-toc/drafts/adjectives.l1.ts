@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'adjectives', topic: '형용사 (-thing + 형용사 포함) - 1부', titleKo: '형용사: 명사 꾸미기 · 보어 · -thing + 형용사',
+  summaryEn: 'Adjectives describe nouns. They go before a noun, after be and sense verbs, and after -thing words.',
+  summaryKo: '형용사는 명사를 꾸미거나 보어로 쓰입니다. 명사 앞, be·감각동사 뒤, something 같은 -thing 단어 뒤에 옵니다.',
+  rules: [
+    ['An adjective goes before a noun: a tall boy.', '형용사는 명사 앞에서 명사를 꾸밉니다. (a tall boy, a new bag)'],
+    ['An adjective goes after be: She is kind.', '형용사는 be동사 뒤에서 주어를 설명하는 보어로 쓰입니다. (She is kind.)'],
+    ['After look, feel, sound, taste, smell, use an adjective, not an adverb.', 'look, feel, sound, taste, smell 같은 감각동사 뒤에는 부사가 아니라 형용사를 씁니다. (She looks happy.)'],
+    ['-thing, -one, -body words: the adjective comes after them.', 'something, anything, someone 같은 말은 형용사가 뒤에서 꾸밉니다. (something cold)'],
+  ],
+  examples: [['She is a kind girl.', '그녀는 친절한 소녀다.'], ['She looks happy.', '그녀는 행복해 보인다.'], ['I want something cold.', '나는 차가운 것을 원한다.']],
+  groups: [
+    ['명사 앞', '명사를 꾸밉니다.', [
+      ['She is a kind girl.', '그녀는 친절한 소녀다.', '형용사 + 명사', 'kind가 girl을 꾸밉니다.'],
+      ['I have a new bag.', '나는 새 가방이 있다.', '형용사 + 명사', 'new가 bag을 꾸밉니다.'],
+      ['He lives in a big house.', '그는 큰 집에 산다.', '형용사 + 명사', 'big이 house를 꾸밉니다.']]],
+    ['be동사 뒤', '보어로 씁니다.', [
+      ['The girl is kind.', '그 소녀는 친절하다.', 'be + 형용사', '주어를 설명합니다.'],
+      ['The bag is new.', '그 가방은 새것이다.', 'be + 형용사', '주어를 설명합니다.'],
+      ['The house is big.', '그 집은 크다.', 'be + 형용사', '주어를 설명합니다.']]],
+    ['감각동사 + 형용사', 'look · feel · sound · taste.', [
+      ['She looks happy.', '그녀는 행복해 보인다.', 'look + 형용사', '부사 happily가 아닙니다.'],
+      ['It sounds great.', '그거 좋게 들린다.', 'sound + 형용사', '부사 greatly가 아닙니다.'],
+      ['This soup tastes good.', '이 수프는 맛이 좋다.', 'taste + 형용사', '부사 well이 아닙니다.']]],
+    ['-thing + 형용사', '형용사가 뒤에 옵니다.', [
+      ['I want something cold.', '나는 차가운 것을 원한다.', 'something + 형용사', '형용사가 뒤에서 꾸밉니다.'],
+      ['Is there anything interesting?', '재미있는 게 있니?', 'anything + 형용사', '형용사가 뒤에서 꾸밉니다.'],
+      ['I know someone kind.', '나는 친절한 사람을 안다.', 'someone + 형용사', '형용사가 뒤에서 꾸밉니다.']]],
+  ],
+  wrong: [['She looks happily.', '감각동사 뒤는 형용사 → She looks happy. — 그녀는 행복해 보인다.', ''], ['I want cold something.', '-thing 뒤에서 꾸밈 → I want something cold. — 나는 차가운 것을 원한다.', ''], ['This soup tastes well.', '감각동사 뒤는 형용사 → This soup tastes good. — 이 수프는 맛이 좋다.', '']],
+  wrongNote: '감각동사 뒤에는 형용사를, -thing 뒤에는 형용사를 뒤에 씁니다.',
+  cram: '■ 핵심 요약\n형용사는 명사 앞, be·감각동사 뒤, -thing 단어 뒤에 옵니다.\n\n■ 규칙\n1. 명사 앞에서 꾸밉니다. (a kind girl)\n2. be동사 뒤에서 보어로 씁니다. (She is kind.)\n3. look, feel, sound, taste, smell 뒤에는 형용사를 씁니다.\n4. something, anything, someone 뒤에서 형용사가 꾸밉니다.\n\n■ 예문 뜻\n그녀는 친절한 소녀다.\n그녀는 행복해 보인다.\n나는 차가운 것을 원한다.',
+  blanks: [['명사를 꾸미는 말은 ___입니다.', '형용사', '세 글자'], ['look 뒤에는 부사가 아니라 ___를 씁니다.', '형용사', '세 글자'], ['something 같은 말은 형용사가 ___에서 꾸밉니다.', '뒤', '한 글자'], ['happy의 부사형은 ___입니다.', 'happily', 'h로 시작']],
+  fill: [
+    ['basic', 'She is a ___ girl.', 'kind', ['kind', 'kindly', 'kindness'], '그녀는 친절한 소녀다.', '명사 girl을 꾸미므로 형용사 kind입니다.', '명사 꾸밈'],
+    ['basic', 'The bag is ___.', 'new', ['newly', 'new', 'news'], '그 가방은 새것이다.', 'be동사 뒤에는 형용사 new입니다.', 'be 뒤'],
+    ['basic', 'She looks ___.', 'happy', ['happily', 'happiness', 'happy'], '그녀는 행복해 보인다.', 'look 뒤에는 형용사 happy입니다.', 'look 뒤'],
+    ['intermediate', 'It sounds ___.', 'great', ['great', 'greatly', 'greater'], '그거 좋게 들린다.', 'sound 뒤에는 형용사 great입니다.', 'sound 뒤'],
+    ['intermediate', 'This soup tastes ___.', 'good', ['well', 'good', 'goodly'], '이 수프는 맛이 좋다.', 'taste 뒤에는 형용사 good입니다.', 'taste 뒤'],
+    ['intermediate', 'I want something ___.', 'cold', ['cold', 'coldly', 'colder'], '나는 차가운 것을 원한다.', 'something 뒤에서 형용사 cold가 꾸밉니다.', 'something'],
+    ['advanced', 'Is there ___ interesting?', 'anything', ['interesting', 'anything', 'any'], '재미있는 게 있니?', 'anything + 형용사 순서입니다.', '-thing 단어'],
+    ['advanced', 'He lives in a ___ house.', 'big', ['bigly', 'bigger', 'big'], '그는 큰 집에 산다.', '명사 house를 꾸미므로 형용사 big입니다.', '명사 꾸밈'],
+  ],
+  fix: [
+    ['basic', 'She looks happily.', 'happily', ['happy'], ['look 뒤에는 형용사 happy를 씁니다.', 'looks는 look이어야 합니다.', 'She는 He여야 합니다.'], 0, 'She looks happy. → look + 형용사'],
+    ['intermediate', 'It sounds greatly.', 'greatly', ['great'], ['sounds는 sound여야 합니다.', 'It은 They여야 합니다.', 'sound 뒤에는 형용사 great를 씁니다.'], 2, 'It sounds great. → sound + 형용사'],
+    ['intermediate', 'This soup tastes well.', 'well', ['good'], ['soup은 soups여야 합니다.', 'taste 뒤에는 형용사 good을 씁니다.', 'tastes는 taste여야 합니다.'], 1, 'This soup tastes good. → taste + 형용사'],
+  ],
+  questions: [
+    pc('Which sentence about a girl is correct?', '소녀에 대한 올바른 문장을 고르세요.', 'basic', [['She is a kindly girl.', '그녀는 친절한 소녀다.'], ['She is a kind girl.', '그녀는 친절한 소녀다.'], ['She is a girl kind.', '그녀는 친절한 소녀다.'], ['She is kind a girl.', '그녀는 친절한 소녀다.']], 1, '형용사는 명사 앞에서 꾸밉니다.'),
+    pc('Which sentence about a bag is correct?', '가방에 대한 올바른 문장을 고르세요.', 'basic', [['The bag is newly.', '그 가방은 새것이다.'], ['The bag new is.', '그 가방은 새것이다.'], ['The bag is new.', '그 가방은 새것이다.'], ['The bag is a new.', '그 가방은 새것이다.']], 2, 'be동사 뒤에는 형용사를 씁니다.'),
+    pc('Which sentence about a feeling is correct?', '기분에 대한 올바른 문장을 고르세요.', 'basic', [['She looks happily.', '그녀는 행복해 보인다.'], ['She looks happiness.', '그녀는 행복해 보인다.'], ['She looks happier a.', '그녀는 행복해 보인다.'], ['She looks happy.', '그녀는 행복해 보인다.']], 3, 'look 뒤에는 형용사를 씁니다.'),
+    pc('Which sentence about a drink is correct?', '마실 것에 대한 올바른 문장을 고르세요.', 'intermediate', [['I want something cold.', '나는 차가운 것을 원한다.'], ['I want cold something.', '나는 차가운 것을 원한다.'], ['I want something coldly.', '나는 차가운 것을 원한다.'], ['I want something of cold.', '나는 차가운 것을 원한다.']], 0, 'something 뒤에서 형용사가 꾸밉니다.'),
+    pc('Which sentence about soup is correct?', '수프에 대한 올바른 문장을 고르세요.', 'intermediate', [['This soup tastes well.', '이 수프는 맛이 좋다.'], ['This soup tastes good.', '이 수프는 맛이 좋다.'], ['This soup tastes goodly.', '이 수프는 맛이 좋다.'], ['This soup is tastes good.', '이 수프는 맛이 좋다.']], 1, 'taste 뒤에는 형용사 good을 씁니다.'),
+    pc('Choose the sentence in which the adjective comes AFTER the noun word.', '형용사가 뒤에서 꾸미는 문장을 고르세요.', 'intermediate', [['She is a kind girl.', '그녀는 친절한 소녀다.'], ['I have a new bag.', '나는 새 가방이 있다.'], ['Is there anything interesting?', '재미있는 게 있니?'], ['He lives in a big house.', '그는 큰 집에 산다.']], 2, '-thing 단어는 형용사가 뒤에서 꾸밉니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['It sounds great.', '그거 좋게 들린다.'], ['I know someone kind.', '나는 친절한 사람을 안다.'], ['The house is big.', '그 집은 크다.'], ['She looks happily.', '그녀는 행복해 보인다.']], 3, 'look 뒤에는 형용사 happy를 씁니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① She is a kind girl.\n② This soup tastes well.\n③ I want something cold.', 'basic', 1, '②만 틀렸고 tastes good이어야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① I want cold something.\n② It sounds greatly.\n③ The bag is new.\n④ She looks happily.', 'advanced', 3, '①은 something cold, ②는 sounds great, ④는 looks happy여야 하므로 틀린 문장은 3개입니다.'),
+    pc('Why is the sentence "She looks happily." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because looks should be look.', 'looks를 look으로 바꿔야 해서'], ['Because She should be He.', 'She를 He로 바꿔야 해서'], ['Because happily should come first.', 'happily가 앞에 와야 해서'], ['Because an adjective is used after look.', 'look 뒤에는 형용사를 써야 해서']], 3, '감각동사 뒤에는 부사가 아니라 형용사를 씁니다.', 'reason'),
+  ],
+  popup: [['She is a ___ girl.', 'kind', ['kindly', 'kindness'], '명사 앞'], ['She looks ___.', 'happy', ['happily', 'happiness'], 'look 뒤'], ['This soup tastes ___.', 'good', ['well', 'goodly'], 'taste 뒤'], ['I want something ___.', 'cold', ['coldly', 'colder'], 'something 뒤']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'She looks happily.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['She looks happy.'], noteKo: 'look 뒤에는 형용사를 씁니다.' },
+    { kind: 'order', level: 'basic', prompt: '', promptKo: '나는 차가운 것을 원한다.', words: ['want', 'I', 'cold', 'something'], answers: ['I want something cold.'], noteKo: 'something 뒤에서 형용사가 꾸밉니다.' },
+  ],
+  top: ['형용사는 명사 앞·be 뒤·감각동사 뒤에 오고, something 같은 -thing 단어는 형용사가 뒤에서 꾸민다.', 'I want something cold.', '나는 차가운 것을 원한다.'],
+  lecture: [
+    { type: 'text', text: '형용사', narration: '오늘은 명사를 꾸미는 형용사가 어디에 오는지 배워요.' },
+    { type: 'board', title: '명사 앞', lines: ['She is a [b]kind[/b] girl. — 그녀는 친절한 소녀다.', 'I have a [b]new[/b] bag. — 나는 새 가방이 있다.', '형용사 + 명사'], narration: '형용사는 명사 앞에서 꾸며요. [en]She is a kind girl.[/en] 그녀는 친절한 소녀예요. [en]I have a new bag.[/en] 나는 새 가방이 있어요.' },
+    { type: 'board', title: 'be동사 뒤', lines: ['The girl is [b]kind[/b]. — 그 소녀는 친절하다.', 'The bag is [b]new[/b]. — 그 가방은 새것이다.'], narration: '[en]be[/en]동사 뒤에서도 써요. [en]The girl is kind.[/en] 그 소녀는 친절해요. 주어를 설명해 주는 보어예요.' },
+    { type: 'board', title: '감각동사 + 형용사', lines: ['She looks [b]happy[/b]. — 그녀는 행복해 보인다.', 'It sounds [b]great[/b]. — 그거 좋게 들린다.', 'This soup tastes [b]good[/b]. — 이 수프는 맛이 좋다.'], narration: '[en]look, sound, taste[/en] 뒤에는 형용사를 써요. [en]She looks happy.[/en] 그녀는 행복해 보여요. [en]This soup tastes good.[/en] 이 수프는 맛이 좋아요.' },
+    { type: 'board', title: '-thing + 형용사', lines: ['I want [b]something cold[/b]. — 나는 차가운 것을 원한다.', 'Is there [b]anything interesting[/b]? — 재미있는 게 있니?', '형용사가 뒤에서 꾸민다'], narration: '[en]something[/en] 같은 말은 형용사가 뒤에 와요. [en]I want something cold.[/en] 나는 차가운 것을 원해요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× She looks [b]happily[/b]. — 그녀는 행복해 보인다.', '× I want [b]cold something[/b]. — 나는 차가운 것을 원한다.', '× This soup tastes [b]well[/b]. — 이 수프는 맛이 좋다.'], narration: '[en]looks happily[/en]는 틀리고 [en]looks happy[/en]가 맞아요. [en]cold something[/en]은 [en]something cold[/en]가 맞아요. [en]tastes well[/en]은 [en]tastes good[/en]이 맞아요.' },
+    { type: 'text', text: '정리: 명사 앞 · be 뒤 · 감각동사 뒤 · -thing 뒤', narration: '정리할게요. 형용사는 명사 앞, [en]be[/en]동사 뒤, 감각동사 뒤에 오고, [en]something[/en] 뒤에서도 꾸며요.' },
+  ],
+});

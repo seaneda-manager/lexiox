@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'present-perfect', topic: '현재완료 - 1부', titleKo: 'have / has + p.p.',
+  summaryEn: 'The present perfect is have/has + past participle. It links the past to now: experience, completion, and continuation.',
+  summaryKo: '현재완료는 have/has + 과거분사로, 과거에 시작한 일이 지금과 이어질 때 씁니다. 경험·완료·계속의 뜻이 있습니다.',
+  rules: [
+    ['Form: have/has + past participle (p.p.).', '형태는 have/has + 과거분사(p.p.)입니다. 주어가 he, she, it이면 has를 씁니다.'],
+    ['Experience: have been, have seen, have never ...', '경험: "~한 적이 있다"는 뜻입니다. ever, never, once 같은 말과 자주 씁니다.'],
+    ['Completion and continuation: just, already, yet, for, since.', '완료는 just·already·yet, 계속은 for(기간)·since(시작 시점)와 함께 씁니다.'],
+    ['Do not use the present perfect with yesterday, last year, or ago.', 'yesterday, last year, ago처럼 과거 한 시점을 나타내는 말과는 쓰지 않고 과거시제를 씁니다.'],
+  ],
+  examples: [['I have seen that movie.', '나는 그 영화를 본 적이 있다.'], ['She has lived here for five years.', '그녀는 여기에서 5년째 살고 있다.'], ['I have just finished my homework.', '나는 방금 숙제를 끝냈다.']],
+  groups: [
+    ['경험', '~한 적이 있다.', [
+      ['I have seen that movie.', '나는 그 영화를 본 적이 있다.', 'have + p.p.', 'see의 p.p.는 seen입니다.'],
+      ['He has never eaten sushi.', '그는 스시를 먹어 본 적이 없다.', 'has never + p.p.', 'never는 has와 p.p. 사이에 옵니다.'],
+      ['Have you ever been to Japan?', '너는 일본에 가 본 적이 있니?', 'Have + 주어 + ever + p.p.', '경험을 물을 때 씁니다.']]],
+    ['완료', '방금·이미·아직.', [
+      ['I have just finished my homework.', '나는 방금 숙제를 끝냈다.', 'just', '방금 끝난 일입니다.'],
+      ['She has already left.', '그녀는 이미 떠났다.', 'already', '이미 끝난 일입니다.'],
+      ['I have not eaten lunch yet.', '나는 아직 점심을 먹지 않았다.', 'not ... yet', '부정문에서 "아직"입니다.']]],
+    ['계속', '~해 오고 있다.', [
+      ['She has lived here for five years.', '그녀는 여기에서 5년째 살고 있다.', 'for + 기간', '기간 앞에는 for입니다.'],
+      ['I have known him since 2020.', '나는 2020년부터 그를 알고 있다.', 'since + 시작 시점', '시작 시점 앞에는 since입니다.'],
+      ['They have been friends for ten years.', '그들은 10년째 친구다.', 'for + 기간', 'be의 p.p.는 been입니다.']]],
+    ['과거시제와 구분', '과거 한 시점이면 과거시제.', [
+      ['I saw him yesterday.', '나는 어제 그를 봤다.', 'yesterday', '과거 시점이면 과거시제입니다.'],
+      ['She moved here two years ago.', '그녀는 2년 전에 여기로 이사 왔다.', 'ago', 'ago가 있으면 과거시제입니다.'],
+      ['He visited Paris last year.', '그는 작년에 파리를 방문했다.', 'last year', '과거 시점이면 과거시제입니다.']]],
+  ],
+  wrong: [['She have lived here for five years.', '3인칭 단수 → She has lived here for five years. — 그녀는 여기에서 5년째 살고 있다.', ''], ['I have seen him yesterday.', 'yesterday는 과거시제 → I saw him yesterday. — 나는 어제 그를 봤다.', ''], ['He has never ate sushi.', 'p.p. 필요 → He has never eaten sushi. — 그는 스시를 먹어 본 적이 없다.', '']],
+  wrongNote: 'has/have 선택, 과거 시점 표현, 과거분사 형태를 확인합니다.',
+  cram: '■ 핵심 요약\n과거에 시작해 지금과 이어지는 일은 have/has + p.p.로 씁니다.\n\n■ 규칙\n1. 형태: have/has + 과거분사. he/she/it은 has.\n2. 경험: ~한 적이 있다 (ever, never).\n3. 완료·계속: just, already, yet / for(기간), since(시작 시점).\n4. yesterday, last year, ago와는 쓰지 않고 과거시제를 씁니다.\n\n■ 예문 뜻\n나는 그 영화를 본 적이 있다.\n그녀는 여기에서 5년째 살고 있다.\n나는 방금 숙제를 끝냈다.',
+  blanks: [['현재완료의 형태는 have/has + ___입니다.', '과거분사', '네 글자'], ['she 뒤에는 ___를 씁니다.', 'has', 'h로 시작'], ['기간 앞에는 ___를 씁니다.', 'for', '세 글자'], ['시작 시점 앞에는 ___를 씁니다.', 'since', 's로 시작']],
+  fill: [
+    ['basic', 'I ___ seen that movie.', 'have', ['has', 'have', 'am'], '나는 그 영화를 본 적이 있다.', 'I 뒤에는 have입니다.', 'I'],
+    ['basic', 'She ___ already left.', 'has', ['has', 'have', 'had'], '그녀는 이미 떠났다.', 'she 뒤에는 has입니다.', 'She'],
+    ['basic', 'He has never ___ sushi.', 'eaten', ['ate', 'eats', 'eaten'], '그는 스시를 먹어 본 적이 없다.', 'eat의 p.p.는 eaten입니다.', 'p.p.'],
+    ['intermediate', 'She has lived here ___ five years.', 'for', ['for', 'since', 'ago'], '그녀는 여기에서 5년째 살고 있다.', '기간 앞에는 for입니다.', '기간'],
+    ['intermediate', 'I have known him ___ 2020.', 'since', ['for', 'since', 'in'], '나는 2020년부터 그를 알고 있다.', '시작 시점 앞에는 since입니다.', '시작 시점'],
+    ['intermediate', 'I have not eaten lunch ___.', 'yet', ['just', 'already', 'yet'], '나는 아직 점심을 먹지 않았다.', '부정문에서 "아직"은 yet입니다.', '아직'],
+    ['advanced', 'I ___ him yesterday.', 'saw', ['saw', 'have seen', 'seen'], '나는 어제 그를 봤다.', 'yesterday가 있으므로 과거시제 saw입니다.', 'yesterday'],
+    ['advanced', 'They have ___ friends for ten years.', 'been', ['be', 'been', 'being'], '그들은 10년째 친구다.', 'be의 p.p.는 been입니다.', 'be의 p.p.'],
+  ],
+  fix: [
+    ['basic', 'She have lived here for five years.', 'have', ['has'], ['she 뒤에는 has를 씁니다.', 'lived는 live여야 합니다.', 'years는 year여야 합니다.'], 0, 'She has lived here for five years. → 3인칭 단수 has'],
+    ['intermediate', 'He has live here since 2020.', 'live', ['lived'], ['since는 for여야 합니다.', 'has 뒤에는 과거분사 lived를 씁니다.', 'here는 there여야 합니다.'], 1, 'He has lived here since 2020. → has + p.p.'],
+    ['intermediate', 'He has never ate sushi.', 'ate', ['eaten'], ['has는 have여야 합니다.', 'never는 ever여야 합니다.', 'has 뒤에는 과거분사 eaten을 씁니다.'], 2, 'He has never eaten sushi. → p.p.'],
+  ],
+  questions: [
+    pc('Which sentence about a movie is correct?', '영화에 대한 올바른 문장을 고르세요.', 'basic', [['I has seen that movie.', '나는 그 영화를 본 적이 있다.'], ['I have seen that movie.', '나는 그 영화를 본 적이 있다.'], ['I have saw that movie.', '나는 그 영화를 본 적이 있다.'], ['I am seen that movie.', '나는 그 영화를 본 적이 있다.']], 1, 'I 뒤에는 have + p.p.(seen)입니다.'),
+    pc('Which sentence about leaving is correct?', '떠난 일에 대한 올바른 문장을 고르세요.', 'basic', [['She have already left.', '그녀는 이미 떠났다.'], ['She has already leave.', '그녀는 이미 떠났다.'], ['She has already left.', '그녀는 이미 떠났다.'], ['She already has leaved.', '그녀는 이미 떠났다.']], 2, 'she 뒤에는 has + p.p.(left)입니다.'),
+    pc('Which sentence about sushi is correct?', '스시에 대한 올바른 문장을 고르세요.', 'basic', [['He has never ate sushi.', '그는 스시를 먹어 본 적이 없다.'], ['He have never eaten sushi.', '그는 스시를 먹어 본 적이 없다.'], ['He never has eat sushi.', '그는 스시를 먹어 본 적이 없다.'], ['He has never eaten sushi.', '그는 스시를 먹어 본 적이 없다.']], 3, 'has + never + p.p.(eaten)입니다.'),
+    pc('Which sentence about living here is correct?', '사는 기간에 대한 올바른 문장을 고르세요.', 'intermediate', [['She has lived here for five years.', '그녀는 여기에서 5년째 살고 있다.'], ['She has lived here since five years.', '그녀는 여기에서 5년째 살고 있다.'], ['She lives here have five years.', '그녀는 여기에서 5년째 살고 있다.'], ['She has live here for five years.', '그녀는 여기에서 5년째 살고 있다.']], 0, '기간 앞에는 for를 씁니다.'),
+    pc('Which sentence about knowing him is correct?', '그를 알아 온 것에 대한 올바른 문장을 고르세요.', 'intermediate', [['I have known him for 2020.', '나는 2020년부터 그를 알고 있다.'], ['I have known him since 2020.', '나는 2020년부터 그를 알고 있다.'], ['I know have him since 2020.', '나는 2020년부터 그를 알고 있다.'], ['I has known him since 2020.', '나는 2020년부터 그를 알고 있다.']], 1, '시작 시점 앞에는 since를 씁니다.'),
+    pc('Choose the sentence that is NOT in the present perfect.', '현재완료가 아닌 문장을 고르세요.', 'intermediate', [['I have just finished my homework.', '나는 방금 숙제를 끝냈다.'], ['She has already left.', '그녀는 이미 떠났다.'], ['She moved here two years ago.', '그녀는 2년 전에 여기로 이사 왔다.'], ['They have been friends for ten years.', '그들은 10년째 친구다.']], 2, '세 번째는 ago가 있는 과거시제입니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['Have you ever been to Japan?', '너는 일본에 가 본 적이 있니?'], ['I have seen him yesterday.', '나는 어제 그를 봤다.'], ['He has never eaten sushi.', '그는 스시를 먹어 본 적이 없다.'], ['I have known him since 2020.', '나는 2020년부터 그를 알고 있다.']], 1, 'yesterday가 있으면 과거시제 I saw him yesterday여야 합니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① I have seen that movie.\n② She have lived here.\n③ He has already left.', 'basic', 1, '②만 틀렸고 She has lived여야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① I have visited Paris last year.\n② He has never ate sushi.\n③ She has lived here for five years.\n④ They have been friends since ten years.', 'advanced', 3, '①은 visited(과거), ②는 eaten, ④는 for ten years여야 하므로 틀린 문장은 3개입니다.'),
+    pc('Why is the sentence "I have seen him yesterday." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because yesterday is a specific past time, so we use the simple past.', 'yesterday는 과거의 한 시점이라 과거시제를 써야 해서'], ['Because have should be has.', 'have를 has로 바꿔야 해서'], ['Because him should be he.', 'him을 he로 바꿔야 해서'], ['Because seen should be see.', 'seen을 see로 바꿔야 해서']], 0, 'yesterday, last year, ago와는 현재완료를 쓰지 않습니다.', 'reason'),
+  ],
+  popup: [['I ___ seen that movie.', 'have', ['has', 'am'], 'I'], ['She ___ already left.', 'has', ['have', 'had'], 'she'], ['She has lived here ___ five years.', 'for', ['since', 'ago'], '기간'], ['I have known him ___ 2020.', 'since', ['for', 'ago'], '시작 시점']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'She have lived here for five years.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['She has lived here for five years.'], noteKo: 'she 뒤에는 has를 씁니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'He has never ate sushi.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['He has never eaten sushi.'], noteKo: 'has 뒤에는 과거분사를 씁니다.' },
+  ],
+  top: ['현재완료 = have/has + p.p. 경험·완료·계속의 뜻이고, yesterday·ago 같은 과거 시점 표현과는 쓰지 않는다.', 'I have seen that movie.', '나는 그 영화를 본 적이 있다.'],
+  lecture: [
+    { type: 'text', text: '현재완료: have / has + p.p.', narration: '오늘은 과거와 지금을 이어 주는 현재완료를 배워요.' },
+    { type: 'board', title: '경험', lines: ['I [b]have seen[/b] that movie. — 나는 그 영화를 본 적이 있다.', 'He [b]has never eaten[/b] sushi. — 그는 스시를 먹어 본 적이 없다.', 'he, she, it → has'], narration: '~한 적이 있다는 경험이에요. [en]I have seen that movie.[/en] 나는 그 영화를 본 적이 있어요. [en]he, she, it[/en] 뒤에는 [en]has[/en]를 써요.' },
+    { type: 'board', title: '완료', lines: ['I have [b]just[/b] finished my homework. — 나는 방금 숙제를 끝냈다.', 'She has [b]already[/b] left. — 그녀는 이미 떠났다.', 'I have not eaten lunch [b]yet[/b]. — 나는 아직 점심을 먹지 않았다.'], narration: '방금, 이미, 아직을 말할 때도 써요. [en]She has already left.[/en] 그녀는 이미 떠났어요. [en]I have not eaten lunch yet.[/en] 나는 아직 점심을 먹지 않았어요.' },
+    { type: 'board', title: '계속', lines: ['She has lived here [b]for[/b] five years. — 그녀는 여기에서 5년째 살고 있다.', 'I have known him [b]since[/b] 2020. — 나는 2020년부터 그를 알고 있다.', 'for = 기간 / since = 시작 시점'], narration: '계속은 [en]for[/en]와 [en]since[/en]와 함께 써요. [en]for[/en] 뒤에는 기간, [en]since[/en] 뒤에는 시작 시점이에요.' },
+    { type: 'board', title: '과거시제와 구분', lines: ['I [b]saw[/b] him yesterday. — 나는 어제 그를 봤다.', 'She moved here two years [b]ago[/b]. — 그녀는 2년 전에 이사 왔다.', 'yesterday, ago → 과거시제'], narration: '[en]yesterday[/en]나 [en]ago[/en]처럼 과거 한 시점이 있으면 과거시제를 써요. [en]I saw him yesterday.[/en] 나는 어제 그를 봤어요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× She [b]have[/b] lived here. — 그녀는 여기에서 살고 있다.', '× I have seen him [b]yesterday[/b]. — 나는 어제 그를 봤다.', '× He has never [b]ate[/b] sushi. — 그는 스시를 먹어 본 적이 없다.'], narration: '[en]She have[/en]는 [en]She has[/en]가 맞아요. [en]yesterday[/en]와는 현재완료를 안 써요. [en]has never ate[/en]는 [en]has never eaten[/en]이 맞아요.' },
+    { type: 'text', text: '정리: have/has + p.p. / for 기간, since 시점', narration: '정리할게요. [en]have[/en]나 [en]has[/en] 뒤에 과거분사를 써요. 기간은 [en]for[/en], 시작 시점은 [en]since[/en]예요.' },
+  ],
+});

@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'imperatives-suggestions', topic: '명령문·청유문 - 1부', titleKo: '명령문 · Don\'t · Let\'s',
+  summaryEn: 'An imperative starts with a base verb. Use Don\'t for a negative command, and Let\'s to make a suggestion.',
+  summaryKo: '명령문은 주어 없이 동사원형으로 시작합니다. 금지는 Don\'t + 동사원형, 제안("~하자")은 Let\'s + 동사원형으로 말합니다.',
+  rules: [
+    ['Command: base verb (no subject). Add please to be polite.', '명령문은 주어 없이 동사원형으로 시작합니다. 공손하게는 please를 붙입니다. (Open the door, please.)'],
+    ['With be: Be + adjective.', 'be동사 명령문은 Be + 형용사입니다. (Be quiet. Be careful.)'],
+    ['Negative command: Don\'t + base verb.', '"~하지 마라"는 Don\'t + 동사원형입니다. (Don\'t run in the hall.)'],
+    ['Suggestion: Let\'s + base verb. Negative: Let\'s not + base verb.', '"~하자"는 Let\'s + 동사원형, "~하지 말자"는 Let\'s not + 동사원형입니다.'],
+  ],
+  examples: [['Open the door, please.', '문을 열어 주세요.'], ['Don\'t run in the hall.', '복도에서 뛰지 마라.'], ['Let\'s go to the park.', '공원에 가자.']],
+  groups: [
+    ['명령문', '동사원형으로 시작.', [
+      ['Open the door, please.', '문을 열어 주세요.', '동사원형', '주어를 쓰지 않습니다.'],
+      ['Sit down.', '앉아라.', '동사원형', '주어 없이 동사로 시작합니다.'],
+      ['Do your homework.', '숙제를 해라.', '동사원형', '동사원형으로 시작합니다.']]],
+    ['Be + 형용사', 'be동사 명령문.', [
+      ['Be quiet.', '조용히 해라.', 'Be + 형용사', 'Are가 아니라 Be입니다.'],
+      ['Be careful.', '조심해라.', 'Be + 형용사', 'Are가 아니라 Be입니다.'],
+      ['Be kind to others.', '다른 사람에게 친절해라.', 'Be + 형용사', 'Are가 아니라 Be입니다.']]],
+    ['Don\'t + 동사원형', '~하지 마라.', [
+      ['Don\'t run in the hall.', '복도에서 뛰지 마라.', "Don't + 원형", '금지 명령입니다.'],
+      ['Don\'t be late.', '늦지 마라.', "Don't be + 형용사", 'be동사도 Don\'t be입니다.'],
+      ['Don\'t touch it.', '그것을 만지지 마라.', "Don't + 원형", '금지 명령입니다.']]],
+    ['Let\'s + 동사원형', '~하자.', [
+      ['Let\'s go to the park.', '공원에 가자.', "Let's + 원형", '제안입니다.'],
+      ['Let\'s play soccer.', '축구를 하자.', "Let's + 원형", '제안입니다.'],
+      ['Let\'s not wait here.', '여기서 기다리지 말자.', "Let's not + 원형", '"~하지 말자"입니다.']]],
+  ],
+  wrong: [['Opens the door, please.', '동사원형 → Open the door, please. — 문을 열어 주세요.', ''], ['Not run in the hall.', 'Don\'t 사용 → Don\'t run in the hall. — 복도에서 뛰지 마라.', ''], ['Let\'s goes to the park.', 'Let\'s 뒤는 원형 → Let\'s go to the park. — 공원에 가자.', '']],
+  wrongNote: '명령문과 Let\'s 뒤에는 항상 동사원형을 쓰고, 금지는 Don\'t를 씁니다.',
+  cram: '■ 핵심 요약\n명령문은 동사원형, 금지는 Don\'t + 원형, 제안은 Let\'s + 원형으로 말합니다.\n\n■ 규칙\n1. 명령문은 주어 없이 동사원형으로 시작하고 please로 공손하게 만듭니다.\n2. be동사 명령문은 Be + 형용사입니다.\n3. 금지는 Don\'t + 동사원형입니다.\n4. 제안은 Let\'s + 동사원형, 부정은 Let\'s not + 동사원형입니다.\n\n■ 예문 뜻\n문을 열어 주세요.\n복도에서 뛰지 마라.\n공원에 가자.',
+  blanks: [['명령문은 ___ 없이 동사원형으로 시작합니다.', '주어', '두 글자'], ['"~하지 마라"는 ___ + 동사원형입니다.', "Don't", 'D로 시작'], ['"~하자"는 ___ + 동사원형입니다.', "Let's", 'L로 시작'], ['be동사의 명령문은 ___ + 형용사입니다.', 'Be', 'B로 시작']],
+  fill: [
+    ['basic', '___ the door, please.', 'Open', ['Open', 'Opens', 'Opening'], '문을 열어 주세요.', '명령문은 동사원형으로 시작합니다.', '동사원형'],
+    ['basic', '___ quiet.', 'Be', ['Are', 'Be', 'Is'], '조용히 해라.', 'be동사 명령문은 Be + 형용사입니다.', '형용사 앞'],
+    ['basic', "___ run in the hall.", "Don't", ['Not', "Don't", "Doesn't"], '복도에서 뛰지 마라.', '금지는 Don\'t + 동사원형입니다.', '금지'],
+    ['intermediate', "Let's ___ to the park.", 'go', ['goes', 'going', 'go'], '공원에 가자.', "Let's 뒤에는 동사원형입니다.", "Let's 뒤"],
+    ['intermediate', "Don't ___ late.", 'be', ['are', 'is', 'be'], '늦지 마라.', "Don't 뒤에는 동사원형 be입니다.", "Don't 뒤"],
+    ['intermediate', "Let's ___ wait here.", 'not', ['no', 'not', "don't"], '여기서 기다리지 말자.', "\"~하지 말자\"는 Let's not입니다.", "Let's ___"],
+    ['advanced', '___ your homework, please.', 'Do', ['Does', 'Do', 'Doing'], '숙제를 해 주세요.', '명령문은 동사원형으로 시작합니다.', '동사원형'],
+    ['advanced', "___ touch it.", "Don't", ["Doesn't", "Not", "Don't"], '그것을 만지지 마라.', "금지 명령은 Don't + 동사원형입니다.", '금지'],
+  ],
+  fix: [
+    ['basic', 'Opens the door, please.', 'Opens', ['Open'], ['door는 doors여야 합니다.', '명령문은 동사원형으로 시작합니다.', 'please는 pleased여야 합니다.'], 1, 'Open the door, please. → 동사원형'],
+    ['intermediate', 'Not run in the hall.', 'Not', ["Don't"], ['금지 명령은 Don\'t + 동사원형입니다.', 'run은 running이어야 합니다.', 'hall은 halls여야 합니다.'], 0, "Don't run in the hall. → 금지는 Don't"],
+    ['intermediate', "Let's goes to the park.", 'goes', ['go'], ['park는 parks여야 합니다.', 'to는 at이어야 합니다.', "Let's 뒤에는 동사원형을 씁니다."], 2, "Let's go to the park. → Let's + 원형"],
+  ],
+  questions: [
+    pc('Which sentence about a door is correct?', '문에 대한 올바른 문장을 고르세요.', 'basic', [['Opens the door, please.', '문을 열어 주세요.'], ['Open the door, please.', '문을 열어 주세요.'], ['You open the door, please.', '문을 열어 주세요.'], ['Opening the door, please.', '문을 열어 주세요.']], 1, '명령문은 동사원형으로 시작합니다.'),
+    pc('Which sentence about being quiet is correct?', '조용히 하는 것에 대한 올바른 문장을 고르세요.', 'basic', [['Are quiet.', '조용히 해라.'], ['Is quiet.', '조용히 해라.'], ['Be quiet.', '조용히 해라.'], ['Being quiet.', '조용히 해라.']], 2, 'be동사 명령문은 Be + 형용사입니다.'),
+    pc('Which sentence about the hall is correct?', '복도에 대한 올바른 문장을 고르세요.', 'basic', [['Not run in the hall.', '복도에서 뛰지 마라.'], ["Doesn't run in the hall.", '복도에서 뛰지 마라.'], ["Don't running in the hall.", '복도에서 뛰지 마라.'], ["Don't run in the hall.", '복도에서 뛰지 마라.']], 3, "금지는 Don't + 동사원형입니다."),
+    pc('Which sentence about a park is correct?', '공원에 대한 올바른 문장을 고르세요.', 'intermediate', [["Let's go to the park.", '공원에 가자.'], ["Let's goes to the park.", '공원에 가자.'], ["Let's going to the park.", '공원에 가자.'], ["Let go to the park.", '공원에 가자.']], 0, "Let's 뒤에는 동사원형입니다."),
+    pc('Which sentence about being late is correct?', '지각에 대한 올바른 문장을 고르세요.', 'intermediate', [["Don't late.", '늦지 마라.'], ["Don't be late.", '늦지 마라.'], ["Not be late.", '늦지 마라.'], ["Don't are late.", '늦지 마라.']], 1, "be동사의 금지는 Don't be + 형용사입니다."),
+    pc('Choose the sentence that is NOT a command or suggestion.', '명령이나 제안이 아닌 문장을 고르세요.', 'intermediate', [['Sit down.', '앉아라.'], ["Let's play soccer.", '축구를 하자.'], ['She sits down.', '그녀는 앉는다.'], ["Don't touch it.", '그것을 만지지 마라.']], 2, '세 번째는 주어가 있는 평서문입니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['Be careful.', '조심해라.'], ["Let's not wait here.", '여기서 기다리지 말자.'], ["Don't touch it.", '그것을 만지지 마라.'], ["Let's goes home.", '집에 가자.']], 3, "Let's 뒤에는 동사원형 go여야 합니다.", 'pick_different'),
+    cw("How many sentences are wrong?\n① Open the door, please.\n② Not run in the hall.\n③ Be quiet.", 'basic', 1, "②만 틀렸고 Don't run이어야 하므로 틀린 문장은 1개입니다."),
+    cw("How many sentences are wrong?\n① Opens the door.\n② Are careful.\n③ Don't be late.\n④ Let's goes to the park.", 'advanced', 3, '①은 Open, ②는 Be careful, ④는 Let\'s go여야 하므로 틀린 문장은 3개입니다.'),
+    pc("Why is the sentence \"Let's goes to the park.\" wrong?", '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because park should be parks.', 'park를 parks로 바꿔야 해서'], ['Because to should be at.', 'to를 at으로 바꿔야 해서'], ['Because Let\'s should be Let.', "Let's를 Let으로 바꿔야 해서"], ['Because the base verb is used after Let\'s.', "Let's 뒤에는 동사원형을 써야 해서"]], 3, "Let's 뒤에는 -s 없이 동사원형을 씁니다.", 'reason'),
+  ],
+  popup: [['___ the door, please.', 'Open', ['Opens', 'Opening'], '동사원형'], ['___ quiet.', 'Be', ['Are', 'Is'], '형용사 앞'], ["___ run in the hall.", "Don't", ['Not', "Doesn't"], '금지'], ["Let's ___ to the park.", 'go', ['goes', 'going'], "Let's 뒤"]],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'Opens the door, please.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['Open the door, please.'], noteKo: '명령문은 동사원형으로 시작합니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: "Let's goes to the park.", promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ["Let's go to the park."], noteKo: "Let's 뒤에는 동사원형입니다." },
+  ],
+  top: ["명령문은 동사원형, 금지는 Don't + 원형, 제안은 Let's + 원형. be동사는 Be로 쓴다.", "Let's go to the park.", '공원에 가자.'],
+  lecture: [
+    { type: 'text', text: '명령문과 제안', narration: '오늘은 시키는 말과 같이 하자는 말을 배워요.' },
+    { type: 'board', title: '명령문', lines: ['[b]Open[/b] the door, please. — 문을 열어 주세요.', '[b]Sit[/b] down. — 앉아라.', '주어 없이 동사원형'], narration: '명령문은 주어 없이 동사원형으로 시작해요. [en]Open the door, please.[/en] 문을 열어 주세요. [en]please[/en]를 붙이면 공손해요.' },
+    { type: 'board', title: 'Be + 형용사', lines: ['[b]Be[/b] quiet. — 조용히 해라.', '[b]Be[/b] careful. — 조심해라.', '× Are quiet.'], narration: '[en]be[/en]동사 명령문은 [en]Be[/en]로 시작해요. [en]Be quiet.[/en] 조용히 해라. [en]Be careful.[/en] 조심해라.' },
+    { type: 'board', title: "Don't + 동사원형", lines: ["[b]Don't[/b] run in the hall. — 복도에서 뛰지 마라.", "[b]Don't be[/b] late. — 늦지 마라.", "Don't touch it. — 그것을 만지지 마라."], narration: "하지 말라는 말은 [en]Don't[/en] 뒤에 동사원형을 써요. [en]Don't run in the hall.[/en] 복도에서 뛰지 마라." },
+    { type: 'board', title: "Let's + 동사원형", lines: ["[b]Let's go[/b] to the park. — 공원에 가자.", "[b]Let's play[/b] soccer. — 축구를 하자.", "[b]Let's not[/b] wait here. — 여기서 기다리지 말자."], narration: "같이 하자는 제안은 [en]Let's[/en] 뒤에 동사원형이에요. [en]Let's go to the park.[/en] 공원에 가자. 하지 말자는 [en]Let's not[/en]이에요." },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× [b]Opens[/b] the door. — 문을 열어라.', '× [b]Not[/b] run in the hall. — 복도에서 뛰지 마라.', "× Let's [b]goes[/b] to the park. — 공원에 가자."], narration: "명령문에는 에스를 붙이지 않아요. 금지는 [en]Don't[/en]예요. [en]Let's[/en] 뒤에도 원형을 써요." },
+    { type: 'text', text: "정리: 원형 / Don't + 원형 / Let's + 원형", narration: "정리할게요. 명령문은 동사원형, 금지는 [en]Don't[/en], 제안은 [en]Let's[/en] 뒤에 동사원형이에요." },
+  ],
+});

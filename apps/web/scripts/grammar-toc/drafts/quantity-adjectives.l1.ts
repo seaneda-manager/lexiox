@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'quantity-adjectives', topic: '수량형용사 - 1부', titleKo: 'many · much · a few · a little · some · any',
+  summaryEn: 'Use many and few with countable nouns, much and little with uncountable nouns, and some and any for an unknown amount.',
+  summaryKo: '셀 수 있는 명사에는 many·(a) few, 셀 수 없는 명사에는 much·(a) little을 씁니다. 긍정문은 some, 부정문·의문문은 any를 씁니다.',
+  rules: [
+    ['Countable (plural): many, a few, few.', '셀 수 있는 복수 명사에는 many(많은), a few(조금 있는), few(거의 없는)를 씁니다.'],
+    ['Uncountable: much, a little, little.', '셀 수 없는 명사에는 much(많은), a little(조금 있는), little(거의 없는)을 씁니다.'],
+    ['A lot of works with both.', 'a lot of는 셀 수 있는 명사와 없는 명사 모두에 씁니다. (a lot of friends, a lot of water)'],
+    ['Use some in positive sentences and any in negatives and questions.', '긍정문에는 some, 부정문·의문문에는 any를 씁니다. (I have some books. / I don\'t have any books.)'],
+  ],
+  examples: [['I have many friends.', '나는 친구가 많다.'], ['There is little water.', '물이 거의 없다.'], ['I don\'t have any books.', '나는 책이 하나도 없다.']],
+  groups: [
+    ['many / much', '많은.', [
+      ['I have many friends.', '나는 친구가 많다.', 'many + 복수', '셀 수 있는 명사입니다.'],
+      ['There is much water.', '물이 많다.', 'much + 불가산', '셀 수 없는 명사입니다.'],
+      ['She has a lot of money.', '그녀는 돈이 많다.', 'a lot of', '둘 다 쓸 수 있습니다.']]],
+    ['a few / a little', '조금 있는.', [
+      ['I have a few books.', '나는 책이 몇 권 있다.', 'a few + 복수', '셀 수 있는 명사입니다.'],
+      ['I have a little time.', '나는 시간이 조금 있다.', 'a little + 불가산', '셀 수 없는 명사입니다.'],
+      ['We need a few eggs.', '우리는 달걀이 몇 개 필요하다.', 'a few + 복수', '셀 수 있는 명사입니다.']]],
+    ['few / little', '거의 없는.', [
+      ['She has few friends.', '그녀는 친구가 거의 없다.', 'few + 복수', '부정적인 느낌입니다.'],
+      ['There is little water.', '물이 거의 없다.', 'little + 불가산', '부정적인 느낌입니다.'],
+      ['He has little money.', '그는 돈이 거의 없다.', 'little + 불가산', '부정적인 느낌입니다.']]],
+    ['some / any', '긍정문과 부정문·의문문.', [
+      ['I have some questions.', '나는 질문이 몇 개 있다.', 'some', '긍정문입니다.'],
+      ['I don\'t have any books.', '나는 책이 하나도 없다.', 'not ... any', '부정문입니다.'],
+      ['Do you have any pens?', '너는 펜이 있니?', 'any', '의문문입니다.']]],
+  ],
+  wrong: [['I have much friends.', '복수에는 many → I have many friends. — 나는 친구가 많다.', ''], ['There is many water.', '불가산에는 much → There is much water. — 물이 많다.', ''], ['I have a little books.', '복수에는 a few → I have a few books. — 나는 책이 몇 권 있다.', '']],
+  wrongNote: '셀 수 있는지 없는지에 따라 many/much, a few/a little을 고릅니다.',
+  cram: '■ 핵심 요약\n셀 수 있으면 many·a few·few, 셀 수 없으면 much·a little·little을 씁니다.\n\n■ 규칙\n1. 셀 수 있는 복수: many, a few, few.\n2. 셀 수 없는 명사: much, a little, little.\n3. a lot of는 둘 다에 씁니다.\n4. 긍정문은 some, 부정문·의문문은 any.\n\n■ 예문 뜻\n나는 친구가 많다.\n물이 거의 없다.\n나는 책이 하나도 없다.',
+  blanks: [['복수 명사 앞의 "많은"은 ___입니다.', 'many', 'm으로 시작'], ['셀 수 없는 명사 앞의 "많은"은 ___입니다.', 'much', 'm으로 시작'], ['부정문에서는 some 대신 ___를 씁니다.', 'any', '세 글자'], ['a little은 셀 수 ___ 명사에 씁니다.', '없는', '두 글자']],
+  fill: [
+    ['basic', 'I have ___ friends.', 'many', ['much', 'many', 'a little'], '나는 친구가 많다.', 'friends는 복수이므로 many입니다.', '복수'],
+    ['basic', 'There is ___ water.', 'much', ['much', 'many', 'few'], '물이 많다.', 'water는 셀 수 없으므로 much입니다.', '불가산'],
+    ['basic', 'I have a ___ books.', 'few', ['little', 'much', 'few'], '나는 책이 몇 권 있다.', 'books는 복수이므로 a few입니다.', '복수'],
+    ['intermediate', 'I have a ___ time.', 'little', ['little', 'few', 'many'], '나는 시간이 조금 있다.', 'time은 셀 수 없으므로 a little입니다.', '불가산'],
+    ['intermediate', 'She has ___ friends, so she feels lonely.', 'few', ['few', 'a few', 'many'], '그녀는 친구가 거의 없어서 외롭다.', '"거의 없는"은 few입니다.', '거의 없는'],
+    ['intermediate', 'I have ___ questions.', 'some', ['any', 'much', 'some'], '나는 질문이 몇 개 있다.', '긍정문에는 some을 씁니다.', '긍정문'],
+    ['advanced', 'I don\'t have ___ books.', 'any', ['some', 'any', 'a few'], '나는 책이 하나도 없다.', '부정문에는 any를 씁니다.', '부정문'],
+    ['advanced', 'She has a lot ___ money.', 'of', ['of', 'many', 'much'], '그녀는 돈이 많다.', 'a lot of 형태입니다.', 'a lot ___'],
+  ],
+  fix: [
+    ['basic', 'I have much friends.', 'much', ['many'], ['friends는 복수라서 many를 씁니다.', 'have는 has여야 합니다.', 'I는 we여야 합니다.'], 0, 'I have many friends. → 복수는 many'],
+    ['intermediate', 'There is many water.', 'many', ['much'], ['water는 waters여야 합니다.', 'is는 are여야 합니다.', 'water는 셀 수 없어서 much를 씁니다.'], 2, 'There is much water. → 불가산은 much'],
+    ['intermediate', 'I have a little books.', 'little', ['few'], ['books는 복수라서 a few를 씁니다.', 'have는 has여야 합니다.', 'books는 book이어야 합니다.'], 0, 'I have a few books. → 복수는 a few'],
+  ],
+  questions: [
+    pc('Which sentence about friends is correct?', '친구에 대한 올바른 문장을 고르세요.', 'basic', [['I have much friends.', '나는 친구가 많다.'], ['I have many friends.', '나는 친구가 많다.'], ['I have a little friends.', '나는 친구가 많다.'], ['I have many friend.', '나는 친구가 많다.']], 1, '복수 명사 앞에는 many입니다.'),
+    pc('Which sentence about water is correct?', '물에 대한 올바른 문장을 고르세요.', 'basic', [['There is many water.', '물이 많다.'], ['There are much water.', '물이 많다.'], ['There is much water.', '물이 많다.'], ['There is a few water.', '물이 많다.']], 2, '셀 수 없는 명사 앞에는 much입니다.'),
+    pc('Which sentence about books is correct?', '책에 대한 올바른 문장을 고르세요.', 'basic', [['I have a little books.', '나는 책이 몇 권 있다.'], ['I have a few book.', '나는 책이 몇 권 있다.'], ['I have much books.', '나는 책이 몇 권 있다.'], ['I have a few books.', '나는 책이 몇 권 있다.']], 3, '복수 명사 앞에는 a few입니다.'),
+    pc('Which sentence about time is correct?', '시간에 대한 올바른 문장을 고르세요.', 'intermediate', [['I have a little time.', '나는 시간이 조금 있다.'], ['I have a few time.', '나는 시간이 조금 있다.'], ['I have many time.', '나는 시간이 조금 있다.'], ['I have little times.', '나는 시간이 조금 있다.']], 0, '셀 수 없는 명사 앞에는 a little입니다.'),
+    pc('Which sentence about pens is correct?', '펜에 대한 올바른 문장을 고르세요.', 'intermediate', [['Do you have some pens?', '너는 펜이 있니?'], ['Do you have any pens?', '너는 펜이 있니?'], ['Do you have much pens?', '너는 펜이 있니?'], ['Do you have a little pens?', '너는 펜이 있니?']], 1, '의문문에는 any를 씁니다.'),
+    pc('Choose the sentence that has a NEGATIVE meaning.', '부정적인 뜻의 문장을 고르세요.', 'intermediate', [['I have a few books.', '나는 책이 몇 권 있다.'], ['I have a little time.', '나는 시간이 조금 있다.'], ['She has few friends.', '그녀는 친구가 거의 없다.'], ['I have some questions.', '나는 질문이 몇 개 있다.']], 2, 'few는 "거의 없는"이라는 부정적인 뜻입니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['She has a lot of money.', '그녀는 돈이 많다.'], ['I don\'t have any books.', '나는 책이 하나도 없다.'], ['We need a few eggs.', '우리는 달걀이 몇 개 필요하다.'], ['There is many water.', '물이 많다.']], 3, 'water는 셀 수 없으므로 much입니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① I have many friends.\n② I have much friends.\n③ There is much water.', 'basic', 1, '②만 틀렸고 many friends여야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① I have a little books.\n② There is many water.\n③ I have a few questions.\n④ I don\'t have some books.', 'advanced', 3, '①은 a few, ②는 much, ④는 any여야 하므로 틀린 문장은 3개입니다.'),
+    pc('Why is the sentence "I have a little books." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because books is a plural countable noun, so a few is needed.', 'books는 셀 수 있는 복수라서 a few를 써야 해서'], ['Because have should be has.', 'have를 has로 바꿔야 해서'], ['Because I should be We.', 'I를 We로 바꿔야 해서'], ['Because books should be book.', 'books를 book으로 바꿔야 해서']], 0, '복수 명사 앞에는 a few를 씁니다.', 'reason'),
+  ],
+  popup: [['I have ___ friends.', 'many', ['much', 'a little'], '복수'], ['There is ___ water.', 'much', ['many', 'a few'], '불가산'], ['I have a ___ books.', 'few', ['little', 'much'], '복수'], ['I don\'t have ___ books.', 'any', ['some', 'much'], '부정문']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'I have much friends.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['I have many friends.'], noteKo: '복수 명사 앞에는 many입니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'There is many water.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['There is much water.'], noteKo: '셀 수 없는 명사 앞에는 much입니다.' },
+  ],
+  top: ['복수(셀 수 있는) = many / a few / few, 셀 수 없는 = much / a little / little. 긍정문 some, 부정·의문문 any.', 'I have many friends.', '나는 친구가 많다.'],
+  lecture: [
+    { type: 'text', text: '수량형용사', narration: '오늘은 양을 나타내는 말을 배워요. 셀 수 있는지 없는지가 열쇠예요.' },
+    { type: 'board', title: 'many / much', lines: ['I have [b]many[/b] friends. — 나는 친구가 많다.', 'There is [b]much[/b] water. — 물이 많다.', 'many → 복수 / much → 셀 수 없는'], narration: '복수에는 [en]many[/en], 셀 수 없는 명사에는 [en]much[/en]를 써요. [en]I have many friends.[/en] 나는 친구가 많아요. [en]There is much water.[/en] 물이 많아요.' },
+    { type: 'board', title: 'a few / a little', lines: ['I have [b]a few[/b] books. — 나는 책이 몇 권 있다.', 'I have [b]a little[/b] time. — 나는 시간이 조금 있다.'], narration: '조금 있는 것은 복수에는 [en]a few[/en], 셀 수 없는 명사에는 [en]a little[/en]을 써요. [en]I have a few books.[/en] 나는 책이 몇 권 있어요.' },
+    { type: 'board', title: 'few / little', lines: ['She has [b]few[/b] friends. — 그녀는 친구가 거의 없다.', 'There is [b]little[/b] water. — 물이 거의 없다.', 'a 없으면 → 거의 없는'], narration: '[en]a[/en]가 없으면 거의 없다는 뜻이에요. [en]She has few friends.[/en] 그녀는 친구가 거의 없어요.' },
+    { type: 'board', title: 'some / any', lines: ['I have [b]some[/b] questions. — 나는 질문이 몇 개 있다.', 'I don\'t have [b]any[/b] books. — 나는 책이 하나도 없다.', 'Do you have [b]any[/b] pens? — 너는 펜이 있니?'], narration: '긍정문에는 [en]some[/en], 부정문과 의문문에는 [en]any[/en]를 써요. [en]I don\'t have any books.[/en] 나는 책이 하나도 없어요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× I have [b]much[/b] friends. — 나는 친구가 많다.', '× There is [b]many[/b] water. — 물이 많다.', '× I have [b]a little[/b] books. — 나는 책이 몇 권 있다.'], narration: '친구는 셀 수 있어서 [en]many[/en]예요. 물은 셀 수 없어서 [en]much[/en]예요. 책은 [en]a few[/en]가 맞아요.' },
+    { type: 'text', text: '정리: 셀 수 있으면 many·a few / 없으면 much·a little', narration: '정리할게요. 셀 수 있으면 [en]many[/en]와 [en]a few[/en], 셀 수 없으면 [en]much[/en]와 [en]a little[/en]을 써요.' },
+  ],
+});

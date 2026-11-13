@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'gerund-basic', topic: '동명사 (주어·보어·목적어) - 1부', titleKo: '동명사: 동사원형 + -ing',
+  summaryEn: 'A gerund is verb + -ing used as a noun. It can be a subject, a complement, an object, or follow a preposition.',
+  summaryKo: '동명사는 동사원형 + -ing로 "~하는 것"이라는 명사 역할을 합니다. 주어·보어·목적어로 쓰고 전치사 뒤에도 옵니다.',
+  rules: [
+    ['As a subject: Swimming is fun.', '주어 자리: "~하는 것은"이라는 뜻입니다. (Swimming is fun.) 단수 취급해서 is를 씁니다.'],
+    ['As a complement: My hobby is reading books.', '보어 자리: be동사 뒤에서 주어를 설명합니다. (My hobby is reading books.)'],
+    ['As an object after some verbs: enjoy, finish, mind, stop.', 'enjoy, finish, mind, stop 같은 동사 뒤에는 동명사만 목적어로 씁니다. (I enjoy playing soccer.)'],
+    ['After a preposition, use a gerund.', '전치사 뒤에는 동명사를 씁니다. (She is good at singing.)'],
+  ],
+  examples: [['Swimming is fun.', '수영하는 것은 재미있다.'], ['My hobby is reading books.', '내 취미는 책을 읽는 것이다.'], ['I enjoy playing soccer.', '나는 축구하는 것을 즐긴다.']],
+  groups: [
+    ['주어', '~하는 것은.', [
+      ['Swimming is fun.', '수영하는 것은 재미있다.', '동명사 주어', '단수 취급해서 is입니다.'],
+      ['Reading books is good for you.', '책을 읽는 것은 너에게 좋다.', '동명사 주어', '단수 취급합니다.'],
+      ['Eating breakfast is important.', '아침을 먹는 것은 중요하다.', '동명사 주어', '단수 취급합니다.']]],
+    ['보어', 'be동사 뒤.', [
+      ['My hobby is reading books.', '내 취미는 책을 읽는 것이다.', '동명사 보어', '주어를 설명합니다.'],
+      ['His job is teaching English.', '그의 직업은 영어를 가르치는 것이다.', '동명사 보어', '주어를 설명합니다.'],
+      ['My dream is traveling around the world.', '내 꿈은 세계를 여행하는 것이다.', '동명사 보어', '주어를 설명합니다.']]],
+    ['목적어', 'enjoy · finish · mind.', [
+      ['I enjoy playing soccer.', '나는 축구하는 것을 즐긴다.', 'enjoy + -ing', 'enjoy 뒤에는 동명사입니다.'],
+      ['She finished doing her homework.', '그녀는 숙제를 끝냈다.', 'finish + -ing', 'finish 뒤에는 동명사입니다.'],
+      ['Do you mind opening the window?', '창문을 열어 주시겠어요?', 'mind + -ing', 'mind 뒤에는 동명사입니다.']]],
+    ['전치사 뒤', '전치사 + -ing.', [
+      ['She is good at singing.', '그녀는 노래를 잘한다.', 'at + -ing', '전치사 뒤에는 동명사입니다.'],
+      ['Thank you for helping me.', '나를 도와줘서 고마워.', 'for + -ing', '전치사 뒤에는 동명사입니다.'],
+      ['He left without saying goodbye.', '그는 작별 인사 없이 떠났다.', 'without + -ing', '전치사 뒤에는 동명사입니다.']]],
+  ],
+  wrong: [['Swim is fun.', '주어는 -ing → Swimming is fun. — 수영하는 것은 재미있다.', ''], ['I enjoy play soccer.', 'enjoy 뒤는 -ing → I enjoy playing soccer. — 나는 축구하는 것을 즐긴다.', ''], ['She is good at sing.', '전치사 뒤는 -ing → She is good at singing. — 그녀는 노래를 잘한다.', '']],
+  wrongNote: '주어·보어·전치사 뒤·enjoy 뒤에는 동사원형이 아니라 -ing를 씁니다.',
+  cram: '■ 핵심 요약\n동명사는 동사원형 + -ing로 "~하는 것"이라는 명사 역할을 합니다.\n\n■ 규칙\n1. 주어: Swimming is fun. (단수 취급)\n2. 보어: My hobby is reading books.\n3. 목적어: enjoy, finish, mind, stop 뒤에 씁니다.\n4. 전치사 뒤에는 동명사를 씁니다.\n\n■ 예문 뜻\n수영하는 것은 재미있다.\n내 취미는 책을 읽는 것이다.\n나는 축구하는 것을 즐긴다.',
+  blanks: [['동명사는 동사원형 + ___입니다.', '-ing', '네 글자'], ['동명사 주어는 ___수로 취급합니다.', '단', '한 글자'], ['enjoy 뒤에는 ___를 씁니다.', '동명사', '세 글자'], ['전치사 뒤에는 ___를 씁니다.', '동명사', '세 글자']],
+  fill: [
+    ['basic', '___ is fun.', 'Swimming', ['Swim', 'Swimming', 'To swimming'], '수영하는 것은 재미있다.', '주어 자리에는 동명사 Swimming을 씁니다.', '주어'],
+    ['basic', 'My hobby is ___ books.', 'reading', ['reading', 'read', 'reads'], '내 취미는 책을 읽는 것이다.', '보어 자리에는 동명사 reading을 씁니다.', '보어'],
+    ['basic', 'I enjoy ___ soccer.', 'playing', ['play', 'plays', 'playing'], '나는 축구하는 것을 즐긴다.', 'enjoy 뒤에는 동명사 playing입니다.', 'enjoy 뒤'],
+    ['intermediate', 'She finished ___ her homework.', 'doing', ['doing', 'do', 'to do'], '그녀는 숙제를 끝냈다.', 'finish 뒤에는 동명사 doing입니다.', 'finish 뒤'],
+    ['intermediate', 'She is good at ___.', 'singing', ['sing', 'to sing', 'singing'], '그녀는 노래를 잘한다.', '전치사 at 뒤에는 동명사입니다.', '전치사 뒤'],
+    ['intermediate', 'Thank you for ___ me.', 'helping', ['helping', 'help', 'helps'], '나를 도와줘서 고마워.', '전치사 for 뒤에는 동명사입니다.', '전치사 뒤'],
+    ['advanced', 'Eating breakfast ___ important.', 'is', ['are', 'is', 'be'], '아침을 먹는 것은 중요하다.', '동명사 주어는 단수 취급하므로 is입니다.', '단수 취급'],
+    ['advanced', 'Do you mind ___ the window?', 'opening', ['open', 'to open', 'opening'], '창문을 열어 주시겠어요?', 'mind 뒤에는 동명사 opening입니다.', 'mind 뒤'],
+  ],
+  fix: [
+    ['basic', 'Swim is fun.', 'Swim', ['Swimming'], ['is는 are여야 합니다.', '주어 자리에는 동명사 Swimming을 씁니다.', 'fun은 funny여야 합니다.'], 1, 'Swimming is fun. → 주어는 동명사'],
+    ['intermediate', 'I enjoy play soccer.', 'play', ['playing'], ['enjoy 뒤에는 동명사 playing을 씁니다.', 'I는 He여야 합니다.', 'soccer는 복수여야 합니다.'], 0, 'I enjoy playing soccer. → enjoy + -ing'],
+    ['intermediate', 'She is good at sing.', 'sing', ['singing'], ['She는 They여야 합니다.', 'is는 are여야 합니다.', '전치사 at 뒤에는 동명사 singing을 씁니다.'], 2, 'She is good at singing. → 전치사 + -ing'],
+  ],
+  questions: [
+    pc('Which sentence about swimming is correct?', '수영에 대한 올바른 문장을 고르세요.', 'basic', [['Swim is fun.', '수영하는 것은 재미있다.'], ['Swimming is fun.', '수영하는 것은 재미있다.'], ['Swimming are fun.', '수영하는 것은 재미있다.'], ['Swims is fun.', '수영하는 것은 재미있다.']], 1, '주어는 동명사 Swimming이고 단수 취급합니다.'),
+    pc('Which sentence about a hobby is correct?', '취미에 대한 올바른 문장을 고르세요.', 'basic', [['My hobby is read books.', '내 취미는 책을 읽는 것이다.'], ['My hobby is reads books.', '내 취미는 책을 읽는 것이다.'], ['My hobby is reading books.', '내 취미는 책을 읽는 것이다.'], ['My hobby reading books.', '내 취미는 책을 읽는 것이다.']], 2, '보어 자리에는 동명사를 씁니다.'),
+    pc('Which sentence about soccer is correct?', '축구에 대한 올바른 문장을 고르세요.', 'basic', [['I enjoy play soccer.', '나는 축구하는 것을 즐긴다.'], ['I enjoy plays soccer.', '나는 축구하는 것을 즐긴다.'], ['I enjoy to play soccer.', '나는 축구하는 것을 즐긴다.'], ['I enjoy playing soccer.', '나는 축구하는 것을 즐긴다.']], 3, 'enjoy 뒤에는 동명사만 씁니다.'),
+    pc('Which sentence about homework is correct?', '숙제에 대한 올바른 문장을 고르세요.', 'intermediate', [['She finished doing her homework.', '그녀는 숙제를 끝냈다.'], ['She finished do her homework.', '그녀는 숙제를 끝냈다.'], ['She finished to do her homework.', '그녀는 숙제를 끝냈다.'], ['She finished done her homework.', '그녀는 숙제를 끝냈다.']], 0, 'finish 뒤에는 동명사를 씁니다.'),
+    pc('Which sentence about singing is correct?', '노래에 대한 올바른 문장을 고르세요.', 'intermediate', [['She is good at sing.', '그녀는 노래를 잘한다.'], ['She is good at singing.', '그녀는 노래를 잘한다.'], ['She is good at to sing.', '그녀는 노래를 잘한다.'], ['She is good at sings.', '그녀는 노래를 잘한다.']], 1, '전치사 뒤에는 동명사를 씁니다.'),
+    pc('Choose the sentence in which the -ing word is NOT a gerund.', '-ing 단어가 동명사가 아닌 문장을 고르세요.', 'intermediate', [['Swimming is fun.', '수영하는 것은 재미있다.'], ['My hobby is reading books.', '내 취미는 책을 읽는 것이다.'], ['She is singing now.', '그녀는 지금 노래하고 있다.'], ['Thank you for helping me.', '나를 도와줘서 고마워.']], 2, '세 번째의 singing은 진행형(be + -ing)입니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['Eating breakfast is important.', '아침을 먹는 것은 중요하다.'], ['He left without saying goodbye.', '그는 작별 인사 없이 떠났다.'], ['Thank you for help me.', '나를 도와줘서 고마워.'], ['I enjoy playing soccer.', '나는 축구하는 것을 즐긴다.']], 2, '전치사 for 뒤에는 helping이어야 합니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① Swimming is fun.\n② I enjoy play soccer.\n③ She is good at singing.', 'basic', 1, '②만 틀렸고 enjoy playing이어야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① Swim is fun.\n② She finished doing her homework.\n③ Thank you for help me.\n④ My dream is travel around the world.', 'advanced', 3, '①은 Swimming, ③은 helping, ④는 traveling이어야 하므로 틀린 문장은 3개입니다.'),
+    pc('Why is the sentence "She is good at sing." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because She should be They.', 'She를 They로 바꿔야 해서'], ['Because is should be are.', 'is를 are로 바꿔야 해서'], ['Because good should be well.', 'good을 well로 바꿔야 해서'], ['Because a gerund is used after a preposition.', '전치사 뒤에는 동명사를 써야 해서']], 3, '전치사 뒤에는 동명사(-ing)를 씁니다.', 'reason'),
+  ],
+  popup: [['___ is fun.', 'Swimming', ['Swim', 'Swims'], '주어'], ['I enjoy ___ soccer.', 'playing', ['play', 'to play'], 'enjoy 뒤'], ['She is good at ___.', 'singing', ['sing', 'sings'], '전치사 뒤'], ['Thank you for ___ me.', 'helping', ['help', 'helps'], '전치사 뒤']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'Swim is fun.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['Swimming is fun.'], noteKo: '주어 자리에는 동명사를 씁니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'I enjoy play soccer.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['I enjoy playing soccer.'], noteKo: 'enjoy 뒤에는 동명사를 씁니다.' },
+  ],
+  top: ['동명사 = 동사원형 + -ing. 주어·보어·enjoy/finish/mind 뒤·전치사 뒤에 쓰고, 주어일 때는 단수 취급한다.', 'I enjoy playing soccer.', '나는 축구하는 것을 즐긴다.'],
+  lecture: [
+    { type: 'text', text: '동명사: 동사 + -ing', narration: '오늘은 동사에 [en]ing[/en]를 붙여 명사처럼 쓰는 동명사를 배워요.' },
+    { type: 'board', title: '주어', lines: ['[b]Swimming[/b] is fun. — 수영하는 것은 재미있다.', '[b]Reading books[/b] is good for you. — 책을 읽는 것은 너에게 좋다.', '동명사 주어 → 단수 취급'], narration: '주어 자리에서는 "~하는 것은"이라는 뜻이에요. [en]Swimming is fun.[/en] 수영하는 것은 재미있어요. 단수로 취급해서 [en]is[/en]를 써요.' },
+    { type: 'board', title: '보어', lines: ['My hobby is [b]reading[/b] books. — 내 취미는 책을 읽는 것이다.', 'His job is [b]teaching[/b] English. — 그의 직업은 영어를 가르치는 것이다.'], narration: '[en]be[/en]동사 뒤에서 주어를 설명해요. [en]My hobby is reading books.[/en] 내 취미는 책을 읽는 거예요.' },
+    { type: 'board', title: '목적어', lines: ['I enjoy [b]playing[/b] soccer. — 나는 축구하는 것을 즐긴다.', 'She finished [b]doing[/b] her homework. — 그녀는 숙제를 끝냈다.', 'enjoy, finish, mind + -ing'], narration: '[en]enjoy, finish, mind[/en] 뒤에는 동명사를 써요. [en]I enjoy playing soccer.[/en] 나는 축구하는 것을 즐겨요.' },
+    { type: 'board', title: '전치사 뒤', lines: ['She is good at [b]singing[/b]. — 그녀는 노래를 잘한다.', 'Thank you for [b]helping[/b] me. — 나를 도와줘서 고마워.'], narration: '전치사 뒤에도 동명사를 써요. [en]She is good at singing.[/en] 그녀는 노래를 잘해요. [en]Thank you for helping me.[/en] 나를 도와줘서 고마워요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× [b]Swim[/b] is fun. — 수영하는 것은 재미있다.', '× I enjoy [b]play[/b] soccer. — 나는 축구하는 것을 즐긴다.', '× She is good at [b]sing[/b]. — 그녀는 노래를 잘한다.'], narration: '동사원형을 그대로 쓰면 틀려요. 주어에는 [en]Swimming[/en], [en]enjoy[/en] 뒤에는 [en]playing[/en], 전치사 뒤에는 [en]singing[/en]이에요.' },
+    { type: 'text', text: '정리: 주어·보어·목적어·전치사 뒤 = -ing', narration: '정리할게요. 동명사는 동사원형에 [en]ing[/en]를 붙여요. 주어, 보어, 목적어, 전치사 뒤에서 명사처럼 써요.' },
+  ],
+});

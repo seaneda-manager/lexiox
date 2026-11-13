@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'tag-questions', topic: '부가의문문 - 1부', titleKo: '부가의문문: ~, isn\'t it?',
+  summaryEn: 'A tag question is a short question added to a sentence. A positive sentence gets a negative tag, and a negative sentence gets a positive tag.',
+  summaryKo: '부가의문문은 문장 끝에 붙이는 짧은 질문으로 "그렇지?"라는 뜻입니다. 긍정문에는 부정 꼬리, 부정문에는 긍정 꼬리를 붙입니다.',
+  rules: [
+    ['Positive sentence + negative tag: She is kind, isn\'t she?', '긍정문 뒤에는 부정형 꼬리를 붙입니다. (She is kind, isn\'t she?)'],
+    ['Negative sentence + positive tag: You don\'t like it, do you?', '부정문 뒤에는 긍정형 꼬리를 붙입니다. (You don\'t like it, do you?)'],
+    ['Use the same be verb, do/does/did, or helping verb as the sentence.', '꼬리의 동사는 본문의 be동사·do/does/did·조동사에 맞춥니다. (can → can\'t / likes → doesn\'t)'],
+    ['The tag subject is a pronoun: he, she, it, they, you.', '꼬리의 주어는 항상 대명사입니다. (Tom → he, the girls → they)'],
+  ],
+  examples: [['She is kind, isn\'t she?', '그녀는 친절하지, 그렇지 않니?'], ['You don\'t like pizza, do you?', '너는 피자를 좋아하지 않지, 그렇지?'], ['Tom can swim, can\'t he?', 'Tom은 수영할 수 있지, 그렇지 않니?']],
+  groups: [
+    ['be동사 문장', '본문의 be동사를 그대로.', [
+      ['She is kind, isn\'t she?', '그녀는 친절하지, 그렇지 않니?', 'is → isn\'t', '긍정문 뒤에는 부정 꼬리입니다.'],
+      ['You are tired, aren\'t you?', '너는 피곤하지, 그렇지 않니?', 'are → aren\'t', 'you 뒤에는 aren\'t you입니다.'],
+      ['He isn\'t at home, is he?', '그는 집에 없지, 그렇지?', 'isn\'t → is', '부정문 뒤에는 긍정 꼬리입니다.']]],
+    ['일반동사 문장', 'do / does / did를 씁니다.', [
+      ['You like pizza, don\'t you?', '너는 피자를 좋아하지, 그렇지 않니?', 'like → don\'t', '일반동사 현재는 do를 씁니다.'],
+      ['Tom likes music, doesn\'t he?', 'Tom은 음악을 좋아하지, 그렇지 않니?', 'likes → doesn\'t', '3인칭 단수는 doesn\'t입니다.'],
+      ['They went home, didn\'t they?', '그들은 집에 갔지, 그렇지 않니?', 'went → didn\'t', '과거는 didn\'t입니다.']]],
+    ['조동사 문장', '조동사를 그대로.', [
+      ['Tom can swim, can\'t he?', 'Tom은 수영할 수 있지, 그렇지 않니?', 'can → can\'t', '조동사를 반복합니다.'],
+      ['She will come, won\'t she?', '그녀는 올 거지, 그렇지 않니?', 'will → won\'t', '조동사를 반복합니다.'],
+      ['You can\'t drive, can you?', '너는 운전을 못하지, 그렇지?', 'can\'t → can', '부정문 뒤에는 긍정 꼬리입니다.']]],
+    ['부정문 뒤 긍정 꼬리', '반대로 붙입니다.', [
+      ['You don\'t like it, do you?', '너는 그것을 좋아하지 않지, 그렇지?', 'don\'t → do', '부정문 뒤에는 긍정 꼬리입니다.'],
+      ['She doesn\'t know, does she?', '그녀는 모르지, 그렇지?', 'doesn\'t → does', '부정문 뒤에는 긍정 꼬리입니다.'],
+      ['They didn\'t come, did they?', '그들은 오지 않았지, 그렇지?', 'didn\'t → did', '부정문 뒤에는 긍정 꼬리입니다.']]],
+  ],
+  wrong: [['She is kind, is she?', '긍정문 뒤는 부정 꼬리 → She is kind, isn\'t she? — 그녀는 친절하지, 그렇지 않니?', ''], ['Tom likes music, don\'t he?', '3인칭 단수 → Tom likes music, doesn\'t he? — Tom은 음악을 좋아하지, 그렇지 않니?', ''], ['You don\'t like it, don\'t you?', '부정문 뒤는 긍정 꼬리 → You don\'t like it, do you? — 너는 그것을 좋아하지 않지, 그렇지?', '']],
+  wrongNote: '긍정/부정을 반대로 하고, 본문의 동사에 맞춰 꼬리를 만듭니다.',
+  cram: '■ 핵심 요약\n긍정문 뒤에는 부정 꼬리, 부정문 뒤에는 긍정 꼬리를 붙이고, 동사는 본문에 맞춥니다.\n\n■ 규칙\n1. 긍정문 + 부정 꼬리 (She is kind, isn\'t she?).\n2. 부정문 + 긍정 꼬리 (You don\'t like it, do you?).\n3. be동사, do/does/did, 조동사를 본문에 맞춥니다.\n4. 꼬리의 주어는 대명사입니다.\n\n■ 예문 뜻\n그녀는 친절하지, 그렇지 않니?\n너는 피자를 좋아하지 않지, 그렇지?\nTom은 수영할 수 있지, 그렇지 않니?',
+  blanks: [['긍정문 뒤에는 ___ 꼬리를 붙입니다.', '부정', '두 글자'], ['부정문 뒤에는 ___ 꼬리를 붙입니다.', '긍정', '두 글자'], ['can 뒤 꼬리는 ___ he?입니다.', "can't", '조동사 반대'], ['꼬리의 주어는 ___입니다.', '대명사', '세 글자']],
+  fill: [
+    ['basic', 'She is kind, ___ she?', "isn't", ["isn't", 'is', "doesn't"], '그녀는 친절하지, 그렇지 않니?', '긍정문 뒤에는 부정 꼬리 isn\'t입니다.', 'is → ?'],
+    ['basic', 'You are tired, ___ you?', "aren't", ["don't", "aren't", 'are'], '너는 피곤하지, 그렇지 않니?', 'are 뒤에는 aren\'t you입니다.', 'are → ?'],
+    ['basic', 'You like pizza, ___ you?', "don't", ["don't", "aren't", 'do'], '너는 피자를 좋아하지, 그렇지 않니?', '일반동사 현재 긍정 뒤에는 don\'t입니다.', 'like → ?'],
+    ['intermediate', 'Tom likes music, ___ he?', "doesn't", ["don't", 'does', "doesn't"], 'Tom은 음악을 좋아하지, 그렇지 않니?', '3인칭 단수이므로 doesn\'t입니다.', 'likes → ?'],
+    ['intermediate', 'They went home, ___ they?', "didn't", ["didn't", "weren't", "don't"], '그들은 집에 갔지, 그렇지 않니?', '과거 일반동사이므로 didn\'t입니다.', 'went → ?'],
+    ['intermediate', 'Tom can swim, ___ he?', "can't", ["can", "doesn't", "can't"], 'Tom은 수영할 수 있지, 그렇지 않니?', '조동사 can의 반대는 can\'t입니다.', 'can → ?'],
+    ['advanced', "You don't like it, ___ you?", 'do', ['do', "don't", 'are'], '너는 그것을 좋아하지 않지, 그렇지?', '부정문 뒤에는 긍정 꼬리 do입니다.', '부정문 뒤'],
+    ['advanced', "He isn't at home, ___ he?", 'is', ["isn't", 'does', 'is'], '그는 집에 없지, 그렇지?', '부정문 뒤에는 긍정 꼬리 is입니다.', '부정문 뒤'],
+  ],
+  fix: [
+    ['basic', "You like pizza, aren't you?", "aren't", ["don't"], ['like는 likes여야 합니다.', '일반동사 현재 긍정문 뒤에는 don\'t 꼬리를 씁니다.', 'pizza는 복수여야 합니다.'], 1, "You like pizza, don't you? → 일반동사는 do 꼬리"],
+    ['intermediate', "Tom likes music, don't he?", "don't", ["doesn't"], ['likes는 like여야 합니다.', 'he는 they여야 합니다.', '3인칭 단수라서 doesn\'t를 씁니다.'], 2, "Tom likes music, doesn't he? → 3인칭 단수"],
+    ['intermediate', "She can swim, can't he?", 'he', ['she'], ['꼬리의 주어는 본문 주어와 같은 she여야 합니다.', "can't는 can이어야 합니다.", 'swim은 swims여야 합니다.'], 0, "She can swim, can't she? → 꼬리 주어 일치"],
+  ],
+  questions: [
+    pc('Which sentence about being kind is correct?', '친절함에 대한 올바른 문장을 고르세요.', 'basic', [['She is kind, is she?', '그녀는 친절하지, 그렇지 않니?'], ["She is kind, isn't she?", '그녀는 친절하지, 그렇지 않니?'], ["She is kind, don't she?", '그녀는 친절하지, 그렇지 않니?'], ["She is kind, isn't he?", '그녀는 친절하지, 그렇지 않니?']], 1, '긍정문 뒤에는 부정 꼬리 isn\'t she입니다.'),
+    pc('Which sentence about being tired is correct?', '피곤함에 대한 올바른 문장을 고르세요.', 'basic', [["You are tired, don't you?", '너는 피곤하지, 그렇지 않니?'], ['You are tired, are you?', '너는 피곤하지, 그렇지 않니?'], ["You are tired, aren't you?", '너는 피곤하지, 그렇지 않니?'], ["You are tired, isn't you?", '너는 피곤하지, 그렇지 않니?']], 2, 'are 뒤에는 aren\'t you입니다.'),
+    pc('Which sentence about pizza is correct?', '피자에 대한 올바른 문장을 고르세요.', 'basic', [["You like pizza, aren't you?", '너는 피자를 좋아하지, 그렇지 않니?'], ['You like pizza, do you?', '너는 피자를 좋아하지, 그렇지 않니?'], ["You like pizza, doesn't you?", '너는 피자를 좋아하지, 그렇지 않니?'], ["You like pizza, don't you?", '너는 피자를 좋아하지, 그렇지 않니?']], 3, '일반동사 현재 긍정 뒤에는 don\'t you입니다.'),
+    pc('Which sentence about music is correct?', '음악에 대한 올바른 문장을 고르세요.', 'intermediate', [["Tom likes music, doesn't he?", 'Tom은 음악을 좋아하지, 그렇지 않니?'], ["Tom likes music, don't he?", 'Tom은 음악을 좋아하지, 그렇지 않니?'], ["Tom likes music, isn't he?", 'Tom은 음악을 좋아하지, 그렇지 않니?'], ["Tom likes music, doesn't Tom?", 'Tom은 음악을 좋아하지, 그렇지 않니?']], 0, '3인칭 단수는 doesn\'t he이고 꼬리 주어는 대명사입니다.'),
+    pc('Which sentence about going home is correct?', '집에 간 일에 대한 올바른 문장을 고르세요.', 'intermediate', [["They went home, weren't they?", '그들은 집에 갔지, 그렇지 않니?'], ["They went home, didn't they?", '그들은 집에 갔지, 그렇지 않니?'], ["They went home, don't they?", '그들은 집에 갔지, 그렇지 않니?'], ['They went home, did they?', '그들은 집에 갔지, 그렇지 않니?']], 1, '과거 일반동사 긍정 뒤에는 didn\'t they입니다.'),
+    pc('Choose the sentence whose tag is a POSITIVE tag.', '꼬리가 긍정형인 문장을 고르세요.', 'intermediate', [["She is kind, isn't she?", '그녀는 친절하지, 그렇지 않니?'], ["Tom can swim, can't he?", 'Tom은 수영할 수 있지, 그렇지 않니?'], ["You don't like it, do you?", '너는 그것을 좋아하지 않지, 그렇지?'], ["They went home, didn't they?", '그들은 집에 갔지, 그렇지 않니?']], 2, '부정문 뒤에는 긍정 꼬리가 옵니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [["She will come, won't she?", '그녀는 올 거지, 그렇지 않니?'], ["They didn't come, did they?", '그들은 오지 않았지, 그렇지?'], ["You can't drive, can't you?", '너는 운전을 못하지, 그렇지?'], ["He isn't at home, is he?", '그는 집에 없지, 그렇지?']], 2, '부정문 뒤에는 긍정 꼬리 can you여야 합니다.', 'pick_different'),
+    cw("How many sentences are wrong?\n① She is kind, isn't she?\n② Tom likes music, don't he?\n③ You are tired, aren't you?", 'basic', 1, "②만 틀렸고 doesn't he여야 하므로 틀린 문장은 1개입니다."),
+    cw("How many sentences are wrong?\n① She is kind, is she?\n② You don't like it, don't you?\n③ Tom can swim, can't he?\n④ They went home, didn't they?", 'advanced', 2, "①은 isn't she, ②는 do you여야 하므로 틀린 문장은 2개입니다."),
+    pc("Why is the sentence \"She is kind, is she?\" wrong?", '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because she should be he.', 'she를 he로 바꿔야 해서'], ['Because kind should be kindly.', 'kind를 kindly로 바꿔야 해서'], ['Because the tag should be isn\'t she.', '꼬리가 isn\'t she인 부정형이어야 해서'], ['Because is should be are.', 'is를 are로 바꿔야 해서']], 2, '긍정문 뒤에는 부정형 꼬리를 붙입니다.', 'reason'),
+  ],
+  popup: [["She is kind, ___ she?", "isn't", ['is', "don't"], 'is'], ["Tom likes music, ___ he?", "doesn't", ["don't", 'does'], 'likes'], ["Tom can swim, ___ he?", "can't", ['can', "doesn't"], 'can'], ["You don't like it, ___ you?", 'do', ["don't", 'are'], '부정문']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'She is kind, is she?', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ["She is kind, isn't she?"], noteKo: '긍정문 뒤에는 부정 꼬리를 붙입니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: "Tom likes music, don't he?", promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ["Tom likes music, doesn't he?"], noteKo: '3인칭 단수는 doesn\'t입니다.' },
+  ],
+  top: ['긍정문 + 부정 꼬리, 부정문 + 긍정 꼬리. 본문의 be동사·do·조동사에 맞추고 꼬리 주어는 대명사로 쓴다.', "She is kind, isn't she?", '그녀는 친절하지, 그렇지 않니?'],
+  lecture: [
+    { type: 'text', text: '부가의문문', narration: '오늘은 그렇지 하고 확인하는 부가의문문을 배워요.' },
+    { type: 'board', title: '긍정문 + 부정 꼬리', lines: ["She is kind, [b]isn't she[/b]? — 그녀는 친절하지, 그렇지 않니?", "You are tired, [b]aren't you[/b]? — 너는 피곤하지, 그렇지 않니?"], narration: "긍정문 뒤에는 부정형 꼬리를 붙여요. [en]She is kind, isn't she?[/en] 그녀는 친절하지, 그렇지 않니? [en]You are tired, aren't you?[/en] 너는 피곤하지, 그렇지 않니?" },
+    { type: 'board', title: '일반동사 문장', lines: ["You like pizza, [b]don't you[/b]? — 너는 피자를 좋아하지, 그렇지 않니?", "Tom likes music, [b]doesn't he[/b]? — Tom은 음악을 좋아하지, 그렇지 않니?", "They went home, [b]didn't they[/b]? — 그들은 집에 갔지, 그렇지 않니?"], narration: "일반동사는 [en]do, does, did[/en]를 써요. [en]Tom likes music, doesn't he?[/en] [en]Tom[/en]은 음악을 좋아하지, 그렇지 않니? 꼬리의 주어는 대명사예요." },
+    { type: 'board', title: '조동사 문장', lines: ["Tom can swim, [b]can't he[/b]? — Tom은 수영할 수 있지, 그렇지 않니?", "She will come, [b]won't she[/b]? — 그녀는 올 거지, 그렇지 않니?"], narration: "조동사는 그대로 반복해요. [en]Tom can swim, can't he?[/en] [en]Tom[/en]은 수영할 수 있지, 그렇지 않니?" },
+    { type: 'board', title: '부정문 + 긍정 꼬리', lines: ["You don't like it, [b]do you[/b]? — 너는 그것을 좋아하지 않지, 그렇지?", "He isn't at home, [b]is he[/b]? — 그는 집에 없지, 그렇지?", '부정문 → 긍정 꼬리'], narration: "부정문 뒤에는 긍정형 꼬리를 붙여요. [en]You don't like it, do you?[/en] 너는 그것을 좋아하지 않지, 그렇지?" },
+    { type: 'board', title: '자주 틀리는 문장', lines: ["× She is kind, [b]is she[/b]? — 그녀는 친절하지, 그렇지 않니?", "× Tom likes music, [b]don't he[/b]? — Tom은 음악을 좋아하지, 그렇지 않니?", "× You don't like it, [b]don't you[/b]? — 너는 그것을 좋아하지 않지, 그렇지?"], narration: "긍정문 뒤에 긍정 꼬리를 붙이면 틀려요. [en]doesn't he[/en]처럼 주어에 맞춰요. 부정문 뒤에는 [en]do you[/en]처럼 긍정 꼬리예요." },
+    { type: 'text', text: '정리: 긍정 → 부정 꼬리 / 부정 → 긍정 꼬리', narration: '정리할게요. 긍정문 뒤에는 부정 꼬리, 부정문 뒤에는 긍정 꼬리예요. 동사는 본문에 맞춰요.' },
+  ],
+});
