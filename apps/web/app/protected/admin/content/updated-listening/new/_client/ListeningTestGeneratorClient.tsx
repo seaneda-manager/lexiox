@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { LListeningTest2026Linear, LListeningTrack2026 } from "@/models/listening";
-import { validateAndShuffleIfNeeded } from "@/lib/utils/validateAnswerDistribution";
+import { shuffleChoicesAndSummarize } from "@/lib/utils/validateAnswerDistribution";
 
 type Phase = "input" | "generating" | "edit" | "saving" | "locked";
 
@@ -476,84 +476,17 @@ export default function ListeningTestGeneratorClient() {
       };
     });
 
-  const extractListeningAnswers = (data: any): string[] => {
-    const answers: string[] = [];
-    const traverse = (obj: any): void => {
-      if (!obj) return;
-      if (obj.questions && Array.isArray(obj.questions)) {
-        obj.questions.forEach((q: any) => {
-          if (q.choices && Array.isArray(q.choices)) {
-            const correct = q.choices.find((c: any) => c.correct);
-            if (correct?.id) {
-              const letter = extractChoiceLetter(correct.id);
-              answers.push(letter);
-            }
-          }
-        });
-      }
-      if (obj.items && Array.isArray(obj.items)) {
-        obj.items.forEach((item: any) => traverse(item));
-      }
-      if (obj.modules && Array.isArray(obj.modules)) {
-        obj.modules.forEach((mod: any) => traverse(mod));
-      }
-    };
-    traverse(data);
-    return answers;
-  };
-
-  const extractChoiceLetter = (choiceId: string): string => {
-    const match = choiceId.match(/(\d+)/);
-    if (!match) return 'A';
-    const num = parseInt(match[1], 10);
-    return String.fromCharCode(64 + num); // 1→A, 2→B, 3→C, 4→D
-  };
-
-  const applyShuffledListeningAnswers = (data: any, shuffledAnswers: string[]): void => {
-    let answerIndex = 0;
-    const traverse = (obj: any): void => {
-      if (!obj) return;
-      if (obj.questions && Array.isArray(obj.questions)) {
-        obj.questions.forEach((q: any) => {
-          if (q.choices && Array.isArray(q.choices)) {
-            if (answerIndex < shuffledAnswers.length) {
-              const newCorrectAnswer = shuffledAnswers[answerIndex++];
-              q.choices.forEach((c: any) => {
-                const choiceLetter = extractChoiceLetter(c.id);
-                c.correct = choiceLetter === newCorrectAnswer;
-              });
-            }
-          }
-        });
-      }
-      if (obj.items && Array.isArray(obj.items)) {
-        obj.items.forEach((item: any) => traverse(item));
-      }
-      if (obj.modules && Array.isArray(obj.modules)) {
-        obj.modules.forEach((mod: any) => traverse(mod));
-      }
-    };
-    traverse(data);
-  };
-
+  // 정답 위치 셔플: 보기 텍스트와 정답 표시를 함께 옮긴다(글자만 재배정하면 정답이 틀어짐).
   const handleShuffle = useCallback(() => {
     if (!test) return;
     setError(null);
     try {
-      const answers = extractListeningAnswers(test);
-      const { answers: shuffledAnswers, wasShuffled, validation } = validateAndShuffleIfNeeded(answers);
-
-      if (wasShuffled) {
-        setTest((prev) => {
-          if (!prev) return prev;
-          const next = structuredClone(prev) as typeof test;
-          if (next) applyShuffledListeningAnswers(next, shuffledAnswers);
-          return next;
-        });
-        setError(`✅ Shuffled: ${validation.distribution.A}A/${validation.distribution.B}B/${validation.distribution.C}C/${validation.distribution.D}D`);
-      } else {
-        setError(`✅ Already random: ${validation.distribution.A}A/${validation.distribution.B}B/${validation.distribution.C}C/${validation.distribution.D}D`);
-      }
+      const next = structuredClone(test) as typeof test;
+      const { before, after } = shuffleChoicesAndSummarize(next);
+      setTest(next);
+      setError(
+        `✅ Shuffled: ${before.A}A/${before.B}B/${before.C}C/${before.D}D → ${after.A}A/${after.B}B/${after.C}C/${after.D}D`
+      );
     } catch (e: any) {
       setError(`❌ Error: ${e?.message ?? 'Unknown error'}`);
     }

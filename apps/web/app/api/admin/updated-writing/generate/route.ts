@@ -3,9 +3,10 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { randomUUID } from 'crypto';
+import { logAnthropicUsage } from '@/lib/ai/logAnthropicUsage';
 
 export const runtime = 'nodejs';
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || 'placeholder' });
 
@@ -150,16 +151,46 @@ Return ONLY valid JSON, no markdown, no explanation:
   ]
 }`;
 
-    const message = await client.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 7500,
-      messages: [{ role: 'user', content: prompt }],
-    });
+    // 구조 검증 — Build a Sentence는 정답이 토큰 id 배열이라 어긋나면 채점이 불가능해진다.
+    const check = (pl: any): string[] => {
+      const issues: string[] = [];
+      const bs = pl?.items?.find((t: any) => t.taskKind === 'build_a_sentence');
+      if (!Array.isArray(bs?.questions) || bs.questions.length !== 10) issues.push(`build_a_sentence needs exactly 10 questions (got ${bs?.questions?.length ?? 0})`);
+      (bs?.questions ?? []).forEach((q: any) => {
+        const ids: string[] = (q.tokens ?? []).map((t: any) => t.id);
+        const order: string[] = q.correctOrder ?? [];
+        if (ids.length < 4 || ids.length > 9) issues.push(`${q.id}: ${ids.length} tokens (need 5-8)`);
+        if (new Set(ids).size !== ids.length) issues.push(`${q.id}: duplicate token ids`);
+        if (order.length !== ids.length || order.some((id) => !ids.includes(id)) || new Set(order).size !== order.length)
+          issues.push(`${q.id}: correctOrder must contain every token id exactly once`);
+      });
+      if (!pl?.items?.some((t: any) => t.taskKind === 'email')) issues.push('missing email task');
+      const ad = pl?.items?.find((t: any) => t.taskKind === 'academic_discussion');
+      if (!ad || (ad.studentPosts?.length ?? 0) !== 2) issues.push('academic_discussion needs exactly 2 studentPosts');
+      return issues;
+    };
 
-    const raw = (message.content[0] as { type: string; text: string }).text.trim();
-    const jsonStart = raw.indexOf('{');
-    const jsonEnd = raw.lastIndexOf('}');
-    const payload = JSON.parse(raw.slice(jsonStart, jsonEnd + 1));
+    let payload: any = null;
+    let issues: string[] = [];
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      const retryNote = attempt > 1 ? `\n\nYour previous answer failed validation: ${issues.join('; ')}. Fix these and return the full JSON again.` : '';
+      const message = await client.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 7500,
+        messages: [{ role: 'user', content: prompt + retryNote }],
+      });
+      void logAnthropicUsage('admin/updated-writing/generate', 'claude-sonnet-4-6', message.usage);
+
+      const raw = (message.content[0] as { type: string; text: string }).text.trim();
+      const jsonStart = raw.indexOf('{');
+      const jsonEnd = raw.lastIndexOf('}');
+      payload = JSON.parse(raw.slice(jsonStart, jsonEnd + 1));
+      issues = check(payload);
+      if (issues.length === 0) break;
+    }
+    if (issues.length > 0) {
+      return NextResponse.json({ ok: false, error: `Writing 생성 검증 실패 (3회 재시도 후): ${issues.join('; ')}` }, { status: 500 });
+    }
 
     const id = randomUUID();
     payload.meta.id = id;

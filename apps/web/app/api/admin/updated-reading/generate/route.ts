@@ -13,6 +13,14 @@ import { findBlankCountIssues } from '@/lib/utils/ensureCompleteWordsBlanks';
 export const runtime = 'nodejs';
 export const maxDuration = 300;
 
+const READING_QUALITY_RULES = `QUALITY RULES (ETS item-writer standards):
+- Daily life passages must be varied REAL-WORLD text types, not all campus notices: e.g. email thread, text-message chain, flyer/advertisement, menu or price list, schedule/timetable, product/service policy, social-media post, short web article. Do NOT make every daily-life passage a campus administrative notice about deadlines or schedule changes.
+- Each question must have exactly ONE defensible answer that is directly supported by a sentence in the passage. Never ask something the passage does not answer.
+- Wrong options must be plausible: reuse words from the passage in a wrong context, state a true-but-irrelevant detail, over-generalize, or reverse a relationship. Never use "all of the above"/"none of the above"; keep the four options similar in length and grammar.
+- Vary question stems (do NOT start every stem with "According to the passage"): mix main idea, detail, negative factual ("is NOT mentioned"), inference, vocabulary-in-context, rhetorical purpose, and reference questions.
+- Academic passage: 180-260 words, one clear paragraph structure with a topic sentence, evidence and a nuance/limitation; do not open every passage with a textbook definition "X is a ...".
+- Vary the opening sentence of every passage; do not reuse a template.`;
+
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || 'placeholder' });
 
 export async function POST(req: Request) {
@@ -127,7 +135,8 @@ async function generateModule1({
     const { data: existingTests } = await supabase
       .from('reading_tests_2026')
       .select('payload')
-      .limit(100);
+      .order('created_at', { ascending: false })
+      .limit(60);
 
     const existingTopics: string[] = [];
     if (existingTests) {
@@ -143,10 +152,7 @@ async function generateModule1({
       }
     }
 
-    // 현재 M1 주제도 제외 목록에 추가
-    const allTopics = [cwTopicM1, dailyLifeTopic1, dailyLifeTopic2, dailyLifeTopic3, academicTopicM1]
-      .filter(Boolean);
-    existingTopics.push(...allTopics);
+    // (주의) 지금 배정된 주제를 기피 목록에 넣으면 프롬프트가 "이 주제를 쓰라"와 "쓰지 마라"를 동시에 말하게 된다.
 
     const prompt = `You are an expert Updated TOEFL iBT 2026 content creator. Generate ONLY Module 1 of an Adaptive Reading test JSON.
 
@@ -154,6 +160,11 @@ CRITICAL: Generate ALL THREE types of passages:
 1. complete_words (1 passage, EXACTLY 10 blanks following ETS patterns)
 2. daily_life (2-3 SEPARATE passages, 2-3 questions each)
 3. academic_passage (1 passage, 5 questions)
+
+AVOID REPEATING THESE (already used in earlier tests — different subject, scenario and wording; do not reuse their names, settings or storylines):
+${Array.from(new Set(existingTopics)).slice(0, 80).map((t) => `- ${t}`).join('\n') || '(none)'}
+
+${READING_QUALITY_RULES}
 
 TOPICS:
 - Complete Words: "${cwTopicM1}"
@@ -346,7 +357,8 @@ async function generateModule2({
     const { data: existingTests } = await supabase
       .from('reading_tests_2026')
       .select('payload')
-      .limit(100);
+      .order('created_at', { ascending: false })
+      .limit(60);
 
     const existingTopics: string[] = [];
     if (existingTests) {
@@ -369,9 +381,10 @@ async function generateModule2({
 
 CRITICAL: Generate ONLY Module 2 (stage2Pool) JSON. Do NOT include Module 1.
 
-AVOID DUPLICATE TOPICS:
-Module 1 Topics (DO NOT REUSE):
-${m1UsedTopics.map(t => `- ${t}`).join('\n')}
+AVOID DUPLICATE TOPICS (Module 1 of this test + earlier tests — do not reuse their subjects, settings or storylines):
+${Array.from(new Set(excludedTopics)).slice(0, 80).map(t => `- ${t}`).join('\n')}
+
+${READING_QUALITY_RULES}
 
 GENERATE Module 2 with TWO branches:
 - hard: complete_words (EXACTLY 10 blanks, ETS style) + academic_passage (5 questions)

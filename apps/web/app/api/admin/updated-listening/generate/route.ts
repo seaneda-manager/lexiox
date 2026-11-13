@@ -6,13 +6,15 @@ import { randomUUID } from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 import { shuffleAllChoicesInPayload } from '@/lib/utils/validateAnswerDistribution';
 import { logAnthropicUsage } from '@/lib/ai/logAnthropicUsage';
+import { verifyListeningQuestions } from '@/lib/listening/questionQA';
+import { buildChooseResponseDiversityBlock, collectChooseResponseUtterances } from '@/lib/listening/diversity';
 
 // 오디오는 이 라우트에서 생성하지 않는다 (스크립트/문제만 생성).
 // 실제 TTS 생성은 admin이 edit 페이지에서 트랙별로 트리거하는
 // /api/admin/updated-listening/generate-audio 엔드포인트 한 곳에서만 처리한다.
 
 export const runtime = 'nodejs';
-export const maxDuration = 120;
+export const maxDuration = 300; // 생성 3병렬 + 정답 블라인드 검증
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || 'placeholder' });
 
@@ -473,11 +475,16 @@ Return ONLY a valid JSON object:
 ${RESPONSE_FORMAT_CRITICAL}`;
 }
 
-async function generateModule(part: 'module1' | 'hard' | 'easy', topics: ModuleTopics, existingTopics: string[] = []) {
-  const prompt =
+async function generateModule(part: 'module1' | 'hard' | 'easy', topics: ModuleTopics, existingTopics: string[] = [], avoidUtterances: string[] = []) {
+  const basePrompt =
     part === 'module1' ? buildModule1Prompt(topics, existingTopics) :
     part === 'hard' ? buildHardPrompt(topics, existingTopics) :
     buildEasyPrompt(topics, existingTopics);
+  // Task 1 소재 강제 배정(+기존 발화 기피). 응답 형식 지시 앞에 끼워 넣어 JSON 규칙이 마지막에 오게 한다.
+  const seedCount = part === 'hard' ? 5 : 7;
+  const diversity = buildChooseResponseDiversityBlock(seedCount, avoidUtterances);
+  const fmtIdx = basePrompt.indexOf('## RESPONSE FORMAT');
+  const prompt = fmtIdx > 0 ? basePrompt.slice(0, fmtIdx) + diversity + '\n---\n\n' + basePrompt.slice(fmtIdx) : basePrompt + diversity;
 
   const message = await anthropic.messages.create({
     model: 'claude-sonnet-4-6',
@@ -549,7 +556,8 @@ export async function POST(req: Request) {
     const { data: existingTests } = await supabase
       .from('listening_tests_2026')
       .select('payload')
-      .limit(100);
+      .order('created_at', { ascending: false })
+      .limit(60);
 
     const existingTopics: string[] = [];
     if (existingTests) {
@@ -566,14 +574,8 @@ export async function POST(req: Request) {
       }
     }
 
-    // Add current input topics to avoid list
-    const allCurrentTopics = [
-      module1.conversationTopic, module1.announcementTopic, module1.lectureTopic1,
-      module2.conversationTopic, module2.conversationTopic2, module2.conversationTopic3,
-      module2.announcementTopic, module2.announcementTopic2,
-      module2.lectureTopic1, module2.lectureTopic2,
-    ].filter(Boolean);
-    existingTopics.push(...allCurrentTopics);
+    // (주의) 이번에 배정된 주제를 기피 목록에 넣으면 프롬프트가 "이 주제로 써라"와 "쓰지 마라"를 동시에 말한다 → 넣지 않는다.
+    const avoidUtterances = collectChooseResponseUtterances((existingTests ?? []).map((t: any) => t.payload), 40);
 
     // Generate Module 1, Module 2 Hard, and Module 2 Easy in parallel
     const [module1Items, hardItems, easyItems] = await Promise.all([
@@ -581,20 +583,20 @@ export async function POST(req: Request) {
         conversationTopic: module1.conversationTopic,
         announcementTopic: module1.announcementTopic,
         lectureTopic1: module1.lectureTopic1,
-      }, existingTopics),
+      }, existingTopics, avoidUtterances),
       generateModule('hard', {
         announcementTopic: module2.announcementTopic,
         announcementTopic2: module2.announcementTopic2,
         lectureTopic1: module2.lectureTopic1,
         lectureTopic2: module2.lectureTopic2,
-      }, existingTopics),
+      }, existingTopics, avoidUtterances),
       generateModule('easy', {
         conversationTopic: module2.conversationTopic,
         conversationTopic2: module2.conversationTopic2,
         conversationTopic3: module2.conversationTopic3,
         announcementTopic: module2.announcementTopic,
         announcementTopic2: module2.announcementTopic2,
-      }, existingTopics),
+      }, existingTopics, avoidUtterances),
     ]);
 
     console.log(`[Generate] Items received — module1: ${module1Items.length}, hard: ${hardItems.length}, easy: ${easyItems.length}`);
@@ -641,6 +643,14 @@ export async function POST(req: Request) {
     let hardTracks = buildTracks(hardItems, 'm2h');
     let easyTracks = buildTracks(easyItems, 'm2e');
 
+    // ✅ 정답 블라인드 검증(스크립트만 보고 다시 풀어 키와 대조). 실패해도 생성은 성공 처리.
+    let qa: unknown = null;
+    try {
+      qa = await verifyListeningQuestions([module1Tracks, hardTracks, easyTracks], anthropic);
+    } catch (e) {
+      console.error('[Listening QA] verify failed', e);
+    }
+
     const payload = {
       meta: {
         id: testId,
@@ -674,7 +684,7 @@ export async function POST(req: Request) {
       }
     };
 
-    return NextResponse.json({ ok: true, id: testId, payload });
+    return NextResponse.json({ ok: true, id: testId, payload, qa });
   } catch (err: any) {
     console.error('LISTENING GENERATE ERROR', err);
     return NextResponse.json({ ok: false, error: err?.message ?? 'Unknown error' }, { status: 500 });

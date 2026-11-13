@@ -271,3 +271,52 @@ export function validateAndShuffleIfNeeded(aiGeneratedAnswers: string[]): {
     validation: reValidation,
   };
 }
+
+/**
+ * payload(모듈1/모듈2 pool/items 배열) 안 모든 문항의 "정답 위치"(A/B/C/D)를 순서대로 수집한다.
+ * 선택지 id 숫자(c1..c4)가 아니라 배열 위치로 계산하므로 id가 "A"~"D"(Reading)든 "c1"~"c4"(Listening)든 동일하게 동작한다.
+ * isCorrect(Reading) / correct(Listening) 어느 쪽이든 인식한다. 정답 표시가 없는 문항은 건너뛴다.
+ */
+export function collectCorrectLetters(payload: unknown): string[] {
+  const letters: string[] = [];
+  function walk(obj: any): void {
+    if (!obj || typeof obj !== "object") return;
+    if (Array.isArray(obj)) {
+      obj.forEach(walk);
+      return;
+    }
+    if (Array.isArray(obj.questions)) {
+      obj.questions.forEach((q: any) => {
+        if (!Array.isArray(q?.choices)) return;
+        const idx = q.choices.findIndex((c: any) => c?.isCorrect === true || c?.correct === true);
+        if (idx >= 0 && idx < 4) letters.push("ABCD"[idx]);
+      });
+    }
+    if (Array.isArray(obj.items)) obj.items.forEach(walk);
+    if (Array.isArray(obj.modules)) obj.modules.forEach(walk);
+    if (obj.stage2Pool) {
+      walk(obj.stage2Pool.hard);
+      walk(obj.stage2Pool.easy);
+    }
+  }
+  walk(payload);
+  return letters;
+}
+
+/**
+ * 관리자 편집 화면의 "셔플" 버튼용. 선택지 글자만 재배정하면 정답 표시가 엉뚱한 보기로 옮겨가
+ * 정답이 틀어진다(예전 버그). 반드시 보기 텍스트와 정답 표시를 함께 옮기는 shuffleAllChoicesInPayload를 쓴다.
+ * 반환: 셔플 전/후 정답 위치 분포 요약.
+ */
+export function shuffleChoicesAndSummarize(payload: unknown): { before: AnswerDistribution; after: AnswerDistribution } {
+  const count = (arr: string[]): AnswerDistribution => ({
+    A: arr.filter((x) => x === "A").length,
+    B: arr.filter((x) => x === "B").length,
+    C: arr.filter((x) => x === "C").length,
+    D: arr.filter((x) => x === "D").length,
+  });
+  const before = count(collectCorrectLetters(payload));
+  shuffleAllChoicesInPayload(payload);
+  const after = count(collectCorrectLetters(payload));
+  return { before, after };
+}

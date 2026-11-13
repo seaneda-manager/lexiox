@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { RReadingTest2026 } from "@/models/reading";
-import { validateAndShuffleIfNeeded } from "@/lib/utils/validateAnswerDistribution";
+import { shuffleChoicesAndSummarize } from "@/lib/utils/validateAnswerDistribution";
 
 type Props = {
   initialId: string;
@@ -57,94 +57,16 @@ export default function ReadingTestEditorClient({
   }
 
   // Choice ID에서 선택지 글자(A/B/C/D) 추출
-  function extractChoiceLetter(choiceId: string): string {
-    const match = choiceId.match(/(\d+)/);
-    if (!match) return 'A';
-    const num = parseInt(match[1], 10);
-    return String.fromCharCode(64 + num); // 1→A, 2→B, 3→C, 4→D
-  }
-
-  // 정답 추출 헬퍼
-  function extractAnswers(data: any): string[] {
-    const answers: string[] = [];
-
-    function traverse(obj: any): void {
-      if (!obj) return;
-
-      if (obj.questions && Array.isArray(obj.questions)) {
-        obj.questions.forEach((q: any) => {
-          if (q.choices && Array.isArray(q.choices)) {
-            const correct = q.choices.find((c: any) => c.isCorrect);
-            if (correct?.id) {
-              const letter = extractChoiceLetter(correct.id);
-              answers.push(letter);
-            }
-          }
-        });
-      }
-
-      if (obj.items && Array.isArray(obj.items)) {
-        obj.items.forEach((item: any) => traverse(item));
-      }
-
-      if (obj.modules && Array.isArray(obj.modules)) {
-        obj.modules.forEach((mod: any) => traverse(mod));
-      }
-    }
-
-    traverse(data);
-    return answers;
-  }
-
-  // 셔플된 정답 적용 헬퍼
-  function applyShuffledAnswers(data: any, shuffledAnswers: string[]): any {
-    let answerIndex = 0;
-
-    function traverse(obj: any): void {
-      if (!obj) return;
-
-      if (obj.questions && Array.isArray(obj.questions)) {
-        obj.questions.forEach((q: any) => {
-          if (q.choices && Array.isArray(q.choices)) {
-            if (answerIndex < shuffledAnswers.length) {
-              const newCorrectAnswer = shuffledAnswers[answerIndex++];
-              q.choices.forEach((c: any) => {
-                const choiceLetter = extractChoiceLetter(c.id);
-                c.isCorrect = choiceLetter === newCorrectAnswer;
-              });
-            }
-          }
-        });
-      }
-
-      if (obj.items && Array.isArray(obj.items)) {
-        obj.items.forEach((item: any) => traverse(item));
-      }
-
-      if (obj.modules && Array.isArray(obj.modules)) {
-        obj.modules.forEach((mod: any) => traverse(mod));
-      }
-    }
-
-    traverse(data);
-    return data;
-  }
-
+  // 정답 위치 셔플: 보기 텍스트와 정답 표시를 함께 옮긴다(글자만 재배정하면 정답이 틀어짐).
   async function handleShuffle() {
     setStatus(null);
     try {
-      const answers = extractAnswers(payload);
-      const { answers: shuffledAnswers, wasShuffled, validation } = validateAndShuffleIfNeeded(answers);
-
-      if (wasShuffled) {
-        setPayload((prev) => {
-          const next = structuredClone(prev) as RReadingTest2026;
-          return applyShuffledAnswers(next, shuffledAnswers);
-        });
-        setStatus(`✅ Shuffled: ${validation.distribution.A}A/${validation.distribution.B}B/${validation.distribution.C}C/${validation.distribution.D}D`);
-      } else {
-        setStatus(`✅ Already random: ${validation.distribution.A}A/${validation.distribution.B}B/${validation.distribution.C}C/${validation.distribution.D}D`);
-      }
+      const next = structuredClone(payload) as RReadingTest2026;
+      const { before, after } = shuffleChoicesAndSummarize(next);
+      setPayload(next);
+      setStatus(
+        `✅ Shuffled: ${before.A}A/${before.B}B/${before.C}C/${before.D}D → ${after.A}A/${after.B}B/${after.C}C/${after.D}D`
+      );
     } catch (e: any) {
       setStatus(`❌ Error: ${e?.message ?? 'Unknown error'}`);
     }

@@ -41,6 +41,19 @@ export function findBlankCountIssues(payload: unknown): string[] {
       const n = Array.isArray(obj.blanks) ? obj.blanks.length : 0;
       if (n !== 10) issues.push(`${path} (${obj.id ?? "no-id"}): blanks 배열=${n}개 (10개 필요)`);
 
+      // 빈칸 한 개마다 word === visible + hidden, correctToken === hidden 이어야 채점·표시가 일치한다.
+      // (필드가 있는 경우에만 검사 — 구형 저장 포맷은 건드리지 않는다.)
+      if (Array.isArray(obj.blanks)) {
+        for (const b of obj.blanks) {
+          if (typeof b?.word === "string" && typeof b?.visible === "string" && typeof b?.hidden === "string") {
+            if (b.visible + b.hidden !== b.word)
+              issues.push(`${path} (${obj.id ?? "no-id"}): blank ${b.order} "${b.visible}"+"${b.hidden}" != "${b.word}"`);
+            if (b.correctToken != null && b.correctToken !== b.hidden)
+              issues.push(`${path} (${obj.id ?? "no-id"}): blank ${b.order} correctToken != hidden`);
+          }
+        }
+      }
+
       const html: string = obj.paragraphHtml ?? obj.passage ?? "";
       const markerCount = countBlankMarkers(html);
       if (markerCount !== n) {

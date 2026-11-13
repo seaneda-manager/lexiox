@@ -10,6 +10,14 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || 'plac
 
 type TopicKind = 'complete_words' | 'daily_life' | 'academic';
 
+const ACADEMIC_FIELDS = ['astronomy', 'marine biology', 'ancient history', 'economics', 'linguistics', 'architecture', 'psychology', 'geology', 'music history', 'public health', 'anthropology', 'materials science', 'art history', 'ecology', 'philosophy of science', 'urban planning', 'agriculture', 'neuroscience', 'archaeology', 'sociology', 'meteorology', 'literature', 'robotics', 'nutrition science'];
+const DAILY_FORMATS = ['email thread between neighbors', 'text-message chain among friends planning a trip', 'restaurant or cafe menu with prices', 'gym or club flyer', 'apartment listing', 'product warranty/return policy', 'bus or train timetable notice', 'social-media post from a local business', 'online store order confirmation', 'volunteer sign-up sheet', 'museum visitor guide', 'job posting for a part-time position'];
+
+function pickFields(kind: TopicKind): string[] {
+  const pool = kind === 'daily_life' ? DAILY_FORMATS : ACADEMIC_FIELDS;
+  return [...pool].sort(() => Math.random() - 0.5).slice(0, 5);
+}
+
 async function suggestTopics(kind: TopicKind, existingTopics: string[]): Promise<string[]> {
   const kindLabel: Record<TopicKind, string> = {
     complete_words: 'a short academic paragraph used for a vocabulary/spelling cloze exercise',
@@ -24,7 +32,7 @@ ${existingTopics.length > 0 ? existingTopics.map(t => `- ${t}`).join('\n') : '(n
 
 Requirements:
 - Each topic should be 3-8 words, specific and realistic
-- Vary across different fields (STEM, humanities, social sciences, campus life, etc.)
+- Spread the ideas over these assigned fields (one idea per field): ${pickFields(kind).join('; ')}
 - Make them diverse and interesting for college students
 - Return ONLY a JSON array of strings, no markdown or explanations
 - Example format: ["Library checkout system", "Coral reef bleaching", "Student housing lottery"]
@@ -43,7 +51,9 @@ Generate ${Math.max(4, 5 - existingTopics.length)} new topic suggestions:`;
   }
 
   try {
-    const topics = JSON.parse(content.text);
+    // Claude가 ```json 펜스나 앞뒤 설명을 붙여도 배열만 뽑아 파싱한다.
+    const m = content.text.match(/\[[\s\S]*\]/);
+    const topics = JSON.parse(m ? m[0] : content.text);
     if (!Array.isArray(topics)) throw new Error('Expected array of topics');
     return topics.filter((t) => typeof t === 'string' && t.trim().length > 0);
   } catch {
