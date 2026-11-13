@@ -1,0 +1,76 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'help-get', topic: 'help · get 5형식 - 1부', titleKo: 'help · get 5형식',
+  summaryEn: 'Help + object + (to) base verb. Get + object + to base verb (cause someone to do). Get + object + p.p. (have something done).',
+  summaryKo: 'help + 목적어 + (to) 동사원형은 "~가 …하는 것을 돕다", get + 목적어 + to 동사원형은 "~가 …하게 하다", get + 목적어 + p.p.는 "~가 …되게 하다"입니다.',
+  rules: [
+    ['help + object + base verb / to + base verb.', 'help는 목적어 뒤에 동사원형이나 to부정사를 모두 쓸 수 있습니다. (She helped me carry the box.)'],
+    ['get + object + to + base verb = make someone do.', 'get + 목적어 + to 동사원형은 "~가 …하게 시키다"입니다. get은 to가 꼭 필요합니다.'],
+    ['get + object + p.p. = have something done.', 'get + 목적어 + p.p.는 "~가 …되게 하다"로, 목적어가 당하거나 받는 경우입니다.'],
+    ['The object takes the object form.', '목적어는 me, him처럼 목적격을 씁니다.'],
+  ],
+  examples: [['She helped me carry the box.', '그녀는 내가 상자를 나르는 것을 도왔다.'], ['I got him to fix my bike.', '나는 그가 내 자전거를 고치게 했다.'], ['I got my hair cut.', '나는 머리를 잘랐다.']],
+  groups: [
+    ['help + 동사원형', '돕다.', [
+      ['She helped me carry the box.', '그녀는 내가 상자를 나르는 것을 도왔다.', 'help + 목적어 + 동사원형', 'to 없이도 씁니다.'],
+      ['He helps his mother clean the house.', '그는 어머니가 집을 청소하는 것을 돕는다.', 'help + 목적어 + 동사원형', 'to 없이도 씁니다.'],
+      ['I will help you find it.', '네가 그것을 찾는 것을 도와줄게.', 'help + 목적어 + 동사원형', 'to 없이도 씁니다.']]],
+    ['help + to부정사', '돕다.', [
+      ['Tom helped us to finish the work.', 'Tom은 우리가 일을 끝내는 것을 도왔다.', 'help + 목적어 + to + 동사원형', 'to를 써도 됩니다.'],
+      ['The book helps students to learn English.', '그 책은 학생들이 영어를 배우는 것을 돕는다.', 'help + 목적어 + to + 동사원형', 'to를 써도 됩니다.'],
+      ['Can you help me to move this?', '이것을 옮기는 것을 도와줄래?', 'help + 목적어 + to + 동사원형', 'to를 써도 됩니다.']]],
+    ['get + O + to V', '~하게 하다.', [
+      ['I got him to fix my bike.', '나는 그가 내 자전거를 고치게 했다.', 'get + 목적어 + to + 동사원형', 'to가 꼭 필요합니다.'],
+      ['She got her brother to wash the car.', '그녀는 남동생이 세차하게 했다.', 'get + 목적어 + to + 동사원형', 'to가 꼭 필요합니다.'],
+      ['We got them to sign the paper.', '우리는 그들이 서류에 서명하게 했다.', 'get + 목적어 + to + 동사원형', 'to가 꼭 필요합니다.']]],
+    ['get + O + p.p.', '~되게 하다.', [
+      ['I got my hair cut.', '나는 머리를 잘랐다.', 'get + 목적어 + p.p.', '머리는 잘리는 대상입니다.'],
+      ['He got his watch repaired.', '그는 시계를 수리받았다.', 'get + 목적어 + p.p.', '시계는 수리되는 대상입니다.'],
+      ['She got her bag stolen.', '그녀는 가방을 도둑맞았다.', 'get + 목적어 + p.p.', '가방은 도둑맞는 대상입니다.']]],
+  ],
+  wrong: [['I got him fix my bike.', 'to fix → I got him to fix my bike. — get 뒤에는 to가 필요합니다.', ''], ['She helped me carrying the box.', 'carry → She helped me carry the box. — help 뒤에는 동사원형입니다.', ''], ['I got my hair cutting.', 'cut → I got my hair cut. — 머리는 잘리는 대상이므로 p.p.입니다.', '']],
+  wrongNote: 'get은 to가 필요하고, 목적어가 당하는 대상이면 p.p.를 씁니다.',
+  cram: '■ 핵심 요약\nhelp는 동사원형, get은 to 동사원형 또는 p.p.를 목적어 뒤에 씁니다.\n\n■ 규칙\n1. help + 목적어 + (to) 동사원형.\n2. get + 목적어 + to 동사원형 = ~하게 하다.\n3. get + 목적어 + p.p. = ~되게 하다.\n4. 목적어는 목적격.\n\n■ 예문 뜻\n그녀는 내가 상자를 나르는 것을 도왔다.\n나는 그가 내 자전거를 고치게 했다.\n나는 머리를 잘랐다.',
+  blanks: [['help 뒤의 to는 ___해도 됩니다.', '생략', '두 글자'], ['get + 목적어 뒤에는 ___ + 동사원형이 옵니다.', 'to', '두 글자'], ['목적어가 당하는 대상이면 ___를 씁니다.', 'p.p.', '과거분사'], ['목적어는 I가 아니라 ___를 씁니다.', 'me', '목적격']],
+  fill: [
+    ['basic', 'She helped me ___ the box.', 'carry', ['carrying', 'carried', 'carry'], '그녀는 내가 상자를 나르는 것을 도왔다.', 'help 뒤에는 동사원형을 씁니다.', '동사원형'],
+    ['basic', 'I got him ___ fix my bike.', 'to', ['to', 'for', 'of'], '나는 그가 내 자전거를 고치게 했다.', 'get + 목적어 뒤에는 to가 필요합니다.', '부정사 표시'],
+    ['basic', 'I got my hair ___.', 'cut', ['cutting', 'cut', 'to cut'], '나는 머리를 잘랐다.', '머리는 잘리는 대상이므로 p.p.입니다.', '과거분사'],
+    ['intermediate', 'He helps his mother ___ the house.', 'clean', ['cleaning', 'cleaned', 'clean'], '그는 어머니가 집을 청소하는 것을 돕는다.', 'help 뒤에는 동사원형을 씁니다.', '동사원형'],
+    ['intermediate', 'She got her brother ___ wash the car.', 'to', ['of', 'to', 'by'], '그녀는 남동생이 세차하게 했다.', 'get + 목적어 뒤에는 to가 필요합니다.', '부정사 표시'],
+    ['intermediate', 'He got his watch ___.', 'repaired', ['repair', 'repairing', 'repaired'], '그는 시계를 수리받았다.', '시계는 수리되는 대상이므로 p.p.입니다.', '과거분사'],
+    ['advanced', 'Tom helped us ___ finish the work.', 'to', ['to', 'of', 'for'], 'Tom은 우리가 일을 끝내는 것을 도왔다.', 'help 뒤에는 to를 써도 됩니다.', '부정사 표시'],
+    ['advanced', 'We got them ___ sign the paper.', 'to', ['to', 'by', 'of'], '우리는 그들이 서류에 서명하게 했다.', 'get + 목적어 뒤에는 to가 필요합니다.', '부정사 표시'],
+  ],
+  fix: [
+    ['basic', 'I got him fix my bike.', 'fix', ['to fix'], ['him은 he여야 합니다.', 'get + 목적어 뒤에는 to가 필요합니다.', 'bike는 bikes여야 합니다.'], 1, 'I got him to fix my bike. → get + 목적어 + to 동사원형'],
+    ['intermediate', 'She helped me carrying the box.', 'carrying', ['carry'], ['help 뒤에는 동사원형을 씁니다.', 'me는 my여야 합니다.', 'box는 boxes여야 합니다.'], 0, 'She helped me carry the box. → help + 목적어 + 동사원형'],
+    ['intermediate', 'I got my hair cutting.', 'cutting', ['cut'], ['hair는 hairs여야 합니다.', 'got은 get이어야 합니다.', '머리는 잘리는 대상이므로 p.p.를 씁니다.'], 2, 'I got my hair cut. → get + 목적어 + p.p.'],
+  ],
+  questions: [
+    pc('Which sentence about carrying is correct?', '나르는 것에 대한 올바른 문장을 고르세요.', 'basic', [['She helped me carrying the box.', '그녀는 내가 상자를 나르는 것을 도왔다.'], ['She helped me carried the box.', '그녀는 내가 상자를 나르는 것을 도왔다.'], ['She helped me carry the box.', '그녀는 내가 상자를 나르는 것을 도왔다.'], ['She helped I carry the box.', '그녀는 내가 상자를 나르는 것을 도왔다.']], 2, 'help + 목적어 + 동사원형입니다.'),
+    pc('Which sentence about a bike is correct?', '자전거에 대한 올바른 문장을 고르세요.', 'basic', [['I got him to fix my bike.', '나는 그가 내 자전거를 고치게 했다.'], ['I got him fix my bike.', '나는 그가 내 자전거를 고치게 했다.'], ['I got he to fix my bike.', '나는 그가 내 자전거를 고치게 했다.'], ['I got him fixing my bike.', '나는 그가 내 자전거를 고치게 했다.']], 0, 'get + 목적어 + to 동사원형입니다.'),
+    pc('Which sentence about hair is correct?', '머리카락에 대한 올바른 문장을 고르세요.', 'basic', [['I got my hair cutting.', '나는 머리를 잘랐다.'], ['I got my hair to cut.', '나는 머리를 잘랐다.'], ['I got my hair cut.', '나는 머리를 잘랐다.'], ['I got my hair cuts.', '나는 머리를 잘랐다.']], 2, '머리는 잘리는 대상이므로 p.p.입니다.'),
+    pc('Which sentence about a watch is correct?', '시계에 대한 올바른 문장을 고르세요.', 'intermediate', [['He got his watch repair.', '그는 시계를 수리받았다.'], ['He got his watch repairing.', '그는 시계를 수리받았다.'], ['He got his watch repaired.', '그는 시계를 수리받았다.'], ['He got his watch to repair.', '그는 시계를 수리받았다.']], 2, '시계는 수리되는 대상이므로 p.p.입니다.'),
+    pc('Which sentence is correct with help?', 'help를 쓴 올바른 문장을 고르세요.', 'intermediate', [['He helps his mother cleaning the house.', '그는 어머니가 집을 청소하는 것을 돕는다.'], ['He helps his mother cleaned the house.', '그는 어머니가 집을 청소하는 것을 돕는다.'], ['He helps his mother cleans the house.', '그는 어머니가 집을 청소하는 것을 돕는다.'], ['He helps his mother clean the house.', '그는 어머니가 집을 청소하는 것을 돕는다.']], 3, 'help + 목적어 + 동사원형입니다.'),
+    pc('Choose the sentence in which the object is done to something.', '목적어가 당하는 대상인 문장을 고르세요.', 'intermediate', [['I got him to fix my bike.', '나는 그가 내 자전거를 고치게 했다.'], ['She got her bag stolen.', '그녀는 가방을 도둑맞았다.'], ['We got them to sign the paper.', '우리는 그들이 서류에 서명하게 했다.'], ['She got her brother to wash the car.', '그녀는 남동생이 세차하게 했다.']], 1, '가방은 도둑맞는 대상이라서 p.p.를 씁니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['Tom helped us to finish the work.', 'Tom은 우리가 일을 끝내는 것을 도왔다.'], ['I will help you find it.', '네가 그것을 찾는 것을 도와줄게.'], ['We got them sign the paper.', '우리는 그들이 서류에 서명하게 했다.'], ['He got his watch repaired.', '그는 시계를 수리받았다.']], 2, 'get + 목적어 뒤에는 to가 필요합니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① I got him fix my bike.\n② She helped me carry the box.\n③ I got my hair cut.', 'basic', 1, '①만 틀렸고 to fix여야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① She helped me carrying the box.\n② I got my hair cutting.\n③ He got his watch repaired.\n④ I got him to fix my bike.', 'advanced', 2, '①은 carry, ②는 cut이어야 하므로 틀린 문장은 2개입니다.'),
+    pc('Why is "I got him fix my bike." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because bike should be bikes.', 'bike를 bikes로 바꿔야 해서'], ['Because him should be he.', 'him을 he로 바꿔야 해서'], ['Because got should be get.', 'got을 get으로 바꿔야 해서'], ['Because get needs to before the base verb.', 'get 뒤에는 to가 필요해서']], 3, 'get + 목적어 + to 동사원형입니다.', 'reason'),
+  ],
+  popup: [['She helped me ___ the box.', 'carry', ['carrying', 'carried'], '동사원형'], ['I got him ___ fix my bike.', 'to', ['for', 'of'], '부정사 표시'], ['I got my hair ___.', 'cut', ['cutting', 'to cut'], '과거분사'], ['He got his watch ___.', 'repaired', ['repair', 'repairing'], '과거분사']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'I got him fix my bike.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['I got him to fix my bike.'], noteKo: 'get + 목적어 뒤에는 to가 필요합니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'I got my hair cutting.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['I got my hair cut.'], noteKo: '머리는 잘리는 대상이므로 p.p.를 씁니다.' },
+  ],
+  top: ['help + 목적어 + (to) 동사원형, get + 목적어 + to 동사원형(~하게 하다), get + 목적어 + p.p.(~되게 하다).', 'She helped me carry the box.', '그녀는 내가 상자를 나르는 것을 도왔다.'],
+  lecture: [
+    { type: 'text', text: 'help · get 5형식', narration: '오늘은 [en]help[/en]와 [en]get[/en] 뒤에 목적어와 동사가 오는 문장을 배워요.' },
+    { type: 'board', title: 'help', lines: ['She [b]helped me carry[/b] the box. — 그녀는 내가 상자를 나르는 것을 도왔다.', 'Tom helped us to finish the work. — Tom은 우리가 일을 끝내는 것을 도왔다.', 'help + 목적어 + (to) 동사원형'], narration: '[en]help[/en] 뒤에는 동사원형이나 [en]to[/en] 동사원형이 와요. [en]She helped me carry the box.[/en] 그녀는 내가 상자를 나르는 것을 도왔어요.' },
+    { type: 'board', title: 'get + O + to V', lines: ['I [b]got him to fix[/b] my bike. — 나는 그가 내 자전거를 고치게 했다.', 'She got her brother to wash the car. — 그녀는 남동생이 세차하게 했다.', 'to가 꼭 필요'], narration: '[en]get[/en] 뒤에는 [en]to[/en]가 꼭 필요해요. [en]I got him to fix my bike.[/en] 나는 그가 내 자전거를 고치게 했어요.' },
+    { type: 'board', title: 'get + O + p.p.', lines: ['I [b]got my hair cut[/b]. — 나는 머리를 잘랐다.', 'He got his watch repaired. — 그는 시계를 수리받았다.', '목적어가 당하는 대상'], narration: '목적어가 당하는 대상이면 과거분사를 써요. [en]I got my hair cut.[/en] 나는 머리를 잘랐어요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× I got him [b]fix[/b] my bike. — 나는 그가 내 자전거를 고치게 했다.', '× She helped me [b]carrying[/b] the box. — 그녀는 내가 상자를 나르는 것을 도왔다.', '× I got my hair [b]cutting[/b]. — 나는 머리를 잘랐다.'], narration: '[en]get[/en] 뒤에는 [en]to[/en]가 필요해요. [en]help[/en] 뒤에는 동사원형이에요. 머리는 잘리는 대상이라서 과거분사를 써요.' },
+    { type: 'text', text: '정리: help는 동사원형, get은 to 또는 p.p.', narration: '정리할게요. [en]help[/en]는 동사원형, [en]get[/en]은 [en]to[/en] 동사원형이나 과거분사가 와요.' },
+  ],
+});

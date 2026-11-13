@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'participial-basic', topic: '분사구문 - 1부', titleKo: '분사구문 만드는 법·의미·부정',
+  summaryEn: 'A participial phrase shortens an adverb clause: drop the conjunction and the subject, then change the verb to -ing.',
+  summaryKo: '분사구문은 부사절에서 접속사와 주어를 없애고 동사를 -ing로 바꿔 문장을 간단히 만든 것입니다.',
+  rules: [
+    ['Drop the conjunction and the same subject, and change the verb to -ing.', '접속사와 같은 주어를 없애고 동사를 -ing로 바꿉니다. (When I walked home → Walking home)'],
+    ['Meanings: time, reason, and doing at the same time.', '시간, 이유, 동시 동작 등의 뜻을 나타냅니다.'],
+    ['Negative: Not + -ing.', '부정은 -ing 앞에 not을 둡니다. (Not knowing the answer, ...)'],
+    ['The subject of the main clause must be the one who does the action.', '주절의 주어가 분사의 동작을 하는 주체여야 합니다.'],
+  ],
+  examples: [['Walking home, I met Tom.', '집에 걸어가다가 나는 Tom을 만났다.'], ['Feeling tired, she went to bed.', '피곤해서 그녀는 잠자리에 들었다.'], ['Not knowing the answer, he kept silent.', '답을 몰라서 그는 가만히 있었다.']],
+  groups: [
+    ['시간', '~할 때, ~하다가.', [
+      ['Walking home, I met Tom.', '집에 걸어가다가 나는 Tom을 만났다.', '동사 + ing', 'When I walked home과 같습니다.'],
+      ['Opening the door, he saw a cat.', '문을 열었을 때 그는 고양이를 보았다.', '동사 + ing', 'When he opened the door와 같습니다.'],
+      ['Turning left, you will see the bank.', '왼쪽으로 돌면 은행이 보일 것이다.', '동사 + ing', 'When you turn left와 같습니다.']]],
+    ['이유', '~해서, ~이므로.', [
+      ['Feeling tired, she went to bed.', '피곤해서 그녀는 잠자리에 들었다.', '동사 + ing', 'Because she felt tired와 같습니다.'],
+      ['Being sick, he stayed home.', '아파서 그는 집에 있었다.', 'Being + 형용사', 'Because he was sick와 같습니다.'],
+      ['Having no money, I couldn\'t buy it.', '돈이 없어서 나는 그것을 살 수 없었다.', 'Having + 명사', 'Because I had no money와 같습니다.']]],
+    ['동시 동작', '~하면서.', [
+      ['She sat there, listening to music.', '그녀는 음악을 들으며 거기에 앉아 있었다.', '동사 + ing', '동시에 하는 동작입니다.'],
+      ['He walked along the street, singing a song.', '그는 노래를 부르며 길을 따라 걸었다.', '동사 + ing', '동시에 하는 동작입니다.'],
+      ['They stood talking.', '그들은 이야기하며 서 있었다.', '동사 + ing', '동시에 하는 동작입니다.']]],
+    ['부정', 'Not + -ing.', [
+      ['Not knowing the answer, he kept silent.', '답을 몰라서 그는 가만히 있었다.', 'Not + 동사 + ing', 'not은 -ing 앞입니다.'],
+      ['Not feeling well, she left early.', '몸이 안 좋아서 그녀는 일찍 떠났다.', 'Not + 동사 + ing', 'not은 -ing 앞입니다.'],
+      ['Not having a car, I took the bus.', '차가 없어서 나는 버스를 탔다.', 'Not + 동사 + ing', 'not은 -ing 앞입니다.']]],
+  ],
+  wrong: [['Walk home, I met Tom.', 'Walking → Walking home, I met Tom. — 분사구문은 동사 + ing입니다.', ''], ['Knowing not the answer, he kept silent.', 'Not knowing → Not knowing the answer, he kept silent. — not은 -ing 앞입니다.', ''], ['Listen to music, she sat there.', 'Listening → Listening to music, she sat there. — 분사구문은 동사 + ing입니다.', '']],
+  wrongNote: '분사구문은 동사를 -ing로 바꾸고, 부정은 -ing 앞에 not을 둡니다.',
+  cram: '■ 핵심 요약\n분사구문은 접속사와 주어를 없애고 동사를 -ing로 바꾼 것입니다.\n\n■ 규칙\n1. 접속사와 같은 주어를 없애고 동사를 -ing로 바꾼다.\n2. 시간, 이유, 동시 동작을 나타낸다.\n3. 부정은 Not + -ing.\n4. 주절의 주어가 동작의 주체여야 한다.\n\n■ 예문 뜻\n집에 걸어가다가 나는 Tom을 만났다.\n피곤해서 그녀는 잠자리에 들었다.\n답을 몰라서 그는 가만히 있었다.',
+  blanks: [['분사구문은 동사를 ___로 바꿉니다.', '-ing', '세 글자'], ['분사구문에서는 접속사와 ___를 없앱니다.', '주어', '두 글자'], ['분사구문의 부정은 ___ + -ing입니다.', 'Not', '부정'], ['"~하면서"는 ___ 동작을 나타냅니다.', '동시', '두 글자']],
+  fill: [
+    ['basic', '___ home, I met Tom.', 'Walking', ['Walk', 'Walked', 'Walking'], '집에 걸어가다가 나는 Tom을 만났다.', '분사구문은 동사 + ing입니다.', '동사 + ing'],
+    ['basic', '___ tired, she went to bed.', 'Feeling', ['Feeling', 'Felt', 'Feel'], '피곤해서 그녀는 잠자리에 들었다.', '분사구문은 동사 + ing입니다.', '동사 + ing'],
+    ['basic', '___ the door, he saw a cat.', 'Opening', ['Opened', 'Opening', 'Open'], '문을 열었을 때 그는 고양이를 보았다.', '분사구문은 동사 + ing입니다.', '동사 + ing'],
+    ['intermediate', 'Not ___ the answer, he kept silent.', 'knowing', ['know', 'knowing', 'known'], '답을 몰라서 그는 가만히 있었다.', 'Not 뒤에도 동사 + ing를 씁니다.', '동사 + ing'],
+    ['intermediate', '___ sick, he stayed home.', 'Being', ['Being', 'Been', 'Be'], '아파서 그는 집에 있었다.', 'be동사의 분사구문은 Being입니다.', 'be의 -ing'],
+    ['intermediate', 'She sat there, ___ to music.', 'listening', ['listen', 'listens', 'listening'], '그녀는 음악을 들으며 거기에 앉아 있었다.', '동시 동작은 동사 + ing로 씁니다.', '동사 + ing'],
+    ['advanced', '___ no money, I couldn\'t buy it.', 'Having', ['Have', 'Having', 'Had'], '돈이 없어서 나는 그것을 살 수 없었다.', 'have의 분사구문은 Having입니다.', 'have의 -ing'],
+    ['advanced', 'He walked along the street, ___ a song.', 'singing', ['singing', 'sing', 'sang'], '그는 노래를 부르며 길을 따라 걸었다.', '동시 동작은 동사 + ing로 씁니다.', '동사 + ing'],
+  ],
+  fix: [
+    ['basic', 'Walk home, I met Tom.', 'Walk', ['Walking'], ['home은 house여야 합니다.', '분사구문은 동사 + ing를 씁니다.', 'met는 meet여야 합니다.'], 1, 'Walking home, I met Tom. → 동사 + ing'],
+    ['intermediate', 'Not know the answer, he kept silent.', 'know', ['knowing'], ['Not 뒤에도 동사 + ing를 씁니다.', 'kept는 keep이어야 합니다.', 'answer는 answers여야 합니다.'], 0, 'Not knowing the answer, he kept silent. → Not + 동사 + ing'],
+    ['intermediate', 'Listen to music, she sat there.', 'Listen', ['Listening'], ['she는 her여야 합니다.', 'sat는 sit여야 합니다.', '분사구문은 동사 + ing를 씁니다.'], 2, 'Listening to music, she sat there. → 동사 + ing'],
+  ],
+  questions: [
+    pc('Which sentence about walking home is correct?', '집에 가는 것에 대한 올바른 문장을 고르세요.', 'basic', [['Walk home, I met Tom.', '집에 걸어가다가 나는 Tom을 만났다.'], ['Walked home, I met Tom.', '집에 걸어가다가 나는 Tom을 만났다.'], ['Walking home, I met Tom.', '집에 걸어가다가 나는 Tom을 만났다.'], ['Walks home, I met Tom.', '집에 걸어가다가 나는 Tom을 만났다.']], 2, '분사구문은 동사 + ing입니다.'),
+    pc('Which sentence about being tired is correct?', '피곤함에 대한 올바른 문장을 고르세요.', 'basic', [['Feeling tired, she went to bed.', '피곤해서 그녀는 잠자리에 들었다.'], ['Feel tired, she went to bed.', '피곤해서 그녀는 잠자리에 들었다.'], ['Felt tired, she went to bed.', '피곤해서 그녀는 잠자리에 들었다.'], ['Feels tired, she went to bed.', '피곤해서 그녀는 잠자리에 들었다.']], 0, '분사구문은 동사 + ing입니다.'),
+    pc('Which sentence about a cat is correct?', '고양이에 대한 올바른 문장을 고르세요.', 'basic', [['Open the door, he saw a cat.', '문을 열었을 때 그는 고양이를 보았다.'], ['Opened the door, he saw a cat.', '문을 열었을 때 그는 고양이를 보았다.'], ['To opening the door, he saw a cat.', '문을 열었을 때 그는 고양이를 보았다.'], ['Opening the door, he saw a cat.', '문을 열었을 때 그는 고양이를 보았다.']], 3, '분사구문은 동사 + ing입니다.'),
+    pc('Which sentence about not knowing is correct?', '모르는 것에 대한 올바른 문장을 고르세요.', 'intermediate', [['Knowing not the answer, he kept silent.', '답을 몰라서 그는 가만히 있었다.'], ['Not knowing the answer, he kept silent.', '답을 몰라서 그는 가만히 있었다.'], ['Not know the answer, he kept silent.', '답을 몰라서 그는 가만히 있었다.'], ['No knowing the answer, he kept silent.', '답을 몰라서 그는 가만히 있었다.']], 1, '부정은 Not + 동사 + ing입니다.'),
+    pc('Which participial phrase means "Because he was sick"?', '"Because he was sick"와 같은 뜻의 분사구문을 고르세요.', 'intermediate', [['Being sick, he stayed home.', '아파서 그는 집에 있었다.'], ['Been sick, he stayed home.', '아파서 그는 집에 있었다.'], ['Be sick, he stayed home.', '아파서 그는 집에 있었다.'], ['Was sick, he stayed home.', '아파서 그는 집에 있었다.']], 0, 'be동사의 분사구문은 Being입니다.'),
+    pc('Choose the sentence in which the -ing phrase shows two actions at the same time.', '동시 동작을 나타내는 문장을 고르세요.', 'intermediate', [['Feeling tired, she went to bed.', '피곤해서 그녀는 잠자리에 들었다.'], ['Opening the door, he saw a cat.', '문을 열었을 때 그는 고양이를 보았다.'], ['She sat there, listening to music.', '그녀는 음악을 들으며 거기에 앉아 있었다.'], ['Not knowing the answer, he kept silent.', '답을 몰라서 그는 가만히 있었다.']], 2, '음악을 들으며 앉아 있는 두 동작이 동시에 일어납니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['Not feeling well, she left early.', '몸이 안 좋아서 그녀는 일찍 떠났다.'], ['Having no money, I couldn\'t buy it.', '돈이 없어서 나는 그것을 살 수 없었다.'], ['Turning left, you will see the bank.', '왼쪽으로 돌면 은행이 보일 것이다.'], ['Listen to music, she sat there.', '음악을 들으며 그녀는 거기에 앉아 있었다.']], 3, '분사구문은 Listening처럼 동사 + ing를 써야 합니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① Walk home, I met Tom.\n② Feeling tired, she went to bed.\n③ Being sick, he stayed home.', 'basic', 1, '①만 틀렸고 Walking이어야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① Not know the answer, he kept silent.\n② Listen to music, she sat there.\n③ Not having a car, I took the bus.\n④ Opening the door, he saw a cat.', 'advanced', 2, '①은 Not knowing, ②는 Listening이어야 하므로 틀린 문장은 2개입니다.'),
+    pc('Why is "Walk home, I met Tom." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because Tom should be tom.', 'Tom을 tom으로 바꿔야 해서'], ['Because met should be meet.', 'met를 meet로 바꿔야 해서'], ['Because home should be house.', 'home을 house로 바꿔야 해서'], ['Because a participial phrase uses verb + ing.', '분사구문은 동사 + ing를 써야 해서']], 3, '분사구문은 동사를 -ing로 바꿉니다.', 'reason'),
+  ],
+  popup: [['___ home, I met Tom.', 'Walking', ['Walk', 'Walked'], '동사 + ing'], ['___ tired, she went to bed.', 'Feeling', ['Felt', 'Feel'], '동사 + ing'], ['Not ___ the answer, he kept silent.', 'knowing', ['know', 'known'], '동사 + ing'], ['___ sick, he stayed home.', 'Being', ['Been', 'Be'], 'be의 -ing']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'Walk home, I met Tom.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['Walking home, I met Tom.'], noteKo: '분사구문은 동사 + ing를 씁니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'Not know the answer, he kept silent.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['Not knowing the answer, he kept silent.'], noteKo: 'Not 뒤에도 동사 + ing를 씁니다.' },
+  ],
+  top: ['분사구문 = 접속사와 같은 주어를 없애고 동사를 -ing로. 시간·이유·동시 동작을 나타내고, 부정은 Not + -ing.', 'Walking home, I met Tom.', '집에 걸어가다가 나는 Tom을 만났다.'],
+  lecture: [
+    { type: 'text', text: '분사구문', narration: '오늘은 문장을 간단히 줄여 주는 분사구문을 배워요.' },
+    { type: 'board', title: '만드는 법', lines: ['When I walked home, I met Tom.', '→ [b]Walking[/b] home, I met Tom. — 집에 걸어가다가 나는 Tom을 만났다.', '접속사와 주어를 없애고 동사 + ing'], narration: '접속사와 같은 주어를 없애고 동사를 [en]ing[/en]로 바꿔요. [en]Walking home, I met Tom.[/en] 집에 걸어가다가 [en]Tom[/en]을 만났어요.' },
+    { type: 'board', title: '시간 · 이유', lines: ['[b]Opening[/b] the door, he saw a cat. — 문을 열었을 때 그는 고양이를 보았다.', '[b]Feeling[/b] tired, she went to bed. — 피곤해서 그녀는 잠자리에 들었다.', 'Being sick, he stayed home. — 아파서 그는 집에 있었다.'], narration: '시간이나 이유를 나타내요. [en]Feeling tired, she went to bed.[/en] 피곤해서 그녀는 잠자리에 들었어요.' },
+    { type: 'board', title: '동시 동작', lines: ['She sat there, [b]listening[/b] to music. — 그녀는 음악을 들으며 거기에 앉아 있었다.', 'He walked along the street, singing a song. — 그는 노래를 부르며 걸었다.', '~하면서'], narration: '하면서라는 동시 동작도 나타내요. [en]She sat there, listening to music.[/en] 그녀는 음악을 들으며 앉아 있었어요.' },
+    { type: 'board', title: '부정', lines: ['[b]Not knowing[/b] the answer, he kept silent. — 답을 몰라서 그는 가만히 있었다.', 'Not feeling well, she left early. — 몸이 안 좋아서 그녀는 일찍 떠났다.', 'Not + 동사 + ing'], narration: '부정은 [en]ing[/en] 앞에 [en]not[/en]을 놓아요. [en]Not knowing the answer, he kept silent.[/en] 답을 몰라서 그는 가만히 있었어요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× [b]Walk[/b] home, I met Tom. — 집에 걸어가다가 나는 Tom을 만났다.', '× [b]Knowing not[/b] the answer, he kept silent. — 답을 몰라서 그는 가만히 있었다.', '× [b]Listen[/b] to music, she sat there. — 음악을 들으며 그녀는 앉아 있었다.'], narration: '분사구문은 반드시 동사 [en]ing[/en]로 써요. 부정은 [en]not[/en]을 앞에 놓아요.' },
+    { type: 'text', text: '정리: 접속사·주어 생략 + 동사 + ing', narration: '정리할게요. 접속사와 주어를 없애고 동사를 [en]ing[/en]로 바꿔요.' },
+  ],
+});

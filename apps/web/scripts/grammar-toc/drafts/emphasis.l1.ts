@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'emphasis', topic: '강조 - 1부', titleKo: '강조 (do 강조 · It is ~ that)',
+  summaryEn: 'Do/does/did + base verb stresses a verb. It is/was ... that stresses a word. A reflexive pronoun stresses the person.',
+  summaryKo: 'do/does/did + 동사원형은 "정말 ~하다", It is(was) ~ that ...은 "…한 것은 바로 ~이다", 재귀대명사는 "직접"이라는 강조입니다.',
+  rules: [
+    ['do/does/did + base verb = really do it.', 'do/does/did를 동사 앞에 두면 "정말 ~하다"입니다. 동사는 원형이 됩니다. (I do like pizza.)'],
+    ['It is/was + word + that + rest = "It is ... that ...".', 'It is(was)와 that 사이에 강조할 말을 넣으면 "…한 것은 바로 ~이다"입니다.'],
+    ['Reflexive pronoun = by oneself, in person.', '-self 재귀대명사는 "직접, 스스로"의 강조입니다. (I made it myself.)'],
+    ['An emphasized word can be a subject, an object, or an adverb.', '강조되는 말은 주어, 목적어, 부사(구)가 될 수 있습니다.'],
+  ],
+  examples: [['I do like pizza.', '나는 피자를 정말 좋아한다.'], ['It was Tom that broke the window.', '창문을 깬 것은 바로 Tom이었다.'], ['I made it myself.', '나는 그것을 직접 만들었다.']],
+  groups: [
+    ['do + 동사원형', '정말 ~하다.', [
+      ['I do like pizza.', '나는 피자를 정말 좋아한다.', 'do + 동사원형', '동사를 강조합니다.'],
+      ['She does know the answer.', '그녀는 정말 답을 안다.', 'does + 동사원형', '3인칭 단수에는 does입니다.'],
+      ['He did come to the party.', '그는 정말 파티에 왔다.', 'did + 동사원형', '과거에는 did입니다.']]],
+    ['It is ~ that (주어 강조)', '바로 ~이다.', [
+      ['It was Tom that broke the window.', '창문을 깬 것은 바로 Tom이었다.', 'It was + 주어 + that', '주어를 강조합니다.'],
+      ['It is my sister that lives in Paris.', '파리에 사는 사람은 바로 내 여동생이다.', 'It is + 주어 + that', '주어를 강조합니다.'],
+      ['It was the dog that ate the cake.', '케이크를 먹은 것은 바로 그 개였다.', 'It was + 주어 + that', '주어를 강조합니다.']]],
+    ['It is ~ that (목적어·부사 강조)', '바로 ~이다.', [
+      ['It was the window that Tom broke.', 'Tom이 깬 것은 바로 그 창문이었다.', 'It was + 목적어 + that', '목적어를 강조합니다.'],
+      ['It was yesterday that I met her.', '내가 그녀를 만난 것은 바로 어제였다.', 'It was + 부사 + that', '부사를 강조합니다.'],
+      ['It is English that I study every day.', '내가 매일 공부하는 것은 바로 영어이다.', 'It is + 목적어 + that', '목적어를 강조합니다.']]],
+    ['재귀대명사 강조', '직접.', [
+      ['I made it myself.', '나는 그것을 직접 만들었다.', '-self', '"직접"이라는 강조입니다.'],
+      ['She herself opened the door.', '그녀가 직접 문을 열었다.', '-self', '"직접"이라는 강조입니다.'],
+      ['They did it themselves.', '그들이 그것을 직접 했다.', '-self', '"직접"이라는 강조입니다.']]],
+  ],
+  wrong: [['I do likes pizza.', 'like → I do like pizza. — do 뒤에는 동사원형을 씁니다.', ''], ['He did came to the party.', 'come → He did come to the party. — did 뒤에는 동사원형을 씁니다.', ''], ['It was Tom what broke the window.', 'that → It was Tom that broke the window. — 강조 구문에는 that을 씁니다.', '']],
+  wrongNote: 'do 강조는 동사원형, It is ~ that 구문에는 that을 씁니다.',
+  cram: '■ 핵심 요약\ndo + 동사원형은 정말 ~하다, It is ~ that은 바로 ~이다, -self는 직접입니다.\n\n■ 규칙\n1. do/does/did + 동사원형 = 정말 ~하다.\n2. It is/was + 강조어 + that + 나머지.\n3. 재귀대명사 = 직접, 스스로.\n4. 주어, 목적어, 부사를 강조할 수 있다.\n\n■ 예문 뜻\n나는 피자를 정말 좋아한다.\n창문을 깬 것은 바로 Tom이었다.\n나는 그것을 직접 만들었다.',
+  blanks: [['동사를 강조할 때는 ___ + 동사원형입니다.', 'do', '조동사'], ['It is ~ ___ 구문의 that입니다.', 'that', '접속사'], ['"직접"이라는 강조는 ___ 재귀대명사입니다.', '-self', '재귀'], ['do 강조 뒤의 동사는 ___입니다.', '원형', '두 글자']],
+  fill: [
+    ['basic', 'I ___ like pizza.', 'do', ['do', 'does', 'did'], '나는 피자를 정말 좋아한다.', '주어 I에는 do를 씁니다.', '강조'],
+    ['basic', 'She ___ know the answer.', 'does', ['do', 'did', 'does'], '그녀는 정말 답을 안다.', '3인칭 단수 현재에는 does입니다.', '강조'],
+    ['basic', 'He did ___ to the party.', 'come', ['came', 'comes', 'come'], '그는 정말 파티에 왔다.', 'did 뒤에는 동사원형을 씁니다.', '동사원형'],
+    ['intermediate', 'It was Tom ___ broke the window.', 'that', ['what', 'that', 'how'], '창문을 깬 것은 바로 Tom이었다.', '강조 구문에는 that을 씁니다.', '강조 구문'],
+    ['intermediate', 'It was yesterday ___ I met her.', 'that', ['that', 'what', 'how'], '내가 그녀를 만난 것은 바로 어제였다.', '강조 구문에는 that을 씁니다.', '강조 구문'],
+    ['intermediate', 'I made it ___.', 'myself', ['me', 'my', 'myself'], '나는 그것을 직접 만들었다.', '"직접"은 재귀대명사입니다.', '직접'],
+    ['advanced', 'She ___ opened the door.', 'herself', ['her', 'herself', 'hers'], '그녀가 직접 문을 열었다.', '"직접"은 재귀대명사입니다.', '직접'],
+    ['advanced', 'They did it ___.', 'themselves', ['themselves', 'them', 'their'], '그들이 그것을 직접 했다.', '"직접"은 재귀대명사입니다.', '직접'],
+  ],
+  fix: [
+    ['basic', 'I do likes pizza.', 'likes', ['like'], ['I는 He여야 합니다.', 'do 뒤에는 동사원형을 씁니다.', 'pizza는 pizzas여야 합니다.'], 1, 'I do like pizza. → do + 동사원형'],
+    ['intermediate', 'He did came to the party.', 'came', ['come'], ['did 뒤에는 동사원형을 씁니다.', 'party는 parties여야 합니다.', 'He는 They여야 합니다.'], 0, 'He did come to the party. → did + 동사원형'],
+    ['intermediate', 'It was Tom what broke the window.', 'what', ['that'], ['broke는 break여야 합니다.', 'window는 windows여야 합니다.', '강조 구문에는 that을 씁니다.'], 2, 'It was Tom that broke the window. → It was ~ that'],
+  ],
+  questions: [
+    pc('Which sentence about pizza is correct?', '피자에 대한 올바른 문장을 고르세요.', 'basic', [['I do likes pizza.', '나는 피자를 정말 좋아한다.'], ['I do liking pizza.', '나는 피자를 정말 좋아한다.'], ['I do like pizza.', '나는 피자를 정말 좋아한다.'], ['I does like pizza.', '나는 피자를 정말 좋아한다.']], 2, 'do + 동사원형입니다.'),
+    pc('Which sentence about an answer is correct?', '답에 대한 올바른 문장을 고르세요.', 'basic', [['She does know the answer.', '그녀는 정말 답을 안다.'], ['She does knows the answer.', '그녀는 정말 답을 안다.'], ['She do know the answer.', '그녀는 정말 답을 안다.'], ['She does knowing the answer.', '그녀는 정말 답을 안다.']], 0, '3인칭 단수에는 does + 동사원형입니다.'),
+    pc('Which sentence about a party is correct?', '파티에 대한 올바른 문장을 고르세요.', 'basic', [['He did came to the party.', '그는 정말 파티에 왔다.'], ['He did coming to the party.', '그는 정말 파티에 왔다.'], ['He did comes to the party.', '그는 정말 파티에 왔다.'], ['He did come to the party.', '그는 정말 파티에 왔다.']], 3, 'did + 동사원형입니다.'),
+    pc('Which sentence stresses the subject Tom?', 'Tom을 강조하는 문장을 고르세요.', 'intermediate', [['It was Tom what broke the window.', '창문을 깬 것은 바로 Tom이었다.'], ['It was Tom that broke the window.', '창문을 깬 것은 바로 Tom이었다.'], ['It was Tom who the window broke.', '창문을 깬 것은 바로 Tom이었다.'], ['Was it Tom that broke the window.', '창문을 깬 것은 바로 Tom이었다.']], 1, 'It was + 강조어 + that입니다.'),
+    pc('Which sentence stresses the time yesterday?', '어제를 강조하는 문장을 고르세요.', 'intermediate', [['It was yesterday what I met her.', '내가 그녀를 만난 것은 바로 어제였다.'], ['It was yesterday I that met her.', '내가 그녀를 만난 것은 바로 어제였다.'], ['It was yesterday that I met her.', '내가 그녀를 만난 것은 바로 어제였다.'], ['It yesterday was that I met her.', '내가 그녀를 만난 것은 바로 어제였다.']], 2, 'It was + 강조어 + that + 나머지입니다.'),
+    pc('Which sentence means "by herself"?', '"그녀가 직접"이라는 뜻의 문장을 고르세요.', 'intermediate', [['She herself opened the door.', '그녀가 직접 문을 열었다.'], ['She hers opened the door.', '그녀가 직접 문을 열었다.'], ['She her opened the door.', '그녀가 직접 문을 열었다.'], ['She she opened the door.', '그녀가 직접 문을 열었다.']], 0, '"직접"은 재귀대명사로 강조합니다.'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['They did it themselves.', '그들이 그것을 직접 했다.'], ['It was the dog that ate the cake.', '케이크를 먹은 것은 바로 그 개였다.'], ['He did came to the party.', '그는 정말 파티에 왔다.'], ['I do like pizza.', '나는 피자를 정말 좋아한다.']], 2, 'did 뒤에는 동사원형을 써야 합니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① I do likes pizza.\n② It was Tom that broke the window.\n③ I made it myself.', 'basic', 1, '①만 틀렸고 do like여야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① He did came to the party.\n② It was Tom what broke the window.\n③ She does know the answer.\n④ It is English that I study every day.', 'advanced', 2, '①은 did come, ②는 that이어야 하므로 틀린 문장은 2개입니다.'),
+    pc('Why is "He did came to the party." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because party should be parties.', 'party를 parties로 바꿔야 해서'], ['Because the verb after did is a base verb.', 'did 뒤의 동사는 원형이어야 해서'], ['Because he should be him.', 'he를 him으로 바꿔야 해서'], ['Because did should be does.', 'did를 does로 바꿔야 해서']], 1, 'do/does/did 뒤에는 동사원형을 씁니다.', 'reason'),
+  ],
+  popup: [['I ___ like pizza.', 'do', ['does', 'did'], '강조'], ['He did ___ to the party.', 'come', ['came', 'comes'], '동사원형'], ['It was Tom ___ broke the window.', 'that', ['what', 'how'], '강조 구문'], ['I made it ___.', 'myself', ['me', 'my'], '직접']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'I do likes pizza.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['I do like pizza.'], noteKo: 'do 뒤에는 동사원형을 씁니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'It was Tom what broke the window.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['It was Tom that broke the window.'], noteKo: '강조 구문에는 that을 씁니다.' },
+  ],
+  top: ['do/does/did + 동사원형 = 정말 ~하다, It is(was) ~ that ... = …한 것은 바로 ~이다, 재귀대명사 = 직접.', 'I do like pizza.', '나는 피자를 정말 좋아한다.'],
+  lecture: [
+    { type: 'text', text: '강조', narration: '오늘은 말을 강하게 만드는 세 가지 방법을 배워요.' },
+    { type: 'board', title: 'do 강조', lines: ['I [b]do like[/b] pizza. — 나는 피자를 정말 좋아한다.', 'She does know the answer. — 그녀는 정말 답을 안다.', 'do/does/did + 동사원형'], narration: '동사 앞에 [en]do[/en]를 놓으면 정말 한다는 뜻이에요. 뒤의 동사는 원형이에요. [en]I do like pizza.[/en] 나는 피자를 정말 좋아해요.' },
+    { type: 'board', title: 'It is ~ that (주어)', lines: ['[b]It was Tom that[/b] broke the window. — 창문을 깬 것은 바로 Tom이었다.', 'It was the dog that ate the cake. — 케이크를 먹은 것은 바로 그 개였다.'], narration: '[en]It was[/en]와 [en]that[/en] 사이에 강조할 말을 넣어요. [en]It was Tom that broke the window.[/en] 창문을 깬 것은 바로 [en]Tom[/en]이었어요.' },
+    { type: 'board', title: 'It is ~ that (목적어·부사)', lines: ['It was [b]the window[/b] that Tom broke. — Tom이 깬 것은 바로 그 창문이었다.', 'It was [b]yesterday[/b] that I met her. — 내가 그녀를 만난 것은 바로 어제였다.'], narration: '목적어나 부사도 강조할 수 있어요. [en]It was yesterday that I met her.[/en] 내가 그녀를 만난 것은 바로 어제였어요.' },
+    { type: 'board', title: '재귀대명사 강조', lines: ['I made it [b]myself[/b]. — 나는 그것을 직접 만들었다.', 'She [b]herself[/b] opened the door. — 그녀가 직접 문을 열었다.', '직접, 스스로'], narration: '[en]self[/en]가 붙은 말은 직접이라는 강조예요. [en]I made it myself.[/en] 나는 그것을 직접 만들었어요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× I do [b]likes[/b] pizza. — 나는 피자를 정말 좋아한다.', '× He did [b]came[/b] to the party. — 그는 정말 파티에 왔다.', '× It was Tom [b]what[/b] broke the window. — 창문을 깬 것은 바로 Tom이었다.'], narration: '[en]do[/en] 뒤에는 동사원형을 써요. 강조 구문에는 [en]what[/en]이 아니라 [en]that[/en]을 써요.' },
+    { type: 'text', text: '정리: do · It is ~ that · -self', narration: '정리할게요. [en]do[/en], [en]It is that[/en], 그리고 재귀대명사로 강조해요.' },
+  ],
+});

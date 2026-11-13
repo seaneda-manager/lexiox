@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'special-questions', topic: '부정의문문·선택의문문 - 1부', titleKo: '부정의문문 · 선택의문문',
+  summaryEn: 'A negative question starts with Don\'t/Isn\'t... A choice question uses A or B and is answered with the choice.',
+  summaryKo: '부정의문문은 Don\'t, Isn\'t 등으로 시작하고, 선택의문문은 A or B로 묻고 선택한 것으로 대답합니다.',
+  rules: [
+    ['Negative question: Don\'t/Doesn\'t/Isn\'t + subject ...?', '부정의문문은 부정 축약형(Don\'t, Isn\'t, Didn\'t)이 문장 맨 앞에 옵니다.'],
+    ['Answer by the facts: Yes = positive, No = negative.', '대답은 내용으로 정합니다. 긍정이면 Yes, 부정이면 No입니다. 우리말의 "응/아니"와 다릅니다.'],
+    ['Choice question: A or B? Answer with the choice.', '선택의문문은 A or B로 묻고, Yes/No가 아니라 선택한 것으로 대답합니다.'],
+    ['Which/Who + ..., A or B?', 'Which, Who 같은 의문사 뒤에도 A or B를 붙일 수 있습니다.'],
+  ],
+  examples: [['Don\'t you like pizza?', '너는 피자를 좋아하지 않니?'], ['Is it red or blue?', '그것은 빨강이니 파랑이니?'], ['Which do you prefer, tea or coffee?', '차와 커피 중 어느 것을 더 좋아하니?']],
+  groups: [
+    ['부정의문문', '부정 축약형으로 시작.', [
+      ['Don\'t you like pizza?', '너는 피자를 좋아하지 않니?', 'Don\'t + 주어 + 동사원형', '일반동사 현재입니다.'],
+      ['Isn\'t she your sister?', '그녀는 네 여동생 아니니?', 'Isn\'t + 주어', 'be동사입니다.'],
+      ['Didn\'t he call you?', '그가 너에게 전화하지 않았니?', 'Didn\'t + 주어 + 동사원형', '과거입니다.']]],
+    ['부정의문문의 대답', '내용에 따라 Yes/No.', [
+      ['Don\'t you like pizza? Yes, I do.', '피자 안 좋아해? 아니, 좋아해.', 'Yes = 긍정 내용', '좋아하면 Yes입니다.'],
+      ['Isn\'t she your sister? No, she isn\'t.', '그녀는 네 여동생 아니니? 응, 아니야.', 'No = 부정 내용', '아니면 No입니다.'],
+      ['Didn\'t he call you? No, he didn\'t.', '그가 전화하지 않았니? 응, 안 했어.', 'No = 부정 내용', '안 했으면 No입니다.']]],
+    ['선택의문문', 'A or B?', [
+      ['Do you want tea or coffee?', '차를 원하니, 커피를 원하니?', 'A or B', '선택해서 대답합니다.'],
+      ['Is it red or blue?', '그것은 빨강이니 파랑이니?', 'A or B', '선택해서 대답합니다.'],
+      ['Will you go by bus or by train?', '버스로 갈 거니, 기차로 갈 거니?', 'A or B', '선택해서 대답합니다.']]],
+    ['의문사 + A or B', 'Which ~, A or B?', [
+      ['Which do you prefer, tea or coffee?', '차와 커피 중 어느 것을 더 좋아하니?', 'Which + ..., A or B', '둘 중 선택입니다.'],
+      ['Who is taller, Tom or Jim?', 'Tom과 Jim 중 누가 더 크니?', 'Who + ..., A or B', '둘 중 선택입니다.'],
+      ['Which do you like better, cats or dogs?', '고양이와 개 중 어느 것을 더 좋아하니?', 'Which + ..., A or B', '둘 중 선택입니다.']]],
+  ],
+  wrong: [['Not you like pizza?', 'Don\'t → Don\'t you like pizza? — 부정의문문은 Don\'t로 시작합니다.', ''], ['Do you want tea and coffee?', 'or → Do you want tea or coffee? — 선택을 물을 때는 or를 씁니다.', ''], ['Doesn\'t she likes pizza?', 'like → Doesn\'t she like pizza? — Doesn\'t 뒤에는 동사원형을 씁니다.', '']],
+  wrongNote: '부정의문문은 축약형으로 시작하고 동사는 원형, 선택의문문은 or를 씁니다.',
+  cram: '■ 핵심 요약\n부정의문문은 Don\'t, Isn\'t로 시작하고 내용에 따라 Yes/No로 대답하며, 선택의문문은 A or B로 묻습니다.\n\n■ 규칙\n1. Don\'t/Doesn\'t/Isn\'t + 주어 ~?\n2. 대답은 내용이 긍정이면 Yes, 부정이면 No.\n3. A or B? 는 선택한 것으로 대답한다.\n4. Which/Who ~, A or B?\n\n■ 예문 뜻\n너는 피자를 좋아하지 않니?\n그것은 빨강이니 파랑이니?\n차와 커피 중 어느 것을 더 좋아하니?',
+  blanks: [['부정의문문은 ___ 축약형으로 시작합니다.', '부정', '두 글자'], ['내용이 긍정이면 ___로 대답합니다.', 'Yes', '대답'], ['선택의문문은 A ___ B로 묻습니다.', 'or', '접속사'], ['선택의문문은 Yes/No가 아니라 ___한 것으로 대답합니다.', '선택', '두 글자']],
+  fill: [
+    ['basic', '___ you like pizza?', 'Don\'t', ['Not', 'Don\'t', 'No'], '너는 피자를 좋아하지 않니?', '부정의문문은 Don\'t로 시작합니다.', '부정 축약형'],
+    ['basic', '___ she your sister?', 'Isn\'t', ['Isn\'t', 'Not', 'Aren\'t'], '그녀는 네 여동생 아니니?', 'she에는 Isn\'t를 씁니다.', 'be동사 부정'],
+    ['basic', 'Do you want tea ___ coffee?', 'or', ['and', 'but', 'or'], '차를 원하니, 커피를 원하니?', '선택은 or로 묻습니다.', '선택'],
+    ['intermediate', '___ he call you yesterday?', 'Didn\'t', ['Doesn\'t', 'Didn\'t', 'Don\'t'], '그가 어제 너에게 전화하지 않았니?', '어제의 일이므로 Didn\'t입니다.', '과거 부정'],
+    ['intermediate', 'Is it red ___ blue?', 'or', ['and', 'or', 'so'], '그것은 빨강이니 파랑이니?', '선택은 or로 묻습니다.', '선택'],
+    ['intermediate', 'Will you go by bus ___ by train?', 'or', ['or', 'and', 'but'], '버스로 갈 거니, 기차로 갈 거니?', '선택은 or로 묻습니다.', '선택'],
+    ['advanced', 'Which do you prefer, tea ___ coffee?', 'or', ['and', 'but', 'or'], '차와 커피 중 어느 것을 더 좋아하니?', '선택은 or로 묻습니다.', '선택'],
+    ['advanced', 'Doesn\'t she ___ pizza?', 'like', ['likes', 'liking', 'like'], '그녀는 피자를 좋아하지 않니?', 'Doesn\'t 뒤에는 동사원형을 씁니다.', '동사원형'],
+  ],
+  fix: [
+    ['basic', 'Not you like pizza?', 'Not', ['Don\'t'], ['you는 your여야 합니다.', '부정의문문은 Don\'t로 시작합니다.', 'like는 likes여야 합니다.'], 1, 'Don\'t you like pizza? → 부정의문문'],
+    ['intermediate', 'Do you want tea and coffee?', 'and', ['or'], ['선택을 물을 때는 or를 씁니다.', 'want는 wants여야 합니다.', 'tea는 teas여야 합니다.'], 0, 'Do you want tea or coffee? → 선택의문문'],
+    ['intermediate', 'Doesn\'t she likes pizza?', 'likes', ['like'], ['she는 her여야 합니다.', 'pizza는 pizzas여야 합니다.', 'Doesn\'t 뒤에는 동사원형을 씁니다.'], 2, 'Doesn\'t she like pizza? → 동사원형'],
+  ],
+  questions: [
+    pc('Which sentence is a correct negative question?', '올바른 부정의문문을 고르세요.', 'basic', [['Not you like pizza?', '너는 피자를 좋아하지 않니?'], ['You not like pizza?', '너는 피자를 좋아하지 않니?'], ['Don\'t you like pizza?', '너는 피자를 좋아하지 않니?'], ['Do not like you pizza?', '너는 피자를 좋아하지 않니?']], 2, '부정의문문은 Don\'t로 시작합니다.'),
+    pc('Which sentence is a correct negative question with be?', 'be동사를 쓴 올바른 부정의문문을 고르세요.', 'basic', [['Isn\'t she your sister?', '그녀는 네 여동생 아니니?'], ['Not she is your sister?', '그녀는 네 여동생 아니니?'], ['She isn\'t your sister?', '그녀는 네 여동생 아니니?'], ['Doesn\'t she your sister?', '그녀는 네 여동생 아니니?']], 0, 'be동사의 부정의문문은 Isn\'t로 시작합니다.'),
+    pc('Which sentence correctly asks for a choice?', '선택을 묻는 올바른 문장을 고르세요.', 'basic', [['Do you want tea and coffee?', '차를 원하니, 커피를 원하니?'], ['Do you want tea but coffee?', '차를 원하니, 커피를 원하니?'], ['Do you want tea so coffee?', '차를 원하니, 커피를 원하니?'], ['Do you want tea or coffee?', '차를 원하니, 커피를 원하니?']], 3, '선택은 or로 묻습니다.'),
+    pc('Don\'t you like pizza? What is the correct answer if you like it?', '"Don\'t you like pizza?"에 좋아한다고 대답할 때 올바른 것을 고르세요.', 'intermediate', [['No, I do.', '아니, 좋아해.'], ['Yes, I do.', '응, 좋아해.'], ['Yes, I don\'t.', '응, 안 좋아해.'], ['No, I like.', '아니, 좋아해.']], 1, '좋아한다는 긍정 내용이므로 Yes, I do.입니다.'),
+    pc('Isn\'t she your sister? Which answer means she is NOT your sister?', '"Isn\'t she your sister?"에 "그녀는 내 여동생이 아니다"라는 뜻의 대답을 고르세요.', 'intermediate', [['No, she isn\'t.', '응, 아니야.'], ['Yes, she isn\'t.', '응, 아니야.'], ['No, she is.', '아니, 맞아.'], ['Yes, she is not.', '응, 아니야.']], 0, '부정 내용이므로 No, she isn\'t.입니다.'),
+    pc('Choose the question that should be answered with a choice, not Yes or No.', 'Yes/No가 아니라 선택해서 대답해야 하는 질문을 고르세요.', 'intermediate', [['Don\'t you like pizza?', '너는 피자를 좋아하지 않니?'], ['Isn\'t she your sister?', '그녀는 네 여동생 아니니?'], ['Is it red or blue?', '그것은 빨강이니 파랑이니?'], ['Didn\'t he call you?', '그가 전화하지 않았니?']], 2, 'A or B로 묻는 선택의문문입니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['Which do you prefer, tea or coffee?', '차와 커피 중 어느 것을 더 좋아하니?'], ['Who is taller, Tom or Jim?', 'Tom과 Jim 중 누가 더 크니?'], ['Didn\'t he call you?', '그가 너에게 전화하지 않았니?'], ['Which do you like better, cats and dogs?', '고양이와 개 중 어느 것을 더 좋아하니?']], 3, '선택을 물을 때는 and가 아니라 or를 써야 합니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① Not you like pizza?\n② Is it red or blue?\n③ Isn\'t she your sister?', 'basic', 1, '①만 틀렸고 Don\'t you like pizza?여야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① Do you want tea and coffee?\n② Doesn\'t she likes pizza?\n③ Will you go by bus or by train?\n④ Didn\'t he call you?', 'advanced', 2, '①은 or, ②는 like여야 하므로 틀린 문장은 2개입니다.'),
+    pc('Why is "Do you want tea and coffee?" wrong as a choice question?', '선택을 묻는 질문으로 이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because want should be wants.', 'want를 wants로 바꿔야 해서'], ['Because tea should be teas.', 'tea를 teas로 바꿔야 해서'], ['Because you should be your.', 'you를 your로 바꿔야 해서'], ['Because a choice question uses or.', '선택의문문은 or를 써야 해서']], 3, '선택을 물을 때는 or를 씁니다.', 'reason'),
+  ],
+  popup: [['___ you like pizza?', 'Don\'t', ['Not', 'No'], '부정 축약형'], ['___ she your sister?', 'Isn\'t', ['Not', 'Aren\'t'], 'be동사 부정'], ['Do you want tea ___ coffee?', 'or', ['and', 'but'], '선택'], ['Doesn\'t she ___ pizza?', 'like', ['likes', 'liking'], '동사원형']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'Not you like pizza?', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['Don\'t you like pizza?'], noteKo: '부정의문문은 Don\'t로 시작합니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'Do you want tea and coffee?', promptKo: '선택을 묻는 문장이 되도록 틀린 곳을 바르게 고쳐 쓰시오.', answers: ['Do you want tea or coffee?'], noteKo: '선택을 물을 때는 or를 씁니다.' },
+  ],
+  top: ['부정의문문 = Don\'t/Isn\'t/Didn\'t + 주어 ~?, 대답은 내용이 긍정이면 Yes, 부정이면 No. 선택의문문 = A or B?', 'Don\'t you like pizza?', '너는 피자를 좋아하지 않니?'],
+  lecture: [
+    { type: 'text', text: '부정의문문 · 선택의문문', narration: '오늘은 부정으로 묻는 문장과 둘 중 고르게 하는 문장을 배워요.' },
+    { type: 'board', title: '부정의문문', lines: ['[b]Don\'t[/b] you like pizza? — 너는 피자를 좋아하지 않니?', '[b]Isn\'t[/b] she your sister? — 그녀는 네 여동생 아니니?', 'Didn\'t he call you? — 그가 너에게 전화하지 않았니?'], narration: '부정 축약형으로 문장을 시작해요. [en]Don\'t you like pizza?[/en] 너는 피자를 좋아하지 않니?' },
+    { type: 'board', title: '부정의문문의 대답', lines: ['Don\'t you like pizza? — [b]Yes[/b], I do. — 아니, 좋아해.', 'Isn\'t she your sister? — [b]No[/b], she isn\'t. — 응, 아니야.', '긍정 내용 = Yes / 부정 내용 = No'], narration: '대답은 내용으로 정해요. 좋아하면 [en]Yes[/en], 아니면 [en]No[/en]예요. 우리말의 응, 아니와는 달라요.' },
+    { type: 'board', title: '선택의문문', lines: ['Do you want tea [b]or[/b] coffee? — 차를 원하니, 커피를 원하니?', 'Is it red or blue? — 그것은 빨강이니 파랑이니?', '선택한 것으로 대답'], narration: '[en]A or B[/en]로 물으면 선택해서 대답해요. [en]Do you want tea or coffee?[/en] 차를 원하니, 커피를 원하니?' },
+    { type: 'board', title: '의문사 + A or B', lines: ['Which do you prefer, tea [b]or[/b] coffee? — 차와 커피 중 어느 것을 더 좋아하니?', 'Who is taller, Tom or Jim? — Tom과 Jim 중 누가 더 크니?'], narration: '[en]which[/en]나 [en]who[/en] 뒤에도 [en]or[/en]를 붙일 수 있어요. [en]Which do you prefer, tea or coffee?[/en] 차와 커피 중 어느 것을 더 좋아하니?' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× [b]Not[/b] you like pizza? — 너는 피자를 좋아하지 않니?', '× Do you want tea [b]and[/b] coffee? — 차를 원하니, 커피를 원하니?', '× Doesn\'t she [b]likes[/b] pizza? — 그녀는 피자를 좋아하지 않니?'], narration: '부정의문문은 [en]Don\'t[/en]로 시작해요. 선택은 [en]or[/en]예요. [en]Doesn\'t[/en] 뒤에는 동사원형이에요.' },
+    { type: 'text', text: '정리: 부정의문문은 내용으로 Yes/No', narration: '정리할게요. 부정의문문의 대답은 내용에 따라 [en]Yes[/en]나 [en]No[/en]로 해요.' },
+  ],
+});

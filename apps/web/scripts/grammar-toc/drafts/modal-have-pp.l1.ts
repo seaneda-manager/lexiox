@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'modal-have-pp', topic: '조동사 + have + p.p. - 1부', titleKo: '조동사 + have + p.p.',
+  summaryEn: 'Modal + have + p.p. talks about the past: must have (surely), may have (maybe), cannot have (impossible), should have (regret).',
+  summaryKo: '조동사 + have + p.p.는 과거에 대한 추측이나 후회를 나타냅니다. must have는 "~했음에 틀림없다", may have는 "~했을지도 모른다", cannot have는 "~했을 리 없다", should have는 "~했어야 했다"입니다.',
+  rules: [
+    ['must have + p.p. = surely did.', 'must have p.p.는 "~했음에 틀림없다"입니다. (He must have left.)'],
+    ['may/might have + p.p. = maybe did.', 'may(might) have p.p.는 "~했을지도 모른다"입니다.'],
+    ['cannot have + p.p. = cannot have done.', 'cannot(can\'t) have p.p.는 "~했을 리가 없다"입니다.'],
+    ['should have + p.p. = regret.', 'should have p.p.는 "~했어야 했는데 (하지 않았다)"는 후회입니다.'],
+  ],
+  examples: [['He must have left early.', '그는 일찍 떠났음에 틀림없다.'], ['She may have forgotten the key.', '그녀가 열쇠를 잊었을지도 모른다.'], ['You should have called me.', '너는 나에게 전화했어야 했다.']],
+  groups: [
+    ['must have p.p.', '~했음에 틀림없다.', [
+      ['He must have left early.', '그는 일찍 떠났음에 틀림없다.', 'must have + p.p.', '확실한 추측입니다.'],
+      ['She must have been tired.', '그녀는 피곤했음에 틀림없다.', 'must have + p.p.', '확실한 추측입니다.'],
+      ['They must have missed the bus.', '그들은 버스를 놓쳤음에 틀림없다.', 'must have + p.p.', '확실한 추측입니다.']]],
+    ['may/might have p.p.', '~했을지도 모른다.', [
+      ['She may have forgotten the key.', '그녀가 열쇠를 잊었을지도 모른다.', 'may have + p.p.', '불확실한 추측입니다.'],
+      ['He might have lost his phone.', '그가 휴대폰을 잃어버렸을지도 모른다.', 'might have + p.p.', '불확실한 추측입니다.'],
+      ['They may have gone home.', '그들은 집에 갔을지도 모른다.', 'may have + p.p.', '불확실한 추측입니다.']]],
+    ['cannot have p.p.', '~했을 리 없다.', [
+      ['He cannot have said that.', '그가 그렇게 말했을 리가 없다.', 'cannot have + p.p.', '강한 부정 추측입니다.'],
+      ['She can\'t have finished it.', '그녀가 그것을 끝냈을 리가 없다.', 'can\'t have + p.p.', '강한 부정 추측입니다.'],
+      ['They can\'t have arrived yet.', '그들이 벌써 도착했을 리가 없다.', 'can\'t have + p.p.', '강한 부정 추측입니다.']]],
+    ['should have p.p.', '~했어야 했다.', [
+      ['You should have called me.', '너는 나에게 전화했어야 했다.', 'should have + p.p.', '하지 않은 것을 후회합니다.'],
+      ['I should have studied harder.', '나는 더 열심히 공부했어야 했다.', 'should have + p.p.', '하지 않은 것을 후회합니다.'],
+      ['He should have listened.', '그는 귀 기울였어야 했다.', 'should have + p.p.', '하지 않은 것을 후회합니다.']]],
+  ],
+  wrong: [['He must have leave early.', 'left → He must have left early. — have 뒤에는 p.p.를 씁니다.', ''], ['You should have call me.', 'called → You should have called me. — 너는 나에게 전화했어야 했다.', ''], ['She may have forget the key.', 'forgotten → She may have forgotten the key. — 그녀가 열쇠를 잊었을지도 모른다.', '']],
+  wrongNote: '조동사 + have 뒤에는 반드시 과거분사(p.p.)를 씁니다.',
+  cram: '■ 핵심 요약\n조동사 + have + p.p.는 과거에 대한 추측과 후회를 나타냅니다.\n\n■ 규칙\n1. must have p.p. = ~했음에 틀림없다.\n2. may/might have p.p. = ~했을지도 모른다.\n3. cannot have p.p. = ~했을 리 없다.\n4. should have p.p. = ~했어야 했다.\n\n■ 예문 뜻\n그는 일찍 떠났음에 틀림없다.\n그녀가 열쇠를 잊었을지도 모른다.\n너는 나에게 전화했어야 했다.',
+  blanks: [['"~했음에 틀림없다"는 ___ have p.p.입니다.', 'must', '조동사'], ['"~했을 리 없다"는 ___ have p.p.입니다.', 'cannot', '조동사'], ['"~했어야 했다"는 ___ have p.p.입니다.', 'should', '조동사'], ['have 뒤에는 ___를 씁니다.', 'p.p.', '과거분사']],
+  fill: [
+    ['basic', 'He must have ___ early.', 'left', ['leave', 'left', 'leaving'], '그는 일찍 떠났음에 틀림없다.', 'have 뒤에는 과거분사를 씁니다.', '과거분사'],
+    ['basic', 'You should have ___ me.', 'called', ['call', 'calling', 'called'], '너는 나에게 전화했어야 했다.', 'have 뒤에는 과거분사를 씁니다.', '과거분사'],
+    ['basic', 'She may have ___ the key.', 'forgotten', ['forgotten', 'forget', 'forgetting'], '그녀가 열쇠를 잊었을지도 모른다.', 'have 뒤에는 과거분사를 씁니다.', '과거분사'],
+    ['intermediate', 'He ___ have said that.', 'cannot', ['must', 'cannot', 'should'], '그가 그렇게 말했을 리가 없다.', '"~했을 리 없다"는 cannot have p.p.입니다.', '~했을 리 없다'],
+    ['intermediate', 'I ___ have studied harder.', 'should', ['should', 'may', 'cannot'], '나는 더 열심히 공부했어야 했다.', '"~했어야 했다"는 should have p.p.입니다.', '후회'],
+    ['intermediate', 'They must have ___ the bus.', 'missed', ['miss', 'missed', 'missing'], '그들은 버스를 놓쳤음에 틀림없다.', 'have 뒤에는 과거분사를 씁니다.', '과거분사'],
+    ['advanced', 'He might have ___ his phone.', 'lost', ['lose', 'losing', 'lost'], '그가 휴대폰을 잃어버렸을지도 모른다.', 'have 뒤에는 과거분사를 씁니다.', '과거분사'],
+    ['advanced', 'She can\'t have ___ it yet.', 'finished', ['finishing', 'finish', 'finished'], '그녀가 그것을 벌써 끝냈을 리가 없다.', 'have 뒤에는 과거분사를 씁니다.', '과거분사'],
+  ],
+  fix: [
+    ['basic', 'He must have leave early.', 'leave', ['left'], ['He는 They여야 합니다.', 'have 뒤에는 과거분사를 씁니다.', 'early는 earlier여야 합니다.'], 1, 'He must have left early. → have + p.p.'],
+    ['intermediate', 'You should have call me.', 'call', ['called'], ['have 뒤에는 과거분사를 씁니다.', 'me는 my여야 합니다.', 'should는 shall이어야 합니다.'], 0, 'You should have called me. → have + p.p.'],
+    ['intermediate', 'She may have forget the key.', 'forget', ['forgotten'], ['She는 He여야 합니다.', 'key는 keys여야 합니다.', 'have 뒤에는 과거분사를 씁니다.'], 2, 'She may have forgotten the key. → have + p.p.'],
+  ],
+  questions: [
+    pc('Which sentence about leaving is correct?', '떠난 것에 대한 올바른 문장을 고르세요.', 'basic', [['He must have leave early.', '그는 일찍 떠났음에 틀림없다.'], ['He must has left early.', '그는 일찍 떠났음에 틀림없다.'], ['He must have left early.', '그는 일찍 떠났음에 틀림없다.'], ['He must had left early.', '그는 일찍 떠났음에 틀림없다.']], 2, 'must have + p.p.입니다.'),
+    pc('Which sentence about a phone call is correct?', '전화에 대한 올바른 문장을 고르세요.', 'basic', [['You should have called me.', '너는 나에게 전화했어야 했다.'], ['You should have call me.', '너는 나에게 전화했어야 했다.'], ['You should had called me.', '너는 나에게 전화했어야 했다.'], ['You should has called me.', '너는 나에게 전화했어야 했다.']], 0, 'should have + p.p.입니다.'),
+    pc('Which sentence about a key is correct?', '열쇠에 대한 올바른 문장을 고르세요.', 'basic', [['She may have forget the key.', '그녀가 열쇠를 잊었을지도 모른다.'], ['She may has forgotten the key.', '그녀가 열쇠를 잊었을지도 모른다.'], ['She may forgotten the key.', '그녀가 열쇠를 잊었을지도 모른다.'], ['She may have forgotten the key.', '그녀가 열쇠를 잊었을지도 모른다.']], 3, 'may have + p.p.입니다.'),
+    pc('Which sentence means "It is impossible that he said that"?', '"그가 그렇게 말했을 리가 없다"는 뜻의 문장을 고르세요.', 'intermediate', [['He must have said that.', '그가 그렇게 말했음에 틀림없다.'], ['He cannot have said that.', '그가 그렇게 말했을 리가 없다.'], ['He may have said that.', '그가 그렇게 말했을지도 모른다.'], ['He should have said that.', '그는 그렇게 말했어야 했다.']], 1, 'cannot have p.p.는 "~했을 리 없다"입니다.'),
+    pc('Which sentence expresses regret?', '후회를 나타내는 문장을 고르세요.', 'intermediate', [['I should have studied harder.', '나는 더 열심히 공부했어야 했다.'], ['They may have gone home.', '그들은 집에 갔을지도 모른다.'], ['She must have been tired.', '그녀는 피곤했음에 틀림없다.'], ['He might have lost his phone.', '그가 휴대폰을 잃어버렸을지도 모른다.']], 0, 'should have p.p.는 후회를 나타냅니다.'),
+    pc('Choose the sentence that expresses a strong guess.', '확실한 추측을 나타내는 문장을 고르세요.', 'intermediate', [['She may have forgotten the key.', '그녀가 열쇠를 잊었을지도 모른다.'], ['He might have lost his phone.', '그가 휴대폰을 잃어버렸을지도 모른다.'], ['They must have missed the bus.', '그들은 버스를 놓쳤음에 틀림없다.'], ['They may have gone home.', '그들은 집에 갔을지도 모른다.']], 2, 'must have p.p.는 확실한 추측입니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['He should have listened.', '그는 귀 기울였어야 했다.'], ['They can\'t have arrived yet.', '그들이 벌써 도착했을 리가 없다.'], ['She must have been tired.', '그녀는 피곤했음에 틀림없다.'], ['He might have lose his phone.', '그가 휴대폰을 잃어버렸을지도 모른다.']], 3, 'have 뒤에는 lost처럼 과거분사를 써야 합니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① He must have leave early.\n② You should have called me.\n③ She may have forgotten the key.', 'basic', 1, '①만 틀렸고 left여야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① You should have call me.\n② She may have forget the key.\n③ They must have missed the bus.\n④ I should have studied harder.', 'advanced', 2, '①은 called, ②는 forgotten이어야 하므로 틀린 문장은 2개입니다.'),
+    pc('Why is "You should have call me." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because me should be my.', 'me를 my로 바꿔야 해서'], ['Because should should be would.', 'should를 would로 바꿔야 해서'], ['Because have should be has.', 'have를 has로 바꿔야 해서'], ['Because have is followed by a past participle.', 'have 뒤에는 과거분사가 와야 해서']], 3, '조동사 + have 뒤에는 과거분사를 씁니다.', 'reason'),
+  ],
+  popup: [['He must have ___ early.', 'left', ['leave', 'leaving'], '과거분사'], ['You should have ___ me.', 'called', ['call', 'calling'], '과거분사'], ['He ___ have said that.', 'cannot', ['must', 'should'], '~했을 리 없다'], ['I ___ have studied harder.', 'should', ['may', 'cannot'], '후회']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'He must have leave early.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['He must have left early.'], noteKo: 'have 뒤에는 과거분사를 씁니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'You should have call me.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['You should have called me.'], noteKo: 'have 뒤에는 과거분사를 씁니다.' },
+  ],
+  top: ['must have p.p. = ~했음에 틀림없다, may have p.p. = ~했을지도, cannot have p.p. = ~했을 리 없다, should have p.p. = ~했어야 했다. have 뒤에는 p.p.', 'He must have left early.', '그는 일찍 떠났음에 틀림없다.'],
+  lecture: [
+    { type: 'text', text: '조동사 + have + p.p.', narration: '오늘은 과거에 대한 추측과 후회를 말하는 조동사 [en]have[/en] 과거분사를 배워요.' },
+    { type: 'board', title: 'must have p.p.', lines: ['He [b]must have left[/b] early. — 그는 일찍 떠났음에 틀림없다.', 'She must have been tired. — 그녀는 피곤했음에 틀림없다.', '~했음에 틀림없다'], narration: '[en]must have[/en] 과거분사는 했음에 틀림없다는 뜻이에요. [en]He must have left early.[/en] 그는 일찍 떠났음에 틀림없어요.' },
+    { type: 'board', title: 'may have p.p.', lines: ['She [b]may have forgotten[/b] the key. — 그녀가 열쇠를 잊었을지도 모른다.', 'He might have lost his phone. — 그가 휴대폰을 잃어버렸을지도 모른다.', '~했을지도 모른다'], narration: '[en]may have[/en] 과거분사는 했을지도 모른다는 뜻이에요. [en]She may have forgotten the key.[/en] 그녀가 열쇠를 잊었을지도 몰라요.' },
+    { type: 'board', title: 'cannot have p.p.', lines: ['He [b]cannot have said[/b] that. — 그가 그렇게 말했을 리가 없다.', 'They can\'t have arrived yet. — 그들이 벌써 도착했을 리가 없다.', '~했을 리 없다'], narration: '[en]cannot have[/en] 과거분사는 했을 리가 없다는 뜻이에요. [en]He cannot have said that.[/en] 그가 그렇게 말했을 리가 없어요.' },
+    { type: 'board', title: 'should have p.p.', lines: ['You [b]should have called[/b] me. — 너는 나에게 전화했어야 했다.', 'I should have studied harder. — 나는 더 열심히 공부했어야 했다.', '~했어야 했다 (후회)'], narration: '[en]should have[/en] 과거분사는 했어야 했는데 하지 않았다는 후회예요. [en]You should have called me.[/en] 너는 나에게 전화했어야 했어요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× He must have [b]leave[/b] early. — 그는 일찍 떠났음에 틀림없다.', '× You should have [b]call[/b] me. — 너는 나에게 전화했어야 했다.', '× She may have [b]forget[/b] the key. — 그녀가 열쇠를 잊었을지도 모른다.'], narration: '[en]have[/en] 뒤에는 반드시 과거분사를 써요. 원형을 쓰면 틀려요.' },
+    { type: 'text', text: '정리: 조동사 + have + p.p.', narration: '정리할게요. 조동사 [en]have[/en] 과거분사로 과거를 추측하거나 후회해요.' },
+  ],
+});

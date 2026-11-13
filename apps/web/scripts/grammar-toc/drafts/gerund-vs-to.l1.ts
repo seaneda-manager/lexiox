@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'gerund-vs-to', topic: '동명사 vs. to부정사 - 1부', titleKo: '동명사 vs. to부정사',
+  summaryEn: 'Some verbs take only -ing (enjoy, finish), some take only to (want, decide), and some take both.',
+  summaryKo: '동사에 따라 목적어로 동명사만(enjoy, finish), to부정사만(want, decide), 둘 다 쓸 수 있습니다.',
+  rules: [
+    ['enjoy, finish, avoid, mind, give up + -ing.', 'enjoy, finish, avoid, mind, give up은 동명사(-ing)만 목적어로 씁니다.'],
+    ['want, hope, decide, plan, promise + to + base verb.', 'want, hope, decide, plan, promise는 to부정사만 목적어로 씁니다.'],
+    ['start, begin, like, love can take both.', 'start, begin, like, love는 둘 다 쓸 수 있고 뜻이 거의 같습니다.'],
+    ['remember/forget + to = a future task; + -ing = a past event.', 'remember, forget 뒤에 to는 "~할 것을", -ing는 "~한 것을"입니다.'],
+  ],
+  examples: [['I enjoy reading books.', '나는 책 읽는 것을 즐긴다.'], ['I want to read books.', '나는 책을 읽고 싶다.'], ['I remember locking the door.', '나는 문을 잠근 것을 기억한다.']],
+  groups: [
+    ['동명사만', 'enjoy, finish, avoid.', [
+      ['I enjoy reading books.', '나는 책 읽는 것을 즐긴다.', 'enjoy + 동사 + ing', '동명사만 씁니다.'],
+      ['He finished doing his homework.', '그는 숙제를 끝냈다.', 'finish + 동사 + ing', '동명사만 씁니다.'],
+      ['She avoids eating sweets.', '그녀는 단 것을 먹는 것을 피한다.', 'avoid + 동사 + ing', '동명사만 씁니다.']]],
+    ['to부정사만', 'want, decide, hope.', [
+      ['I want to read books.', '나는 책을 읽고 싶다.', 'want + to + 동사원형', 'to부정사만 씁니다.'],
+      ['She decided to leave early.', '그녀는 일찍 떠나기로 결심했다.', 'decide + to + 동사원형', 'to부정사만 씁니다.'],
+      ['They hope to win the game.', '그들은 경기에서 이기기를 바란다.', 'hope + to + 동사원형', 'to부정사만 씁니다.']]],
+    ['둘 다 가능', 'start, begin.', [
+      ['She started to cry.', '그녀는 울기 시작했다.', 'start + to + 동사원형', '뜻이 같습니다.'],
+      ['She started crying.', '그녀는 울기 시작했다.', 'start + 동사 + ing', '뜻이 같습니다.'],
+      ['It began to rain.', '비가 오기 시작했다.', 'begin + to + 동사원형', 'begin도 둘 다 가능합니다.']]],
+    ['remember / forget', '뜻이 달라져요.', [
+      ['I remember locking the door.', '나는 문을 잠근 것을 기억한다.', 'remember + 동사 + ing', '이미 한 일입니다.'],
+      ['Remember to lock the door.', '문을 잠글 것을 기억해라.', 'remember + to + 동사원형', '앞으로 할 일입니다.'],
+      ['I forgot to call her.', '나는 그녀에게 전화하는 것을 잊었다.', 'forget + to + 동사원형', '앞으로 할 일을 잊었습니다.']]],
+  ],
+  wrong: [['I enjoy to read books.', 'reading → I enjoy reading books. — enjoy 뒤에는 동명사입니다.', ''], ['She decided leaving early.', 'to leave → She decided to leave early. — decide 뒤에는 to부정사입니다.', ''], ['He finished to do his homework.', 'doing → He finished doing his homework. — finish 뒤에는 동명사입니다.', '']],
+  wrongNote: '동사마다 뒤에 오는 형태가 정해져 있습니다.',
+  cram: '■ 핵심 요약\nenjoy, finish는 -ing, want, decide는 to부정사, start, begin은 둘 다 씁니다.\n\n■ 규칙\n1. enjoy, finish, avoid + -ing.\n2. want, hope, decide + to + 동사원형.\n3. start, begin, like, love는 둘 다 가능.\n4. remember/forget + to = 할 것, + -ing = 한 것.\n\n■ 예문 뜻\n나는 책 읽는 것을 즐긴다.\n나는 책을 읽고 싶다.\n나는 문을 잠근 것을 기억한다.',
+  blanks: [['enjoy 뒤에는 ___을 씁니다.', '동명사', '세 글자'], ['want 뒤에는 ___를 씁니다.', 'to부정사', '다섯 글자'], ['start 뒤에는 둘 다 쓸 수 ___.', '있다', '두 글자'], ['remember + -ing는 이미 ___ 일입니다.', '한', '한 글자']],
+  fill: [
+    ['basic', 'I enjoy ___ books.', 'reading', ['read', 'to read', 'reading'], '나는 책 읽는 것을 즐긴다.', 'enjoy 뒤에는 동명사입니다.', '동명사'],
+    ['basic', 'I want ___ read books.', 'to', ['to', 'of', 'for'], '나는 책을 읽고 싶다.', 'want 뒤에는 to부정사입니다.', '부정사 표시'],
+    ['basic', 'He finished ___ his homework.', 'doing', ['do', 'doing', 'to do'], '그는 숙제를 끝냈다.', 'finish 뒤에는 동명사입니다.', '동명사'],
+    ['intermediate', 'She decided ___ early.', 'to leave', ['leaving', 'to leave', 'leave'], '그녀는 일찍 떠나기로 결심했다.', 'decide 뒤에는 to부정사입니다.', 'to부정사'],
+    ['intermediate', 'She avoids ___ sweets.', 'eating', ['eating', 'to eat', 'eat'], '그녀는 단 것을 먹는 것을 피한다.', 'avoid 뒤에는 동명사입니다.', '동명사'],
+    ['intermediate', 'They hope ___ the game.', 'to win', ['winning', 'win', 'to win'], '그들은 경기에서 이기기를 바란다.', 'hope 뒤에는 to부정사입니다.', 'to부정사'],
+    ['advanced', 'I forgot ___ her, so she is angry.', 'to call', ['calling', 'to call', 'call'], '나는 그녀에게 전화하는 것을 잊어서 그녀가 화났다.', '해야 할 일을 잊었으므로 to부정사입니다.', '할 일'],
+    ['advanced', 'I remember ___ the door last night.', 'locking', ['locking', 'to lock', 'lock'], '나는 어젯밤 문을 잠근 것을 기억한다.', '이미 한 일이므로 동명사입니다.', '한 일'],
+  ],
+  fix: [
+    ['basic', 'He finished do his homework.', 'do', ['doing'], ['He는 They여야 합니다.', 'finish 뒤에는 동명사를 씁니다.', 'homework는 homeworks여야 합니다.'], 1, 'He finished doing his homework. → finish + -ing'],
+    ['intermediate', 'She decided leaving early.', 'leaving', ['to leave'], ['decide 뒤에는 to부정사를 씁니다.', 'early는 earlier여야 합니다.', 'decided는 decide여야 합니다.'], 0, 'She decided to leave early. → decide + to부정사'],
+    ['intermediate', 'They hope winning the game.', 'winning', ['to win'], ['game은 games여야 합니다.', 'hope는 hopes여야 합니다.', 'hope 뒤에는 to부정사를 씁니다.'], 2, 'They hope to win the game. → hope + to부정사'],
+  ],
+  questions: [
+    pc('Which sentence about books is correct?', '책에 대한 올바른 문장을 고르세요.', 'basic', [['I enjoy to read books.', '나는 책 읽는 것을 즐긴다.'], ['I enjoy read books.', '나는 책 읽는 것을 즐긴다.'], ['I enjoy reading books.', '나는 책 읽는 것을 즐긴다.'], ['I enjoy reads books.', '나는 책 읽는 것을 즐긴다.']], 2, 'enjoy 뒤에는 동명사입니다.'),
+    pc('Which sentence about homework is correct?', '숙제에 대한 올바른 문장을 고르세요.', 'basic', [['He finished doing his homework.', '그는 숙제를 끝냈다.'], ['He finished to do his homework.', '그는 숙제를 끝냈다.'], ['He finished do his homework.', '그는 숙제를 끝냈다.'], ['He finished did his homework.', '그는 숙제를 끝냈다.']], 0, 'finish 뒤에는 동명사입니다.'),
+    pc('Which sentence about leaving is correct?', '떠나는 것에 대한 올바른 문장을 고르세요.', 'basic', [['She decided leaving early.', '그녀는 일찍 떠나기로 결심했다.'], ['She decided leave early.', '그녀는 일찍 떠나기로 결심했다.'], ['She decided leaves early.', '그녀는 일찍 떠나기로 결심했다.'], ['She decided to leave early.', '그녀는 일찍 떠나기로 결심했다.']], 3, 'decide 뒤에는 to부정사입니다.'),
+    pc('Which sentence about winning is correct?', '이기는 것에 대한 올바른 문장을 고르세요.', 'intermediate', [['They hope winning the game.', '그들은 경기에서 이기기를 바란다.'], ['They hope to win the game.', '그들은 경기에서 이기기를 바란다.'], ['They hope win the game.', '그들은 경기에서 이기기를 바란다.'], ['They hope won the game.', '그들은 경기에서 이기기를 바란다.']], 1, 'hope 뒤에는 to부정사입니다.'),
+    pc('Which sentence means the person already locked the door?', '이미 문을 잠갔다는 뜻의 문장을 고르세요.', 'intermediate', [['I remember locking the door.', '나는 문을 잠근 것을 기억한다.'], ['Remember to lock the door.', '문을 잠글 것을 기억해라.'], ['I forgot to lock the door.', '나는 문을 잠그는 것을 잊었다.'], ['I want to lock the door.', '나는 문을 잠그고 싶다.']], 0, 'remember + -ing는 이미 한 일입니다.'),
+    pc('Choose the sentence in which both forms mean the same.', '두 형태 모두 같은 뜻으로 쓸 수 있는 문장을 고르세요.', 'intermediate', [['I enjoy reading books.', '나는 책 읽는 것을 즐긴다.'], ['She started to cry.', '그녀는 울기 시작했다.'], ['She decided to leave.', '그녀는 떠나기로 결심했다.'], ['He finished doing his homework.', '그는 숙제를 끝냈다.']], 1, 'start는 to부정사와 동명사 모두 쓸 수 있습니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['She avoids eating sweets.', '그녀는 단 것을 먹는 것을 피한다.'], ['I want to read books.', '나는 책을 읽고 싶다.'], ['It began to rain.', '비가 오기 시작했다.'], ['He finished to do his homework.', '그는 숙제를 끝냈다.']], 3, 'finish 뒤에는 동명사를 써야 합니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① I enjoy reading books.\n② She decided leaving early.\n③ I want to read books.', 'basic', 1, '②만 틀렸고 to leave여야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① He finished do his homework.\n② They hope winning the game.\n③ She avoids eating sweets.\n④ She started crying.', 'advanced', 2, '①은 doing, ②는 to win이어야 하므로 틀린 문장은 2개입니다.'),
+    pc('Why is "I enjoy to read books." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because books should be book.', 'books를 book으로 바꿔야 해서'], ['Because enjoy is followed by a gerund.', 'enjoy 뒤에는 동명사가 와야 해서'], ['Because read should be reads.', 'read를 reads로 바꿔야 해서'], ['Because I should be we.', 'I를 we로 바꿔야 해서']], 1, 'enjoy 뒤에는 동명사를 씁니다.', 'reason'),
+  ],
+  popup: [['I enjoy ___ books.', 'reading', ['read', 'to read'], '동명사'], ['I want ___ read books.', 'to', ['of', 'for'], '부정사 표시'], ['He finished ___ his homework.', 'doing', ['do', 'to do'], '동명사'], ['She decided ___ early.', 'to leave', ['leaving', 'leave'], 'to부정사']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'He finished do his homework.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['He finished doing his homework.'], noteKo: 'finish 뒤에는 동명사를 씁니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'She decided leaving early.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['She decided to leave early.'], noteKo: 'decide 뒤에는 to부정사를 씁니다.' },
+  ],
+  top: ['enjoy · finish · avoid + -ing, want · hope · decide + to부정사, start · begin은 둘 다 가능. remember/forget은 to = 할 일, -ing = 한 일.', 'I enjoy reading books.', '나는 책 읽는 것을 즐긴다.'],
+  lecture: [
+    { type: 'text', text: '동명사 vs. to부정사', narration: '오늘은 동사 뒤에 [en]ing[/en]가 올지 [en]to[/en]가 올지 배워요.' },
+    { type: 'board', title: '동명사만 쓰는 동사', lines: ['I [b]enjoy reading[/b] books. — 나는 책 읽는 것을 즐긴다.', 'He finished doing his homework. — 그는 숙제를 끝냈다.', 'enjoy · finish · avoid'], narration: '[en]enjoy[/en], [en]finish[/en], [en]avoid[/en] 뒤에는 동사 [en]ing[/en]가 와요. [en]I enjoy reading books.[/en] 나는 책 읽는 것을 즐겨요.' },
+    { type: 'board', title: 'to부정사만 쓰는 동사', lines: ['I [b]want to read[/b] books. — 나는 책을 읽고 싶다.', 'She decided to leave early. — 그녀는 일찍 떠나기로 결심했다.', 'want · hope · decide'], narration: '[en]want[/en], [en]hope[/en], [en]decide[/en] 뒤에는 [en]to[/en] 동사원형이 와요. [en]I want to read books.[/en] 나는 책을 읽고 싶어요.' },
+    { type: 'board', title: '둘 다 가능', lines: ['She started [b]to cry[/b]. = She started [b]crying[/b]. — 그녀는 울기 시작했다.', 'start · begin · like · love'], narration: '[en]start[/en]와 [en]begin[/en]은 둘 다 쓸 수 있어요. 뜻은 같아요. [en]She started to cry.[/en] 그녀는 울기 시작했어요.' },
+    { type: 'board', title: 'remember / forget', lines: ['I remember [b]locking[/b] the door. — 나는 문을 잠근 것을 기억한다.', 'Remember [b]to lock[/b] the door. — 문을 잠글 것을 기억해라.', '-ing = 한 일 / to = 할 일'], narration: '[en]remember[/en] 뒤에 [en]ing[/en]가 오면 이미 한 일, [en]to[/en]가 오면 앞으로 할 일이에요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× I enjoy [b]to read[/b] books. — 나는 책 읽는 것을 즐긴다.', '× She decided [b]leaving[/b] early. — 그녀는 일찍 떠나기로 결심했다.', '× He finished [b]to do[/b] his homework. — 그는 숙제를 끝냈다.'], narration: '[en]enjoy[/en]와 [en]finish[/en] 뒤에 [en]to[/en]를 쓰면 틀려요. [en]decide[/en] 뒤에 [en]ing[/en]를 써도 틀려요.' },
+    { type: 'text', text: '정리: 동사마다 정해진 형태', narration: '정리할게요. 동사마다 뒤에 오는 형태가 정해져 있어요.' },
+  ],
+});

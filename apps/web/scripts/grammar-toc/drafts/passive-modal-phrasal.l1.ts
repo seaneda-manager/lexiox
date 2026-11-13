@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'passive-modal-phrasal', topic: '조동사·동사구 수동태 - 1부', titleKo: '조동사·동사구 수동태',
+  summaryEn: 'Modal + be + p.p. is the passive with a modal. A phrasal verb is treated as one verb in the passive.',
+  summaryKo: '조동사가 있는 수동태는 "조동사 + be + p.p."이고, 동사구는 하나의 동사처럼 묶어서 수동태로 만듭니다.',
+  rules: [
+    ['modal + be + p.p.', '조동사 수동태는 조동사 + be + p.p.입니다. (can be solved)'],
+    ['The object of the active sentence becomes the subject.', '능동문의 목적어가 수동문의 주어가 됩니다.'],
+    ['A phrasal verb stays together: look after → be looked after.', '동사구는 떨어지지 않고 그대로 씁니다. (look after → be looked after)'],
+    ['Negative: modal + not + be + p.p.', '부정은 조동사 + not + be + p.p.입니다. (cannot be opened)'],
+  ],
+  examples: [['The problem can be solved.', '그 문제는 해결될 수 있다.'], ['The party will be held tomorrow.', '파티는 내일 열릴 것이다.'], ['The baby was looked after by her.', '그 아기는 그녀에게 돌봄을 받았다.']],
+  groups: [
+    ['can/must/should + be p.p.', '~될 수 있다, ~되어야 한다.', [
+      ['The problem can be solved.', '그 문제는 해결될 수 있다.', 'can + be + p.p.', '가능입니다.'],
+      ['The work must be finished today.', '그 일은 오늘 끝나야 한다.', 'must + be + p.p.', '의무입니다.'],
+      ['This door should be closed.', '이 문은 닫혀야 한다.', 'should + be + p.p.', '충고입니다.']]],
+    ['will/may + be p.p.', '~될 것이다, ~될지도 모른다.', [
+      ['The party will be held tomorrow.', '파티는 내일 열릴 것이다.', 'will + be + p.p.', '미래입니다.'],
+      ['The letter may be sent today.', '그 편지는 오늘 보내질지도 모른다.', 'may + be + p.p.', '추측입니다.'],
+      ['The road will be repaired soon.', '그 도로는 곧 수리될 것이다.', 'will + be + p.p.', '미래입니다.']]],
+    ['동사구 수동태', '동사구는 묶어서.', [
+      ['The baby was looked after by her.', '그 아기는 그녀에게 돌봄을 받았다.', 'be + looked after', 'look after를 한 덩어리로 씁니다.'],
+      ['The meeting was put off.', '회의가 연기되었다.', 'be + put off', 'put off를 한 덩어리로 씁니다.'],
+      ['The old house was pulled down.', '그 오래된 집은 철거되었다.', 'be + pulled down', 'pull down을 한 덩어리로 씁니다.']]],
+    ['부정 수동태', 'not을 조동사 뒤에.', [
+      ['The window cannot be opened.', '그 창문은 열릴 수 없다.', 'cannot + be + p.p.', '부정입니다.'],
+      ['The rules must not be broken.', '규칙은 어겨서는 안 된다.', 'must not + be + p.p.', '금지입니다.'],
+      ['The homework will not be accepted.', '숙제는 받아들여지지 않을 것이다.', 'will not + be + p.p.', '부정 미래입니다.']]],
+  ],
+  wrong: [['The problem can solved.', 'be solved → The problem can be solved. — 조동사 뒤에 be가 필요합니다.', ''], ['The work must be finish today.', 'finished → The work must be finished today. — be 뒤에는 p.p.를 씁니다.', ''], ['The baby was looked by her.', 'looked after → The baby was looked after by her. — 동사구는 함께 씁니다.', '']],
+  wrongNote: '조동사 수동태는 be + p.p.를 빼먹지 않고, 동사구는 함께 씁니다.',
+  cram: '■ 핵심 요약\n조동사 수동태는 조동사 + be + p.p., 동사구는 한 덩어리로 수동태를 만듭니다.\n\n■ 규칙\n1. 조동사 + be + p.p.\n2. 능동문의 목적어가 주어가 된다.\n3. 동사구는 함께 쓴다. (be looked after)\n4. 부정은 조동사 + not + be + p.p.\n\n■ 예문 뜻\n그 문제는 해결될 수 있다.\n파티는 내일 열릴 것이다.\n그 아기는 그녀에게 돌봄을 받았다.',
+  blanks: [['조동사 수동태는 조동사 + ___ + p.p.입니다.', 'be', '동사원형'], ['be 뒤에는 ___를 씁니다.', 'p.p.', '과거분사'], ['look after는 한 개의 ___처럼 묶어서 씁니다.', '동사', '두 글자'], ['부정의 not은 조동사 ___에 둡니다.', '뒤', '한 글자']],
+  fill: [
+    ['basic', 'The problem can ___ solved.', 'be', ['be', 'is', 'been'], '그 문제는 해결될 수 있다.', '조동사 뒤에는 be가 옵니다.', '동사원형'],
+    ['basic', 'The work must be ___ today.', 'finished', ['finish', 'finishing', 'finished'], '그 일은 오늘 끝나야 한다.', 'be 뒤에는 p.p.를 씁니다.', '과거분사'],
+    ['basic', 'The party will ___ held tomorrow.', 'be', ['is', 'be', 'been'], '파티는 내일 열릴 것이다.', 'will 뒤에는 be가 옵니다.', '동사원형'],
+    ['intermediate', 'This door should be ___.', 'closed', ['close', 'closing', 'closed'], '이 문은 닫혀야 한다.', 'be 뒤에는 p.p.를 씁니다.', '과거분사'],
+    ['intermediate', 'The baby is looked ___ by her.', 'after', ['after', 'at', 'up'], '그 아기는 그녀에게 돌봄을 받는다.', 'look after를 함께 씁니다.', '돌보다'],
+    ['intermediate', 'The meeting was put ___.', 'off', ['off', 'on', 'in'], '회의가 연기되었다.', 'put off를 함께 씁니다.', '연기하다'],
+    ['advanced', 'The window cannot ___ opened.', 'be', ['been', 'being', 'be'], '그 창문은 열릴 수 없다.', '조동사 뒤에는 be가 옵니다.', '동사원형'],
+    ['advanced', 'The rules must not be ___.', 'broken', ['broke', 'broken', 'breaking'], '규칙은 어겨서는 안 된다.', 'be 뒤에는 p.p.를 씁니다.', '과거분사'],
+  ],
+  fix: [
+    ['basic', 'The problem can solved.', 'solved', ['be solved'], ['problem은 problems여야 합니다.', '조동사 뒤에는 be + p.p.가 옵니다.', 'can은 could여야 합니다.'], 1, 'The problem can be solved. → can + be + p.p.'],
+    ['intermediate', 'The work must be finish today.', 'finish', ['finished'], ['be 뒤에는 p.p.를 씁니다.', 'work는 works여야 합니다.', 'must는 should여야 합니다.'], 0, 'The work must be finished today. → be + p.p.'],
+    ['intermediate', 'The baby was looked by her.', 'looked', ['looked after'], ['baby는 babies여야 합니다.', 'was는 were여야 합니다.', '동사구 look after를 함께 씁니다.'], 2, 'The baby was looked after by her. → 동사구 수동태'],
+  ],
+  questions: [
+    pc('Which sentence about a problem is correct?', '문제에 대한 올바른 문장을 고르세요.', 'basic', [['The problem can solved.', '그 문제는 해결될 수 있다.'], ['The problem can be solve.', '그 문제는 해결될 수 있다.'], ['The problem can be solved.', '그 문제는 해결될 수 있다.'], ['The problem can is solved.', '그 문제는 해결될 수 있다.']], 2, '조동사 + be + p.p.입니다.'),
+    pc('Which sentence about work is correct?', '일에 대한 올바른 문장을 고르세요.', 'basic', [['The work must be finished today.', '그 일은 오늘 끝나야 한다.'], ['The work must finished today.', '그 일은 오늘 끝나야 한다.'], ['The work must be finish today.', '그 일은 오늘 끝나야 한다.'], ['The work must been finished today.', '그 일은 오늘 끝나야 한다.']], 0, '조동사 + be + p.p.입니다.'),
+    pc('Which sentence about a party is correct?', '파티에 대한 올바른 문장을 고르세요.', 'basic', [['The party will hold tomorrow.', '파티는 내일 열릴 것이다.'], ['The party will be hold tomorrow.', '파티는 내일 열릴 것이다.'], ['The party will been held tomorrow.', '파티는 내일 열릴 것이다.'], ['The party will be held tomorrow.', '파티는 내일 열릴 것이다.']], 3, 'will + be + p.p.입니다.'),
+    pc('Which sentence about a baby is correct?', '아기에 대한 올바른 문장을 고르세요.', 'intermediate', [['The baby was looked by her.', '그 아기는 그녀에게 돌봄을 받았다.'], ['The baby was looked after by her.', '그 아기는 그녀에게 돌봄을 받았다.'], ['The baby was after looked by her.', '그 아기는 그녀에게 돌봄을 받았다.'], ['The baby looked after by her.', '그 아기는 그녀에게 돌봄을 받았다.']], 1, '동사구 look after를 함께 씁니다.'),
+    pc('Which sentence about rules is correct?', '규칙에 대한 올바른 문장을 고르세요.', 'intermediate', [['The rules must be not broken.', '규칙은 어겨서는 안 된다.'], ['The rules not must be broken.', '규칙은 어겨서는 안 된다.'], ['The rules must not be broken.', '규칙은 어겨서는 안 된다.'], ['The rules must not break.', '규칙은 어겨서는 안 된다.']], 2, '부정은 조동사 + not + be + p.p.입니다.'),
+    pc('Choose the sentence that uses a phrasal verb in the passive.', '동사구 수동태를 쓴 문장을 고르세요.', 'intermediate', [['The problem can be solved.', '그 문제는 해결될 수 있다.'], ['The party will be held tomorrow.', '파티는 내일 열릴 것이다.'], ['The meeting was put off.', '회의가 연기되었다.'], ['This door should be closed.', '이 문은 닫혀야 한다.']], 2, 'put off는 동사구입니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['The window cannot be opened.', '그 창문은 열릴 수 없다.'], ['The old house was pulled down.', '그 오래된 집은 철거되었다.'], ['The letter may be sent today.', '그 편지는 오늘 보내질지도 모른다.'], ['The road will repaired soon.', '그 도로는 곧 수리될 것이다.']], 3, 'will 뒤에는 be가 필요합니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① The problem can solved.\n② The party will be held tomorrow.\n③ This door should be closed.', 'basic', 1, '①만 틀렸고 can be solved여야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① The work must be finish today.\n② The baby was looked by her.\n③ The window cannot be opened.\n④ The meeting was put off.', 'advanced', 2, '①은 finished, ②는 looked after여야 하므로 틀린 문장은 2개입니다.'),
+    pc('Why is "The problem can solved." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because can should be could.', 'can을 could로 바꿔야 해서'], ['Because problem should be problems.', 'problem을 problems로 바꿔야 해서'], ['Because be is missing after the modal.', '조동사 뒤에 be가 빠져서'], ['Because solved should be solve.', 'solved를 solve로 바꿔야 해서']], 2, '조동사 수동태에는 be + p.p.가 필요합니다.', 'reason'),
+  ],
+  popup: [['The problem can ___ solved.', 'be', ['is', 'been'], '동사원형'], ['The work must be ___ today.', 'finished', ['finish', 'finishing'], '과거분사'], ['The baby is looked ___ by her.', 'after', ['at', 'up'], '돌보다'], ['The meeting was put ___.', 'off', ['on', 'in'], '연기하다']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'The problem can solved.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['The problem can be solved.'], noteKo: '조동사 뒤에는 be + p.p.를 씁니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'The work must be finish today.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['The work must be finished today.'], noteKo: 'be 뒤에는 p.p.를 씁니다.' },
+  ],
+  top: ['조동사 수동태 = 조동사 + be + p.p., 동사구는 한 덩어리(be looked after), 부정은 조동사 + not + be + p.p.', 'The problem can be solved.', '그 문제는 해결될 수 있다.'],
+  lecture: [
+    { type: 'text', text: '조동사·동사구 수동태', narration: '오늘은 조동사가 있는 수동태와 동사구 수동태를 배워요.' },
+    { type: 'board', title: '조동사 + be + p.p.', lines: ['The problem [b]can be solved[/b]. — 그 문제는 해결될 수 있다.', 'The work must be finished today. — 그 일은 오늘 끝나야 한다.', '조동사 + be + p.p.'], narration: '조동사 뒤에는 [en]be[/en]와 과거분사가 와요. [en]The problem can be solved.[/en] 그 문제는 해결될 수 있어요.' },
+    { type: 'board', title: 'will / may + be p.p.', lines: ['The party [b]will be held[/b] tomorrow. — 파티는 내일 열릴 것이다.', 'The letter may be sent today. — 그 편지는 오늘 보내질지도 모른다.'], narration: '[en]will[/en]과 [en]may[/en]도 같아요. [en]The party will be held tomorrow.[/en] 파티는 내일 열릴 거예요.' },
+    { type: 'board', title: '동사구 수동태', lines: ['The baby was [b]looked after[/b] by her. — 그 아기는 그녀에게 돌봄을 받았다.', 'The meeting was put off. — 회의가 연기되었다.', '동사구는 함께'], narration: '동사구는 한 덩어리로 써요. [en]The baby was looked after by her.[/en] 그 아기는 그녀에게 돌봄을 받았어요.' },
+    { type: 'board', title: '부정 수동태', lines: ['The window [b]cannot be[/b] opened. — 그 창문은 열릴 수 없다.', 'The rules must not be broken. — 규칙은 어겨서는 안 된다.', '조동사 + not + be + p.p.'], narration: '부정은 조동사 뒤에 [en]not[/en]을 놓아요. [en]The window cannot be opened.[/en] 그 창문은 열릴 수 없어요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× The problem can [b]solved[/b]. — 그 문제는 해결될 수 있다.', '× The work must be [b]finish[/b] today. — 그 일은 오늘 끝나야 한다.', '× The baby was [b]looked[/b] by her. — 그 아기는 그녀에게 돌봄을 받았다.'], narration: '[en]be[/en]를 빼먹으면 틀려요. [en]be[/en] 뒤에는 과거분사예요. 동사구는 떼어 쓰지 않아요.' },
+    { type: 'text', text: '정리: 조동사 + be + p.p.', narration: '정리할게요. 조동사 수동태는 조동사 [en]be[/en] 과거분사예요.' },
+  ],
+});
