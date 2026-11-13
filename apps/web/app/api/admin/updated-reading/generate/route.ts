@@ -11,6 +11,7 @@ import { logAnthropicUsage } from '@/lib/ai/logAnthropicUsage';
 import { findBlankCountIssues } from '@/lib/utils/ensureCompleteWordsBlanks';
 import { collectUsedTopics, fetchTestPayloads } from '@/lib/topicPool/usedTopics';
 import { findAcademicParagraphIssues } from '@/lib/utils/validateAcademicParagraphs';
+import { ensureReadingIds } from '@/lib/utils/ensureReadingIds';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
@@ -286,6 +287,9 @@ Return ONLY this JSON structure (NO markdown, NO explanations, NO extra text):
     // 원래 정답 글자 묶음 자체를 안 바꾸니 셔플해도 못 고침 — shuffleAllChoicesInPayload로 교체)
     shuffleAllChoicesInPayload(payload);
 
+    // 빈칸/문항 id 보장 — 없으면 응시 화면에서 빈칸 10개가 한 키를 공유해 입력이 전 칸에 복사된다.
+    ensureReadingIds(payload);
+
     // ✅ 정답 블라인드 검증 + 근거 문장 초안 (실패해도 생성은 성공 처리)
     let qa: unknown = null;
     try { qa = await verifyQuestionsAndAttachEvidence(payload, client); } catch (e) { console.error('[QA] verify failed', e); }
@@ -508,6 +512,9 @@ Return ONLY this JSON structure (NO markdown, NO explanations):
     // ✅ 정답 위치 무작위화 (hard와 easy 모두) — 매 문제 choices를 무조건 섞는다
     shuffleAllChoicesInPayload(module2Data.stage2Pool.hard);
     shuffleAllChoicesInPayload(module2Data.stage2Pool.easy);
+
+    // 빈칸/문항 id 보장 (Module 1과 동일한 이유)
+    ensureReadingIds(module2Data);
 
     // ✅ 정답 블라인드 검증 + 근거 문장 초안 (hard/easy 모두)
     let qa: unknown = null;

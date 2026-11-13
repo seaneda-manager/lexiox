@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { isTestAssigned } from "@/lib/supabase/assignment-guard";
 import { extractReadingTestToBank } from "@/lib/utils/problemBankExtract";
+import { ensureReadingIds } from "@/lib/utils/ensureReadingIds";
 import type { RReadingTest2026 } from "@/models/reading";
 
 type SaveBody = {
@@ -23,6 +24,9 @@ export async function POST(req: Request) {
     }
 
     const test = body.test;
+
+    // 어떤 경로(생성/편집/가져오기)로 왔든 빈칸·문항 id가 비어 있으면 채운다.
+    ensureReadingIds(test);
 
     const supabase = await getServerSupabase();
 
