@@ -3,11 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { calcWritingRawScore, calcWritingBandScore } from "@/lib/writing/rubric";
+import GradeDetailView from "@/components/writing/GradeDetailView";
+import type { WritingGradeDetail } from "@/lib/writing/gradeDetail";
 
 type Props = {
   sessionId: string;
   gradingStatus: string;
   rawAnswers?: Record<string, any>;
+  aiDetail?: WritingGradeDetail | null;
   aiScores: { buildASentence: number | null; email: number | null; discussion: number | null; feedback: string | null };
   finalScores: { buildASentence: number | null; email: number | null; discussion: number | null; feedback: string | null };
 };
@@ -50,7 +53,7 @@ function ScoreSelector({
   );
 }
 
-export default function WritingGradeClient({ sessionId, gradingStatus, rawAnswers = {}, aiScores, finalScores }: Props) {
+export default function WritingGradeClient({ sessionId, gradingStatus, rawAnswers = {}, aiDetail = null, aiScores, finalScores }: Props) {
   const router = useRouter();
 
   const initial = finalScores.email != null ? finalScores : {
@@ -64,6 +67,8 @@ export default function WritingGradeClient({ sessionId, gradingStatus, rawAnswer
   const [email, setEmail] = useState<number>(initial.email ?? 3);
   const [discussion, setDiscussion] = useState<number>(initial.discussion ?? 3);
   const [feedback, setFeedback] = useState<string>(initial.feedback ?? "");
+  const [detail, setDetail] = useState<WritingGradeDetail | null>(aiDetail);
+  const [shareAiDetail, setShareAiDetail] = useState<boolean>(!!aiDetail?.sharedWithStudent);
 
   const [aiLoading, setAiLoading] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
@@ -86,6 +91,7 @@ export default function WritingGradeClient({ sessionId, gradingStatus, rawAnswer
       const data = await res.json() as {
         ok: boolean;
         grading?: { scores: { buildASentence: number; email: number; discussion: number }; feedback: string };
+        detail?: WritingGradeDetail;
         error?: string;
       };
 
@@ -97,6 +103,7 @@ export default function WritingGradeClient({ sessionId, gradingStatus, rawAnswer
         setDiscussion(data.grading.scores.discussion);
         setFeedback(data.grading.feedback ?? "");
       }
+      if (data.detail) setDetail(data.detail);
       router.refresh();
     } catch {
       setError("AI 채점 요청 중 오류가 발생했습니다.");
@@ -112,7 +119,7 @@ export default function WritingGradeClient({ sessionId, gradingStatus, rawAnswer
       const res = await fetch("/api/writing-2026/finalize-grade", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId, buildASentence, email, discussion, feedback }),
+        body: JSON.stringify({ sessionId, buildASentence, email, discussion, feedback, shareAiDetail: !!detail && shareAiDetail }),
       });
       const data = await res.json() as { ok: boolean; bandScore?: number; error?: string };
 
@@ -219,6 +226,25 @@ export default function WritingGradeClient({ sessionId, gradingStatus, rawAnswer
             <span className="text-2xl font-bold text-blue-900">{bandScore.toFixed(1)}</span>
           </div>
         </div>
+
+        {detail && (
+          <div className="space-y-3 border-t border-slate-200 pt-4">
+            <p className="text-xs font-semibold text-slate-600">🤖 AI 채점 상세 (루브릭 기준별)</p>
+            <GradeDetailView detail={detail} audience="teacher" />
+            <label className="flex items-start gap-2 rounded-lg bg-slate-50 p-3 text-xs text-slate-700">
+              <input
+                type="checkbox"
+                checked={shareAiDetail}
+                onChange={(e) => setShareAiDetail(e.target.checked)}
+                className="mt-0.5"
+              />
+              <span>
+                기준별 근거·오류 목록·다음 단계를 학생에게 함께 공개합니다.
+                <span className="block text-slate-500">내용을 확인한 뒤에만 체크하세요. 공개해도 학생에게는 AI 점수가 아니라 아래 확정 점수가 표시됩니다.</span>
+              </span>
+            </label>
+          </div>
+        )}
 
         <div className="space-y-1.5">
           <label className="text-xs font-semibold text-slate-600">피드백 (학생에게 표시됩니다)</label>

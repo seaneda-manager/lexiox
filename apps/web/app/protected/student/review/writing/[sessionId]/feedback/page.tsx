@@ -1,5 +1,7 @@
 // app/(protected)/student/review/writing/[sessionId]/feedback/page.tsx
 // 선생님 채점 완료 후 학생이 보는 Writing 피드백 페이지
+import GradeDetailView from "@/components/writing/GradeDetailView";
+import type { WritingGradeDetail } from "@/lib/writing/gradeDetail";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getServerSupabase } from "@/lib/supabase/server";
@@ -53,6 +55,20 @@ export default async function WritingFeedbackPage({ params }: Props) {
   if (error || !session) return notFound();
 
   const status = session.grading_status ?? "ungraded";
+
+  // AI 상세 분석은 별도 조회 — ai_grade_detail 컬럼이 아직 없어도 페이지가 깨지지 않게 한다.
+  // 선생님이 공개(sharedWithStudent)하기로 한 경우에만 학생에게 보인다.
+  let sharedDetail: WritingGradeDetail | null = null;
+  {
+    const { data: d, error: dErr } = await supabase
+      .from("writing_2026_sessions")
+      .select("ai_grade_detail")
+      .eq("id", sessionId)
+      .eq("user_id", user.id)
+      .maybeSingle();
+    const detail = !dErr ? ((d as any)?.ai_grade_detail as WritingGradeDetail | null) : null;
+    if (detail?.sharedWithStudent) sharedDetail = detail;
+  }
 
   if (status !== "teacher_graded") {
     return (
@@ -128,6 +144,13 @@ export default async function WritingFeedbackPage({ params }: Props) {
           <p className="whitespace-pre-wrap text-sm leading-relaxed text-teal-900">
             {session.final_grade_feedback}
           </p>
+        </section>
+      )}
+
+      {sharedDetail && (
+        <section className="space-y-2">
+          <h2 className="text-sm font-bold text-slate-800">루브릭별 상세 분석</h2>
+          <GradeDetailView detail={sharedDetail} audience="student" />
         </section>
       )}
 

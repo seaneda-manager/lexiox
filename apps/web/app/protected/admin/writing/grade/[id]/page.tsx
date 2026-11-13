@@ -242,6 +242,7 @@ export default async function WritingGradeDetailPage({ params }: Props) {
             sessionId={s.id}
             gradingStatus={status}
             rawAnswers={s.raw_answers ?? {}}
+            aiDetail={s.ai_grade_detail ?? null}
             aiScores={{
               buildASentence: s.ai_build_a_sentence_score ?? null,
               email: s.ai_email_score ?? null,
