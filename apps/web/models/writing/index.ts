@@ -55,8 +55,13 @@ export interface WBuildSentenceQuestion {
   id: string;
   contextLeadIn: string;   // 문장 앞부분 (고정 텍스트)
   contextLeadOut: string;  // 문장 뒷부분 (고정 텍스트)
-  /** 제시 조각. 정답에 쓰이지 않는 잉여 조각은 두지 않는다 (ETS 근거 없음). */
+  /** 정답을 이루는 조각 (정답 순서). */
   tokens?: WSentenceToken[];
+  /**
+   * 함정 단어(0~2개). 정답에 쓰이지 않지만 화면에는 다른 조각과 섞여 보인다.
+   * tokens/correctOrder에는 넣지 않는다 — 채점은 correctOrder 텍스트 순서만 본다.
+   */
+  distractors?: WSentenceToken[];
   /** 정답 순서 — token id 배열 */
   correctOrder?: string[];
   /** 문장 끝 문장부호. 조각으로 만들지 않고 화면에 고정 표시한다. */

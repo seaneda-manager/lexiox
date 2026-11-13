@@ -13,26 +13,35 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || 'placeho
 export async function POST(req: Request) {
   try {
     const { buildSentenceTopic, emailTopic, academicTopic } = await req.json() as {
-      buildSentenceTopic: string;
+      buildSentenceTopic?: string;
       emailTopic: string;
       academicTopic: string;
     };
 
-    if (!buildSentenceTopic?.trim() || !emailTopic?.trim() || !academicTopic?.trim()) {
+    if (!emailTopic?.trim() || !academicTopic?.trim()) {
       return NextResponse.json({ ok: false, error: 'All 3 topics required' }, { status: 400 });
     }
 
     const prompt = `You are an expert Updated TOEFL Writing content creator. Generate a complete Updated TOEFL Writing test JSON with exactly 3 tasks.
 
 Task 1 — Build a Sentence (10 questions, 6 min 50 sec global timer):
-Topic/context: "${buildSentenceTopic}"
-- Create 10 sentence completion questions all sharing the same general context/situation
+Optional theme hint from the teacher (may be empty — if so, choose freely): "${buildSentenceTopic}"
+
+This task is NOT one themed essay. EVERY question is an independent mini-conversation:
+- Each of the 10 questions has its OWN situation and topic (e.g. a library, a flight delay, a lab, a roommate, a job fair...). Do NOT reuse one situation across questions; the 10 contexts must all differ.
+- contextLeadIn is the other speaker's short line (a question or statement), written like "A: ..." — the test taker builds the reply that answers it.
+- contextLeadOut is usually "" (empty) because the built sentence IS the whole reply.
 - Each question has:
-  • contextLeadIn: first part of the sentence (ends naturally where the answer goes)
-  • contextLeadOut: last part of the sentence (starts naturally after the answer)
-  • tokens: the pieces the test taker arranges, IN CORRECT ORDER
-  • correctOrder: array of token ids in the correct order (same order as tokens)
+  • tokens: the pieces that form the correct answer, IN CORRECT ORDER
+  • correctOrder: array of those token ids in the correct order (same order as tokens)
+  • distractors: 0-2 extra tokens that are NOT part of the answer (see below)
   • punctuation: sentence-final punctuation ("?" or "." or "") — NOT a token
+
+GRAMMAR FOCUS — this task tests word order and structure, not creativity. Across the 10 questions cover a spread of these (each question tests ONE main structure):
+  indirect (embedded) questions ("Could you tell me where the library is?"), relative clauses (who/which/that/whose),
+  inverted conditionals / subjunctive ("Had I known..., I would have..."), negative inversion ("Never have I seen..."),
+  passive voice, perfect tenses, comparatives, reported speech, "wish"/"would rather" patterns, noun clauses ("what she said"),
+  and ordinary wh-questions with auxiliaries. Answers may be statements or questions.
 
 CRITICAL — how to split into tokens (ETS "words or phrases" rule):
 Split every answer into 5-8 tokens. Each token is {"id","text","type"} where type is "WORD" or "PHRASE".
@@ -54,19 +63,26 @@ not carry the grammar being tested:
 
 Never group a subject with its verb, and never group an auxiliary with a main verb.
 
-There must be NO extra or unnecessary tokens. Every token is used exactly once in the
-correct answer — the item is scored all-or-nothing, 1 point, with no partial credit.
+DISTRACTORS: on about 4 of the 10 questions (spread across difficulty) add 1-2 distractors, e.g.
+"distractors": [{"id":"d1","text":"did","type":"WORD"}]. A distractor must be a plausible but grammatically
+wrong choice for that slot (wrong tense/form, an extra auxiliary, a wrong preposition or pronoun). It must NOT make
+a second valid answer: with it, the sentence must become ungrammatical or change the meaning. Ids start with "d".
+Questions without distractors use "distractors": []. Distractors are NEVER listed in tokens or correctOrder.
 
-- Sentences should be natural English related to the topic
+Every token in tokens is used exactly once in the correct answer — the item is scored all-or-nothing,
+1 point, with no partial credit.
+
+- Sentences should be natural English
 - Difficulty: first 3 easy (q1-q3), middle 4 medium (q4-q7), last 3 harder (q8-q10)
 
-Example of a correctly split question:
+Example of a correctly split question (with one distractor):
   contextLeadIn: "A: I'm going shopping later."   contextLeadOut: ""
   answer sentence: "What brand will you buy?"
   tokens: [{"id":"t1","text":"What","type":"WORD"},{"id":"t2","text":"brand","type":"WORD"},
            {"id":"t3","text":"will","type":"WORD"},{"id":"t4","text":"you","type":"WORD"},
            {"id":"t5","text":"buy","type":"WORD"}]
   correctOrder: ["t1","t2","t3","t4","t5"]   punctuation: "?"
+  distractors: [{"id":"d1","text":"did","type":"WORD"}]
 
 Task 2 — Write an Email (7 minutes):
 Topic: "${emailTopic}"
@@ -161,6 +177,10 @@ Return ONLY valid JSON, no markdown, no explanation:
         const order: string[] = q.correctOrder ?? [];
         if (ids.length < 4 || ids.length > 9) issues.push(`${q.id}: ${ids.length} tokens (need 5-8)`);
         if (new Set(ids).size !== ids.length) issues.push(`${q.id}: duplicate token ids`);
+        const ds: any[] = Array.isArray(q.distractors) ? q.distractors : [];
+        if (ds.length > 2) issues.push(`${q.id}: ${ds.length} distractors (max 2)`);
+        if (ds.some((d) => !d?.id || !d?.text || ids.includes(d.id))) issues.push(`${q.id}: distractor needs unique id and text`);
+        if (ds.some((d) => (q.tokens ?? []).some((t: any) => String(t.text).toLowerCase() === String(d.text).toLowerCase()))) issues.push(`${q.id}: distractor duplicates an answer token`);
         if (order.length !== ids.length || order.some((id) => !ids.includes(id)) || new Set(order).size !== order.length)
           issues.push(`${q.id}: correctOrder must contain every token id exactly once`);
       });
@@ -196,7 +216,7 @@ Return ONLY valid JSON, no markdown, no explanation:
     payload.meta.id = id;
     // 주제 추천이 중복을 피할 수 있도록 이번에 소비한 주제를 남긴다.
     payload.meta.usedTopics = {
-      build_sentence: [buildSentenceTopic],
+      build_sentence: buildSentenceTopic?.trim() ? [buildSentenceTopic] : [],
       email: [emailTopic],
       academic: [academicTopic],
     };

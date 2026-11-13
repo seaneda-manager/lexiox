@@ -435,6 +435,23 @@ function BuildSentenceEditor({ item, onChange }: { item: WBuildSentenceItem; onC
                 </div>
               </div>
 
+              {/* 함정 단어 (선택, 최대 2개) — 정답에 안 쓰이지만 화면에 섞여 보인다 */}
+              <div className="space-y-1">
+                <span className="text-xs text-gray-500">함정 단어 (선택 · 쉼표로 구분, 최대 2개)</span>
+                <input
+                  className="w-full rounded border px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-sky-400"
+                  placeholder="예: did, to"
+                  value={(q.distractors ?? []).map((d) => d.text).join(", ")}
+                  onChange={(e) => {
+                    const texts = e.target.value.split(",").map((x) => x.trim()).filter(Boolean).slice(0, 2);
+                    updateQ(qi, (qq) => ({
+                      ...qq,
+                      distractors: texts.map((text, i) => ({ id: `d${i + 1}`, text, type: "WORD" as const })),
+                    }));
+                  }}
+                />
+              </div>
+
               {/* 조각 목록 */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">

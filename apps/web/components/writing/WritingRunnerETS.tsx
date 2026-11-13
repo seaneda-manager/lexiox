@@ -117,8 +117,9 @@ function BuildASentence({
   const tokenById = useMemo(() => {
     const m = new Map<string, string>();
     current?.tokens.forEach((t) => m.set(t.id, t.text));
+    q?.distractors?.forEach((t) => m.set(t.id, t.text));
     return m;
-  }, [current]);
+  }, [current, q]);
 
   const finishAll = () => {
     const finalScores = item.questions.map((qq, i) => {
@@ -147,10 +148,11 @@ function BuildASentence({
   const [shuffledMap, setShuffledMap] = useState<Record<number, string[]>>({});
   useEffect(() => {
     if (!current || shuffledMap[qIndex]) return;
-    const ids = current.tokens.map((t) => t.id).sort(() => Math.random() - 0.5);
+    // 함정 단어(distractors)도 같이 섞어 보여 준다.
+    const ids = [...current.tokens, ...(q?.distractors ?? [])].map((t) => t.id).sort(() => Math.random() - 0.5);
     setShuffledMap((prev) => ({ ...prev, [qIndex]: ids }));
   }, [qIndex, current, shuffledMap]);
-  const shuffled = shuffledMap[qIndex] ?? current?.tokens.map((t) => t.id) ?? [];
+  const shuffled = shuffledMap[qIndex] ?? [...(current?.tokens ?? []), ...(q?.distractors ?? [])].map((t) => t.id);
 
   const setSelected = (updater: (prev: string[]) => string[]) => {
     setAllSelected((prev) => ({
@@ -161,6 +163,8 @@ function BuildASentence({
 
   const handleChunkClick = (tokenId: string) => {
     if (selected.includes(tokenId)) return;
+    // 빈칸 수만큼만 채울 수 있다 (함정 단어가 있으면 조각 수 > 빈칸 수).
+    if (selected.length >= (current?.correctOrder.length ?? 0)) return;
     setSelected((prev) => [...prev, tokenId]);
   };
 
