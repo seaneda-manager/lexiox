@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'should-etc', topic: 'should · ought to · had better · would rather - 1부', titleKo: 'should · ought to · had better · would rather',
+  summaryEn: 'Should and ought to give advice. Had better is strong advice. Would rather shows a preference.',
+  summaryKo: 'should와 ought to는 "~해야 한다(충고)", had better는 "~하는 게 좋다(강한 충고)", would rather는 "차라리 ~하겠다"입니다.',
+  rules: [
+    ['should + base verb = advice.', 'should는 "~하는 게 좋다, ~해야 한다"는 충고입니다. (You should see a doctor.)'],
+    ['ought to + base verb = should.', 'ought to는 should와 같은 뜻입니다. (We ought to help others.)'],
+    ['had better + base verb = strong advice.', 'had better는 "~하는 게 좋겠다"는 강한 충고로, 하지 않으면 안 좋은 일이 생길 때 씁니다.'],
+    ['would rather A than B = prefer A to B.', 'would rather는 "차라리 ~하겠다"입니다. 모두 뒤에는 동사원형이 옵니다.'],
+  ],
+  examples: [['You should see a doctor.', '너는 병원에 가 봐야 한다.'], ['You had better go now.', '너는 지금 가는 게 좋겠다.'], ['I would rather stay home than go out.', '나는 나가느니 차라리 집에 있겠다.']],
+  groups: [
+    ['should', '충고.', [
+      ['You should see a doctor.', '너는 병원에 가 봐야 한다.', 'should + 동사원형', '충고입니다.'],
+      ['Students should study hard.', '학생들은 열심히 공부해야 한다.', 'should + 동사원형', '충고입니다.'],
+      ['You should not eat too much.', '너는 너무 많이 먹으면 안 된다.', 'should not + 동사원형', '부정은 should not입니다.']]],
+    ['ought to', 'should와 같은 뜻.', [
+      ['You ought to wear a coat.', '너는 코트를 입어야 한다.', 'ought to + 동사원형', 'should와 같은 뜻입니다.'],
+      ['We ought to help others.', '우리는 다른 사람을 도와야 한다.', 'ought to + 동사원형', 'should와 같은 뜻입니다.'],
+      ['He ought to apologize.', '그는 사과해야 한다.', 'ought to + 동사원형', '주어가 he여도 ought to는 변하지 않습니다.']]],
+    ['had better', '강한 충고.', [
+      ['You had better go now.', '너는 지금 가는 게 좋겠다.', 'had better + 동사원형', '하지 않으면 문제가 생깁니다.'],
+      ['You had better take an umbrella.', '너는 우산을 가져가는 게 좋겠다.', 'had better + 동사원형', '하지 않으면 문제가 생깁니다.'],
+      ['You had better not be late.', '너는 늦지 않는 게 좋겠다.', 'had better not + 동사원형', '부정은 had better not입니다.']]],
+    ['would rather', '차라리 ~하겠다.', [
+      ['I would rather stay home than go out.', '나는 나가느니 차라리 집에 있겠다.', 'would rather A than B', '선호를 나타냅니다.'],
+      ['She would rather walk than take a bus.', '그녀는 버스를 타느니 차라리 걷겠다.', 'would rather A than B', '선호를 나타냅니다.'],
+      ['I would rather not go.', '나는 차라리 가지 않겠다.', 'would rather not + 동사원형', '부정은 would rather not입니다.']]],
+  ],
+  wrong: [['You should to see a doctor.', 'to 삭제 → You should see a doctor. — 너는 병원에 가 봐야 한다.', ''], ['You had better to go now.', 'to 삭제 → You had better go now. — 너는 지금 가는 게 좋겠다.', ''], ['I would rather to stay home.', 'to 삭제 → I would rather stay home. — 나는 차라리 집에 있겠다.', '']],
+  wrongNote: 'should, had better, would rather 뒤에는 to 없이 동사원형을 씁니다.',
+  cram: '■ 핵심 요약\nshould, ought to는 충고, had better는 강한 충고, would rather는 차라리 ~하겠다입니다.\n\n■ 규칙\n1. should + 동사원형 = 충고.\n2. ought to + 동사원형 = should.\n3. had better + 동사원형 = 강한 충고.\n4. would rather A than B = B보다 차라리 A.\n\n■ 예문 뜻\n너는 병원에 가 봐야 한다.\n너는 지금 가는 게 좋겠다.\n나는 나가느니 차라리 집에 있겠다.',
+  blanks: [['"~하는 게 좋다"는 ___ + 동사원형입니다.', 'should', '조동사'], ['ought 뒤에는 ___ + 동사원형이 옵니다.', 'to', '두 글자'], ['had better의 부정은 had better ___입니다.', 'not', '부정'], ['would rather는 "___ ~하겠다"입니다.', '차라리', '세 글자']],
+  fill: [
+    ['basic', 'You ___ see a doctor.', 'should', ['should', 'shoulds', 'should to'], '너는 병원에 가 봐야 한다.', '충고는 should + 동사원형입니다.', '충고'],
+    ['basic', 'We ought ___ help others.', 'to', ['for', 'to', 'of'], '우리는 다른 사람을 도와야 한다.', 'ought 뒤에는 to가 옵니다.', 'should와 같은 뜻'],
+    ['basic', 'You had ___ go now.', 'better', ['good', 'best', 'better'], '너는 지금 가는 게 좋겠다.', '강한 충고는 had better입니다.', '강한 충고'],
+    ['intermediate', 'I would ___ stay home than go out.', 'rather', ['better', 'rather', 'more'], '나는 나가느니 차라리 집에 있겠다.', '"차라리"는 would rather입니다.', '차라리'],
+    ['intermediate', 'You had better ___ be late.', 'not', ['not', 'no', 'don\'t'], '너는 늦지 않는 게 좋겠다.', '부정은 had better not입니다.', '부정'],
+    ['intermediate', 'Students should ___ hard.', 'study', ['studies', 'studying', 'study'], '학생들은 열심히 공부해야 한다.', 'should 뒤에는 동사원형을 씁니다.', '동사원형'],
+    ['advanced', 'He should ___ a doctor.', 'see', ['see', 'sees', 'seeing'], '그는 병원에 가 봐야 한다.', 'should 뒤에는 동사원형을 씁니다.', '동사원형'],
+    ['advanced', 'She would rather ___ than take a bus.', 'walk', ['walking', 'walks', 'walk'], '그녀는 버스를 타느니 차라리 걷겠다.', 'would rather 뒤에는 동사원형을 씁니다.', '동사원형'],
+  ],
+  fix: [
+    ['basic', 'He should sees a doctor.', 'sees', ['see'], ['He는 They여야 합니다.', 'should 뒤에는 동사원형을 씁니다.', 'doctor는 doctors여야 합니다.'], 1, 'He should see a doctor. → should + 동사원형'],
+    ['intermediate', 'You had better going now.', 'going', ['go'], ['had better 뒤에는 동사원형을 씁니다.', 'now는 know여야 합니다.', 'had는 have여야 합니다.'], 0, 'You had better go now. → had better + 동사원형'],
+    ['intermediate', 'I would rather stays home than go out.', 'stays', ['stay'], ['home은 house여야 합니다.', 'go는 going이어야 합니다.', 'would rather 뒤에는 동사원형을 씁니다.'], 2, 'I would rather stay home than go out. → would rather + 동사원형'],
+  ],
+  questions: [
+    pc('Which sentence about a doctor is correct?', '병원에 대한 올바른 문장을 고르세요.', 'basic', [['You should to see a doctor.', '너는 병원에 가 봐야 한다.'], ['You should see a doctor.', '너는 병원에 가 봐야 한다.'], ['You should sees a doctor.', '너는 병원에 가 봐야 한다.'], ['You should seeing a doctor.', '너는 병원에 가 봐야 한다.']], 1, 'should 뒤에는 동사원형을 씁니다.'),
+    pc('Which sentence about going is correct?', '가는 것에 대한 올바른 문장을 고르세요.', 'basic', [['You had better to go now.', '너는 지금 가는 게 좋겠다.'], ['You had better going now.', '너는 지금 가는 게 좋겠다.'], ['You had better go now.', '너는 지금 가는 게 좋겠다.'], ['You better had go now.', '너는 지금 가는 게 좋겠다.']], 2, 'had better + 동사원형입니다.'),
+    pc('Which sentence about helping is correct?', '돕는 것에 대한 올바른 문장을 고르세요.', 'basic', [['We ought help others.', '우리는 다른 사람을 도와야 한다.'], ['We ought to helping others.', '우리는 다른 사람을 도와야 한다.'], ['We ought for help others.', '우리는 다른 사람을 도와야 한다.'], ['We ought to help others.', '우리는 다른 사람을 도와야 한다.']], 3, 'ought to + 동사원형입니다.'),
+    pc('Which sentence about staying home is correct?', '집에 있는 것에 대한 올바른 문장을 고르세요.', 'intermediate', [['I would rather stay home than go out.', '나는 나가느니 차라리 집에 있겠다.'], ['I would rather to stay home than go out.', '나는 나가느니 차라리 집에 있겠다.'], ['I would better stay home than go out.', '나는 나가느니 차라리 집에 있겠다.'], ['I would rather stays home than go out.', '나는 나가느니 차라리 집에 있겠다.']], 0, 'would rather + 동사원형입니다.'),
+    pc('Which sentence means "You are advised not to be late"?', '"늦지 않는 게 좋겠다"는 뜻의 문장을 고르세요.', 'intermediate', [['You had not better late.', '너는 늦지 않는 게 좋겠다.'], ['You had better not be late.', '너는 늦지 않는 게 좋겠다.'], ['You not had better be late.', '너는 늦지 않는 게 좋겠다.'], ['You had better be not late.', '너는 늦지 않는 게 좋겠다.']], 1, '부정은 had better not입니다.'),
+    pc('Choose the sentence that talks about a preference.', '선호를 나타내는 문장을 고르세요.', 'intermediate', [['You should see a doctor.', '너는 병원에 가 봐야 한다.'], ['We ought to help others.', '우리는 다른 사람을 도와야 한다.'], ['She would rather walk than take a bus.', '그녀는 버스를 타느니 차라리 걷겠다.'], ['You had better go now.', '너는 지금 가는 게 좋겠다.']], 2, '나머지는 충고이고 이것만 선호입니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['He ought to apologize.', '그는 사과해야 한다.'], ['You should not eat too much.', '너는 너무 많이 먹으면 안 된다.'], ['I would rather not go.', '나는 차라리 가지 않겠다.'], ['You had better to take an umbrella.', '너는 우산을 가져가는 게 좋겠다.']], 3, 'had better 뒤에는 to 없이 동사원형을 써야 합니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① You should see a doctor.\n② You had better to go now.\n③ I would rather stay home.', 'basic', 1, '②만 틀렸고 had better go여야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① He should sees a doctor.\n② You had better going now.\n③ We ought to help others.\n④ She would rather walk than take a bus.', 'advanced', 2, '①은 should see, ②는 had better go여야 하므로 틀린 문장은 2개입니다.'),
+    pc('Why is "You should to see a doctor." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because see should be sees.', 'see를 sees로 바꿔야 해서'], ['Because doctor should be doctors.', 'doctor를 doctors로 바꿔야 해서'], ['Because should is not followed by to.', 'should 뒤에는 to를 쓰지 않아서'], ['Because you should be your.', 'you를 your로 바꿔야 해서']], 2, 'should 뒤에는 to 없이 동사원형을 씁니다.', 'reason'),
+  ],
+  popup: [['You ___ see a doctor.', 'should', ['shoulds', 'should to'], '충고'], ['We ought ___ help others.', 'to', ['for', 'of'], 'should와 같은 뜻'], ['You had ___ go now.', 'better', ['good', 'best'], '강한 충고'], ['I would ___ stay home than go out.', 'rather', ['better', 'more'], '차라리']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'You had better to go now.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['You had better go now.'], noteKo: 'had better 뒤에는 to 없이 동사원형을 씁니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'He should sees a doctor.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['He should see a doctor.'], noteKo: 'should 뒤에는 동사원형을 씁니다.' },
+  ],
+  top: ['should · ought to = 충고, had better = 강한 충고, would rather = 차라리 ~하겠다. 뒤에는 동사원형이 온다.', 'You should see a doctor.', '너는 병원에 가 봐야 한다.'],
+  lecture: [
+    { type: 'text', text: 'should · ought to · had better · would rather', narration: '오늘은 충고와 선호를 말하는 [en]should[/en], [en]ought to[/en], [en]had better[/en], [en]would rather[/en]를 배워요.' },
+    { type: 'board', title: 'should', lines: ['You [b]should[/b] see a doctor. — 너는 병원에 가 봐야 한다.', 'You should not eat too much. — 너는 너무 많이 먹으면 안 된다.', '충고'], narration: '[en]should[/en] 뒤에는 동사원형이 와요. [en]You should see a doctor.[/en] 너는 병원에 가 봐야 해요.' },
+    { type: 'board', title: 'ought to', lines: ['We [b]ought to[/b] help others. — 우리는 다른 사람을 도와야 한다.', 'He ought to apologize. — 그는 사과해야 한다.', 'should와 같은 뜻'], narration: '[en]ought to[/en]는 [en]should[/en]와 같은 뜻이에요. [en]We ought to help others.[/en] 우리는 다른 사람을 도와야 해요.' },
+    { type: 'board', title: 'had better', lines: ['You [b]had better[/b] go now. — 너는 지금 가는 게 좋겠다.', 'You had better not be late. — 너는 늦지 않는 게 좋겠다.', '강한 충고'], narration: '[en]had better[/en]는 강한 충고예요. 안 하면 문제가 생길 때 써요. [en]You had better go now.[/en] 너는 지금 가는 게 좋겠어요.' },
+    { type: 'board', title: 'would rather', lines: ['I [b]would rather[/b] stay home than go out. — 나는 나가느니 차라리 집에 있겠다.', 'I would rather not go. — 나는 차라리 가지 않겠다.', '차라리 ~하겠다'], narration: '[en]would rather[/en]는 차라리 하겠다는 뜻이에요. [en]I would rather stay home than go out.[/en] 나는 나가느니 차라리 집에 있겠어요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× You should [b]to see[/b] a doctor. — 너는 병원에 가 봐야 한다.', '× You had better [b]to go[/b] now. — 너는 지금 가는 게 좋겠다.', '× I would rather [b]to stay[/b] home. — 나는 차라리 집에 있겠다.'], narration: '[en]should[/en], [en]had better[/en], [en]would rather[/en] 뒤에는 [en]to[/en] 없이 동사원형을 써요.' },
+    { type: 'text', text: '정리: 뒤에는 동사원형', narration: '정리할게요. 이 표현들 뒤에는 모두 동사원형이 와요. [en]ought[/en] 뒤에만 [en]to[/en]가 있어요.' },
+  ],
+});

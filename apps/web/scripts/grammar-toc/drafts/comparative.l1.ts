@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'comparative', topic: '비교급과 비교 표현 - 1부', titleKo: '비교급과 비교 표현',
+  summaryEn: 'Comparative + than compares two things. Much, far, and even strengthen it. The + comparative, the + comparative means "the more ..., the more ...".',
+  summaryKo: '비교급 + than은 두 대상을 비교하고, much·far·even으로 강조하며, the + 비교급 ~, the + 비교급 ~은 "~할수록 더 …하다"입니다.',
+  rules: [
+    ['comparative + than = "more ... than".', '비교급 뒤에는 than을 씁니다. (Tom is taller than Jim.)'],
+    ['Strengthen with much / far / even / still / a lot, not very.', '비교급은 much, far, even, still, a lot으로 강조하며 very는 쓰지 않습니다.'],
+    ['The + comparative, the + comparative.', 'the + 비교급 ~, the + 비교급 ~은 "~할수록 더 …하다"입니다.'],
+    ['comparative and comparative = "more and more".', '비교급 and 비교급은 "점점 더 ~하다"입니다.'],
+  ],
+  examples: [['Tom is taller than Jim.', 'Tom은 Jim보다 키가 크다.'], ['This bag is much heavier than that one.', '이 가방은 저것보다 훨씬 더 무겁다.'], ['The harder you study, the better you will do.', '열심히 공부할수록 더 잘하게 될 것이다.']],
+  groups: [
+    ['비교급 + than', '~보다 더.', [
+      ['Tom is taller than Jim.', 'Tom은 Jim보다 키가 크다.', '비교급 + than', '두 대상을 비교합니다.'],
+      ['My car is cheaper than yours.', '내 차는 네 것보다 싸다.', '비교급 + than', '두 대상을 비교합니다.'],
+      ['She runs faster than he does.', '그녀는 그보다 빨리 달린다.', '비교급 + than', '두 대상을 비교합니다.']]],
+    ['비교급 강조', '훨씬 더.', [
+      ['This bag is much heavier than that one.', '이 가방은 저것보다 훨씬 더 무겁다.', 'much + 비교급', 'very는 쓰지 않습니다.'],
+      ['He is far taller than his brother.', '그는 형보다 훨씬 더 키가 크다.', 'far + 비교급', 'very는 쓰지 않습니다.'],
+      ['It is even hotter today.', '오늘은 더욱더 덥다.', 'even + 비교급', 'very는 쓰지 않습니다.']]],
+    ['the + 비교급, the + 비교급', '~할수록 더 …하다.', [
+      ['The harder you study, the better you will do.', '열심히 공부할수록 더 잘하게 될 것이다.', 'the + 비교급, the + 비교급', '앞뒤 모두 the가 필요합니다.'],
+      ['The more you eat, the fatter you get.', '많이 먹을수록 더 살이 찐다.', 'the + 비교급, the + 비교급', '앞뒤 모두 the가 필요합니다.'],
+      ['The older we get, the wiser we become.', '나이가 들수록 더 현명해진다.', 'the + 비교급, the + 비교급', '앞뒤 모두 the가 필요합니다.']]],
+    ['비교급 and 비교급', '점점 더.', [
+      ['It is getting colder and colder.', '점점 더 추워지고 있다.', '비교급 and 비교급', '점점 더입니다.'],
+      ['The balloon grew bigger and bigger.', '풍선이 점점 더 커졌다.', '비교급 and 비교급', '점점 더입니다.'],
+      ['She became more and more tired.', '그녀는 점점 더 피곤해졌다.', 'more and more + 형용사', '긴 단어는 more and more를 씁니다.']]],
+  ],
+  wrong: [['Tom is tall than Jim.', 'taller → Tom is taller than Jim. — Tom은 Jim보다 키가 크다.', ''], ['This bag is very heavier than that one.', 'much → This bag is much heavier than that one. — 비교급은 very로 강조하지 않습니다.', ''], ['The older we get, wiser we become.', 'the wiser → The older we get, the wiser we become. — 앞뒤 모두 the가 필요합니다.', '']],
+  wrongNote: '비교급에는 than을 쓰고, very 대신 much·far·even으로 강조하며, the + 비교급 구문은 앞뒤 모두 the를 씁니다.',
+  cram: '■ 핵심 요약\n비교급 + than은 ~보다 더, the + 비교급 ~, the + 비교급 ~은 ~할수록 더 …입니다.\n\n■ 규칙\n1. 비교급 + than.\n2. 비교급 강조는 much, far, even (very 불가).\n3. the + 비교급, the + 비교급.\n4. 비교급 and 비교급 = 점점 더.\n\n■ 예문 뜻\nTom은 Jim보다 키가 크다.\n이 가방은 저것보다 훨씬 더 무겁다.\n열심히 공부할수록 더 잘하게 될 것이다.',
+  blanks: [['비교급 뒤에는 ___을 씁니다.', 'than', '비교 표현'], ['비교급을 강조할 때 very 대신 ___를 쓸 수 있습니다.', 'much', '훨씬'], ['"~할수록 더 …하다"는 the + 비교급, ___ + 비교급입니다.', 'the', '관사'], ['"점점 더"는 비교급 ___ 비교급입니다.', 'and', '접속사']],
+  fill: [
+    ['basic', 'Tom is taller ___ Jim.', 'than', ['then', 'than', 'that'], 'Tom은 Jim보다 키가 크다.', '비교급 뒤에는 than을 씁니다.', '~보다'],
+    ['basic', 'This bag is ___ heavier than that one.', 'much', ['very', 'too', 'much'], '이 가방은 저것보다 훨씬 더 무겁다.', '비교급은 much로 강조합니다.', '훨씬'],
+    ['basic', 'It is getting ___ and colder.', 'colder', ['cold', 'colder', 'coldest'], '점점 더 추워지고 있다.', '비교급 and 비교급입니다.', '비교급'],
+    ['intermediate', 'The harder you study, ___ better you will do.', 'the', ['the', 'a', 'an'], '열심히 공부할수록 더 잘하게 될 것이다.', '뒤에도 the를 씁니다.', '관사'],
+    ['intermediate', 'He is far ___ than his brother.', 'taller', ['tall', 'tallest', 'taller'], '그는 형보다 훨씬 더 키가 크다.', 'than 앞에는 비교급을 씁니다.', '비교급'],
+    ['intermediate', 'My car is cheaper ___ yours.', 'than', ['than', 'then', 'that'], '내 차는 네 것보다 싸다.', '비교급 뒤에는 than을 씁니다.', '~보다'],
+    ['advanced', 'The ___ we get, the wiser we become.', 'older', ['old', 'oldest', 'older'], '나이가 들수록 더 현명해진다.', 'the + 비교급입니다.', '비교급'],
+    ['advanced', 'It is ___ hotter today.', 'even', ['even', 'very', 'too'], '오늘은 더욱더 덥다.', '비교급은 even으로 강조합니다.', '더욱더'],
+  ],
+  fix: [
+    ['basic', 'Tom is tall than Jim.', 'tall', ['taller'], ['Tom은 Tim이어야 합니다.', 'than 앞에는 비교급을 씁니다.', 'than은 then이어야 합니다.'], 1, 'Tom is taller than Jim. → 비교급 + than'],
+    ['intermediate', 'This bag is very heavier than that one.', 'very', ['much'], ['비교급은 much로 강조합니다.', 'heavier는 heaviest여야 합니다.', 'that은 this여야 합니다.'], 0, 'This bag is much heavier than that one. → much + 비교급'],
+    ['intermediate', 'The older we get, wiser we become.', 'wiser', ['the wiser'], ['older는 oldest여야 합니다.', 'become은 became이어야 합니다.', '뒤에도 the가 필요합니다.'], 2, 'The older we get, the wiser we become. → the + 비교급, the + 비교급'],
+  ],
+  questions: [
+    pc('Which sentence about height is correct?', '키에 대한 올바른 문장을 고르세요.', 'basic', [['Tom is tall than Jim.', 'Tom은 Jim보다 키가 크다.'], ['Tom is taller than Jim.', 'Tom은 Jim보다 키가 크다.'], ['Tom is more taller than Jim.', 'Tom은 Jim보다 키가 크다.'], ['Tom is taller then Jim.', 'Tom은 Jim보다 키가 크다.']], 1, '비교급 + than입니다.'),
+    pc('Which sentence about a bag is correct?', '가방에 대한 올바른 문장을 고르세요.', 'basic', [['This bag is very heavier than that one.', '이 가방은 저것보다 훨씬 더 무겁다.'], ['This bag is too heavier than that one.', '이 가방은 저것보다 훨씬 더 무겁다.'], ['This bag is much heavier than that one.', '이 가방은 저것보다 훨씬 더 무겁다.'], ['This bag is so heavier than that one.', '이 가방은 저것보다 훨씬 더 무겁다.']], 2, '비교급은 much로 강조합니다.'),
+    pc('Which sentence about the weather is correct?', '날씨에 대한 올바른 문장을 고르세요.', 'basic', [['It is getting cold and cold.', '점점 더 추워지고 있다.'], ['It is getting colder and colder.', '점점 더 추워지고 있다.'], ['It is getting coldest and coldest.', '점점 더 추워지고 있다.'], ['It is getting more cold and cold.', '점점 더 추워지고 있다.']], 1, '비교급 and 비교급입니다.'),
+    pc('Which sentence about studying is correct?', '공부에 대한 올바른 문장을 고르세요.', 'intermediate', [['Harder you study, better you will do.', '열심히 공부할수록 더 잘하게 될 것이다.'], ['The harder you study, better you will do.', '열심히 공부할수록 더 잘하게 될 것이다.'], ['The hard you study, the good you will do.', '열심히 공부할수록 더 잘하게 될 것이다.'], ['The harder you study, the better you will do.', '열심히 공부할수록 더 잘하게 될 것이다.']], 3, '앞뒤 모두 the + 비교급입니다.'),
+    pc('Which sentence about age is correct?', '나이에 대한 올바른 문장을 고르세요.', 'intermediate', [['The older we get, the wiser we become.', '나이가 들수록 더 현명해진다.'], ['The older we get, wiser we become.', '나이가 들수록 더 현명해진다.'], ['The oldest we get, the wisest we become.', '나이가 들수록 더 현명해진다.'], ['Older we get, the wiser we become.', '나이가 들수록 더 현명해진다.']], 0, '앞뒤 모두 the + 비교급입니다.'),
+    pc('Choose the sentence that uses a different structure.', '다른 구조의 문장을 고르세요.', 'intermediate', [['Tom is taller than Jim.', 'Tom은 Jim보다 키가 크다.'], ['My car is cheaper than yours.', '내 차는 네 것보다 싸다.'], ['The more you eat, the fatter you get.', '많이 먹을수록 더 살이 찐다.'], ['She runs faster than he does.', '그녀는 그보다 빨리 달린다.']], 2, '나머지는 비교급 + than이고 이것만 the + 비교급 구문입니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['It is even hotter today.', '오늘은 더욱더 덥다.'], ['He is far taller than his brother.', '그는 형보다 훨씬 더 키가 크다.'], ['She became more and more tired.', '그녀는 점점 더 피곤해졌다.'], ['This bag is very heavier than that one.', '이 가방은 저것보다 훨씬 더 무겁다.']], 3, '비교급은 very가 아니라 much로 강조합니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① Tom is tall than Jim.\n② My car is cheaper than yours.\n③ It is even hotter today.', 'basic', 1, '①만 틀렸고 taller여야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① This bag is very heavier than that one.\n② The older we get, wiser we become.\n③ The balloon grew bigger and bigger.\n④ He is far taller than his brother.', 'advanced', 2, '①은 much, ②는 the wiser여야 하므로 틀린 문장은 2개입니다.'),
+    pc('Why is "This bag is very heavier than that one." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because bag should be bags.', 'bag을 bags로 바꿔야 해서'], ['Because heavier should be heavy.', 'heavier를 heavy로 바꿔야 해서'], ['Because than should be then.', 'than을 then으로 바꿔야 해서'], ['Because a comparative is strengthened by much, not very.', '비교급은 very가 아니라 much로 강조해야 해서']], 3, '비교급은 much, far, even으로 강조합니다.', 'reason'),
+  ],
+  popup: [['Tom is taller ___ Jim.', 'than', ['then', 'that'], '~보다'], ['This bag is ___ heavier than that one.', 'much', ['very', 'too'], '훨씬'], ['The harder you study, ___ better you will do.', 'the', ['a', 'an'], '관사'], ['It is getting ___ and colder.', 'colder', ['cold', 'coldest'], '비교급']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'Tom is tall than Jim.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['Tom is taller than Jim.'], noteKo: 'than 앞에는 비교급을 씁니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'This bag is very heavier than that one.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['This bag is much heavier than that one.'], noteKo: '비교급은 much로 강조합니다.' },
+  ],
+  top: ['비교급 + than = ~보다 더, 비교급 강조는 much·far·even, the + 비교급 ~, the + 비교급 ~ = ~할수록 더 …, 비교급 and 비교급 = 점점 더.', 'Tom is taller than Jim.', 'Tom은 Jim보다 키가 크다.'],
+  lecture: [
+    { type: 'text', text: '비교급과 비교 표현', narration: '오늘은 비교급을 활용한 여러 표현을 배워요.' },
+    { type: 'board', title: '비교급 + than', lines: ['Tom is [b]taller than[/b] Jim. — Tom은 Jim보다 키가 크다.', 'My car is cheaper than yours. — 내 차는 네 것보다 싸다.', '~보다 더'], narration: '비교급 뒤에는 [en]than[/en]을 써요. [en]Tom is taller than Jim.[/en] [en]Tom[/en]은 [en]Jim[/en]보다 키가 커요.' },
+    { type: 'board', title: '비교급 강조', lines: ['This bag is [b]much[/b] heavier than that one. — 이 가방은 저것보다 훨씬 더 무겁다.', 'He is far taller than his brother. — 그는 형보다 훨씬 더 키가 크다.', 'much · far · even · still · a lot'], narration: '비교급은 [en]much[/en], [en]far[/en], [en]even[/en]으로 강조해요. [en]very[/en]는 쓰지 않아요. [en]This bag is much heavier than that one.[/en] 이 가방은 저것보다 훨씬 더 무거워요.' },
+    { type: 'board', title: 'the + 비교급, the + 비교급', lines: ['[b]The harder[/b] you study, [b]the better[/b] you will do. — 열심히 공부할수록 더 잘하게 될 것이다.', 'The older we get, the wiser we become. — 나이가 들수록 더 현명해진다.', '~할수록 더 …하다'], narration: '앞뒤에 모두 [en]the[/en]와 비교급을 써요. [en]The harder you study, the better you will do.[/en] 열심히 공부할수록 더 잘하게 될 거예요.' },
+    { type: 'board', title: '비교급 and 비교급', lines: ['It is getting [b]colder and colder[/b]. — 점점 더 추워지고 있다.', 'She became more and more tired. — 그녀는 점점 더 피곤해졌다.', '점점 더'], narration: '비교급을 [en]and[/en]로 이으면 점점 더라는 뜻이에요. [en]It is getting colder and colder.[/en] 점점 더 추워지고 있어요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× Tom is [b]tall[/b] than Jim. — Tom은 Jim보다 키가 크다.', '× This bag is [b]very[/b] heavier than that one. — 이 가방은 저것보다 훨씬 더 무겁다.', '× The older we get, [b]wiser[/b] we become. — 나이가 들수록 더 현명해진다.'], narration: '[en]than[/en] 앞에는 비교급을 써요. 비교급은 [en]very[/en]가 아니라 [en]much[/en]로 강조해요. 뒤에도 [en]the[/en]를 꼭 써요.' },
+    { type: 'text', text: '정리: than · much · the 비교급 · and', narration: '정리할게요. 비교급에는 [en]than[/en], 강조에는 [en]much[/en], 할수록에는 [en]the[/en] 비교급, 점점 더에는 [en]and[/en]를 써요.' },
+  ],
+});

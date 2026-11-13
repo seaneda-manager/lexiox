@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'gerund-idioms', topic: '동명사 관용 표현 - 1부', titleKo: '동명사 관용 표현',
+  summaryEn: 'Some fixed expressions are always followed by a verb + ing: go -ing, be busy -ing, look forward to -ing, and so on.',
+  summaryKo: 'go ~ing, be busy ~ing, look forward to ~ing 등 일부 표현 뒤에는 항상 동사 + ing(동명사)를 씁니다.',
+  rules: [
+    ['go + -ing = go doing an activity.', 'go ~ing는 "~하러 가다"입니다. (go swimming)'],
+    ['be busy -ing / spend time -ing.', 'be busy ~ing는 "~하느라 바쁘다", spend 시간 ~ing는 "~하는 데 시간을 보내다"입니다.'],
+    ['look forward to -ing / feel like -ing.', 'look forward to ~ing는 "~하기를 기대하다", feel like ~ing는 "~하고 싶다"입니다. 이때 to는 전치사입니다.'],
+    ['be worth -ing / It is no use -ing / cannot help -ing.', 'be worth ~ing는 "~할 가치가 있다", It is no use ~ing는 "~해도 소용없다", cannot help ~ing는 "~하지 않을 수 없다"입니다.'],
+  ],
+  examples: [['We go swimming every summer.', '우리는 매년 여름 수영하러 간다.'], ['I look forward to seeing you.', '나는 너를 만나기를 기대한다.'], ['This book is worth reading.', '이 책은 읽을 가치가 있다.']],
+  groups: [
+    ['go -ing', '~하러 가다.', [
+      ['We go swimming every summer.', '우리는 매년 여름 수영하러 간다.', 'go + 동사 + ing', '~하러 간다는 뜻입니다.'],
+      ['She goes shopping on Sundays.', '그녀는 일요일마다 쇼핑하러 간다.', 'go + 동사 + ing', '~하러 간다는 뜻입니다.'],
+      ['Let\'s go fishing.', '낚시하러 가자.', 'go + 동사 + ing', '~하러 간다는 뜻입니다.']]],
+    ['be busy -ing / spend time -ing', '~하느라 바쁘다.', [
+      ['He is busy cleaning the room.', '그는 방을 청소하느라 바쁘다.', 'be busy + 동사 + ing', '~하느라 바쁘다는 뜻입니다.'],
+      ['I am busy doing my homework.', '나는 숙제를 하느라 바쁘다.', 'be busy + 동사 + ing', '~하느라 바쁘다는 뜻입니다.'],
+      ['She spends time reading books.', '그녀는 책을 읽으며 시간을 보낸다.', 'spend time + 동사 + ing', '시간을 보낸다는 뜻입니다.']]],
+    ['look forward to -ing / feel like -ing', '기대, 하고 싶음.', [
+      ['I look forward to seeing you.', '나는 너를 만나기를 기대한다.', 'look forward to + 동사 + ing', 'to는 전치사입니다.'],
+      ['We look forward to meeting him.', '우리는 그를 만나기를 기대한다.', 'look forward to + 동사 + ing', 'to는 전치사입니다.'],
+      ['I feel like eating pizza.', '나는 피자를 먹고 싶다.', 'feel like + 동사 + ing', '~하고 싶다는 뜻입니다.']]],
+    ['worth / no use / can\'t help', '관용 표현.', [
+      ['This book is worth reading.', '이 책은 읽을 가치가 있다.', 'be worth + 동사 + ing', '~할 가치가 있다는 뜻입니다.'],
+      ['It is no use crying.', '울어도 소용없다.', 'It is no use + 동사 + ing', '~해도 소용없다는 뜻입니다.'],
+      ['I can\'t help laughing.', '나는 웃지 않을 수 없다.', 'can\'t help + 동사 + ing', '~하지 않을 수 없다는 뜻입니다.']]],
+  ],
+  wrong: [['I look forward to see you.', 'seeing → I look forward to seeing you. — 나는 너를 만나기를 기대한다.', ''], ['She goes to shopping on Sundays.', 'goes shopping → She goes shopping on Sundays. — 그녀는 일요일마다 쇼핑하러 간다.', ''], ['It is no use to cry.', 'crying → It is no use crying. — 울어도 소용없다.', '']],
+  wrongNote: '이 표현들 뒤에는 to부정사가 아니라 동사 + ing를 씁니다.',
+  cram: '■ 핵심 요약\ngo ~ing, be busy ~ing, look forward to ~ing 같은 표현 뒤에는 동사 + ing를 씁니다.\n\n■ 규칙\n1. go ~ing = ~하러 가다.\n2. be busy ~ing = ~하느라 바쁘다.\n3. look forward to ~ing = ~하기를 기대하다.\n4. be worth ~ing, It is no use ~ing, can\'t help ~ing.\n\n■ 예문 뜻\n우리는 매년 여름 수영하러 간다.\n나는 너를 만나기를 기대한다.\n이 책은 읽을 가치가 있다.',
+  blanks: [['"~하러 가다"는 go + 동사 + ___입니다.', 'ing', '세 글자'], ['look forward to의 to는 ___입니다.', '전치사', '세 글자'], ['"~하고 싶다"는 feel ___ ~ing입니다.', 'like', '비슷한'], ['"~할 가치가 있다"는 be ___ ~ing입니다.', 'worth', '가치']],
+  fill: [
+    ['basic', 'We go ___ every summer.', 'swimming', ['swim', 'swimming', 'to swim'], '우리는 매년 여름 수영하러 간다.', 'go ~ing는 "~하러 가다"입니다.', '~하러 가다'],
+    ['basic', 'He is busy ___ the room.', 'cleaning', ['clean', 'to clean', 'cleaning'], '그는 방을 청소하느라 바쁘다.', 'be busy 뒤에는 동사 + ing를 씁니다.', '~하느라'],
+    ['basic', 'I look forward to ___ you.', 'seeing', ['seeing', 'see', 'to see'], '나는 너를 만나기를 기대한다.', 'to는 전치사라서 동사 + ing가 옵니다.', '기대'],
+    ['intermediate', 'She spends time ___ books.', 'reading', ['read', 'reading', 'to read'], '그녀는 책을 읽으며 시간을 보낸다.', 'spend 시간 뒤에는 동사 + ing를 씁니다.', '시간을 보내다'],
+    ['intermediate', 'I feel like ___ pizza.', 'eating', ['eat', 'to eat', 'eating'], '나는 피자를 먹고 싶다.', 'feel like 뒤에는 동사 + ing를 씁니다.', '~하고 싶다'],
+    ['intermediate', 'It is no use ___.', 'crying', ['crying', 'cry', 'to cry'], '울어도 소용없다.', 'no use 뒤에는 동사 + ing를 씁니다.', '소용없다'],
+    ['advanced', 'This book is worth ___.', 'reading', ['read', 'to read', 'reading'], '이 책은 읽을 가치가 있다.', 'worth 뒤에는 동사 + ing를 씁니다.', '가치'],
+    ['advanced', 'I can\'t help ___.', 'laughing', ['laughing', 'laugh', 'to laugh'], '나는 웃지 않을 수 없다.', 'can\'t help 뒤에는 동사 + ing를 씁니다.', '~하지 않을 수 없다'],
+  ],
+  fix: [
+    ['basic', 'I look forward to see you.', 'see', ['seeing'], ['look은 looks여야 합니다.', 'to는 전치사라서 동사 + ing가 필요합니다.', 'you는 your여야 합니다.'], 1, 'I look forward to seeing you. → to 뒤에 동사 + ing'],
+    ['intermediate', 'He is busy cleans the room.', 'cleans', ['cleaning'], ['be busy 뒤에는 동사 + ing를 씁니다.', 'room은 rooms여야 합니다.', 'is는 are여야 합니다.'], 0, 'He is busy cleaning the room. → be busy + 동사 + ing'],
+    ['intermediate', 'This book is worth read.', 'read', ['reading'], ['book은 books여야 합니다.', 'is는 are여야 합니다.', 'worth 뒤에는 동사 + ing를 씁니다.'], 2, 'This book is worth reading. → worth + 동사 + ing'],
+  ],
+  questions: [
+    pc('Which sentence about swimming is correct?', '수영에 대한 올바른 문장을 고르세요.', 'basic', [['We go swim every summer.', '우리는 매년 여름 수영하러 간다.'], ['We go to swim every summer.', '우리는 매년 여름 수영하러 간다.'], ['We go swimming every summer.', '우리는 매년 여름 수영하러 간다.'], ['We go to swimming every summer.', '우리는 매년 여름 수영하러 간다.']], 2, 'go ~ing는 "~하러 가다"입니다.'),
+    pc('Which sentence about meeting is correct?', '만나는 것에 대한 올바른 문장을 고르세요.', 'basic', [['I look forward to seeing you.', '나는 너를 만나기를 기대한다.'], ['I look forward to see you.', '나는 너를 만나기를 기대한다.'], ['I look forward seeing you.', '나는 너를 만나기를 기대한다.'], ['I look forward for see you.', '나는 너를 만나기를 기대한다.']], 0, 'to는 전치사라서 동사 + ing를 씁니다.'),
+    pc('Which sentence about a room is correct?', '방에 대한 올바른 문장을 고르세요.', 'basic', [['He is busy to clean the room.', '그는 방을 청소하느라 바쁘다.'], ['He is busy clean the room.', '그는 방을 청소하느라 바쁘다.'], ['He is busy cleans the room.', '그는 방을 청소하느라 바쁘다.'], ['He is busy cleaning the room.', '그는 방을 청소하느라 바쁘다.']], 3, 'be busy 뒤에는 동사 + ing를 씁니다.'),
+    pc('Which sentence about pizza is correct?', '피자에 대한 올바른 문장을 고르세요.', 'intermediate', [['I feel like eat pizza.', '나는 피자를 먹고 싶다.'], ['I feel like eating pizza.', '나는 피자를 먹고 싶다.'], ['I feel like to eat pizza.', '나는 피자를 먹고 싶다.'], ['I feel like eats pizza.', '나는 피자를 먹고 싶다.']], 1, 'feel like 뒤에는 동사 + ing를 씁니다.'),
+    pc('Which sentence about crying is correct?', '우는 것에 대한 올바른 문장을 고르세요.', 'intermediate', [['It is no use crying.', '울어도 소용없다.'], ['It is no use to cry.', '울어도 소용없다.'], ['It is no use cry.', '울어도 소용없다.'], ['It is no use cries.', '울어도 소용없다.']], 0, 'no use 뒤에는 동사 + ing를 씁니다.'),
+    pc('Choose the sentence that means "cannot stop yourself".', '"~하지 않을 수 없다"는 뜻의 문장을 고르세요.', 'intermediate', [['It is no use crying.', '울어도 소용없다.'], ['I can\'t help laughing.', '나는 웃지 않을 수 없다.'], ['This book is worth reading.', '이 책은 읽을 가치가 있다.'], ['I feel like eating pizza.', '나는 피자를 먹고 싶다.']], 1, 'can\'t help ~ing는 "~하지 않을 수 없다"입니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['She goes shopping on Sundays.', '그녀는 일요일마다 쇼핑하러 간다.'], ['She spends time reading books.', '그녀는 책을 읽으며 시간을 보낸다.'], ['This book is worth reading.', '이 책은 읽을 가치가 있다.'], ['We look forward to meet him.', '우리는 그를 만나기를 기대한다.']], 3, 'look forward to 뒤에는 동사 + ing를 써야 합니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① I look forward to see you.\n② We go swimming every summer.\n③ It is no use crying.', 'basic', 1, '①만 틀렸고 seeing이어야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① He is busy cleans the room.\n② This book is worth read.\n③ I can\'t help laughing.\n④ Let\'s go fishing.', 'advanced', 2, '①은 cleaning, ②는 reading이어야 하므로 틀린 문장은 2개입니다.'),
+    pc('Why is "I look forward to see you." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because look should be looks.', 'look을 looks로 바꿔야 해서'], ['Because you should be your.', 'you를 your로 바꿔야 해서'], ['Because forward should be forwards.', 'forward를 forwards로 바꿔야 해서'], ['Because to is a preposition and needs a verb + ing.', 'to가 전치사라서 동사 + ing가 와야 해서']], 3, 'look forward to의 to는 전치사입니다.', 'reason'),
+  ],
+  popup: [['We go ___ every summer.', 'swimming', ['swim', 'to swim'], '~하러 가다'], ['He is busy ___ the room.', 'cleaning', ['clean', 'to clean'], '~하느라'], ['I look forward to ___ you.', 'seeing', ['see', 'to see'], '기대'], ['This book is worth ___.', 'reading', ['read', 'to read'], '가치']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'I look forward to see you.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['I look forward to seeing you.'], noteKo: 'to는 전치사라서 동사 + ing를 씁니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'This book is worth read.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['This book is worth reading.'], noteKo: 'worth 뒤에는 동사 + ing를 씁니다.' },
+  ],
+  top: ['go ~ing, be busy ~ing, look forward to ~ing, feel like ~ing, be worth ~ing, It is no use ~ing, can\'t help ~ing. 이 표현 뒤에는 to부정사가 아니라 동사 + ing를 쓴다.', 'We go swimming every summer.', '우리는 매년 여름 수영하러 간다.'],
+  lecture: [
+    { type: 'text', text: '동명사 관용 표현', narration: '오늘은 뒤에 동사 [en]ing[/en]가 오는 관용 표현을 배워요.' },
+    { type: 'board', title: 'go -ing', lines: ['We [b]go swimming[/b] every summer. — 우리는 매년 여름 수영하러 간다.', 'Let\'s go fishing. — 낚시하러 가자.', '~하러 가다'], narration: '[en]go[/en] 뒤에 동사 [en]ing[/en]를 붙이면 하러 가다예요. [en]We go swimming every summer.[/en] 우리는 매년 여름 수영하러 가요.' },
+    { type: 'board', title: 'be busy -ing', lines: ['He is [b]busy cleaning[/b] the room. — 그는 방을 청소하느라 바쁘다.', 'She spends time reading books. — 그녀는 책을 읽으며 시간을 보낸다.'], narration: '[en]be busy[/en] 뒤에도 동사 [en]ing[/en]가 와요. [en]He is busy cleaning the room.[/en] 그는 방을 청소하느라 바빠요.' },
+    { type: 'board', title: 'look forward to -ing', lines: ['I [b]look forward to seeing[/b] you. — 나는 너를 만나기를 기대한다.', 'I feel like eating pizza. — 나는 피자를 먹고 싶다.', 'to는 전치사'], narration: '[en]look forward to[/en]의 [en]to[/en]는 전치사예요. 그래서 동사 [en]ing[/en]가 와요. [en]I look forward to seeing you.[/en] 나는 너를 만나기를 기대해요.' },
+    { type: 'board', title: 'worth · no use · can\'t help', lines: ['This book is [b]worth reading[/b]. — 이 책은 읽을 가치가 있다.', 'It is no use crying. — 울어도 소용없다.', 'I can\'t help laughing. — 나는 웃지 않을 수 없다.'], narration: '[en]worth[/en], [en]no use[/en], [en]can\'t help[/en] 뒤에도 동사 [en]ing[/en]가 와요. [en]This book is worth reading.[/en] 이 책은 읽을 가치가 있어요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× I look forward to [b]see[/b] you. — 나는 너를 만나기를 기대한다.', '× He is busy [b]cleans[/b] the room. — 그는 방을 청소하느라 바쁘다.', '× This book is worth [b]read[/b]. — 이 책은 읽을 가치가 있다.'], narration: '이 표현들 뒤에는 동사원형이나 [en]to[/en]부정사가 아니라 동사 [en]ing[/en]를 써요.' },
+    { type: 'text', text: '정리: 관용 표현 뒤에는 동사 + ing', narration: '정리할게요. 관용 표현 뒤에는 동사 [en]ing[/en]를 써요.' },
+  ],
+});

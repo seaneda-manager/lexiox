@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'participle-adjective', topic: '분사의 명사 수식 - 1부', titleKo: '현재분사 vs. 과거분사 / 분사의 수식',
+  summaryEn: 'A present participle (-ing) means "doing". A past participle (p.p.) means "done". Both can describe a noun.',
+  summaryKo: '현재분사(-ing)는 "~하는", 과거분사(p.p.)는 "~된, ~당한"의 뜻으로 명사를 꾸며 줍니다.',
+  rules: [
+    ['present participle (-ing) = active, "doing".', '현재분사는 능동·진행의 뜻으로 "~하는"입니다. (a sleeping baby)'],
+    ['past participle (p.p.) = passive, "done".', '과거분사는 수동·완료의 뜻으로 "~된, ~당한"입니다. (a broken window)'],
+    ['A single participle goes before the noun.', '분사 한 단어만 쓰이면 명사 앞에서 꾸밉니다.'],
+    ['A participle with other words goes after the noun.', '분사에 다른 말이 붙으면 명사 뒤에서 꾸밉니다. (the boy playing soccer)'],
+  ],
+  examples: [['Look at the sleeping baby.', '잠자는 아기를 보세요.'], ['He fixed the broken window.', '그는 깨진 창문을 고쳤다.'], ['The boy playing soccer is Tom.', '축구를 하고 있는 소년은 Tom이다.']],
+  groups: [
+    ['현재분사 + 명사', '~하는.', [
+      ['Look at the sleeping baby.', '잠자는 아기를 보세요.', '현재분사 + 명사', '아기가 자는 중입니다.'],
+      ['I saw a crying child.', '나는 울고 있는 아이를 보았다.', '현재분사 + 명사', '아이가 우는 중입니다.'],
+      ['A running boy fell down.', '달리는 소년이 넘어졌다.', '현재분사 + 명사', '소년이 달리는 중입니다.']]],
+    ['과거분사 + 명사', '~된, ~당한.', [
+      ['He fixed the broken window.', '그는 깨진 창문을 고쳤다.', '과거분사 + 명사', '창문이 깨진 것입니다.'],
+      ['She ate a boiled egg.', '그녀는 삶은 달걀을 먹었다.', '과거분사 + 명사', '달걀이 삶아진 것입니다.'],
+      ['I picked up a fallen leaf.', '나는 떨어진 나뭇잎을 주웠다.', '과거분사 + 명사', '나뭇잎이 떨어진 것입니다.']]],
+    ['현재분사가 뒤에서 수식', '분사 + 어구는 뒤에.', [
+      ['The boy playing soccer is Tom.', '축구를 하고 있는 소년은 Tom이다.', '명사 + 현재분사 + 어구', '어구가 붙어 뒤에서 꾸밉니다.'],
+      ['The girl singing on stage is my sister.', '무대에서 노래하는 소녀는 내 여동생이다.', '명사 + 현재분사 + 어구', '어구가 붙어 뒤에서 꾸밉니다.'],
+      ['I know the man standing there.', '나는 저기 서 있는 남자를 안다.', '명사 + 현재분사 + 어구', '어구가 붙어 뒤에서 꾸밉니다.']]],
+    ['과거분사가 뒤에서 수식', '분사 + 어구는 뒤에.', [
+      ['The book written by him is famous.', '그가 쓴 책은 유명하다.', '명사 + 과거분사 + 어구', '책이 쓰여진 것입니다.'],
+      ['The car made in Korea is good.', '한국에서 만들어진 차는 좋다.', '명사 + 과거분사 + 어구', '차가 만들어진 것입니다.'],
+      ['The language spoken here is English.', '이곳에서 쓰이는 언어는 영어이다.', '명사 + 과거분사 + 어구', '언어가 쓰여지는 것입니다.']]],
+  ],
+  wrong: [['He fixed the broke window.', 'broken → He fixed the broken window. — 그는 깨진 창문을 고쳤다.', ''], ['She ate a boiling egg.', 'boiled → She ate a boiled egg. — 삶아진 달걀이므로 과거분사입니다.', ''], ['The boy play soccer is Tom.', 'playing → The boy playing soccer is Tom. — 축구를 하고 있는 소년은 Tom이다.', '']],
+  wrongNote: '능동이면 -ing, 수동이면 p.p.를 고르고, 어구가 붙으면 명사 뒤에 둡니다.',
+  cram: '■ 핵심 요약\n현재분사(-ing)는 ~하는, 과거분사(p.p.)는 ~된, ~당한이며 명사를 꾸밉니다.\n\n■ 규칙\n1. 현재분사 = 능동·진행(~하는).\n2. 과거분사 = 수동·완료(~된).\n3. 분사 한 단어는 명사 앞에서 꾸민다.\n4. 분사 + 어구는 명사 뒤에서 꾸민다.\n\n■ 예문 뜻\n잠자는 아기를 보세요.\n그는 깨진 창문을 고쳤다.\n축구를 하고 있는 소년은 Tom이다.',
+  blanks: [['"~하는"의 뜻인 분사는 ___분사입니다.', '현재', '두 글자'], ['"~된"의 뜻인 분사는 ___분사입니다.', '과거', '두 글자'], ['분사 한 단어는 명사의 ___에서 꾸밉니다.', '앞', '한 글자'], ['분사 + 어구는 명사의 ___에서 꾸밉니다.', '뒤', '한 글자']],
+  fill: [
+    ['basic', 'Look at the ___ baby.', 'sleeping', ['sleep', 'slept', 'sleeping'], '잠자는 아기를 보세요.', '아기가 자고 있으므로 현재분사입니다.', '~하는'],
+    ['basic', 'He fixed the ___ window.', 'broken', ['broken', 'breaking', 'broke'], '그는 깨진 창문을 고쳤다.', '창문이 깨진 것이므로 과거분사입니다.', '~된'],
+    ['basic', 'She ate a ___ egg.', 'boiled', ['boiling', 'boiled', 'boil'], '그녀는 삶은 달걀을 먹었다.', '달걀이 삶아진 것이므로 과거분사입니다.', '~된'],
+    ['intermediate', 'The boy ___ soccer is Tom.', 'playing', ['played', 'playing', 'play'], '축구를 하고 있는 소년은 Tom이다.', '소년이 하고 있으므로 현재분사입니다.', '~하는'],
+    ['intermediate', 'The book ___ by him is famous.', 'written', ['writing', 'wrote', 'written'], '그가 쓴 책은 유명하다.', '책이 쓰여진 것이므로 과거분사입니다.', '~된'],
+    ['intermediate', 'I saw a ___ child.', 'crying', ['crying', 'cried', 'cry'], '나는 울고 있는 아이를 보았다.', '아이가 울고 있으므로 현재분사입니다.', '~하는'],
+    ['advanced', 'The car ___ in Korea is good.', 'made', ['making', 'make', 'made'], '한국에서 만들어진 차는 좋다.', '차가 만들어진 것이므로 과거분사입니다.', '~된'],
+    ['advanced', 'The language ___ here is English.', 'spoken', ['spoken', 'speaking', 'spoke'], '이곳에서 쓰이는 언어는 영어이다.', '언어가 쓰여지는 것이므로 과거분사입니다.', '~된'],
+  ],
+  fix: [
+    ['basic', 'He fixed the broke window.', 'broke', ['broken'], ['fixed는 fix여야 합니다.', '창문이 깨진 것이므로 과거분사를 씁니다.', 'window는 windows여야 합니다.'], 1, 'He fixed the broken window. → 과거분사'],
+    ['intermediate', 'She ate a boiling egg.', 'boiling', ['boiled'], ['달걀이 삶아진 것이므로 과거분사를 씁니다.', 'ate는 eat여야 합니다.', 'egg는 eggs여야 합니다.'], 0, 'She ate a boiled egg. → 과거분사'],
+    ['intermediate', 'The boy play soccer is Tom.', 'play', ['playing'], ['boy는 boys여야 합니다.', 'is는 are여야 합니다.', '소년이 하고 있으므로 현재분사를 씁니다.'], 2, 'The boy playing soccer is Tom. → 현재분사'],
+  ],
+  questions: [
+    pc('Which sentence about a baby is correct?', '아기에 대한 올바른 문장을 고르세요.', 'basic', [['Look at the sleep baby.', '잠자는 아기를 보세요.'], ['Look at the slept baby.', '잠자는 아기를 보세요.'], ['Look at the sleeping baby.', '잠자는 아기를 보세요.'], ['Look at the sleeps baby.', '잠자는 아기를 보세요.']], 2, '자고 있는 아기는 현재분사입니다.'),
+    pc('Which sentence about a window is correct?', '창문에 대한 올바른 문장을 고르세요.', 'basic', [['He fixed the breaking window.', '그는 깨진 창문을 고쳤다.'], ['He fixed the broken window.', '그는 깨진 창문을 고쳤다.'], ['He fixed the broke window.', '그는 깨진 창문을 고쳤다.'], ['He fixed the break window.', '그는 깨진 창문을 고쳤다.']], 1, '깨진 창문은 과거분사입니다.'),
+    pc('Which sentence about an egg is correct?', '달걀에 대한 올바른 문장을 고르세요.', 'basic', [['She ate a boiling egg.', '그녀는 삶은 달걀을 먹었다.'], ['She ate a boil egg.', '그녀는 삶은 달걀을 먹었다.'], ['She ate a boils egg.', '그녀는 삶은 달걀을 먹었다.'], ['She ate a boiled egg.', '그녀는 삶은 달걀을 먹었다.']], 3, '삶아진 달걀은 과거분사입니다.'),
+    pc('Which sentence about a boy is correct?', '소년에 대한 올바른 문장을 고르세요.', 'intermediate', [['The boy playing soccer is Tom.', '축구를 하고 있는 소년은 Tom이다.'], ['The boy played soccer is Tom.', '축구를 하고 있는 소년은 Tom이다.'], ['The playing boy soccer is Tom.', '축구를 하고 있는 소년은 Tom이다.'], ['The boy play soccer is Tom.', '축구를 하고 있는 소년은 Tom이다.']], 0, '어구가 붙으면 현재분사가 명사 뒤에 옵니다.'),
+    pc('Which sentence about a book is correct?', '책에 대한 올바른 문장을 고르세요.', 'intermediate', [['The book writing by him is famous.', '그가 쓴 책은 유명하다.'], ['The book wrote by him is famous.', '그가 쓴 책은 유명하다.'], ['The book written by him is famous.', '그가 쓴 책은 유명하다.'], ['The written book by him famous is.', '그가 쓴 책은 유명하다.']], 2, '책이 쓰여진 것이므로 과거분사입니다.'),
+    pc('Choose the sentence that uses a present participle.', '현재분사를 쓴 문장을 고르세요.', 'intermediate', [['He fixed the broken window.', '그는 깨진 창문을 고쳤다.'], ['I saw a crying child.', '나는 울고 있는 아이를 보았다.'], ['The car made in Korea is good.', '한국에서 만들어진 차는 좋다.'], ['She ate a boiled egg.', '그녀는 삶은 달걀을 먹었다.']], 1, '나머지는 과거분사이고 이것만 현재분사입니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['I picked up a fallen leaf.', '나는 떨어진 나뭇잎을 주웠다.'], ['The language spoken here is English.', '이곳에서 쓰이는 언어는 영어이다.'], ['A running boy fell down.', '달리는 소년이 넘어졌다.'], ['She ate a boiling egg.', '그녀는 삶은 달걀을 먹었다.']], 3, '삶아진 달걀이므로 과거분사 boiled를 써야 합니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① He fixed the broke window.\n② Look at the sleeping baby.\n③ I know the man standing there.', 'basic', 1, '①만 틀렸고 broken이어야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① She ate a boiling egg.\n② The boy play soccer is Tom.\n③ The car made in Korea is good.\n④ I saw a crying child.', 'advanced', 2, '①은 boiled, ②는 playing이어야 하므로 틀린 문장은 2개입니다.'),
+    pc('Why is "She ate a boiling egg." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because ate should be eat.', 'ate를 eat로 바꿔야 해서'], ['Because egg should be eggs.', 'egg를 eggs로 바꿔야 해서'], ['Because she should be her.', 'she를 her로 바꿔야 해서'], ['Because the egg is boiled by someone, so a past participle is needed.', '달걀이 삶아진 것이라서 과거분사가 필요해서']], 3, '수동의 뜻이면 과거분사를 씁니다.', 'reason'),
+  ],
+  popup: [['Look at the ___ baby.', 'sleeping', ['sleep', 'slept'], '~하는'], ['He fixed the ___ window.', 'broken', ['breaking', 'broke'], '~된'], ['The boy ___ soccer is Tom.', 'playing', ['played', 'play'], '~하는'], ['The book ___ by him is famous.', 'written', ['writing', 'wrote'], '~된']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'He fixed the broke window.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['He fixed the broken window.'], noteKo: '창문이 깨진 것이므로 과거분사를 씁니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'She ate a boiling egg.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['She ate a boiled egg.'], noteKo: '달걀이 삶아진 것이므로 과거분사를 씁니다.' },
+  ],
+  top: ['현재분사(-ing) = ~하는(능동), 과거분사(p.p.) = ~된(수동). 한 단어면 명사 앞, 어구가 붙으면 명사 뒤에서 꾸민다.', 'Look at the sleeping baby.', '잠자는 아기를 보세요.'],
+  lecture: [
+    { type: 'text', text: '현재분사와 과거분사', narration: '오늘은 명사를 꾸며 주는 현재분사와 과거분사를 배워요.' },
+    { type: 'board', title: '현재분사 (-ing)', lines: ['Look at the [b]sleeping[/b] baby. — 잠자는 아기를 보세요.', 'I saw a crying child. — 나는 울고 있는 아이를 보았다.', '~하는 (능동)'], narration: '[en]ing[/en]를 붙인 현재분사는 하는이라는 뜻이에요. [en]Look at the sleeping baby.[/en] 잠자는 아기를 보세요.' },
+    { type: 'board', title: '과거분사 (p.p.)', lines: ['He fixed the [b]broken[/b] window. — 그는 깨진 창문을 고쳤다.', 'She ate a boiled egg. — 그녀는 삶은 달걀을 먹었다.', '~된 (수동)'], narration: '과거분사는 된이라는 뜻이에요. [en]He fixed the broken window.[/en] 그는 깨진 창문을 고쳤어요.' },
+    { type: 'board', title: '뒤에서 꾸미기 (현재분사)', lines: ['The boy [b]playing soccer[/b] is Tom. — 축구를 하고 있는 소년은 Tom이다.', 'I know the man standing there. — 나는 저기 서 있는 남자를 안다.'], narration: '분사에 다른 말이 붙으면 명사 뒤에서 꾸며요. [en]The boy playing soccer is Tom.[/en] 축구를 하고 있는 소년은 [en]Tom[/en]이에요.' },
+    { type: 'board', title: '뒤에서 꾸미기 (과거분사)', lines: ['The book [b]written by him[/b] is famous. — 그가 쓴 책은 유명하다.', 'The car made in Korea is good. — 한국에서 만들어진 차는 좋다.'], narration: '과거분사도 어구가 붙으면 뒤에서 꾸며요. [en]The book written by him is famous.[/en] 그가 쓴 책은 유명해요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× He fixed the [b]broke[/b] window. — 그는 깨진 창문을 고쳤다.', '× She ate a [b]boiling[/b] egg. — 그녀는 삶은 달걀을 먹었다.', '× The boy [b]play[/b] soccer is Tom. — 축구를 하고 있는 소년은 Tom이다.'], narration: '깨진 창문은 [en]broken[/en], 삶은 달걀은 [en]boiled[/en]예요. 소년이 하고 있으면 [en]playing[/en]이에요.' },
+    { type: 'text', text: '정리: -ing = ~하는 / p.p. = ~된', narration: '정리할게요. [en]ing[/en]는 하는, [en]p.p.[/en]는 된이라는 뜻이에요.' },
+  ],
+});

@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'present-perfect-progressive', topic: '현재완료 진행 - 1부', titleKo: '현재완료 진행',
+  summaryEn: 'Have/has been + -ing shows an action that started in the past and is still going on.',
+  summaryKo: 'have/has been + -ing는 과거에 시작해서 지금까지 계속 진행 중인 동작을 나타냅니다.',
+  rules: [
+    ['have/has + been + -ing = still going on.', 'have/has been -ing는 "(지금까지) 계속 ~하고 있다"입니다. (I have been studying for two hours.)'],
+    ['Use for + a period, since + a starting point.', '기간에는 for, 시작한 때에는 since를 씁니다.'],
+    ['Negative: haven\'t been -ing. Question: Have you been -ing?', '부정은 haven\'t(hasn\'t) been -ing, 의문은 Have you been -ing?입니다.'],
+    ['State verbs (know, like, want) are not used in the progressive.', 'know, like, want 같은 상태 동사는 진행형으로 쓰지 않고 현재완료로 씁니다. (I have known him.)'],
+  ],
+  examples: [['I have been studying for two hours.', '나는 두 시간째 공부하고 있다.'], ['She has been working since morning.', '그녀는 아침부터 계속 일하고 있다.'], ['It has been raining all day.', '하루 종일 비가 오고 있다.']],
+  groups: [
+    ['have/has been -ing', '계속 ~하고 있다.', [
+      ['I have been studying for two hours.', '나는 두 시간째 공부하고 있다.', 'have been + 동사 + ing', '지금도 하고 있습니다.'],
+      ['She has been working since morning.', '그녀는 아침부터 계속 일하고 있다.', 'has been + 동사 + ing', '3인칭 단수에는 has입니다.'],
+      ['It has been raining all day.', '하루 종일 비가 오고 있다.', 'has been + 동사 + ing', '지금도 오고 있습니다.']]],
+    ['for / since', '기간과 시작점.', [
+      ['He has been living here for ten years.', '그는 10년째 여기에 살고 있다.', 'for + 기간', '기간에는 for입니다.'],
+      ['We have been learning English since 2020.', '우리는 2020년부터 영어를 배우고 있다.', 'since + 시점', '시작한 때에는 since입니다.'],
+      ['She has been sleeping for three hours.', '그녀는 세 시간째 자고 있다.', 'for + 기간', '기간에는 for입니다.']]],
+    ['부정·의문', 'haven\'t been / Have you been.', [
+      ['I haven\'t been sleeping well.', '나는 잠을 잘 자지 못하고 있다.', 'haven\'t been + 동사 + ing', '부정입니다.'],
+      ['Have you been waiting long?', '오래 기다리고 있었니?', 'Have + 주어 + been + 동사 + ing', '의문문입니다.'],
+      ['How long have you been studying?', '얼마나 오래 공부하고 있니?', 'How long + have + 주어 + been + 동사 + ing', '기간을 묻습니다.']]],
+    ['상태 동사', '진행형을 쓰지 않아요.', [
+      ['I have known him for years.', '나는 그를 몇 년째 알고 있다.', 'have + p.p.', 'know는 상태 동사입니다.'],
+      ['She has liked him since childhood.', '그녀는 어릴 때부터 그를 좋아해 왔다.', 'has + p.p.', 'like는 상태 동사입니다.'],
+      ['They have wanted a dog for years.', '그들은 몇 년째 개를 원해 왔다.', 'have + p.p.', 'want는 상태 동사입니다.']]],
+  ],
+  wrong: [['I have been study for two hours.', 'studying → I have been studying for two hours. — 나는 두 시간째 공부하고 있다.', ''], ['She have been working since morning.', 'has → She has been working since morning. — 그녀는 아침부터 계속 일하고 있다.', ''], ['I have been knowing him for years.', 'have known → I have known him for years. — 상태 동사는 진행형을 쓰지 않습니다.', '']],
+  wrongNote: 'have/has been 뒤에는 동사 + ing를 쓰고, 상태 동사는 진행형으로 쓰지 않습니다.',
+  cram: '■ 핵심 요약\nhave/has been + 동사 + ing는 과거부터 지금까지 계속 진행 중인 동작을 나타냅니다.\n\n■ 규칙\n1. have/has + been + 동사 + ing = 계속 ~하고 있다.\n2. 기간 for, 시작점 since.\n3. 부정 haven\'t been -ing, 의문 Have you been -ing?\n4. 상태 동사는 진행형 불가.\n\n■ 예문 뜻\n나는 두 시간째 공부하고 있다.\n그녀는 아침부터 계속 일하고 있다.\n하루 종일 비가 오고 있다.',
+  blanks: [['현재완료 진행은 have/has ___ + 동사 + ing입니다.', 'been', 'be의 p.p.'], ['기간에는 ___를 씁니다.', 'for', '전치사'], ['시작한 때에는 ___를 씁니다.', 'since', '전치사'], ['know 같은 상태 동사는 ___형으로 쓰지 않습니다.', '진행', '두 글자']],
+  fill: [
+    ['basic', 'I have been ___ for two hours.', 'studying', ['study', 'studying', 'studied'], '나는 두 시간째 공부하고 있다.', 'been 뒤에는 동사 + ing를 씁니다.', '동사 + ing'],
+    ['basic', 'She ___ been working since morning.', 'has', ['have', 'is', 'has'], '그녀는 아침부터 계속 일하고 있다.', '3인칭 단수에는 has been입니다.', '3인칭 단수'],
+    ['basic', 'It has been ___ all day.', 'raining', ['rain', 'rained', 'raining'], '하루 종일 비가 오고 있다.', 'been 뒤에는 동사 + ing를 씁니다.', '동사 + ing'],
+    ['intermediate', 'We have been learning English ___ 2020.', 'since', ['for', 'since', 'from'], '우리는 2020년부터 영어를 배우고 있다.', '시작한 때에는 since를 씁니다.', '~부터'],
+    ['intermediate', 'She has been sleeping ___ three hours.', 'for', ['for', 'since', 'from'], '그녀는 세 시간째 자고 있다.', '기간에는 for를 씁니다.', '~동안'],
+    ['intermediate', 'I ___ been sleeping well.', 'haven\'t', ['hasn\'t', 'am not', 'haven\'t'], '나는 잠을 잘 자지 못하고 있다.', '주어 I의 부정은 haven\'t입니다.', '부정'],
+    ['advanced', 'How long have you been ___?', 'studying', ['studying', 'study', 'studied'], '얼마나 오래 공부하고 있니?', 'been 뒤에는 동사 + ing를 씁니다.', '동사 + ing'],
+    ['advanced', 'I have ___ him for years.', 'known', ['known', 'been knowing', 'knowing'], '나는 그를 몇 년째 알고 있다.', 'know는 상태 동사라서 현재완료로 씁니다.', '상태 동사'],
+  ],
+  fix: [
+    ['basic', 'I have been study for two hours.', 'study', ['studying'], ['I는 He여야 합니다.', 'been 뒤에는 동사 + ing를 씁니다.', 'hours는 hour여야 합니다.'], 1, 'I have been studying for two hours. → been + 동사 + ing'],
+    ['intermediate', 'She have been working since morning.', 'have', ['has'], ['3인칭 단수에는 has been을 씁니다.', 'working은 work여야 합니다.', 'since는 for여야 합니다.'], 0, 'She has been working since morning. → has been'],
+    ['intermediate', 'We have been learning English from 2020.', 'from', ['since'], ['learning은 learn이어야 합니다.', 'English는 England여야 합니다.', '시작한 때에는 since를 씁니다.'], 2, 'We have been learning English since 2020. → since + 시점'],
+  ],
+  questions: [
+    pc('Which sentence about studying is correct?', '공부에 대한 올바른 문장을 고르세요.', 'basic', [['I have been study for two hours.', '나는 두 시간째 공부하고 있다.'], ['I have studying for two hours.', '나는 두 시간째 공부하고 있다.'], ['I have been studying for two hours.', '나는 두 시간째 공부하고 있다.'], ['I am been studying for two hours.', '나는 두 시간째 공부하고 있다.']], 2, 'have been + 동사 + ing입니다.'),
+    pc('Which sentence about working is correct?', '일하는 것에 대한 올바른 문장을 고르세요.', 'basic', [['She has been working since morning.', '그녀는 아침부터 계속 일하고 있다.'], ['She have been working since morning.', '그녀는 아침부터 계속 일하고 있다.'], ['She has been work since morning.', '그녀는 아침부터 계속 일하고 있다.'], ['She has be working since morning.', '그녀는 아침부터 계속 일하고 있다.']], 0, '3인칭 단수에는 has been + 동사 + ing입니다.'),
+    pc('Which sentence about rain is correct?', '비에 대한 올바른 문장을 고르세요.', 'basic', [['It has been rain all day.', '하루 종일 비가 오고 있다.'], ['It has raining all day.', '하루 종일 비가 오고 있다.'], ['It has been rained all day.', '하루 종일 비가 오고 있다.'], ['It has been raining all day.', '하루 종일 비가 오고 있다.']], 3, 'has been + 동사 + ing입니다.'),
+    pc('Which sentence about learning English is correct?', '영어를 배우는 것에 대한 올바른 문장을 고르세요.', 'intermediate', [['We have been learning English from 2020.', '우리는 2020년부터 영어를 배우고 있다.'], ['We have been learning English since 2020.', '우리는 2020년부터 영어를 배우고 있다.'], ['We have been learning English for 2020.', '우리는 2020년부터 영어를 배우고 있다.'], ['We have been learn English since 2020.', '우리는 2020년부터 영어를 배우고 있다.']], 1, '시작한 때에는 since를 씁니다.'),
+    pc('Which sentence about sleeping is correct?', '잠에 대한 올바른 문장을 고르세요.', 'intermediate', [['She has been sleeping for three hours.', '그녀는 세 시간째 자고 있다.'], ['She has been sleeping since three hours.', '그녀는 세 시간째 자고 있다.'], ['She has been sleeping from three hours.', '그녀는 세 시간째 자고 있다.'], ['She has been sleep for three hours.', '그녀는 세 시간째 자고 있다.']], 0, '기간에는 for를 씁니다.'),
+    pc('Choose the sentence that does NOT use the progressive.', '진행형을 쓰지 않은 문장을 고르세요.', 'intermediate', [['It has been raining all day.', '하루 종일 비가 오고 있다.'], ['I have known him for years.', '나는 그를 몇 년째 알고 있다.'], ['Have you been waiting long?', '오래 기다리고 있었니?'], ['I haven\'t been sleeping well.', '나는 잠을 잘 자지 못하고 있다.']], 1, 'know는 상태 동사라서 현재완료로 씁니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['How long have you been studying?', '얼마나 오래 공부하고 있니?'], ['She has liked him since childhood.', '그녀는 어릴 때부터 그를 좋아해 왔다.'], ['They have wanted a dog for years.', '그들은 몇 년째 개를 원해 왔다.'], ['I have been knowing him for years.', '나는 그를 몇 년째 알고 있다.']], 3, 'know는 상태 동사라서 진행형을 쓰지 않습니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① I have been study for two hours.\n② She has been working since morning.\n③ It has been raining all day.', 'basic', 1, '①만 틀렸고 studying이어야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① She have been working since morning.\n② We have been learning English from 2020.\n③ Have you been waiting long?\n④ He has been living here for ten years.', 'advanced', 2, '①은 has, ②는 since여야 하므로 틀린 문장은 2개입니다.'),
+    pc('Why is "I have been knowing him for years." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because him should be he.', 'him을 he로 바꿔야 해서'], ['Because years should be year.', 'years를 year로 바꿔야 해서'], ['Because know is a state verb and is not used in the progressive.', 'know는 상태 동사라서 진행형으로 쓰지 않아서'], ['Because for should be since.', 'for를 since로 바꿔야 해서']], 2, '상태 동사는 진행형으로 쓰지 않습니다.', 'reason'),
+  ],
+  popup: [['I have been ___ for two hours.', 'studying', ['study', 'studied'], '동사 + ing'], ['She ___ been working since morning.', 'has', ['have', 'is'], '3인칭 단수'], ['She has been sleeping ___ three hours.', 'for', ['since', 'from'], '~동안'], ['We have been learning English ___ 2020.', 'since', ['for', 'from'], '~부터']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'I have been study for two hours.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['I have been studying for two hours.'], noteKo: 'been 뒤에는 동사 + ing를 씁니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'She have been working since morning.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['She has been working since morning.'], noteKo: '3인칭 단수에는 has been을 씁니다.' },
+  ],
+  top: ['have/has been + 동사 + ing = 과거부터 지금까지 계속 ~하고 있다. 기간은 for, 시작점은 since. know·like 같은 상태 동사는 진행형으로 쓰지 않는다.', 'I have been studying for two hours.', '나는 두 시간째 공부하고 있다.'],
+  lecture: [
+    { type: 'text', text: '현재완료 진행', narration: '오늘은 과거부터 지금까지 계속되는 동작을 말하는 현재완료 진행을 배워요.' },
+    { type: 'board', title: 'have/has been -ing', lines: ['I [b]have been studying[/b] for two hours. — 나는 두 시간째 공부하고 있다.', 'She has been working since morning. — 그녀는 아침부터 계속 일하고 있다.', '계속 ~하고 있다'], narration: '[en]have been[/en] 뒤에 동사 [en]ing[/en]를 붙여요. [en]I have been studying for two hours.[/en] 나는 두 시간째 공부하고 있어요.' },
+    { type: 'board', title: 'for / since', lines: ['He has been living here [b]for[/b] ten years. — 그는 10년째 여기에 살고 있다.', 'We have been learning English [b]since[/b] 2020. — 우리는 2020년부터 영어를 배우고 있다.', 'for + 기간 / since + 시점'], narration: '기간에는 [en]for[/en], 시작한 때에는 [en]since[/en]를 써요. [en]We have been learning English since 2020.[/en] 우리는 2020년부터 영어를 배우고 있어요.' },
+    { type: 'board', title: '부정·의문', lines: ['I [b]haven\'t been[/b] sleeping well. — 나는 잠을 잘 자지 못하고 있다.', '[b]Have you been[/b] waiting long? — 오래 기다리고 있었니?', 'How long have you been studying? — 얼마나 오래 공부하고 있니?'], narration: '부정은 [en]haven\'t been[/en], 의문은 [en]Have you been[/en]으로 시작해요. [en]Have you been waiting long?[/en] 오래 기다리고 있었니?' },
+    { type: 'board', title: '상태 동사', lines: ['I have [b]known[/b] him for years. — 나는 그를 몇 년째 알고 있다.', 'She has liked him since childhood. — 그녀는 어릴 때부터 그를 좋아해 왔다.', 'know · like · want → 진행형 불가'], narration: '[en]know[/en], [en]like[/en], [en]want[/en] 같은 상태 동사는 진행형으로 쓰지 않아요. [en]I have known him for years.[/en] 나는 그를 몇 년째 알고 있어요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× I have been [b]study[/b] for two hours. — 나는 두 시간째 공부하고 있다.', '× She [b]have[/b] been working since morning. — 그녀는 아침부터 일하고 있다.', '× I have been [b]knowing[/b] him for years. — 나는 그를 몇 년째 알고 있다.'], narration: '[en]been[/en] 뒤에는 동사 [en]ing[/en]가 와요. 그녀는 [en]has been[/en]을 써요. [en]know[/en]는 진행형으로 쓰지 않아요.' },
+    { type: 'text', text: '정리: have/has been + 동사 + ing', narration: '정리할게요. 과거부터 지금까지 계속되는 동작은 [en]have been[/en] 동사 [en]ing[/en]로 말해요.' },
+  ],
+});

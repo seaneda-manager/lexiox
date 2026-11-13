@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'relative-adverbs', topic: '관계부사 - 1부', titleKo: '관계부사 (where · when · why · how)',
+  summaryEn: 'Relative adverbs join two sentences: where for a place, when for a time, why for a reason, how for a way.',
+  summaryKo: '관계부사는 두 문장을 연결하며, 장소는 where, 시간은 when, 이유는 why, 방법은 how를 씁니다.',
+  rules: [
+    ['where = a place (the house where I live).', '장소 명사 뒤에는 where를 씁니다. (the house where I live)'],
+    ['when = a time (the day when we met).', '시간 명사 뒤에는 when을 씁니다. (the day when we met)'],
+    ['why = a reason (the reason why he left).', 'reason 뒤에는 why를 씁니다. (the reason why he left)'],
+    ['how = a way. Do not use the way and how together.', '방법은 how를 쓰며, the way와 how는 함께 쓰지 않습니다. (This is how I learned English.)'],
+  ],
+  examples: [['This is the house where I live.', '이곳이 내가 사는 집이다.'], ['I remember the day when we met.', '나는 우리가 만난 날을 기억한다.'], ['That is the reason why he left.', '그것이 그가 떠난 이유이다.']],
+  groups: [
+    ['where', '장소.', [
+      ['This is the house where I live.', '이곳이 내가 사는 집이다.', '장소 + where', '장소를 설명합니다.'],
+      ['Seoul is the city where he was born.', '서울은 그가 태어난 도시이다.', '장소 + where', '장소를 설명합니다.'],
+      ['I know a shop where you can buy shoes.', '나는 신발을 살 수 있는 가게를 안다.', '장소 + where', '장소를 설명합니다.']]],
+    ['when', '시간.', [
+      ['I remember the day when we met.', '나는 우리가 만난 날을 기억한다.', '시간 + when', '시간을 설명합니다.'],
+      ['Sunday is the day when I rest.', '일요일은 내가 쉬는 날이다.', '시간 + when', '시간을 설명합니다.'],
+      ['This is the time when she sleeps.', '지금은 그녀가 잠자는 시간이다.', '시간 + when', '시간을 설명합니다.']]],
+    ['why', '이유.', [
+      ['That is the reason why he left.', '그것이 그가 떠난 이유이다.', 'reason + why', '이유를 설명합니다.'],
+      ['Tell me the reason why you are late.', '네가 늦은 이유를 말해 줘.', 'reason + why', '이유를 설명합니다.'],
+      ['I don\'t know the reason why she is angry.', '나는 그녀가 화난 이유를 모른다.', 'reason + why', '이유를 설명합니다.']]],
+    ['how', '방법.', [
+      ['This is how I learned English.', '이것이 내가 영어를 배운 방법이다.', 'how = 방법', 'the way와 함께 쓰지 않습니다.'],
+      ['I know how he made it.', '나는 그가 그것을 만든 방법을 안다.', 'how = 방법', 'the way와 함께 쓰지 않습니다.'],
+      ['Tell me how you opened it.', '네가 그것을 연 방법을 말해 줘.', 'how = 방법', 'the way와 함께 쓰지 않습니다.']]],
+  ],
+  wrong: [['This is the house which I live.', 'where → This is the house where I live. — 장소에는 where를 씁니다.', ''], ['I remember the day where we met.', 'when → I remember the day when we met. — 시간에는 when을 씁니다.', ''], ['That is the reason when he left.', 'why → That is the reason why he left. — 이유에는 why를 씁니다.', '']],
+  wrongNote: '장소 where, 시간 when, 이유 why, 방법 how를 구별합니다.',
+  cram: '■ 핵심 요약\n관계부사는 장소 where, 시간 when, 이유 why, 방법 how입니다.\n\n■ 규칙\n1. 장소 + where.\n2. 시간 + when.\n3. reason + why.\n4. 방법은 how (the way how 불가).\n\n■ 예문 뜻\n이곳이 내가 사는 집이다.\n나는 우리가 만난 날을 기억한다.\n그것이 그가 떠난 이유이다.',
+  blanks: [['장소를 설명하는 관계부사는 ___입니다.', 'where', '의문사'], ['시간을 설명하는 관계부사는 ___입니다.', 'when', '의문사'], ['이유를 설명하는 관계부사는 ___입니다.', 'why', '의문사'], ['방법을 나타내는 관계부사는 ___입니다.', 'how', '의문사']],
+  fill: [
+    ['basic', 'This is the house ___ I live.', 'where', ['where', 'when', 'why'], '이곳이 내가 사는 집이다.', '장소에는 where를 씁니다.', '장소'],
+    ['basic', 'I remember the day ___ we met.', 'when', ['where', 'when', 'why'], '나는 우리가 만난 날을 기억한다.', '시간에는 when을 씁니다.', '시간'],
+    ['basic', 'That is the reason ___ he left.', 'why', ['where', 'when', 'why'], '그것이 그가 떠난 이유이다.', '이유에는 why를 씁니다.', '이유'],
+    ['intermediate', 'Seoul is the city ___ he was born.', 'where', ['when', 'where', 'how'], '서울은 그가 태어난 도시이다.', '도시는 장소이므로 where입니다.', '장소'],
+    ['intermediate', 'Sunday is the day ___ I rest.', 'when', ['how', 'why', 'when'], '일요일은 내가 쉬는 날이다.', 'day는 시간이므로 when입니다.', '시간'],
+    ['intermediate', 'This is ___ I learned English.', 'how', ['how', 'where', 'why'], '이것이 내가 영어를 배운 방법이다.', '방법은 how입니다.', '방법'],
+    ['advanced', 'Tell me the reason ___ you are late.', 'why', ['why', 'where', 'when'], '네가 늦은 이유를 말해 줘.', 'reason 뒤에는 why를 씁니다.', '이유'],
+    ['advanced', 'I know a shop ___ you can buy shoes.', 'where', ['how', 'when', 'where'], '나는 신발을 살 수 있는 가게를 안다.', 'shop은 장소이므로 where입니다.', '장소'],
+  ],
+  fix: [
+    ['basic', 'This is the house which I live.', 'which', ['where'], ['This는 These여야 합니다.', '장소에는 where를 씁니다.', 'live는 lives여야 합니다.'], 1, 'This is the house where I live. → 장소 where'],
+    ['intermediate', 'I remember the day where we met.', 'where', ['when'], ['시간에는 when을 씁니다.', 'day는 days여야 합니다.', 'met는 meet여야 합니다.'], 0, 'I remember the day when we met. → 시간 when'],
+    ['intermediate', 'That is the reason when he left.', 'when', ['why'], ['reason은 reasons여야 합니다.', 'left는 leave여야 합니다.', '이유에는 why를 씁니다.'], 2, 'That is the reason why he left. → 이유 why'],
+  ],
+  questions: [
+    pc('Which sentence about a house is correct?', '집에 대한 올바른 문장을 고르세요.', 'basic', [['This is the house when I live.', '이곳이 내가 사는 집이다.'], ['This is the house why I live.', '이곳이 내가 사는 집이다.'], ['This is the house where I live.', '이곳이 내가 사는 집이다.'], ['This is the house how I live.', '이곳이 내가 사는 집이다.']], 2, '장소에는 where를 씁니다.'),
+    pc('Which sentence about a day is correct?', '날에 대한 올바른 문장을 고르세요.', 'basic', [['I remember the day when we met.', '나는 우리가 만난 날을 기억한다.'], ['I remember the day where we met.', '나는 우리가 만난 날을 기억한다.'], ['I remember the day why we met.', '나는 우리가 만난 날을 기억한다.'], ['I remember the day how we met.', '나는 우리가 만난 날을 기억한다.']], 0, '시간에는 when을 씁니다.'),
+    pc('Which sentence about a reason is correct?', '이유에 대한 올바른 문장을 고르세요.', 'basic', [['That is the reason where he left.', '그것이 그가 떠난 이유이다.'], ['That is the reason when he left.', '그것이 그가 떠난 이유이다.'], ['That is the reason how he left.', '그것이 그가 떠난 이유이다.'], ['That is the reason why he left.', '그것이 그가 떠난 이유이다.']], 3, '이유에는 why를 씁니다.'),
+    pc('Which sentence about learning English is correct?', '영어를 배운 방법에 대한 올바른 문장을 고르세요.', 'intermediate', [['This is the way how I learned English.', '이것이 내가 영어를 배운 방법이다.'], ['This is how I learned English.', '이것이 내가 영어를 배운 방법이다.'], ['This is the way why I learned English.', '이것이 내가 영어를 배운 방법이다.'], ['This is the way where I learned English.', '이것이 내가 영어를 배운 방법이다.']], 1, 'the way와 how는 함께 쓰지 않습니다.'),
+    pc('Which sentence about a city is correct?', '도시에 대한 올바른 문장을 고르세요.', 'intermediate', [['Seoul is the city where he was born.', '서울은 그가 태어난 도시이다.'], ['Seoul is the city when he was born.', '서울은 그가 태어난 도시이다.'], ['Seoul is the city why he was born.', '서울은 그가 태어난 도시이다.'], ['Seoul is the city how he was born.', '서울은 그가 태어난 도시이다.']], 0, '도시는 장소이므로 where를 씁니다.'),
+    pc('Choose the sentence that uses a different relative adverb.', '다른 관계부사를 쓴 문장을 고르세요.', 'intermediate', [['This is the house where I live.', '이곳이 내가 사는 집이다.'], ['I know a shop where you can buy shoes.', '나는 신발을 살 수 있는 가게를 안다.'], ['Sunday is the day when I rest.', '일요일은 내가 쉬는 날이다.'], ['Seoul is the city where he was born.', '서울은 그가 태어난 도시이다.']], 2, '나머지는 where이고 이것만 when입니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['Tell me the reason why you are late.', '네가 늦은 이유를 말해 줘.'], ['This is the time when she sleeps.', '지금은 그녀가 잠자는 시간이다.'], ['I know how he made it.', '나는 그가 그것을 만든 방법을 안다.'], ['I remember the day where we met.', '나는 우리가 만난 날을 기억한다.']], 3, '시간에는 where가 아니라 when을 써야 합니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① This is the house which I live.\n② I remember the day when we met.\n③ That is the reason why he left.', 'basic', 1, '①만 틀렸고 where여야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① I remember the day where we met.\n② That is the reason when he left.\n③ Seoul is the city where he was born.\n④ This is how I learned English.', 'advanced', 2, '①은 when, ②는 why여야 하므로 틀린 문장은 2개입니다.'),
+    pc('Why is "I remember the day where we met." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because remember should be remembers.', 'remember를 remembers로 바꿔야 해서'], ['Because met should be meet.', 'met를 meet로 바꿔야 해서'], ['Because day is a time, so when is needed.', 'day는 시간이라서 when이 필요해서'], ['Because day should be days.', 'day를 days로 바꿔야 해서']], 2, '시간 명사 뒤에는 when을 씁니다.', 'reason'),
+  ],
+  popup: [['This is the house ___ I live.', 'where', ['when', 'why'], '장소'], ['I remember the day ___ we met.', 'when', ['where', 'why'], '시간'], ['That is the reason ___ he left.', 'why', ['where', 'when'], '이유'], ['This is ___ I learned English.', 'how', ['where', 'why'], '방법']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'This is the house which I live.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['This is the house where I live.'], noteKo: '장소에는 where를 씁니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'That is the reason when he left.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['That is the reason why he left.'], noteKo: '이유에는 why를 씁니다.' },
+  ],
+  top: ['관계부사: 장소 where, 시간 when, 이유 why, 방법 how. the way와 how는 함께 쓰지 않는다.', 'This is the house where I live.', '이곳이 내가 사는 집이다.'],
+  lecture: [
+    { type: 'text', text: '관계부사', narration: '오늘은 문장을 이어 주는 관계부사 [en]where[/en], [en]when[/en], [en]why[/en], [en]how[/en]를 배워요.' },
+    { type: 'board', title: 'where', lines: ['This is the house [b]where[/b] I live. — 이곳이 내가 사는 집이다.', 'Seoul is the city where he was born. — 서울은 그가 태어난 도시이다.', '장소'], narration: '장소 뒤에는 [en]where[/en]를 써요. [en]This is the house where I live.[/en] 이곳이 내가 사는 집이에요.' },
+    { type: 'board', title: 'when', lines: ['I remember the day [b]when[/b] we met. — 나는 우리가 만난 날을 기억한다.', 'Sunday is the day when I rest. — 일요일은 내가 쉬는 날이다.', '시간'], narration: '시간 뒤에는 [en]when[/en]을 써요. [en]I remember the day when we met.[/en] 나는 우리가 만난 날을 기억해요.' },
+    { type: 'board', title: 'why', lines: ['That is the reason [b]why[/b] he left. — 그것이 그가 떠난 이유이다.', 'Tell me the reason why you are late. — 네가 늦은 이유를 말해 줘.', '이유'], narration: '[en]reason[/en] 뒤에는 [en]why[/en]를 써요. [en]That is the reason why he left.[/en] 그것이 그가 떠난 이유예요.' },
+    { type: 'board', title: 'how', lines: ['This is [b]how[/b] I learned English. — 이것이 내가 영어를 배운 방법이다.', 'I know how he made it. — 나는 그가 그것을 만든 방법을 안다.', 'the way how는 쓰지 않는다'], narration: '방법은 [en]how[/en]예요. [en]the way[/en]와 [en]how[/en]는 함께 쓰지 않아요. [en]This is how I learned English.[/en] 이것이 내가 영어를 배운 방법이에요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× This is the house [b]which[/b] I live. — 이곳이 내가 사는 집이다.', '× I remember the day [b]where[/b] we met. — 나는 우리가 만난 날을 기억한다.', '× That is the reason [b]when[/b] he left. — 그것이 그가 떠난 이유이다.'], narration: '장소는 [en]where[/en], 시간은 [en]when[/en], 이유는 [en]why[/en]예요. 서로 바꿔 쓰면 틀려요.' },
+    { type: 'text', text: '정리: where · when · why · how', narration: '정리할게요. 장소는 [en]where[/en], 시간은 [en]when[/en], 이유는 [en]why[/en], 방법은 [en]how[/en]예요.' },
+  ],
+});

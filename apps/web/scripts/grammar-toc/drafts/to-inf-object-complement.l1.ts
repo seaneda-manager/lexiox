@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'to-inf-object-complement', topic: '목적격보어로 쓰이는 to부정사 - 1부', titleKo: '목적격보어로 쓰이는 to부정사',
+  summaryEn: 'Verbs like want, tell, ask, and allow take an object and then to + base verb.',
+  summaryKo: 'want, tell, ask, allow 같은 동사는 "동사 + 목적어 + to + 동사원형" 형태로 씁니다.',
+  rules: [
+    ['want / expect + object + to + base verb.', 'want, expect는 "~가 …하기를 원하다/기대하다"입니다. (I want you to come.)'],
+    ['ask / tell + object + to + base verb.', 'ask, tell은 "~에게 …하라고 요청하다/말하다"입니다. (She told me to wait.)'],
+    ['allow / advise + object + to + base verb.', 'allow, advise는 "~가 …하도록 허락하다/충고하다"입니다.'],
+    ['Negative: object + not + to + base verb.', '부정은 to 앞에 not을 둡니다. (He asked me not to go.)'],
+  ],
+  examples: [['I want you to come.', '나는 네가 오기를 원한다.'], ['She told me to wait.', '그녀는 나에게 기다리라고 말했다.'], ['He asked me not to go.', '그는 나에게 가지 말라고 부탁했다.']],
+  groups: [
+    ['want / expect', '원하다, 기대하다.', [
+      ['I want you to come.', '나는 네가 오기를 원한다.', 'want + 목적어 + to + 동사원형', '목적어는 you입니다.'],
+      ['She wants him to help.', '그녀는 그가 도와주기를 원한다.', 'want + 목적어 + to + 동사원형', '목적어는 him입니다.'],
+      ['We expect them to win.', '우리는 그들이 이기기를 기대한다.', 'expect + 목적어 + to + 동사원형', '목적어는 them입니다.']]],
+    ['ask / tell', '요청하다, 말하다.', [
+      ['She told me to wait.', '그녀는 나에게 기다리라고 말했다.', 'tell + 목적어 + to + 동사원형', '목적어는 me입니다.'],
+      ['He asked me to open the door.', '그는 나에게 문을 열어 달라고 부탁했다.', 'ask + 목적어 + to + 동사원형', '목적어는 me입니다.'],
+      ['The teacher told us to be quiet.', '선생님은 우리에게 조용히 하라고 말했다.', 'tell + 목적어 + to + 동사원형', '목적어는 us입니다.']]],
+    ['allow / advise', '허락하다, 충고하다.', [
+      ['My parents allow me to stay up late.', '부모님은 내가 늦게까지 깨어 있도록 허락하신다.', 'allow + 목적어 + to + 동사원형', '목적어는 me입니다.'],
+      ['The doctor advised him to rest.', '의사는 그에게 쉬라고 충고했다.', 'advise + 목적어 + to + 동사원형', '목적어는 him입니다.'],
+      ['They allowed us to enter.', '그들은 우리가 들어가는 것을 허락했다.', 'allow + 목적어 + to + 동사원형', '목적어는 us입니다.']]],
+    ['부정 not to', '~하지 말라고.', [
+      ['He asked me not to go.', '그는 나에게 가지 말라고 부탁했다.', '목적어 + not + to + 동사원형', 'not은 to 앞에 둡니다.'],
+      ['She told us not to talk.', '그녀는 우리에게 이야기하지 말라고 말했다.', '목적어 + not + to + 동사원형', 'not은 to 앞에 둡니다.'],
+      ['I told him not to worry.', '나는 그에게 걱정하지 말라고 말했다.', '목적어 + not + to + 동사원형', 'not은 to 앞에 둡니다.']]],
+  ],
+  wrong: [['I want you come.', 'to come → I want you to come. — 나는 네가 오기를 원한다.', ''], ['She told I to wait.', 'me → She told me to wait. — 목적어는 목적격을 씁니다.', ''], ['He asked me not go.', 'not to go → He asked me not to go. — 그는 나에게 가지 말라고 부탁했다.', '']],
+  wrongNote: '목적어 뒤에는 to + 동사원형을 쓰고, 목적어는 me, him처럼 목적격으로 씁니다.',
+  cram: '■ 핵심 요약\nwant, tell, ask, allow 뒤에는 목적어 + to + 동사원형이 옵니다.\n\n■ 규칙\n1. want / expect + 목적어 + to + 동사원형.\n2. ask / tell + 목적어 + to + 동사원형.\n3. allow / advise + 목적어 + to + 동사원형.\n4. 부정은 not to + 동사원형.\n\n■ 예문 뜻\n나는 네가 오기를 원한다.\n그녀는 나에게 기다리라고 말했다.\n그는 나에게 가지 말라고 부탁했다.',
+  blanks: [['want + 목적어 + ___ + 동사원형입니다.', 'to', '두 글자'], ['목적어 자리에는 I가 아니라 ___를 씁니다.', 'me', '목적격'], ['"~하지 말라고"는 ___ to + 동사원형입니다.', 'not', '부정'], ['tell은 "~에게 …하라고 ___"입니다.', '말하다', '세 글자']],
+  fill: [
+    ['basic', 'I want you ___ come.', 'to', ['to', 'for', 'of'], '나는 네가 오기를 원한다.', 'want + 목적어 + to + 동사원형입니다.', '부정사 표시'],
+    ['basic', 'She told ___ to wait.', 'me', ['I', 'my', 'me'], '그녀는 나에게 기다리라고 말했다.', '목적어는 목적격 me입니다.', '목적격'],
+    ['basic', 'He asked me ___ open the door.', 'to', ['for', 'to', 'of'], '그는 나에게 문을 열어 달라고 부탁했다.', 'ask + 목적어 + to + 동사원형입니다.', '부정사 표시'],
+    ['intermediate', 'We expect them ___ win.', 'to', ['to', 'by', 'of'], '우리는 그들이 이기기를 기대한다.', 'expect + 목적어 + to + 동사원형입니다.', '부정사 표시'],
+    ['intermediate', 'The doctor advised him ___ rest.', 'to', ['by', 'at', 'to'], '의사는 그에게 쉬라고 충고했다.', 'advise + 목적어 + to + 동사원형입니다.', '부정사 표시'],
+    ['intermediate', 'My parents allow ___ to stay up late.', 'me', ['my', 'me', 'I'], '부모님은 내가 늦게까지 깨어 있도록 허락하신다.', '목적어는 목적격 me입니다.', '목적격'],
+    ['advanced', 'He asked me ___ to go.', 'not', ['no', 'not', 'don\'t'], '그는 나에게 가지 말라고 부탁했다.', '부정은 not to입니다.', '부정'],
+    ['advanced', 'She wants ___ to help.', 'him', ['he', 'his', 'him'], '그녀는 그가 도와주기를 원한다.', '목적어는 목적격 him입니다.', '목적격'],
+  ],
+  fix: [
+    ['basic', 'I want you come.', 'come', ['to come'], ['I는 We여야 합니다.', 'want + 목적어 뒤에는 to + 동사원형을 씁니다.', 'you는 your여야 합니다.'], 1, 'I want you to come. → want + 목적어 + to + 동사원형'],
+    ['intermediate', 'She told I to wait.', 'I', ['me'], ['목적어는 목적격을 씁니다.', 'wait는 waiting이어야 합니다.', 'told는 tell이어야 합니다.'], 0, 'She told me to wait. → 목적격 me'],
+    ['intermediate', 'The doctor advised him resting.', 'resting', ['to rest'], ['doctor는 doctors여야 합니다.', 'him은 he여야 합니다.', 'advise + 목적어 뒤에는 to + 동사원형을 씁니다.'], 2, 'The doctor advised him to rest. → advise + 목적어 + to + 동사원형'],
+  ],
+  questions: [
+    pc('Which sentence about coming is correct?', '오는 것에 대한 올바른 문장을 고르세요.', 'basic', [['I want you come.', '나는 네가 오기를 원한다.'], ['I want you coming.', '나는 네가 오기를 원한다.'], ['I want you to come.', '나는 네가 오기를 원한다.'], ['I want you for come.', '나는 네가 오기를 원한다.']], 2, 'want + 목적어 + to + 동사원형입니다.'),
+    pc('Which sentence about waiting is correct?', '기다리는 것에 대한 올바른 문장을 고르세요.', 'basic', [['She told me to wait.', '그녀는 나에게 기다리라고 말했다.'], ['She told I to wait.', '그녀는 나에게 기다리라고 말했다.'], ['She told my to wait.', '그녀는 나에게 기다리라고 말했다.'], ['She told me wait.', '그녀는 나에게 기다리라고 말했다.']], 0, '목적어는 me, 그 뒤에 to + 동사원형입니다.'),
+    pc('Which sentence about a door is correct?', '문에 대한 올바른 문장을 고르세요.', 'basic', [['He asked me opening the door.', '그는 나에게 문을 열어 달라고 부탁했다.'], ['He asked me open the door.', '그는 나에게 문을 열어 달라고 부탁했다.'], ['He asked me for open the door.', '그는 나에게 문을 열어 달라고 부탁했다.'], ['He asked me to open the door.', '그는 나에게 문을 열어 달라고 부탁했다.']], 3, 'ask + 목적어 + to + 동사원형입니다.'),
+    pc('Which sentence about a doctor is correct?', '의사에 대한 올바른 문장을 고르세요.', 'intermediate', [['The doctor advised him resting.', '의사는 그에게 쉬라고 충고했다.'], ['The doctor advised him to rest.', '의사는 그에게 쉬라고 충고했다.'], ['The doctor advised he to rest.', '의사는 그에게 쉬라고 충고했다.'], ['The doctor advised him rest.', '의사는 그에게 쉬라고 충고했다.']], 1, 'advise + 목적어 + to + 동사원형입니다.'),
+    pc('Which sentence means "He asked me not to go"?', '"가지 말라고 부탁했다"는 뜻의 문장을 고르세요.', 'intermediate', [['He asked me not to go.', '그는 나에게 가지 말라고 부탁했다.'], ['He asked me to not go.', '그는 나에게 가지 말라고 부탁했다.'], ['He asked me don\'t go.', '그는 나에게 가지 말라고 부탁했다.'], ['He asked me not go.', '그는 나에게 가지 말라고 부탁했다.']], 0, '부정은 not to + 동사원형입니다.'),
+    pc('Choose the sentence that uses a different pattern.', '다른 형태의 문장을 고르세요.', 'intermediate', [['She told me to wait.', '그녀는 나에게 기다리라고 말했다.'], ['We expect them to win.', '우리는 그들이 이기기를 기대한다.'], ['I look forward to seeing you.', '나는 너를 만나기를 기대한다.'], ['They allowed us to enter.', '그들은 우리가 들어가는 것을 허락했다.']], 2, '나머지는 목적어 + to + 동사원형이고 이것만 to 뒤에 동사 + ing입니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['My parents allow me to stay up late.', '부모님은 내가 늦게까지 깨어 있도록 허락하신다.'], ['She wants he to help.', '그녀는 그가 도와주기를 원한다.'], ['The teacher told us to be quiet.', '선생님은 우리에게 조용히 하라고 말했다.'], ['I told him not to worry.', '나는 그에게 걱정하지 말라고 말했다.']], 1, '목적어 자리에는 he가 아니라 him을 써야 합니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① I want you come.\n② She told me to wait.\n③ We expect them to win.', 'basic', 1, '①만 틀렸고 to come이어야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① She told I to wait.\n② The doctor advised him resting.\n③ He asked me not to go.\n④ I told him not to worry.', 'advanced', 2, '①은 me, ②는 to rest여야 하므로 틀린 문장은 2개입니다.'),
+    pc('Why is "She told I to wait." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because wait should be waiting.', 'wait를 waiting으로 바꿔야 해서'], ['Because the object should be in the object form.', '목적어 자리에는 목적격을 써야 해서'], ['Because told should be tell.', 'told를 tell로 바꿔야 해서'], ['Because to should be for.', 'to를 for로 바꿔야 해서']], 1, '동사 뒤 목적어는 me처럼 목적격을 씁니다.', 'reason'),
+  ],
+  popup: [['I want you ___ come.', 'to', ['for', 'of'], '부정사 표시'], ['She told ___ to wait.', 'me', ['I', 'my'], '목적격'], ['He asked me ___ to go.', 'not', ['no', 'don\'t'], '부정'], ['The doctor advised him ___ rest.', 'to', ['by', 'at'], '부정사 표시']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'I want you come.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['I want you to come.'], noteKo: 'want + 목적어 뒤에는 to + 동사원형을 씁니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'She told I to wait.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['She told me to wait.'], noteKo: '목적어는 목적격 me를 씁니다.' },
+  ],
+  top: ['want, tell, ask, allow, advise 뒤에는 목적어 + to + 동사원형. 부정은 not to + 동사원형. 목적어는 me, him처럼 목적격이다.', 'I want you to come.', '나는 네가 오기를 원한다.'],
+  lecture: [
+    { type: 'text', text: '목적격보어로 쓰이는 to부정사', narration: '오늘은 동사 뒤에 사람과 [en]to[/en] 동사원형이 오는 문장을 배워요.' },
+    { type: 'board', title: 'want / expect', lines: ['I [b]want you to come[/b]. — 나는 네가 오기를 원한다.', 'We expect them to win. — 우리는 그들이 이기기를 기대한다.', 'want + 목적어 + to + 동사원형'], narration: '[en]want[/en] 뒤에 사람, 그리고 [en]to[/en] 동사원형이 와요. [en]I want you to come.[/en] 나는 네가 오기를 원해요.' },
+    { type: 'board', title: 'ask / tell', lines: ['She [b]told me to wait[/b]. — 그녀는 나에게 기다리라고 말했다.', 'He asked me to open the door. — 그는 나에게 문을 열어 달라고 부탁했다.'], narration: '[en]tell[/en]과 [en]ask[/en]도 같은 모양이에요. [en]She told me to wait.[/en] 그녀는 나에게 기다리라고 말했어요.' },
+    { type: 'board', title: 'allow / advise', lines: ['The doctor [b]advised him to rest[/b]. — 의사는 그에게 쉬라고 충고했다.', 'They allowed us to enter. — 그들은 우리가 들어가는 것을 허락했다.'], narration: '[en]allow[/en]와 [en]advise[/en]도 마찬가지예요. [en]The doctor advised him to rest.[/en] 의사는 그에게 쉬라고 충고했어요.' },
+    { type: 'board', title: '부정 not to', lines: ['He asked me [b]not to[/b] go. — 그는 나에게 가지 말라고 부탁했다.', 'I told him not to worry. — 나는 그에게 걱정하지 말라고 말했다.', 'not은 to 앞'], narration: '부정은 [en]to[/en] 앞에 [en]not[/en]을 놓아요. [en]He asked me not to go.[/en] 그는 나에게 가지 말라고 부탁했어요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× I want you [b]come[/b]. — 나는 네가 오기를 원한다.', '× She told [b]I[/b] to wait. — 그녀는 나에게 기다리라고 말했다.', '× The doctor advised him [b]resting[/b]. — 의사는 그에게 쉬라고 충고했다.'], narration: '목적어 뒤에는 [en]to[/en] 동사원형을 써요. 목적어는 [en]me[/en]처럼 목적격이에요.' },
+    { type: 'text', text: '정리: 동사 + 목적어 + to + 동사원형', narration: '정리할게요. 동사 다음에 목적어, 그리고 [en]to[/en] 동사원형이 와요.' },
+  ],
+});
