@@ -214,6 +214,33 @@ function PlainTextCard({ raw }: { raw: string }) {
   );
 }
 
+// ── Table (메뉴·가격표·시간표 등 표가 들어 있는 지문) ─────────────────────────
+// 평문으로 바꾸면 표가 한 줄로 뭉개지므로, <table>이 있으면 HTML 그대로 표로 그린다.
+function sanitizeTableHtml(html: string): string {
+  return html
+    .replace(/<(script|style|iframe|object|embed)[\s\S]*?<\/\1>/gi, "")
+    .replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "")
+    .replace(/javascript:/gi, "");
+}
+
+function TableCard({ html }: { html: string }) {
+  return (
+    <div
+      className="dl-table-card"
+      style={{ fontFamily: FONT, fontSize: 15, lineHeight: 1.7, color: "#222" }}
+    >
+      <style>{`
+        .dl-table-card h3 { font-size: 16px; font-weight: 700; margin: 0 0 6px; }
+        .dl-table-card p { margin: 8px 0; }
+        .dl-table-card table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+        .dl-table-card th, .dl-table-card td { border: 1px solid #C9CED6; padding: 7px 10px; text-align: left; vertical-align: top; }
+        .dl-table-card th { background: #F1F3F6; font-weight: 700; }
+      `}</style>
+      <div dangerouslySetInnerHTML={{ __html: sanitizeTableHtml(html) }} />
+    </div>
+  );
+}
+
 // ── Dispatcher ─────────────────────────────────────────────────────────
 export function DailyLifeContent({
   contextType,
@@ -222,6 +249,7 @@ export function DailyLifeContent({
   contextType: DailyLifeContextType;
   contentHtml: string;
 }) {
+  if (/<table[\s>]/i.test(contentHtml)) return <TableCard html={contentHtml} />;
   const raw = htmlToPlainText(contentHtml);
   if (!raw) return null;
 

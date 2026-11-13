@@ -937,11 +937,13 @@ export default function MockTestPlayer({
                   <input
                     type="text"
                     maxLength={blank.correctToken.length || 8}
+                    autoComplete="off"
+                    spellCheck={false}
                     value={val}
                     onChange={(e) => setCwAnswer(blank.id, e.target.value)}
                     style={{
                       display: "inline-block",
-                      width: Math.max(blank.correctToken.length * 11 + 8, 30),
+                      width: Math.max(blank.correctToken.length * 13 + 14, 44),
                       height: 22, border: "none", borderRadius: 0,
                       backgroundColor: "#E4E4E4", textAlign: "left", padding: "0 3px",
                       fontSize: 14, color: "#222", outline: "none",
