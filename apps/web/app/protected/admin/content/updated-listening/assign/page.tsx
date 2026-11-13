@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { formatCreated, topicHint, labelOrPlaceholder } from "@/lib/admin/testListDisplay";
 import { getServiceSupabase } from "@/lib/supabase/service";
 import { getAssignedTestIds } from "@/lib/supabase/assignment-guard";
 
@@ -91,8 +92,8 @@ export default async function AssignListeningPage({ searchParams }: { searchPara
   const [{ data: tests }, { data: students }, assignedIds] = await Promise.all([
     supabase
       .from("listening_tests_2026")
-      .select("id, label")
-      .order("updated_at", { ascending: false }),
+      .select("id, label, created_at, used:payload->meta->usedTopics")
+      .order("created_at", { ascending: false }),
     supabase
       .from("profiles")
       .select("id, name, email")
@@ -130,7 +131,15 @@ export default async function AssignListeningPage({ searchParams }: { searchPara
             {(tests ?? []).map((t) => (
               <label key={t.id} className="flex cursor-pointer items-center gap-3 rounded-lg border p-3 hover:bg-teal-50/50 has-[:checked]:border-teal-400 has-[:checked]:bg-teal-50">
                 <input type="radio" name="listening_test_id" value={t.id} required className="accent-teal-500" />
-                <span className="flex-1 text-sm font-medium text-slate-800">{t.label}</span>
+                <span className="flex-1 space-y-0.5">
+                  <span className={`block text-sm font-medium ${labelOrPlaceholder(t.label).empty ? "text-slate-400" : "text-slate-800"}`}>
+                    {labelOrPlaceholder(t.label).text}
+                  </span>
+                  <span className="block text-[11px] text-slate-400">
+                    {formatCreated(t.created_at)}
+                    {topicHint(t.used) && <> · {topicHint(t.used)}</>}
+                  </span>
+                </span>
                 {assignedIds.has(t.id) && <span className="text-[10px] text-slate-400">📌 배정됨</span>}
               </label>
             ))}

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { formatCreated, topicHint, labelOrPlaceholder } from "@/lib/admin/testListDisplay";
 import { getServiceSupabase } from "@/lib/supabase/service";
 
 export const dynamic = "force-dynamic";
@@ -57,7 +58,7 @@ export default async function AssignSpeakingPage({ searchParams }: { searchParam
   const [{ data: tests }, { data: students }] = await Promise.all([
     supabase
       .from("speaking_tests")
-      .select("id, label")
+      .select("id, label, created_at, used:payload->usedTopics")
       .order("created_at", { ascending: false }),
     supabase
       .from("profiles")
@@ -96,7 +97,13 @@ export default async function AssignSpeakingPage({ searchParams }: { searchParam
               <label key={t.id} className="flex cursor-pointer items-center gap-3 rounded-lg border p-3 hover:bg-orange-50/50 has-[:checked]:border-orange-400 has-[:checked]:bg-orange-50">
                 <input type="radio" name="speaking_test_id" value={t.id} required className="accent-orange-500" />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-slate-800">{t.label}</p>
+                  <p className={`text-sm font-medium ${labelOrPlaceholder(t.label).empty ? "text-slate-400" : "text-slate-800"}`}>
+                    {labelOrPlaceholder(t.label).text}
+                  </p>
+                  <p className="text-[11px] text-slate-400">
+                    {formatCreated(t.created_at)}
+                    {topicHint(t.used) && <> · {topicHint(t.used)}</>}
+                  </p>
                 </div>
               </label>
             ))}

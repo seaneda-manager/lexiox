@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { getAssignedTestIds } from "@/lib/supabase/assignment-guard";
 import { PlusCircle } from "lucide-react";
+import DeleteTestButton from "../_client/DeleteTestButton";
 
 export const dynamic = "force-dynamic";
 
@@ -63,7 +64,9 @@ export default async function WritingAdminListPage() {
             {tests.map((t) => (
               <div key={t.id} className="px-4 py-3 text-xs hover:bg-teal-50/30 md:grid md:grid-cols-4 md:items-center">
                 <div className="font-mono text-[11px] text-gray-500">{t.id.slice(0, 8)}…</div>
-                <div className="font-semibold text-gray-900">{t.label}</div>
+                <div className={`font-semibold ${t.label?.trim() ? "text-gray-900" : "text-gray-400"}`}>
+                  {t.label?.trim() || "(이름 없음)"}
+                </div>
                 <div className="text-gray-500">{fmt(t.updated_at)}</div>
                 <div className="flex items-center justify-end gap-2">
                   {assignedIds.has(t.id) && (
@@ -75,6 +78,13 @@ export default async function WritingAdminListPage() {
                   >
                     미리보기
                   </Link>
+                  <DeleteTestButton
+                    endpoint="/api/admin/updated-writing/delete"
+                    testId={t.id}
+                    testLabel={t.label}
+                    createdHint={`수정: ${fmt(t.updated_at)}`}
+                    assigned={assignedIds.has(t.id)}
+                  />
                 </div>
               </div>
             ))}

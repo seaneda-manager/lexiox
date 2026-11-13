@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { getAssignedTestIds } from "@/lib/supabase/assignment-guard";
 import { BookOpenCheck, PlusCircle, RefreshCcw } from "lucide-react";
+import DeleteTestButton from "../_client/DeleteTestButton";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -199,7 +200,9 @@ export default async function Reading2026AdminListPage() {
 
                   {/* Label */}
                   <div className="mt-1 md:mt-0 flex items-center gap-2">
-                    <div className="font-semibold text-gray-900">{t.label}</div>
+                    <div className={`font-semibold ${t.label?.trim() ? "text-gray-900" : "text-gray-400"}`}>
+                      {t.label?.trim() || "(이름 없음)"}
+                    </div>
                     {assignedIds.has(t.id) && (
                       <span className="rounded-full bg-gray-900 px-2 py-0.5 text-[10px] font-medium text-white">📌 배정됨</span>
                     )}
@@ -232,6 +235,13 @@ export default async function Reading2026AdminListPage() {
                     >
                       수정
                     </Link>
+                    <DeleteTestButton
+                      endpoint="/api/admin/updated-reading/delete"
+                      testId={t.id}
+                      testLabel={t.label}
+                      createdHint={`수정: ${formatUpdatedAt(t.updated_at)}`}
+                      assigned={assignedIds.has(t.id)}
+                    />
                   </div>
                 </div>
               ))}

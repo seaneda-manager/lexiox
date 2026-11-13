@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { formatCreated, topicHint, labelOrPlaceholder } from "@/lib/admin/testListDisplay";
 import { getServiceSupabase } from "@/lib/supabase/service";
 import { getAssignedTestIds } from "@/lib/supabase/assignment-guard";
 
@@ -58,7 +59,7 @@ export default async function AssignWritingPage({ searchParams }: { searchParams
   const [{ data: tests }, { data: students }, assignedIds] = await Promise.all([
     supabase
       .from("writing_tests")
-      .select("id, label")
+      .select("id, label, updated_at, used:payload->meta->usedTopics")
       .order("updated_at", { ascending: false }),
     supabase
       .from("profiles")
@@ -97,7 +98,15 @@ export default async function AssignWritingPage({ searchParams }: { searchParams
             {(tests ?? []).map((t) => (
               <label key={t.id} className="flex cursor-pointer items-center gap-3 rounded-lg border p-3 hover:bg-violet-50/50 has-[:checked]:border-violet-400 has-[:checked]:bg-violet-50">
                 <input type="radio" name="writing_test_id" value={t.id} required className="accent-violet-500" />
-                <span className="flex-1 text-sm font-medium text-slate-800">{t.label}</span>
+                <span className="flex-1 space-y-0.5">
+                  <span className={`block text-sm font-medium ${labelOrPlaceholder(t.label).empty ? "text-slate-400" : "text-slate-800"}`}>
+                    {labelOrPlaceholder(t.label).text}
+                  </span>
+                  <span className="block text-[11px] text-slate-400">
+                    {formatCreated(t.updated_at)}
+                    {topicHint(t.used) && <> · {topicHint(t.used)}</>}
+                  </span>
+                </span>
                 {assignedIds.has(t.id) && <span className="text-[10px] text-slate-400">📌 배정됨</span>}
               </label>
             ))}

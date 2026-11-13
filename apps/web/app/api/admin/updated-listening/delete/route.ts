@@ -1,33 +1,9 @@
 export const dynamic = 'force-dynamic';
-
-import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
 export const runtime = 'nodejs';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-);
+import { handleDeleteTests } from '@/lib/admin/deleteTestsHandler';
 
+// 관리자 확인 + 배정된 시험 삭제 차단은 공통 핸들러가 처리한다.
 export async function POST(req: Request) {
-  try {
-    const { id } = await req.json() as { id: string };
-
-    if (!id?.trim()) {
-      return NextResponse.json({ ok: false, error: 'Test ID required' }, { status: 400 });
-    }
-
-    const { error } = await supabase
-      .from('listening_tests_2026')
-      .delete()
-      .eq('id', id);
-
-    if (error) throw error;
-
-    return NextResponse.json({ ok: true });
-  } catch (err: any) {
-    console.error('DELETE TEST ERROR', err);
-    return NextResponse.json({ ok: false, error: err?.message ?? 'Unknown error' }, { status: 500 });
-  }
+  return handleDeleteTests(req, { section: 'listening', table: 'listening_tests_2026' });
 }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { getServiceSupabase } from "@/lib/supabase/service";
 import { getAssignedTestIds } from "@/lib/supabase/assignment-guard";
+import { formatCreated, topicHint, labelOrPlaceholder } from "@/lib/admin/testListDisplay";
 
 export const dynamic = "force-dynamic";
 
@@ -90,8 +91,9 @@ export default async function AssignReadingPage({ searchParams }: { searchParams
   const [{ data: tests }, { data: students }, assignedIds] = await Promise.all([
     supabase
       .from("reading_tests_2026")
-      .select("id, label")
-      .order("updated_at", { ascending: false }),
+      // 이름 없는 시험도 구분되도록 생성 시각 + 주제 힌트(meta.usedTopics)를 함께 가져온다.
+      .select("id, label, created_at, used:payload->meta->usedTopics")
+      .order("created_at", { ascending: false }),
     supabase
       .from("profiles")
       .select("id, name, email")
@@ -129,7 +131,15 @@ export default async function AssignReadingPage({ searchParams }: { searchParams
             {(tests ?? []).map((t) => (
               <label key={t.id} className="flex cursor-pointer items-center gap-3 rounded-lg border p-3 hover:bg-blue-50/50 has-[:checked]:border-blue-400 has-[:checked]:bg-blue-50">
                 <input type="radio" name="reading_test_id" value={t.id} required className="accent-blue-500" />
-                <span className="flex-1 text-sm font-medium text-slate-800">{t.label}</span>
+                <span className="flex-1 space-y-0.5">
+                  <span className={`block text-sm font-medium ${labelOrPlaceholder(t.label).empty ? "text-slate-400" : "text-slate-800"}`}>
+                    {labelOrPlaceholder(t.label).text}
+                  </span>
+                  <span className="block text-[11px] text-slate-400">
+                    {formatCreated(t.created_at)}
+                    {topicHint(t.used) && <> · {topicHint(t.used)}</>}
+                  </span>
+                </span>
                 {assignedIds.has(t.id) && <span className="text-[10px] text-slate-400">📌 배정됨</span>}
               </label>
             ))}
