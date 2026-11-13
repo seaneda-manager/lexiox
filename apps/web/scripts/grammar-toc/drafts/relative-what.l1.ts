@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'relative-what', topic: '관계대명사 what - 1부', titleKo: '관계대명사 what',
+  summaryEn: 'What means "the thing that". A what-clause works like a noun: subject, object, or complement.',
+  summaryKo: 'what은 "~하는 것"이라는 뜻으로, what절은 문장에서 주어, 목적어, 보어 역할을 합니다.',
+  rules: [
+    ['what = the thing that. It has no noun before it.', 'what은 the thing that과 같고, 앞에 선행사가 없습니다.'],
+    ['A what-clause can be a subject. It takes a singular verb.', 'what절이 주어이면 단수 동사를 씁니다. (What I need is time.)'],
+    ['A what-clause can be an object.', 'what절은 목적어가 될 수 있습니다. (I know what you mean.)'],
+    ['A what-clause can be a complement.', 'what절은 보어가 될 수 있습니다. (This is what I wanted.)'],
+  ],
+  examples: [['What I need is time.', '내가 필요한 것은 시간이다.'], ['I know what you mean.', '나는 네가 말하는 것을 안다.'], ['This is what I wanted.', '이것이 내가 원하던 것이다.']],
+  groups: [
+    ['what절 = 주어', '"~하는 것은".', [
+      ['What I need is time.', '내가 필요한 것은 시간이다.', 'What + 주어 + 동사 + 단수 동사', '주어 역할입니다.'],
+      ['What she said was true.', '그녀가 말한 것은 사실이었다.', 'What + 주어 + 동사 + 단수 동사', '주어 역할입니다.'],
+      ['What he wants is money.', '그가 원하는 것은 돈이다.', 'What + 주어 + 동사 + 단수 동사', '주어 역할입니다.']]],
+    ['what절 = 목적어', '"~하는 것을".', [
+      ['I know what you mean.', '나는 네가 말하는 것을 안다.', '동사 + what절', '목적어 역할입니다.'],
+      ['Tell me what you want.', '네가 원하는 것을 나에게 말해 줘.', '동사 + what절', '목적어 역할입니다.'],
+      ['I don\'t understand what he said.', '나는 그가 말한 것을 이해하지 못한다.', '동사 + what절', '목적어 역할입니다.']]],
+    ['what절 = 보어', '"~하는 것이다".', [
+      ['This is what I wanted.', '이것이 내가 원하던 것이다.', 'be + what절', '보어 역할입니다.'],
+      ['That is what she likes.', '그것이 그녀가 좋아하는 것이다.', 'be + what절', '보어 역할입니다.'],
+      ['Time is what we need.', '시간이 우리에게 필요한 것이다.', 'be + what절', '보어 역할입니다.']]],
+    ['the thing that으로 바꾸기', 'what = the thing that.', [
+      ['I believe what he says.', '나는 그가 말하는 것을 믿는다.', 'what = the thing that', '"I believe the thing that he says."와 같습니다.'],
+      ['She bought what she needed.', '그녀는 자신이 필요한 것을 샀다.', 'what = the thing that', '"She bought the thing that she needed."와 같습니다.'],
+      ['I like what you made.', '나는 네가 만든 것이 마음에 든다.', 'what = the thing that', '"I like the thing that you made."와 같습니다.']]],
+  ],
+  wrong: [['This is that I wanted.', 'what → This is what I wanted. — 이것이 내가 원하던 것이다.', ''], ['What she said were true.', 'was → What she said was true. — what절 주어에는 단수 동사를 씁니다.', ''], ['I like which you made.', 'what → I like what you made. — 나는 네가 만든 것이 마음에 든다.', '']],
+  wrongNote: '선행사가 없으면 what, what절 주어에는 단수 동사를 씁니다.',
+  cram: '■ 핵심 요약\nwhat은 "~하는 것"이고, what절은 주어, 목적어, 보어가 됩니다.\n\n■ 규칙\n1. what = the thing that (앞에 명사 없음).\n2. what절이 주어이면 단수 동사.\n3. what절은 목적어가 될 수 있다.\n4. what절은 보어가 될 수 있다.\n\n■ 예문 뜻\n내가 필요한 것은 시간이다.\n나는 네가 말하는 것을 안다.\n이것이 내가 원하던 것이다.',
+  blanks: [['what은 "the ___ that"과 같습니다.', 'thing', '사물'], ['what절이 주어이면 ___ 동사를 씁니다.', '단수', '두 글자'], ['I know what you mean.에서 what절은 ___ 역할입니다.', '목적어', '세 글자'], ['This is what I wanted.에서 what절은 ___ 역할입니다.', '보어', '두 글자']],
+  fill: [
+    ['basic', '___ I need is time.', 'What', ['What', 'Whose', 'It'], '내가 필요한 것은 시간이다.', '"~하는 것"은 what입니다.', '~하는 것'],
+    ['basic', 'I know ___ you mean.', 'what', ['whose', 'what', 'whether'], '나는 네가 말하는 것을 안다.', '"~하는 것"은 what입니다.', '~하는 것'],
+    ['basic', 'This is ___ I wanted.', 'what', ['it', 'whose', 'what'], '이것이 내가 원하던 것이다.', '"~하는 것"은 what입니다.', '~하는 것'],
+    ['intermediate', 'What she said ___ true.', 'was', ['were', 'was', 'are'], '그녀가 말한 것은 사실이었다.', 'what절 주어에는 단수 동사를 씁니다.', '단수'],
+    ['intermediate', 'She bought ___ she needed.', 'what', ['what', 'how', 'whose'], '그녀는 자신이 필요한 것을 샀다.', '"~하는 것"은 what입니다.', '~하는 것'],
+    ['intermediate', 'I believe ___ he says.', 'what', ['whether', 'whose', 'what'], '나는 그가 말하는 것을 믿는다.', '"~하는 것"은 what입니다.', '~하는 것'],
+    ['advanced', 'What he wants ___ money.', 'is', ['are', 'be', 'is'], '그가 원하는 것은 돈이다.', 'what절 주어에는 단수 동사를 씁니다.', '단수'],
+    ['advanced', 'I like ___ you made.', 'what', ['whose', 'what', 'whether'], '나는 네가 만든 것이 마음에 든다.', '"~하는 것"은 what입니다.', '~하는 것'],
+  ],
+  fix: [
+    ['basic', 'This is that I wanted.', 'that', ['what'], ['This는 These여야 합니다.', '"~하는 것"은 what을 씁니다.', 'wanted는 want여야 합니다.'], 1, 'This is what I wanted. → what = ~하는 것'],
+    ['intermediate', 'What she said were true.', 'were', ['was'], ['what절 주어에는 단수 동사를 씁니다.', 'said는 say여야 합니다.', 'true는 truly여야 합니다.'], 0, 'What she said was true. → 단수 동사'],
+    ['intermediate', 'I like which you made.', 'which', ['what'], ['like는 likes여야 합니다.', 'made는 make여야 합니다.', '선행사가 없으면 what을 씁니다.'], 2, 'I like what you made. → what = ~하는 것'],
+  ],
+  questions: [
+    pc('Which sentence about needing is correct?', '필요한 것에 대한 올바른 문장을 고르세요.', 'basic', [['What I need is time.', '내가 필요한 것은 시간이다.'], ['That I need is time.', '내가 필요한 것은 시간이다.'], ['Which I need is time.', '내가 필요한 것은 시간이다.'], ['It I need is time.', '내가 필요한 것은 시간이다.']], 0, '"~하는 것"은 what입니다.'),
+    pc('Which sentence about meaning is correct?', '의미에 대한 올바른 문장을 고르세요.', 'basic', [['I know the what you mean.', '나는 네가 말하는 것을 안다.'], ['I know that you mean.', '나는 네가 말하는 것을 안다.'], ['I know what you mean.', '나는 네가 말하는 것을 안다.'], ['I know it you mean.', '나는 네가 말하는 것을 안다.']], 2, 'what은 the thing that과 같아서 the를 붙이지 않습니다.'),
+    pc('Which sentence about wanting is correct?', '원하던 것에 대한 올바른 문장을 고르세요.', 'basic', [['This is the thing what I wanted.', '이것이 내가 원하던 것이다.'], ['This is that I wanted.', '이것이 내가 원하던 것이다.'], ['This is which I wanted.', '이것이 내가 원하던 것이다.'], ['This is what I wanted.', '이것이 내가 원하던 것이다.']], 3, 'what 앞에는 선행사가 없습니다.'),
+    pc('Which sentence about a speech is correct?', '말한 것에 대한 올바른 문장을 고르세요.', 'intermediate', [['What he said were true.', '그가 말한 것은 사실이었다.'], ['What he said was true.', '그가 말한 것은 사실이었다.'], ['What he said are true.', '그가 말한 것은 사실이었다.'], ['What he said be true.', '그가 말한 것은 사실이었다.']], 1, 'what절 주어에는 단수 동사를 씁니다.'),
+    pc('Which sentence has the same meaning as "I like what you made."?', '"I like what you made."와 같은 뜻의 문장을 고르세요.', 'intermediate', [['I like the thing that you made.', '나는 네가 만든 것이 마음에 든다.'], ['I like the thing you.', '나는 네가 마음에 든다.'], ['I like what made you.', '나는 너를 만든 것이 마음에 든다.'], ['I like that things.', '나는 그것들이 마음에 든다.']], 0, 'what은 the thing that과 같습니다.'),
+    pc('Choose the sentence in which the what-clause is the subject.', 'what절이 주어인 문장을 고르세요.', 'intermediate', [['I know what you mean.', '나는 네가 말하는 것을 안다.'], ['This is what I wanted.', '이것이 내가 원하던 것이다.'], ['She bought what she needed.', '그녀는 자신이 필요한 것을 샀다.'], ['What he wants is money.', '그가 원하는 것은 돈이다.']], 3, '문장의 맨 앞에서 주어로 쓰였습니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['What I need is time.', '내가 필요한 것은 시간이다.'], ['She bought what she needed.', '그녀는 자신이 필요한 것을 샀다.'], ['I like which you made.', '나는 네가 만든 것이 마음에 든다.'], ['Tell me what you want.', '네가 원하는 것을 나에게 말해 줘.']], 2, '선행사가 없으므로 what을 써야 합니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① What I need is time.\n② This is that I wanted.\n③ I know what you mean.', 'basic', 1, '②만 틀렸고 what이어야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① What she said were true.\n② I like which you made.\n③ What he wants is money.\n④ Time is what we need.', 'advanced', 2, '①은 was, ②는 what이어야 하므로 틀린 문장은 2개입니다.'),
+    pc('Why is "What she said were true." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because said should be say.', 'said를 say로 바꿔야 해서'], ['Because true should be truly.', 'true를 truly로 바꿔야 해서'], ['Because a what-clause as a subject takes a singular verb.', 'what절이 주어이면 단수 동사를 써야 해서'], ['Because she should be her.', 'she를 her로 바꿔야 해서']], 2, 'what절 주어에는 단수 동사를 씁니다.', 'reason'),
+  ],
+  popup: [['___ I need is time.', 'What', ['Whose', 'It'], '~하는 것'], ['I know ___ you mean.', 'what', ['whose', 'whether'], '~하는 것'], ['This is ___ I wanted.', 'what', ['it', 'whose'], '~하는 것'], ['What she said ___ true.', 'was', ['were', 'are'], '단수']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'This is that I wanted.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['This is what I wanted.'], noteKo: '선행사가 없으면 what을 씁니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'What she said were true.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['What she said was true.'], noteKo: 'what절 주어에는 단수 동사를 씁니다.' },
+  ],
+  top: ['what = the thing that(~하는 것). 앞에 선행사가 없고, what절은 주어·목적어·보어가 된다. 주어일 때는 단수 동사를 쓴다.', 'What I need is time.', '내가 필요한 것은 시간이다.'],
+  lecture: [
+    { type: 'text', text: '관계대명사 what', narration: '오늘은 "~하는 것"이라는 뜻의 [en]what[/en]을 배워요.' },
+    { type: 'board', title: 'what = the thing that', lines: ['I believe [b]what[/b] he says. — 나는 그가 말하는 것을 믿는다.', '= I believe the thing that he says.', '앞에 명사가 없다'], narration: '[en]what[/en]은 [en]the thing that[/en]과 같아요. 앞에 명사가 없어요. [en]I believe what he says.[/en] 나는 그가 말하는 것을 믿어요.' },
+    { type: 'board', title: 'what절 = 주어', lines: ['[b]What I need[/b] is time. — 내가 필요한 것은 시간이다.', 'What she said was true. — 그녀가 말한 것은 사실이었다.', '단수 동사'], narration: '[en]what[/en]이 이끄는 절이 주어이면 단수 동사를 써요. [en]What I need is time.[/en] 내가 필요한 것은 시간이에요.' },
+    { type: 'board', title: 'what절 = 목적어', lines: ['I know [b]what you mean[/b]. — 나는 네가 말하는 것을 안다.', 'Tell me what you want. — 네가 원하는 것을 나에게 말해 줘.'], narration: '동사 뒤에서 목적어로도 쓰여요. [en]I know what you mean.[/en] 나는 네가 말하는 것을 알아요.' },
+    { type: 'board', title: 'what절 = 보어', lines: ['This is [b]what I wanted[/b]. — 이것이 내가 원하던 것이다.', 'Time is what we need. — 시간이 우리에게 필요한 것이다.'], narration: '[en]be[/en] 동사 뒤에서 보어로도 쓰여요. [en]This is what I wanted.[/en] 이것이 내가 원하던 것이에요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× This is [b]that[/b] I wanted. — 이것이 내가 원하던 것이다.', '× What she said [b]were[/b] true. — 그녀가 말한 것은 사실이었다.', '× I like [b]which[/b] you made. — 나는 네가 만든 것이 마음에 든다.'], narration: '앞에 명사가 없으면 [en]that[/en]이나 [en]which[/en]가 아니라 [en]what[/en]을 써요. 주어일 때는 [en]was[/en]처럼 단수 동사를 써요.' },
+    { type: 'text', text: '정리: what = ~하는 것', narration: '정리할게요. [en]what[/en]은 하는 것이라는 뜻이고, 주어, 목적어, 보어가 될 수 있어요.' },
+  ],
+});

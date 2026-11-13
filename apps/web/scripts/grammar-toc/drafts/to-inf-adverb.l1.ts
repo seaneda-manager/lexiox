@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'to-inf-adverb', topic: 'to부정사 부사적 용법 - 1부', titleKo: 'to부정사의 부사적 용법',
+  summaryEn: 'To + base verb can show purpose, the cause of a feeling, or what an adjective is about.',
+  summaryKo: 'to + 동사원형은 "~하기 위해(목적)", "~해서(감정의 원인)", "~하기에(형용사 수식)"의 뜻으로 쓰입니다.',
+  rules: [
+    ['to + base verb = "in order to" (purpose).', '목적을 나타내는 to는 "~하기 위해"입니다. (I went to the store to buy milk.)'],
+    ['in order to / so as to = stronger purpose.', 'in order to, so as to도 "~하기 위해"로, 목적을 분명히 합니다.'],
+    ['feeling adjective + to + base verb = "because ...".', '감정 형용사 뒤의 to는 "~해서"입니다. (I am glad to see you.)'],
+    ['adjective + to + base verb = "to ...".', '형용사 뒤의 to는 "~하기에"입니다. (This book is easy to read.)'],
+  ],
+  examples: [['I went to the store to buy milk.', '나는 우유를 사기 위해 가게에 갔다.'], ['I am glad to see you.', '나는 너를 만나서 기쁘다.'], ['This book is easy to read.', '이 책은 읽기 쉽다.']],
+  groups: [
+    ['목적', '"~하기 위해".', [
+      ['She studies hard to pass the exam.', '그녀는 시험에 합격하기 위해 열심히 공부한다.', 'to + 동사원형', '목적을 나타냅니다.'],
+      ['I went to the store to buy milk.', '나는 우유를 사기 위해 가게에 갔다.', 'to + 동사원형', '목적을 나타냅니다.'],
+      ['He got up early to catch the bus.', '그는 버스를 타기 위해 일찍 일어났다.', 'to + 동사원형', '목적을 나타냅니다.']]],
+    ['in order to / so as to', '목적을 분명히 해요.', [
+      ['He saves money in order to buy a bike.', '그는 자전거를 사기 위해 돈을 모은다.', 'in order to + 동사원형', '목적입니다.'],
+      ['She left early in order to catch the train.', '그녀는 기차를 타기 위해 일찍 떠났다.', 'in order to + 동사원형', '목적입니다.'],
+      ['We ran so as to be on time.', '우리는 제시간에 도착하기 위해 뛰었다.', 'so as to + 동사원형', '목적입니다.']]],
+    ['감정의 원인', '"~해서".', [
+      ['I am glad to see you.', '나는 너를 만나서 기쁘다.', '감정 형용사 + to + 동사원형', '기쁜 이유를 말합니다.'],
+      ['She was happy to get a gift.', '그녀는 선물을 받아서 기뻤다.', '감정 형용사 + to + 동사원형', '기쁜 이유를 말합니다.'],
+      ['He was sad to hear the news.', '그는 그 소식을 들어서 슬펐다.', '감정 형용사 + to + 동사원형', '슬픈 이유를 말합니다.']]],
+    ['형용사 수식', '"~하기에".', [
+      ['This book is easy to read.', '이 책은 읽기 쉽다.', '형용사 + to + 동사원형', '쉬운 정도를 말합니다.'],
+      ['This question is hard to answer.', '이 질문은 대답하기 어렵다.', '형용사 + to + 동사원형', '어려운 정도를 말합니다.'],
+      ['The movie is fun to watch.', '그 영화는 보기에 재미있다.', '형용사 + to + 동사원형', '재미있는 정도를 말합니다.']]],
+  ],
+  wrong: [['I went to the store for buy milk.', 'to → I went to the store to buy milk. — 나는 우유를 사기 위해 가게에 갔다.', ''], ['She studies hard to passes the exam.', 'pass → She studies hard to pass the exam. — to 뒤에는 동사원형을 씁니다.', ''], ['I am glad seeing you.', 'to see → I am glad to see you. — 나는 너를 만나서 기쁘다.', '']],
+  wrongNote: '목적과 감정의 원인에는 to + 동사원형을 씁니다.',
+  cram: '■ 핵심 요약\nto + 동사원형은 목적(~하기 위해), 감정의 원인(~해서), 형용사 수식(~하기에)으로 쓰입니다.\n\n■ 규칙\n1. to + 동사원형 = ~하기 위해.\n2. in order to, so as to = ~하기 위해.\n3. 감정 형용사 + to + 동사원형 = ~해서.\n4. 형용사 + to + 동사원형 = ~하기에.\n\n■ 예문 뜻\n나는 우유를 사기 위해 가게에 갔다.\n나는 너를 만나서 기쁘다.\n이 책은 읽기 쉽다.',
+  blanks: [['"~하기 위해"는 ___ + 동사원형입니다.', 'to', '두 글자'], ['목적을 강조하는 말은 in ___ to입니다.', 'order', '순서'], ['감정의 원인은 "~___"의 뜻입니다.', '해서', '두 글자'], ['to 뒤에는 동사 ___이 옵니다.', '원형', '두 글자']],
+  fill: [
+    ['basic', 'I went to the store ___ buy milk.', 'to', ['to', 'for', 'of'], '나는 우유를 사기 위해 가게에 갔다.', '목적은 to + 동사원형입니다.', '~하기 위해'],
+    ['basic', 'I am glad ___ see you.', 'to', ['for', 'to', 'of'], '나는 너를 만나서 기쁘다.', '감정의 원인은 to + 동사원형입니다.', '~해서'],
+    ['basic', 'This book is easy ___ read.', 'to', ['of', 'for', 'to'], '이 책은 읽기 쉽다.', '형용사 뒤에는 to + 동사원형을 씁니다.', '~하기에'],
+    ['intermediate', 'She studies hard to ___ the exam.', 'pass', ['passes', 'pass', 'passing'], '그녀는 시험에 합격하기 위해 열심히 공부한다.', 'to 뒤에는 동사원형을 씁니다.', '동사원형'],
+    ['intermediate', 'He saves money in order ___ buy a bike.', 'to', ['for', 'of', 'to'], '그는 자전거를 사기 위해 돈을 모은다.', 'in order to + 동사원형입니다.', '목적'],
+    ['intermediate', 'She was happy ___ get a gift.', 'to', ['to', 'for', 'at'], '그녀는 선물을 받아서 기뻤다.', '감정의 원인은 to + 동사원형입니다.', '~해서'],
+    ['advanced', 'We ran so as ___ be on time.', 'to', ['to', 'for', 'by'], '우리는 제시간에 도착하기 위해 뛰었다.', 'so as to + 동사원형입니다.', '목적'],
+    ['advanced', 'The movie is fun ___ watch.', 'to', ['for', 'of', 'to'], '그 영화는 보기에 재미있다.', '형용사 뒤에는 to + 동사원형을 씁니다.', '~하기에'],
+  ],
+  fix: [
+    ['basic', 'I went to the store for buy milk.', 'for', ['to'], ['store는 stores여야 합니다.', '목적은 to + 동사원형을 씁니다.', 'buy는 buying이어야 합니다.'], 1, 'I went to the store to buy milk. → 목적'],
+    ['intermediate', 'She studies hard to passes the exam.', 'passes', ['pass'], ['to 뒤에는 동사원형을 씁니다.', 'studies는 study여야 합니다.', 'exam은 exams여야 합니다.'], 0, 'She studies hard to pass the exam. → to + 동사원형'],
+    ['intermediate', 'I am glad seeing you.', 'seeing', ['to see'], ['glad는 gladly여야 합니다.', 'you는 your여야 합니다.', '감정의 원인은 to + 동사원형을 씁니다.'], 2, 'I am glad to see you. → 감정의 원인'],
+  ],
+  questions: [
+    pc('Which sentence about buying milk is correct?', '우유를 사는 문장 중 올바른 것을 고르세요.', 'basic', [['I went to the store for buy milk.', '나는 우유를 사기 위해 가게에 갔다.'], ['I went to the store buy milk.', '나는 우유를 사기 위해 가게에 갔다.'], ['I went to the store to buy milk.', '나는 우유를 사기 위해 가게에 갔다.'], ['I went to the store to buying milk.', '나는 우유를 사기 위해 가게에 갔다.']], 2, '목적은 to + 동사원형입니다.'),
+    pc('Which sentence about seeing is correct?', '만나는 것에 대한 올바른 문장을 고르세요.', 'basic', [['I am glad to see you.', '나는 너를 만나서 기쁘다.'], ['I am glad seeing you.', '나는 너를 만나서 기쁘다.'], ['I am glad for see you.', '나는 너를 만나서 기쁘다.'], ['I am glad see you.', '나는 너를 만나서 기쁘다.']], 0, '감정의 원인은 to + 동사원형입니다.'),
+    pc('Which sentence about a book is correct?', '책에 대한 올바른 문장을 고르세요.', 'basic', [['This book is easy reading.', '이 책은 읽기 쉽다.'], ['This book is easy for read.', '이 책은 읽기 쉽다.'], ['This book is to easy read.', '이 책은 읽기 쉽다.'], ['This book is easy to read.', '이 책은 읽기 쉽다.']], 3, '형용사 뒤에는 to + 동사원형을 씁니다.'),
+    pc('Which sentence about an exam is correct?', '시험에 대한 올바른 문장을 고르세요.', 'intermediate', [['She studies hard to passes the exam.', '그녀는 시험에 합격하기 위해 열심히 공부한다.'], ['She studies hard to pass the exam.', '그녀는 시험에 합격하기 위해 열심히 공부한다.'], ['She studies hard for pass the exam.', '그녀는 시험에 합격하기 위해 열심히 공부한다.'], ['She studies hard to passing the exam.', '그녀는 시험에 합격하기 위해 열심히 공부한다.']], 1, 'to 뒤에는 동사원형을 씁니다.'),
+    pc('Which sentence means "to buy a bike" as a purpose?', '자전거를 사기 위한 목적을 나타내는 문장을 고르세요.', 'intermediate', [['He saves money in order to buy a bike.', '그는 자전거를 사기 위해 돈을 모은다.'], ['He saves money in order buying a bike.', '그는 자전거를 사기 위해 돈을 모은다.'], ['He saves money in order for buy a bike.', '그는 자전거를 사기 위해 돈을 모은다.'], ['He saves money order to buy a bike.', '그는 자전거를 사기 위해 돈을 모은다.']], 0, 'in order to + 동사원형입니다.'),
+    pc('Choose the sentence in which to shows a feeling cause.', 'to가 감정의 원인을 나타내는 문장을 고르세요.', 'intermediate', [['He got up early to catch the bus.', '그는 버스를 타기 위해 일찍 일어났다.'], ['He was sad to hear the news.', '그는 그 소식을 들어서 슬펐다.'], ['We ran so as to be on time.', '우리는 제시간에 도착하기 위해 뛰었다.'], ['This question is hard to answer.', '이 질문은 대답하기 어렵다.']], 1, '슬픈 이유를 말하는 to입니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['She was happy to get a gift.', '그녀는 선물을 받아서 기뻤다.'], ['The movie is fun to watch.', '그 영화는 보기에 재미있다.'], ['I went to the store for buy milk.', '나는 우유를 사기 위해 가게에 갔다.'], ['We ran so as to be on time.', '우리는 제시간에 도착하기 위해 뛰었다.']], 2, '목적은 for가 아니라 to + 동사원형으로 씁니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① I am glad to see you.\n② I am glad seeing you.\n③ This book is easy to read.', 'basic', 1, '②만 틀렸고 to see여야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① I went to the store for buy milk.\n② She studies hard to passes the exam.\n③ He was sad to hear the news.\n④ He got up early to catch the bus.', 'advanced', 2, '①은 to buy, ②는 to pass여야 하므로 틀린 문장은 2개입니다.'),
+    pc('Why is "I am glad seeing you." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because glad should be gladly.', 'glad를 gladly로 바꿔야 해서'], ['Because you should be your.', 'you를 your로 바꿔야 해서'], ['Because am should be is.', 'am을 is로 바꿔야 해서'], ['Because the cause of a feeling uses to + base verb.', '감정의 원인에는 to + 동사원형을 써야 해서']], 3, '감정의 원인은 to + 동사원형으로 씁니다.', 'reason'),
+  ],
+  popup: [['I went to the store ___ buy milk.', 'to', ['for', 'of'], '~하기 위해'], ['I am glad ___ see you.', 'to', ['for', 'of'], '~해서'], ['This book is easy ___ read.', 'to', ['of', 'for'], '~하기에'], ['She studies hard to ___ the exam.', 'pass', ['passes', 'passing'], '동사원형']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'I went to the store for buy milk.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['I went to the store to buy milk.'], noteKo: '목적은 to + 동사원형으로 씁니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'I am glad seeing you.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['I am glad to see you.'], noteKo: '감정의 원인은 to + 동사원형으로 씁니다.' },
+  ],
+  top: ['to + 동사원형은 목적(~하기 위해), 감정의 원인(~해서), 형용사 수식(~하기에)으로 쓰인다. to 뒤에는 항상 동사원형이 온다.', 'I went to the store to buy milk.', '나는 우유를 사기 위해 가게에 갔다.'],
+  lecture: [
+    { type: 'text', text: 'to부정사의 부사적 용법', narration: '오늘은 [en]to[/en] 뒤에 동사원형이 와서 부사처럼 쓰이는 문장을 배워요.' },
+    { type: 'board', title: '목적', lines: ['I went to the store [b]to buy[/b] milk. — 나는 우유를 사기 위해 가게에 갔다.', 'He got up early to catch the bus. — 그는 버스를 타기 위해 일찍 일어났다.', '~하기 위해'], narration: '[en]to[/en] 동사원형은 하기 위해라는 목적이에요. [en]I went to the store to buy milk.[/en] 나는 우유를 사기 위해 가게에 갔어요.' },
+    { type: 'board', title: 'in order to / so as to', lines: ['He saves money [b]in order to[/b] buy a bike. — 그는 자전거를 사기 위해 돈을 모은다.', 'We ran so as to be on time. — 우리는 제시간에 도착하기 위해 뛰었다.'], narration: '[en]in order to[/en]와 [en]so as to[/en]도 하기 위해라는 뜻이에요. [en]He saves money in order to buy a bike.[/en] 그는 자전거를 사기 위해 돈을 모아요.' },
+    { type: 'board', title: '감정의 원인', lines: ['I am glad [b]to see[/b] you. — 나는 너를 만나서 기쁘다.', 'She was happy to get a gift. — 그녀는 선물을 받아서 기뻤다.', '~해서'], narration: '감정을 나타내는 형용사 뒤의 [en]to[/en]는 해서라는 뜻이에요. [en]I am glad to see you.[/en] 나는 너를 만나서 기뻐요.' },
+    { type: 'board', title: '형용사 수식', lines: ['This book is easy [b]to read[/b]. — 이 책은 읽기 쉽다.', 'The movie is fun to watch. — 그 영화는 보기에 재미있다.', '~하기에'], narration: '형용사 뒤의 [en]to[/en]는 하기에라는 뜻이에요. [en]This book is easy to read.[/en] 이 책은 읽기 쉬워요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× I went to the store [b]for buy[/b] milk. — 나는 우유를 사기 위해 가게에 갔다.', '× She studies hard to [b]passes[/b] the exam. — 그녀는 시험에 합격하기 위해 공부한다.', '× I am glad [b]seeing[/b] you. — 나는 너를 만나서 기쁘다.'], narration: '목적에는 [en]for[/en]가 아니라 [en]to[/en]를 써요. [en]to[/en] 뒤에는 동사원형이에요. 감정의 원인도 [en]to see[/en]처럼 써요.' },
+    { type: 'text', text: '정리: to + 동사원형 = 목적 · 감정의 원인 · ~하기에', narration: '정리할게요. [en]to[/en] 뒤에는 동사원형을 쓰고, 목적, 감정의 원인, 형용사 수식으로 쓰여요.' },
+  ],
+});

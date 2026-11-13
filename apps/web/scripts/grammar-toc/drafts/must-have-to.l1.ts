@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'must-have-to', topic: 'must · have to - 1부', titleKo: 'must · have to',
+  summaryEn: 'Must and have to mean "should do it". Must not means "forbidden". Do not have to means "not necessary".',
+  summaryKo: 'must와 have to는 "~해야 한다", must not은 "~하면 안 된다", don\'t have to는 "~할 필요가 없다"입니다.',
+  rules: [
+    ['must + base verb = have to + base verb.', 'must와 have to는 모두 "~해야 한다"입니다. (You must go. = You have to go.)'],
+    ['have to changes with the subject: has to for he/she/it.', 'have to는 주어에 따라 변합니다. he, she, it에는 has to를 씁니다.'],
+    ['must not + base verb = forbidden.', 'must not은 "~하면 안 된다"는 금지입니다.'],
+    ['don\'t/doesn\'t have to + base verb = not necessary.', 'don\'t have to는 "~할 필요가 없다"로, must not과 뜻이 다릅니다.'],
+  ],
+  examples: [['You must wear a helmet.', '너는 헬멧을 써야 한다.'], ['I have to get up early.', '나는 일찍 일어나야 한다.'], ['You don\'t have to come.', '너는 올 필요가 없다.']],
+  groups: [
+    ['must', '~해야 한다.', [
+      ['You must wear a helmet.', '너는 헬멧을 써야 한다.', 'must + 동사원형', '꼭 해야 합니다.'],
+      ['We must be quiet here.', '우리는 여기서 조용히 해야 한다.', 'must + 동사원형', '꼭 해야 합니다.'],
+      ['You must do your homework.', '너는 숙제를 해야 한다.', 'must + 동사원형', '꼭 해야 합니다.']]],
+    ['have to / has to', '~해야 한다.', [
+      ['I have to get up early.', '나는 일찍 일어나야 한다.', 'have to + 동사원형', '주어가 I입니다.'],
+      ['She has to work today.', '그녀는 오늘 일해야 한다.', 'has to + 동사원형', '3인칭 단수에는 has to입니다.'],
+      ['We have to wear uniforms.', '우리는 교복을 입어야 한다.', 'have to + 동사원형', '주어가 We입니다.']]],
+    ['must not', '~하면 안 된다.', [
+      ['You must not run here.', '너는 여기서 뛰면 안 된다.', 'must not + 동사원형', '금지입니다.'],
+      ['You must not use your phone in class.', '너는 수업 중에 휴대폰을 쓰면 안 된다.', 'must not + 동사원형', '금지입니다.'],
+      ['You must not be late.', '너는 늦으면 안 된다.', 'must not + 동사원형', '금지입니다.']]],
+    ['don\'t have to', '~할 필요가 없다.', [
+      ['You don\'t have to come.', '너는 올 필요가 없다.', 'don\'t have to + 동사원형', '꼭 하지 않아도 됩니다.'],
+      ['He doesn\'t have to wait.', '그는 기다릴 필요가 없다.', 'doesn\'t have to + 동사원형', '3인칭 단수에는 doesn\'t입니다.'],
+      ['We don\'t have to pay.', '우리는 돈을 낼 필요가 없다.', 'don\'t have to + 동사원형', '꼭 하지 않아도 됩니다.']]],
+  ],
+  wrong: [['He must goes home.', 'go → He must go home. — 그는 집에 가야 한다.', ''], ['She have to work today.', 'has to → She has to work today. — 그녀는 오늘 일해야 한다.', ''], ['You don\'t must come.', 'don\'t have to → You don\'t have to come. — 너는 올 필요가 없다.', '']],
+  wrongNote: 'must 뒤에는 동사원형, 3인칭 단수에는 has to, 부정은 must not과 don\'t have to를 구별합니다.',
+  cram: '■ 핵심 요약\nmust와 have to는 ~해야 한다, must not은 금지, don\'t have to는 필요 없음입니다.\n\n■ 규칙\n1. must + 동사원형 = have to + 동사원형.\n2. he, she, it에는 has to를 씁니다.\n3. must not = ~하면 안 된다.\n4. don\'t have to = ~할 필요가 없다.\n\n■ 예문 뜻\n너는 헬멧을 써야 한다.\n나는 일찍 일어나야 한다.\n너는 올 필요가 없다.',
+  blanks: [['"~해야 한다"는 ___ 또는 have to입니다.', 'must', '조동사'], ['she에는 have to 대신 ___ to를 씁니다.', 'has', '세 글자'], ['"~하면 안 된다"는 must ___입니다.', 'not', '부정'], ['"~할 필요가 없다"는 don\'t ___ to입니다.', 'have', '동사']],
+  fill: [
+    ['basic', 'You ___ wear a helmet.', 'must', ['must', 'musts', 'must to'], '너는 헬멧을 써야 한다.', 'must 뒤에는 바로 동사원형입니다.', '조동사'],
+    ['basic', 'I ___ get up early.', 'have to', ['has to', 'have to', 'must to'], '나는 일찍 일어나야 한다.', '주어 I에는 have to입니다.', '~해야 한다'],
+    ['basic', 'She ___ work today.', 'has to', ['have to', 'must to', 'has to'], '그녀는 오늘 일해야 한다.', '3인칭 단수에는 has to입니다.', '3인칭 단수'],
+    ['intermediate', 'We must ___ quiet here.', 'be', ['be', 'are', 'is'], '우리는 여기서 조용히 해야 한다.', 'must 뒤에는 동사원형 be입니다.', '동사원형'],
+    ['intermediate', 'You must ___ run here.', 'not', ['don\'t', 'not', 'no'], '너는 여기서 뛰면 안 된다.', '금지는 must not입니다.', '금지'],
+    ['intermediate', 'You ___ have to come.', 'don\'t', ['not', 'no', 'don\'t'], '너는 올 필요가 없다.', '필요 없음은 don\'t have to입니다.', '필요 없음'],
+    ['advanced', 'He ___ have to wait.', 'doesn\'t', ['don\'t', 'doesn\'t', 'not'], '그는 기다릴 필요가 없다.', '주어 He에는 doesn\'t입니다.', '3인칭 단수'],
+    ['advanced', 'He must ___ home.', 'go', ['go', 'goes', 'going'], '그는 집에 가야 한다.', 'must 뒤에는 동사원형입니다.', '동사원형'],
+  ],
+  fix: [
+    ['basic', 'He must goes home.', 'goes', ['go'], ['He는 She여야 합니다.', 'must 뒤에는 동사원형을 씁니다.', 'home은 house여야 합니다.'], 1, 'He must go home. → must + 동사원형'],
+    ['intermediate', 'She have to work today.', 'have', ['has'], ['3인칭 단수에는 has to를 씁니다.', 'work는 works여야 합니다.', 'today는 tomorrow여야 합니다.'], 0, 'She has to work today. → has to'],
+    ['intermediate', 'He musts wear a helmet.', 'musts', ['must'], ['wear는 wears여야 합니다.', 'helmet은 helmets여야 합니다.', '조동사에는 s를 붙이지 않습니다.'], 2, 'He must wear a helmet. → must는 변하지 않음'],
+  ],
+  questions: [
+    pc('Which sentence about a helmet is correct?', '헬멧에 대한 올바른 문장을 고르세요.', 'basic', [['You must wears a helmet.', '너는 헬멧을 써야 한다.'], ['You must to wear a helmet.', '너는 헬멧을 써야 한다.'], ['You must wear a helmet.', '너는 헬멧을 써야 한다.'], ['You musts wear a helmet.', '너는 헬멧을 써야 한다.']], 2, 'must + 동사원형입니다.'),
+    pc('Which sentence about work is correct?', '일에 대한 올바른 문장을 고르세요.', 'basic', [['She have to work today.', '그녀는 오늘 일해야 한다.'], ['She has to work today.', '그녀는 오늘 일해야 한다.'], ['She has to works today.', '그녀는 오늘 일해야 한다.'], ['She must to work today.', '그녀는 오늘 일해야 한다.']], 1, '3인칭 단수에는 has to를 씁니다.'),
+    pc('Which sentence means "You are forbidden to run"?', '"뛰면 안 된다"는 뜻의 문장을 고르세요.', 'basic', [['You must not run here.', '너는 여기서 뛰면 안 된다.'], ['You don\'t have to run here.', '너는 여기서 뛸 필요가 없다.'], ['You have to run here.', '너는 여기서 뛰어야 한다.'], ['You must run here.', '너는 여기서 뛰어야 한다.']], 0, 'must not은 금지입니다.'),
+    pc('Which sentence means "It is not necessary to come"?', '"올 필요가 없다"는 뜻의 문장을 고르세요.', 'intermediate', [['You must not come.', '너는 오면 안 된다.'], ['You must come.', '너는 와야 한다.'], ['You have to come.', '너는 와야 한다.'], ['You don\'t have to come.', '너는 올 필요가 없다.']], 3, 'don\'t have to는 필요 없음입니다.'),
+    pc('Which sentence about waiting is correct?', '기다림에 대한 올바른 문장을 고르세요.', 'intermediate', [['He doesn\'t have to wait.', '그는 기다릴 필요가 없다.'], ['He don\'t have to wait.', '그는 기다릴 필요가 없다.'], ['He doesn\'t has to wait.', '그는 기다릴 필요가 없다.'], ['He not have to wait.', '그는 기다릴 필요가 없다.']], 0, '주어 He에는 doesn\'t have to를 씁니다.'),
+    pc('Choose the sentence that has a different meaning.', '뜻이 다른 문장을 고르세요.', 'intermediate', [['You must do your homework.', '너는 숙제를 해야 한다.'], ['You have to do your homework.', '너는 숙제를 해야 한다.'], ['You don\'t have to do your homework.', '너는 숙제를 할 필요가 없다.'], ['You must finish your homework.', '너는 숙제를 끝내야 한다.']], 2, '나머지는 모두 해야 한다는 뜻이고 이것만 필요 없다는 뜻입니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['We must be quiet here.', '우리는 여기서 조용히 해야 한다.'], ['She has to work today.', '그녀는 오늘 일해야 한다.'], ['We don\'t have to pay.', '우리는 돈을 낼 필요가 없다.'], ['He must goes home.', '그는 집에 가야 한다.']], 3, 'must 뒤에는 동사원형을 써야 합니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① I have to get up early.\n② She have to work today.\n③ We must be quiet here.', 'basic', 1, '②만 틀렸고 has to여야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① He must goes home.\n② You don\'t have to come.\n③ He musts wear a helmet.\n④ We have to wear uniforms.', 'advanced', 2, '①은 must go, ③은 must wear여야 하므로 틀린 문장은 2개입니다.'),
+    pc('Why is "She have to work today." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because work should be works.', 'work를 works로 바꿔야 해서'], ['Because today should be tomorrow.', 'today를 tomorrow로 바꿔야 해서'], ['Because she is third person singular, so has to is used.', '주어가 3인칭 단수라서 has to를 써야 해서'], ['Because to should be for.', 'to를 for로 바꿔야 해서']], 2, '주어 she에는 has to를 씁니다.', 'reason'),
+  ],
+  popup: [['You ___ wear a helmet.', 'must', ['musts', 'must to'], '조동사'], ['She ___ work today.', 'has to', ['have to', 'must to'], '3인칭 단수'], ['You must ___ run here.', 'not', ['don\'t', 'no'], '금지'], ['You ___ have to come.', 'don\'t', ['not', 'no'], '필요 없음']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'He must goes home.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['He must go home.'], noteKo: 'must 뒤에는 동사원형을 씁니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'She have to work today.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['She has to work today.'], noteKo: '3인칭 단수에는 has to를 씁니다.' },
+  ],
+  top: ['must · have to = ~해야 한다, must not = 금지, don\'t have to = 필요 없음. must 뒤에는 동사원형, he/she/it에는 has to를 쓴다.', 'You must wear a helmet.', '너는 헬멧을 써야 한다.'],
+  lecture: [
+    { type: 'text', text: 'must · have to', narration: '오늘은 해야 한다는 뜻의 [en]must[/en]와 [en]have to[/en]를 배워요.' },
+    { type: 'board', title: 'must', lines: ['You [b]must[/b] wear a helmet. — 너는 헬멧을 써야 한다.', 'We must be quiet here. — 우리는 여기서 조용히 해야 한다.', 'must + 동사원형'], narration: '[en]must[/en] 뒤에는 동사원형이 와요. [en]You must wear a helmet.[/en] 너는 헬멧을 써야 해요.' },
+    { type: 'board', title: 'have to / has to', lines: ['I [b]have to[/b] get up early. — 나는 일찍 일어나야 한다.', 'She [b]has to[/b] work today. — 그녀는 오늘 일해야 한다.', '3인칭 단수 → has to'], narration: '[en]have to[/en]도 해야 한다는 뜻이에요. 그녀는 [en]has to[/en]를 써요. [en]She has to work today.[/en] 그녀는 오늘 일해야 해요.' },
+    { type: 'board', title: 'must not', lines: ['You [b]must not[/b] run here. — 너는 여기서 뛰면 안 된다.', 'You must not be late. — 너는 늦으면 안 된다.', '금지'], narration: '[en]must not[/en]은 하면 안 된다는 금지예요. [en]You must not run here.[/en] 여기서 뛰면 안 돼요.' },
+    { type: 'board', title: 'don\'t have to', lines: ['You [b]don\'t have to[/b] come. — 너는 올 필요가 없다.', 'He doesn\'t have to wait. — 그는 기다릴 필요가 없다.', '필요 없음'], narration: '[en]don\'t have to[/en]는 할 필요가 없다는 뜻이에요. 금지와는 달라요. [en]You don\'t have to come.[/en] 너는 올 필요가 없어요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× He must [b]goes[/b] home. — 그는 집에 가야 한다.', '× She [b]have[/b] to work today. — 그녀는 오늘 일해야 한다.', '× You [b]don\'t must[/b] come. — 너는 올 필요가 없다.'], narration: '[en]must[/en] 뒤에는 동사원형이에요. 그녀는 [en]has to[/en]를 써요. 필요 없다는 [en]don\'t have to[/en]예요.' },
+    { type: 'text', text: '정리: must = have to / must not = 금지 / don\'t have to = 필요 없음', narration: '정리할게요. [en]must[/en]와 [en]have to[/en]는 해야 한다, [en]must not[/en]은 금지, [en]don\'t have to[/en]는 필요 없다는 뜻이에요.' },
+  ],
+});

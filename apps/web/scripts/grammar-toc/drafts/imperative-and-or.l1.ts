@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'imperative-and-or', topic: '명령문 + and/or - 1부', titleKo: '명령문 + and / or',
+  summaryEn: 'Command, and ... means "if you do it, ...". Command, or ... means "if you do not, ...".',
+  summaryKo: '명령문, and ~는 "…하라, 그러면 ~", 명령문, or ~는 "…하라, 그렇지 않으면 ~"입니다.',
+  rules: [
+    ['Command, and + result: good result.', '명령문, and 뒤에는 좋은 결과가 옵니다. (Study hard, and you will pass.)'],
+    ['Command, or + result: bad result.', '명령문, or 뒤에는 나쁜 결과가 옵니다. (Hurry up, or you will be late.)'],
+    ['Command, and = If you + verb, ...', '명령문, and는 If you ~, ...와 같습니다.'],
+    ['Command, or = If you don\'t + verb, ...', '명령문, or는 If you don\'t ~, ...와 같습니다.'],
+  ],
+  examples: [['Study hard, and you will pass the test.', '열심히 공부해라, 그러면 시험에 합격할 것이다.'], ['Hurry up, or you will be late.', '서둘러라, 그렇지 않으면 늦을 것이다.'], ['Wear a coat, or you will catch a cold.', '코트를 입어라, 그렇지 않으면 감기에 걸릴 것이다.']],
+  groups: [
+    ['명령문, and', '그러면.', [
+      ['Study hard, and you will pass the test.', '열심히 공부해라, 그러면 시험에 합격할 것이다.', '명령문, and + 좋은 결과', '합격이라는 좋은 결과입니다.'],
+      ['Get up early, and you will feel good.', '일찍 일어나라, 그러면 기분이 좋을 것이다.', '명령문, and + 좋은 결과', '기분이 좋다는 좋은 결과입니다.'],
+      ['Take this medicine, and you will get better.', '이 약을 먹어라, 그러면 나아질 것이다.', '명령문, and + 좋은 결과', '나아진다는 좋은 결과입니다.']]],
+    ['명령문, or', '그렇지 않으면.', [
+      ['Hurry up, or you will be late.', '서둘러라, 그렇지 않으면 늦을 것이다.', '명령문, or + 나쁜 결과', '지각이라는 나쁜 결과입니다.'],
+      ['Study hard, or you will fail the test.', '열심히 공부해라, 그렇지 않으면 시험에 떨어질 것이다.', '명령문, or + 나쁜 결과', '불합격이라는 나쁜 결과입니다.'],
+      ['Wear a coat, or you will catch a cold.', '코트를 입어라, 그렇지 않으면 감기에 걸릴 것이다.', '명령문, or + 나쁜 결과', '감기라는 나쁜 결과입니다.']]],
+    ['If로 바꿔 쓰기', 'and 문장을 바꿔요.', [
+      ['If you study hard, you will pass the test.', '열심히 공부하면 시험에 합격할 것이다.', 'If you + 동사', '명령문, and와 같은 뜻입니다.'],
+      ['If you get up early, you will feel good.', '일찍 일어나면 기분이 좋을 것이다.', 'If you + 동사', '명령문, and와 같은 뜻입니다.'],
+      ['If you take this medicine, you will get better.', '이 약을 먹으면 나아질 것이다.', 'If you + 동사', '명령문, and와 같은 뜻입니다.']]],
+    ['If ~ not으로 바꿔 쓰기', 'or 문장을 바꿔요.', [
+      ['If you don\'t hurry up, you will be late.', '서두르지 않으면 늦을 것이다.', 'If you don\'t + 동사', '명령문, or와 같은 뜻입니다.'],
+      ['If you don\'t study hard, you will fail the test.', '열심히 공부하지 않으면 시험에 떨어질 것이다.', 'If you don\'t + 동사', '명령문, or와 같은 뜻입니다.'],
+      ['If you don\'t wear a coat, you will catch a cold.', '코트를 입지 않으면 감기에 걸릴 것이다.', 'If you don\'t + 동사', '명령문, or와 같은 뜻입니다.']]],
+  ],
+  wrong: [['Hurry up, and you will be late.', 'or → Hurry up, or you will be late. — 서둘러라, 그렇지 않으면 늦을 것이다.', ''], ['Study hard, or you will pass the test.', 'and → Study hard, and you will pass the test. — 열심히 공부해라, 그러면 합격할 것이다.', ''], ['Hurry up, or you will late.', 'be late → Hurry up, or you will be late. — will 뒤에는 be late가 필요합니다.', '']],
+  wrongNote: '좋은 결과는 and, 나쁜 결과는 or로 연결합니다.',
+  cram: '■ 핵심 요약\n명령문, and는 그러면, 명령문, or는 그렇지 않으면입니다.\n\n■ 규칙\n1. 명령문, and + 좋은 결과.\n2. 명령문, or + 나쁜 결과.\n3. 명령문, and = If you + 동사.\n4. 명령문, or = If you don\'t + 동사.\n\n■ 예문 뜻\n열심히 공부해라, 그러면 시험에 합격할 것이다.\n서둘러라, 그렇지 않으면 늦을 것이다.\n코트를 입어라, 그렇지 않으면 감기에 걸릴 것이다.',
+  blanks: [['"그러면"은 명령문, ___입니다.', 'and', '접속사'], ['"그렇지 않으면"은 명령문, ___입니다.', 'or', '접속사'], ['명령문, and는 ___ you ~와 같습니다.', 'If', '조건'], ['명령문, or는 If you ___ ~와 같습니다.', 'don\'t', '부정']],
+  fill: [
+    ['basic', 'Study hard, ___ you will pass the test.', 'and', ['or', 'and', 'but'], '열심히 공부해라, 그러면 시험에 합격할 것이다.', '좋은 결과는 and로 연결합니다.', '그러면'],
+    ['basic', 'Hurry up, ___ you will be late.', 'or', ['or', 'and', 'but'], '서둘러라, 그렇지 않으면 늦을 것이다.', '나쁜 결과는 or로 연결합니다.', '그렇지 않으면'],
+    ['basic', 'Wear a coat, ___ you will catch a cold.', 'or', ['and', 'but', 'or'], '코트를 입어라, 그렇지 않으면 감기에 걸릴 것이다.', '나쁜 결과는 or로 연결합니다.', '그렇지 않으면'],
+    ['intermediate', 'Get up early, ___ you will feel good.', 'and', ['and', 'or', 'so'], '일찍 일어나라, 그러면 기분이 좋을 것이다.', '좋은 결과는 and로 연결합니다.', '그러면'],
+    ['intermediate', 'If you ___ hurry up, you will be late.', 'don\'t', ['not', 'don\'t', 'no'], '서두르지 않으면 늦을 것이다.', 'or는 If you don\'t로 바꿉니다.', '부정'],
+    ['intermediate', 'If you study hard, you ___ pass the test.', 'will', ['did', 'will', 'won\'t'], '열심히 공부하면 시험에 합격할 것이다.', '미래의 결과는 will을 씁니다.', '미래 조동사'],
+    ['advanced', 'Take this medicine, and you ___ get better.', 'will', ['are', 'did', 'will'], '이 약을 먹어라, 그러면 나아질 것이다.', '미래의 결과는 will을 씁니다.', '미래 조동사'],
+    ['advanced', 'Study hard, or you will ___ the test.', 'fail', ['pass', 'win', 'fail'], '열심히 공부해라, 그렇지 않으면 시험에 떨어질 것이다.', 'or 뒤에는 나쁜 결과가 옵니다.', '나쁜 결과'],
+  ],
+  fix: [
+    ['basic', 'Hurry up, and you will be late.', 'and', ['or'], ['late는 later여야 합니다.', '나쁜 결과 앞에는 or를 씁니다.', 'Hurry는 Hurried여야 합니다.'], 1, 'Hurry up, or you will be late. → 명령문, or'],
+    ['intermediate', 'Study hard, or you will pass the test.', 'or', ['and'], ['좋은 결과 앞에는 and를 씁니다.', 'pass는 passed여야 합니다.', 'will은 would여야 합니다.'], 0, 'Study hard, and you will pass the test. → 명령문, and'],
+    ['intermediate', 'Hurry up, or you will late.', 'late', ['be late'], ['or는 and여야 합니다.', 'Hurry는 Hurries여야 합니다.', 'will 뒤에는 be가 필요합니다.'], 2, 'Hurry up, or you will be late. → will + be late'],
+  ],
+  questions: [
+    pc('Which sentence about being late is correct?', '지각에 대한 올바른 문장을 고르세요.', 'basic', [['Hurry up, and you will be late.', '서둘러라, 그렇지 않으면 늦을 것이다.'], ['Hurry up, but you will be late.', '서둘러라, 그렇지 않으면 늦을 것이다.'], ['Hurry up, or you will be late.', '서둘러라, 그렇지 않으면 늦을 것이다.'], ['Hurry up, so you will be late.', '서둘러라, 그렇지 않으면 늦을 것이다.']], 2, '나쁜 결과 앞에는 or를 씁니다.'),
+    pc('Which sentence about a test is correct?', '시험에 대한 올바른 문장을 고르세요.', 'basic', [['Study hard, and you will pass the test.', '열심히 공부해라, 그러면 시험에 합격할 것이다.'], ['Study hard, or you will pass the test.', '열심히 공부해라, 그러면 시험에 합격할 것이다.'], ['Study hard, but you will pass the test.', '열심히 공부해라, 그러면 시험에 합격할 것이다.'], ['Study hard, so you pass the test.', '열심히 공부해라, 그러면 시험에 합격할 것이다.']], 0, '좋은 결과 앞에는 and를 씁니다.'),
+    pc('Which sentence about a cold is correct?', '감기에 대한 올바른 문장을 고르세요.', 'basic', [['Wear a coat, and you will catch a cold.', '코트를 입어라, 그렇지 않으면 감기에 걸릴 것이다.'], ['Wear a coat, but you will catch a cold.', '코트를 입어라, 그렇지 않으면 감기에 걸릴 것이다.'], ['Wear a coat, so you will catch a cold.', '코트를 입어라, 그렇지 않으면 감기에 걸릴 것이다.'], ['Wear a coat, or you will catch a cold.', '코트를 입어라, 그렇지 않으면 감기에 걸릴 것이다.']], 3, '감기는 나쁜 결과라서 or를 씁니다.'),
+    pc('Which sentence has the same meaning as "Hurry up, or you will be late."?', '"Hurry up, or you will be late."와 같은 뜻의 문장을 고르세요.', 'intermediate', [['If you hurry up, you will be late.', '서두르면 늦을 것이다.'], ['If you don\'t hurry up, you will be late.', '서두르지 않으면 늦을 것이다.'], ['If you don\'t hurry up, you will not be late.', '서두르지 않으면 늦지 않을 것이다.'], ['If you hurry up, you won\'t be late.', '서두르면 늦지 않을 것이다.']], 1, '명령문, or는 If you don\'t ~와 같습니다.'),
+    pc('Which sentence has the same meaning as "Study hard, and you will pass the test."?', '"Study hard, and you will pass the test."와 같은 뜻의 문장을 고르세요.', 'intermediate', [['If you don\'t study hard, you will pass the test.', '열심히 공부하지 않으면 합격할 것이다.'], ['If you study hard, you will fail the test.', '열심히 공부하면 떨어질 것이다.'], ['If you don\'t study hard, you will fail the test.', '열심히 공부하지 않으면 떨어질 것이다.'], ['If you study hard, you will pass the test.', '열심히 공부하면 합격할 것이다.']], 3, '명령문, and는 If you ~와 같습니다.'),
+    pc('Choose the sentence that gives a bad result.', '나쁜 결과를 말하는 문장을 고르세요.', 'intermediate', [['Get up early, and you will feel good.', '일찍 일어나라, 그러면 기분이 좋을 것이다.'], ['Take this medicine, and you will get better.', '이 약을 먹어라, 그러면 나아질 것이다.'], ['Study hard, or you will fail the test.', '열심히 공부해라, 그렇지 않으면 시험에 떨어질 것이다.'], ['If you study hard, you will pass the test.', '열심히 공부하면 시험에 합격할 것이다.']], 2, '나머지는 모두 좋은 결과이고 이것만 나쁜 결과입니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['Wear a coat, or you will catch a cold.', '코트를 입어라, 그렇지 않으면 감기에 걸릴 것이다.'], ['Get up early, or you will feel good.', '일찍 일어나라, 그러면 기분이 좋을 것이다.'], ['If you don\'t wear a coat, you will catch a cold.', '코트를 입지 않으면 감기에 걸릴 것이다.'], ['Take this medicine, and you will get better.', '이 약을 먹어라, 그러면 나아질 것이다.']], 1, '좋은 결과 앞에는 and를 써야 합니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① Hurry up, and you will be late.\n② Study hard, and you will pass the test.\n③ Wear a coat, or you will catch a cold.', 'basic', 1, '①만 틀렸고 or여야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① Get up early, or you will feel good.\n② Hurry up, or you will late.\n③ Take this medicine, and you will get better.\n④ Study hard, or you will fail the test.', 'advanced', 2, '①은 and, ②는 be late여야 하므로 틀린 문장은 2개입니다.'),
+    pc('Why is "Study hard, or you will pass the test." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because pass should be passed.', 'pass를 passed로 바꿔야 해서'], ['Because will should be would.', 'will을 would로 바꿔야 해서'], ['Because test should be tests.', 'test를 tests로 바꿔야 해서'], ['Because a good result needs and.', '좋은 결과에는 and를 써야 해서']], 3, '좋은 결과 앞에는 and를 씁니다.', 'reason'),
+  ],
+  popup: [['Study hard, ___ you will pass the test.', 'and', ['or', 'but'], '그러면'], ['Hurry up, ___ you will be late.', 'or', ['and', 'but'], '그렇지 않으면'], ['If you ___ hurry up, you will be late.', 'don\'t', ['not', 'no'], '부정'], ['Get up early, ___ you will feel good.', 'and', ['or', 'so'], '그러면']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'Hurry up, and you will be late.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['Hurry up, or you will be late.'], noteKo: '나쁜 결과 앞에는 or를 씁니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'Study hard, or you will pass the test.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['Study hard, and you will pass the test.'], noteKo: '좋은 결과 앞에는 and를 씁니다.' },
+  ],
+  top: ['명령문, and = 그러면(좋은 결과), 명령문, or = 그렇지 않으면(나쁜 결과). and는 If you ~, or는 If you don\'t ~로 바꿔 쓴다.', 'Study hard, and you will pass the test.', '열심히 공부해라, 그러면 시험에 합격할 것이다.'],
+  lecture: [
+    { type: 'text', text: '명령문 + and / or', narration: '오늘은 명령문 뒤에 [en]and[/en]나 [en]or[/en]를 붙이는 문장을 배워요.' },
+    { type: 'board', title: '명령문, and', lines: ['Study hard, [b]and[/b] you will pass the test. — 열심히 공부해라, 그러면 시험에 합격할 것이다.', 'Get up early, and you will feel good. — 일찍 일어나라, 그러면 기분이 좋을 것이다.', '그러면 → 좋은 결과'], narration: '[en]and[/en] 뒤에는 좋은 결과가 와요. [en]Study hard, and you will pass the test.[/en] 열심히 공부하면 합격할 거예요.' },
+    { type: 'board', title: '명령문, or', lines: ['Hurry up, [b]or[/b] you will be late. — 서둘러라, 그렇지 않으면 늦을 것이다.', 'Wear a coat, or you will catch a cold. — 코트를 입어라, 그렇지 않으면 감기에 걸릴 것이다.', '그렇지 않으면 → 나쁜 결과'], narration: '[en]or[/en] 뒤에는 나쁜 결과가 와요. [en]Hurry up, or you will be late.[/en] 서두르지 않으면 늦을 거예요.' },
+    { type: 'board', title: 'If로 바꿔 쓰기', lines: ['If you study hard, you will pass the test. — 열심히 공부하면 시험에 합격할 것이다.', '명령문, and = If you + 동사'], narration: '[en]and[/en] 문장은 [en]if[/en] 문장으로 바꿀 수 있어요. [en]If you study hard, you will pass the test.[/en] 열심히 공부하면 합격할 거예요.' },
+    { type: 'board', title: 'If ~ not으로 바꿔 쓰기', lines: ['If you [b]don\'t[/b] hurry up, you will be late. — 서두르지 않으면 늦을 것이다.', '명령문, or = If you don\'t + 동사'], narration: '[en]or[/en] 문장은 [en]if you don\'t[/en]로 바꿔요. [en]If you don\'t hurry up, you will be late.[/en] 서두르지 않으면 늦을 거예요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× Hurry up, [b]and[/b] you will be late. — 서둘러라, 그렇지 않으면 늦을 것이다.', '× Study hard, [b]or[/b] you will pass the test. — 열심히 공부해라, 그러면 합격할 것이다.', '× Hurry up, or you will [b]late[/b]. — 서둘러라, 그렇지 않으면 늦을 것이다.'], narration: '나쁜 결과에 [en]and[/en]를 쓰면 틀려요. 좋은 결과에는 [en]and[/en], 나쁜 결과에는 [en]or[/en]를 써요. [en]will[/en] 뒤에는 [en]be late[/en]가 필요해요.' },
+    { type: 'text', text: '정리: and = 그러면 / or = 그렇지 않으면', narration: '정리할게요. [en]and[/en]는 그러면, [en]or[/en]는 그렇지 않으면이에요.' },
+  ],
+});

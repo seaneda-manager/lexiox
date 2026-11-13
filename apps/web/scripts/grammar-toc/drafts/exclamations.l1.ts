@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'exclamations', topic: '감탄문 - 1부', titleKo: '감탄문',
+  summaryEn: 'What + (a/an) + adjective + noun! and How + adjective/adverb! show strong feeling.',
+  summaryKo: '감탄문은 What + (a/an) + 형용사 + 명사! 또는 How + 형용사/부사!로 만듭니다.',
+  rules: [
+    ['What + a/an + adjective + noun (+ subject + verb)!', 'What 감탄문은 명사가 중심입니다. (What a nice day!)'],
+    ['How + adjective/adverb (+ subject + verb)!', 'How 감탄문은 형용사나 부사가 중심입니다. (How tall he is!)'],
+    ['Plural and uncountable nouns have no a/an.', '복수 명사와 셀 수 없는 명사 앞에는 a/an을 쓰지 않습니다. (What nice shoes!)'],
+    ['The subject and verb come after the exclamation phrase, in normal order.', '감탄하는 말 뒤에는 주어 + 동사가 평범한 순서로 옵니다.'],
+  ],
+  examples: [['What a beautiful day!', '정말 아름다운 날이군요!'], ['How tall he is!', '그는 정말 키가 크구나!'], ['What nice shoes!', '정말 멋진 신발이군요!']],
+  groups: [
+    ['What a/an + 형용사 + 명사', '명사가 중심일 때.', [
+      ['What a nice day!', '정말 좋은 날이군요!', 'What + a + 형용사 + 명사', '명사 day가 중심입니다.'],
+      ['What a cute dog!', '정말 귀여운 강아지로군요!', 'What + a + 형용사 + 명사', '명사 dog가 중심입니다.'],
+      ['What an interesting story!', '정말 흥미로운 이야기군요!', 'What + an + 형용사 + 명사', '모음 소리 앞에는 an입니다.']]],
+    ['How + 형용사/부사', '형용사나 부사가 중심일 때.', [
+      ['How beautiful she is!', '그녀는 정말 아름답구나!', 'How + 형용사', '형용사 beautiful이 중심입니다.'],
+      ['How fast he runs!', '그는 정말 빨리 달리는구나!', 'How + 부사', '부사 fast가 중심입니다.'],
+      ['How kind you are!', '너는 정말 친절하구나!', 'How + 형용사', '형용사 kind가 중심입니다.']]],
+    ['복수·셀 수 없는 명사', 'a/an을 쓰지 않아요.', [
+      ['What nice shoes!', '정말 멋진 신발이군요!', 'What + 형용사 + 복수 명사', 'a/an이 없습니다.'],
+      ['What good music!', '정말 좋은 음악이군요!', 'What + 형용사 + 셀 수 없는 명사', 'a/an이 없습니다.'],
+      ['What beautiful flowers!', '정말 아름다운 꽃들이군요!', 'What + 형용사 + 복수 명사', 'a/an이 없습니다.']]],
+    ['주어 + 동사 붙이기', '뒤에 문장이 이어져요.', [
+      ['What a big house he has!', '그는 정말 큰 집을 가지고 있구나!', 'What + a + 형용사 + 명사 + 주어 + 동사', '주어 + 동사가 뒤에 옵니다.'],
+      ['How hard they study!', '그들은 정말 열심히 공부하는구나!', 'How + 부사 + 주어 + 동사', '주어 + 동사가 뒤에 옵니다.'],
+      ['What a good boy Tom is!', 'Tom은 정말 착한 소년이구나!', 'What + a + 형용사 + 명사 + 주어 + 동사', '주어 + 동사가 뒤에 옵니다.']]],
+  ],
+  wrong: [['What beautiful day!', 'a 필요 → What a beautiful day! — 정말 아름다운 날이군요!', ''], ['What tall he is!', 'How 사용 → How tall he is! — 그는 정말 키가 크구나!', ''], ['How a nice dog!', 'What 사용 → What a nice dog! — 정말 멋진 강아지로군요!', '']],
+  wrongNote: '명사가 중심이면 What, 형용사·부사가 중심이면 How를 씁니다.',
+  cram: '■ 핵심 요약\n감탄문은 What + (a/an) + 형용사 + 명사!, How + 형용사/부사!로 만듭니다.\n\n■ 규칙\n1. What + a/an + 형용사 + 명사 (+ 주어 + 동사)!\n2. How + 형용사/부사 (+ 주어 + 동사)!\n3. 복수·셀 수 없는 명사 앞에는 a/an이 없습니다.\n4. 주어 + 동사는 평범한 순서로 뒤에 옵니다.\n\n■ 예문 뜻\n정말 아름다운 날이군요!\n그는 정말 키가 크구나!\n정말 멋진 신발이군요!',
+  blanks: [['명사가 중심인 감탄문은 ___로 시작합니다.', 'What', '의문사'], ['형용사가 중심인 감탄문은 ___로 시작합니다.', 'How', '의문사'], ['복수 명사 앞에는 a/an을 ___ 쓴다.', '안', '한 글자'], ['감탄문 뒤의 주어와 동사는 ___ 순서입니다.', '평범한', '세 글자']],
+  fill: [
+    ['basic', '___ a nice day!', 'What', ['What', 'How', 'Which'], '정말 좋은 날이군요!', '명사 day가 중심이면 What입니다.', '명사 중심'],
+    ['basic', '___ tall he is!', 'How', ['What', 'Which', 'How'], '그는 정말 키가 크구나!', '형용사 tall이 중심이면 How입니다.', '형용사 중심'],
+    ['basic', 'What ___ interesting story!', 'an', ['a', 'an', 'the'], '정말 흥미로운 이야기군요!', '모음 소리 앞에는 an입니다.', '관사'],
+    ['intermediate', 'What nice ___!', 'shoes', ['shoe', 'a shoe', 'shoes'], '정말 멋진 신발이군요!', '복수 명사에는 a/an을 쓰지 않습니다.', '복수형'],
+    ['intermediate', '___ fast he runs!', 'How', ['How', 'What', 'Where'], '그는 정말 빨리 달리는구나!', '부사 fast가 중심이면 How입니다.', '부사 중심'],
+    ['intermediate', 'What a big house he ___!', 'has', ['have', 'has', 'having'], '그는 정말 큰 집을 가지고 있구나!', '주어 he 뒤에는 has입니다.', '3인칭 단수'],
+    ['advanced', 'What ___ music!', 'good', ['well', 'a good', 'good'], '정말 좋은 음악이군요!', 'music은 셀 수 없는 명사라서 a가 필요 없습니다.', '형용사'],
+    ['advanced', 'How hard ___ study!', 'they', ['they', 'do they', 'are they'], '그들은 정말 열심히 공부하는구나!', '감탄문에서는 주어 + 동사 순서입니다.', '주어'],
+  ],
+  fix: [
+    ['basic', 'What beautiful day!', 'What', ['What a'], ['beautiful은 beautifully여야 합니다.', 'day는 days여야 합니다.', '명사 앞에 관사가 필요합니다.'], 2, 'What a beautiful day! → What a + 형용사 + 명사'],
+    ['intermediate', 'What tall he is!', 'What', ['How'], ['"tall"은 taller여야 합니다.', '형용사가 중심이면 How를 씁니다.', 'he는 him이어야 합니다.'], 1, 'How tall he is! → How + 형용사'],
+    ['intermediate', 'How a nice dog!', 'How', ['What'], ['명사가 중심이면 What을 씁니다.', 'dog는 dogs여야 합니다.', 'nice는 nicely여야 합니다.'], 0, 'What a nice dog! → What + a + 형용사 + 명사'],
+  ],
+  questions: [
+    pc('Which sentence about a day is correct?', '날씨에 대한 올바른 문장을 고르세요.', 'basic', [['What a beautiful day!', '정말 아름다운 날이군요!'], ['What beautiful day!', '정말 아름다운 날이군요!'], ['How a beautiful day!', '정말 아름다운 날이군요!'], ['What beautiful a day!', '정말 아름다운 날이군요!']], 0, 'What + a + 형용사 + 명사입니다.'),
+    pc('Which sentence about height is correct?', '키에 대한 올바른 문장을 고르세요.', 'basic', [['What tall he is!', '그는 정말 키가 크구나!'], ['How he is tall!', '그는 정말 키가 크구나!'], ['How tall he is!', '그는 정말 키가 크구나!'], ['What a tall is he!', '그는 정말 키가 크구나!']], 2, 'How + 형용사 + 주어 + 동사입니다.'),
+    pc('Which sentence about shoes is correct?', '신발에 대한 올바른 문장을 고르세요.', 'basic', [['What a nice shoes!', '정말 멋진 신발이군요!'], ['What nice shoes!', '정말 멋진 신발이군요!'], ['How nice shoes!', '정말 멋진 신발이군요!'], ['What nice a shoes!', '정말 멋진 신발이군요!']], 1, '복수 명사 앞에는 a를 쓰지 않습니다.'),
+    pc('Which sentence about a story is correct?', '이야기에 대한 올바른 문장을 고르세요.', 'intermediate', [['What a interesting story!', '정말 흥미로운 이야기군요!'], ['What interesting story!', '정말 흥미로운 이야기군요!'], ['How an interesting story!', '정말 흥미로운 이야기군요!'], ['What an interesting story!', '정말 흥미로운 이야기군요!']], 3, 'interesting은 모음 소리라서 an을 씁니다.'),
+    pc('Which sentence about running is correct?', '달리기에 대한 올바른 문장을 고르세요.', 'intermediate', [['How fast he runs!', '그는 정말 빨리 달리는구나!'], ['What fast he runs!', '그는 정말 빨리 달리는구나!'], ['How fast runs he!', '그는 정말 빨리 달리는구나!'], ['What a fast he runs!', '그는 정말 빨리 달리는구나!']], 0, '부사가 중심이면 How를 씁니다.'),
+    pc('Which sentence uses a different pattern?', '다른 형태의 감탄문을 고르세요.', 'intermediate', [['What a cute dog!', '정말 귀여운 강아지로군요!'], ['How kind you are!', '너는 정말 친절하구나!'], ['What nice shoes!', '정말 멋진 신발이군요!'], ['What good music!', '정말 좋은 음악이군요!']], 1, '나머지는 What + 명사 형태이고 이것만 How + 형용사입니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['What a big house he has!', '그는 정말 큰 집을 가지고 있구나!'], ['How hard they study!', '그들은 정말 열심히 공부하는구나!'], ['What a good boy Tom is!', 'Tom은 정말 착한 소년이구나!'], ['What a good music!', '정말 좋은 음악이군요!']], 3, 'music은 셀 수 없는 명사라서 a를 쓸 수 없습니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① What a nice day!\n② What tall he is!\n③ How kind you are!', 'basic', 1, '②만 틀렸고 How tall이어야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① What beautiful day!\n② How a nice dog!\n③ What nice shoes!\n④ How fast he runs!', 'advanced', 2, '①은 What a, ②는 What a nice dog이어야 하므로 틀린 문장은 2개입니다.'),
+    pc('Why is the sentence "What tall he is!" wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because tall should be taller.', 'tall을 taller로 바꿔야 해서'], ['Because he should be him.', 'he를 him으로 바꿔야 해서'], ['Because How is used when an adjective is the key word.', '형용사가 중심이면 How를 써야 해서'], ['Because is should be are.', 'is를 are로 바꿔야 해서']], 2, '형용사나 부사가 중심이면 How를 씁니다.', 'reason'),
+  ],
+  popup: [['___ a nice day!', 'What', ['How', 'Which'], '명사 중심'], ['___ tall he is!', 'How', ['What', 'Which'], '형용사 중심'], ['What ___ interesting story!', 'an', ['a', 'the'], '관사'], ['What nice ___!', 'shoes', ['shoe', 'a shoe'], '복수형']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'What tall he is!', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['How tall he is!'], noteKo: '형용사가 중심이면 How를 씁니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'What beautiful day!', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['What a beautiful day!'], noteKo: '단수 명사 앞에는 a가 필요합니다.' },
+  ],
+  top: ['명사가 중심이면 What + (a/an) + 형용사 + 명사!, 형용사·부사가 중심이면 How + 형용사/부사!. 주어 + 동사는 뒤에 평범한 순서로 온다.', 'What a beautiful day!', '정말 아름다운 날이군요!'],
+  lecture: [
+    { type: 'text', text: '감탄문', narration: '오늘은 놀라거나 감동했을 때 쓰는 감탄문을 배워요. [en]What[/en]과 [en]How[/en]가 중요해요.' },
+    { type: 'board', title: 'What 감탄문', lines: ['[b]What a[/b] nice day! — 정말 좋은 날이군요!', 'What an interesting story! — 정말 흥미로운 이야기군요!', 'What + a/an + 형용사 + 명사'], narration: '명사가 중심이면 [en]What a[/en] 형용사 명사예요. [en]What a nice day![/en] 정말 좋은 날이군요.' },
+    { type: 'board', title: 'How 감탄문', lines: ['[b]How[/b] tall he is! — 그는 정말 키가 크구나!', 'How fast he runs! — 그는 정말 빨리 달리는구나!', 'How + 형용사/부사'], narration: '형용사나 부사가 중심이면 [en]How[/en]를 써요. [en]How tall he is![/en] 그는 정말 키가 크구나.' },
+    { type: 'board', title: '복수·셀 수 없는 명사', lines: ['What [b]nice shoes[/b]! — 정말 멋진 신발이군요!', 'What good music! — 정말 좋은 음악이군요!', 'a/an 없음'], narration: '복수 명사나 셀 수 없는 명사 앞에는 [en]a[/en]나 [en]an[/en]을 쓰지 않아요. [en]What nice shoes![/en] 정말 멋진 신발이군요.' },
+    { type: 'board', title: '주어 + 동사 붙이기', lines: ['What a big house [b]he has[/b]! — 그는 정말 큰 집을 가지고 있구나!', 'How hard they study! — 그들은 정말 열심히 공부하는구나!'], narration: '뒤에 주어와 동사를 붙일 수 있어요. 순서는 평범해요. [en]What a big house he has![/en] 그는 정말 큰 집을 가지고 있구나.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× What [b]beautiful[/b] day! — 정말 아름다운 날이군요!', '× [b]What[/b] tall he is! — 그는 정말 키가 크구나!', '× [b]How[/b] a nice dog! — 정말 멋진 강아지로군요!'], narration: '단수 명사 앞에는 [en]a[/en]가 필요해요. 형용사가 중심이면 [en]How[/en], 명사가 중심이면 [en]What[/en]이에요.' },
+    { type: 'text', text: '정리: 명사 → What / 형용사·부사 → How', narration: '정리할게요. 명사가 중심이면 [en]What[/en], 형용사나 부사가 중심이면 [en]How[/en]를 써요.' },
+  ],
+});

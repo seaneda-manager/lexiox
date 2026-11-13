@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'coordinating-conjunctions', topic: '등위접속사 - 1부', titleKo: '등위접속사 (and · but · or · so)',
+  summaryEn: 'And adds, but contrasts, or gives a choice, and so shows a result. They join words of the same form.',
+  summaryKo: 'and는 "그리고", but은 "그러나", or는 "또는", so는 "그래서"이며, 같은 형태의 말을 연결합니다.',
+  rules: [
+    ['and = adds similar ideas.', 'and는 비슷한 내용을 더해 줍니다. (cats and dogs)'],
+    ['but = shows a contrast.', 'but은 반대되는 내용을 연결합니다. (poor but happy)'],
+    ['or = gives a choice.', 'or는 선택을 나타냅니다. (tea or coffee)'],
+    ['so = shows a result.', 'so는 앞 내용의 결과를 나타냅니다. (It rained, so we stayed home.)'],
+  ],
+  examples: [['I like cats and dogs.', '나는 고양이와 개를 좋아한다.'], ['He is poor but happy.', '그는 가난하지만 행복하다.'], ['It rained, so we stayed home.', '비가 와서 우리는 집에 있었다.']],
+  groups: [
+    ['and', '그리고.', [
+      ['She sings and dances.', '그녀는 노래하고 춤춘다.', 'A and B', '같은 형태로 연결합니다.'],
+      ['I like cats and dogs.', '나는 고양이와 개를 좋아한다.', 'A and B', '비슷한 내용을 더합니다.'],
+      ['He opened the door and went out.', '그는 문을 열고 나갔다.', 'A and B', '두 동작을 이어 줍니다.']]],
+    ['but', '그러나.', [
+      ['He is poor but happy.', '그는 가난하지만 행복하다.', 'A but B', '반대되는 내용입니다.'],
+      ['I like tea but not coffee.', '나는 차는 좋아하지만 커피는 아니다.', 'A but B', '반대되는 내용입니다.'],
+      ['She tried hard but failed.', '그녀는 열심히 했지만 실패했다.', 'A but B', '반대되는 내용입니다.']]],
+    ['or', '또는.', [
+      ['Do you want tea or coffee?', '차를 원하세요, 커피를 원하세요?', 'A or B', '둘 중 선택입니다.'],
+      ['Is it red or blue?', '그것은 빨강이니 파랑이니?', 'A or B', '둘 중 선택입니다.'],
+      ['Walk or take the bus.', '걸어가거나 버스를 타라.', 'A or B', '둘 중 선택입니다.']]],
+    ['so', '그래서.', [
+      ['It rained, so we stayed home.', '비가 와서 우리는 집에 있었다.', ', so + 결과', '앞 내용의 결과입니다.'],
+      ['I was tired, so I went to bed.', '나는 피곤해서 잠자리에 들었다.', ', so + 결과', '앞 내용의 결과입니다.'],
+      ['He was hungry, so he ate a sandwich.', '그는 배가 고파서 샌드위치를 먹었다.', ', so + 결과', '앞 내용의 결과입니다.']]],
+  ],
+  wrong: [['He is poor and happy.', 'but → He is poor but happy. — 그는 가난하지만 행복하다.', ''], ['It rained, but we stayed home.', 'so → It rained, so we stayed home. — 비가 와서 우리는 집에 있었다.', ''], ['She sings and dance.', 'dances → She sings and dances. — 같은 형태로 맞춥니다.', '']],
+  wrongNote: '내용에 맞는 접속사를 고르고, and로 연결하는 말은 같은 형태로 맞춥니다.',
+  cram: '■ 핵심 요약\nand는 그리고, but은 그러나, or는 또는, so는 그래서입니다.\n\n■ 규칙\n1. and = 비슷한 내용을 더한다.\n2. but = 반대되는 내용을 연결한다.\n3. or = 선택을 나타낸다.\n4. so = 결과를 나타낸다.\n\n■ 예문 뜻\n나는 고양이와 개를 좋아한다.\n그는 가난하지만 행복하다.\n비가 와서 우리는 집에 있었다.',
+  blanks: [['"그러나"는 ___입니다.', 'but', '접속사'], ['"또는"은 ___입니다.', 'or', '접속사'], ['"그래서"는 ___입니다.', 'so', '두 글자'], ['"그리고"는 ___입니다.', 'and', '접속사']],
+  fill: [
+    ['basic', 'I like cats ___ dogs.', 'and', ['and', 'but', 'so'], '나는 고양이와 개를 좋아한다.', '더해 주는 말은 and입니다.', '그리고'],
+    ['basic', 'He is poor ___ happy.', 'but', ['and', 'so', 'but'], '그는 가난하지만 행복하다.', '반대되는 내용은 but입니다.', '그러나'],
+    ['basic', 'Do you want tea ___ coffee?', 'or', ['but', 'or', 'so'], '차를 원하세요, 커피를 원하세요?', '선택은 or입니다.', '또는'],
+    ['intermediate', 'It rained, ___ we stayed home.', 'so', ['but', 'so', 'or'], '비가 와서 우리는 집에 있었다.', '결과는 so입니다.', '그래서'],
+    ['intermediate', 'I was tired, ___ I went to bed.', 'so', ['or', 'but', 'so'], '나는 피곤해서 잠자리에 들었다.', '결과는 so입니다.', '그래서'],
+    ['intermediate', 'She tried hard ___ failed.', 'but', ['but', 'and', 'so'], '그녀는 열심히 했지만 실패했다.', '반대되는 결과는 but입니다.', '그러나'],
+    ['advanced', 'She sings and ___.', 'dances', ['dance', 'dancing', 'dances'], '그녀는 노래하고 춤춘다.', 'sings와 같은 형태로 맞춥니다.', '3인칭 단수'],
+    ['advanced', 'Is it red ___ blue?', 'or', ['or', 'and', 'so'], '그것은 빨강이니 파랑이니?', '선택은 or입니다.', '또는'],
+  ],
+  fix: [
+    ['basic', 'He is poor and happy.', 'and', ['but'], ['poor는 poorly여야 합니다.', '반대되는 내용은 but을 씁니다.', 'happy는 happily여야 합니다.'], 1, 'He is poor but happy. → 반대는 but'],
+    ['intermediate', 'It rained, but we stayed home.', 'but', ['so'], ['결과는 so로 연결합니다.', 'rained는 rain이어야 합니다.', 'stayed는 stay여야 합니다.'], 0, 'It rained, so we stayed home. → 결과는 so'],
+    ['intermediate', 'She sings and dance.', 'dance', ['dances'], ['sings는 sing이어야 합니다.', 'She는 They여야 합니다.', 'sings와 같은 형태로 맞춥니다.'], 2, 'She sings and dances. → 같은 형태로 연결'],
+  ],
+  questions: [
+    pc('Which sentence about being poor is correct?', '가난함에 대한 올바른 문장을 고르세요.', 'basic', [['He is poor and happy.', '그는 가난하지만 행복하다.'], ['He is poor or happy.', '그는 가난하지만 행복하다.'], ['He is poor but happy.', '그는 가난하지만 행복하다.'], ['He is poor so happy.', '그는 가난하지만 행복하다.']], 2, '반대되는 내용은 but으로 연결합니다.'),
+    pc('Which sentence about rain is correct?', '비에 대한 올바른 문장을 고르세요.', 'basic', [['It rained, so we stayed home.', '비가 와서 우리는 집에 있었다.'], ['It rained, but we stayed home.', '비가 와서 우리는 집에 있었다.'], ['It rained, or we stayed home.', '비가 와서 우리는 집에 있었다.'], ['It rained, and so we home stayed.', '비가 와서 우리는 집에 있었다.']], 0, '결과는 so로 연결합니다.'),
+    pc('Which sentence about a drink is correct?', '음료에 대한 올바른 문장을 고르세요.', 'basic', [['Do you want tea so coffee?', '차를 원하세요, 커피를 원하세요?'], ['Do you want tea or coffee?', '차를 원하세요, 커피를 원하세요?'], ['Do you want tea but coffee?', '차를 원하세요, 커피를 원하세요?'], ['Do you want tea and coffee?', '차와 커피를 모두 원하세요?']], 1, '선택을 물을 때는 or를 씁니다.'),
+    pc('Which sentence about singing is correct?', '노래에 대한 올바른 문장을 고르세요.', 'intermediate', [['She sings and dance.', '그녀는 노래하고 춤춘다.'], ['She sings and dancing.', '그녀는 노래하고 춤춘다.'], ['She sings and to dance.', '그녀는 노래하고 춤춘다.'], ['She sings and dances.', '그녀는 노래하고 춤춘다.']], 3, 'and로 연결하는 말은 같은 형태로 맞춥니다.'),
+    pc('Which sentence about trying is correct?', '노력에 대한 올바른 문장을 고르세요.', 'intermediate', [['She tried hard but failed.', '그녀는 열심히 했지만 실패했다.'], ['She tried hard so failed.', '그녀는 열심히 했지만 실패했다.'], ['She tried hard or failed.', '그녀는 열심히 했지만 실패했다.'], ['She tried hard and failed.', '그녀는 열심히 해서 실패했다.']], 0, '반대되는 결과는 but으로 연결합니다.'),
+    pc('Choose the sentence that shows a result.', '결과를 나타내는 문장을 고르세요.', 'intermediate', [['I like cats and dogs.', '나는 고양이와 개를 좋아한다.'], ['I like tea but not coffee.', '나는 차는 좋아하지만 커피는 아니다.'], ['I was tired, so I went to bed.', '나는 피곤해서 잠자리에 들었다.'], ['Is it red or blue?', '그것은 빨강이니 파랑이니?']], 2, 'so는 결과를 나타냅니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['He opened the door and went out.', '그는 문을 열고 나갔다.'], ['He was hungry, so he ate a sandwich.', '그는 배가 고파서 샌드위치를 먹었다.'], ['Walk or take the bus.', '걸어가거나 버스를 타라.'], ['He is poor and happy.', '그는 가난하지만 행복하다.']], 3, '반대되는 내용은 and가 아니라 but을 써야 합니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① I like cats and dogs.\n② It rained, but we stayed home.\n③ Do you want tea or coffee?', 'basic', 1, '②만 틀렸고 so여야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① He is poor and happy.\n② She sings and dance.\n③ I was tired, so I went to bed.\n④ She tried hard but failed.', 'advanced', 2, '①은 but, ②는 dances여야 하므로 틀린 문장은 2개입니다.'),
+    pc('Why is "It rained, but we stayed home." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because rained should be rain.', 'rained를 rain으로 바꿔야 해서'], ['Because stayed should be stay.', 'stayed를 stay로 바꿔야 해서'], ['Because we should be us.', 'we를 us로 바꿔야 해서'], ['Because a result is joined with so.', '결과는 so로 연결해야 해서']], 3, '앞 내용의 결과는 so로 연결합니다.', 'reason'),
+  ],
+  popup: [['I like cats ___ dogs.', 'and', ['but', 'so'], '그리고'], ['He is poor ___ happy.', 'but', ['and', 'so'], '그러나'], ['Do you want tea ___ coffee?', 'or', ['but', 'so'], '또는'], ['It rained, ___ we stayed home.', 'so', ['but', 'or'], '그래서']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'He is poor and happy.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['He is poor but happy.'], noteKo: '반대되는 내용은 but으로 연결합니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'It rained, but we stayed home.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['It rained, so we stayed home.'], noteKo: '결과는 so로 연결합니다.' },
+  ],
+  top: ['and = 그리고, but = 그러나, or = 또는, so = 그래서(결과). and로 연결하는 말은 같은 형태로 맞춘다.', 'I like cats and dogs.', '나는 고양이와 개를 좋아한다.'],
+  lecture: [
+    { type: 'text', text: '등위접속사', narration: '오늘은 말과 말, 문장과 문장을 이어 주는 [en]and[/en], [en]but[/en], [en]or[/en], [en]so[/en]를 배워요.' },
+    { type: 'board', title: 'and', lines: ['I like cats [b]and[/b] dogs. — 나는 고양이와 개를 좋아한다.', 'She sings and dances. — 그녀는 노래하고 춤춘다.', '그리고'], narration: '[en]and[/en]는 그리고라는 뜻이에요. [en]I like cats and dogs.[/en] 나는 고양이와 개를 좋아해요.' },
+    { type: 'board', title: 'but', lines: ['He is poor [b]but[/b] happy. — 그는 가난하지만 행복하다.', 'She tried hard but failed. — 그녀는 열심히 했지만 실패했다.', '그러나'], narration: '[en]but[/en]은 반대되는 내용을 이어요. [en]He is poor but happy.[/en] 그는 가난하지만 행복해요.' },
+    { type: 'board', title: 'or', lines: ['Do you want tea [b]or[/b] coffee? — 차를 원하세요, 커피를 원하세요?', 'Is it red or blue? — 그것은 빨강이니 파랑이니?', '또는'], narration: '[en]or[/en]는 선택을 나타내요. [en]Do you want tea or coffee?[/en] 차를 원하세요, 커피를 원하세요?' },
+    { type: 'board', title: 'so', lines: ['It rained, [b]so[/b] we stayed home. — 비가 와서 우리는 집에 있었다.', 'I was tired, so I went to bed. — 나는 피곤해서 잠자리에 들었다.', '그래서 → 결과'], narration: '[en]so[/en]는 앞 내용의 결과를 나타내요. [en]It rained, so we stayed home.[/en] 비가 와서 우리는 집에 있었어요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× He is poor [b]and[/b] happy. — 그는 가난하지만 행복하다.', '× It rained, [b]but[/b] we stayed home. — 비가 와서 우리는 집에 있었다.', '× She sings and [b]dance[/b]. — 그녀는 노래하고 춤춘다.'], narration: '반대되는 내용에 [en]and[/en]를 쓰면 틀려요. 결과에는 [en]so[/en]를 써요. [en]and[/en]로 이은 말은 같은 형태로 맞춰요.' },
+    { type: 'text', text: '정리: and · but · or · so', narration: '정리할게요. [en]and[/en]는 그리고, [en]but[/en]은 그러나, [en]or[/en]는 또는, [en]so[/en]는 그래서예요.' },
+  ],
+});

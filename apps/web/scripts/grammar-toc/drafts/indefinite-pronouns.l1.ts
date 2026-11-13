@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'indefinite-pronouns', topic: '부정대명사 - 1부', titleKo: '부정대명사 (one·another·the other·some·others)',
+  summaryEn: 'Another means one more. The other means the last one. Some and others divide a group.',
+  summaryKo: 'another는 "또 다른 하나", the other는 "나머지 하나", some ~ others는 "일부는 ~, 또 다른 일부는 ~"입니다.',
+  rules: [
+    ['another = one more (an + other), used for any one of several.', 'another는 "또 다른 하나"입니다. (Show me another.)'],
+    ['one ... the other: two things in total.', '둘 중 하나는 one, 나머지 하나는 the other입니다.'],
+    ['some ... others: some of many, and different ones.', '여럿 중 일부는 some, 또 다른 일부는 others입니다.'],
+    ['the others = all the rest.', '나머지 전부는 the others입니다.'],
+  ],
+  examples: [['I have two dogs. One is black, and the other is white.', '나는 개가 두 마리 있다. 한 마리는 검은색이고, 다른 한 마리는 흰색이다.'], ['I don\'t like this hat. Show me another.', '이 모자는 마음에 안 들어요. 다른 것을 보여 주세요.'], ['Some like tea, and others like coffee.', '어떤 사람들은 차를 좋아하고, 또 다른 사람들은 커피를 좋아한다.']],
+  groups: [
+    ['another', '또 다른 하나.', [
+      ['I don\'t like this hat. Show me another.', '이 모자는 마음에 안 들어요. 다른 것을 보여 주세요.', 'another = 또 다른 하나', '아직 정해지지 않은 하나입니다.'],
+      ['This cup is dirty. Please give me another.', '이 컵은 더러워요. 다른 것을 주세요.', 'another = 또 다른 하나', '아직 정해지지 않은 하나입니다.'],
+      ['One is red, and another is blue.', '하나는 빨강이고, 또 다른 하나는 파랑이다.', 'one ~ another', '여럿 중 차례로 말합니다.']]],
+    ['one ~ the other', '둘 중 하나, 나머지 하나.', [
+      ['I have two dogs. One is black, and the other is white.', '나는 개가 두 마리 있다. 한 마리는 검은색이고, 다른 한 마리는 흰색이다.', 'one ~ the other', '모두 둘입니다.'],
+      ['She has two sisters. One is a doctor, and the other is a teacher.', '그녀는 언니가 둘 있다. 한 명은 의사이고, 다른 한 명은 교사이다.', 'one ~ the other', '모두 둘입니다.'],
+      ['I have two bags. One is big, and the other is small.', '나는 가방이 두 개 있다. 하나는 크고, 다른 하나는 작다.', 'one ~ the other', '모두 둘입니다.']]],
+    ['some ~ others', '여럿 중 일부, 또 다른 일부.', [
+      ['Some like tea, and others like coffee.', '어떤 사람들은 차를 좋아하고, 또 다른 사람들은 커피를 좋아한다.', 'some ~ others', '여럿을 나눕니다.'],
+      ['Some students walk, and others take the bus.', '어떤 학생들은 걸어가고, 또 다른 학생들은 버스를 탄다.', 'some ~ others', '여럿을 나눕니다.'],
+      ['Some people sing, and others dance.', '어떤 사람들은 노래하고, 또 다른 사람들은 춤춘다.', 'some ~ others', '여럿을 나눕니다.']]],
+    ['the others', '나머지 전부.', [
+      ['Two are red, and the others are blue.', '둘은 빨강이고, 나머지는 모두 파랑이다.', 'the others = 나머지 전부', '복수입니다.'],
+      ['One student is absent, and the others are here.', '한 학생은 결석했고, 나머지는 모두 여기 있다.', 'the others = 나머지 전부', '복수입니다.'],
+      ['Some are old, and the others are new.', '일부는 오래된 것이고, 나머지는 모두 새것이다.', 'the others = 나머지 전부', '복수입니다.']]],
+  ],
+  wrong: [['I have two dogs. One is black, and another is white.', 'the other → I have two dogs. One is black, and the other is white. — 개가 두 마리이므로 나머지 하나는 the other입니다.', ''], ['Some like tea, and other like coffee.', 'others → Some like tea, and others like coffee. — 어떤 사람들은 차를, 또 다른 사람들은 커피를 좋아한다.', ''], ['I don\'t like this hat. Show me other.', 'another → I don\'t like this hat. Show me another. — 다른 것을 보여 주세요.', '']],
+  wrongNote: '둘이면 one ~ the other, 여럿이면 some ~ others, 또 다른 하나는 another입니다.',
+  cram: '■ 핵심 요약\nanother는 또 다른 하나, the other는 나머지 하나, some ~ others는 일부와 또 다른 일부입니다.\n\n■ 규칙\n1. another = 또 다른 하나.\n2. one ~ the other: 모두 둘.\n3. some ~ others: 여럿 중 일부, 또 다른 일부.\n4. the others = 나머지 전부.\n\n■ 예문 뜻\n나는 개가 두 마리 있다. 한 마리는 검은색이고, 다른 한 마리는 흰색이다.\n이 모자는 마음에 안 들어요. 다른 것을 보여 주세요.\n어떤 사람들은 차를 좋아하고, 또 다른 사람들은 커피를 좋아한다.',
+  blanks: [['"또 다른 하나"는 ___입니다.', 'another', '한 단어'], ['둘 중 나머지 하나는 the ___입니다.', 'other', '비슷한 말'], ['some 뒤에 이어 말하는 "또 다른 일부"는 ___입니다.', 'others', '복수형'], ['나머지 전부는 the ___입니다.', 'others', '복수형']],
+  fill: [
+    ['basic', 'I have two dogs. One is black, and ___ is white.', 'the other', ['another', 'the other', 'others'], '나는 개가 두 마리 있다. 한 마리는 검은색이고, 다른 한 마리는 흰색이다.', '둘 중 나머지 하나는 the other입니다.', '둘 중 나머지'],
+    ['basic', 'I don\'t like this hat. Show me ___.', 'another', ['another', 'the other', 'others'], '이 모자는 마음에 안 들어요. 다른 것을 보여 주세요.', '또 다른 하나는 another입니다.', '또 다른 하나'],
+    ['basic', 'Some like tea, and ___ like coffee.', 'others', ['the other', 'another', 'others'], '어떤 사람들은 차를 좋아하고, 또 다른 사람들은 커피를 좋아한다.', 'some 다음의 또 다른 일부는 others입니다.', '복수'],
+    ['intermediate', 'She has two sisters. One is a doctor, and ___ is a teacher.', 'the other', ['others', 'the other', 'another'], '그녀는 언니가 둘 있다. 한 명은 의사이고, 다른 한 명은 교사이다.', '모두 둘이므로 the other입니다.', '둘 중 나머지'],
+    ['intermediate', 'This cup is dirty. Please give me ___.', 'another', ['the other', 'others', 'another'], '이 컵은 더러워요. 다른 것을 주세요.', '아직 정해지지 않은 다른 하나는 another입니다.', '또 다른 하나'],
+    ['intermediate', 'Some students walk, and ___ take the bus.', 'others', ['another', 'others', 'the other'], '어떤 학생들은 걸어가고, 또 다른 학생들은 버스를 탄다.', '복수 동사 take와 함께 others를 씁니다.', '복수'],
+    ['advanced', 'Two are red, and ___ are blue.', 'the others', ['others', 'another', 'the others'], '둘은 빨강이고, 나머지는 모두 파랑이다.', '나머지 전부는 the others입니다.', '나머지 전부'],
+    ['advanced', 'One student is absent, and ___ are here.', 'the others', ['the others', 'another', 'the other'], '한 학생은 결석했고, 나머지는 모두 여기 있다.', 'are가 있으므로 복수 the others입니다.', '나머지 전부'],
+  ],
+  fix: [
+    ['basic', 'I have two dogs. One is black, and another is white.', 'another', ['the other'], ['black은 blacks여야 합니다.', '모두 둘이므로 나머지 하나를 말합니다.', 'is는 are여야 합니다.'], 1, '개가 두 마리이므로 the other입니다.'],
+    ['intermediate', 'Some like tea, and other like coffee.', 'other', ['others'], ['like는 likes여야 합니다.', 'tea는 teas여야 합니다.', '복수로 말하는 또 다른 일부입니다.'], 2, 'some 다음의 또 다른 일부는 others입니다.'],
+    ['intermediate', 'I don\'t like this hat. Show me other.', 'other', ['another'], ['또 다른 하나를 뜻합니다.', 'hat은 hats여야 합니다.', 'Show는 Showing이어야 합니다.'], 0, '또 다른 하나는 another입니다.'],
+  ],
+  questions: [
+    pc('Which sentence about two dogs is correct?', '개 두 마리에 대한 올바른 문장을 고르세요.', 'basic', [['One is black, and another is white.', '하나는 검은색이고, 다른 하나는 흰색이다.'], ['One is black, and other is white.', '하나는 검은색이고, 다른 하나는 흰색이다.'], ['One is black, and the other is white.', '하나는 검은색이고, 다른 하나는 흰색이다.'], ['One is black, and others is white.', '하나는 검은색이고, 다른 하나는 흰색이다.']], 2, '둘 중 나머지 하나는 the other입니다.'),
+    pc('Which sentence about a hat is correct?', '모자에 대한 올바른 문장을 고르세요.', 'basic', [['Show me another.', '다른 것을 보여 주세요.'], ['Show me the another.', '다른 것을 보여 주세요.'], ['Show me an other.', '다른 것을 보여 주세요.'], ['Show me others one.', '다른 것을 보여 주세요.']], 0, 'another는 한 단어이고 the를 붙이지 않습니다.'),
+    pc('Which sentence about drinks is correct?', '음료에 대한 올바른 문장을 고르세요.', 'basic', [['Some like tea, and another like coffee.', '어떤 사람들은 차를, 또 다른 사람들은 커피를 좋아한다.'], ['Some like tea, and others like coffee.', '어떤 사람들은 차를, 또 다른 사람들은 커피를 좋아한다.'], ['Some like tea, and the other like coffee.', '어떤 사람들은 차를, 또 다른 사람들은 커피를 좋아한다.'], ['Some like tea, and other likes coffee.', '어떤 사람들은 차를, 또 다른 사람들은 커피를 좋아한다.']], 1, '복수로 말하는 또 다른 일부는 others입니다.'),
+    pc('Which sentence about sisters is correct?', '자매에 대한 올바른 문장을 고르세요.', 'intermediate', [['One is a doctor, and others is a teacher.', '한 명은 의사이고, 다른 한 명은 교사이다.'], ['One is a doctor, and another is a teacher.', '한 명은 의사이고, 다른 한 명은 교사이다.'], ['One is a doctor, and other is a teacher.', '한 명은 의사이고, 다른 한 명은 교사이다.'], ['One is a doctor, and the other is a teacher.', '한 명은 의사이고, 다른 한 명은 교사이다.']], 3, '언니가 둘뿐이므로 the other입니다.'),
+    pc('Which sentence about the rest is correct?', '나머지에 대한 올바른 문장을 고르세요.', 'intermediate', [['Two are red, and the others are blue.', '둘은 빨강이고, 나머지는 모두 파랑이다.'], ['Two are red, and the other are blue.', '둘은 빨강이고, 나머지는 모두 파랑이다.'], ['Two are red, and another are blue.', '둘은 빨강이고, 나머지는 모두 파랑이다.'], ['Two are red, and others is blue.', '둘은 빨강이고, 나머지는 모두 파랑이다.']], 0, '나머지 전부는 the others입니다.'),
+    pc('Choose the sentence that talks about exactly two things.', '딱 두 개를 말하는 문장을 고르세요.', 'intermediate', [['Some people sing, and others dance.', '어떤 사람들은 노래하고, 또 다른 사람들은 춤춘다.'], ['Two are red, and the others are blue.', '둘은 빨강이고, 나머지는 모두 파랑이다.'], ['I have two bags. One is big, and the other is small.', '나는 가방이 두 개 있다. 하나는 크고, 다른 하나는 작다.'], ['This cup is dirty. Please give me another.', '이 컵은 더러워요. 다른 것을 주세요.']], 2, 'one ~ the other는 모두 둘일 때 씁니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['Some students walk, and others take the bus.', '어떤 학생들은 걸어가고, 또 다른 학생들은 버스를 탄다.'], ['One student is absent, and the others are here.', '한 학생은 결석했고, 나머지는 모두 여기 있다.'], ['I have two bags. One is big, and others is small.', '나는 가방이 두 개 있다. 하나는 크고, 다른 하나는 작다.'], ['Some are old, and the others are new.', '일부는 오래된 것이고, 나머지는 모두 새것이다.']], 2, '둘 중 나머지 하나는 the other여야 합니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① I don\'t like this hat. Show me other.\n② Some like tea, and others like coffee.\n③ One is red, and another is blue.', 'basic', 1, '①만 틀렸고 another여야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① One is black, and another is white. (개가 두 마리)\n② Some walk, and other take the bus.\n③ Some are old, and the others are new.\n④ This cup is dirty. Please give me another.', 'advanced', 2, '①은 the other, ②는 others여야 하므로 틀린 문장은 2개입니다.'),
+    pc('Why is "I have two bags. One is big, and another is small." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because bags should be bag.', 'bags를 bag으로 바꿔야 해서'], ['Because the last one of two is the other.', '둘 중 마지막 하나는 the other로 써야 해서'], ['Because big should be bigger.', 'big을 bigger로 바꿔야 해서'], ['Because is should be are.', 'is를 are로 바꿔야 해서']], 1, '모두 둘이므로 나머지 하나는 the other입니다.', 'reason'),
+  ],
+  popup: [['I have two dogs. One is black, and ___ is white.', 'the other', ['another', 'others'], '둘 중 나머지'], ['I don\'t like this hat. Show me ___.', 'another', ['the other', 'others'], '또 다른 하나'], ['Some like tea, and ___ like coffee.', 'others', ['another', 'the other'], '복수'], ['Two are red, and ___ are blue.', 'the others', ['another', 'the other'], '나머지 전부']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'Some like tea, and other like coffee.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['Some like tea, and others like coffee.'], noteKo: '복수로 말하는 또 다른 일부는 others입니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'I don\'t like this hat. Show me other.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['I don\'t like this hat. Show me another.'], noteKo: '또 다른 하나는 another입니다.' },
+  ],
+  top: ['another = 또 다른 하나, one ~ the other = 둘 중 하나와 나머지 하나, some ~ others = 일부와 또 다른 일부, the others = 나머지 전부.', 'I have two dogs. One is black, and the other is white.', '나는 개가 두 마리 있다. 한 마리는 검은색이고, 다른 한 마리는 흰색이다.'],
+  lecture: [
+    { type: 'text', text: '부정대명사', narration: '오늘은 [en]another[/en], [en]the other[/en], [en]some[/en], [en]others[/en] 같은 부정대명사를 배워요.' },
+    { type: 'board', title: 'another', lines: ['I don\'t like this hat. Show me [b]another[/b]. — 이 모자는 마음에 안 들어요. 다른 것을 보여 주세요.', 'another = 또 다른 하나'], narration: '[en]another[/en]는 또 다른 하나라는 뜻이에요. [en]Show me another.[/en] 다른 것을 보여 주세요.' },
+    { type: 'board', title: 'one ~ the other', lines: ['I have two dogs. [b]One[/b] is black, and [b]the other[/b] is white. — 한 마리는 검은색이고, 다른 한 마리는 흰색이다.', '모두 둘'], narration: '모두 둘일 때는 하나는 [en]one[/en], 나머지 하나는 [en]the other[/en]예요. [en]One is black, and the other is white.[/en] 한 마리는 검고 나머지는 하얘요.' },
+    { type: 'board', title: 'some ~ others', lines: ['[b]Some[/b] like tea, and [b]others[/b] like coffee. — 어떤 사람들은 차를 좋아하고, 또 다른 사람들은 커피를 좋아한다.', '여럿 중 일부'], narration: '여럿 중 일부는 [en]some[/en], 또 다른 일부는 [en]others[/en]예요. [en]Some like tea, and others like coffee.[/en] 어떤 사람은 차를, 또 다른 사람은 커피를 좋아해요.' },
+    { type: 'board', title: 'the others', lines: ['Two are red, and [b]the others[/b] are blue. — 둘은 빨강이고, 나머지는 모두 파랑이다.', '나머지 전부'], narration: '나머지 전부는 [en]the others[/en]예요. [en]Two are red, and the others are blue.[/en] 둘은 빨갛고 나머지는 모두 파래요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× One is black, and [b]another[/b] is white. — 한 마리는 검고, 나머지 한 마리는 희다. (둘뿐일 때)', '× Some like tea, and [b]other[/b] like coffee. — 어떤 사람은 차를, 다른 사람은 커피를 좋아한다.', '× Show me [b]other[/b]. — 다른 것을 보여 주세요.'], narration: '둘뿐이면 [en]the other[/en]를 써요. 복수로 말할 때는 [en]others[/en], 또 다른 하나는 [en]another[/en]예요.' },
+    { type: 'text', text: '정리: another / the other / others / the others', narration: '정리할게요. 또 다른 하나는 [en]another[/en], 둘 중 나머지는 [en]the other[/en], 일부는 [en]others[/en], 나머지 전부는 [en]the others[/en]예요.' },
+  ],
+});

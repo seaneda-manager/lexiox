@@ -1,0 +1,77 @@
+import { mk, pc, cw } from './_h';
+export default mk({
+  conceptKey: 'noun-clauses', topic: '명사절 접속사 - 1부', titleKo: '명사절 접속사 (that · whether / if)',
+  summaryEn: 'That means "that ...". Whether and if mean "whether or not". A noun clause works like a noun.',
+  summaryKo: 'that은 "~라는 것", whether와 if는 "~인지 아닌지"를 뜻하며, 명사절은 문장에서 명사처럼 쓰입니다.',
+  rules: [
+    ['that + subject + verb = "that ...". It can be an object.', 'that절은 "~라는 것"이고 목적어가 될 수 있습니다. (I know that she is smart.)'],
+    ['That can be left out when the clause is an object.', '목적어로 쓰인 that은 생략할 수 있습니다. (I think he is kind.)'],
+    ['whether / if + subject + verb = "whether or not".', 'whether와 if는 "~인지 아닌지"입니다. (I wonder if it will rain.)'],
+    ['As a subject, use whether (not if).', '주어 자리에서는 if를 쓰지 않고 whether를 씁니다. (Whether he comes is unclear.)'],
+  ],
+  examples: [['I know that she is smart.', '나는 그녀가 똑똑하다는 것을 안다.'], ['I don\'t know whether he will come.', '나는 그가 올지 안 올지 모른다.'], ['I wonder if it will rain.', '나는 비가 올지 궁금하다.']],
+  groups: [
+    ['that절', '"~라는 것".', [
+      ['I know that she is smart.', '나는 그녀가 똑똑하다는 것을 안다.', 'that + 주어 + 동사', '목적어 역할입니다.'],
+      ['He said that he was busy.', '그는 바쁘다고 말했다.', 'that + 주어 + 동사', '목적어 역할입니다.'],
+      ['I think that this book is good.', '나는 이 책이 좋다고 생각한다.', 'that + 주어 + 동사', '목적어 역할입니다.']]],
+    ['that 생략', '목적어일 때 생략해요.', [
+      ['I think he is kind.', '나는 그가 친절하다고 생각한다.', 'that 생략', '목적어 that은 생략할 수 있습니다.'],
+      ['She says she is tired.', '그녀는 피곤하다고 말한다.', 'that 생략', '목적어 that은 생략할 수 있습니다.'],
+      ['I hope you like it.', '나는 네가 그것을 좋아하기를 바란다.', 'that 생략', '목적어 that은 생략할 수 있습니다.']]],
+    ['whether / if', '"~인지 아닌지".', [
+      ['I don\'t know whether he will come.', '나는 그가 올지 안 올지 모른다.', 'whether + 주어 + 동사', '"~인지 아닌지"입니다.'],
+      ['Ask him if he likes pizza.', '그가 피자를 좋아하는지 물어봐.', 'if + 주어 + 동사', '"~인지 아닌지"입니다.'],
+      ['I wonder if it will rain.', '나는 비가 올지 궁금하다.', 'if + 주어 + 동사', '"~인지 아닌지"입니다.']]],
+    ['whether 주어·보어', '주어 자리에는 whether.', [
+      ['Whether he comes is unclear.', '그가 올지 안 올지는 분명하지 않다.', 'Whether + 주어 + 동사', '주어 자리에는 if를 쓰지 않습니다.'],
+      ['The question is whether she will agree.', '문제는 그녀가 동의할지이다.', 'be + whether', '보어 자리입니다.'],
+      ['Whether we win doesn\'t matter.', '우리가 이길지는 중요하지 않다.', 'Whether + 주어 + 동사', '주어 자리에는 if를 쓰지 않습니다.']]],
+  ],
+  wrong: [['If he comes is unclear.', 'Whether → Whether he comes is unclear. — 그가 올지는 분명하지 않다.', ''], ['I wonder that it will rain.', 'if → I wonder if it will rain. — 나는 비가 올지 궁금하다.', ''], ['I think what he is kind.', 'that → I think that he is kind. — 나는 그가 친절하다고 생각한다.', '']],
+  wrongNote: '"~라는 것"은 that, "~인지 아닌지"는 whether나 if이고, 주어 자리에는 whether만 씁니다.',
+  cram: '■ 핵심 요약\nthat은 ~라는 것, whether/if는 ~인지 아닌지를 뜻하는 명사절 접속사입니다.\n\n■ 규칙\n1. that + 주어 + 동사 = ~라는 것.\n2. 목적어 that은 생략할 수 있다.\n3. whether / if + 주어 + 동사 = ~인지 아닌지.\n4. 주어 자리에는 whether만 쓴다.\n\n■ 예문 뜻\n나는 그녀가 똑똑하다는 것을 안다.\n나는 그가 올지 안 올지 모른다.\n나는 비가 올지 궁금하다.',
+  blanks: [['"~라는 것"은 ___입니다.', 'that', '접속사'], ['"~인지 아닌지"는 whether 또는 ___입니다.', 'if', '두 글자'], ['목적어로 쓰인 that은 ___할 수 있습니다.', '생략', '두 글자'], ['주어 자리에는 if 대신 ___를 씁니다.', 'whether', '접속사']],
+  fill: [
+    ['basic', 'I know ___ she is smart.', 'that', ['what', 'that', 'how'], '나는 그녀가 똑똑하다는 것을 안다.', '"~라는 것"은 that입니다.', '~라는 것'],
+    ['basic', 'I don\'t know ___ he will come.', 'whether', ['whether', 'what', 'which'], '나는 그가 올지 안 올지 모른다.', '"~인지 아닌지"는 whether입니다.', '~인지 아닌지'],
+    ['basic', 'I wonder ___ it will rain.', 'if', ['that', 'what', 'if'], '나는 비가 올지 궁금하다.', '"~인지 아닌지"는 if입니다.', '~인지 아닌지'],
+    ['intermediate', 'The fact is ___ she is tired.', 'that', ['what', 'that', 'if'], '사실은 그녀가 피곤하다는 것이다.', '"~라는 것"은 that입니다.', '~라는 것'],
+    ['intermediate', '___ he comes is unclear.', 'Whether', ['If', 'Whether', 'What'], '그가 올지 안 올지는 분명하지 않다.', '주어 자리에는 whether를 씁니다.', '주어 자리'],
+    ['intermediate', 'The question is ___ she will agree.', 'whether', ['if', 'what', 'whether'], '문제는 그녀가 동의할지이다.', '"~인지 아닌지"는 whether입니다.', '~인지 아닌지'],
+    ['advanced', 'Ask him ___ he likes pizza.', 'if', ['if', 'that', 'what'], '그가 피자를 좋아하는지 물어봐.', '"~인지 아닌지"는 if입니다.', '~인지 아닌지'],
+    ['advanced', 'I think he ___ kind.', 'is', ['is', 'are', 'be'], '나는 그가 친절하다고 생각한다.', 'that이 생략되어도 he is로 이어집니다.', 'he의 be동사'],
+  ],
+  fix: [
+    ['basic', 'If he comes is unclear.', 'If', ['Whether'], ['comes는 come이어야 합니다.', '주어 자리에는 Whether를 씁니다.', 'unclear는 clear여야 합니다.'], 1, 'Whether he comes is unclear. → 주어 자리에는 whether'],
+    ['intermediate', 'I wonder that it will rain.', 'that', ['if'], ['"~인지 아닌지"를 뜻합니다.', 'rain은 rains여야 합니다.', 'will은 would여야 합니다.'], 0, 'I wonder if it will rain. → if = ~인지'],
+    ['intermediate', 'I think what he is kind.', 'what', ['that'], ['think는 thinks여야 합니다.', 'kind는 kindly여야 합니다.', '"~라는 것"은 that을 씁니다.'], 2, 'I think that he is kind. → that = ~라는 것'],
+  ],
+  questions: [
+    pc('Which sentence about being smart is correct?', '똑똑함에 대한 올바른 문장을 고르세요.', 'basic', [['I know what she is smart.', '나는 그녀가 똑똑하다는 것을 안다.'], ['I know that she is smart.', '나는 그녀가 똑똑하다는 것을 안다.'], ['I know how she smart.', '나는 그녀가 똑똑하다는 것을 안다.'], ['I know she that is smart.', '나는 그녀가 똑똑하다는 것을 안다.']], 1, '"~라는 것"은 that입니다.'),
+    pc('Which sentence about coming is correct?', '오는 것에 대한 올바른 문장을 고르세요.', 'basic', [['I don\'t know whether he will come.', '나는 그가 올지 모른다.'], ['I don\'t know that he whether will come.', '나는 그가 올지 모른다.'], ['I don\'t know whether will he come.', '나는 그가 올지 모른다.'], ['I don\'t know what he will come.', '나는 그가 올지 모른다.']], 0, 'whether + 주어 + 동사 순서입니다.'),
+    pc('Which sentence about rain is correct?', '비에 대한 올바른 문장을 고르세요.', 'basic', [['I wonder that it will rain.', '나는 비가 올지 궁금하다.'], ['I wonder what it will rain.', '나는 비가 올지 궁금하다.'], ['I wonder it if will rain.', '나는 비가 올지 궁금하다.'], ['I wonder if it will rain.', '나는 비가 올지 궁금하다.']], 3, '"~인지 아닌지"는 if입니다.'),
+    pc('Which sentence is correct as a subject?', '주어로 쓰인 올바른 문장을 고르세요.', 'intermediate', [['Whether he comes is unclear.', '그가 올지는 분명하지 않다.'], ['If he comes is unclear.', '그가 올지는 분명하지 않다.'], ['What he comes is unclear.', '그가 올지는 분명하지 않다.'], ['Whether he come is unclear.', '그가 올지는 분명하지 않다.']], 0, '주어 자리에는 whether를 씁니다.'),
+    pc('In which sentence can the word that be left out?', 'that을 생략할 수 있는 문장을 고르세요.', 'intermediate', [['The fact is that she is tired.', '사실은 그녀가 피곤하다는 것이다.'], ['I think that he is kind.', '나는 그가 친절하다고 생각한다.'], ['That she lied is clear.', '그녀가 거짓말했다는 것은 분명하다.'], ['The news that he won is true.', '그가 이겼다는 소식은 사실이다.']], 1, '목적어로 쓰인 that만 생략할 수 있습니다.'),
+    pc('Which sentence has a different meaning?', '뜻이 다른 문장을 고르세요.', 'intermediate', [['I wonder if it will rain.', '나는 비가 올지 궁금하다.'], ['I wonder whether it will rain.', '나는 비가 올지 궁금하다.'], ['I know that it will rain.', '나는 비가 올 것임을 안다.'], ['I wonder whether or not it will rain.', '나는 비가 올지 안 올지 궁금하다.']], 2, '나머지는 모두 올지 궁금하다는 뜻이고 이것은 안다는 뜻입니다.', 'pick_different'),
+    pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['She says she is tired.', '그녀는 피곤하다고 말한다.'], ['The question is whether she will agree.', '문제는 그녀가 동의할지이다.'], ['I hope you like it.', '나는 네가 그것을 좋아하기를 바란다.'], ['If we win doesn\'t matter.', '우리가 이길지는 중요하지 않다.']], 3, '주어 자리에는 If가 아니라 Whether를 써야 합니다.', 'pick_different'),
+    cw('How many sentences are wrong?\n① I know that she is smart.\n② I think what he is kind.\n③ I wonder if it will rain.', 'basic', 1, '②만 틀렸고 that이어야 하므로 틀린 문장은 1개입니다.'),
+    cw('How many sentences are wrong?\n① If he comes is unclear.\n② I wonder that it will rain.\n③ He said that he was busy.\n④ Ask him if he likes pizza.', 'advanced', 2, '①은 Whether, ②는 if여야 하므로 틀린 문장은 2개입니다.'),
+    pc('Why is "If he comes is unclear." wrong?', '이 문장이 틀린 이유로 올바른 설명을 고르세요.', 'intermediate', [['Because comes should be come.', 'comes를 come으로 바꿔야 해서'], ['Because unclear should be clear.', 'unclear를 clear로 바꿔야 해서'], ['Because he should be him.', 'he를 him으로 바꿔야 해서'], ['Because a subject clause uses whether, not if.', '주어 자리에는 if가 아니라 whether를 써야 해서']], 3, '주어 자리에는 whether를 씁니다.', 'reason'),
+  ],
+  popup: [['I know ___ she is smart.', 'that', ['what', 'how'], '~라는 것'], ['I don\'t know ___ he will come.', 'whether', ['what', 'which'], '~인지 아닌지'], ['I wonder ___ it will rain.', 'if', ['that', 'what'], '~인지 아닌지'], ['___ he comes is unclear.', 'Whether', ['If', 'What'], '주어 자리']],
+  written: [
+    { kind: 'fix_write', level: 'basic', prompt: 'If he comes is unclear.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['Whether he comes is unclear.'], noteKo: '주어 자리에는 whether를 씁니다.' },
+    { kind: 'fix_write', level: 'basic', prompt: 'I think what he is kind.', promptKo: '틀린 곳을 찾아 문장 전체를 바르게 고쳐 쓰시오.', answers: ['I think that he is kind.', 'I think he is kind.'], noteKo: '"~라는 것"은 that입니다. that은 생략할 수도 있습니다.' },
+  ],
+  top: ['that = ~라는 것(목적어일 때 생략 가능), whether / if = ~인지 아닌지. 주어 자리에는 whether만 쓴다.', 'I know that she is smart.', '나는 그녀가 똑똑하다는 것을 안다.'],
+  lecture: [
+    { type: 'text', text: '명사절 접속사', narration: '오늘은 문장 속에서 명사처럼 쓰이는 [en]that[/en]절과 [en]whether[/en], [en]if[/en]절을 배워요.' },
+    { type: 'board', title: 'that절', lines: ['I know [b]that[/b] she is smart. — 나는 그녀가 똑똑하다는 것을 안다.', 'He said that he was busy. — 그는 바쁘다고 말했다.', 'that = ~라는 것'], narration: '[en]that[/en]은 라는 것이라는 뜻이에요. [en]I know that she is smart.[/en] 나는 그녀가 똑똑하다는 것을 알아요.' },
+    { type: 'board', title: 'that 생략', lines: ['I think (that) he is kind. — 나는 그가 친절하다고 생각한다.', 'She says (that) she is tired. — 그녀는 피곤하다고 말한다.', '목적어 that은 생략 가능'], narration: '목적어로 쓰인 [en]that[/en]은 생략할 수 있어요. [en]I think he is kind.[/en] 나는 그가 친절하다고 생각해요.' },
+    { type: 'board', title: 'whether / if', lines: ['I don\'t know [b]whether[/b] he will come. — 나는 그가 올지 안 올지 모른다.', 'I wonder [b]if[/b] it will rain. — 나는 비가 올지 궁금하다.', '~인지 아닌지'], narration: '[en]whether[/en]와 [en]if[/en]는 인지 아닌지라는 뜻이에요. [en]I wonder if it will rain.[/en] 나는 비가 올지 궁금해요.' },
+    { type: 'board', title: '주어 자리에는 whether', lines: ['[b]Whether[/b] he comes is unclear. — 그가 올지 안 올지는 분명하지 않다.', 'The question is whether she will agree. — 문제는 그녀가 동의할지이다.'], narration: '주어 자리에서는 [en]if[/en]를 쓰지 않고 [en]whether[/en]를 써요. [en]Whether he comes is unclear.[/en] 그가 올지는 분명하지 않아요.' },
+    { type: 'board', title: '자주 틀리는 문장', lines: ['× [b]If[/b] he comes is unclear. — 그가 올지는 분명하지 않다.', '× I wonder [b]that[/b] it will rain. — 나는 비가 올지 궁금하다.', '× I think [b]what[/b] he is kind. — 나는 그가 친절하다고 생각한다.'], narration: '주어 자리에 [en]if[/en]를 쓰면 틀려요. 올지 궁금하다는 [en]if[/en], 라는 것은 [en]that[/en]이에요.' },
+    { type: 'text', text: '정리: that = ~라는 것 / whether·if = ~인지 아닌지', narration: '정리할게요. [en]that[/en]은 라는 것, [en]whether[/en]와 [en]if[/en]는 인지 아닌지예요.' },
+  ],
+});
