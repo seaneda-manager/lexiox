@@ -1,3 +1,4 @@
+import { ensureReadingIds } from "@/lib/utils/ensureReadingIds";
 export const dynamic = 'force-dynamic';
 
 // apps/web/app/api/updated-reading/result/[resultId]/route.ts
@@ -128,6 +129,7 @@ export async function GET(
 
     // 3. 테스트 데이터 파싱 — 컬럼명은 payload다 (data가 아니다)
     const testJson = testData.payload as RReadingTest2026;
+    ensureReadingIds(testJson);
     if (!testJson?.modules?.length) {
       return NextResponse.json(
         { ok: false, error: "Test payload is empty or malformed" },

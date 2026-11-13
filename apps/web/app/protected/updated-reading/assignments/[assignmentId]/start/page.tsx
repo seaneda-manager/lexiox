@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { getServiceSupabase } from "@/lib/supabase/service";
 import ReadingTestRunnerClient from "@/app/protected/updated-reading/test/[testId]/_client/ReadingTestRunnerClient";
+import { ensureReadingIds } from "@/lib/utils/ensureReadingIds";
 import type { RReadingTest2026 } from "@/models/reading";
 
 export const dynamic = "force-dynamic";
@@ -54,6 +55,9 @@ export default async function StartReadingAssignmentPage({ params }: { params: P
     ).data;
 
   if (!testRow || !testRow.payload) notFound();
+
+  // 예전에 저장된 시험은 빈칸/문항 id가 없어 입력이 한 키를 공유한다 — 응시 전에 보정(결정적이라 채점과 일치).
+  ensureReadingIds(testRow.payload);
 
   await markInProgress(assignmentId, assignment.status);
 
