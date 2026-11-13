@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { getServiceSupabase } from '@/lib/supabase/service';
 import { buildInspirationBlock } from '@/lib/topicPool';
+import { collectUsedTopics, fetchTestPayloads } from '@/lib/topicPool/usedTopics';
 
 export const runtime = 'nodejs';
 
@@ -35,7 +36,7 @@ Requirements:
 - Each topic should be 3-8 words, specific and realistic
 - Spread the ideas over these assigned fields (one idea per field): ${pickFields(kind).join('; ')}
 - Make them diverse and interesting for college students
-${kind === 'daily_life' ? '' : buildInspirationBlock('reading', 5)}
+${kind === 'daily_life' ? '' : buildInspirationBlock('reading', 5, 'en', existingTopics)}
 - Return ONLY a JSON array of strings, no markdown or explanations
 - Example format: ["Library checkout system", "Coral reef bleaching", "Student housing lottery"]
 
@@ -77,16 +78,8 @@ export async function POST(req: Request) {
 
     const sb = getServiceSupabase();
 
-    const { data: tests } = await sb.from('reading_tests_2026').select('payload');
-
-    const existingTopics: string[] = [];
-    if (tests) {
-      for (const test of tests) {
-        const payload = test.payload as any;
-        const used = payload?.meta?.usedTopics?.[kind] as string[] | undefined;
-        if (used) existingTopics.push(...used.filter(Boolean));
-      }
-    }
+    // 전체 이력 장부(usedTopics + 실제 지문 제목) — 유형 구분 없이 모두 피한다.
+    const existingTopics: string[] = collectUsedTopics(await fetchTestPayloads(sb, 'reading_tests_2026'), 150);
 
     if (Array.isArray(avoid)) {
       existingTopics.push(...avoid.filter((t): t is string => typeof t === 'string' && t.trim().length > 0));

@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { getServiceSupabase } from '@/lib/supabase/service';
 import { buildInspirationBlock } from '@/lib/topicPool';
+import { fetchTestPayloads } from '@/lib/topicPool/usedTopics';
 
 export const runtime = 'nodejs';
 
@@ -23,13 +24,23 @@ const KIND_TO_BUCKET: Record<TopicKind, Bucket> = {
 // DB에 저장된 기존 시험들에서 bucket(conversation/announcement/lecture)별로 이미 쓰인 주제 조회
 async function getExistingTopicsByBucket(): Promise<Record<Bucket, string[]>> {
   const sb = getServiceSupabase();
-  const { data: tests } = await sb.from('listening_tests_2026').select('payload');
+  const payloads = await fetchTestPayloads(sb, 'listening_tests_2026');
 
   const result: Record<Bucket, string[]> = { conversation: [], announcement: [], lecture: [] };
-  if (!tests) return result;
 
-  for (const test of tests) {
-    const payload = test.payload as any;
+  for (const payload of payloads as any[]) {
+    // 실제 만들어진 스크립트 제목도 장부에 넣는다(usedTopics가 없는 옛 저장분·입력과 달라진 경우 대비).
+    const kindToBucket: Record<string, Bucket> = { conversation: 'conversation', announcement: 'announcement', academic_talk: 'lecture' };
+    const items = [
+      ...(payload?.modules ?? []).flatMap((m: any) => m?.items ?? []),
+      ...(payload?.stage2Pool?.hard?.items ?? []),
+      ...(payload?.stage2Pool?.easy?.items ?? []),
+    ];
+    for (const it of items) {
+      const b = kindToBucket[it?.taskKind];
+      const t = typeof it?.title === 'string' ? it.title.trim() : '';
+      if (b && t && !/^(title|\.\.\.)$/i.test(t)) result[b].push(t);
+    }
     for (const bucket of ['conversation', 'announcement', 'lecture'] as Bucket[]) {
       const used = payload?.meta?.usedTopics?.[bucket] as string[] | undefined;
       if (used) result[bucket].push(...used.filter(Boolean));
@@ -84,7 +95,7 @@ Requirements:
 - Each topic should be 3-8 words, specific and realistic
 - Vary across different fields (STEM, humanities, social sciences, etc.)
 - Make them diverse and interesting for college students
-${kind === 'announcement' ? '' : buildInspirationBlock(kind === 'conversation' ? 'conversation' : 'lecture', 5)}
+${kind === 'announcement' ? '' : buildInspirationBlock(kind === 'conversation' ? 'conversation' : 'lecture', 5, 'en', existingTopics)}
 - Return ONLY a JSON array of strings, no markdown or explanations
 - Example format: ["Library checkout system", "Climate change research", "Student wellness programs"]
 
@@ -129,7 +140,7 @@ Lecture: ${avoidBlock('lecture')}
 Requirements:
 - Each topic should be 3-8 words, specific and realistic
 - Suitable as a baseline-difficulty item (not too advanced)
-${buildInspirationBlock('conversation', 3)}${buildInspirationBlock('lecture', 3)}
+${buildInspirationBlock('conversation', 3, 'en', existingByBucket.conversation)}${buildInspirationBlock('lecture', 3, 'en', existingByBucket.lecture)}
 - Return ONLY JSON, no markdown or explanation, in this exact shape:
 {"conversation": "...", "announcement": "...", "lecture": "..."}`;
 
@@ -154,7 +165,7 @@ Requirements:
 - Each topic should be 3-8 words, specific and realistic
 - Lecture topics should be genuinely advanced/academic (STEM, humanities, social science)
 - Vary the two lecture topics across different fields
-${buildInspirationBlock('lecture', 4)}
+${buildInspirationBlock('lecture', 4, 'en', existingByBucket.lecture)}
 - Return ONLY JSON, no markdown or explanation, in this exact shape:
 {"lecture": ["...", "..."], "announcement": ["...", "..."]}`;
 
@@ -177,7 +188,7 @@ Requirements:
 - Each topic should be 3-8 words, specific and realistic
 - Everyday campus-life scenarios (housing, registration, clubs, dining, etc.)
 - Vary the three topics so they don't overlap in theme
-${buildInspirationBlock('conversation', 5)}
+${buildInspirationBlock('conversation', 5, 'en', existingByBucket.conversation)}
 - Return ONLY JSON, no markdown or explanation, in this exact shape:
 {"conversation": ["...", "...", "..."]}`;
 

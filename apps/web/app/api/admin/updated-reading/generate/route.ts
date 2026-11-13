@@ -9,6 +9,8 @@ import { verifyQuestionsAndAttachEvidence } from '@/lib/reading/questionQA';
 import { extractReadingTestToBank } from '@/lib/utils/problemBankExtract';
 import { logAnthropicUsage } from '@/lib/ai/logAnthropicUsage';
 import { findBlankCountIssues } from '@/lib/utils/ensureCompleteWordsBlanks';
+import { collectUsedTopics, fetchTestPayloads } from '@/lib/topicPool/usedTopics';
+import { findAcademicParagraphIssues } from '@/lib/utils/validateAcademicParagraphs';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
@@ -18,7 +20,7 @@ const READING_QUALITY_RULES = `QUALITY RULES (ETS item-writer standards):
 - Each question must have exactly ONE defensible answer that is directly supported by a sentence in the passage. Never ask something the passage does not answer.
 - Wrong options must be plausible: reuse words from the passage in a wrong context, state a true-but-irrelevant detail, over-generalize, or reverse a relationship. Never use "all of the above"/"none of the above"; keep the four options similar in length and grammar.
 - Vary question stems (do NOT start every stem with "According to the passage"): mix main idea, detail, negative factual ("is NOT mentioned"), inference, vocabulary-in-context, rhetorical purpose, and reference questions.
-- Academic passage: 180-260 words, one clear paragraph structure with a topic sentence, evidence and a nuance/limitation; do not open every passage with a textbook definition "X is a ...".
+- Academic passage: EXACTLY 3 paragraphs (3 separate <p> elements in passageHtml), about 180-260 words in total. Paragraph 1 introduces the topic and its central claim, paragraph 2 develops it with evidence or an example, paragraph 3 adds a nuance, limitation or implication. Do not open every passage with a textbook definition "X is a ...".
 - Vary the opening sentence of every passage; do not reuse a template.`;
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || 'placeholder' });
@@ -131,26 +133,8 @@ async function generateModule1({
       process.env.SUPABASE_SERVICE_ROLE_KEY || ''
     );
 
-    // 기존 테스트의 주제 조회
-    const { data: existingTests } = await supabase
-      .from('reading_tests_2026')
-      .select('payload')
-      .order('created_at', { ascending: false })
-      .limit(60);
-
-    const existingTopics: string[] = [];
-    if (existingTests) {
-      for (const test of existingTests) {
-        const payload = test.payload as any;
-        if (payload?.meta?.usedTopics) {
-          const used = payload.meta.usedTopics;
-          Object.values(used).forEach((topics: any) => {
-            if (Array.isArray(topics)) existingTopics.push(...topics);
-            else if (typeof topics === 'string') existingTopics.push(topics);
-          });
-        }
-      }
-    }
+    // 기존 테스트의 주제 장부(전체 이력: usedTopics + 실제 지문 제목)
+    const existingTopics = collectUsedTopics(await fetchTestPayloads(supabase, 'reading_tests_2026'), 150);
 
     // (주의) 지금 배정된 주제를 기피 목록에 넣으면 프롬프트가 "이 주제를 쓰라"와 "쓰지 마라"를 동시에 말하게 된다.
 
@@ -162,7 +146,7 @@ CRITICAL: Generate ALL THREE types of passages:
 3. academic_passage (1 passage, 5 questions)
 
 AVOID REPEATING THESE (already used in earlier tests — different subject, scenario and wording; do not reuse their names, settings or storylines):
-${Array.from(new Set(existingTopics)).slice(0, 80).map((t) => `- ${t}`).join('\n') || '(none)'}
+${Array.from(new Set(existingTopics)).slice(0, 150).map((t) => `- ${t}`).join('\n') || '(none)'}
 
 ${READING_QUALITY_RULES}
 
@@ -249,7 +233,7 @@ Return ONLY this JSON structure (NO markdown, NO explanations, NO extra text):
         "stage": 1,
         "difficulty": "core",
         "title": "The ${academicTopicM1}",
-        "passageHtml": "<p>Academic passage about ${academicTopicM1}...</p>",
+        "passageHtml": "<p>Paragraph 1 about ${academicTopicM1}...</p><p>Paragraph 2...</p><p>Paragraph 3...</p>",
         "questions": [
           {"stem": "What is...?", "choices": [{"id": "A", "text": "Option A", "isCorrect": true}, {"id": "B", "text": "Option B", "isCorrect": false}, {"id": "C", "text": "Option C", "isCorrect": false}, {"id": "D", "text": "Option D", "isCorrect": false}]},
           {"stem": "According to...?", "choices": [{"id": "A", "text": "Option A", "isCorrect": false}, {"id": "B", "text": "Option B", "isCorrect": true}, {"id": "C", "text": "Option C", "isCorrect": false}, {"id": "D", "text": "Option D", "isCorrect": false}]},
@@ -268,7 +252,7 @@ Return ONLY this JSON structure (NO markdown, NO explanations, NO extra text):
     for (let attempt = 1; attempt <= 3; attempt++) {
       const retryNote =
         attempt > 1
-          ? `\n\n⚠️ 이전 응답이 검증에 실패했습니다: ${blankIssues.join('; ')}\ncomplete_words 항목은 반드시 "blanks" 배열에 정확히 10개의 항목이 있어야 합니다. 응답하기 전에 반드시 개수를 세어 확인하세요.`
+          ? `\n\n⚠️ 이전 응답이 검증에 실패했습니다: ${blankIssues.join('; ')}\ncomplete_words 항목은 반드시 "blanks" 배열에 정확히 10개의 항목이 있어야 하고, academic_passage의 passageHtml은 반드시 <p> 3개(정확히 3문단)여야 합니다. 응답하기 전에 개수를 세어 확인하세요.`
           : '';
 
       const message = await client.messages.create({
@@ -286,13 +270,13 @@ Return ONLY this JSON structure (NO markdown, NO explanations, NO extra text):
       }
 
       payload = JSON.parse(raw.slice(jsonStart, jsonEnd + 1));
-      blankIssues = findBlankCountIssues(payload);
+      blankIssues = [...findBlankCountIssues(payload), ...findAcademicParagraphIssues(payload)];
       if (blankIssues.length === 0) break;
     }
 
     if (blankIssues.length > 0) {
       return NextResponse.json(
-        { ok: false, error: `Complete Words 빈칸 개수 검증 실패 (3회 재시도 후): ${blankIssues.join('; ')}` },
+        { ok: false, error: `생성 검증 실패 — 빈칸 10개/학술 지문 3문단 (3회 재시도 후): ${blankIssues.join('; ')}` },
         { status: 500 }
       );
     }
@@ -353,26 +337,8 @@ async function generateModule2({
       else if (typeof topics === 'string') m1UsedTopics.push(topics);
     });
 
-    // 기존 테스트의 주제 조회
-    const { data: existingTests } = await supabase
-      .from('reading_tests_2026')
-      .select('payload')
-      .order('created_at', { ascending: false })
-      .limit(60);
-
-    const existingTopics: string[] = [];
-    if (existingTests) {
-      for (const test of existingTests) {
-        const payload = test.payload as any;
-        if (payload?.meta?.usedTopics) {
-          const used = payload.meta.usedTopics;
-          Object.values(used).forEach((topics: any) => {
-            if (Array.isArray(topics)) existingTopics.push(...topics);
-            else if (typeof topics === 'string') existingTopics.push(topics);
-          });
-        }
-      }
-    }
+    // 기존 테스트의 주제 장부(전체 이력: usedTopics + 실제 지문 제목)
+    const existingTopics = collectUsedTopics(await fetchTestPayloads(supabase, 'reading_tests_2026'), 150);
 
     // Module 1 주제 + 기존 주제 모두 제외
     const excludedTopics = [...m1UsedTopics, ...existingTopics];
@@ -382,7 +348,7 @@ async function generateModule2({
 CRITICAL: Generate ONLY Module 2 (stage2Pool) JSON. Do NOT include Module 1.
 
 AVOID DUPLICATE TOPICS (Module 1 of this test + earlier tests — do not reuse their subjects, settings or storylines):
-${Array.from(new Set(excludedTopics)).slice(0, 80).map(t => `- ${t}`).join('\n')}
+${Array.from(new Set(excludedTopics)).slice(0, 170).map(t => `- ${t}`).join('\n')}
 
 ${READING_QUALITY_RULES}
 
@@ -442,7 +408,7 @@ Return ONLY this JSON structure (NO markdown, NO explanations):
           "stage": 2,
           "difficulty": "hard",
           "title": "Title",
-          "passageHtml": "<p>...</p>",
+          "passageHtml": "<p>Paragraph 1...</p><p>Paragraph 2...</p><p>Paragraph 3...</p>",
           "questions": [
             {
               "stem": "What does...",
@@ -510,7 +476,7 @@ Return ONLY this JSON structure (NO markdown, NO explanations):
     for (let attempt = 1; attempt <= 3; attempt++) {
       const retryNote =
         attempt > 1
-          ? `\n\n⚠️ 이전 응답이 검증에 실패했습니다: ${blankIssues.join('; ')}\ncomplete_words 항목은 반드시 "blanks" 배열에 정확히 10개의 항목이 있어야 합니다. 응답하기 전에 반드시 개수를 세어 확인하세요.`
+          ? `\n\n⚠️ 이전 응답이 검증에 실패했습니다: ${blankIssues.join('; ')}\ncomplete_words 항목은 반드시 "blanks" 배열에 정확히 10개의 항목이 있어야 하고, academic_passage의 passageHtml은 반드시 <p> 3개(정확히 3문단)여야 합니다. 응답하기 전에 개수를 세어 확인하세요.`
           : '';
 
       const message = await client.messages.create({
@@ -528,13 +494,13 @@ Return ONLY this JSON structure (NO markdown, NO explanations):
       }
 
       module2Data = JSON.parse(raw.slice(jsonStart, jsonEnd + 1));
-      blankIssues = findBlankCountIssues(module2Data);
+      blankIssues = [...findBlankCountIssues(module2Data), ...findAcademicParagraphIssues(module2Data)];
       if (blankIssues.length === 0) break;
     }
 
     if (blankIssues.length > 0) {
       return NextResponse.json(
-        { ok: false, error: `Complete Words 빈칸 개수 검증 실패 (3회 재시도 후): ${blankIssues.join('; ')}` },
+        { ok: false, error: `생성 검증 실패 — 빈칸 10개/학술 지문 3문단 (3회 재시도 후): ${blankIssues.join('; ')}` },
         { status: 500 }
       );
     }

@@ -19,6 +19,23 @@ export type PoolKey =
 
 const POOLS = seedData as unknown as Record<PoolKey, Seed[]>;
 
+const STOP = new Set(["the", "of", "and", "in", "on", "for", "to", "a", "an", "with", "from", "its", "their", "history"]);
+/** 비교용 토큰 집합(소문자, 불용어 제거, 어미 s 제거). */
+function tokens(text: string): Set<string> {
+  return new Set(
+    text
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .filter((w) => w.length > 2 && !STOP.has(w))
+      .map((w) => w.replace(/s$/, ""))
+  );
+}
+function overlap(a: Set<string>, b: Set<string>): number {
+  let n = 0;
+  a.forEach((w) => b.has(w) && n++);
+  return n;
+}
+
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -33,8 +50,17 @@ function shuffle<T>(arr: T[]): T[] {
  * (분야 비중은 풀 자체의 실제 기출 분포를 따른다: 무작위 순서에서 분야별 첫 항목을 고르므로
  *  항목이 많은 분야가 자주 먼저 걸린다.)
  */
-export function sampleSeeds(key: PoolKey, n: number, opts: { fields?: string[] } = {}): Seed[] {
+export function sampleSeeds(key: PoolKey, n: number, opts: { fields?: string[]; avoid?: string[] } = {}): Seed[] {
   let pool = (POOLS[key] ?? []).filter((s) => s.s);
+  // 이미 쓴 주제(장부)와 세부주제가 겹치는 씨앗은 제외한다. 다 걸러져 모자라면 원래 풀로 되돌린다.
+  if (opts.avoid?.length) {
+    const avoidTokens = opts.avoid.map(tokens);
+    const fresh = pool.filter((s) => {
+      const st = tokens(s.s);
+      return !avoidTokens.some((at) => overlap(st, at) >= 2 || (st.size === 1 && overlap(st, at) === 1));
+    });
+    if (fresh.length >= n) pool = fresh;
+  }
   if (opts.fields?.length) {
     const only = pool.filter((s) => opts.fields!.includes(s.f));
     if (only.length >= n) pool = only;
@@ -62,8 +88,8 @@ const clip = (t: string, max: number) => (t.length > max ? t.slice(0, max - 1) +
  * 프롬프트에 붙일 "영감용 참고" 블록. 풀이 비어 있으면 빈 문자열을 돌려주므로 그대로 이어 붙여도 안전하다.
  * lang: 'en' = 영어 요약, 'ko' = 한국어 요약(Speaking/Writing 추천은 한국어 주제를 만든다).
  */
-export function buildInspirationBlock(key: PoolKey, n: number, lang: "en" | "ko" = "en"): string {
-  const seeds = sampleSeeds(key, n);
+export function buildInspirationBlock(key: PoolKey, n: number, lang: "en" | "ko" = "en", avoid: string[] = []): string {
+  const seeds = sampleSeeds(key, n, { avoid });
   if (!seeds.length) return "";
   const lines = seeds.map((s) => {
     const gist = lang === "ko" ? s.k || s.g : s.g || s.k;

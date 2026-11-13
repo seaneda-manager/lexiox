@@ -7,6 +7,7 @@ import { createClient } from '@supabase/supabase-js';
 import { shuffleAllChoicesInPayload } from '@/lib/utils/validateAnswerDistribution';
 import { logAnthropicUsage } from '@/lib/ai/logAnthropicUsage';
 import { verifyListeningQuestions } from '@/lib/listening/questionQA';
+import { collectUsedTopics, fetchTestPayloads } from '@/lib/topicPool/usedTopics';
 import { buildChooseResponseDiversityBlock, collectChooseResponseUtterances } from '@/lib/listening/diversity';
 
 // 오디오는 이 라우트에서 생성하지 않는다 (스크립트/문제만 생성).
@@ -553,29 +554,12 @@ export async function POST(req: Request) {
       process.env.NEXT_PUBLIC_SUPABASE_URL || '',
       process.env.SUPABASE_SERVICE_ROLE_KEY || ''
     );
-    const { data: existingTests } = await supabase
-      .from('listening_tests_2026')
-      .select('payload')
-      .order('created_at', { ascending: false })
-      .limit(60);
-
-    const existingTopics: string[] = [];
-    if (existingTests) {
-      for (const test of existingTests) {
-        const payload = test.payload as any;
-        // Extract all topics from existing tests
-        if (payload?.meta?.usedTopics) {
-          const used = payload.meta.usedTopics;
-          Object.values(used).forEach((topics: any) => {
-            if (Array.isArray(topics)) existingTopics.push(...topics);
-            else if (typeof topics === 'string') existingTopics.push(topics);
-          });
-        }
-      }
-    }
+    // 전체 이력 장부(usedTopics + 실제 스크립트 제목). 기간 제한 없이 최신순으로 모은다.
+    const existingPayloads = await fetchTestPayloads(supabase, 'listening_tests_2026');
+    const existingTopics = collectUsedTopics(existingPayloads, 150);
 
     // (주의) 이번에 배정된 주제를 기피 목록에 넣으면 프롬프트가 "이 주제로 써라"와 "쓰지 마라"를 동시에 말한다 → 넣지 않는다.
-    const avoidUtterances = collectChooseResponseUtterances((existingTests ?? []).map((t: any) => t.payload), 40);
+    const avoidUtterances = collectChooseResponseUtterances(existingPayloads, 40);
 
     // Generate Module 1, Module 2 Hard, and Module 2 Easy in parallel
     const [module1Items, hardItems, easyItems] = await Promise.all([
