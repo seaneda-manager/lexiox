@@ -78,26 +78,42 @@ function AdvertisementCard({ raw }: { raw: string }) {
   const { heading, bodyParagraphs } = parseHeadingAndBody(raw);
   if (!heading && bodyParagraphs.length === 0) return <PlainTextCard raw={raw} />;
 
+  // 전단지(leaflet) 모양: 종이 시트 + 컬러 헤더 띠 + 점선 안쪽 프레임
   return (
-    <div
-      style={{
-        fontFamily: FONT,
-        border: "2px solid #0073E6",
-        borderRadius: 10,
-        padding: "28px 32px",
-        background: "linear-gradient(180deg, #EBF3FC 0%, #FFFFFF 55%)",
-        textAlign: "center",
-      }}
-    >
-      {heading && (
-        <h3 style={{ margin: "0 0 18px", fontSize: 22, fontWeight: 900, color: "#0F3D91", letterSpacing: 0.2 }}>
-          {heading}
-        </h3>
-      )}
-      <div style={{ textAlign: "left", fontSize: 15, lineHeight: 1.8, color: "#222", display: "inline-block" }}>
-        {bodyParagraphs.map((p, i) => (
-          <p key={i} style={{ margin: i === 0 ? 0 : "10px 0 0" }}>{p}</p>
-        ))}
+    <div style={{ fontFamily: FONT, background: "#E9EDF2", padding: 14, borderRadius: 6 }}>
+      <div
+        style={{
+          background: "#FFFFFF",
+          boxShadow: "0 3px 10px rgba(0,0,0,0.18)",
+          borderRadius: 2,
+          overflow: "hidden",
+        }}
+      >
+        {heading && (
+          <div style={{ background: "linear-gradient(135deg, #0F3D91 0%, #0073E6 100%)", padding: "22px 24px", textAlign: "center" }}>
+            <h3 style={{ margin: 0, fontSize: 24, fontWeight: 900, color: "#FFFFFF", letterSpacing: 0.4, lineHeight: 1.25 }}>
+              {heading}
+            </h3>
+          </div>
+        )}
+        <div style={{ padding: 14 }}>
+          <div style={{ border: "2px dashed #9DB8E0", borderRadius: 4, padding: "18px 22px" }}>
+            {bodyParagraphs.map((p, i) => (
+              <p
+                key={i}
+                style={{
+                  margin: i === 0 ? 0 : "10px 0 0",
+                  fontSize: 15,
+                  lineHeight: 1.75,
+                  color: "#222",
+                  textAlign: "center",
+                }}
+              >
+                {p}
+              </p>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

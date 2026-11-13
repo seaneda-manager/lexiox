@@ -415,6 +415,7 @@ export default function MockTestPlayer({
   const [introStep, setIntroStep] = useState(0); // 0~4: Hardware Check → Volume → Microphone → Reading Section → Module 1
   const [breakStep, setBreakStep] = useState(0); // 0: End of Module 1, 1: Module 2 안내
   const [cwIdx, setCwIdx] = useState(0); // which complete_words item we're on
+  const [cwStage, setCwStage] = useState<1 | 2>(1); // Module 2(적응형)의 Complete Words는 Module 2 시작 때 푼다
   const [currentIdx, setCurrentIdx] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string | string[]>>(
     () => (mode === "study" ? {} : loadAutosave(testId)?.answers ?? {})
@@ -451,6 +452,17 @@ export default function MockTestPlayer({
   // Adaptive: which stage2 module was selected
   const [stage2Difficulty, setStage2Difficulty] = useState<"easy" | "hard" | null>(null);
   const [stage2Questions, setStage2Questions] = useState<FlatQuestion[]>([]);
+
+  // Module 2 Complete Words — 적응형은 선택된 난이도 풀(stage2Pool)에 들어 있다.
+  // (비적응형은 test.modules[1]에 있어 위 cwItems에 이미 포함된다.)
+  const cwStage2Items = useMemo<RCompleteWordsItem[]>(() => {
+    if (!isAdaptive || !stage2Difficulty || !resolvedAdaptiveConfig) return [];
+    const mod = stage2Difficulty === "hard" ? resolvedAdaptiveConfig.stage2Hard : resolvedAdaptiveConfig.stage2Easy;
+    return (mod?.items ?? []).filter((i) => i.taskKind === "complete_words") as RCompleteWordsItem[];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdaptive, stage2Difficulty]);
+  const cwList = cwStage === 2 ? cwStage2Items : cwItems;
+
 
   // Study: 답·위치·깃발·정답확인 상태를 바뀔 때마다 저장 (resume 선택 전에는 덮어쓰지 않는다)
   useEffect(() => {
@@ -595,7 +607,13 @@ export default function MockTestPlayer({
 
   function startStage2() {
     setCurrentIdx(stage1Questions.length); // jump to first stage2 question
-    setPhase("stage2_testing");
+    if (cwStage2Items.length > 0) {
+      setCwStage(2);
+      setCwIdx(0);
+      setPhase("complete_words");
+    } else {
+      setPhase("stage2_testing");
+    }
   }
 
   const triggerFinish = useCallback(async () => {
@@ -895,9 +913,9 @@ export default function MockTestPlayer({
   // ── Complete the Words Screen ──────────────────────────────────────
 
   if (phase === "complete_words") {
-    const cwItem = cwItems[cwIdx];
+    const cwItem = cwList[cwIdx];
     if (!cwItem) {
-      setPhase("stage1_testing");
+      setPhase(cwStage === 2 ? "stage2_testing" : "stage1_testing");
       return null;
     }
 
@@ -912,10 +930,10 @@ export default function MockTestPlayer({
     const allFilled = cwItem.blanks.every((b) => !!((answers[cwKey(b.id)] as string) ?? "").trim());
 
     function goNextCw() {
-      if (cwIdx < cwItems.length - 1) {
+      if (cwIdx < cwList.length - 1) {
         setCwIdx((i) => i + 1);
       } else {
-        setPhase("stage1_testing");
+        setPhase(cwStage === 2 ? "stage2_testing" : "stage1_testing");
       }
     }
 
@@ -958,9 +976,9 @@ export default function MockTestPlayer({
       );
     }
 
-    const cwBlanksBefore = cwItems.slice(0, cwIdx).reduce((n, it) => n + it.blanks.length, 0);
-    const cwBlanksTotal = cwItems.reduce((n, it) => n + it.blanks.length, 0);
-    const module1Total = cwBlanksTotal + stage1Questions.length;
+    const cwBlanksBefore = cwList.slice(0, cwIdx).reduce((n, it) => n + it.blanks.length, 0);
+    const cwBlanksTotal = cwList.reduce((n, it) => n + it.blanks.length, 0);
+    const module1Total = cwBlanksTotal + (cwStage === 2 ? stage2Questions.length : stage1Questions.length);
 
     return (
       <ReadingETSFrame>
@@ -1344,8 +1362,8 @@ export default function MockTestPlayer({
   }
 
   // ── 실제 ETS 문제 화면: 청록 헤더(Volume/Back/Next), "Reading | Question X of Y", 가운데 제목, 좌 지문 / 우 문제 ──
-  const cwBlankCount = cwItems.reduce((n, it) => n + it.blanks.length, 0);
-  const questionOffset = isStage1 ? cwBlankCount : 0;
+  const cwBlankCount = (isStage1 ? cwItems : cwStage2Items).reduce((n, it) => n + it.blanks.length, 0);
+  const questionOffset = cwBlankCount;
   const questionTotal = questionOffset + stageTotal;
   const questionNo = questionOffset + stageLocalIdx + 1;
 

@@ -136,9 +136,16 @@ export async function GET(
         { status: 500 }
       );
     }
+    // 적응형은 Module 2가 stage2Pool(hard/easy)에 있다 — 응시한 난이도의 풀을 포함한다.
+    const stage2Pool = (testJson as any).stage2Pool;
+    const pickedPool =
+      resultData.stage2_difficulty === "hard" ? stage2Pool?.hard
+      : resultData.stage2_difficulty === "easy" ? stage2Pool?.easy
+      : null;
     const allItems = [
       ...(testJson.modules[0]?.items ?? []),
       ...(testJson.modules[1]?.items ?? []),
+      ...(pickedPool?.items ?? []),
     ];
 
     // 4. 사용자 답변 파싱
