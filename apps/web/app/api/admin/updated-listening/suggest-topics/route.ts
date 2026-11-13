@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { getServiceSupabase } from '@/lib/supabase/service';
+import { buildInspirationBlock } from '@/lib/topicPool';
 
 export const runtime = 'nodejs';
 
@@ -83,6 +84,7 @@ Requirements:
 - Each topic should be 3-8 words, specific and realistic
 - Vary across different fields (STEM, humanities, social sciences, etc.)
 - Make them diverse and interesting for college students
+${kind === 'announcement' ? '' : buildInspirationBlock(kind === 'conversation' ? 'conversation' : 'lecture', 5)}
 - Return ONLY a JSON array of strings, no markdown or explanations
 - Example format: ["Library checkout system", "Climate change research", "Student wellness programs"]
 
@@ -127,6 +129,7 @@ Lecture: ${avoidBlock('lecture')}
 Requirements:
 - Each topic should be 3-8 words, specific and realistic
 - Suitable as a baseline-difficulty item (not too advanced)
+${buildInspirationBlock('conversation', 3)}${buildInspirationBlock('lecture', 3)}
 - Return ONLY JSON, no markdown or explanation, in this exact shape:
 {"conversation": "...", "announcement": "...", "lecture": "..."}`;
 
@@ -151,6 +154,7 @@ Requirements:
 - Each topic should be 3-8 words, specific and realistic
 - Lecture topics should be genuinely advanced/academic (STEM, humanities, social science)
 - Vary the two lecture topics across different fields
+${buildInspirationBlock('lecture', 4)}
 - Return ONLY JSON, no markdown or explanation, in this exact shape:
 {"lecture": ["...", "..."], "announcement": ["...", "..."]}`;
 
@@ -173,6 +177,7 @@ Requirements:
 - Each topic should be 3-8 words, specific and realistic
 - Everyday campus-life scenarios (housing, registration, clubs, dining, etc.)
 - Vary the three topics so they don't overlap in theme
+${buildInspirationBlock('conversation', 5)}
 - Return ONLY JSON, no markdown or explanation, in this exact shape:
 {"conversation": ["...", "...", "..."]}`;
 

@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { getServiceSupabase } from '@/lib/supabase/service';
+import { buildInspirationBlock } from '@/lib/topicPool';
 
 export const runtime = 'nodejs';
 
@@ -34,6 +35,7 @@ Requirements:
 - Each topic should be 3-8 words, specific and realistic
 - Spread the ideas over these assigned fields (one idea per field): ${pickFields(kind).join('; ')}
 - Make them diverse and interesting for college students
+${kind === 'daily_life' ? '' : buildInspirationBlock('reading', 5)}
 - Return ONLY a JSON array of strings, no markdown or explanations
 - Example format: ["Library checkout system", "Coral reef bleaching", "Student housing lottery"]
 

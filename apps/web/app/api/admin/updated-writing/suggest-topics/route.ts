@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { getServiceSupabase } from '@/lib/supabase/service';
+import { buildInspirationBlock } from '@/lib/topicPool';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -71,6 +72,7 @@ Requirements:
 - Write each topic in Korean as a short phrase, to match the existing set
 - Each topic must be specific enough to generate content from, not a broad category
 - Vary the situations and domains; do not cluster around one theme
+${buildInspirationBlock(bucket === 'academic' ? 'writingIntegrated' : 'conversation', 4, 'ko')}
 - Return ONLY a JSON array of strings, no markdown, no explanation`;
 
   const message = await client.messages.create({

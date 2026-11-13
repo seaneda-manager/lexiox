@@ -6,6 +6,7 @@
  * 프롬프트에 예시 소재 목록이 있고 기존 "주제"만 회피 목록에 들어가 발화 단위 중복은 안 걸러졌기 때문.
  * → 서버가 무작위로 서로 다른 상황 씨앗을 문항마다 하나씩 강제 배정하고, 최근 발화 목록을 기피시킨다.
  */
+import { conversationScenarioSeeds } from "@/lib/topicPool";
 
 export const CR_SCENARIO_SEEDS = [
   "asking a barista or cafeteria worker about a menu item or allergen",
@@ -82,7 +83,8 @@ export function collectChooseResponseUtterances(payloads: any[], max = 40): stri
 
 /** Task 1 소재 배정 + 기존 발화 기피 블록(프롬프트 끝에 붙인다). */
 export function buildChooseResponseDiversityBlock(seedCount: number, avoidUtterances: string[]): string {
-  const seeds = pickRandom(CR_SCENARIO_SEEDS, seedCount);
+  // 직접 만든 40개 + 실제 기출 대화 상황(lib/topicPool) 합쳐서 뽑는다.
+  const seeds = pickRandom([...CR_SCENARIO_SEEDS, ...conversationScenarioSeeds()], seedCount);
   return `
 
 ## TASK 1 SCENARIO ASSIGNMENT (mandatory — overrides the example scenario list above)
