@@ -167,14 +167,22 @@ export async function generateSpeakingReview(input: {
   return { delivery, review, model: MODEL };
 }
 
+/** 고친 부분: "to" 가 고친 문장 안에 실제로 있는 것만 남긴다(표시할 수 있어야 하므로). */
+function parseChanges(v: unknown, correctedText: string): { from: string; to: string }[] {
+  const low = correctedText.toLowerCase();
+  return arr(v, 6)
+    .map((c: any) => ({ from: s(c?.from), to: s(c?.to) }))
+    .filter((c) => c.to && low.includes(c.to.toLowerCase()));
+}
+
 // ── 녹음 Drill 생성 ───────────────────────────────────────────────────
 function drillSystemPrompt(): string {
   return `You create short SPEAKING drills for Korean TOEFL students. Every item will be answered by RECORDING the student's voice, so each target must be a natural SPOKEN sentence that is easy to say (6–16 words, no long subordinate chains).
 
 Item kinds:
-- "shadow": a sentence the student hears (text-to-speech) and repeats. Give "text" (English) and "korean" (its meaning). Use useful sentence patterns from the improved/model answers.
+- "shadow": a sentence the student hears (text-to-speech) and repeats. It must be the student's OWN sentence from the transcript, corrected: "original" = the student's sentence copied EXACTLY (verbatim) from the transcript, "text" = the corrected, natural version (change only what is wrong, plus at most light polish), "korean" = its meaning, "changes" = the corrected pieces as [{"from":"<wrong piece as the student said it>","to":"<corrected piece as it appears in text>"}]. "to" MUST be a substring of "text" (same spelling and case) so it can be highlighted. Choose sentences that contain real errors; if the student made fewer errors than needed, use model-answer sentences with "original":"" and "changes":[].
 - "dictation": the student hears a sentence (text-to-speech, possibly several times) and TYPES it from memory. Give "text" (English, 8–16 words) and "korean". Prefer sentences that use the student's weak patterns, taken from the improved/model answers.
-- "fix": the student sees a sentence that contains a grammar error and TYPES the corrected sentence; then the correct sentence is shown, erased, and the student SPEAKS it from memory. Give "wrong" (a complete spoken-style sentence that keeps the student's REAL mistake from the transcript/grammar tendencies — keep the error as the student made it), "answer" (the corrected sentence, differing from "wrong" only by the fix), and "explanation" (one Korean line saying what was wrong). If the student made fewer distinct errors than needed, create a sentence with the same TYPE of error.
+- "fix" (grammar drill): the student HEARS (text-to-speech, up to 5 times, never shown on screen) a sentence that contains typical grammar errors, TYPES the corrected sentence, and then speaks the corrected sentence from memory while seeing only its Korean meaning. These sentences do NOT have to come from the student: INVENT fresh, natural, spoken-style sentences (new topics and situations, 8–16 words) that deliberately contain the grammar errors this student makes most — use the grammar tendencies and drill focus listed below, one error type per sentence (two errors at most). Give "wrong" (the sentence with the error(s)), "answer" (the corrected sentence, differing from "wrong" only by the fixes), "korean" (natural Korean meaning of "answer"), "changes" ([{"from","to"}] pieces; each "to" must be a substring of "answer"), and "explanation" (one Korean line stating the rule that was broken). Each of the 3 fix items must target a different weak grammar point.
 - "recall": the student sees only the Korean meaning and a few English hint words and says the sentence from memory. Give "korean", "answer" (English), "hint" (3–5 key words, NOT the full sentence).
 - "pattern": a short speaking task. The student SEES A KOREAN SENTENCE and says it in English. Each pattern item has a "mode":
     • "verb": the student must use the given verbs. "constraint" = e.g. "동사: reconsider, postpone". 
@@ -189,12 +197,13 @@ RULES:
 - "tag" = grammar/pattern name in Korean (reuse the focus tags).
 - Korean must be natural Korean, not word-by-word.
 
-Return ONLY JSON: {"items":[{"kind":"shadow","tag":"...","text":"...","korean":"..."},{"kind":"dictation","tag":"...","text":"...","korean":"..."},{"kind":"fix","tag":"...","wrong":"...","answer":"...","explanation":"..."},{"kind":"recall","tag":"...","korean":"...","answer":"...","hint":"..."},{"kind":"pattern","mode":"verb","tag":"...","korean":"...","answer":"...","constraint":"...","mustUse":"..."}]}`;
+Return ONLY JSON: {"items":[{"kind":"shadow","tag":"...","text":"...","korean":"...","original":"...","changes":[{"from":"...","to":"..."}]},{"kind":"dictation","tag":"...","text":"...","korean":"..."},{"kind":"fix","tag":"...","wrong":"...","answer":"...","korean":"...","changes":[{"from":"...","to":"..."}],"explanation":"..."},{"kind":"recall","tag":"...","korean":"...","answer":"...","hint":"..."},{"kind":"pattern","mode":"verb","tag":"...","korean":"...","answer":"...","constraint":"...","mustUse":"..."}]}`;
 }
 
-export async function generateSpeakingDrill(review: SpeakingReview, prompt: string): Promise<SpeakingDrillItem[]> {
+export async function generateSpeakingDrill(review: SpeakingReview, prompt: string, script: string): Promise<SpeakingDrillItem[]> {
   const content = [
     `Task: ${prompt || "(n/a)"}`,
+    `Student transcript (use these real sentences for the shadow items):\n${script.trim()}`,
     `Drill focus: ${review.drillFocus.map((d) => `${d.tag} (${d.description})`).join("; ") || "(none)"}`,
     `Grammar tendencies: ${review.grammarPatterns.map((g) => g.pattern).join("; ") || "(none)"}`,
     `Corrected examples: ${review.grammarPatterns.flatMap((g) => g.examples.map((e) => `"${e.quote}" -> "${e.correction}"`)).slice(0, 6).join(" | ") || "(none)"}`,
@@ -220,7 +229,10 @@ export async function generateSpeakingDrill(review: SpeakingReview, prompt: stri
     const korean = s(it?.korean);
     if (it?.kind === "shadow") {
       const text = s(it.text);
-      if (text) items.push({ id: `s${++n}`, kind: "shadow", tag, text, korean });
+      if (text) {
+        const original = s(it.original);
+        items.push({ id: `s${++n}`, kind: "shadow", tag, text, korean, original: original || undefined, changes: parseChanges(it.changes, text) });
+      }
     } else if (it?.kind === "dictation") {
       const text = s(it.text);
       if (text) items.push({ id: `d${++n}`, kind: "dictation", tag, text, korean });
@@ -228,7 +240,7 @@ export async function generateSpeakingDrill(review: SpeakingReview, prompt: stri
       const wrong = s(it.wrong);
       const answer = s(it.answer);
       if (wrong && answer && wrong !== answer) {
-        items.push({ id: `f${++n}`, kind: "fix", tag, wrong, answer, explanation: s(it.explanation) });
+        items.push({ id: `f${++n}`, kind: "fix", tag, wrong, answer, explanation: s(it.explanation), korean: korean || undefined, changes: parseChanges(it.changes, answer) });
       }
     } else if (it?.kind === "recall") {
       const answer = s(it.answer);

@@ -76,7 +76,7 @@ export async function POST(req: Request) {
       const { delivery, review, model } = await generateSpeakingReview({ prompt: ctx.prompt, script: ctx.script, durationSec: ctx.durationSec });
       bundle = { version: 1, model, generatedAt: new Date().toISOString(), delivery, review };
     }
-    const items = await generateSpeakingDrill(bundle.review, ctx.prompt);
+    const items = await generateSpeakingDrill(bundle.review, ctx.prompt, ctx.script);
     const withDrill: SpeakingReviewBundle = { ...bundle, drill: { generatedAt: new Date().toISOString(), items } };
     await saveSpeakingBundle(ctx, withDrill);
     return NextResponse.json({ ok: true, items, retell: retellInfo(withDrill) });

@@ -41,14 +41,23 @@ export interface SpeakingReview {
   drillFocus: { tag: string; description: string }[];
 }
 
+/** 틀려서 고친 부분 (원문 조각 → 고친 조각) */
+export interface FixChange {
+  from: string;
+  to: string;
+}
+
 /** 듣고 따라 말하기 */
 export interface ShadowItem {
   id: string;
   kind: "shadow";
   tag: string;
-  /** 따라 말할 영어 문장 */
+  /** 따라 말할 영어 문장 (내가 실제로 말한 문장을 바르게 고친 것) */
   text: string;
   korean: string;
+  /** 내가 실제로 말한 원래 문장 (있으면 고친 부분을 표시한다) */
+  original?: string;
+  changes?: FixChange[];
 }
 
 /** 듣고 기억해서 타이핑 (여러 번 들을 수 있지만 재청취마다 감점) */
@@ -71,6 +80,10 @@ export interface FixItem {
   answer: string;
   /** 왜 틀렸는지 한 줄 (한국어) */
   explanation: string;
+  /** 고친 문장의 한글 뜻 (말하기 단계에서 화면에 계속 보인다) */
+  korean?: string;
+  /** 틀려서 고친 부분 */
+  changes?: FixChange[];
 }
 
 /** 한글 뜻을 보고 고친 문장을 기억해서 말하기 */
