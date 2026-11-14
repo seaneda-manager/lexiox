@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import ScriptEditor from "./ScriptEditor";
-import AiFeedbackPanel from "./AiFeedbackPanel";
+import ReviewDetail from "./ReviewDetail";
 import ReRecordPanel from "./ReRecordPanel";
 
 export default function ScriptAndFeedback({
@@ -20,10 +20,12 @@ export default function ScriptAndFeedback({
   approxSentences?: number | null;
   initialFeedback?: string | null;
 }) {
-  const [scriptChanged, setScriptChanged] = useState(false);
+  const [scriptVersion, setScriptVersion] = useState(0);
+  const [script, setScript] = useState(initialScript);
 
-  function onChanged() {
-    setScriptChanged(true);
+  function onChanged(newScript?: string) {
+    if (typeof newScript === "string") setScript(newScript);
+    setScriptVersion((v) => v + 1);
   }
 
   return (
@@ -42,13 +44,7 @@ export default function ScriptAndFeedback({
           />
         }
       />
-      {initialScript && (
-        <AiFeedbackPanel
-          resultId={resultId}
-          initialFeedback={initialFeedback}
-          scriptChanged={scriptChanged}
-        />
-      )}
+      <ReviewDetail resultId={resultId} script={script} scriptVersion={scriptVersion} />
     </>
   );
 }

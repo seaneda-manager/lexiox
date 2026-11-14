@@ -16,7 +16,7 @@ export default function ScriptEditor({
   initialScript: string | null;
   approxWords?: number | null;
   approxSentences?: number | null;
-  onScriptChanged?: () => void;
+  onScriptChanged?: (script?: string) => void;
   reRecordSlot?: ReactNode;
 }) {
   const [editing, setEditing] = useState(false);
@@ -46,7 +46,7 @@ export default function ScriptEditor({
       if (!res.ok) throw new Error(data.error ?? "저장 실패");
       setScript(draft);
       setEditing(false);
-      onScriptChanged?.();
+      onScriptChanged?.(draft);
     } catch (e) {
       setError(e instanceof Error ? e.message : "오류가 발생했습니다.");
     } finally {
