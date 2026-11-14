@@ -8,10 +8,15 @@ import { useRouter } from "next/navigation";
  * Reading 섹션의 모든 화면(안내, Complete the Words, 문항, Stage Break, Review, 결과)이
  * 같은 비율로 보이도록 공유한다.
  */
-export function ReadingETSFrame({ children }: { children: React.ReactNode }) {
+export function ReadingETSFrame({ children, confirmExit = true }: { children: React.ReactNode; confirmExit?: boolean }) {
   const router = useRouter();
 
   const handleExit = () => {
+    // 시험이 이미 끝난 화면(결과/완료)에서는 "저장되지 않습니다" 경고 없이 바로 나간다.
+    if (!confirmExit) {
+      router.push("/student");
+      return;
+    }
     const confirmed = window.confirm(
       "If you exit now, your progress will not be saved and you will need to restart this test from the beginning.\n\nAre you sure you want to exit?"
     );

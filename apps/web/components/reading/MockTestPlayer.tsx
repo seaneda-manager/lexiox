@@ -448,6 +448,7 @@ export default function MockTestPlayer({
     setResumeChecked(true);
   }, [isStudy, testId]);
   const [submitting, setSubmitting] = useState(false);
+  const [saveError, setSaveError] = useState(false);
 
   // Adaptive: which stage2 module was selected
   const [stage2Difficulty, setStage2Difficulty] = useState<"easy" | "hard" | null>(null);
@@ -626,6 +627,7 @@ export default function MockTestPlayer({
     setPhase("result");
 
     setSubmitting(true);
+    setSaveError(false);
     // Complete Words answers: keys starting with "cw__"
     const cwAnswers = Object.entries(answers)
       .filter(([k]) => k.startsWith("cw__"))
@@ -656,6 +658,7 @@ export default function MockTestPlayer({
           body: JSON.stringify(payload),
         });
         const json = await res.json().catch(() => null);
+        if (!res.ok || json?.ok === false) setSaveError(true);
         if (json?.nextSection) {
           setNextSection({ href: json.nextSection.href, section: json.nextSection.section });
         }
@@ -668,7 +671,7 @@ export default function MockTestPlayer({
         try { window.localStorage.removeItem(autosaveKey(testId)); window.localStorage.removeItem(studyKey(testId)); } catch { /* noop */ }
       }
     } catch {
-      // silent
+      setSaveError(true);
     } finally {
       setSubmitting(false);
     }
@@ -1063,7 +1066,7 @@ export default function MockTestPlayer({
   if (phase === "result" && score) {
     const pct = Math.round((score.correct / score.total) * 100);
     return (
-      <ReadingETSFrame>
+      <ReadingETSFrame confirmExit={submitting || saveError}>
       <div className="flex-1 overflow-y-auto" style={{ backgroundColor: "#F4F6F9" }}>
       <div className="mx-auto max-w-2xl px-4 py-10">
         <div className="rounded-xl border bg-white p-8 shadow-sm">
@@ -1152,6 +1155,11 @@ export default function MockTestPlayer({
 
           {submitting && (
             <p className="mt-4 text-xs text-gray-400">결과 저장 중…</p>
+          )}
+          {saveError && !submitting && (
+            <p className="mt-4 rounded-md bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700">
+              결과 저장에 실패했어요. 이 화면을 캡처해서 선생님께 알려 주세요.
+            </p>
           )}
 
           {nextSection && (

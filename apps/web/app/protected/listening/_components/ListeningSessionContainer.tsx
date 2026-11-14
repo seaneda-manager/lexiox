@@ -404,6 +404,7 @@ function ListeningFinalScreen({ nextHref, groupHref }: { nextHref?: string; grou
   };
   return (
     <ListeningTestLayout2026
+      confirmExit={false}
       headerLeft={<ListeningHeaderLabel />}
       headerRight={<button onClick={goNext} style={etsNextStyle}>{tx("Next >", "다음 >")}</button>}
       subHeaderLeft={<ListeningSubHeaderLabel />}

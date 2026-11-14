@@ -24,6 +24,8 @@ type Props = {
   /** 서브헤더 우측: 문항별 카운트다운 타이머 등 */
   subHeaderRight?: ReactNode;
   children: ReactNode;
+  /** 시험이 끝난 화면(완료)에서는 false 로 두어 Exit 경고창을 없앤다. 기본 true. */
+  confirmExit?: boolean;
 };
 
 /**
@@ -52,10 +54,10 @@ export function ListeningSubHeaderLabel({ questionInfo }: { questionInfo?: strin
   );
 }
 
-export default function ListeningTestLayout2026({ headerLeft, headerRight, subHeaderLeft, subHeaderRight, children }: Props) {
+export default function ListeningTestLayout2026({ headerLeft, headerRight, subHeaderLeft, subHeaderRight, children, confirmExit = true }: Props) {
   const isStudy = useContext(ListeningStudyContext);
   return (
-    <ListeningETSFrame>
+    <ListeningETSFrame confirmExit={confirmExit}>
       {/* ── ETS Header ── */}
       <header style={{
         height: 60,
