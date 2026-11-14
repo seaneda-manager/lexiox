@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ensureReadingIds } from "@/lib/utils/ensureReadingIds";
 import { getServerSupabase } from "@/lib/supabase/server";
 import type { RReadingTest2026 } from "@/models/reading";
 
@@ -69,6 +70,8 @@ export default async function AdminReadingDetailPage({
     .eq("id", resultData.test_id)
     .single();
 
+  // 예전에 저장된 시험은 문항·빈칸 id가 비어 있다. 응시 때 붙이던 것과 같은 규칙으로 보정해야 저장된 답과 맞는다.
+  if (testData?.payload) ensureReadingIds(testData.payload);
   const testJson = testData?.payload as RReadingTest2026;
   const testLabel = testJson?.meta?.label ?? testData?.label ?? resultData.label ?? "Reading Test";
 

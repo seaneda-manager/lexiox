@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ensureReadingIds } from "@/lib/utils/ensureReadingIds";
 import { notFound } from "next/navigation";
 import { getServerSupabase } from "@/lib/supabase/server";
 import type {
@@ -140,6 +141,8 @@ export default async function StudentReadingReviewDetailPage({ params }: PagePro
   if (testError) console.error("ReadingReview test error", testError);
   if (!testRow?.payload) notFound();
 
+  // 예전에 저장된 시험은 문항·빈칸 id가 비어 있다. 응시 때 붙이던 것과 같은 규칙으로 보정해야 저장된 답과 맞는다.
+  ensureReadingIds(testRow.payload);
   const test = testRow.payload as RReadingTest2026;
 
   const answers: AnswerPayload[] = Array.isArray(resultRow.answers)

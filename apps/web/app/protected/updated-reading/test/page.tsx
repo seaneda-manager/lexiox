@@ -1,4 +1,5 @@
 // apps/web/app/protected/updated-reading/test/page.tsx
+import { ensureReadingIds } from "@/lib/utils/ensureReadingIds";
 import { getServerSupabase } from '@/lib/supabase/server';
 import MockTestPlayer from '@/components/reading/MockTestPlayer';
 import type { RReadingTest2026 } from '@/models/reading';
@@ -39,7 +40,7 @@ export default async function Reading2026TestPage() {
     <MockTestPlayer
       testId={testRow.id}
       label={testRow.label ?? 'Reading 2026 Test'}
-      test={testRow.payload as RReadingTest2026}
+      test={(ensureReadingIds(testRow.payload), testRow.payload) as RReadingTest2026}
     />
   );
 }
