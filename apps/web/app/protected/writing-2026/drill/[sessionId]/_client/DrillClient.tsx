@@ -24,14 +24,14 @@ export default function DrillClient({ sessionId }: { sessionId: string }) {
   const [results, setResults] = useState<Result[]>([]);
 
   const load = useCallback(
-    async (regenerate = false) => {
+    async () => {
       setLoading(true);
       setError(null);
       try {
         const res = await fetch("/api/writing-2026/drill", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sessionId, action: "get", regenerate }),
+          body: JSON.stringify({ sessionId, action: "get" }),
         });
         const json = await res.json().catch(() => ({}));
         if (!res.ok || !json.ok) throw new Error(json.error || "Drill을 불러오지 못했습니다");
@@ -48,7 +48,7 @@ export default function DrillClient({ sessionId }: { sessionId: string }) {
   );
 
   useEffect(() => {
-    void load(false);
+    void load();
   }, [load]);
 
   const record = (item: DrillItem, ok: boolean) =>
@@ -67,14 +67,14 @@ export default function DrillClient({ sessionId }: { sessionId: string }) {
     return (
       <div className="space-y-3 rounded-2xl border border-rose-200 bg-rose-50 px-6 py-6 text-center">
         <p className="text-sm text-rose-700">{error ?? "Drill이 없습니다"}</p>
-        <button onClick={() => load(false)} className="rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-700">
+        <button onClick={() => load()} className="rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-700">
           다시 시도
         </button>
       </div>
     );
   }
 
-  if (idx >= items.length) return <Summary items={items} results={results} sessionId={sessionId} onRetry={() => load(true)} />;
+  if (idx >= items.length) return <Summary items={items} results={results} sessionId={sessionId} onRetry={() => { setIdx(0); setResults([]); }} />;
 
   const item = items[idx];
   const stage = item.kind === "chunk" ? 1 : 2;
@@ -290,7 +290,7 @@ function Summary({ items, results, sessionId, onRetry }: { items: DrillItem[]; r
       </div>
       <div className="flex gap-3">
         <button onClick={onRetry} className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-          새 문제로 다시
+          같은 문제 다시 풀기
         </button>
         <Link href={`/writing-2026/review/${sessionId}`} className="flex-1 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white">
           리뷰로 돌아가기

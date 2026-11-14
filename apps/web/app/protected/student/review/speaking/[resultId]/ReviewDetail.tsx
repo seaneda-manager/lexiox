@@ -40,14 +40,14 @@ export default function ReviewDetail({ resultId, script, scriptVersion }: { resu
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(
-    async (regenerate = false) => {
+    async () => {
       setLoading(true);
       setError(null);
       try {
         const res = await fetch("/api/speaking-2026/review", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ resultId, regenerate }),
+          body: JSON.stringify({ resultId }),
         });
         const json = await res.json().catch(() => ({}));
         if (!res.ok || !json.ok) throw new Error(json.error || "리뷰를 불러오지 못했습니다");
@@ -63,7 +63,7 @@ export default function ReviewDetail({ resultId, script, scriptVersion }: { resu
 
   // 스크립트를 고치면(scriptVersion 증가) 서버가 캐시를 무효화하므로 다시 불러온다.
   useEffect(() => {
-    if (script) void load(false);
+    if (script) void load();
   }, [load, script, scriptVersion]);
 
   if (!script) {
@@ -88,7 +88,7 @@ export default function ReviewDetail({ resultId, script, scriptVersion }: { resu
     return (
       <section className="space-y-3 rounded-xl border border-rose-200 bg-rose-50 px-6 py-6 text-center">
         <p className="text-sm text-rose-700">{error ?? "리뷰가 없습니다"}</p>
-        <button onClick={() => load(false)} className="rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-700">
+        <button onClick={() => load()} className="rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-700">
           다시 시도
         </button>
       </section>
@@ -102,9 +102,6 @@ export default function ReviewDetail({ resultId, script, scriptVersion }: { resu
     <section className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-base font-bold text-gray-900">상세 리뷰</h2>
-        <button onClick={() => load(true)} className="text-xs text-gray-400 hover:text-gray-600" title="리뷰를 새로 생성합니다">
-          ↻ 다시 생성
-        </button>
       </div>
 
       {r.overview && (

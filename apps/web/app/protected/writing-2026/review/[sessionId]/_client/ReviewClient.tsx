@@ -14,14 +14,14 @@ export default function ReviewClient({ sessionId, emailText, discussionText }: P
   const [tab, setTab] = useState<ReviewTaskKey>(emailText.trim() ? "email" : "discussion");
 
   const load = useCallback(
-    async (regenerate = false) => {
+    async () => {
       setLoading(true);
       setError(null);
       try {
         const res = await fetch("/api/writing-2026/review", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sessionId, regenerate }),
+          body: JSON.stringify({ sessionId }),
         });
         const json = await res.json().catch(() => ({}));
         if (!res.ok || !json.ok) throw new Error(json.error || "리뷰를 불러오지 못했습니다");
@@ -36,7 +36,7 @@ export default function ReviewClient({ sessionId, emailText, discussionText }: P
   );
 
   useEffect(() => {
-    void load(false);
+    void load();
   }, [load]);
 
   if (loading) {
@@ -54,7 +54,7 @@ export default function ReviewClient({ sessionId, emailText, discussionText }: P
       <section className="space-y-3 rounded-2xl border border-rose-200 bg-rose-50 px-6 py-6 text-center">
         <p className="text-sm text-rose-700">{error ?? "리뷰가 없습니다"}</p>
         <button
-          onClick={() => load(false)}
+          onClick={() => load()}
           className="rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-700"
         >
           다시 시도
@@ -84,9 +84,6 @@ export default function ReviewClient({ sessionId, emailText, discussionText }: P
             </button>
           ))}
         </div>
-        <button onClick={() => load(true)} className="text-xs text-slate-400 hover:text-slate-600" title="리뷰를 새로 생성합니다">
-          ↻ 다시 생성
-        </button>
       </div>
 
       <TaskReviewView task={task} studentText={studentText} />

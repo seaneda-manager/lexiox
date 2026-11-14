@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
 export async function POST(req: Request) {
-  let body: { sessionId?: string; action?: "get" | "check"; itemId?: string; answer?: string; regenerate?: boolean; item?: { korean?: string; answer?: string; mustUse?: string } };
+  let body: { sessionId?: string; action?: "get" | "check"; itemId?: string; answer?: string; item?: { korean?: string; answer?: string; mustUse?: string } };
   try {
     body = await req.json();
   } catch {
@@ -45,9 +45,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true, result, modelAnswer: item.answer });
     }
 
-    if (ctx.cached?.drill?.items.length && !body.regenerate) {
+    if (ctx.cached?.drill?.items.length) {
       return NextResponse.json({ ok: true, items: ctx.cached.drill.items });
     }
+
+  // 선생님/관리자가 열었는데 아직 만들어진 게 없으면 만들지 않는다 (비용 보호). 학생이 열 때 한 번만 만들어 저장한다.
+  if (!ctx.isOwner) {
+    return NextResponse.json({ ok: false, notGenerated: true, error: "아직 만들어진 리뷰가 없어요. 학생이 리뷰를 처음 열면 자동으로 만들어집니다." }, { status: 409 });
+  }
 
     // 리뷰가 아직 없으면(리뷰 페이지를 거치지 않고 접근) 먼저 만든다.
     let review: WritingAiReview | null = ctx.cached;

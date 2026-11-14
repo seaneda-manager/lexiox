@@ -13,7 +13,6 @@ export async function POST(req: Request) {
   let body: {
     resultId?: string;
     action?: "get" | "check" | "compare" | "fix";
-    regenerate?: boolean;
     transcript?: string;
     durationSec?: number;
     item?: { korean?: string; answer?: string; mustUse?: string; wrong?: string };
@@ -64,9 +63,14 @@ export async function POST(req: Request) {
       });
     }
 
-    if (ctx.cached?.drill?.items.length && !body.regenerate) {
+    if (ctx.cached?.drill?.items.length) {
       return NextResponse.json({ ok: true, items: ctx.cached.drill.items, retell: retellInfo(ctx.cached) });
     }
+
+  // 선생님/관리자가 열었는데 아직 만들어진 게 없으면 만들지 않는다 (비용 보호). 학생이 열 때 한 번만 만들어 저장한다.
+  if (!ctx.isOwner) {
+    return NextResponse.json({ ok: false, notGenerated: true, error: "아직 만들어진 리뷰가 없어요. 학생이 리뷰를 처음 열면 자동으로 만들어집니다." }, { status: 409 });
+  }
 
     let bundle: SpeakingReviewBundle | null = ctx.cached;
     if (!bundle) {

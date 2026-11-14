@@ -46,14 +46,14 @@ export default function SpeakingDrillClient({ resultId, prompt, firstScript }: {
   const [results, setResults] = useState<Result[]>([]);
 
   const load = useCallback(
-    async (regenerate = false) => {
+    async () => {
       setLoading(true);
       setError(null);
       try {
         const res = await fetch("/api/speaking-2026/drill", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ resultId, action: "get", regenerate }),
+          body: JSON.stringify({ resultId, action: "get" }),
         });
         const json = await res.json().catch(() => ({}));
         if (!res.ok || !json.ok) throw new Error(json.error || "Drill을 불러오지 못했습니다");
@@ -71,7 +71,7 @@ export default function SpeakingDrillClient({ resultId, prompt, firstScript }: {
   );
 
   useEffect(() => {
-    void load(false);
+    void load();
   }, [load]);
 
   if (loading) {
@@ -87,7 +87,7 @@ export default function SpeakingDrillClient({ resultId, prompt, firstScript }: {
     return (
       <div className="space-y-3 rounded-2xl border border-rose-200 bg-rose-50 px-6 py-6 text-center">
         <p className="text-sm text-rose-700">{error ?? "Drill이 없습니다"}</p>
-        <button onClick={() => load(false)} className="rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-700">
+        <button onClick={() => load()} className="rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-700">
           다시 시도
         </button>
       </div>
@@ -112,7 +112,7 @@ export default function SpeakingDrillClient({ resultId, prompt, firstScript }: {
               ? "기억해서 말하기"
               : "한글 보고 말하기";
 
-  if (idx > items.length) return <Summary results={results} resultId={resultId} onRetry={() => load(true)} />;
+  if (idx > items.length) return <Summary results={results} resultId={resultId} onRetry={() => { setIdx(0); setResults([]); }} />;
 
   const item = idx < items.length ? items[idx] : null;
 
@@ -866,7 +866,7 @@ function Summary({ results, resultId, onRetry }: { results: Result[]; resultId: 
       </div>
       <div className="flex gap-3">
         <button onClick={onRetry} className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50">
-          새 문제로 다시
+          같은 문제 다시 풀기
         </button>
         <Link href={`/student/review/speaking/${resultId}`} className="flex-1 rounded-xl bg-gray-900 px-4 py-3 text-sm font-semibold text-white">
           리뷰로 돌아가기

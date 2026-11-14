@@ -17,6 +17,8 @@ export interface SpeakingReviewContext {
   meta: Record<string, unknown>;
   /** 캐시가 현재 스크립트 기준인지 확인하기 위한 해시 */
   scriptKey: string;
+  /** 이 결과를 낸 학생 본인인지 (선생님/관리자는 false) */
+  isOwner: boolean;
 }
 
 export type SpeakingLoadResult =
@@ -42,7 +44,8 @@ export async function loadSpeakingReviewSession(resultId: string): Promise<Speak
     .maybeSingle();
   if (!row) return { ok: false, status: 404, error: "결과를 찾을 수 없습니다" };
 
-  if ((row as any).user_id !== user.id) {
+  const isOwner = (row as any).user_id === user.id;
+  if (!isOwner) {
     try {
       await requireTeacherOrAdmin();
     } catch {
@@ -67,6 +70,7 @@ export async function loadSpeakingReviewSession(resultId: string): Promise<Speak
       cached: bundle && bundle.scriptKey === scriptKey ? bundle : null,
       meta,
       scriptKey,
+      isOwner,
     },
   };
 }

@@ -59,14 +59,14 @@ export default function SpeakingVocabClient({ resultId }: { resultId: string }) 
   const [correct, setCorrect] = useState(0);
 
   const load = useCallback(
-    async (regenerate = false) => {
+    async () => {
       setLoading(true);
       setError(null);
       try {
         const res = await fetch("/api/speaking-2026/vocab", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ resultId, regenerate }),
+          body: JSON.stringify({ resultId }),
         });
         const json = await res.json().catch(() => ({}));
         if (!res.ok || !json.ok) throw new Error(json.error || "단어 목록을 불러오지 못했습니다");
@@ -82,7 +82,7 @@ export default function SpeakingVocabClient({ resultId }: { resultId: string }) 
   );
 
   useEffect(() => {
-    void load(false);
+    void load();
   }, [load]);
 
   const startTest = (list: SpeakingVocabEntry[]) => {
@@ -106,7 +106,7 @@ export default function SpeakingVocabClient({ resultId }: { resultId: string }) 
     return (
       <div className="space-y-3 rounded-2xl border border-rose-200 bg-rose-50 px-6 py-6 text-center">
         <p className="text-sm text-rose-700">{error ?? "단어 목록이 없습니다"}</p>
-        <button onClick={() => load(false)} className="rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-700">
+        <button onClick={() => load()} className="rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-700">
           다시 시도
         </button>
       </div>
@@ -134,7 +134,6 @@ export default function SpeakingVocabClient({ resultId }: { resultId: string }) 
       resultId={resultId}
       onRetryMissed={() => startTest(missed)}
       onRetryAll={() => setPhase("study")}
-      onRegenerate={() => load(true)}
     />
   );
 }
@@ -343,7 +342,6 @@ function Summary({
   resultId,
   onRetryMissed,
   onRetryAll,
-  onRegenerate,
 }: {
   total: number;
   correct: number;
@@ -351,7 +349,6 @@ function Summary({
   resultId: string;
   onRetryMissed: () => void;
   onRetryAll: () => void;
-  onRegenerate: () => void;
 }) {
   return (
     <div className="space-y-5 rounded-2xl border border-gray-200 bg-white p-6">
@@ -388,9 +385,6 @@ function Summary({
         )}
         <button onClick={onRetryAll} className="flex-1 rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50">
           처음부터 다시
-        </button>
-        <button onClick={onRegenerate} className="flex-1 rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50">
-          새 단어 목록
         </button>
       </div>
       <Link href={`/student/review/speaking/${resultId}`} className="block text-center text-xs text-gray-500 underline">

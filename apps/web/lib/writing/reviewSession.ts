@@ -12,6 +12,8 @@ export interface ReviewSessionContext {
   sessionId: string;
   input: ReviewInput;
   cached: WritingAiReview | null;
+  /** 이 결과를 낸 학생 본인인지 (선생님/관리자는 false) */
+  isOwner: boolean;
 }
 
 export type LoadResult =
@@ -43,7 +45,8 @@ export async function loadReviewSession(sessionId: string): Promise<LoadResult> 
     .maybeSingle();
   if (!session) return { ok: false, status: 404, error: "세션을 찾을 수 없습니다" };
 
-  if ((session as any).user_id !== user.id) {
+  const isOwner = (session as any).user_id === user.id;
+  if (!isOwner) {
     try {
       await requireTeacherOrAdmin();
     } catch {
@@ -98,6 +101,7 @@ export async function loadReviewSession(sessionId: string): Promise<LoadResult> 
         discussionText: textOf(answers.task_3_submission),
       },
       cached,
+      isOwner,
     },
   };
 }

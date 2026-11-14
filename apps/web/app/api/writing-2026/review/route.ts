@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
 export async function POST(req: Request) {
-  let body: { sessionId?: string; regenerate?: boolean };
+  let body: { sessionId?: string };
   try {
     body = await req.json();
   } catch {
@@ -19,8 +19,13 @@ export async function POST(req: Request) {
   if (loaded.ok === false) return NextResponse.json({ ok: false, error: loaded.error }, { status: loaded.status });
   const { ctx } = loaded;
 
-  if (ctx.cached && !body.regenerate && (ctx.cached.email || ctx.cached.discussion)) {
+  if (ctx.cached && (ctx.cached.email || ctx.cached.discussion)) {
     return NextResponse.json({ ok: true, cached: true, review: ctx.cached });
+  }
+
+  // 선생님/관리자가 열었는데 아직 만들어진 게 없으면 만들지 않는다 (비용 보호). 학생이 열 때 한 번만 만들어 저장한다.
+  if (!ctx.isOwner) {
+    return NextResponse.json({ ok: false, notGenerated: true, error: "아직 만들어진 리뷰가 없어요. 학생이 리뷰를 처음 열면 자동으로 만들어집니다." }, { status: 409 });
   }
 
   try {
