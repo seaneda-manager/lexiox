@@ -140,27 +140,44 @@ function userContent(input: ReviewInput): string {
   return parts.join("\n\n");
 }
 
+async function reviewOneTask(client: Anthropic, input: ReviewInput, key: ReviewTaskKey): Promise<TaskReview | null> {
+  const only: ReviewInput =
+    key === "email"
+      ? { ...input, discussionText: "" }
+      : { ...input, emailText: "" };
+  const text = key === "email" ? input.emailText : input.discussionText;
+  if (!text.trim()) return null;
+
+  const msg = await client.messages.create({
+    model: MODEL,
+    max_tokens: 6500,
+    temperature: 0.4,
+    system: [{ type: "text", text: systemPrompt(), cache_control: { type: "ephemeral" } }],
+    messages: [{ role: "user", content: userContent(only) }],
+  });
+  void logAnthropicUsage("writing-2026/review", MODEL, msg.usage);
+  const raw = msg.content[0]?.type === "text" ? msg.content[0].text : "";
+  const json = parseJson(raw);
+  if (!json) throw new Error("리뷰 응답을 해석하지 못했습니다.");
+  return parseTaskReview(json[key], text);
+}
+
+/** Email / Discussion 을 병렬로 따로 생성한다 (한 번에 만들면 서버리스 제한 시간을 넘긴다). */
 export async function generateWritingReview(input: ReviewInput): Promise<WritingAiReview> {
   if (!input.emailText.trim() && !input.discussionText.trim()) {
     throw new Error("리뷰할 답안이 없습니다.");
   }
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-  const msg = await client.messages.create({
-    model: MODEL,
-    max_tokens: 12000,
-    temperature: 0.4,
-    system: [{ type: "text", text: systemPrompt(), cache_control: { type: "ephemeral" } }],
-    messages: [{ role: "user", content: userContent(input) }],
-  });
-  void logAnthropicUsage("writing-2026/review", MODEL, msg.usage);
-  const raw = msg.content[0]?.type === "text" ? msg.content[0].text : "";
-  const json = parseJson(raw);
-  if (!json) throw new Error("AI 리뷰 응답을 해석하지 못했습니다.");
-
-  const email = input.emailText.trim() ? parseTaskReview(json.email, input.emailText) : null;
-  const discussion = input.discussionText.trim() ? parseTaskReview(json.discussion, input.discussionText) : null;
-  if (!email && !discussion) throw new Error("AI 리뷰 결과가 비어 있습니다.");
-
+  const [e, d] = await Promise.allSettled([
+    reviewOneTask(client, input, "email"),
+    reviewOneTask(client, input, "discussion"),
+  ]);
+  const email = e.status === "fulfilled" ? e.value : null;
+  const discussion = d.status === "fulfilled" ? d.value : null;
+  if (!email && !discussion) {
+    const failed = [e, d].find((r) => r.status === "rejected") as PromiseRejectedResult | undefined;
+    throw new Error(failed?.reason instanceof Error ? failed.reason.message : "리뷰 결과가 비어 있습니다.");
+  }
   return { version: 1, model: MODEL, generatedAt: new Date().toISOString(), email, discussion };
 }
 
