@@ -1,5 +1,5 @@
 "use client";
-// 2단계 Drill: ① 청크 배열(정답 즉시 판정) → ② 한글→영어 작문(AI 채점) → 결과 요약
+// 2단계 Drill: ① 청크 배열(정답 즉시 판정) → ② 한글→영어 작문(자동 채점) → 결과 요약
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import type { DrillChunkItem, DrillComposeItem, DrillItem } from "@/lib/writing/reviewTypes";

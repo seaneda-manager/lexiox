@@ -1,5 +1,5 @@
 // app/protected/writing-2026/review/[sessionId]/page.tsx
-// Writing 리뷰 — 점수 + 선생님 피드백 + AI 상세 리뷰(답안 비교·경향 분석·모범답안 2종) + Drill 진입
+// Writing 리뷰 — 점수 + 선생님 피드백 + 상세 리뷰(답안 비교·경향 분석·모범답안 2종) + Drill 진입
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getServiceSupabase } from "@/lib/supabase/service";
@@ -67,7 +67,7 @@ export default async function WritingReviewPage({ params }: Props) {
         </div>
       ) : (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-800">
-          ⏳ 선생님 채점이 끝나면 점수가 이곳에 표시됩니다. 아래 AI 리뷰는 지금 바로 볼 수 있습니다.
+          ⏳ 선생님 채점이 끝나면 점수가 이곳에 표시됩니다. 아래 리뷰는 지금 바로 볼 수 있습니다.
         </div>
       )}
 

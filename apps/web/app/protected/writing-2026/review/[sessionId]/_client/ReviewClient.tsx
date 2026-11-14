@@ -1,5 +1,5 @@
 "use client";
-// AI 리뷰 본문: 생성(최초 20~40초) → Email / Discussion 탭 → 섹션별 상세.
+// 리뷰 본문: 생성(최초 20~40초) → Email / Discussion 탭 → 섹션별 상세.
 import { useCallback, useEffect, useState } from "react";
 import type { TaskReview, WritingAiReview, ReviewTaskKey } from "@/lib/writing/reviewTypes";
 
@@ -43,7 +43,7 @@ export default function ReviewClient({ sessionId, emailText, discussionText }: P
     return (
       <section className="rounded-2xl border border-slate-200 bg-white px-6 py-12 text-center">
         <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-teal-600 border-t-transparent" />
-        <p className="mt-4 text-sm font-semibold text-slate-700">AI가 답안을 분석하고 있어요</p>
+        <p className="mt-4 text-sm font-semibold text-slate-700">답안을 분석하고 있어요</p>
         <p className="mt-1 text-xs text-slate-500">처음 한 번만 20~40초 걸립니다. 다음부터는 바로 열려요.</p>
       </section>
     );

@@ -24,7 +24,7 @@ export const SKILL_META: Record<
   { title: string; desc: string; color: "blue" | "orange" | "violet" | "teal"; emptyHref: string; emptyLabel: string }
 > = {
   reading: { title: "Reading", desc: "문항별 정답·오답 복습, 단어·근거 분석", color: "blue", emptyHref: "/updated-reading/study", emptyLabel: "Reading 연습 시작하기" },
-  speaking: { title: "Speaking", desc: "스크립트 · AI 피드백 · 다시 녹음", color: "orange", emptyHref: "/speaking-2026/study", emptyLabel: "Speaking 연습 시작하기" },
+  speaking: { title: "Speaking", desc: "스크립트 · 피드백 · 다시 녹음", color: "orange", emptyHref: "/speaking-2026/study", emptyLabel: "Speaking 연습 시작하기" },
   listening: { title: "Listening", desc: "문항별 스크립트와 해설 복습", color: "violet", emptyHref: "/updated-listening", emptyLabel: "Listening 연습 시작하기" },
   writing: { title: "Writing", desc: "답안 비교 · 모범답안 · Drill", color: "teal", emptyHref: "/updated-writing/test", emptyLabel: "Writing 연습 시작하기" },
 };
