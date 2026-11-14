@@ -276,12 +276,20 @@ export default function ReviewDetail({ resultId, script, scriptVersion }: { resu
         </Card>
       )}
 
-      <Link
-        href={`/student/review/speaking/${resultId}/drill`}
-        className="flex items-center justify-center gap-2 rounded-xl bg-orange-600 px-4 py-3 text-sm font-semibold text-white hover:bg-orange-700"
-      >
-        <Mic className="h-4 w-4" /> 말하기 Drill 시작하기 →
-      </Link>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Link
+          href={`/student/review/speaking/${resultId}/drill`}
+          className="flex items-center justify-center gap-2 rounded-xl bg-orange-600 px-4 py-3 text-sm font-semibold text-white hover:bg-orange-700"
+        >
+          <Mic className="h-4 w-4" /> 말하기 Drill 시작하기 →
+        </Link>
+        <Link
+          href={`/student/review/speaking/${resultId}/vocab`}
+          className="flex items-center justify-center gap-2 rounded-xl border border-orange-300 bg-white px-4 py-3 text-sm font-semibold text-orange-700 hover:bg-orange-50"
+        >
+          <Mic className="h-4 w-4" /> 말하기 단어시험 →
+        </Link>
+      </div>
     </section>
   );
 }

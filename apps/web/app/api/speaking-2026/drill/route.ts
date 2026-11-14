@@ -2,7 +2,7 @@
 // 녹음 Drill 문항 생성(캐시 우선) + 단문 말하기 채점.
 //  action: "get"(기본) → 문항 반환/생성,  "check" → pattern 문항 1개 채점(인식된 문장 기준)
 import { NextResponse } from "next/server";
-import { checkSpokenAnswer, computeDelivery, generateSpeakingDrill, generateSpeakingReview } from "@/lib/speaking/aiReview";
+import { checkFixAnswer, checkSpokenAnswer, computeDelivery, generateSpeakingDrill, generateSpeakingReview } from "@/lib/speaking/aiReview";
 import { loadSpeakingReviewSession, saveSpeakingBundle } from "@/lib/speaking/reviewSession";
 import type { SpeakingReviewBundle } from "@/lib/speaking/reviewTypes";
 
@@ -12,11 +12,12 @@ export const maxDuration = 120;
 export async function POST(req: Request) {
   let body: {
     resultId?: string;
-    action?: "get" | "check" | "compare";
+    action?: "get" | "check" | "compare" | "fix";
     regenerate?: boolean;
     transcript?: string;
     durationSec?: number;
-    item?: { korean?: string; answer?: string; mustUse?: string };
+    item?: { korean?: string; answer?: string; mustUse?: string; wrong?: string };
+    typed?: string;
   };
   try {
     body = await req.json();
@@ -40,6 +41,15 @@ export async function POST(req: Request) {
         mustUse: it.mustUse ?? "",
         transcript: transcript.slice(0, 600),
       });
+      return NextResponse.json({ ok: true, result });
+    }
+
+    if (body.action === "fix") {
+      const it = body.item;
+      const typed = (body.typed ?? "").trim();
+      if (!it?.wrong || !it?.answer) return NextResponse.json({ ok: false, error: "문항 정보가 없습니다" }, { status: 400 });
+      if (!typed) return NextResponse.json({ ok: false, error: "고친 문장을 입력하세요" }, { status: 400 });
+      const result = await checkFixAnswer({ wrong: it.wrong, modelAnswer: it.answer, studentFix: typed.slice(0, 400) });
       return NextResponse.json({ ok: true, result });
     }
 

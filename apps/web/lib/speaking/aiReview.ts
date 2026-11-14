@@ -8,6 +8,7 @@ import type {
   SpeakingDrillItem,
   SpeakingReview,
   SpeakingReviewBundle,
+  SpeakingVocabEntry,
 } from "@/lib/speaking/reviewTypes";
 
 const MODEL = "claude-sonnet-4-6";
@@ -172,6 +173,8 @@ function drillSystemPrompt(): string {
 
 Item kinds:
 - "shadow": a sentence the student hears (text-to-speech) and repeats. Give "text" (English) and "korean" (its meaning). Use useful sentence patterns from the improved/model answers.
+- "dictation": the student hears a sentence (text-to-speech, possibly several times) and TYPES it from memory. Give "text" (English, 8–16 words) and "korean". Prefer sentences that use the student's weak patterns, taken from the improved/model answers.
+- "fix": the student sees a sentence that contains a grammar error and TYPES the corrected sentence; then the correct sentence is shown, erased, and the student SPEAKS it from memory. Give "wrong" (a complete spoken-style sentence that keeps the student's REAL mistake from the transcript/grammar tendencies — keep the error as the student made it), "answer" (the corrected sentence, differing from "wrong" only by the fix), and "explanation" (one Korean line saying what was wrong). If the student made fewer distinct errors than needed, create a sentence with the same TYPE of error.
 - "recall": the student sees only the Korean meaning and a few English hint words and says the sentence from memory. Give "korean", "answer" (English), "hint" (3–5 key words, NOT the full sentence).
 - "pattern": a short speaking task. The student SEES A KOREAN SENTENCE and says it in English. Each pattern item has a "mode":
     • "verb": the student must use the given verbs. "constraint" = e.g. "동사: reconsider, postpone". 
@@ -182,11 +185,11 @@ Item kinds:
 
 RULES:
 - Base items on the student's grammar weaknesses and drill focus points and on sentence patterns in the improved/model answers. For recall and pattern items, change the topic/situation (new nouns, new context) so the student practices the PATTERN, not memorization. Shadow items may reuse model-answer sentences.
-- Exactly: 4 shadow, 2 recall, 4 pattern, in that order (easier → harder). The 4 pattern items must be one each of modes "verb", "expression", "structure", "free", in that order. Choose the "structure" item from the student's weak points or the structures used in the model answers. Cover every focus tag at least once.
+- Exactly: 3 shadow, 3 dictation, 3 fix, 4 pattern (no recall items), in that order (easier → harder). The 4 pattern items must be one each of modes "verb", "expression", "structure", "free", in that order. Choose the "structure" item from the student's weak points or the structures used in the model answers. Cover every focus tag at least once.
 - "tag" = grammar/pattern name in Korean (reuse the focus tags).
 - Korean must be natural Korean, not word-by-word.
 
-Return ONLY JSON: {"items":[{"kind":"shadow","tag":"...","text":"...","korean":"..."},{"kind":"recall","tag":"...","korean":"...","answer":"...","hint":"..."},{"kind":"pattern","mode":"verb","tag":"...","korean":"...","answer":"...","constraint":"...","mustUse":"..."}]}`;
+Return ONLY JSON: {"items":[{"kind":"shadow","tag":"...","text":"...","korean":"..."},{"kind":"dictation","tag":"...","text":"...","korean":"..."},{"kind":"fix","tag":"...","wrong":"...","answer":"...","explanation":"..."},{"kind":"recall","tag":"...","korean":"...","answer":"...","hint":"..."},{"kind":"pattern","mode":"verb","tag":"...","korean":"...","answer":"...","constraint":"...","mustUse":"..."}]}`;
 }
 
 export async function generateSpeakingDrill(review: SpeakingReview, prompt: string): Promise<SpeakingDrillItem[]> {
@@ -212,12 +215,21 @@ export async function generateSpeakingDrill(review: SpeakingReview, prompt: stri
 
   const items: SpeakingDrillItem[] = [];
   let n = 0;
-  for (const it of arr(json?.items, 14)) {
+  for (const it of arr(json?.items, 16)) {
     const tag = s(it?.tag) || "문장 구성";
     const korean = s(it?.korean);
     if (it?.kind === "shadow") {
       const text = s(it.text);
       if (text) items.push({ id: `s${++n}`, kind: "shadow", tag, text, korean });
+    } else if (it?.kind === "dictation") {
+      const text = s(it.text);
+      if (text) items.push({ id: `d${++n}`, kind: "dictation", tag, text, korean });
+    } else if (it?.kind === "fix") {
+      const wrong = s(it.wrong);
+      const answer = s(it.answer);
+      if (wrong && answer && wrong !== answer) {
+        items.push({ id: `f${++n}`, kind: "fix", tag, wrong, answer, explanation: s(it.explanation) });
+      }
     } else if (it?.kind === "recall") {
       const answer = s(it.answer);
       if (answer && korean) items.push({ id: `r${++n}`, kind: "recall", tag, korean, answer, hint: s(it.hint) });
@@ -240,6 +252,97 @@ export async function generateSpeakingDrill(review: SpeakingReview, prompt: stri
   }
   if (items.length === 0) throw new Error("Drill 문항을 만들지 못했습니다.");
   return items;
+}
+
+// ── 말하기 단어시험 범위 생성 ─────────────────────────────────────────
+function vocabSystemPrompt(): string {
+  return `You build a SPEAKING vocabulary list for a Korean TOEFL student from one speaking topic. The student will study the list, then hear/see a Korean meaning and SAY the English word, phrasal verb or idiom aloud.
+
+Pick 12 items that actually appear in (or are directly useful for) this topic, drawn from the model answers and the student's own transcript:
+- source "model": useful words/phrases from the model answers the student did NOT use or used wrongly.
+- source "student": words/phrases the student used imprecisely or wrongly, where a better expression exists (give the better expression).
+Mix kinds: about 6 "word" (precise, topic-relevant vocabulary — not trivial words), 3 "phrasal" (phrasal verbs), 3 "idiom" (idioms / fixed collocations / set phrases).
+
+Rules for each item:
+- "en": the clean base form to be spoken, 1–4 words, NO placeholders, no "~", no "(someone)", no slashes (e.g. "look into", "in the long run", "take advantage of", "reluctant").
+- "alts": other acceptable spoken forms (e.g. inflections like "looked into") — [] if none.
+- "ko": a natural Korean meaning the student can translate from, 2–12 characters/words, unambiguous (add a short cue in parentheses if needed to disambiguate, e.g. "(~에 대해) 조사하다").
+- "example": one short English example sentence (spoken style) from the model answer when possible.
+- Avoid very easy words (be, get, good…) and proper nouns.
+
+Return ONLY JSON: {"items":[{"en":"...","alts":["..."],"ko":"...","kind":"word","example":"...","source":"model"}]}`;
+}
+
+export async function generateSpeakingVocab(args: {
+  review: SpeakingReview;
+  script: string;
+  prompt: string;
+}): Promise<SpeakingVocabEntry[]> {
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const msg = await client.messages.create({
+    model: MODEL,
+    max_tokens: 3500,
+    temperature: 0.4,
+    system: [{ type: "text", text: vocabSystemPrompt(), cache_control: { type: "ephemeral" } }],
+    messages: [
+      {
+        role: "user",
+        content: `Task: ${args.prompt || "(n/a)"}
+
+Student transcript:
+${args.script}
+
+Improved model answer:
+${args.review.improved.text}
+
+Structured model answer:
+${args.review.facelift.text}`,
+      },
+    ],
+  });
+  void logAnthropicUsage("speaking-2026/vocab", MODEL, msg.usage);
+  const json = parseJson(msg.content[0]?.type === "text" ? msg.content[0].text : "");
+  const items: SpeakingVocabEntry[] = [];
+  const seen = new Set<string>();
+  for (const it of arr(json?.items, 16)) {
+    const en = s(it?.en).replace(/[~()/]/g, " ").replace(/\s+/g, " ").trim();
+    const ko = s(it?.ko);
+    if (!en || !ko || seen.has(en.toLowerCase())) continue;
+    seen.add(en.toLowerCase());
+    const kind = (["word", "phrasal", "idiom"] as const).find((k) => k === it?.kind) ?? "word";
+    items.push({
+      id: `v${items.length + 1}`,
+      en,
+      alts: strArr(it?.alts, 4),
+      ko,
+      kind,
+      example: s(it?.example),
+      source: it?.source === "student" ? "student" : "model",
+    });
+  }
+  if (items.length < 4) throw new Error("단어시험 범위를 만들지 못했습니다.");
+  return items;
+}
+
+// ── 문장 고치기(fix) 채점: 타이핑한 문장이 오류를 바르게 고쳤는지 ────────
+export async function checkFixAnswer(args: {
+  wrong: string;
+  modelAnswer: string;
+  studentFix: string;
+}): Promise<{ correct: boolean; feedback: string }> {
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const msg = await client.messages.create({
+    model: HAIKU,
+    max_tokens: 400,
+    temperature: 0,
+    system:
+      "A Korean student corrected a grammatically wrong English sentence by typing a new version. Judge only whether the student's version fixes the error(s) and is grammatical and natural, with the same meaning as the original. Another valid correction (different from the model answer) is also correct. Ignore capitalization and final punctuation. Give 1–2 sentences of feedback in KOREAN (what is still wrong, or why it is right). Return ONLY JSON: {\"correct\": boolean, \"feedback\": \"...\"}",
+    messages: [{ role: "user", content: `Wrong sentence: ${args.wrong}\nModel correction: ${args.modelAnswer}\nStudent's version: ${args.studentFix}` }],
+  });
+  void logAnthropicUsage("speaking-2026/drill-fix-check", HAIKU, msg.usage);
+  const json = parseJson(msg.content[0]?.type === "text" ? msg.content[0].text : "");
+  if (!json) throw new Error("채점 응답을 해석하지 못했습니다.");
+  return { correct: json.correct === true, feedback: s(json.feedback) };
 }
 
 // ── 단문 말하기(pattern) 채점: 인식된 문장 기준 ───────────────────────

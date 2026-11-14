@@ -51,6 +51,28 @@ export interface ShadowItem {
   korean: string;
 }
 
+/** 듣고 기억해서 타이핑 (여러 번 들을 수 있지만 재청취마다 감점) */
+export interface DictationItem {
+  id: string;
+  kind: "dictation";
+  tag: string;
+  text: string;
+  korean: string;
+}
+
+/** 틀린 문장을 고쳐서 타이핑 → 고친 문장을 화면에서 지우고 말하기 */
+export interface FixItem {
+  id: string;
+  kind: "fix";
+  tag: string;
+  /** 문법 오류가 들어 있는 문장 (학생이 실제로 한 실수 기반) */
+  wrong: string;
+  /** 바르게 고친 문장 */
+  answer: string;
+  /** 왜 틀렸는지 한 줄 (한국어) */
+  explanation: string;
+}
+
 /** 한글 뜻을 보고 고친 문장을 기억해서 말하기 */
 export interface RecallItem {
   id: string;
@@ -79,7 +101,24 @@ export interface PatternItem {
   mustUse: string;
 }
 
-export type SpeakingDrillItem = ShadowItem | RecallItem | PatternItem;
+/** 말하기 단어시험 항목: 한글 뜻 → 영어 단어/이어동사/숙어 말하기 */
+export type VocabKind = "word" | "phrasal" | "idiom";
+
+export interface SpeakingVocabEntry {
+  id: string;
+  /** 정답 표현 (자리표시자 없이 깨끗한 형태. 예: "look into", "in the long run") */
+  en: string;
+  /** 인식·채점에서 함께 인정할 변형 (예: 과거형) */
+  alts: string[];
+  ko: string;
+  kind: VocabKind;
+  /** 이 표현이 쓰인 짧은 예문 */
+  example: string;
+  /** 어디서 나온 표현인지 */
+  source: "model" | "student";
+}
+
+export type SpeakingDrillItem = ShadowItem | DictationItem | FixItem | RecallItem | PatternItem;
 
 export interface SpeakingReviewBundle {
   version: 1;
@@ -88,4 +127,5 @@ export interface SpeakingReviewBundle {
   delivery: SpeakingDeliveryStats;
   review: SpeakingReview;
   drill?: { generatedAt: string; items: SpeakingDrillItem[] };
+  vocab?: { generatedAt: string; items: SpeakingVocabEntry[] };
 }

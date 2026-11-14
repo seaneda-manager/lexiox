@@ -9,7 +9,7 @@ import Link from "next/link";
 import { Mic, Square, Volume2, RotateCcw, Loader2 } from "lucide-react";
 import { useSpeechRecorder } from "@/components/speaking/useSpeechRecorder";
 import { compareSpoken } from "@/lib/speaking/similarity";
-import type { PatternItem, RecallItem, ShadowItem, SpeakingDeliveryStats, SpeakingDrillItem } from "@/lib/speaking/reviewTypes";
+import type { DictationItem, FixItem, PatternItem, RecallItem, ShadowItem, SpeakingDeliveryStats, SpeakingDrillItem } from "@/lib/speaking/reviewTypes";
 
 type Retell = { outline: { part: string; role: string }[]; modelText: string };
 type Result = { id: string; tag: string; ok: boolean };
@@ -27,6 +27,10 @@ const MODE_DESC: Record<PatternItem["mode"], string> = {
   free: "힌트 없이 뜻만 보고 영어로 말하세요",
 };
 
+const PASS_SAY = 70; // 타이핑 후 소리 내어 말하기 통과선
+const PLAY_FREE = 1; // 무료로 들을 수 있는 횟수
+const PLAY_PENALTY = 10; // 재청취 1회마다 감점
+const PASS_DICTATION = 60; // 감점 후 점수 통과선
 const PASS_SHADOW = 80;
 const PASS_RECALL = 65;
 
@@ -95,7 +99,17 @@ export default function SpeakingDrillClient({ resultId, prompt, firstScript }: {
   const next = () => setIdx((i) => i + 1);
 
   const stageLabel = (it: SpeakingDrillItem | null) =>
-    !it ? "마지막 · 같은 문제 다시 답하기" : it.kind === "shadow" ? "1단계 · 듣고 따라 말하기" : it.kind === "recall" ? "2단계 · 기억해서 말하기" : "3단계 · 한글 보고 말하기";
+    !it
+      ? "마지막 · 같은 문제 다시 답하기"
+      : it.kind === "shadow"
+        ? "듣고 따라 말하기"
+        : it.kind === "dictation"
+          ? "듣고 기억해서 쓰고 말하기"
+          : it.kind === "fix"
+            ? "틀린 문장 고치고 말하기"
+            : it.kind === "recall"
+              ? "기억해서 말하기"
+              : "한글 보고 말하기";
 
   if (idx > items.length) return <Summary results={results} resultId={resultId} onRetry={() => load(true)} />;
 
@@ -119,6 +133,10 @@ export default function SpeakingDrillClient({ resultId, prompt, firstScript }: {
         <RetellStep key="retell" resultId={resultId} prompt={prompt} retell={retell} onDone={next} />
       ) : item.kind === "shadow" ? (
         <TargetStep key={item.id} item={item} onDone={(ok) => { record(item.id, item.tag, ok); next(); }} />
+      ) : item.kind === "dictation" ? (
+        <DictationStep key={item.id} item={item} onDone={(oks) => { oks.forEach((o, i) => record(`${item.id}-${i}`, item.tag, o)); next(); }} />
+      ) : item.kind === "fix" ? (
+        <FixStep key={item.id} item={item} resultId={resultId} onDone={(oks) => { oks.forEach((o, i) => record(`${item.id}-${i}`, item.tag, o)); next(); }} />
       ) : item.kind === "recall" ? (
         <TargetStep key={item.id} item={item} onDone={(ok) => { record(item.id, item.tag, ok); next(); }} />
       ) : (
@@ -288,6 +306,267 @@ function TargetStep({ item, onDone }: { item: ShadowItem | RecallItem; onDone: (
               다음 →
             </button>
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+// ── 말하기 확인: 문장을 말하고 인식된 결과를 목표와 비교 (dictation/fix 공용) ───
+function SaySentence({
+  target,
+  hidden,
+  onResult,
+  label,
+}: {
+  target: string;
+  hidden: boolean;
+  onResult: (ok: boolean) => void;
+  label: string;
+}) {
+  const rec = useSpeechRecorder();
+  const [judged, setJudged] = useState<null | { score: number; diff: { word: string; state: "hit" | "miss" }[] }>(null);
+
+  if (judged) {
+    const ok = judged.score >= PASS_SAY;
+    return (
+      <div className="space-y-3">
+        <div className={`rounded-xl p-4 ${ok ? "bg-emerald-50" : "bg-rose-50"}`}>
+          <p className={`text-sm font-bold ${ok ? "text-emerald-800" : "text-rose-800"}`}>
+            {ok ? "✓ 말하기 통과" : "✗ 말하기 다시 해 볼까요?"} · 일치율 {judged.score}%
+          </p>
+          <div className="mt-2">
+            <p className="mb-1 text-[11px] text-gray-500">정답 문장 (빨간 단어는 못 들렸어요)</p>
+            <DiffLine diff={judged.diff} />
+          </div>
+          <p className="mt-2 text-[11px] text-gray-500">내가 말한 문장: <span className="text-gray-700">{rec.transcript}</span></p>
+        </div>
+        {rec.audioUrl && <audio controls src={rec.audioUrl} className="h-9 w-full" />}
+        <div className="flex gap-2">
+          {!ok && (
+            <button onClick={() => { setJudged(null); rec.reset(); }} className="inline-flex flex-1 items-center justify-center gap-1 rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700">
+              <RotateCcw className="h-4 w-4" /> 다시 말하기
+            </button>
+          )}
+          <button onClick={() => onResult(ok)} className="flex-1 rounded-xl bg-orange-600 px-4 py-3 text-sm font-semibold text-white hover:bg-orange-700">
+            다음 →
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="text-xs font-semibold text-orange-700">{label}</p>
+      <p className="rounded-xl bg-orange-50/60 p-4 text-lg font-semibold leading-relaxed text-gray-900">{hidden ? "••••••••••••••" : target}</p>
+      <RecorderBar rec={rec} />
+      {rec.status === "done" && (
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              const r = compareSpoken(target, rec.transcript);
+              setJudged({ score: r.score, diff: r.diff });
+            }}
+            disabled={!rec.transcript.trim()}
+            className="flex-1 rounded-xl bg-gray-900 px-4 py-3 text-sm font-semibold text-white disabled:opacity-30"
+          >
+            결과 보기
+          </button>
+          <button onClick={rec.reset} className="inline-flex items-center gap-1 rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium text-gray-600">
+            <RotateCcw className="h-4 w-4" /> 다시
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── dictation: 듣고 기억해서 타이핑(재청취 감점) → 소리 내어 말하기(녹음) ─────
+function DictationStep({ item, onDone }: { item: DictationItem; onDone: (oks: boolean[]) => void }) {
+  const [plays, setPlays] = useState(0);
+  const [typed, setTyped] = useState("");
+  const [typeResult, setTypeResult] = useState<null | { base: number; score: number; diff: { word: string; state: "hit" | "miss" }[] }>(null);
+  const [phase, setPhase] = useState<"type" | "say">("type");
+
+  const extra = Math.max(0, plays - PLAY_FREE);
+  const penalty = extra * PLAY_PENALTY;
+
+  const play = (rate = 0.9) => {
+    speak(item.text, rate);
+    setPlays((n) => n + 1);
+  };
+
+  const check = () => {
+    const r = compareSpoken(item.text, typed);
+    setTypeResult({ base: r.score, score: Math.max(0, r.score - penalty), diff: r.diff });
+  };
+  const typedOk = typeResult ? typeResult.score >= PASS_DICTATION : false;
+
+  if (phase === "say") {
+    return (
+      <div className="space-y-4 rounded-2xl border border-gray-200 bg-white p-5">
+        <Tag tag={item.tag} />
+        <SaySentence
+          target={item.text}
+          hidden={false}
+          label="이제 같은 문장을 소리 내어 말해 보세요."
+          onResult={(sayOk) => onDone([typedOk, sayOk])}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4 rounded-2xl border border-gray-200 bg-white p-5">
+      <Tag tag={item.tag} />
+      <p className="text-xs text-gray-500">
+        문장을 듣고 기억해서 그대로 입력하세요. 첫 {PLAY_FREE}번은 무료, 다시 들을 때마다 <b>{PLAY_PENALTY}점 감점</b>됩니다.
+      </p>
+      <div className="space-y-2 rounded-xl bg-orange-50/60 p-4">
+        <div className="flex items-center gap-2">
+          <button onClick={() => play()} disabled={!!typeResult} className="inline-flex items-center gap-1.5 rounded-lg bg-orange-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-orange-700 disabled:opacity-40">
+            <Volume2 className="h-3.5 w-3.5" /> {plays === 0 ? "듣기" : "다시 듣기"}
+          </button>
+          <button onClick={() => play(0.65)} disabled={!!typeResult} className="rounded-lg border border-orange-200 bg-white px-3 py-1.5 text-xs font-semibold text-orange-700 disabled:opacity-40">
+            천천히
+          </button>
+          <span className="ml-auto text-xs text-gray-600">
+            들은 횟수 <b>{plays}</b>회{penalty > 0 && <span className="font-semibold text-rose-600"> · -{penalty}점</span>}
+          </span>
+        </div>
+        <p className="text-xs text-gray-500">{item.korean}</p>
+      </div>
+
+      <textarea
+        value={typed}
+        onChange={(e) => setTyped(e.target.value)}
+        disabled={!!typeResult}
+        rows={2}
+        placeholder="들은 문장을 입력하세요"
+        className="w-full rounded-xl border border-gray-300 p-3 text-sm focus:border-orange-500 focus:outline-none disabled:bg-gray-50"
+      />
+
+      {!typeResult ? (
+        <button onClick={check} disabled={plays === 0 || !typed.trim()} className="w-full rounded-xl bg-gray-900 px-4 py-3 text-sm font-semibold text-white disabled:opacity-30">
+          {plays === 0 ? "먼저 문장을 들어 보세요" : "제출"}
+        </button>
+      ) : (
+        <div className="space-y-3">
+          <div className={`rounded-xl p-4 ${typedOk ? "bg-emerald-50" : "bg-rose-50"}`}>
+            <p className={`text-sm font-bold ${typedOk ? "text-emerald-800" : "text-rose-800"}`}>
+              {typedOk ? "✓ 잘 기억했어요!" : "✗ 아쉬워요"} · 점수 {typeResult.score}점
+              {penalty > 0 && <span className="font-normal text-gray-500"> (일치율 {typeResult.base}% - 재청취 {penalty}점)</span>}
+            </p>
+            <div className="mt-2">
+              <p className="mb-1 text-[11px] text-gray-500">정답 문장 (빨간 단어는 빠졌어요)</p>
+              <DiffLine diff={typeResult.diff} />
+            </div>
+          </div>
+          <button onClick={() => setPhase("say")} className="w-full rounded-xl bg-orange-600 px-4 py-3 text-sm font-semibold text-white hover:bg-orange-700">
+            이어서 소리 내어 말하기 →
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── fix: 틀린 문장을 고쳐 타이핑 → 정답 문장을 보고 → 지우고 말하기(녹음) ────────
+function FixStep({ item, resultId, onDone }: { item: FixItem; resultId: string; onDone: (oks: boolean[]) => void }) {
+  const [typed, setTyped] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [fix, setFix] = useState<null | { correct: boolean; feedback: string }>(null);
+  const [phase, setPhase] = useState<"type" | "study" | "say">("type");
+
+  const submit = async () => {
+    setBusy(true);
+    setErr(null);
+    try {
+      // 정답과 사실상 같으면 AI 호출 없이 통과
+      const local = compareSpoken(item.answer, typed);
+      if (local.score >= 97 && local.extra.length === 0) {
+        setFix({ correct: true, feedback: "정확하게 고쳤어요." });
+        return;
+      }
+      const r = await fetch("/api/speaking-2026/drill", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resultId, action: "fix", typed, item: { wrong: item.wrong, answer: item.answer } }),
+      });
+      const json = await r.json().catch(() => ({}));
+      if (!r.ok || !json.ok) throw new Error(json.error || "채점에 실패했습니다");
+      setFix(json.result);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "채점에 실패했습니다");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (phase === "say") {
+    return (
+      <div className="space-y-4 rounded-2xl border border-gray-200 bg-white p-5">
+        <Tag tag={item.tag} />
+        <SaySentence
+          target={item.answer}
+          hidden
+          label="문장이 지워졌어요. 기억해서 고친 문장을 말해 보세요."
+          onResult={(sayOk) => onDone([fix?.correct ?? false, sayOk])}
+        />
+      </div>
+    );
+  }
+
+  if (phase === "study") {
+    return (
+      <div className="space-y-4 rounded-2xl border border-gray-200 bg-white p-5">
+        <Tag tag={item.tag} />
+        <p className="text-xs text-gray-500">바른 문장을 읽고 외워 보세요. 준비되면 문장을 지우고 말합니다.</p>
+        <p className="rounded-xl bg-emerald-50 p-4 text-lg font-semibold leading-relaxed text-emerald-900">{item.answer}</p>
+        {item.explanation && <p className="text-xs leading-relaxed text-gray-600">{item.explanation}</p>}
+        <div className="flex gap-2">
+          <button onClick={() => speak(item.answer)} className="inline-flex items-center gap-1.5 rounded-xl border border-orange-200 bg-white px-4 py-3 text-sm font-semibold text-orange-700">
+            <Volume2 className="h-4 w-4" /> 듣기
+          </button>
+          <button onClick={() => setPhase("say")} className="flex-1 rounded-xl bg-orange-600 px-4 py-3 text-sm font-semibold text-white hover:bg-orange-700">
+            외웠어요 — 문장 지우고 말하기 →
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4 rounded-2xl border border-gray-200 bg-white p-5">
+      <Tag tag={item.tag} />
+      <p className="text-xs text-gray-500">아래 문장에는 문법 오류가 있어요. 고친 문장을 입력하세요.</p>
+      <p className="rounded-xl bg-rose-50 p-4 text-lg font-semibold leading-relaxed text-rose-900">{item.wrong}</p>
+      <textarea
+        value={typed}
+        onChange={(e) => setTyped(e.target.value)}
+        disabled={!!fix}
+        rows={2}
+        placeholder="고친 문장을 입력하세요"
+        className="w-full rounded-xl border border-gray-300 p-3 text-sm focus:border-orange-500 focus:outline-none disabled:bg-gray-50"
+      />
+      {err && <p className="text-xs text-rose-600">{err}</p>}
+
+      {!fix ? (
+        <button onClick={submit} disabled={busy || !typed.trim()} className="w-full rounded-xl bg-gray-900 px-4 py-3 text-sm font-semibold text-white disabled:opacity-30">
+          {busy ? "채점 중…" : "제출"}
+        </button>
+      ) : (
+        <div className="space-y-3">
+          <div className={`rounded-xl p-4 text-sm ${fix.correct ? "bg-emerald-50 text-emerald-900" : "bg-rose-50 text-rose-900"}`}>
+            <p className="font-bold">{fix.correct ? "✓ 잘 고쳤어요!" : "✗ 아직 틀린 부분이 있어요"}</p>
+            <p className="mt-1 text-xs leading-relaxed">{fix.feedback}</p>
+          </div>
+          <button onClick={() => setPhase("study")} className="w-full rounded-xl bg-orange-600 px-4 py-3 text-sm font-semibold text-white hover:bg-orange-700">
+            바른 문장 보고 말하기로 →
+          </button>
         </div>
       )}
     </div>
