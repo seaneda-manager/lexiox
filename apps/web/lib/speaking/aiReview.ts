@@ -261,7 +261,11 @@ function vocabSystemPrompt(): string {
 Pick 12 items that actually appear in (or are directly useful for) this topic, drawn from the model answers and the student's own transcript:
 - source "model": useful words/phrases from the model answers the student did NOT use or used wrongly.
 - source "student": words/phrases the student used imprecisely or wrongly, where a better expression exists (give the better expression).
-Mix kinds: about 6 "word" (precise, topic-relevant vocabulary — not trivial words), 3 "phrasal" (phrasal verbs), 3 "idiom" (idioms / fixed collocations / set phrases).
+Mix kinds EXACTLY: 6 "word", 3 "phrasal", 3 "idiom". Be strict about the kinds:
+- "word": a precise, topic-relevant single word or a tight two-word term (e.g. "flexible", "commute", "cost savings"). Not trivial words.
+- "phrasal": MUST be a TRUE phrasal verb — a verb + particle/preposition whose meaning is idiomatic (e.g. "add up to", "look into", "put off", "come up with", "sign up for", "fall behind"). A verb plus an ordinary object ("attend classes", "watch lectures") or a single verb ("rewind") is NOT a phrasal verb. If the texts contain fewer than 3 real phrasal verbs, supply natural, topic-relevant phrasal verbs the student could have used on this topic (source "model").
+- "idiom": MUST be a real idiom or fixed set phrase (e.g. "in the long run", "make ends meet", "on top of that", "at your own pace", "for instance"). Ordinary collocations such as "offer more advantages" are NOT idioms — put them under "word" only if they are a tight two-word term, otherwise skip them. If needed, supply topic-relevant idioms (source "model").
+- Write possessives in the "you/your" form ("at your own pace"), never "one's".
 
 Rules for each item:
 - "en": the clean base form to be spoken, 1–4 words, NO placeholders, no "~", no "(someone)", no slashes (e.g. "look into", "in the long run", "take advantage of", "reluctant").
