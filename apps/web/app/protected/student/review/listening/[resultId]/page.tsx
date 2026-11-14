@@ -15,11 +15,12 @@ export default async function ListeningReviewPage({ params }: PageProps) {
   if (!user) redirect("/login");
 
   // Get listening result
+  // 학생은 RLS(listening_results_2026_own_read)로 자기 결과만, 선생님/관리자는 직원 읽기 정책으로 학생 결과를 볼 수 있다.
+  // (예전에는 여기서 user_id = 내 계정 조건을 직접 걸어서 선생님이 학생 결과를 열면 항상 "없음"이 됐다.)
   const { data: result, error: resultError } = await supabase
     .from("listening_results_2026")
     .select("id, test_id, module, difficulty, correct_count, total_questions, finished_at, answers, review_notes")
     .eq("id", resultId)
-    .eq("user_id", user.id)
     .maybeSingle();
 
   if (resultError) console.error("Listening result fetch error:", resultError);
