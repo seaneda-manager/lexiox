@@ -1,4 +1,5 @@
 import Link from "next/link";
+import NewChip from "@/components/student/NewChip";
 import { getServerSupabase } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -64,7 +65,7 @@ export default async function ListeningAssignmentsPage() {
                 <div className="flex items-center justify-between mb-3">
                   <div className="space-y-1 flex-1">
                     <p className="text-sm font-semibold text-slate-900">
-                      {test?.label ?? "시험"}
+                      {a.status === "pending" && <NewChip />}{test?.label ?? "시험"}
                     </p>
                     <div className="flex items-center gap-2 text-[11px] text-slate-400">
                       <span className={`rounded-full px-2 py-0.5 font-medium ${statusInfo.cls}`}>

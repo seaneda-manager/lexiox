@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import NewAssignmentsNotice from '@/components/student/NewAssignmentsNotice';
 import SectionGuide from '@/app/components/SectionGuide';
 
 export const dynamic = 'force-dynamic';
@@ -7,6 +8,8 @@ export default function Speaking2026Home() {
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-6">
       <h1 className="text-xl font-semibold">Speaking 2026</h1>
+
+      <NewAssignmentsNotice skill="speaking" />
 
       <SectionGuide
         storageKey="guide-seen-speaking-2026"

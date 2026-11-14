@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import NewAssignmentsNotice from '@/components/student/NewAssignmentsNotice';
 import SectionGuide from '@/app/components/SectionGuide';
 
 export default function WritingHubPage() {
@@ -6,6 +7,8 @@ export default function WritingHubPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-6">
       <h1 className="text-xl font-semibold">Writing 2026</h1>
+
+      <NewAssignmentsNotice skill="writing" />
 
       <SectionGuide
         storageKey="guide-seen-updated-writing"

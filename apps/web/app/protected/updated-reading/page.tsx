@@ -1,5 +1,6 @@
 // apps/web/app/(protected)/updated-reading/page.tsx
 import Link from 'next/link';
+import NewAssignmentsNotice from '@/components/student/NewAssignmentsNotice';
 import SectionGuide from '@/app/components/SectionGuide';
 import TipsCarousel from '@/components/TipsCarousel';
 
@@ -9,6 +10,8 @@ export default function Reading2026Home() {
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-6">
       <h1 className="text-xl font-semibold">Reading 2026</h1>
+
+      <NewAssignmentsNotice skill="reading" />
 
       <SectionGuide
         storageKey="guide-seen-updated-reading"

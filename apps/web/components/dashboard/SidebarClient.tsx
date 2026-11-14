@@ -244,7 +244,37 @@ export default function SidebarClient({ role, permissions, program = null, hasHi
       }
     })();
   }, [role, pathname]);
-  const badgeFor = (href?: string): number => (href === '/vocab/test' ? reviewDue : 0);
+  // 새로 배정되어 아직 시작하지 않은 Updated TOEFL 시험 개수 (영역별)
+  const [assignBadges, setAssignBadges] = useState<Record<string, number>>({});
+  const lastAssignFetch = useRef(0);
+  useEffect(() => {
+    if (role !== 'student') return;
+    const now = Date.now();
+    if (lastAssignFetch.current !== 0 && now - lastAssignFetch.current < 20_000) return;
+    lastAssignFetch.current = now;
+    (async () => {
+      try {
+        const r = await fetch('/api/student/assignment-badges', { cache: 'no-store' });
+        if (!r.ok) throw new Error('not ok');
+        const d = await r.json();
+        if (mountedRef.current && d?.counts) setAssignBadges(d.counts);
+      } catch {
+        lastAssignFetch.current = 0;
+      }
+    })();
+  }, [role, pathname]);
+  const ASSIGN_BADGE_HREF: Record<string, string> = {
+    '/updated-reading': 'reading',
+    '/updated-listening': 'listening',
+    '/speaking-2026': 'speaking',
+    '/updated-writing': 'writing',
+  };
+  const badgeFor = (href?: string): number => {
+    if (href === '/vocab/test') return reviewDue;
+    const k = href ? ASSIGN_BADGE_HREF[href] : undefined;
+    return k ? Number(assignBadges[k]) || 0 : 0;
+  };
+  const badgeTitle = (href?: string) => (href === '/vocab/test' ? '오늘 복습할 단어' : `새로 배정된 시험 ${badgeFor(href)}개`);
 
   // ── Initial open-section state ──────────────────────────────
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
@@ -606,7 +636,7 @@ export default function SidebarClient({ role, permissions, program = null, hasHi
                               {badgeFor(it.href) > 0 && (
                                 <span
                                   className="mr-1 min-w-[18px] rounded-full bg-rose-500 px-1.5 text-center text-[10px] font-bold leading-[18px] text-white"
-                                  title="오늘 복습할 단어"
+                                  title={badgeTitle(it.href)}
                                 >
                                   {badgeFor(it.href)}
                                 </span>
