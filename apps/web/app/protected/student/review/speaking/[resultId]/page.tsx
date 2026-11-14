@@ -78,7 +78,7 @@ export default async function SpeakingReviewDetailPage({ params }: PageProps) {
             <Star className="h-4 w-4 text-orange-400" />
             점수
             <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${isFinal ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
-              {isFinal ? "선생님 최종 채점" : "AI 채점 (임시)"}
+              {isFinal ? "선생님 최종 채점" : "자동 채점 (임시)"}
             </span>
             {totalScore != null && (
               <span className="ml-auto text-lg font-black text-orange-600">{totalScore}/30</span>
@@ -118,7 +118,7 @@ export default async function SpeakingReviewDetailPage({ params }: PageProps) {
         </section>
       )}
 
-      {/* 내 답변 스크립트 + AI 첨삭 */}
+      {/* 내 답변 스크립트 + 상세 리뷰 */}
       <ScriptAndFeedback
         resultId={result.id}
         initialScript={result.script ?? null}

@@ -21,7 +21,7 @@ export default function WritingHubPage() {
         steps={[
           { icon: '📚', title: 'Study Mode', desc: '라이팅 기초 전략과 Task별 접근법을 학습합니다.' },
           { icon: '✍️', title: 'Test Mode', desc: '실전과 동일한 환경에서 모의고사를 응시합니다.' },
-          { icon: '📊', title: 'Review Mode', desc: 'AI 첨삭으로 피드백을 받고 개선점을 학습합니다.' },
+          { icon: '📊', title: 'Review Mode', desc: '상세 리뷰와 Drill로 피드백을 받고 개선점을 학습합니다.' },
         ]}
         nextAction={{ label: 'Assignments 보기', href: '/updated-writing/assignments' }}
       />
@@ -45,7 +45,7 @@ export default function WritingHubPage() {
         >
           <div className="text-sm font-semibold">📊 Review</div>
           <div className="mt-1 text-xs text-gray-500">
-            지금까지 응시한 기록과 Task별 성적을 확인하고 AI 첨삭으로 필수 확인 Task(논리 검토, 문법 오류, 단어 선택, 다시 작성)를 수행합니다.
+            지금까지 응시한 기록과 Task별 성적을 확인하고 상세 리뷰(논리 검토, 문법 오류, 단어 선택, 모범답안 비교)와 Drill을 진행합니다.
           </div>
         </Link>
       </div>
