@@ -30,6 +30,15 @@ function speak(text: string, lang: "en-US" | "ko-KR", rate = 0.9) {
   window.speechSynthesis.speak(u);
 }
 
+/** 첫 글자 힌트: 단어마다 첫 글자만 보이고 나머지는 밑줄 (예: "add up to" → "a__ u_ t_") */
+function firstLetterHint(en: string): string {
+  return en
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((w) => w[0] + "_".repeat(Math.max(1, w.length - 1)))
+    .join("  ");
+}
+
 /** 인식 결과에 정답 표현(또는 변형)이 그대로 들어 있으면 통과. 한두 단어 표현은 음성 인식이 불안정하므로 포함 여부로 판정한다. */
 function matches(entry: SpeakingVocabEntry, spoken: string): boolean {
   const said = ` ${tokens(spoken).join(" ")} `;
@@ -250,6 +259,9 @@ function TestPhase({ queue, onFinish }: { queue: SpeakingVocabEntry[]; onFinish:
           </button>
         </div>
         <p className="text-2xl font-bold leading-relaxed text-gray-900">{item.ko}</p>
+        <p className="font-mono text-lg font-semibold tracking-widest text-orange-600" aria-label="첫 글자 힌트">
+          {firstLetterHint(item.en)}
+        </p>
 
         {verdict === null && (
           <div className="space-y-2">
