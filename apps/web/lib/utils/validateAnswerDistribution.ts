@@ -219,13 +219,68 @@ export function shuffleChoices<T extends { id: string; text: string; isCorrect?:
   return shuffled.map((c, i) => ({ ...c, id: ids[i] }));
 }
 
-/** payload(중첩 객체 또는 items 배열) 안의 모든 문제의 choices를 전부 무작위로 섞는다. */
+function correctIndexOf(choices: any[]): number {
+  const idx = choices.map((c, i) => (c && (c.correct === true || c.isCorrect === true) ? i : -1)).filter((i) => i >= 0);
+  return idx.length === 1 ? idx[0] : -1; // 정답이 정확히 1개인 문제만 다룬다
+}
+
+/**
+ * 정답 위치 균형 배정 (2026-11-14).
+ *
+ * 문제마다 보기를 독립적으로 섞는(shuffleChoices) 것만으로는 문항 수가 적을 때 우연히 한쪽에 몰릴 수 있다
+ * (실제로 Listening 테스트에서 B/C 에 몰린 사례가 있었다). 그래서 한 번에 처리하는 문항 묶음 안에서
+ * 정답 위치 A/B/C/D 가 최대한 고르게(개수 차이 1 이내) 나오고, 같은 위치가 3번 연속 나오지 않도록
+ * 목표 위치를 미리 정한 뒤 정답 보기를 그 자리로 옮긴다. 정답 텍스트와 정답 표시는 그대로고 위치만 바뀐다.
+ */
+export function makeBalancedTargets(n: number, k = 4): number[] {
+  const targets: number[] = [];
+  const base = Math.floor(n / k);
+  for (let i = 0; i < k; i++) for (let j = 0; j < base; j++) targets.push(i);
+  const extra = Array.from({ length: k }, (_, i) => i);
+  for (let i = extra.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [extra[i], extra[j]] = [extra[j], extra[i]];
+  }
+  for (let i = 0; i < n - base * k; i++) targets.push(extra[i]);
+
+  const shuffle = () => {
+    for (let i = targets.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [targets[i], targets[j]] = [targets[j], targets[i]];
+    }
+  };
+  const hasRun = () => targets.some((t, i) => i >= 2 && targets[i - 1] === t && targets[i - 2] === t);
+  shuffle();
+  for (let tries = 0; tries < 300 && hasRun(); tries++) shuffle();
+  return targets;
+}
+
+/** 문제 목록의 정답 위치를 균형 있게 재배정한다. 보기 id 는 위치 순서(c1..c4)를 그대로 유지한다. */
+export function balanceCorrectPositions(questions: any[]): void {
+  const usable = questions.filter((q) => Array.isArray(q?.choices) && q.choices.length >= 2 && correctIndexOf(q.choices) >= 0);
+  if (usable.length < 2) return;
+  const targets = makeBalancedTargets(usable.length, Math.min(4, Math.max(...usable.map((q) => q.choices.length))));
+  usable.forEach((q, n) => {
+    const ids = q.choices.map((c: any) => c.id);
+    const ci = correctIndexOf(q.choices);
+    const t = Math.min(targets[n], q.choices.length - 1);
+    if (ci !== t) {
+      const next = [...q.choices];
+      [next[ci], next[t]] = [next[t], next[ci]];
+      q.choices = next.map((c: any, i: number) => ({ ...c, id: ids[i] }));
+    }
+  });
+}
+
+/** payload(중첩 객체 또는 items 배열) 안의 모든 문제의 choices를 섞고, 정답 위치를 균형 있게 배정한다. */
 export function shuffleAllChoicesInPayload(payload: unknown): void {
+  const collected: any[] = [];
   function walk(obj: any): void {
     if (!obj || typeof obj !== "object") return;
     if (Array.isArray(obj.questions)) {
       obj.questions.forEach((q: any) => {
         if (Array.isArray(q.choices)) q.choices = shuffleChoices(q.choices);
+        collected.push(q);
       });
     }
     if (Array.isArray(obj.items)) obj.items.forEach(walk);
@@ -241,6 +296,7 @@ export function shuffleAllChoicesInPayload(payload: unknown): void {
   } else {
     walk(payload);
   }
+  balanceCorrectPositions(collected);
 }
 
 /**
