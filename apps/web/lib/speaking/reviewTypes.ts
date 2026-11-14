@@ -145,6 +145,8 @@ export interface SpeakingReviewBundle {
   status?: "draft" | "published";
   publishedAt?: string;
   publishedBy?: string;
+  /** Drill·단어시험 시도 기록 (학생이 마칠 때마다 쌓인다) */
+  attempts?: import("@/lib/reviewAttempts").DrillAttempt[];
 }
 
 export const isPublishedBundle = (b: { status?: string } | null | undefined) => !!b && (!b.status || b.status === "published");

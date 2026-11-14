@@ -7,12 +7,14 @@ import { checkComposeAnswer } from "@/lib/writing/aiReview";
 import { loadReviewSession } from "@/lib/writing/reviewSession";
 import { isPublishedReview } from "@/lib/writing/reviewTypes";
 import { releaseAtOf } from "@/lib/reviewRelease";
+import { buildDrillAttempt } from "@/lib/reviewAttempts";
+import { appendWritingAttempt } from "@/lib/reviewAttempts.server";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 export async function POST(req: Request) {
-  let body: { sessionId?: string; action?: "get" | "check"; itemId?: string; answer?: string; item?: { korean?: string; answer?: string; mustUse?: string } };
+  let body: { sessionId?: string; action?: "get" | "check" | "finish"; results?: { tag?: string; ok?: boolean }[]; itemId?: string; answer?: string; item?: { korean?: string; answer?: string; mustUse?: string } };
   try {
     body = await req.json();
   } catch {
@@ -32,6 +34,15 @@ export async function POST(req: Request) {
   }
 
   try {
+    // 마칠 때 결과 저장 (학생 본인의 공개된 리뷰에서만)
+    if (body.action === "finish") {
+      if (!ctx.isOwner) return NextResponse.json({ ok: true, skipped: true });
+      const attempt = buildDrillAttempt(body.results ?? []);
+      if (!attempt) return NextResponse.json({ ok: false, error: "저장할 결과가 없습니다" }, { status: 400 });
+      const saved = await appendWritingAttempt(ctx.sessionId, attempt);
+      return NextResponse.json({ ok: saved, attempt: saved ? attempt : undefined });
+    }
+
     if (body.action === "check") {
       const cachedItem = ctx.cached?.drill?.items.find((i) => i.id === body.itemId);
       const item =

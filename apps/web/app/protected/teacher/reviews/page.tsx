@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { getServerSupabase } from "@/lib/supabase/server";
 import ReviewManager, { type ManagedRow, type ReviewState } from "./_client/ReviewManager";
+import { summarizeAttempts } from "@/lib/reviewAttempts";
 
 export const dynamic = "force-dynamic";
 
@@ -34,7 +35,7 @@ export default async function ReviewsAdminPage({ searchParams }: { searchParams:
   if (kind === "writing") {
     const { data, error } = await supabase
       .from("writing_2026_sessions")
-      .select("id,user_id,test_id,created_at,review_status:ai_review->>status,review_ver:ai_review->>version")
+      .select("id,user_id,test_id,created_at,review_status:ai_review->>status,review_ver:ai_review->>version,attempts:ai_review->attempts")
       .order("created_at", { ascending: false })
       .limit(150);
     if (error) loadError = error.message;
@@ -42,7 +43,7 @@ export default async function ReviewsAdminPage({ searchParams }: { searchParams:
   } else {
     const { data, error } = await supabase
       .from("speaking_results_2026")
-      .select("id,user_id,test_id,task_id,prompt,script,approx_words,created_at,review_status:meta->review_bundle->>status,review_ver:meta->review_bundle->>version")
+      .select("id,user_id,test_id,task_id,prompt,script,approx_words,created_at,review_status:meta->review_bundle->>status,review_ver:meta->review_bundle->>version,attempts:meta->review_bundle->attempts")
       .order("created_at", { ascending: false })
       .limit(150);
     if (error) loadError = error.message;
@@ -75,6 +76,7 @@ export default async function ReviewsAdminPage({ searchParams }: { searchParams:
         : "",
     at: fmtKst(r.created_at),
     state: stateOf(r.review_status, r.review_ver),
+    drill: summarizeAttempts(Array.isArray(r.attempts) ? r.attempts : null),
     canGenerate: kind === "writing" ? true : wordsOf(r) > 0,
     short: kind === "speaking" ? wordsOf(r) < 40 : false,
   }));

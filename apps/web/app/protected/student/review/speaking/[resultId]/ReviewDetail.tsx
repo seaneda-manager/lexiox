@@ -6,6 +6,7 @@ import { Loader2, Mic } from "lucide-react";
 import type { SpeakingReviewBundle } from "@/lib/speaking/reviewTypes";
 import ReviewGate, { type GateInfo } from "@/components/review/ReviewGate";
 import StaffReviewBar from "@/components/review/StaffReviewBar";
+import DrillHistory from "@/components/review/DrillHistory";
 
 function Card({ title, children, tone = "white" }: { title: string; children: React.ReactNode; tone?: "white" | "blue" | "emerald" | "amber" }) {
   const toneCls = {
@@ -295,6 +296,8 @@ export default function ReviewDetail({ resultId, script, scriptVersion }: { resu
           </div>
         </Card>
       )}
+
+      <DrillHistory attempts={bundle.attempts} />
 
       <div className="grid gap-3 sm:grid-cols-2">
         <Link

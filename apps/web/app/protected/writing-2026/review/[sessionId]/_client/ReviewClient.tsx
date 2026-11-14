@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { TaskReview, WritingAiReview, ReviewTaskKey } from "@/lib/writing/reviewTypes";
 import ReviewGate, { type GateInfo } from "@/components/review/ReviewGate";
 import StaffReviewBar from "@/components/review/StaffReviewBar";
+import DrillHistory from "@/components/review/DrillHistory";
 
 type Props = { sessionId: string; emailText: string; discussionText: string };
 
@@ -111,6 +112,7 @@ export default function ReviewClient({ sessionId, emailText, discussionText }: P
       </div>
 
       <TaskReviewView task={task} studentText={studentText} />
+      <DrillHistory attempts={review.attempts} />
     </section>
   );
 }

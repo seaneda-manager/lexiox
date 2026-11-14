@@ -13,6 +13,8 @@ export interface ManagedRow {
   detail: string;
   at: string;
   state: ReviewState;
+  /** 최근 Drill·단어시험 결과 한 줄 (없으면 빈 문자열) */
+  drill: string;
   canGenerate: boolean;
   short: boolean;
 }
@@ -147,6 +149,7 @@ export default function ReviewManager({ kind, rows }: { kind: "writing" | "speak
                   {r.test} · {r.at}
                   {r.detail && <> · {r.detail}</>}
                 </div>
+                {r.drill && <div className="text-[11px] font-semibold text-teal-700">{r.drill}</div>}
                 {errors[r.id] && <div className="text-[11px] text-rose-600">{errors[r.id]}</div>}
               </div>
               <div className="flex shrink-0 gap-2">

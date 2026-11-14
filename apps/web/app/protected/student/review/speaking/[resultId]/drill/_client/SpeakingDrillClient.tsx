@@ -849,6 +849,22 @@ function RetellStep({ resultId, prompt, retell, onDone }: { resultId: string; pr
 
 // ── 결과 요약 ───────────────────────────────────────────────────────
 function Summary({ results, resultId, onRetry }: { results: Result[]; resultId: string; onRetry: () => void }) {
+  // 마칠 때 한 번 결과를 저장한다 (학생 본인이 볼 때만 서버가 저장하고, 선생님 미리보기는 건너뛴다)
+  const savedRef = useRef(false);
+  const [saveState, setSaveState] = useState<"saving" | "ok" | "fail" | "skip">("saving");
+  useEffect(() => {
+    if (savedRef.current) return;
+    savedRef.current = true;
+    fetch("/api/speaking-2026/drill", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ resultId, action: "finish", results: results.map((r) => ({ tag: r.tag, ok: r.ok })) }),
+    })
+      .then((r) => r.json())
+      .then((j) => setSaveState(j.skipped ? "skip" : j.ok ? "ok" : "fail"))
+      .catch(() => setSaveState("fail"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const correct = results.filter((r) => r.ok).length;
   const byTag = new Map<string, { ok: number; n: number }>();
   for (const r of results) {
@@ -864,6 +880,11 @@ function Summary({ results, resultId, onRetry }: { results: Result[]; resultId: 
         {correct}
         <span className="text-xl font-bold text-gray-400"> / {results.length}</span>
       </p>
+      {saveState !== "skip" && (
+        <p className="text-[11px] text-gray-400">
+          {saveState === "saving" ? "결과 저장 중…" : saveState === "ok" ? "✓ 결과가 저장됐어요" : "결과를 저장하지 못했어요"}
+        </p>
+      )}
       <div className="space-y-2 text-left">
         {[...byTag.entries()].map(([tag, v]) => (
           <div key={tag} className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 text-xs">

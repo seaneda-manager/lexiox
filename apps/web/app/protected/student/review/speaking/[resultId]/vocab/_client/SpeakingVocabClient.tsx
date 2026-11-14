@@ -358,6 +358,22 @@ function Summary({
   onRetryMissed: () => void;
   onRetryAll: () => void;
 }) {
+  // 마칠 때 한 번 결과를 저장한다 (학생 본인이 볼 때만 서버가 저장하고, 선생님 미리보기는 건너뛴다)
+  const savedRef = useRef(false);
+  const [saveState, setSaveState] = useState<"saving" | "ok" | "fail" | "skip">("saving");
+  useEffect(() => {
+    if (savedRef.current) return;
+    savedRef.current = true;
+    fetch("/api/speaking-2026/vocab", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ resultId, action: "finish", total, correct, missed: missed.map((x) => x.en) }),
+    })
+      .then((r) => r.json())
+      .then((j) => setSaveState(j.skipped ? "skip" : j.ok ? "ok" : "fail"))
+      .catch(() => setSaveState("fail"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return (
     <div className="space-y-5 rounded-2xl border border-gray-200 bg-white p-6">
       <div className="text-center">
@@ -395,6 +411,11 @@ function Summary({
           처음부터 다시
         </button>
       </div>
+      {saveState !== "skip" && (
+        <p className="text-[11px] text-gray-400">
+          {saveState === "saving" ? "결과 저장 중…" : saveState === "ok" ? "✓ 결과가 저장됐어요" : "결과를 저장하지 못했어요"}
+        </p>
+      )}
       <Link href={`/student/review/speaking/${resultId}`} className="block text-center text-xs text-gray-500 underline">
         리뷰로 돌아가기
       </Link>

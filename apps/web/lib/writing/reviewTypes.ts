@@ -70,6 +70,8 @@ export interface WritingAiReview {
   status?: "draft" | "published";
   publishedAt?: string;
   publishedBy?: string;
+  /** Drill 시도 기록 (학생이 Drill 을 마칠 때마다 쌓인다) */
+  attempts?: import("@/lib/reviewAttempts").DrillAttempt[];
 }
 
 export const isPublishedReview = (r: { status?: string } | null | undefined) => !!r && (!r.status || r.status === "published");

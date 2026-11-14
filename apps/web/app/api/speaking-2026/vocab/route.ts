@@ -4,11 +4,13 @@ import { NextResponse } from "next/server";
 import { loadSpeakingReviewSession } from "@/lib/speaking/reviewSession";
 import { isPublishedBundle } from "@/lib/speaking/reviewTypes";
 import { releaseAtOf } from "@/lib/reviewRelease";
+import { buildVocabAttempt } from "@/lib/reviewAttempts";
+import { appendSpeakingAttempt } from "@/lib/reviewAttempts.server";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
-  let body: { resultId?: string };
+  let body: { resultId?: string; action?: "get" | "finish"; total?: number; correct?: number; missed?: string[] };
   try {
     body = await req.json();
   } catch {
@@ -24,6 +26,13 @@ export async function POST(req: Request) {
       { ok: false, notPublished: true, releaseAt: releaseAtOf(ctx.submittedAt), error: "자세한 리뷰는 곧 공개돼요." },
       { status: 409 },
     );
+  }
+  if (body.action === "finish") {
+    if (!ctx.isOwner) return NextResponse.json({ ok: true, skipped: true });
+    const attempt = buildVocabAttempt(body.total, body.correct, body.missed);
+    if (!attempt) return NextResponse.json({ ok: false, error: "저장할 결과가 없습니다" }, { status: 400 });
+    const saved = await appendSpeakingAttempt(ctx.resultId, attempt);
+    return NextResponse.json({ ok: saved, attempt: saved ? attempt : undefined });
   }
   if (ctx.cached?.vocab?.items.length) {
     return NextResponse.json({ ok: true, items: ctx.cached.vocab.items, isStaff: !ctx.isOwner });

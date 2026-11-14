@@ -6,6 +6,8 @@ import { checkFixAnswer, checkSpokenAnswer, computeDelivery } from "@/lib/speaki
 import { loadSpeakingReviewSession } from "@/lib/speaking/reviewSession";
 import { isPublishedBundle, type SpeakingReviewBundle } from "@/lib/speaking/reviewTypes";
 import { releaseAtOf } from "@/lib/reviewRelease";
+import { buildDrillAttempt } from "@/lib/reviewAttempts";
+import { appendSpeakingAttempt } from "@/lib/reviewAttempts.server";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -13,7 +15,8 @@ export const maxDuration = 120;
 export async function POST(req: Request) {
   let body: {
     resultId?: string;
-    action?: "get" | "check" | "compare" | "fix";
+    action?: "get" | "check" | "compare" | "fix" | "finish";
+    results?: { tag?: string; ok?: boolean }[];
     transcript?: string;
     durationSec?: number;
     item?: { korean?: string; answer?: string; mustUse?: string; wrong?: string };
@@ -38,6 +41,15 @@ export async function POST(req: Request) {
   }
 
   try {
+    // 마칠 때 결과 저장 (학생 본인의 공개된 리뷰에서만)
+    if (body.action === "finish") {
+      if (!ctx.isOwner) return NextResponse.json({ ok: true, skipped: true });
+      const attempt = buildDrillAttempt(body.results ?? []);
+      if (!attempt) return NextResponse.json({ ok: false, error: "저장할 결과가 없습니다" }, { status: 400 });
+      const saved = await appendSpeakingAttempt(ctx.resultId, attempt);
+      return NextResponse.json({ ok: saved, attempt: saved ? attempt : undefined });
+    }
+
     if (body.action === "check") {
       const it = body.item;
       const transcript = (body.transcript ?? "").trim();
