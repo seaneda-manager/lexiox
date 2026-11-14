@@ -112,10 +112,14 @@ function AudioCheckStep({ onNext, volume, onVolumeChange }: { onNext: () => void
   const [isRecording, setIsRecording] = useState(false);
   const audioContextRef = useRef<AudioContext | null>(null);
   const rafRef = useRef<number | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   const startMicTest = async () => {
     try {
+      // 이미 켜져 있던 스트림이 있으면 먼저 닫는다 (마이크가 계속 켜진 채 남지 않게)
+      streamRef.current?.getTracks().forEach((t) => t.stop());
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
       const ctx = audioContextRef.current ?? new (window.AudioContext || (window as any).webkitAudioContext)();
       audioContextRef.current = ctx;
       const analyser = ctx.createAnalyser();
@@ -138,6 +142,10 @@ function AudioCheckStep({ onNext, volume, onVolumeChange }: { onNext: () => void
 
   const stopMicTest = () => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    // 마이크 트랙을 반드시 끈다. 켜 둔 채 시험을 진행하면 아이패드(iOS)가 오디오를 통화 모드로 바꿔
+    // 문제 음성이 매우 작게 들린다.
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
     if (audioContextRef.current) {
       audioContextRef.current.close();
       audioContextRef.current = null;
@@ -157,7 +165,10 @@ function AudioCheckStep({ onNext, volume, onVolumeChange }: { onNext: () => void
     gain.gain.value = volume / 100;
     osc.frequency.value = 440;
     osc.start();
-    setTimeout(() => osc.stop(), 500);
+    setTimeout(() => {
+      osc.stop();
+      ctx.close().catch(() => {}); // 쓰고 난 오디오 컨텍스트는 닫는다
+    }, 500);
   };
 
   return (
