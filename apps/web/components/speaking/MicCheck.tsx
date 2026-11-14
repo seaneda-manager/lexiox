@@ -11,6 +11,8 @@ export default function MicCheck({ className = "" }: { className?: string }) {
   const [heard, setHeard] = useState(false);
   const [sttOk, setSttOk] = useState(true);
   const [perm, setPerm] = useState<PermissionState | "unknown">("unknown");
+  const [device, setDevice] = useState("");
+  const [noSignal, setNoSignal] = useState(false);
 
   const streamRef = useRef<MediaStream | null>(null);
   const ctxRef = useRef<AudioContext | null>(null);
@@ -43,23 +45,49 @@ export default function MicCheck({ className = "" }: { className?: string }) {
   const start = async () => {
     setState("starting");
     setHeard(false);
+    setNoSignal(false);
+    setDevice("");
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      streamRef.current = stream;
+      // 클릭 직후에 오디오 컨텍스트를 만들어야 브라우저가 일시정지(suspended) 상태로 시작하지 않는다.
+      // (마이크 허용 팝업을 거친 뒤에 만들면 소리가 들어와도 막대가 0에 머무는 경우가 있다)
       const AC = (window as any).AudioContext || (window as any).webkitAudioContext;
       const ctx: AudioContext = new AC();
       ctxRef.current = ctx;
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+      });
+      streamRef.current = stream;
+      const track = stream.getAudioTracks()[0];
+      setDevice(track?.label || "이름 없는 마이크");
+      await ctx.resume();
+
       const analyser = ctx.createAnalyser();
-      analyser.fftSize = 512;
+      analyser.fftSize = 1024;
       ctx.createMediaStreamSource(stream).connect(analyser);
       const buf = new Uint8Array(analyser.fftSize);
+      const startedAt = Date.now();
+      let shown = 0;
+      let everHeard = false;
       const tick = () => {
         analyser.getByteTimeDomainData(buf);
-        let peak = 0;
-        for (let i = 0; i < buf.length; i++) peak = Math.max(peak, Math.abs(buf[i] - 128));
-        const v = Math.min(1, peak / 64);
-        setLevel(v);
-        if (v > 0.15) setHeard(true);
+        // RMS(평균 세기)를 쓰고 감도를 높여, 보통 목소리 크기에서도 막대가 충분히 오른다.
+        let sum = 0;
+        for (let i = 0; i < buf.length; i++) {
+          const d = (buf[i] - 128) / 128;
+          sum += d * d;
+        }
+        const rms = Math.sqrt(sum / buf.length);
+        const v = Math.min(1, rms * 8);
+        shown = Math.max(v, shown * 0.88); // 올라갈 땐 바로, 내려갈 땐 천천히
+        setLevel(shown);
+        if (v > 0.12) {
+          everHeard = true;
+          setHeard(true);
+          setNoSignal(false);
+        }
+        // 4초가 지나도 신호가 전혀 없으면 원인을 안내한다
+        if (!everHeard && Date.now() - startedAt > 4000) setNoSignal(true);
         rafRef.current = requestAnimationFrame(tick);
       };
       tick();
@@ -116,6 +144,18 @@ export default function MicCheck({ className = "" }: { className?: string }) {
           <p className={heard ? "font-semibold text-emerald-700" : "text-gray-500"}>
             {heard ? "✓ 마이크가 잘 들려요. 이 상태로 녹음하면 됩니다." : "아무 말이나 해 보세요. 막대가 움직이면 정상입니다."}
           </p>
+          {device && <p className="text-gray-500">사용 중인 마이크: <b className="text-gray-700">{device}</b></p>}
+          {noSignal && !heard && (
+            <div className="rounded-lg bg-amber-50 p-2.5 leading-relaxed text-amber-900">
+              소리가 전혀 들어오지 않아요. 아래를 확인해 주세요.
+              <ul className="mt-1 list-disc pl-4">
+                <li>위에 표시된 마이크가 실제로 쓰는 마이크가 맞는지 (노트북 내장 vs 이어폰 마이크)</li>
+                <li>Windows 설정 → 시스템 → 소리 → 입력에서 같은 마이크를 고르고, 말할 때 입력 막대가 움직이는지</li>
+                <li>마이크 음소거 스위치(이어폰·키보드의 마이크 끄기 키)가 켜져 있지 않은지</li>
+                <li>Windows 설정 → 개인 정보 및 보안 → 마이크에서 브라우저(Chrome)가 허용되어 있는지</li>
+              </ul>
+            </div>
+          )}
         </div>
       )}
 
