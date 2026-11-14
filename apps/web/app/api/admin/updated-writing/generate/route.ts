@@ -31,6 +31,10 @@ Pick 10 DIFFERENT settings, e.g.: campus library, flight delay, dorm roommate, l
 This task is NOT one themed essay. EVERY question is an independent mini-conversation:
 - Each of the 10 questions has its OWN situation and topic (e.g. a library, a flight delay, a lab, a roommate, a job fair...). Do NOT reuse one situation across questions; the 10 contexts must all differ.
 - contextLeadIn is the other speaker's short line (a question or statement), written like "A: ..." — the test taker builds the reply that answers it.
+- CONVERSATION COHERENCE (critical): the built sentence must be a natural, direct reply to the A line, as if you read the two lines aloud as a real dialogue. If A asks a question, B's sentence must answer it or respond to it. If A makes a statement, B's sentence must be a natural reaction or follow-up to that statement. Design A's line FIRST so that B's target structure is the obvious thing to say next; never attach an unrelated A line to a sentence you already wrote.
+  BAD: A: "Excuse me, do you work here at the pharmacy?"  B: "Can you recommend a good cold medicine for me?"  (B ignores A's question)
+  GOOD: A: "Hello! How can I help you today?"  B: "Can you recommend a good cold medicine for me?"
+  Before finalizing each question, re-read A then B once; if B does not clearly follow from A, rewrite A.
 - contextLeadOut is usually "" (empty) because the built sentence IS the whole reply.
 - Each question has:
   • tokens: the pieces that form the correct answer, IN CORRECT ORDER
