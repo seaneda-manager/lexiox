@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Loader2, Mic, RotateCcw, Square, Volume2 } from "lucide-react";
 import { useSpeechRecorder } from "@/components/speaking/useSpeechRecorder";
+import MicCheck from "@/components/speaking/MicCheck";
 import { tokens } from "@/lib/speaking/similarity";
 import type { SpeakingVocabEntry, VocabKind } from "@/lib/speaking/reviewTypes";
 
@@ -155,6 +156,7 @@ function StudyPhase({ items, onStart }: { items: SpeakingVocabEntry[]; onStart: 
 
   return (
     <div className="space-y-4">
+      <MicCheck />
       <div className="flex items-center justify-between rounded-xl bg-orange-50 px-4 py-3">
         <div>
           <p className="text-sm font-bold text-orange-900">암기 시간</p>

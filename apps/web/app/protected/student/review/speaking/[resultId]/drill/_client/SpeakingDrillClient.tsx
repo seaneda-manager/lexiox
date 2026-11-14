@@ -8,6 +8,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Mic, Square, Volume2, RotateCcw, Loader2 } from "lucide-react";
 import { useSpeechRecorder } from "@/components/speaking/useSpeechRecorder";
+import MicCheck from "@/components/speaking/MicCheck";
 import { compareSpoken } from "@/lib/speaking/similarity";
 import type { DictationItem, FixItem, PatternItem, RecallItem, ShadowItem, SpeakingDeliveryStats, SpeakingDrillItem } from "@/lib/speaking/reviewTypes";
 
@@ -117,6 +118,7 @@ export default function SpeakingDrillClient({ resultId, prompt, firstScript }: {
 
   return (
     <div className="space-y-4">
+      <MicCheck />
       <div className="space-y-1.5">
         <div className="flex items-center justify-between text-xs text-gray-500">
           <span className="font-semibold text-gray-700">{stageLabel(item)}</span>
