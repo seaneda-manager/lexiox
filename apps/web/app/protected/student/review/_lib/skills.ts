@@ -12,6 +12,8 @@ export interface ReviewRow {
   /** 보조 링크 (예: Writing Drill) */
   extra?: { label: string; href: string };
   at: string | null;
+  /** 같은 날 같은 시험에서 나온 기록끼리 묶는 그룹 (있으면 목록이 그룹별로 나뉜다) */
+  group?: { key: string; title: string; date: string };
 }
 
 export interface SkillList {
@@ -27,6 +29,16 @@ export const SKILL_META: Record<
   speaking: { title: "Speaking", desc: "스크립트 · 피드백 · 다시 녹음", color: "orange", emptyHref: "/speaking-2026/study", emptyLabel: "Speaking 연습 시작하기" },
   listening: { title: "Listening", desc: "문항별 스크립트와 해설 복습", color: "violet", emptyHref: "/updated-listening", emptyLabel: "Listening 연습 시작하기" },
   writing: { title: "Writing", desc: "답안 비교 · 모범답안 · Drill", color: "teal", emptyHref: "/updated-writing/test", emptyLabel: "Writing 연습 시작하기" },
+};
+
+const KST = "Asia/Seoul";
+const fmtDate = (iso: string) =>
+  new Date(iso).toLocaleDateString("ko-KR", { timeZone: KST, year: "numeric", month: "long", day: "numeric", weekday: "short" });
+const fmtTime = (iso: string) => new Date(iso).toLocaleTimeString("ko-KR", { timeZone: KST, hour: "numeric", minute: "2-digit" });
+/** "task1" → "Task 1", 그 외는 그대로 */
+const taskLabel = (id: string | null | undefined) => {
+  const m = String(id ?? "").match(/^task[_\s-]?(\d+)$/i);
+  return m ? `Task ${m[1]}` : id ? String(id) : "Speaking";
 };
 
 const fmt = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleString("ko-KR") : "-");
@@ -65,21 +77,32 @@ export async function loadSkill(supabase: SupabaseClient, userId: string, skill:
     case "speaking": {
       const { data, count } = await supabase
         .from("speaking_results_2026")
-        .select("id,test_id,content_score,created_at", { count: "exact" })
+        .select("id,test_id,task_id,prompt,content_score,created_at", { count: "exact" })
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .limit(limit);
       const labels = await labelMap(supabase, "speaking_tests", (data ?? []).map((r: any) => r.test_id));
-      return {
-        total: count ?? data?.length ?? 0,
-        rows: (data ?? []).map((r: any) => ({
+
+      // 같은 시험을 3시간 안에 이어서 한 기록은 한 번의 응시로 묶는다 (날짜가 같아도 따로 응시했으면 따로 나눈다)
+      const SESSION_GAP_MS = 3 * 60 * 60 * 1000;
+      const last = new Map<string, { at: number; key: string }>();
+      const rows = (data ?? []).map((r: any) => {
+        const title = (r.test_id && labels[r.test_id]) || r.test_id || "Unknown";
+        const at = new Date(r.created_at).getTime();
+        const prev = last.get(r.test_id);
+        const key = prev && prev.at - at <= SESSION_GAP_MS ? prev.key : `${r.test_id}:${r.id}`;
+        last.set(r.test_id, { at, key });
+        const snippet = r.prompt ? String(r.prompt).replace(/\s+/g, " ").slice(0, 70) + (String(r.prompt).length > 70 ? "…" : "") : "";
+        return {
           id: r.id,
-          label: (r.test_id && labels[r.test_id]) || r.test_id || "Unknown",
-          meta: `${fmt(r.created_at)}${r.content_score != null ? ` · 내용 ${r.content_score}점` : ""}`,
+          label: taskLabel(r.task_id),
+          meta: [snippet, r.content_score != null ? `내용 ${r.content_score}점` : "", fmtTime(r.created_at)].filter(Boolean).join(" · "),
           href: `/student/review/speaking/${r.id}`,
           at: r.created_at,
-        })),
-      };
+          group: { key, title, date: fmtDate(r.created_at) },
+        } as ReviewRow;
+      });
+      return { total: count ?? data?.length ?? 0, rows };
     }
     case "listening": {
       const { data, count } = await supabase
