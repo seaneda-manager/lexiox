@@ -1,7 +1,10 @@
 "use client";
-// 리뷰 본문: 생성(최초 20~40초) → Email / Discussion 탭 → 섹션별 상세.
+// 리뷰 본문: 선생님이 공개한 리뷰를 Email / Discussion 탭으로 보여 준다. 공개 전이면 공개 예정일을 안내한다.
+// 선생님/관리자가 열면 초안도 미리 보고, 공개·수정할 수 있는 도구 모음이 위에 붙는다.
 import { useCallback, useEffect, useState } from "react";
 import type { TaskReview, WritingAiReview, ReviewTaskKey } from "@/lib/writing/reviewTypes";
+import ReviewGate, { type GateInfo } from "@/components/review/ReviewGate";
+import StaffReviewBar from "@/components/review/StaffReviewBar";
 
 type Props = { sessionId: string; emailText: string; discussionText: string };
 
@@ -12,11 +15,15 @@ export default function ReviewClient({ sessionId, emailText, discussionText }: P
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<ReviewTaskKey>(emailText.trim() ? "email" : "discussion");
+  const [gate, setGate] = useState<GateInfo | null>(null);
+  const [status, setStatus] = useState<"draft" | "published">("published");
+  const [isStaff, setIsStaff] = useState(false);
 
   const load = useCallback(
     async () => {
       setLoading(true);
       setError(null);
+      setGate(null);
       try {
         const res = await fetch("/api/writing-2026/review", {
           method: "POST",
@@ -24,8 +31,14 @@ export default function ReviewClient({ sessionId, emailText, discussionText }: P
           body: JSON.stringify({ sessionId }),
         });
         const json = await res.json().catch(() => ({}));
+        if (json.notPublished || json.notGenerated) {
+          setGate(json as GateInfo);
+          return;
+        }
         if (!res.ok || !json.ok) throw new Error(json.error || "리뷰를 불러오지 못했습니다");
         setReview(json.review as WritingAiReview);
+        setStatus(json.status === "draft" ? "draft" : "published");
+        setIsStaff(!!json.isStaff);
       } catch (e) {
         setError(e instanceof Error ? e.message : "리뷰를 불러오지 못했습니다");
       } finally {
@@ -43,11 +56,12 @@ export default function ReviewClient({ sessionId, emailText, discussionText }: P
     return (
       <section className="rounded-2xl border border-slate-200 bg-white px-6 py-12 text-center">
         <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-teal-600 border-t-transparent" />
-        <p className="mt-4 text-sm font-semibold text-slate-700">답안을 분석하고 있어요</p>
-        <p className="mt-1 text-xs text-slate-500">처음 한 번만 20~40초 걸립니다. 다음부터는 바로 열려요.</p>
+        <p className="mt-4 text-sm font-semibold text-slate-700">리뷰를 불러오고 있어요</p>
       </section>
     );
   }
+
+  if (gate) return <ReviewGate gate={gate} />;
 
   if (error || !review) {
     return (
@@ -70,6 +84,16 @@ export default function ReviewClient({ sessionId, emailText, discussionText }: P
 
   return (
     <section className="space-y-6">
+      {isStaff && (
+        <StaffReviewBar
+          kind="writing"
+          id={sessionId}
+          status={status}
+          task={active}
+          texts={{ overview: task.overview, improvedText: task.improved.text, faceliftText: task.facelift.text }}
+          onChanged={() => load()}
+        />
+      )}
       <div className="flex items-center justify-between gap-3">
         <div className="flex gap-2">
           {tabs.map((k) => (

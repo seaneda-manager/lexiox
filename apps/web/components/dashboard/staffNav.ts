@@ -104,6 +104,7 @@ function allItems(role: StaffRole): StaffNavItem[] {
     { section: S.today, href: "/admin/homework", label: "숙제 관리", icon: ClipboardCheck, perm: "homework.grade" },
     { section: S.today, href: "/teacher/students", label: "학생 현황", icon: Users, perm: "students.view" },
     { section: S.today, href: "/admin/dashboard", label: "학생 진행 현황", icon: BarChart2, perm: "students.view" },
+    { section: S.today, href: "/teacher/reviews", label: "리뷰 관리", icon: ClipboardCheck, perm: "students.view" },
     { section: S.today, href: "/teacher/vocab-review", label: "단어 복습 현황", icon: RotateCcw, perm: "reports.view" },
     { section: S.today, href: "/teacher/reports/students", label: "활동 리포트", icon: BarChart2, perm: "reports.view" },
     { section: S.today, href: "/teacher/tasks", label: "할 일 관리", icon: CheckSquare },

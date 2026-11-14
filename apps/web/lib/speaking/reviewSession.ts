@@ -19,6 +19,8 @@ export interface SpeakingReviewContext {
   scriptKey: string;
   /** 이 결과를 낸 학생 본인인지 (선생님/관리자는 false) */
   isOwner: boolean;
+  /** 제출 시각 (공개 예정일 계산용) */
+  submittedAt: string | null;
 }
 
 export type SpeakingLoadResult =
@@ -39,7 +41,7 @@ export async function loadSpeakingReviewSession(resultId: string): Promise<Speak
   const admin = getServiceSupabase();
   const { data: row } = await admin
     .from("speaking_results_2026")
-    .select("id, user_id, prompt, script, meta")
+    .select("id, user_id, prompt, script, meta, created_at")
     .eq("id", resultId)
     .maybeSingle();
   if (!row) return { ok: false, status: 404, error: "결과를 찾을 수 없습니다" };
@@ -66,11 +68,12 @@ export async function loadSpeakingReviewSession(resultId: string): Promise<Speak
       prompt: String((row as any).prompt ?? ""),
       script,
       durationSec: Number.isFinite(rawDur) && rawDur > 0 ? rawDur : null,
-      // 스크립트를 고쳤다면 이전 리뷰는 더 이상 맞지 않으므로 무효
-      cached: bundle && bundle.scriptKey === scriptKey ? bundle : null,
+      // 검수·공개된 리뷰는 학생이 스크립트를 고쳐도 유지한다(선생님 승인 없이 다시 만들지 않는다).
+      cached: bundle ?? null,
       meta,
       scriptKey,
       isOwner,
+      submittedAt: ((row as any).created_at as string | null) ?? null,
     },
   };
 }

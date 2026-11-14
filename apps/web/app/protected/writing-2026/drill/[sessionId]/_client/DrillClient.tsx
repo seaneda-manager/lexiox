@@ -1,5 +1,6 @@
 "use client";
 // 2단계 Drill: ① 청크 배열(정답 즉시 판정) → ② 한글→영어 작문(자동 채점) → 결과 요약
+import ReviewGate, { type GateInfo } from "@/components/review/ReviewGate";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import type { DrillChunkItem, DrillComposeItem, DrillItem } from "@/lib/writing/reviewTypes";
@@ -20,6 +21,7 @@ export default function DrillClient({ sessionId }: { sessionId: string }) {
   const [items, setItems] = useState<DrillItem[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [gate, setGate] = useState<GateInfo | null>(null);
   const [idx, setIdx] = useState(0);
   const [results, setResults] = useState<Result[]>([]);
 
@@ -34,6 +36,10 @@ export default function DrillClient({ sessionId }: { sessionId: string }) {
           body: JSON.stringify({ sessionId, action: "get" }),
         });
         const json = await res.json().catch(() => ({}));
+        if (json.notPublished || json.notGenerated) {
+          setGate(json as GateInfo);
+          return;
+        }
         if (!res.ok || !json.ok) throw new Error(json.error || "Drill을 불러오지 못했습니다");
         setItems(json.items as DrillItem[]);
         setIdx(0);
@@ -58,11 +64,13 @@ export default function DrillClient({ sessionId }: { sessionId: string }) {
     return (
       <div className="rounded-2xl border border-slate-200 bg-white px-6 py-12 text-center">
         <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-teal-600 border-t-transparent" />
-        <p className="mt-4 text-sm font-semibold text-slate-700">내 답안에 맞는 Drill을 만들고 있어요</p>
-        <p className="mt-1 text-xs text-slate-500">처음 한 번만 20~40초 걸립니다.</p>
+        <p className="mt-4 text-sm font-semibold text-slate-700">Drill을 불러오고 있어요</p>
+        <p className="mt-1 text-xs text-slate-500"></p>
       </div>
     );
   }
+  if (gate) return <ReviewGate gate={gate} />;
+
   if (error || !items) {
     return (
       <div className="space-y-3 rounded-2xl border border-rose-200 bg-rose-50 px-6 py-6 text-center">

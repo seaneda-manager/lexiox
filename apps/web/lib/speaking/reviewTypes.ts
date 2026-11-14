@@ -141,4 +141,10 @@ export interface SpeakingReviewBundle {
   review: SpeakingReview;
   drill?: { generatedAt: string; items: SpeakingDrillItem[] };
   vocab?: { generatedAt: string; items: SpeakingVocabEntry[] };
+  /** 선생님 검수 상태. 없으면(예전 데이터) 공개로 본다. */
+  status?: "draft" | "published";
+  publishedAt?: string;
+  publishedBy?: string;
 }
+
+export const isPublishedBundle = (b: { status?: string } | null | undefined) => !!b && (!b.status || b.status === "published");

@@ -66,6 +66,12 @@ export interface WritingAiReview {
   email: TaskReview | null;
   discussion: TaskReview | null;
   drill?: { generatedAt: string; items: DrillItem[] };
+  /** 선생님 검수 상태. 없으면(예전 데이터) 공개로 본다. */
+  status?: "draft" | "published";
+  publishedAt?: string;
+  publishedBy?: string;
 }
+
+export const isPublishedReview = (r: { status?: string } | null | undefined) => !!r && (!r.status || r.status === "published");
 
 export const GRAMMAR_FOCUS_TAG_FALLBACK = "문장 구성";

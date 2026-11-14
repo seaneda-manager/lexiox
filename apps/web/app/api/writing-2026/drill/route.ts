@@ -1,13 +1,15 @@
 // app/api/writing-2026/drill/route.ts
-// 리뷰(수정된 문장·문법 경향)에서 Drill 문항을 만든다. 캐시 우선.
-//  action: "get"(기본) → 문항 반환/생성,  "check" → 작문 문항 1개 채점
+// Writing Drill 문항 조회 + 작문 채점.
+//  - Drill 문항은 선생님이 '리뷰 관리'에서 리뷰와 함께 만든다. 학생은 공개된 뒤에만 열 수 있다.
+//  action: "get"(기본) → 문항 반환,  "check" → 작문 문항 1개 채점
 import { NextResponse } from "next/server";
-import { checkComposeAnswer, generateWritingDrill, generateWritingReview } from "@/lib/writing/aiReview";
-import { loadReviewSession, saveReview } from "@/lib/writing/reviewSession";
-import type { WritingAiReview } from "@/lib/writing/reviewTypes";
+import { checkComposeAnswer } from "@/lib/writing/aiReview";
+import { loadReviewSession } from "@/lib/writing/reviewSession";
+import { isPublishedReview } from "@/lib/writing/reviewTypes";
+import { releaseAtOf } from "@/lib/reviewRelease";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 120;
+export const maxDuration = 60;
 
 export async function POST(req: Request) {
   let body: { sessionId?: string; action?: "get" | "check"; itemId?: string; answer?: string; item?: { korean?: string; answer?: string; mustUse?: string } };
@@ -21,9 +23,16 @@ export async function POST(req: Request) {
   if (loaded.ok === false) return NextResponse.json({ ok: false, error: loaded.error }, { status: loaded.status });
   const { ctx } = loaded;
 
+  // 공개 전에는 학생이 Drill 을 열 수 없다 (선생님은 미리보기 가능)
+  if (ctx.isOwner && !isPublishedReview(ctx.cached)) {
+    return NextResponse.json(
+      { ok: false, notPublished: true, releaseAt: releaseAtOf(ctx.submittedAt), error: "자세한 리뷰는 곧 공개돼요." },
+      { status: 409 },
+    );
+  }
+
   try {
     if (body.action === "check") {
-      // 캐시(ai_review 컬럼)가 없는 환경에서도 동작하도록 클라이언트가 보낸 문항을 대체값으로 쓴다.
       const cachedItem = ctx.cached?.drill?.items.find((i) => i.id === body.itemId);
       const item =
         cachedItem && cachedItem.kind === "compose"
@@ -31,9 +40,7 @@ export async function POST(req: Request) {
           : body.item && typeof body.item.korean === "string" && typeof body.item.answer === "string"
             ? { korean: body.item.korean, answer: body.item.answer, mustUse: String(body.item.mustUse ?? "") }
             : null;
-      if (!item) {
-        return NextResponse.json({ ok: false, error: "문항을 찾을 수 없습니다" }, { status: 404 });
-      }
+      if (!item) return NextResponse.json({ ok: false, error: "문항을 찾을 수 없습니다" }, { status: 404 });
       const answer = (body.answer ?? "").trim();
       if (!answer) return NextResponse.json({ ok: false, error: "답을 입력하세요" }, { status: 400 });
       const result = await checkComposeAnswer({
@@ -46,23 +53,12 @@ export async function POST(req: Request) {
     }
 
     if (ctx.cached?.drill?.items.length) {
-      return NextResponse.json({ ok: true, items: ctx.cached.drill.items });
+      return NextResponse.json({ ok: true, items: ctx.cached.drill.items, isStaff: !ctx.isOwner, status: ctx.cached.status ?? "published" });
     }
-
-  // 선생님/관리자가 열었는데 아직 만들어진 게 없으면 만들지 않는다 (비용 보호). 학생이 열 때 한 번만 만들어 저장한다.
-  if (!ctx.isOwner) {
-    return NextResponse.json({ ok: false, notGenerated: true, error: "아직 만들어진 리뷰가 없어요. 학생이 리뷰를 처음 열면 자동으로 만들어집니다." }, { status: 409 });
-  }
-
-    // 리뷰가 아직 없으면(리뷰 페이지를 거치지 않고 접근) 먼저 만든다.
-    let review: WritingAiReview | null = ctx.cached;
-    if (!review || (!review.email && !review.discussion)) {
-      review = await generateWritingReview(ctx.input);
-    }
-    const items = await generateWritingDrill(review);
-    const withDrill: WritingAiReview = { ...review, drill: { generatedAt: new Date().toISOString(), items } };
-    await saveReview(ctx.sessionId, withDrill);
-    return NextResponse.json({ ok: true, items });
+    return NextResponse.json(
+      { ok: false, notGenerated: true, isStaff: !ctx.isOwner, error: "Drill 이 아직 만들어지지 않았어요. 선생님 메뉴의 ‘리뷰 관리’에서 만들어 주세요." },
+      { status: 409 },
+    );
   } catch (e) {
     console.error("[Writing Drill] error:", e);
     return NextResponse.json({ ok: false, error: e instanceof Error ? e.message : "Drill 처리 실패" }, { status: 500 });

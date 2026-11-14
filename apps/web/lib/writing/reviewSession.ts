@@ -14,6 +14,8 @@ export interface ReviewSessionContext {
   cached: WritingAiReview | null;
   /** 이 결과를 낸 학생 본인인지 (선생님/관리자는 false) */
   isOwner: boolean;
+  /** 제출 시각 (공개 예정일 계산용) */
+  submittedAt: string | null;
 }
 
 export type LoadResult =
@@ -40,7 +42,7 @@ export async function loadReviewSession(sessionId: string): Promise<LoadResult> 
   const admin = getServiceSupabase();
   const { data: session } = await admin
     .from("writing_2026_sessions")
-    .select("id, user_id, test_id, raw_answers")
+    .select("id, user_id, test_id, raw_answers, created_at")
     .eq("id", sessionId)
     .maybeSingle();
   if (!session) return { ok: false, status: 404, error: "세션을 찾을 수 없습니다" };
@@ -102,6 +104,7 @@ export async function loadReviewSession(sessionId: string): Promise<LoadResult> 
       },
       cached,
       isOwner,
+      submittedAt: ((session as any).created_at as string | null) ?? null,
     },
   };
 }

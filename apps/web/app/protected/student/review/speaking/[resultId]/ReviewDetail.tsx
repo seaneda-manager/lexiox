@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Loader2, Mic } from "lucide-react";
 import type { SpeakingReviewBundle } from "@/lib/speaking/reviewTypes";
+import ReviewGate, { type GateInfo } from "@/components/review/ReviewGate";
+import StaffReviewBar from "@/components/review/StaffReviewBar";
 
 function Card({ title, children, tone = "white" }: { title: string; children: React.ReactNode; tone?: "white" | "blue" | "emerald" | "amber" }) {
   const toneCls = {
@@ -38,11 +40,15 @@ export default function ReviewDetail({ resultId, script, scriptVersion }: { resu
   const [bundle, setBundle] = useState<SpeakingReviewBundle | null>(null);
   const [loading, setLoading] = useState(!!script);
   const [error, setError] = useState<string | null>(null);
+  const [gate, setGate] = useState<GateInfo | null>(null);
+  const [status, setStatus] = useState<"draft" | "published">("published");
+  const [isStaff, setIsStaff] = useState(false);
 
   const load = useCallback(
     async () => {
       setLoading(true);
       setError(null);
+      setGate(null);
       try {
         const res = await fetch("/api/speaking-2026/review", {
           method: "POST",
@@ -50,8 +56,14 @@ export default function ReviewDetail({ resultId, script, scriptVersion }: { resu
           body: JSON.stringify({ resultId }),
         });
         const json = await res.json().catch(() => ({}));
+        if (json.notPublished || json.notGenerated) {
+          setGate(json as GateInfo);
+          return;
+        }
         if (!res.ok || !json.ok) throw new Error(json.error || "리뷰를 불러오지 못했습니다");
         setBundle(json.bundle as SpeakingReviewBundle);
+        setStatus(json.status === "draft" ? "draft" : "published");
+        setIsStaff(!!json.isStaff);
       } catch (e) {
         setError(e instanceof Error ? e.message : "리뷰를 불러오지 못했습니다");
       } finally {
@@ -78,11 +90,13 @@ export default function ReviewDetail({ resultId, script, scriptVersion }: { resu
     return (
       <section className="rounded-xl border border-gray-200 bg-white px-6 py-10 text-center">
         <Loader2 className="mx-auto h-7 w-7 animate-spin text-orange-500" />
-        <p className="mt-3 text-sm font-semibold text-gray-700">답변을 분석하고 있어요</p>
-        <p className="mt-1 text-xs text-gray-500">처음 한 번만 20~40초 걸립니다. 다음부터는 바로 열려요.</p>
+        <p className="mt-3 text-sm font-semibold text-gray-700">리뷰를 불러오고 있어요</p>
+        <p className="mt-1 text-xs text-gray-500"></p>
       </section>
     );
   }
+
+  if (gate) return <ReviewGate gate={gate} />;
 
   if (error || !bundle) {
     return (
@@ -100,6 +114,15 @@ export default function ReviewDetail({ resultId, script, scriptVersion }: { resu
 
   return (
     <section className="space-y-4">
+      {isStaff && (
+        <StaffReviewBar
+          kind="speaking"
+          id={resultId}
+          status={status}
+          texts={{ overview: r.overview, improvedText: r.improved.text, faceliftText: r.facelift.text }}
+          onChanged={() => load()}
+        />
+      )}
       <div className="flex items-center justify-between">
         <h2 className="text-base font-bold text-gray-900">상세 리뷰</h2>
       </div>

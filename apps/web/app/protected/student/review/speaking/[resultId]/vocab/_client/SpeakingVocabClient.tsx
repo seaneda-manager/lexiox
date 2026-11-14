@@ -3,6 +3,7 @@
 //  1) study — 단어 목록을 보며 암기(항목을 누르면 영어 발음 재생). 타이머가 끝나거나 직접 시험 시작.
 //  2) test  — 한글 뜻을 화면에 보이고 읽어 주면(ko-KR TTS) 영어 표현을 말해 녹음. 인식된 말과 정답을 비교.
 //  3) summary — 틀린 항목 목록 + 틀린 것만 다시 보기
+import ReviewGate, { type GateInfo } from "@/components/review/ReviewGate";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Loader2, Mic, RotateCcw, Square, Volume2 } from "lucide-react";
@@ -53,6 +54,7 @@ export default function SpeakingVocabClient({ resultId }: { resultId: string }) 
   const [items, setItems] = useState<SpeakingVocabEntry[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [gate, setGate] = useState<GateInfo | null>(null);
   const [phase, setPhase] = useState<"study" | "test" | "summary">("study");
   const [queue, setQueue] = useState<SpeakingVocabEntry[]>([]);
   const [missed, setMissed] = useState<SpeakingVocabEntry[]>([]);
@@ -69,6 +71,10 @@ export default function SpeakingVocabClient({ resultId }: { resultId: string }) 
           body: JSON.stringify({ resultId }),
         });
         const json = await res.json().catch(() => ({}));
+        if (json.notPublished || json.notGenerated) {
+          setGate(json as GateInfo);
+          return;
+        }
         if (!res.ok || !json.ok) throw new Error(json.error || "단어 목록을 불러오지 못했습니다");
         setItems(json.items as SpeakingVocabEntry[]);
         setPhase("study");
@@ -97,11 +103,13 @@ export default function SpeakingVocabClient({ resultId }: { resultId: string }) 
     return (
       <div className="rounded-2xl border border-gray-200 bg-white px-6 py-12 text-center">
         <Loader2 className="mx-auto h-8 w-8 animate-spin text-orange-500" />
-        <p className="mt-4 text-sm font-semibold text-gray-700">이 주제의 단어 목록을 만들고 있어요</p>
-        <p className="mt-1 text-xs text-gray-500">처음 한 번만 20~40초 걸립니다.</p>
+        <p className="mt-4 text-sm font-semibold text-gray-700">단어 목록을 불러오고 있어요</p>
+        <p className="mt-1 text-xs text-gray-500"></p>
       </div>
     );
   }
+  if (gate) return <ReviewGate gate={gate} />;
+
   if (error || !items) {
     return (
       <div className="space-y-3 rounded-2xl border border-rose-200 bg-rose-50 px-6 py-6 text-center">

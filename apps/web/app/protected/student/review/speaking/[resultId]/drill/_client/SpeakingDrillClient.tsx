@@ -4,6 +4,7 @@
 //  recall  — 한글 뜻 + 힌트만 보고 기억해서 말하기: 같은 방식으로 비교
 //  pattern — 지정 문형으로 단문 말하기: 인식된 문장을 AI가 채점
 //  retell  — 같은 문제를 구조 템플릿을 보고 전체 다시 답하기: 처음 답과 수치 비교
+import ReviewGate, { type GateInfo } from "@/components/review/ReviewGate";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Mic, Square, Volume2, RotateCcw, Loader2 } from "lucide-react";
@@ -42,6 +43,7 @@ export default function SpeakingDrillClient({ resultId, prompt, firstScript }: {
   const [retell, setRetell] = useState<Retell | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [gate, setGate] = useState<GateInfo | null>(null);
   const [idx, setIdx] = useState(0);
   const [results, setResults] = useState<Result[]>([]);
 
@@ -56,6 +58,10 @@ export default function SpeakingDrillClient({ resultId, prompt, firstScript }: {
           body: JSON.stringify({ resultId, action: "get" }),
         });
         const json = await res.json().catch(() => ({}));
+        if (json.notPublished || json.notGenerated) {
+          setGate(json as GateInfo);
+          return;
+        }
         if (!res.ok || !json.ok) throw new Error(json.error || "Drill을 불러오지 못했습니다");
         setItems(json.items as SpeakingDrillItem[]);
         setRetell(json.retell as Retell);
@@ -78,11 +84,13 @@ export default function SpeakingDrillClient({ resultId, prompt, firstScript }: {
     return (
       <div className="rounded-2xl border border-gray-200 bg-white px-6 py-12 text-center">
         <Loader2 className="mx-auto h-8 w-8 animate-spin text-orange-500" />
-        <p className="mt-4 text-sm font-semibold text-gray-700">내 답변에 맞는 Drill을 만들고 있어요</p>
-        <p className="mt-1 text-xs text-gray-500">처음 한 번만 20~40초 걸립니다.</p>
+        <p className="mt-4 text-sm font-semibold text-gray-700">Drill을 불러오고 있어요</p>
+        <p className="mt-1 text-xs text-gray-500"></p>
       </div>
     );
   }
+  if (gate) return <ReviewGate gate={gate} />;
+
   if (error || !items) {
     return (
       <div className="space-y-3 rounded-2xl border border-rose-200 bg-rose-50 px-6 py-6 text-center">

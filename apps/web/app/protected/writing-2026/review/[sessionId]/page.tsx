@@ -67,7 +67,7 @@ export default async function WritingReviewPage({ params }: Props) {
         </div>
       ) : (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-800">
-          ⏳ 선생님 채점이 끝나면 점수가 이곳에 표시됩니다. 아래 리뷰는 지금 바로 볼 수 있습니다.
+          ⏳ 선생님 채점이 끝나면 점수가 이곳에 표시됩니다.
         </div>
       )}
 

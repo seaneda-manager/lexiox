@@ -1,10 +1,11 @@
 // app/api/speaking-2026/drill/route.ts
-// 녹음 Drill 문항 생성(캐시 우선) + 단문 말하기 채점.
-//  action: "get"(기본) → 문항 반환/생성,  "check" → pattern 문항 1개 채점(인식된 문장 기준)
+// 녹음 Drill 문항 조회 + 채점. 문항은 선생님이 '리뷰 관리'에서 리뷰와 함께 만들고, 학생은 공개된 뒤에만 열 수 있다.
+//  action: "get"(기본) → 문항 반환,  "check" → pattern 문항 1개 채점(인식된 문장 기준)
 import { NextResponse } from "next/server";
-import { checkFixAnswer, checkSpokenAnswer, computeDelivery, generateSpeakingDrill, generateSpeakingReview } from "@/lib/speaking/aiReview";
-import { loadSpeakingReviewSession, saveSpeakingBundle } from "@/lib/speaking/reviewSession";
-import type { SpeakingReviewBundle } from "@/lib/speaking/reviewTypes";
+import { checkFixAnswer, checkSpokenAnswer, computeDelivery } from "@/lib/speaking/aiReview";
+import { loadSpeakingReviewSession } from "@/lib/speaking/reviewSession";
+import { isPublishedBundle, type SpeakingReviewBundle } from "@/lib/speaking/reviewTypes";
+import { releaseAtOf } from "@/lib/reviewRelease";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -27,6 +28,14 @@ export async function POST(req: Request) {
   const loaded = await loadSpeakingReviewSession(body.resultId ?? "");
   if (loaded.ok === false) return NextResponse.json({ ok: false, error: loaded.error }, { status: loaded.status });
   const { ctx } = loaded;
+
+  // 공개 전에는 학생이 Drill 을 열 수 없다 (선생님은 미리보기 가능)
+  if (ctx.isOwner && !isPublishedBundle(ctx.cached)) {
+    return NextResponse.json(
+      { ok: false, notPublished: true, releaseAt: releaseAtOf(ctx.submittedAt), error: "자세한 리뷰는 곧 공개돼요." },
+      { status: 409 },
+    );
+  }
 
   try {
     if (body.action === "check") {
@@ -64,26 +73,12 @@ export async function POST(req: Request) {
     }
 
     if (ctx.cached?.drill?.items.length) {
-      return NextResponse.json({ ok: true, items: ctx.cached.drill.items, retell: retellInfo(ctx.cached) });
+      return NextResponse.json({ ok: true, items: ctx.cached.drill.items, retell: retellInfo(ctx.cached), isStaff: !ctx.isOwner });
     }
-
-  // 선생님/관리자가 열었는데 아직 만들어진 게 없으면 만들지 않는다 (비용 보호). 학생이 열 때 한 번만 만들어 저장한다.
-  if (!ctx.isOwner) {
-    return NextResponse.json({ ok: false, notGenerated: true, error: "아직 만들어진 리뷰가 없어요. 학생이 리뷰를 처음 열면 자동으로 만들어집니다." }, { status: 409 });
-  }
-
-    let bundle: SpeakingReviewBundle | null = ctx.cached;
-    if (!bundle) {
-      if (!ctx.script.trim()) {
-        return NextResponse.json({ ok: false, error: "스크립트가 없어 Drill을 만들 수 없습니다." }, { status: 422 });
-      }
-      const { delivery, review, model } = await generateSpeakingReview({ prompt: ctx.prompt, script: ctx.script, durationSec: ctx.durationSec });
-      bundle = { version: 1, model, generatedAt: new Date().toISOString(), delivery, review };
-    }
-    const items = await generateSpeakingDrill(bundle.review, ctx.prompt, ctx.script);
-    const withDrill: SpeakingReviewBundle = { ...bundle, drill: { generatedAt: new Date().toISOString(), items } };
-    await saveSpeakingBundle(ctx, withDrill);
-    return NextResponse.json({ ok: true, items, retell: retellInfo(withDrill) });
+    return NextResponse.json(
+      { ok: false, notGenerated: true, isStaff: !ctx.isOwner, error: "Drill 이 아직 만들어지지 않았어요. 선생님 메뉴의 ‘리뷰 관리’에서 만들어 주세요." },
+      { status: 409 },
+    );
   } catch (e) {
     console.error("[Speaking Drill] error:", e);
     return NextResponse.json({ ok: false, error: e instanceof Error ? e.message : "Drill 처리 실패" }, { status: 500 });
