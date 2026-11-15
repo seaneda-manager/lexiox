@@ -16,10 +16,13 @@ import MemoryGame from "@/components/workout/MemoryGame";
 import GameFrame from "@/components/workout/GameFrame";
 import { ARCHERY_MODE_LABEL, DEMO_VOCAB, buildArcheryQuestions, type ArcheryMode, type ArcheryVocab } from "@/lib/workout/archeryQuestions";
 import { loadMyStages, loadSetWords, type TrackInfo } from "@/lib/workout/loadStageWords";
+import { usePerk } from "@/lib/workout/usePerk";
+import PerkLock from "@/components/workout/PerkLock";
 import { groupOfStyle, isGameStyle, orientationOf, playHref, type GameStyle } from "@/lib/workout/gameCatalog";
 
 function Player({ style }: { style: GameStyle }) {
   const router = useRouter();
+  const perk = usePerk({ tick: true }); // 플레이 시간(보상) 확인 + 60초마다 1분 차감
   const group = groupOfStyle(style);
   const [mode, setMode] = useState<ArcheryMode>("en-en");
   const [round, setRound] = useState(0);
@@ -86,6 +89,16 @@ function Player({ style }: { style: GameStyle }) {
 
   const key = `${style}-${effMode}-${round}-${assist ? "a" : "n"}-${omokLevel}-${usingReal ? setId : "demo"}`;
 
+  // 게임은 보상: 시간이 없으면(숙제·학원 학습 전, 또는 오늘 시간을 다 씀) 잠금 화면. 플레이 중 시간이 0이 되면 게임이 닫힌다.
+  if (perk.state === "loading") return <main className="p-6 text-slate-500 text-sm">게임 시간을 확인하는 중...</main>;
+  if (perk.state === "locked" || perk.state === "login") {
+    return (
+      <main className="p-4 md:p-6">
+        <PerkLock perk={perk} />
+      </main>
+    );
+  }
+
   return (
     <main className="bg-slate-900 p-3 md:p-6 rounded-2xl">
       <div className="max-w-5xl mx-auto mb-4 flex flex-col gap-3">
@@ -95,6 +108,11 @@ function Player({ style }: { style: GameStyle }) {
           </Link>
           <h1 className="text-white font-extrabold tracking-wide">{group.name}</h1>
           <span className="text-slate-400 text-sm">{group.subtitle}</span>
+          {perk.unlimited ? (
+            <span className="ml-auto rounded-full bg-slate-700 text-slate-200 text-xs px-3 py-1">{perk.dev ? "개발 환경 · 잠금 우회" : "직원 미리보기 · 시간 제한 없음"}</span>
+          ) : (
+            <span className="ml-auto rounded-full bg-amber-400 text-slate-900 text-xs font-bold px-3 py-1">남은 게임 시간 {perk.balance}분</span>
+          )}
         </div>
 
         {group.modes.length > 1 && (

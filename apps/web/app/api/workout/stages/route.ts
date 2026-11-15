@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { getServerSupabase, getServiceRoleClient } from "@/lib/supabase/server";
+import { resolveAcademyStudentId } from "@/lib/workout/perk";
 
 /**
  * GET /api/workout/stages
@@ -21,11 +22,15 @@ export async function GET() {
 
     const admin = getServiceRoleClient();
 
+    // 단어 숙제 표의 student_id 는 academy_students.id (로그인 계정 ID와 다르다)
+    const academyId = await resolveAcademyStudentId(user.id);
+    if (!academyId) return NextResponse.json({ tracks: [] });
+
     // 학생의 활성 플랜 → 과정 목록
     const { data: plans } = await admin
       .from("student_vocab_plans")
       .select("track_id, cursor_day_index, is_enabled")
-      .eq("student_id", user.id)
+      .eq("student_id", academyId)
       .eq("is_enabled", true);
 
     const trackIds = Array.from(new Set((plans ?? []).map((p) => p.track_id as string)));
@@ -34,11 +39,12 @@ export async function GET() {
     const [{ data: tracks }, { data: sets }, { data: assigns }] = await Promise.all([
       admin.from("vocab_tracks").select("id, title").in("id", trackIds),
       admin.from("vocab_sets").select("id, track_id, order_index").in("track_id", trackIds).not("order_index", "is", null).order("order_index", { ascending: true }),
-      admin.from("student_vocab_assignments").select("set_id, status").eq("student_id", user.id).in("track_id", trackIds),
+      admin.from("student_vocab_assignments").select("set_id, status, completed_at").eq("student_id", academyId).in("track_id", trackIds),
     ]);
 
     const statusBySet = new Map<string, string>();
-    for (const a of assigns ?? []) statusBySet.set(a.set_id as string, a.status as string);
+    // 완료 여부는 completed_at 이 권위 신호(깜지까지 끝낸 뒤 찍힘). status 컬럼은 보조.
+    for (const a of assigns ?? []) statusBySet.set(a.set_id as string, a.completed_at ? "COMPLETED" : ((a.status as string) || "ASSIGNED"));
 
     const result = (tracks ?? []).map((t) => ({
       id: t.id as string,

@@ -119,6 +119,16 @@ create table public.game_stage_progress (
 - `checked_by`는 NOT NULL + ON DELETE SET NULL 모순이라 nullable로 수정한 뒤 적용.
 - 마이그레이션 이력(`supabase_migrations`) 정렬(runbook Phase D)은 별도 — 이 파일 버전은 아직 "applied"로 기록하지 않음.
 
+## 7-2. 2단계 코드 구현 (브랜치 `feat/workout-perk-lock`, 2026-11-15)
+- **선생님 "학습 완료 체크"**: `/teacher/study-check` + `GET/POST/DELETE /api/teacher/study-checks`. 새 권한 `study_check.write`(선생님·원장 기본 포함), 사이드바 "학습 완료 체크". 체크 → 장부 `academy_checked` +분(기본 10, 칸에서 조정). 취소 → 반대 부호 `teacher_revoke`로 회수(장부는 지우지 않음). 같은 학생·날짜 1회. 로그인 계정이 없는 학원 학생(15명 중 2명)은 "로그인 계정 없음".
+- **숙제 완료 적립**: `vocab/session/actions.ts`의 `completeVocabDayAction`(깜지까지 끝낸 단 하나의 완료 지점) 끝에서 `awardHomeworkDoneIfComplete` 호출 → 오늘 완료한 Day 수가 하루 목표(plan.sets_per_day, 기본 1)에 도달하면 `homework_done` +분(기본 10), **하루 한 번**(결정적 ref UUID + 유니크 인덱스). 실패해도 숙제 완료에 영향 없음(try/catch). ※ 지금은 단어 숙제만 "오늘 숙제"로 셈.
+- **잔액/차감**: `GET/POST /api/workout/perk`. 직원은 unlimited(미리보기). 학생은 플레이 시작 시 1분, 이후 60초마다 1분 차감(탭이 보일 때만), 50초 내 중복 호출은 차감하지 않음. 잔액 0이면 `locked`.
+- **잠금 UI**: 게임 목록·플레이 페이지가 `usePerk`로 상태 확인 → 잠금이면 `PerkLock`(오늘 숙제/학원 체크 현황 + 숙제 링크). 플레이 중 0분이 되면 게임이 닫히고 잠금 화면. 개발(NODE_ENV!=='production')에서 세션 없음(401)이면 우회(배지 표시), `?perk=locked|login`으로 잠금 화면 확인 가능(운영 빌드에서는 사라짐).
+- **버그 수정**: 단어 숙제 표의 `student_id`는 `academy_students.id`(로그인 계정 ID와 다름). 1단계 `/api/workout/stages`·`/words`가 계정 ID로 찾던 것을 `resolveAcademyStudentId`로 교정.
+- 검증: 운영 DB에서 적립/중복차단/잔액계산/사용차감/잘못된 사유 거부/ID 변환/주입 안전/미완료 시 미적립 확인(테스트 행은 모두 삭제, 잔여 0). 화면: 잠금 화면 2종, 목록 우회 배지, 선생님 화면 비직원 리다이렉트, 선생님 API 401.
+- **미확인**: 실제 선생님 세션으로 체크 화면 조작, 실제 학생이 Day를 끝냈을 때 적립되는 흐름(완료 지점 연동은 코드로만), 학생 세션으로 차감·잠금 전환. 운영 반영 전에 실계정으로 확인 필요.
+- **알려진 한계**: 차감은 클라이언트의 틱 호출에 의존(요청을 막으면 무료 플레이 가능 — 서버 세션 방식은 후속). 단어 숙제만 "오늘 숙제". 마이그레이션 이력(`supabase migration repair`) 미기록.
+
 ## 8. 주말 적용 체크리스트 (완료됨, 위 7-1 참고)
 1. 위 SQL을 Supabase SQL 편집기에서 실행 → 파일 맨 아래 "적용 후 확인" 쿼리 3개 확인.
 2. 적용 후 개발할 것(스키마가 있어야 테스트 가능): 선생님 "학원 학습 완료" 체크 UI(`/teacher/...`) + API, 오늘 숙제 완료 판정과 적립(`/api/vocab/complete-day` 연동), 잔액 조회/플레이 tick API, 게임 허브 잠금.

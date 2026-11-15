@@ -117,6 +117,7 @@ function allItems(role: StaffRole): StaffNavItem[] {
     { section: S.people, href: "/admin/exam-mode", label: "시험모드 현황", icon: Calendar, perm: "students.view" },
     { section: S.people, href: "/teacher/homework-calendar", label: "배정 캘린더", icon: Calendar, perm: "assign.manage" },
     { section: S.people, href: "/teacher/lesson-log", label: "수업 로그", icon: ClipboardCheck, perm: "lesson_log.write" },
+    { section: S.people, href: "/teacher/study-check", label: "학습 완료 체크", icon: CheckSquare, perm: "study_check.write" },
     // 원장이 선생님 직급과 권한을 정하는 화면 (2단계에서 구현)
     { section: S.people, label: "직급·권한 관리 (soon)", icon: ShieldCheck, perm: "branch.staff", disabled: true },
 

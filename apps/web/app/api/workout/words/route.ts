@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { getServerSupabase, getServiceRoleClient } from "@/lib/supabase/server";
+import { resolveAcademyStudentId } from "@/lib/workout/perk";
 
 /**
  * GET /api/workout/words?setId=<vocab_sets.id>
@@ -29,7 +30,10 @@ export async function GET(req: Request) {
     const { data: profile } = await admin.from("profiles").select("role").eq("id", user.id).maybeSingle();
     const isStaff = STAFF.has((profile?.role as string) ?? "");
     if (!isStaff) {
-      const { data: mine } = await admin.from("student_vocab_assignments").select("id").eq("student_id", user.id).eq("set_id", setId).limit(1);
+      // 단어 숙제 표의 student_id 는 academy_students.id
+      const academyId = await resolveAcademyStudentId(user.id);
+      if (!academyId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      const { data: mine } = await admin.from("student_vocab_assignments").select("id").eq("student_id", academyId).eq("set_id", setId).limit(1);
       if (!mine || mine.length === 0) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

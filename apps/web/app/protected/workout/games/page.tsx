@@ -3,12 +3,32 @@
 import Link from "next/link";
 import GameThumb from "@/components/workout/GameThumb";
 import { GAME_GROUPS, playHref } from "@/lib/workout/gameCatalog";
+import { usePerk } from "@/lib/workout/usePerk";
+import PerkLock from "@/components/workout/PerkLock";
 
 export default function WorkoutGamesPage() {
+  const perk = usePerk(); // 조회만(차감은 플레이 페이지에서)
+
+  if (perk.state === "loading") return <main className="max-w-6xl mx-auto p-6 text-slate-500 text-sm">게임 시간을 확인하는 중...</main>;
+  if (perk.state === "locked" || perk.state === "login") {
+    return (
+      <main className="max-w-6xl mx-auto p-4 md:p-6">
+        <PerkLock perk={perk} />
+      </main>
+    );
+  }
+
   return (
     <main className="max-w-6xl mx-auto p-4 md:p-6">
       <header className="mb-6">
-        <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900">단어 게임</h1>
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900">단어 게임</h1>
+          {perk.unlimited ? (
+            <span className="rounded-full bg-slate-200 text-slate-700 text-xs px-3 py-1">{perk.dev ? "개발 환경 · 잠금 우회" : "직원 미리보기 · 시간 제한 없음"}</span>
+          ) : (
+            <span className="rounded-full bg-amber-400 text-slate-900 text-xs font-bold px-3 py-1">오늘 남은 게임 시간 {perk.balance}분</span>
+          )}
+        </div>
         <p className="text-slate-500 mt-1">게임을 고르고, 안에서 모드를 선택하세요. 문제 방식(영영 · 한영 · 영한 · 스펠링)은 게임 안에서 바꿀 수 있어요.</p>
       </header>
 

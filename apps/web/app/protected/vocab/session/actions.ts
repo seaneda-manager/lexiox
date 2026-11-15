@@ -9,6 +9,7 @@ import type { SessionWord, VocabExample, VocabCollocation } from "@/models/vocab
 import type { WordFormRowLike } from "@/lib/vocab/drill/buildBlockDrillTasksV1";
 import { registerReviewItemsForDay } from "@/lib/vocab/review/reviewItems";
 import { pickReviewWordIds, reviewWindowDays } from "@/lib/vocab/review/dayWindowReview";
+import { awardHomeworkDoneIfComplete } from "@/lib/workout/perk";
 
 export type LoadSessionWordsActionInput = {
   /** Optional: force a specific setId (debug / admin / shortcut) */
@@ -1135,6 +1136,14 @@ export async function completeVocabDayAction(input: {
       }
     } catch (e) {
       console.warn('[COMPLETE] cursor advance failed (non-fatal):', toErrMsg(e));
+    }
+
+    // 게임 보상: 오늘 숙제(Day)를 하루 목표만큼 끝냈으면 플레이 시간을 적립한다(하루 한 번).
+    // 실패해도 숙제 완료에는 영향이 없다.
+    try {
+      await awardHomeworkDoneIfComplete({ userId, academyStudentId, trackId: cleanStr(row.track_id) || null });
+    } catch (e) {
+      console.warn("[COMPLETE] game perk award failed (non-fatal):", toErrMsg(e));
     }
 
     return {

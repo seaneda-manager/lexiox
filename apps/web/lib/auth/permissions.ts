@@ -20,6 +20,7 @@ export const PERMISSIONS = {
   "exam.create": "시험 출제",
   "reports.view": "리포트 보기",
   "lesson_log.write": "수업 로그 작성",
+  "study_check.write": "학원 학습 완료 체크(게임 시간 적립)",
   // ── 원장(가맹점 운영) ──
   "students.manage": "학생 추가·수정",
   "guardians.view": "학부모 연락처 보기",
@@ -47,6 +48,7 @@ export const TEACHER_DEFAULT_PERMISSIONS: PermissionKey[] = [
   "exam.create",
   "reports.view",
   "lesson_log.write",
+  "study_check.write",
 ];
 
 /** 원장 = 선생님 권한 전부 + 가맹점 운영 권한 (본사·시스템 권한은 없음) */
