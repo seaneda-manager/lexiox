@@ -20,6 +20,7 @@ import {
   Dumbbell,
   FileCheck,
   FileText,
+  Gamepad2,
   Gift,
   Globe,
   GraduationCap,
@@ -136,6 +137,7 @@ function allItems(role: StaffRole): StaffNavItem[] {
     // ── 수업 도구 (선생님·원장이 수업에 바로 쓰는 것) ──
     { section: S.tools, href: "/vocab/hub-new", label: "단어 학습", icon: Library },
     { section: S.tools, href: "/teacher/speaking-drills", label: "Speaking 훈련", icon: Dumbbell },
+    { section: S.tools, href: "/workout/games", label: "단어 게임", icon: Gamepad2 },
 
     // ── 콘텐츠 제작 (본사·Super) ──
     { section: S.toefl, href: "/admin/content/updated-reading", label: "Reading", icon: BookOpen, perm: "content.produce" },
@@ -209,7 +211,8 @@ export function buildStaffMenu(role: StaffRole, permissions: readonly string[]):
     if (!hasPermission(permissions, it.perm)) continue;
     if (role === "teacher" && it.href?.startsWith("/admin")) continue;
     // 수업 도구는 수업을 하는 역할(선생님·원장)에게만
-    if (it.section === S.tools && (role === "admin" || role === "hq_staff")) continue;
+    // (단어 게임은 관리자도 미리보기용으로 본다)
+    if (it.section === S.tools && (role === "admin" || role === "hq_staff") && it.href !== "/workout/games") continue;
     // 중학내신 드릴 결과(선생님용 경로)는 내신 콘텐츠를 가진 쪽과 중복되니 제외
     if ((role === "admin" || role === "hq_staff") && it.href === "/teacher/middle-naesin-drill-results") continue;
     // 같은 경로가 한 메뉴에 두 번 나오지 않게 (본사 직원: 홈=본사 허브)

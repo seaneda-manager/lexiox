@@ -25,6 +25,7 @@ const WORLD_W = 2600;
 const WORLD_H = 1800;
 const TRACK_W = 250;
 const MAX_V = 820;
+const REVERSE_MAX = 260; // 후진 최고 속도(px/s)
 const FONT = "system-ui, -apple-system, 'Segoe UI', sans-serif";
 
 // 서킷 제어점 (시계 방향). 0번 점에서 동쪽으로 출발
@@ -103,6 +104,10 @@ export default function DriftGame({ questions, laps = 2, gatesPerLap = 6, assist
         steer = 0;
         sliding = false;
         offT = 0;
+        camYaw = 0; // 콕핏뷰 카메라 방향(차 방향과 속도 방향 사이를 부드럽게 따라간다)
+        lastCT = 0;
+        offTrackT = 0; // 트랙 밖에 머문 시간(초)
+        resetBtn!: Phaser.GameObjects.Text;
         slip = 0;
         onTrack = true;
         idx = 0;
@@ -124,7 +129,8 @@ export default function DriftGame({ questions, laps = 2, gatesPerLap = 6, assist
         panel!: Phaser.GameObjects.Rectangle;
         mini!: Phaser.GameObjects.Image;
         miniDot!: Phaser.GameObjects.Rectangle;
-        btns: { name: "left" | "right" | "gas" | "drift"; r: Phaser.GameObjects.Rectangle; x: number; y: number; w: number; h: number }[] = [];
+        vfNow = 0; // 차 방향 속도(음수 = 후진)
+        btns: { name: "left" | "right" | "gas" | "drift" | "back"; r: Phaser.GameObjects.Rectangle; x: number; y: number; w: number; h: number }[] = [];
         keys!: Record<string, Phaser.Input.Keyboard.Key>;
         overlay: Phaser.GameObjects.Container | null = null;
         joy!: Joystick;
@@ -175,6 +181,9 @@ export default function DriftGame({ questions, laps = 2, gatesPerLap = 6, assist
           this.x = p.x;
           this.y = p.y;
           this.theta = Math.atan2(tg.y, tg.x);
+          this.camYaw = this.theta;
+          this.lastCT = 0;
+          this.offTrackT = 0;
           this.idx = this.lastIdx = PROG0;
           this.prog = PROG0;
 
@@ -211,8 +220,17 @@ export default function DriftGame({ questions, laps = 2, gatesPerLap = 6, assist
           this.keys = {
             left: kb.addKey("LEFT"), right: kb.addKey("RIGHT"), a: kb.addKey("A"), d: kb.addKey("D"),
             up: kb.addKey("UP"), w: kb.addKey("W"), down: kb.addKey("DOWN"), s: kb.addKey("S"), space: kb.addKey("SPACE"),
-            shift: kb.addKey("SHIFT"),
+            shift: kb.addKey("SHIFT"), r: kb.addKey("R"),
           };
+          // 트랙을 벗어나 한참 헤맬 때 쓰는 복귀 버튼(키보드 R)
+          this.resetBtn = this.add
+            .text(W / 2, 330, "↺ 트랙으로 복귀  (R)  +3초", { fontFamily: FONT, fontSize: "22px", color: "#0b1230", backgroundColor: "#fde68a", padding: { x: 18, y: 10 }, fontStyle: "bold" })
+            .setOrigin(0.5)
+            .setScrollFactor(0)
+            .setDepth(60)
+            .setVisible(false)
+            .setInteractive({ useHandCursor: true });
+          this.resetBtn.on("pointerdown", () => this.returnToTrack());
           kb.on("keydown-ENTER", () => this.onAnyStart());
           kb.on("keydown-SPACE", () => this.onAnyStart());
           this.showStart();
@@ -398,6 +416,7 @@ export default function DriftGame({ questions, laps = 2, gatesPerLap = 6, assist
           const defs: [typeof this.btns[number]["name"], string, number, number, number, number][] = [
             ["left", "◀", 14, H - 92, 128, 80],
             ["right", "▶", 152, H - 92, 128, 80],
+            ["back", "BACK", W - 466, H - 92, 148, 80], // 브레이크 · 멈춘 뒤에는 후진
             ["drift", "DRIFT", W - 310, H - 92, 148, 80],
             ["gas", "GAS", W - 154, H - 92, 140, 80],
           ];
@@ -429,7 +448,7 @@ export default function DriftGame({ questions, laps = 2, gatesPerLap = 6, assist
             .text(
               W / 2,
               270,
-              `${laps}바퀴 · 코너에서 크게 꺾거나 DRIFT를 눌러 미끄러지세요${assist ? "  [어시스트 ON]" : ""}\n미끄러질수록, 길게 이어갈수록 점수 ×배율!\n정답 게이트: 그냥 통과 300 · 드리프트로 통과 600~900\n(미끄러진 각도가 클수록 높음)\n\n◀ ▶ 핸들(폰은 조이패드) · GAS 가속 · DRIFT 핸드브레이크\n키보드: ← → / ↑ / ↓ / Space`,
+              `${laps}바퀴 · 코너에서 크게 꺾거나 DRIFT를 눌러 미끄러지세요${assist ? "  [어시스트 ON]" : ""}\n미끄러질수록, 길게 이어갈수록 점수 ×배율!\n정답 게이트: 그냥 통과 300 · 드리프트로 통과 600~900\n(미끄러진 각도가 클수록 높음)\n\n◀ ▶ 핸들(폰은 조이패드) · GAS 가속 · BACK 브레이크/후진 · DRIFT 핸드브레이크\n키보드: ← → / ↑ / ↓(브레이크·멈추면 후진) / Space · R 트랙 복귀`,
               { fontFamily: FONT, fontSize: "19px", color: "#fff", align: "center", lineSpacing: 8 },
             )
             .setOrigin(0.5)
@@ -481,7 +500,7 @@ export default function DriftGame({ questions, laps = 2, gatesPerLap = 6, assist
           let gas = k.up.isDown || k.w.isDown;
           let brake = k.down.isDown || k.s.isDown;
           let drift = k.space.isDown || k.shift.isDown;
-          const down = { left: false, right: false, gas: false, drift: false } as Record<string, boolean>;
+          const down = { left: false, right: false, gas: false, drift: false, back: false } as Record<string, boolean>;
           this.input.manager.pointers.forEach((p) => {
             if (!p.isDown) return;
             this.btns.forEach((b) => {
@@ -492,6 +511,7 @@ export default function DriftGame({ questions, laps = 2, gatesPerLap = 6, assist
           right = right || down.right;
           gas = gas || down.gas;
           drift = drift || down.drift;
+          brake = brake || down.back;
           this.btns.forEach((b) => b.r.setFillStyle(0xffffff, down[b.name] ? 0.4 : 0.14));
           let steerTarget = (right ? 1 : 0) - (left ? 1 : 0);
           if (this.joy.vec.active) steerTarget = Phaser.Math.Clamp(this.joy.vec.x * 1.25, -1, 1); // 조이패드: 아날로그 핸들
@@ -506,6 +526,8 @@ export default function DriftGame({ questions, laps = 2, gatesPerLap = 6, assist
             this.t += dt;
             this.drive(dt, inp);
             this.locate();
+            this.offTrackT = this.onTrack ? 0 : this.offTrackT + dt;
+            if (Phaser.Input.Keyboard.JustDown(this.keys.r)) this.returnToTrack();
             this.scoring(dt);
           } else {
             // 카운트다운 중 차는 정지
@@ -514,7 +536,29 @@ export default function DriftGame({ questions, laps = 2, gatesPerLap = 6, assist
           this.car.setPosition(this.x, this.y).setRotation(this.theta + Math.PI / 2);
           this.camTarget.setPosition(this.x + this.vx * 0.3, this.y + this.vy * 0.3);
           if (view === "cockpit") this.drawCockpit(time);
+          this.resetBtn.setVisible(this.state === "run" && this.offTrackT > 1.2);
           this.drawHud();
+        }
+
+        /** 트랙 밖에서 헤맬 때: 가장 가까운 트랙 지점에서 진행 방향으로 다시 출발(속도 0, +3초, 드리프트 체인 소멸) */
+        returnToTrack() {
+          if (this.state !== "run") return;
+          const p = track[this.idx];
+          const tg = tangent(this.idx);
+          this.x = p.x;
+          this.y = p.y;
+          this.theta = Math.atan2(tg.y, tg.x);
+          this.camYaw = this.theta;
+          this.vx = this.vy = 0;
+          this.steer = 0;
+          this.sliding = false;
+          this.slip = 0;
+          this.onTrack = true;
+          this.offTrackT = 0;
+          this.offT = 0;
+          this.t += 3;
+          if (this.chain.pts > 0) this.loseChain("RESET");
+          this.floatText(this.x, this.y - 60, "+3.0s", "#ff6b6b", 28);
         }
 
         drive(dt: number, inp: { steerTarget: number; gas: boolean; brake: boolean; drift: boolean }) {
@@ -556,10 +600,14 @@ export default function DriftGame({ questions, laps = 2, gatesPerLap = 6, assist
 
           // 엔진 / 브레이크 / 저항
           const grass = !this.onTrack;
-          if (inp.gas) vf += 560 * (1 - Phaser.Math.Clamp(vf / MAX_V, 0, 1)) * dt + 60 * dt;
-          if (inp.brake) vf -= Math.sign(vf) * Math.min(Math.abs(vf), 900 * dt);
+          if (inp.gas) vf += 560 * (1 - Phaser.Math.Clamp(vf / MAX_V, 0, 1)) * dt + 60 * dt + (vf < 0 ? 900 * dt : 0); // 후진 중 가속하면 빨리 멈춰서 전진
+          if (inp.brake && !inp.gas) {
+            if (vf > 40) vf -= Math.min(vf, 900 * dt); // 달리는 중에는 브레이크
+            else vf = Math.max(-REVERSE_MAX, vf - 420 * dt); // 거의 멈추면 후진
+          }
           vf -= vf * (grass ? (assist ? 0.8 : 1.6) : 0.35) * dt;
           if (inp.drift) vf -= vf * 0.45 * dt;
+          this.vfNow = vf;
 
           // 횡 그립
           const gripK = this.sliding ? (inp.drift ? 1.2 : 2.1) : 8.5;
@@ -746,7 +794,7 @@ export default function DriftGame({ questions, laps = 2, gatesPerLap = 6, assist
           this.hud.chain.setText(ch.active ? `DRIFT ${Math.round(ch.pts * this.mult())}  ×${this.mult().toFixed(1)}` : "");
           const lap = Math.min(laps, Math.max(1, Math.floor((this.prog - PROG0) / N) + 1));
           const sp = Math.round((Math.hypot(this.vx, this.vy) / MAX_V) * 220);
-          this.hud.info.setText(`LAP ${lap}/${laps}\n${this.t.toFixed(1)}s\n${sp} km/h`);
+          this.hud.info.setText(`LAP ${lap}/${laps}\n${this.t.toFixed(1)}s\n${this.vfNow < -20 ? "R " : ""}${sp} km/h`);
           this.miniDot.setPosition(W - 210 + (this.x / WORLD_W) * 200, 8 + (this.y / WORLD_H) * (200 * WORLD_H / WORLD_W));
         }
 
@@ -843,9 +891,15 @@ export default function DriftGame({ questions, laps = 2, gatesPerLap = 6, assist
           const HZ = 118;
           const sn = Math.min(1, Math.hypot(this.vx, this.vy) / MAX_V);
           const FOC = 290 - sn * 55;
-          const CAMH = 40;
-          const cosT = Math.cos(this.theta);
-          const sinT = Math.sin(this.theta);
+          const CAMH = 58; // 카메라를 높여 도로가 넓게 보이게
+          // 카메라 방향: 차 방향과 속도 방향의 중간을 부드럽게 따라간다 → 드리프트해도 화면이 확 돌아가지 않는다
+          const dtc = this.lastCT ? Math.min(0.05, (time - this.lastCT) / 1000) : 0.016;
+          this.lastCT = time;
+          const targetYaw = this.theta + this.slip * 0.5;
+          this.camYaw += Phaser.Math.Angle.Wrap(targetYaw - this.camYaw) * (1 - Math.exp(-dtc * 8));
+          const yaw = this.camYaw;
+          const cosT = Math.cos(yaw);
+          const sinT = Math.sin(yaw);
           const proj = (wx: number, wy: number) => {
             const dx = wx - this.x;
             const dy = wy - this.y;
@@ -865,7 +919,7 @@ export default function DriftGame({ questions, laps = 2, gatesPerLap = 6, assist
           // 하늘 + 산 (진행 방향에 따라 좌우로 흐른다)
           ctx.fillStyle = this.skyGrad;
           ctx.fillRect(0, 0, CW, HZ + 1);
-          const off = (((-this.theta * 220) % 720) + 720) % 720;
+          const off = (((-yaw * 220) % 720) + 720) % 720;
           ctx.fillStyle = "#4a4a86";
           for (let rep = -1; rep <= 1; rep++) {
             const bx = -off + rep * 720;
@@ -876,7 +930,7 @@ export default function DriftGame({ questions, laps = 2, gatesPerLap = 6, assist
             ctx.closePath();
             ctx.fill();
           }
-          ctx.fillStyle = "#2f7a3b";
+          ctx.fillStyle = "#27603a"; // 들판은 어둡게 → 도로가 또렷하게 보인다
           ctx.fillRect(0, HZ, CW, CH - HZ);
 
           // 앞쪽 도로 점 수집
@@ -884,7 +938,7 @@ export default function DriftGame({ questions, laps = 2, gatesPerLap = 6, assist
           const pts: Pt[] = [];
           const i0 = (this.idx - 4 + N) % N;
           const HW = TRACK_W / 2;
-          const KW = 20;
+          const KW = 28;
           for (let s = 0; s < 120; s++) {
             const i = (i0 + s * 2) % N;
             const p = track[i];
@@ -895,22 +949,32 @@ export default function DriftGame({ questions, laps = 2, gatesPerLap = 6, assist
             const pr = proj(p.x + nx * HW, p.y + ny * HW);
             const plo = proj(p.x - nx * (HW + KW), p.y - ny * (HW + KW));
             const pro = proj(p.x + nx * (HW + KW), p.y + ny * (HW + KW));
-            const pc1 = proj(p.x - nx * 2.5, p.y - ny * 2.5);
-            const pc2 = proj(p.x + nx * 2.5, p.y + ny * 2.5);
-            pts.push({ i, ok: pl.f > 12 && pr.f > 12, sy: pl.y, pl, pr, plo, pro, pc1, pc2 });
+            const pc1 = proj(p.x - nx * 4.5, p.y - ny * 4.5);
+            const pc2 = proj(p.x + nx * 4.5, p.y + ny * 4.5);
+            // 연석 바깥 점까지 전부 카메라 앞에 있을 때만 그린다(너무 가까운 점이 엄청 크게 투영되어 하늘을 덮는 빨간 띠가 생기던 문제)
+            const okAll = pl.f > 25 && pr.f > 25 && plo.f > 25 && pro.f > 25;
+            // 들판 띠는 중앙선 깊이를 기준으로 그린다(좌우 가장자리 깊이가 달라도 띠가 도로를 덮지 않게)
+            const cen = proj(p.x, p.y);
+            pts.push({ i, ok: okAll, sy: cen.y, pl, pr, plo, pro, pc1, pc2 });
           }
+          // 1패스: 들판 띠(멀리→가까이). 도로를 그리기 전에 전부 깔아 둔다 → 도로 조각이 띠에 덮여 톱니 모양이 생기지 않는다
           for (let k = pts.length - 2; k >= 0; k--) {
             const a = pts[k];
             const b = pts[k + 1];
             if (!a.ok || !b.ok || a.sy <= b.sy) continue;
-            const par = Math.floor(a.i / 6) % 2;
-            ctx.fillStyle = par ? "#2f7a3b" : "#3a8a46";
+            ctx.fillStyle = Math.floor(a.i / 6) % 2 ? "#27603a" : "#2f6d3f";
             ctx.fillRect(0, b.sy, CW, a.sy - b.sy + 1);
-            const kc = Math.floor(a.i / 2) % 2 ? "#d62839" : "#f1f5f9";
+          }
+          // 2패스: 연석·도로·중앙선(멀리→가까이)
+          for (let k = pts.length - 2; k >= 0; k--) {
+            const a = pts[k];
+            const b = pts[k + 1];
+            if (!a.ok || !b.ok) continue;
+            const kc = Math.floor(a.i / 2) % 2 ? "#e11d48" : "#ffffff";
             poly([a.plo, a.pl, b.pl, b.plo], kc);
             poly([a.pr, a.pro, b.pro, b.pr], kc);
-            poly([a.pl, a.pr, b.pr, b.pl], Math.floor(a.i / 3) % 2 ? "#3b404c" : "#434855");
-            if (Math.floor(a.i / 3) % 2 === 0) poly([a.pc1, a.pc2, b.pc2, b.pc1], "rgba(255,255,255,0.8)");
+            poly([a.pl, a.pr, b.pr, b.pl], Math.floor(a.i / 3) % 2 ? "#5a6072" : "#666d82"); // 밝은 아스팔트
+            if (Math.floor(a.i / 3) % 2 === 0) poly([a.pc1, a.pc2, b.pc2, b.pc1], "#ffffff");
             if (a.i >= 0 && a.i < 4) poly([a.pl, a.pr, b.pr, b.pl], "#ffffff"); // 출발선
           }
 
@@ -964,6 +1028,36 @@ export default function DriftGame({ questions, laps = 2, gatesPerLap = 6, assist
               ctx.fillText(label, q.x, yTop + h / 2);
             });
           });
+
+          // 트랙을 벗어났을 때: 경고 + 트랙 쪽을 가리키는 화살표(돌아갈 방향을 잃지 않게)
+          if (!this.onTrack && this.state === "run") {
+            const tp = track[(this.idx + 18) % N];
+            const rel = Phaser.Math.Angle.Wrap(Math.atan2(tp.y - this.y, tp.x - this.x) - yaw);
+            ctx.save();
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.font = "bold 24px sans-serif";
+            ctx.lineWidth = 5;
+            ctx.strokeStyle = "#0b1230";
+            ctx.fillStyle = "#ff5d5d";
+            ctx.strokeText("OFF TRACK", CW / 2, HZ + 44);
+            ctx.fillText("OFF TRACK", CW / 2, HZ + 44);
+            if (Math.abs(rel) > 0.2) {
+              const dir = rel > 0 ? 1 : -1; // 트랙이 오른쪽이면 +
+              const ax = CW / 2 + dir * 120;
+              ctx.fillStyle = "#fde047";
+              ctx.strokeStyle = "#0b1230";
+              ctx.lineWidth = 4;
+              ctx.beginPath();
+              ctx.moveTo(ax + dir * 26, HZ + 44);
+              ctx.lineTo(ax - dir * 8, HZ + 22);
+              ctx.lineTo(ax - dir * 8, HZ + 66);
+              ctx.closePath();
+              ctx.stroke();
+              ctx.fill();
+            }
+            ctx.restore();
+          }
 
           // 속도선
           if (sn > 0.55) {
