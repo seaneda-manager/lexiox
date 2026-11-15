@@ -34,7 +34,11 @@ export async function GET(req: Request) {
       const academyId = await resolveAcademyStudentId(user.id);
       if (!academyId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       const { data: mine } = await admin.from("student_vocab_assignments").select("id").eq("student_id", academyId).eq("set_id", setId).limit(1);
-      if (!mine || mine.length === 0) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      if (!mine || mine.length === 0) {
+        // 선생님이 게임으로 직접 내준 세트도 열 수 있다
+        const { data: given } = await admin.from("game_assignments").select("id").eq("student_id", academyId).eq("set_id", setId).is("cancelled_at", null).limit(1);
+        if (!given || given.length === 0) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
     }
 
     const { data: setItems } = await admin.from("vocab_set_items").select("word_id, sort_order").eq("set_id", setId).order("sort_order", { ascending: true });

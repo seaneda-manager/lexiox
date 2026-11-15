@@ -17,12 +17,33 @@ import GameFrame from "@/components/workout/GameFrame";
 import { ARCHERY_MODE_LABEL, DEMO_VOCAB, buildArcheryQuestions, type ArcheryMode, type ArcheryVocab } from "@/lib/workout/archeryQuestions";
 import { loadMyStages, loadSetWords, type TrackInfo } from "@/lib/workout/loadStageWords";
 import { usePerk } from "@/lib/workout/usePerk";
+import { loadMyAssignments, reportAttempt, type MyAssignment } from "@/lib/workout/assignments";
 import PerkLock from "@/components/workout/PerkLock";
 import { groupOfStyle, isGameStyle, orientationOf, playHref, type GameStyle } from "@/lib/workout/gameCatalog";
 
-function Player({ style }: { style: GameStyle }) {
+function Player({ style, assignmentId }: { style: GameStyle; assignmentId: string | null }) {
   const router = useRouter();
-  const perk = usePerk({ tick: true }); // 플레이 시간(보상) 확인 + 60초마다 1분 차감
+
+  // 선생님이 내준 게임으로 들어왔다면 서버에서 확인한다(내 배정이고 아직 목표를 못 채웠을 때만 시간 차감 없이 열린다)
+  const [asg, setAsg] = useState<MyAssignment | null>(null);
+  const [asgLoading, setAsgLoading] = useState(!!assignmentId);
+  const [bypass, setBypass] = useState(false);
+  useEffect(() => {
+    if (!assignmentId) return;
+    let alive = true;
+    loadMyAssignments().then((list) => {
+      if (!alive) return;
+      const a = list.find((x) => x.id === assignmentId && x.style === style) ?? null;
+      setAsg(a);
+      setBypass(!!a && !a.done); // 한 번 열리면 이 화면에서는 유지(마지막 판 결과 화면이 닫히지 않게)
+      setAsgLoading(false);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [assignmentId, style]);
+
+  const perk = usePerk({ tick: !asgLoading && !bypass }); // 플레이 시간(보상) 확인 + 60초마다 1분 차감
   const group = groupOfStyle(style);
   const [mode, setMode] = useState<ArcheryMode>("en-en");
   const [round, setRound] = useState(0);
@@ -41,6 +62,12 @@ function Player({ style }: { style: GameStyle }) {
       alive = false;
     };
   }, []);
+  useEffect(() => {
+    if (!asg) return;
+    if (asg.setId) setSetId(asg.setId);
+    if (["en-en", "ko-en", "en-ko", "spelling"].includes(asg.mode)) setMode(asg.mode as ArcheryMode);
+    if (["easy", "normal", "hard"].includes(asg.level)) setOmokLevel(asg.level as OmokLevel);
+  }, [asg]);
   useEffect(() => {
     if (!setId) {
       setRealVocab(null);
@@ -87,11 +114,17 @@ function Player({ style }: { style: GameStyle }) {
       disabled ? "bg-slate-800 text-slate-500 cursor-not-allowed" : active ? "bg-amber-400 text-slate-900" : "bg-slate-700 text-slate-200 hover:bg-slate-600"
     }`;
 
+  // 한 판이 끝나면 결과를 기록하고, 내준 게임이면 진행 횟수를 올린다
+  const onFinish = (result: object) => {
+    reportAttempt({ style, setId: usingReal ? setId : null, assignmentId: asg?.id ?? null, mode: effMode, level: omokLevel, result: result as Record<string, unknown> });
+    if (asg) setAsg((a) => (a ? { ...a, plays: a.plays + 1 } : a));
+  };
+
   const key = `${style}-${effMode}-${round}-${assist ? "a" : "n"}-${omokLevel}-${usingReal ? setId : "demo"}`;
 
   // 게임은 보상: 시간이 없으면(숙제·학원 학습 전, 또는 오늘 시간을 다 씀) 잠금 화면. 플레이 중 시간이 0이 되면 게임이 닫힌다.
-  if (perk.state === "loading") return <main className="p-6 text-slate-500 text-sm">게임 시간을 확인하는 중...</main>;
-  if (perk.state === "locked" || perk.state === "login") {
+  if (asgLoading || perk.state === "loading") return <main className="p-6 text-slate-500 text-sm">게임 시간을 확인하는 중...</main>;
+  if (!bypass && (perk.state === "locked" || perk.state === "login")) {
     return (
       <main className="p-4 md:p-6">
         <PerkLock perk={perk} />
@@ -108,7 +141,11 @@ function Player({ style }: { style: GameStyle }) {
           </Link>
           <h1 className="text-white font-extrabold tracking-wide">{group.name}</h1>
           <span className="text-slate-400 text-sm">{group.subtitle}</span>
-          {perk.unlimited ? (
+          {bypass ? (
+            <span className="ml-auto rounded-full bg-emerald-400 text-slate-900 text-xs font-bold px-3 py-1">
+              선생님이 내준 게임 · {asg!.plays}/{asg!.targetPlays}판 · 시간 차감 없음
+            </span>
+          ) : perk.unlimited ? (
             <span className="ml-auto rounded-full bg-slate-700 text-slate-200 text-xs px-3 py-1">{perk.dev ? "개발 환경 · 잠금 우회" : "직원 미리보기 · 시간 제한 없음"}</span>
           ) : (
             <span className="ml-auto rounded-full bg-amber-400 text-slate-900 text-xs font-bold px-3 py-1">남은 게임 시간 {perk.balance}분</span>
@@ -159,15 +196,19 @@ function Player({ style }: { style: GameStyle }) {
           </div>
         )}
 
-        {tracks.length > 0 && (
+        {asg?.note && <p className="text-amber-300 text-sm">선생님 메모: {asg.note}</p>}
+
+        {(tracks.length > 0 || asg) && (
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-slate-400 text-sm w-12">단어</span>
             <select
               value={setId}
               onChange={(e) => setSetId(e.target.value)}
+              disabled={!!asg}
               className="rounded-full bg-slate-700 text-slate-100 text-sm font-semibold px-4 py-2 outline-none"
             >
               <option value="">데모 단어 (30개)</option>
+              {asg?.setId && !tracks.some((t) => t.stages.some((s) => s.setId === asg.setId)) && <option value={asg.setId}>{asg.setLabel ?? "내준 단어장"}</option>}
               {tracks.map((t) => (
                 <optgroup key={t.id} label={t.title}>
                   {t.stages.map((s) => (
@@ -202,23 +243,24 @@ function Player({ style }: { style: GameStyle }) {
 
       <GameFrame orientation={orientationOf(style)}>
         {style === "memory" ? (
-          <MemoryGame key={key} vocab={vocab} mode={effMode} level={omokLevel} stages={6} />
+          <MemoryGame onFinish={onFinish} key={key} vocab={vocab} mode={effMode} level={omokLevel} stages={6} />
         ) : style === "rescue" ? (
-          <RescueGame key={key} questions={questions} rounds={3} level={omokLevel} />
+          <RescueGame onFinish={onFinish} key={key} questions={questions} rounds={3} level={omokLevel} />
         ) : style === "clay" ? (
-          <ClayGame key={key} questions={questions} />
+          <ClayGame onFinish={onFinish} key={key} questions={questions} />
         ) : style === "sprint" ? (
-          <SprintGame key={key} questions={questions} level={omokLevel} />
+          <SprintGame onFinish={onFinish} key={key} questions={questions} level={omokLevel} />
         ) : style === "omok" ? (
-          <OmokGame key={key} questions={questions} level={omokLevel} />
+          <OmokGame onFinish={onFinish} key={key} questions={questions} level={omokLevel} />
         ) : style === "cockpit" ? (
-          <CockpitGame key={key} questions={questions} />
+          <CockpitGame onFinish={onFinish} key={key} questions={questions} />
         ) : style === "drift" || style === "driftcockpit" ? (
-          <DriftGame key={key} questions={questions} laps={2} gatesPerLap={6} assist={assist} view={style === "driftcockpit" ? "cockpit" : "top"} />
+          <DriftGame onFinish={onFinish} key={key} questions={questions} laps={2} gatesPerLap={6} assist={assist} view={style === "driftcockpit" ? "cockpit" : "top"} />
         ) : style === "trial" || style === "race" ? (
-          <RaceGame key={key} questions={questions} mode={style} rows={10} />
+          <RaceGame onFinish={onFinish} key={key} questions={questions} mode={style} rows={10} />
         ) : style === "rain" || style === "spell" ? (
           <ArcheryFall
+            onFinish={onFinish}
             key={key}
             kind={style === "rain" ? "words" : "letters"}
             questions={questions}
@@ -226,7 +268,7 @@ function Player({ style }: { style: GameStyle }) {
             titleSub={style === "rain" ? ARCHERY_MODE_LABEL[effMode].sub : undefined}
           />
         ) : (
-          <ArcheryPhaser key={key} questions={questions} motion={style} titleSub={ARCHERY_MODE_LABEL[effMode].sub} />
+          <ArcheryPhaser onFinish={onFinish} key={key} questions={questions} motion={style} titleSub={ARCHERY_MODE_LABEL[effMode].sub} />
         )}
       </GameFrame>
     </main>
@@ -246,7 +288,7 @@ function PlayInner() {
       </main>
     );
   }
-  return <Player style={raw} />;
+  return <Player style={raw} assignmentId={params.get("assignment")} />;
 }
 
 export default function WorkoutPlayPage() {

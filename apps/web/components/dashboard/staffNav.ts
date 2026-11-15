@@ -127,6 +127,7 @@ function allItems(role: StaffRole): StaffNavItem[] {
     { section: S.assign, href: "/teacher/vocab-exams", label: "단어 시험 출제", icon: FileText, perm: "exam.create" },
     { section: S.assign, href: "/teacher/vocab-test-config", label: "단어 시험 설정", icon: Settings, perm: "exam.create" },
     { section: S.assign, href: "/admin/homework/books", label: "교재별 정기 숙제", icon: Library, perm: "assign.manage" },
+    { section: S.assign, href: "/teacher/game-assign", label: "게임 배정", icon: Gamepad2, perm: "assign.manage" },
     { section: S.assign, href: "/admin/vocab/assign", label: "단어 배정", icon: UserPlus, perm: "assign.manage" },
     { section: S.assign, href: "/admin/vocab/Tracks", label: "트랙 배포", icon: Send, perm: "assign.manage" },
     { section: S.assign, href: "/admin/level-test", label: "레벨 테스트", icon: BarChart2, perm: "assign.manage" },
