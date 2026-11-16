@@ -706,7 +706,7 @@ export default function TetrisGame({ questions, level = "normal", stages = 3, fe
   const cur = quiz ? quiz.items[quiz.i] : null;
 
   return (
-    <div className="w-full mx-auto select-none touch-none" style={{ maxWidth: 480 }}>
+    <div className="w-full mx-auto select-none touch-none [.gf-slot-full_&]:flex [.gf-slot-full_&]:flex-col [.gf-slot-full_&]:items-center [.gf-slot-full_&]:justify-center" style={{ maxWidth: 560 }}>
       {(evView || pairView || msg) && (
         <div className={`mb-2 rounded-xl px-3 py-2 text-white ${evView ? "bg-indigo-900" : pairView ? "bg-fuchsia-950" : "bg-slate-800"}`}>
           {evView && (
@@ -724,9 +724,13 @@ export default function TetrisGame({ questions, level = "normal", stages = 3, fe
           {msg && <p className="text-xs text-emerald-300 mt-0.5">{msg}</p>}
         </div>
       )}
-      <div className="relative flex items-start gap-3 rounded-2xl bg-slate-900 p-3 shadow-2xl">
-        <div className="flex-1 min-w-0 flex justify-center">
-         <div className="relative" style={{ width: "min(100%, calc(min(72dvh, 600px) / 2))", aspectRatio: `${W} / ${H}` }}>
+      <div className="relative flex items-start gap-3 rounded-2xl bg-slate-900 p-3 shadow-2xl w-fit max-w-full mx-auto">
+        <div className="shrink-0 flex justify-center">
+         {/* 판 크기: 화면 높이 기준(일반 78dvh·최대 380px 폭, 전체화면은 화면 높이에 맞춰 크게). 폭이 좁으면 옆 패널 자리를 남긴다 */}
+         <div
+           className="relative w-[min(calc(78dvh/2),calc(100vw_-_10rem),380px)] [.gf-slot-full_&]:!w-[min(calc((100dvh_-_7rem)/2),calc(100vw_-_11rem))]"
+           style={{ aspectRatio: `${W} / ${H}` }}
+         >
           <canvas ref={canvasRef} width={W * CELL} height={H * CELL} className="w-full h-full rounded-lg border border-slate-700" />
 
           {phase === "start" && (
@@ -823,7 +827,8 @@ export default function TetrisGame({ questions, level = "normal", stages = 3, fe
           )}
       </div>
 
-      <div className="mt-3 grid grid-cols-6 gap-2 px-1">
+      {/* 마우스/키보드 환경에서는 숨기고, 터치 기기(폰·태블릿)에서만 보인다 */}
+      <div className="mt-3 hidden [@media(pointer:coarse)]:grid grid-cols-6 gap-2 px-1">
         <button className={`${btn} h-14`} {...hold(() => move(-1))}>
           ◀
         </button>

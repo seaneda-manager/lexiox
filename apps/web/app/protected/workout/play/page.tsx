@@ -140,120 +140,104 @@ function Player({ style, assignmentId, demo }: { style: GameStyle; assignmentId:
     );
   }
 
-  return (
-    <main className="bg-slate-900 p-3 md:p-6 rounded-2xl">
-      <div className="max-w-5xl mx-auto mb-4 flex flex-col gap-3">
-        <div className="flex flex-wrap items-center gap-3">
-          <Link href="/workout/games" className="text-sm text-slate-300 hover:text-white underline-offset-2 hover:underline">
-            ← 게임 목록
-          </Link>
-          <h1 className="text-white font-extrabold tracking-wide">{group.name}</h1>
-          <span className="text-slate-400 text-sm">{group.subtitle}</span>
-          {demo ? (
-            <span className="ml-auto rounded-full bg-sky-400 text-slate-900 text-xs font-bold px-3 py-1">체험판 · 샘플 단어 10개 · 1판</span>
-          ) : bypass ? (
-            <span className="ml-auto rounded-full bg-emerald-400 text-slate-900 text-xs font-bold px-3 py-1">
-              선생님이 내준 게임 · {asg!.plays}/{asg!.targetPlays}판 · 시간 차감 없음
-            </span>
-          ) : perk.unlimited ? (
-            <span className="ml-auto rounded-full bg-slate-700 text-slate-200 text-xs px-3 py-1">{perk.dev ? "개발 환경 · 잠금 우회" : "직원 미리보기 · 시간 제한 없음"}</span>
-          ) : (
-            <span className="ml-auto rounded-full bg-amber-400 text-slate-900 text-xs font-bold px-3 py-1">남은 게임 시간 {perk.balance}분</span>
-          )}
-        </div>
-
+  // 테트리스는 옵션(모드·난이도·단어 범위·문제 방식)과 조작 설명을 오른쪽 사이드에 둔다
+  const sideOptions = style === "tetris";
+  const options = (
+    <>
         {group.modes.length > 1 && (
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-slate-400 text-sm w-12">모드</span>
-            {group.modes.map((m) => (
-              <button key={m.style} className={chip(style === m.style)} onClick={() => router.replace(playHref(m.style))}>
-                {m.label}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {(style === "drift" || style === "driftcockpit") && (
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-slate-400 text-sm w-12">난이도</span>
-            <button className={chip(!assist)} onClick={() => setAssist(false)}>
-              일반
-            </button>
-            <button className={chip(assist)} onClick={() => setAssist(true)}>
-              어시스트 (쉬움)
-            </button>
-            <span className="text-slate-400 text-xs">어시스트는 드리프트가 쉽게 걸리고 스핀·코스 이탈에 관대해요. 드리프트 점수는 ×0.7</span>
-          </div>
-        )}
-
-        {(style === "omok" || style === "sprint" || style === "rescue" || style === "memory" || style === "tetris") && (
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-slate-400 text-sm w-12">{style === "sprint" ? "상대" : style === "rescue" || style === "memory" || style === "tetris" ? "난이도" : "AI"}</span>
-            {(["easy", "normal", "hard"] as OmokLevel[]).map((lv) => (
-              <button key={lv} className={chip(omokLevel === lv)} onClick={() => setOmokLevel(lv)}>
-                {lv === "easy" ? "쉬움" : lv === "normal" ? "보통" : "어려움"}
-              </button>
-            ))}
-            <span className="text-slate-400 text-xs">
-              {style === "sprint"
-                ? "상대 선수의 속도 (쉬움 · 보통 · 어려움)"
-                : style === "rescue"
-                  ? "스테이지가 올라갈수록 어려워져요. 쉬움은 한 단계 낮게, 어려움은 한 단계 높게 시작해요"
-                  : style === "tetris"
-                    ? "쉬움: 목숨 5·6줄·느리게 / 보통: 목숨 3·8줄 / 어려움: 목숨 2·10줄·빠르게"
-                  : style === "memory"
-                    ? "쉬움은 카드 4장부터·외우는 시간 1.3배, 어려움은 8장부터·0.8배로 시작해요"
-                  : "AI도 철자 문제를 이 확률로 맞혀요 (50% / 72% / 90%)"}
-            </span>
-          </div>
-        )}
-
-        {asg?.note && <p className="text-amber-300 text-sm">선생님 메모: {asg.note}</p>}
-
-        {!demo && (tracks.length > 0 || asg) && (
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-slate-400 text-sm w-12">단어</span>
-            <select
-              value={setId}
-              onChange={(e) => setSetId(e.target.value)}
-              disabled={!!asg}
-              className="rounded-full bg-slate-700 text-slate-100 text-sm font-semibold px-4 py-2 outline-none"
-            >
-              <option value="">데모 단어 (30개)</option>
-              {asg?.setId && !tracks.some((t) => t.stages.some((s) => s.setId === asg.setId)) && <option value={asg.setId}>{asg.setLabel ?? "내준 단어장"}</option>}
-              {tracks.map((t) => (
-                <optgroup key={t.id} label={t.title}>
-                  {t.stages.map((s) => (
-                    <option key={s.setId} value={s.setId}>
-                      Day {s.day} · {s.status === "COMPLETED" ? "완료" : s.status === "STARTED" ? "진행 중" : s.status === "ASSIGNED" ? "배정됨" : "예정"}
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
-            <span className="text-slate-400 text-xs">
-              {loadingWords ? "단어 불러오는 중..." : setId ? (usingReal ? `내 단어 ${realVocab!.length}개로 게임해요` : "이 Day의 단어를 불러오지 못해 데모 단어로 대신해요") : "내 단어장 범위를 고르면 실제 단어로 게임해요"}
-            </span>
-          </div>
-        )}
-
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-slate-400 text-sm w-12">문제</span>
-          {(Object.keys(ARCHERY_MODE_LABEL) as ArcheryMode[]).map((m) => {
-            const disabled = !usesMode || (!spellingOk && m === "spelling") || (noKoAnswer && m === "en-ko");
-            return (
-              <button key={m} disabled={disabled} className={chip(effMode === m && usesMode, disabled)} onClick={() => setMode(m)}>
-                {ARCHERY_MODE_LABEL[m].label}
-              </button>
-            );
-          })}
-          <button disabled={demo} className="ml-auto px-4 py-2 rounded-full text-sm bg-slate-700 text-slate-200 hover:bg-slate-600 disabled:opacity-40" onClick={() => setRound((r) => r + 1)}>
-            ↻ 다시 섞기
-          </button>
+          <span className="text-slate-400 text-sm w-12">모드</span>
+          {group.modes.map((m) => (
+            <button key={m.style} className={chip(style === m.style)} onClick={() => router.replace(playHref(m.style))}>
+              {m.label}
+            </button>
+          ))}
         </div>
-      </div>
+      )}
 
-      {demo && demoDone ? (
+      {(style === "drift" || style === "driftcockpit") && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-slate-400 text-sm w-12">난이도</span>
+          <button className={chip(!assist)} onClick={() => setAssist(false)}>
+            일반
+          </button>
+          <button className={chip(assist)} onClick={() => setAssist(true)}>
+            어시스트 (쉬움)
+          </button>
+          <span className="text-slate-400 text-xs">어시스트는 드리프트가 쉽게 걸리고 스핀·코스 이탈에 관대해요. 드리프트 점수는 ×0.7</span>
+        </div>
+      )}
+
+      {(style === "omok" || style === "sprint" || style === "rescue" || style === "memory" || style === "tetris") && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-slate-400 text-sm w-12">{style === "sprint" ? "상대" : style === "rescue" || style === "memory" || style === "tetris" ? "난이도" : "AI"}</span>
+          {(["easy", "normal", "hard"] as OmokLevel[]).map((lv) => (
+            <button key={lv} className={chip(omokLevel === lv)} onClick={() => setOmokLevel(lv)}>
+              {lv === "easy" ? "쉬움" : lv === "normal" ? "보통" : "어려움"}
+            </button>
+          ))}
+          <span className="text-slate-400 text-xs">
+            {style === "sprint"
+              ? "상대 선수의 속도 (쉬움 · 보통 · 어려움)"
+              : style === "rescue"
+                ? "스테이지가 올라갈수록 어려워져요. 쉬움은 한 단계 낮게, 어려움은 한 단계 높게 시작해요"
+                : style === "tetris"
+                  ? "쉬움: 목숨 5·6줄·느리게 / 보통: 목숨 3·8줄 / 어려움: 목숨 2·10줄·빠르게"
+                : style === "memory"
+                  ? "쉬움은 카드 4장부터·외우는 시간 1.3배, 어려움은 8장부터·0.8배로 시작해요"
+                : "AI도 철자 문제를 이 확률로 맞혀요 (50% / 72% / 90%)"}
+          </span>
+        </div>
+      )}
+
+      {asg?.note && <p className="text-amber-300 text-sm">선생님 메모: {asg.note}</p>}
+
+      {!demo && (tracks.length > 0 || asg) && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-slate-400 text-sm w-12">단어</span>
+          <select
+            value={setId}
+            onChange={(e) => setSetId(e.target.value)}
+            disabled={!!asg}
+            className="rounded-full bg-slate-700 text-slate-100 text-sm font-semibold px-4 py-2 outline-none"
+          >
+            <option value="">데모 단어 (30개)</option>
+            {asg?.setId && !tracks.some((t) => t.stages.some((s) => s.setId === asg.setId)) && <option value={asg.setId}>{asg.setLabel ?? "내준 단어장"}</option>}
+            {tracks.map((t) => (
+              <optgroup key={t.id} label={t.title}>
+                {t.stages.map((s) => (
+                  <option key={s.setId} value={s.setId}>
+                    Day {s.day} · {s.status === "COMPLETED" ? "완료" : s.status === "STARTED" ? "진행 중" : s.status === "ASSIGNED" ? "배정됨" : "예정"}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+          <span className="text-slate-400 text-xs">
+            {loadingWords ? "단어 불러오는 중..." : setId ? (usingReal ? `내 단어 ${realVocab!.length}개로 게임해요` : "이 Day의 단어를 불러오지 못해 데모 단어로 대신해요") : "내 단어장 범위를 고르면 실제 단어로 게임해요"}
+          </span>
+        </div>
+      )}
+
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-slate-400 text-sm w-12">문제</span>
+        {(Object.keys(ARCHERY_MODE_LABEL) as ArcheryMode[]).map((m) => {
+          const disabled = !usesMode || (!spellingOk && m === "spelling") || (noKoAnswer && m === "en-ko");
+          return (
+            <button key={m} disabled={disabled} className={chip(effMode === m && usesMode, disabled)} onClick={() => setMode(m)}>
+              {ARCHERY_MODE_LABEL[m].label}
+            </button>
+          );
+        })}
+        <button disabled={demo} className="ml-auto px-4 py-2 rounded-full text-sm bg-slate-700 text-slate-200 hover:bg-slate-600 disabled:opacity-40" onClick={() => setRound((r) => r + 1)}>
+          ↻ 다시 섞기
+        </button>
+      </div>
+    </>
+  );
+
+  const frame = (
+    demo && demoDone ? (
         <div className="max-w-xl mx-auto rounded-2xl bg-slate-800 p-8 text-center text-slate-100">
           <p className="text-lg font-extrabold">체험 끝!</p>
           <p className="mt-2 text-sm text-slate-300">샘플 단어로 한 판 해봤어요. 숙제를 끝내거나 선생님이 게임을 내주면 내 단어로 계속 할 수 있어요.</p>
@@ -294,6 +278,52 @@ function Player({ style, assignmentId, demo }: { style: GameStyle; assignmentId:
           <ArcheryPhaser onFinish={onFinish} key={key} questions={questions} motion={style} titleSub={ARCHERY_MODE_LABEL[effMode].sub} />
         )}
       </GameFrame>
+      )
+  );
+
+  return (
+    <main className="bg-slate-900 p-3 md:p-6 rounded-2xl">
+      <div className="max-w-5xl mx-auto mb-4 flex flex-col gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <Link href="/workout/games" className="text-sm text-slate-300 hover:text-white underline-offset-2 hover:underline">
+            ← 게임 목록
+          </Link>
+          <h1 className="text-white font-extrabold tracking-wide">{group.name}</h1>
+          <span className="text-slate-400 text-sm">{group.subtitle}</span>
+          {demo ? (
+            <span className="ml-auto rounded-full bg-sky-400 text-slate-900 text-xs font-bold px-3 py-1">체험판 · 샘플 단어 10개 · 1판</span>
+          ) : bypass ? (
+            <span className="ml-auto rounded-full bg-emerald-400 text-slate-900 text-xs font-bold px-3 py-1">
+              선생님이 내준 게임 · {asg!.plays}/{asg!.targetPlays}판 · 시간 차감 없음
+            </span>
+          ) : perk.unlimited ? (
+            <span className="ml-auto rounded-full bg-slate-700 text-slate-200 text-xs px-3 py-1">{perk.dev ? "개발 환경 · 잠금 우회" : "직원 미리보기 · 시간 제한 없음"}</span>
+          ) : (
+            <span className="ml-auto rounded-full bg-amber-400 text-slate-900 text-xs font-bold px-3 py-1">남은 게임 시간 {perk.balance}분</span>
+          )}
+        </div>
+
+        {!sideOptions && options}
+      </div>
+
+      {sideOptions ? (
+        <div className="max-w-5xl mx-auto flex flex-wrap items-start gap-4">
+          {/* 게임이 먼저 자리를 차지하고, 옆에 자리가 남을 때만 사이드가 옆에 붙는다(좁으면 아래로) */}
+          <div className="min-w-0 max-w-full">{frame}</div>
+          <aside className="flex-1 min-w-[15rem] rounded-2xl bg-slate-800/70 p-3 flex flex-col gap-3">
+            {options}
+            <div className="rounded-xl bg-slate-900/70 p-3 text-xs text-slate-300 leading-relaxed">
+              <p className="mb-1 font-bold text-slate-100">조작 (키보드)</p>
+              <p>← → (A D) 이동</p>
+              <p>↑ (W X Z) 회전</p>
+              <p>↓ (S) 빠르게 내리기</p>
+              <p>Space 한 번에 떨구기</p>
+              <p>P pause권 사용</p>
+            </div>
+          </aside>
+        </div>
+      ) : (
+        frame
       )}
     </main>
   );
