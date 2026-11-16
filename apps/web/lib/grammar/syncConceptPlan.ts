@@ -15,6 +15,7 @@ type PlanRow = {
   units_per_session: number | null;
   is_enabled: boolean;
   is_paused: boolean;
+  exam_period_id?: string | null;
 };
 
 /**
@@ -66,6 +67,8 @@ export async function syncConceptPlan(planId: string): Promise<Result> {
   if (planErr || !planData) return { error: planErr?.message ?? "플랜을 찾을 수 없습니다." };
   const plan = planData as PlanRow;
   if (!plan.is_enabled || plan.is_paused) return { created: 0 };
+  // 내신 시험 범위로 만든 플랜은 교재 순서로 다시 깔면 안 된다 — 시험 범위 화면에서만 다시 배정한다
+  if (plan.exam_period_id) return { created: 0 };
 
   const [{ data: concepts }, { data: done }, { data: existing }, bookOrder] = await Promise.all([
     db.from("grammar_concepts").select("id, difficulty_rank, status"),
@@ -111,8 +114,9 @@ export async function syncConceptPlan(planId: string): Promise<Result> {
 /** 오늘부터 다시 잡는다: 끝내지 않은 배정(밀린 것 포함)을 지우고 새로 만든다. 끝낸 개념의 배정은 기록으로 남긴다. */
 export async function rescheduleConceptPlan(planId: string): Promise<Result> {
   const db = getServiceSupabase();
-  const { data: plan } = await db.from("student_grammar_concept_plans").select("student_id, level").eq("id", planId).maybeSingle();
+  const { data: plan } = await db.from("student_grammar_concept_plans").select("student_id, level, exam_period_id").eq("id", planId).maybeSingle();
   if (!plan) return { error: "플랜을 찾을 수 없습니다." };
+  if ((plan as { exam_period_id?: string | null }).exam_period_id) return { created: 0 };
 
   const [{ data: done }, { data: current }] = await Promise.all([
     db.from("student_grammar_concept_done").select("concept_id").eq("student_id", plan.student_id).eq("level", plan.level),

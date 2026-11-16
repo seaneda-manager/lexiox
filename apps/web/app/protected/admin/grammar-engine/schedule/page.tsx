@@ -17,6 +17,8 @@ type PlanRec = {
   weekdays: number[] | null;
   units_per_session: number | null;
   is_paused: boolean | null;
+  kind: 'regular' | 'naesin' | null;
+  exam_period_id: string | null;
 };
 type AssignRec = { plan_id: string; student_id: string; concept_id: string; scheduled_date: string; seq: number };
 
@@ -24,7 +26,7 @@ export default async function ConceptSchedulePage() {
   const db = getServiceSupabase();
   const today = todayKst();
 
-  const { data: planData, error: planErr } = await db.from('student_grammar_concept_plans').select('*').eq('kind', 'regular').order('created_at', { ascending: true });
+  const { data: planData, error: planErr } = await db.from('student_grammar_concept_plans').select('*').order('created_at', { ascending: true });
   const missingTable = !!planErr && /student_grammar_concept_plans|does not exist|schema cache/i.test(planErr.message);
   const plans = (planData ?? []) as PlanRec[];
 
@@ -38,6 +40,10 @@ export default async function ConceptSchedulePage() {
       missingTable ? Promise.resolve({ data: [] }) : db.from('student_grammar_concept_done').select('student_id, concept_id, level'),
       db.from('profiles').select('id, full_name, name, email, grade').eq('role', 'student').order('full_name', { ascending: true }),
     ]);
+  const { data: periodData } = await db.from('school_exam_periods').select('id, year, semester, exam_type, schools(name)');
+  const periodLabel = new Map<string, string>(
+    ((periodData ?? []) as unknown as { id: string; year: number; semester: number; exam_type: string; schools: { name: string } | null }[]).map((p) => [p.id, `${p.schools?.name ?? '학교'} ${p.year}년 ${p.semester}학기 ${p.exam_type === 'midterm' ? '중간' : '기말'}`]),
+  );
   const engineMissing = !!bookErr && /grammar_books|does not exist|schema cache/i.test(bookErr.message);
 
   const books: BookOption[] = ((bookData ?? []) as { id: string; title: string }[]).map((b) => ({
@@ -76,10 +82,12 @@ export default async function ConceptSchedulePage() {
     const book = p.book_id ? bookById.get(p.book_id) : null;
     const curUnit = book?.units.find((u) => u.id === p.current_unit_id);
     const bookLabel = book ? `교재: ${book.title}${curUnit ? ` · 현재 ${curUnit.label}` : ' · 처음부터'}` : '교재 없음 — 개념 난이도순';
-    return { plan: p, sum, upcoming, bookLabel };
+    return { plan: p, sum, upcoming, bookLabel, kind: (p.kind ?? 'regular') as 'regular' | 'naesin', scopeLabel: p.exam_period_id ? periodLabel.get(p.exam_period_id) ?? '시험 범위' : undefined };
   });
 
   const totalOverdue = rows.reduce((s, r) => s + r.sum.overdue, 0);
+  const regularRows = rows.filter((r) => r.kind === 'regular');
+  const naesinRows = rows.filter((r) => r.kind === 'naesin');
 
   return (
     <main className="mx-auto max-w-5xl space-y-6 px-4 py-6">
@@ -115,41 +123,53 @@ export default async function ConceptSchedulePage() {
       )}
 
       <div className="grid grid-cols-2 gap-2">
-        <Stat label="스케줄 학생" value={`${rows.length}명`} />
+        <Stat label="정규 / 내신 스케줄" value={`${regularRows.length}명 / ${naesinRows.length}명`} />
         <Stat label="밀린 개념" value={`${totalOverdue}개`} bad={totalOverdue > 0} />
       </div>
 
-      <section className="space-y-3">
-        <h2 className="text-sm font-semibold text-gray-800">학생별 스케줄</h2>
-        {rows.length === 0 && <p className="rounded-xl border bg-white p-4 text-sm text-gray-400">아직 스케줄이 없습니다. 아래에서 만드세요.</p>}
-        {rows.map(({ plan, sum, upcoming, bookLabel }) => (
-          <ConceptPlanRow
-            key={plan.id}
-            planId={plan.id}
-            studentName={nameOf.get(plan.student_id) ?? '이름 미설정'}
-            paused={!!plan.is_paused}
-            bookLabel={bookLabel}
-            settings={{
-              studentId: plan.student_id,
-              bookId: plan.book_id,
-              currentUnitId: plan.current_unit_id,
-              level: plan.level,
-              startDate: plan.start_date,
-              weekdays: plan.weekdays ?? [],
-              perSession: plan.units_per_session ?? 1,
-            }}
-            total={sum.total}
-            done={sum.done}
-            overdue={sum.overdue}
-            todayLabels={sum.todayUnitIds.map((id) => conceptTitle.get(id) ?? id)}
-            nextDate={sum.nextDate}
-            lastDate={sum.lastDate}
-            upcoming={upcoming}
-            books={books}
-            today={today}
-          />
-        ))}
-      </section>
+      {[
+        { title: '정규 스케줄', hint: '교재 진도에 따른 평소 일정. 시험 준비기간에는 자동으로 멈춥니다.', list: regularRows, tone: 'border-gray-200' },
+        { title: '내신 스케줄', hint: '시험 범위 기준 일정. 시험기간에도 멈추지 않습니다.', list: naesinRows, tone: 'border-amber-300' },
+      ].map((g) => (
+        <section key={g.title} className="space-y-3">
+          <div className={`flex items-baseline gap-2 border-l-4 pl-3 ${g.tone}`}>
+            <h2 className="text-sm font-semibold text-gray-800">
+              {g.title} <span className="font-normal text-gray-400">({g.list.length})</span>
+            </h2>
+            <span className="text-xs text-gray-500">{g.hint}</span>
+          </div>
+          {g.list.length === 0 && <p className="rounded-xl border bg-white p-4 text-sm text-gray-400">아직 없습니다.</p>}
+          {g.list.map(({ plan, sum, upcoming, bookLabel, kind, scopeLabel }) => (
+            <ConceptPlanRow
+              key={plan.id}
+              planId={plan.id}
+              studentName={nameOf.get(plan.student_id) ?? '이름 미설정'}
+              paused={!!plan.is_paused}
+              bookLabel={bookLabel}
+              scopeLabel={scopeLabel}
+              settings={{
+                studentId: plan.student_id,
+                kind,
+                bookId: plan.book_id,
+                currentUnitId: plan.current_unit_id,
+                level: plan.level,
+                startDate: plan.start_date,
+                weekdays: plan.weekdays ?? [],
+                perSession: plan.units_per_session ?? 1,
+              }}
+              total={sum.total}
+              done={sum.done}
+              overdue={sum.overdue}
+              todayLabels={sum.todayUnitIds.map((id) => conceptTitle.get(id) ?? id)}
+              nextDate={sum.nextDate}
+              lastDate={sum.lastDate}
+              upcoming={upcoming}
+              books={books}
+              today={today}
+            />
+          ))}
+        </section>
+      ))}
 
       {!missingTable && !engineMissing && (
         <ConceptPlanForm students={[...nameOf.entries()].map(([id, name]) => ({ id, name, grade: gradeOf.get(id) ?? '' }))} books={books} today={today} />

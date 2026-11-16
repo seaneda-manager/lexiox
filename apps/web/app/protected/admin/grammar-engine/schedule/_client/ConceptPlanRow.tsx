@@ -23,6 +23,8 @@ export default function ConceptPlanRow(props: {
   upcoming: UpcomingItem[];
   books: BookOption[];
   today: string;
+  /** 내신 시험 범위 화면에서 만든 플랜 — 이 화면에서는 다시 배정하지 않는다 */
+  scopeLabel?: string;
 }) {
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState('');
@@ -49,12 +51,19 @@ export default function ConceptPlanRow(props: {
           <div className="mt-0.5 text-xs text-neutral-500">
             {s.weekdays.map((w) => WEEKDAY_KO[w]).join('·')} · 하루 {s.perSession}개념 · L{s.level} · {s.startDate} 시작
           </div>
-          <div className="mt-0.5 text-xs font-medium text-indigo-600">{props.bookLabel}</div>
+          <div className="mt-0.5 text-xs font-medium text-indigo-600">{props.scopeLabel ? `시험 범위: ${props.scopeLabel}` : props.bookLabel}</div>
         </div>
         <div className="flex flex-wrap gap-1.5">
-          <button disabled={pending} onClick={() => setEditing((v) => !v)} className={btn}>
-            {editing ? '닫기' : '수정'}
-          </button>
+          {!props.scopeLabel && (
+            <button disabled={pending} onClick={() => setEditing((v) => !v)} className={btn}>
+              {editing ? '닫기' : '수정'}
+            </button>
+          )}
+          {props.scopeLabel && (
+            <a href="/admin/exam-scope" className={btn}>
+              시험 범위 화면에서 다시 배정
+            </a>
+          )}
           <button
             disabled={pending}
             onClick={() => run(() => toggleConceptPauseAction(props.planId, !props.paused), (n) => (props.paused ? `다시 시작 — 개념 ${n}개 재배치` : '일시정지했습니다.'))}
@@ -62,16 +71,20 @@ export default function ConceptPlanRow(props: {
           >
             {props.paused ? '다시 시작' : '일시정지'}
           </button>
-          <button disabled={pending} onClick={() => run(() => resyncConceptPlanAction(props.planId), (n) => `동기화 — 새로 배치한 개념 ${n}개`)} className={btn}>
-            재동기화
-          </button>
-          <button
-            disabled={pending}
-            onClick={() => confirm('끝내지 않은 개념(밀린 것 포함)을 지우고 오늘부터 다시 배치합니다. 계속할까요?') && run(() => rescheduleConceptPlanAction(props.planId), (n) => `오늘부터 다시 배치 — 개념 ${n}개`)}
-            className={btn}
-          >
-            오늘부터 다시 잡기
-          </button>
+          {!props.scopeLabel && (
+            <>
+              <button disabled={pending} onClick={() => run(() => resyncConceptPlanAction(props.planId), (n) => `동기화 — 새로 배치한 개념 ${n}개`)} className={btn}>
+                재동기화
+              </button>
+              <button
+                disabled={pending}
+                onClick={() => confirm('끝내지 않은 개념(밀린 것 포함)을 지우고 오늘부터 다시 배치합니다. 계속할까요?') && run(() => rescheduleConceptPlanAction(props.planId), (n) => `오늘부터 다시 배치 — 개념 ${n}개`)}
+                className={btn}
+              >
+                오늘부터 다시 잡기
+              </button>
+            </>
+          )}
           <button
             disabled={pending}
             onClick={() => confirm('이 학생의 스케줄을 삭제합니다. (완료 기록은 남습니다)') && run(() => deleteConceptPlanAction(props.planId), () => '삭제했습니다.')}

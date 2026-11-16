@@ -24,6 +24,7 @@ const done = (r: { created: number } | { error: string }): Result => {
 // 학생의 개념 스케줄을 만들거나(없으면) 바꾸고(있으면), 오늘부터 일정을 다시 잡는다.
 export async function saveConceptPlanAction(input: {
   studentId: string;
+  kind?: 'regular' | 'naesin';
   bookId: string | null;
   currentUnitId: string | null;
   level: number;
@@ -46,6 +47,7 @@ export async function saveConceptPlanAction(input: {
   const { data: stu } = await db.from('profiles').select('id, role').eq('id', input.studentId).maybeSingle();
   if (!stu || stu.role !== 'student') return { error: '학생 계정을 찾을 수 없습니다.' };
 
+  const kind = input.kind === 'naesin' ? 'naesin' : 'regular';
   const fields = {
     book_id: input.bookId || null,
     current_unit_id: input.bookId ? input.currentUnitId || null : null,
@@ -56,7 +58,7 @@ export async function saveConceptPlanAction(input: {
     is_enabled: true,
     updated_at: new Date().toISOString(),
   };
-  const { data: existing } = await db.from('student_grammar_concept_plans').select('id').eq('student_id', input.studentId).eq('kind', 'regular').maybeSingle();
+  const { data: existing } = await db.from('student_grammar_concept_plans').select('id').eq('student_id', input.studentId).eq('kind', kind).maybeSingle();
 
   let planId = existing?.id as string | undefined;
   if (planId) {
@@ -65,7 +67,7 @@ export async function saveConceptPlanAction(input: {
   } else {
     const { data: created, error } = await db
       .from('student_grammar_concept_plans')
-      .insert({ ...fields, student_id: input.studentId, kind: 'regular', created_by: who.userId })
+      .insert({ ...fields, student_id: input.studentId, kind, created_by: who.userId })
       .select('id')
       .single();
     if (error || !created) return { error: error?.message ?? '플랜을 만들지 못했습니다.' };

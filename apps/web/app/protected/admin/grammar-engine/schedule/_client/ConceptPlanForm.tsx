@@ -8,6 +8,7 @@ const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 export type BookOption = { id: string; title: string; units: { id: string; label: string }[] };
 export type ConceptPlanInitial = {
   studentId: string;
+  kind?: 'regular' | 'naesin';
   bookId: string | null;
   currentUnitId: string | null;
   level: number;
@@ -32,6 +33,7 @@ export default function ConceptPlanForm({
   initial?: ConceptPlanInitial;
   onDone?: () => void;
 }) {
+  const [kind, setKind] = useState<'regular' | 'naesin'>(initial?.kind ?? 'regular');
   const [studentIds, setStudentIds] = useState<string[]>([]);
   const [gradeFilter, setGradeFilter] = useState('');
   const [nameFilter, setNameFilter] = useState('');
@@ -55,7 +57,7 @@ export default function ConceptPlanForm({
     setSaving(true);
     setError('');
     setMessage('');
-    const base = { bookId: bookId || null, currentUnitId: unitId || null, level, startDate, weekdays, perSession };
+    const base = { kind, bookId: bookId || null, currentUnitId: unitId || null, level, startDate, weekdays, perSession };
     if (initial) {
       const res = await saveConceptPlanAction({ studentId: initial.studentId, ...base });
       setSaving(false);
@@ -75,6 +77,18 @@ export default function ConceptPlanForm({
   return (
     <form onSubmit={submit} className="space-y-4 rounded-2xl border border-neutral-200 bg-white p-5">
       {!initial && <h2 className="text-xs font-bold uppercase tracking-wide text-neutral-400">학생 스케줄 만들기 / 바꾸기</h2>}
+
+      {!initial && (
+        <label className={`flex items-start gap-2 rounded-xl border p-3 text-sm ${kind === 'naesin' ? 'border-amber-300 bg-amber-50' : 'border-neutral-200'}`}>
+          <input type="checkbox" checked={kind === 'naesin'} onChange={(e) => setKind(e.target.checked ? 'naesin' : 'regular')} className="mt-0.5" />
+          <span>
+            <b>내신용 스케줄</b>
+            <span className="block text-xs font-normal text-neutral-500">
+              체크하면 정규 일정과 따로 &quot;내신&quot; 목록에 만들어집니다. 시험기간에도 멈추지 않습니다. 시험 범위(개념 목록)로 만들려면 <a href="/admin/exam-scope" className="underline">내신 시험 범위</a> 화면을 쓰세요.
+            </span>
+          </span>
+        </label>
+      )}
 
       {!initial && (
         <div className="space-y-2 text-xs font-semibold text-neutral-600">
@@ -191,7 +205,7 @@ export default function ConceptPlanForm({
         disabled={saving || (!initial && studentIds.length === 0)}
         className="w-full rounded-xl bg-emerald-600 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
       >
-        {saving ? '저장 중…' : initial ? '바꾸고 일정 다시 잡기' : studentIds.length > 1 ? `${studentIds.length}명에게 스케줄 만들기` : '스케줄 만들기'}
+        {saving ? '저장 중…' : initial ? '바꾸고 일정 다시 잡기' : `${studentIds.length > 1 ? studentIds.length + '명에게 ' : ''}${kind === 'naesin' ? '내신 ' : ''}스케줄 만들기`}
       </button>
     </form>
   );
