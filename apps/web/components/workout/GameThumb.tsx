@@ -562,6 +562,33 @@ function Sports() {
   );
 }
 
+function Tetris() {
+  const rows: [number, number, string][] = [
+    [2, 6, "#22d3ee"], [3, 6, "#22d3ee"], [4, 6, "#22d3ee"], [5, 6, "#22d3ee"],
+    [0, 7, "#facc15"], [1, 7, "#facc15"], [0, 8, "#facc15"], [1, 8, "#facc15"], [2, 7, "#a78bfa"], [3, 7, "#a78bfa"], [4, 7, "#a78bfa"], [3, 6.0001, "#22d3ee"],
+    [2, 8, "#a78bfa"], [3, 8, "#4ade80"], [4, 8, "#4ade80"], [5, 8, "#f87171"], [6, 8, "#f87171"], [5, 7, "#4ade80"], [6, 7, "#f87171"], [7, 8, "#fb923c"], [7, 7, "#fb923c"], [7, 6, "#fb923c"],
+  ];
+  return (
+    <svg viewBox="0 0 320 180" className="w-full h-full" aria-hidden>
+      <rect width="320" height="180" fill="#0f172a" />
+      <g transform="translate(100,6)">
+        <rect x="0" y="0" width="120" height="168" rx="4" fill="#0b1220" stroke="#334155" />
+        {rows.map(([x, y, c], i) => (
+          <rect key={i} x={x * 14 + 3} y={y * 14 + 56} width="12" height="12" rx="2" fill={c} />
+        ))}
+        <g transform="translate(40,4)">
+          <rect x="0" y="0" width="14" height="14" fill="#a78bfa" />
+          <rect x="14" y="0" width="14" height="14" fill="#a78bfa" />
+          <rect x="28" y="0" width="14" height="14" fill="#a78bfa" />
+          <rect x="14" y="14" width="14" height="14" fill="#a78bfa" />
+        </g>
+      </g>
+      <text x="232" y="64" fill="#fbbf24" fontSize="22" fontWeight="800">★★★</text>
+      <text x="234" y="92" fill="#e2e8f0" fontSize="13" fontWeight="700">reluctant</text>
+    </svg>
+  );
+}
+
 export default function GameThumb({ kind }: { kind: ThumbKey }) {
   switch (kind) {
     case "sports":
@@ -570,6 +597,8 @@ export default function GameThumb({ kind }: { kind: ThumbKey }) {
       return <Rescue />;
     case "memory":
       return <Memory />;
+    case "tetris":
+      return <Tetris />;
     case "omok":
       return <Omok />;
     case "archery":

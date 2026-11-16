@@ -13,6 +13,7 @@ import ClayGame from "@/components/workout/ClayGame";
 import SprintGame from "@/components/workout/SprintGame";
 import RescueGame from "@/components/workout/RescueGame";
 import MemoryGame from "@/components/workout/MemoryGame";
+import TetrisGame from "@/components/workout/TetrisGame";
 import GameFrame from "@/components/workout/GameFrame";
 import { ARCHERY_MODE_LABEL, DEMO_VOCAB, buildArcheryQuestions, type ArcheryMode, type ArcheryVocab } from "@/lib/workout/archeryQuestions";
 import { loadMyStages, loadSetWords, type TrackInfo } from "@/lib/workout/loadStageWords";
@@ -21,7 +22,7 @@ import { loadMyAssignments, reportAttempt, type MyAssignment } from "@/lib/worko
 import PerkLock from "@/components/workout/PerkLock";
 import { groupOfStyle, isGameStyle, orientationOf, playHref, type GameStyle } from "@/lib/workout/gameCatalog";
 
-function Player({ style, assignmentId }: { style: GameStyle; assignmentId: string | null }) {
+function Player({ style, assignmentId, demo }: { style: GameStyle; assignmentId: string | null; demo: boolean }) {
   const router = useRouter();
 
   // 선생님이 내준 게임으로 들어왔다면 서버에서 확인한다(내 배정이고 아직 목표를 못 채웠을 때만 시간 차감 없이 열린다)
@@ -43,7 +44,8 @@ function Player({ style, assignmentId }: { style: GameStyle; assignmentId: strin
     };
   }, [assignmentId, style]);
 
-  const perk = usePerk({ tick: !asgLoading && !bypass }); // 플레이 시간(보상) 확인 + 60초마다 1분 차감
+  const [demoDone, setDemoDone] = useState(false);
+  const perk = usePerk({ tick: !asgLoading && !bypass && !demo }); // 플레이 시간(보상) 확인 + 60초마다 1분 차감
   const group = groupOfStyle(style);
   const [mode, setMode] = useState<ArcheryMode>("en-en");
   const [round, setRound] = useState(0);
@@ -85,9 +87,11 @@ function Player({ style, assignmentId }: { style: GameStyle; assignmentId: strin
     };
   }, [setId]);
   // 실제 단어가 너무 적으면(4개 미만) 데모로 대체하고, 오답 보기가 부족할 때는 데모 단어로 채운다
-  const usingReal = !!realVocab && realVocab.length >= 4;
-  const vocab: ArcheryVocab[] = usingReal ? realVocab! : DEMO_VOCAB;
-  const extraPool: ArcheryVocab[] = usingReal && realVocab!.length < 16 ? DEMO_VOCAB : [];
+  const usingReal = !demo && !!realVocab && realVocab.length >= 4;
+  // 체험(데모): 샘플 단어 10개로 한 판만
+  const demoVocab = useMemo(() => [...DEMO_VOCAB].sort(() => Math.random() - 0.5).slice(0, 10), []);
+  const vocab: ArcheryVocab[] = demo ? demoVocab : usingReal ? realVocab! : DEMO_VOCAB;
+  const extraPool: ArcheryVocab[] = demo ? DEMO_VOCAB : usingReal && realVocab!.length < 16 ? DEMO_VOCAB : [];
 
   // 스펠링(빈칸) 문제는 활쏘기(매달린/날아가는 과녁)에서만 쓴다
   const spellingOk = style === "hang" || style === "fly";
@@ -100,9 +104,9 @@ function Player({ style, assignmentId }: { style: GameStyle; assignmentId: strin
   const questions = useMemo<ArcheryQuestion[]>(() => {
     const shuffled = [...vocab].sort(() => Math.random() - 0.5);
     if (style === "spell") {
-      return shuffled.slice(0, 15).map((v, i) => ({ id: `sp-${i}`, prompt: v.ko, answer: v.word, choices: [] }));
+      return shuffled.slice(0, demo ? 10 : 15).map((v, i) => ({ id: `sp-${i}`, prompt: v.ko, answer: v.word, choices: [] }));
     }
-    const count = style === "rain" || style === "omok" || style === "sprint" || style === "rescue" ? 30 : style === "drift" || style === "driftcockpit" ? 12 : 10;
+    const count = demo ? 10 : style === "rain" || style === "omok" || style === "sprint" || style === "rescue" || style === "tetris" ? 30 : style === "drift" || style === "driftcockpit" ? 12 : 10;
     return buildArcheryQuestions(shuffled.slice(0, count), effMode, extraPool);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [effMode, style, round, vocab]);
@@ -116,6 +120,10 @@ function Player({ style, assignmentId }: { style: GameStyle; assignmentId: strin
 
   // 한 판이 끝나면 결과를 기록하고, 내준 게임이면 진행 횟수를 올린다
   const onFinish = (result: object) => {
+    if (demo) {
+      window.setTimeout(() => setDemoDone(true), 7000); // 결과 화면을 잠깐 보여준 뒤 닫는다
+      return;
+    }
     reportAttempt({ style, setId: usingReal ? setId : null, assignmentId: asg?.id ?? null, mode: effMode, level: omokLevel, result: result as Record<string, unknown> });
     if (asg) setAsg((a) => (a ? { ...a, plays: a.plays + 1 } : a));
   };
@@ -123,8 +131,8 @@ function Player({ style, assignmentId }: { style: GameStyle; assignmentId: strin
   const key = `${style}-${effMode}-${round}-${assist ? "a" : "n"}-${omokLevel}-${usingReal ? setId : "demo"}`;
 
   // 게임은 보상: 시간이 없으면(숙제·학원 학습 전, 또는 오늘 시간을 다 씀) 잠금 화면. 플레이 중 시간이 0이 되면 게임이 닫힌다.
-  if (asgLoading || perk.state === "loading") return <main className="p-6 text-slate-500 text-sm">게임 시간을 확인하는 중...</main>;
-  if (!bypass && (perk.state === "locked" || perk.state === "login")) {
+  if (!demo && (asgLoading || perk.state === "loading")) return <main className="p-6 text-slate-500 text-sm">게임 시간을 확인하는 중...</main>;
+  if (!demo && !bypass && (perk.state === "locked" || perk.state === "login")) {
     return (
       <main className="p-4 md:p-6">
         <PerkLock perk={perk} />
@@ -141,7 +149,9 @@ function Player({ style, assignmentId }: { style: GameStyle; assignmentId: strin
           </Link>
           <h1 className="text-white font-extrabold tracking-wide">{group.name}</h1>
           <span className="text-slate-400 text-sm">{group.subtitle}</span>
-          {bypass ? (
+          {demo ? (
+            <span className="ml-auto rounded-full bg-sky-400 text-slate-900 text-xs font-bold px-3 py-1">체험판 · 샘플 단어 10개 · 1판</span>
+          ) : bypass ? (
             <span className="ml-auto rounded-full bg-emerald-400 text-slate-900 text-xs font-bold px-3 py-1">
               선생님이 내준 게임 · {asg!.plays}/{asg!.targetPlays}판 · 시간 차감 없음
             </span>
@@ -176,9 +186,9 @@ function Player({ style, assignmentId }: { style: GameStyle; assignmentId: strin
           </div>
         )}
 
-        {(style === "omok" || style === "sprint" || style === "rescue" || style === "memory") && (
+        {(style === "omok" || style === "sprint" || style === "rescue" || style === "memory" || style === "tetris") && (
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-slate-400 text-sm w-12">{style === "sprint" ? "상대" : style === "rescue" || style === "memory" ? "난이도" : "AI"}</span>
+            <span className="text-slate-400 text-sm w-12">{style === "sprint" ? "상대" : style === "rescue" || style === "memory" || style === "tetris" ? "난이도" : "AI"}</span>
             {(["easy", "normal", "hard"] as OmokLevel[]).map((lv) => (
               <button key={lv} className={chip(omokLevel === lv)} onClick={() => setOmokLevel(lv)}>
                 {lv === "easy" ? "쉬움" : lv === "normal" ? "보통" : "어려움"}
@@ -189,6 +199,8 @@ function Player({ style, assignmentId }: { style: GameStyle; assignmentId: strin
                 ? "상대 선수의 속도 (쉬움 · 보통 · 어려움)"
                 : style === "rescue"
                   ? "스테이지가 올라갈수록 어려워져요. 쉬움은 한 단계 낮게, 어려움은 한 단계 높게 시작해요"
+                  : style === "tetris"
+                    ? "쉬움: 목숨 5·6줄·느리게 / 보통: 목숨 3·8줄 / 어려움: 목숨 2·10줄·빠르게"
                   : style === "memory"
                     ? "쉬움은 카드 4장부터·외우는 시간 1.3배, 어려움은 8장부터·0.8배로 시작해요"
                   : "AI도 철자 문제를 이 확률로 맞혀요 (50% / 72% / 90%)"}
@@ -198,7 +210,7 @@ function Player({ style, assignmentId }: { style: GameStyle; assignmentId: strin
 
         {asg?.note && <p className="text-amber-300 text-sm">선생님 메모: {asg.note}</p>}
 
-        {(tracks.length > 0 || asg) && (
+        {!demo && (tracks.length > 0 || asg) && (
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-slate-400 text-sm w-12">단어</span>
             <select
@@ -235,14 +247,25 @@ function Player({ style, assignmentId }: { style: GameStyle; assignmentId: strin
               </button>
             );
           })}
-          <button className="ml-auto px-4 py-2 rounded-full text-sm bg-slate-700 text-slate-200 hover:bg-slate-600" onClick={() => setRound((r) => r + 1)}>
+          <button disabled={demo} className="ml-auto px-4 py-2 rounded-full text-sm bg-slate-700 text-slate-200 hover:bg-slate-600 disabled:opacity-40" onClick={() => setRound((r) => r + 1)}>
             ↻ 다시 섞기
           </button>
         </div>
       </div>
 
+      {demo && demoDone ? (
+        <div className="max-w-xl mx-auto rounded-2xl bg-slate-800 p-8 text-center text-slate-100">
+          <p className="text-lg font-extrabold">체험 끝!</p>
+          <p className="mt-2 text-sm text-slate-300">샘플 단어로 한 판 해봤어요. 숙제를 끝내거나 선생님이 게임을 내주면 내 단어로 계속 할 수 있어요.</p>
+          <Link href="/workout/games" className="mt-5 inline-block rounded-full bg-amber-400 px-5 py-2 text-sm font-bold text-slate-900">
+            게임 목록으로
+          </Link>
+        </div>
+      ) : (
       <GameFrame orientation={orientationOf(style)}>
-        {style === "memory" ? (
+        {style === "tetris" ? (
+          <TetrisGame onFinish={onFinish} key={key} questions={questions} level={omokLevel} stages={3} />
+        ) : style === "memory" ? (
           <MemoryGame onFinish={onFinish} key={key} vocab={vocab} mode={effMode} level={omokLevel} stages={6} />
         ) : style === "rescue" ? (
           <RescueGame onFinish={onFinish} key={key} questions={questions} rounds={3} level={omokLevel} />
@@ -271,6 +294,7 @@ function Player({ style, assignmentId }: { style: GameStyle; assignmentId: strin
           <ArcheryPhaser onFinish={onFinish} key={key} questions={questions} motion={style} titleSub={ARCHERY_MODE_LABEL[effMode].sub} />
         )}
       </GameFrame>
+      )}
     </main>
   );
 }
@@ -288,7 +312,7 @@ function PlayInner() {
       </main>
     );
   }
-  return <Player style={raw} assignmentId={params.get("assignment")} />;
+  return <Player style={raw} assignmentId={params.get("assignment")} demo={params.get("demo") === "1"} />;
 }
 
 export default function WorkoutPlayPage() {

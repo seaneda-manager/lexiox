@@ -1,6 +1,6 @@
 /** Workout 게임 카탈로그: 같은 엔진·세계관의 모드들을 하나의 게임(그룹)으로 묶는다. */
-export type GameStyle = "hang" | "fly" | "rain" | "spell" | "trial" | "race" | "drift" | "driftcockpit" | "cockpit" | "omok" | "clay" | "sprint" | "rescue" | "memory";
-export type ThumbKey = "archery" | "rain" | "race" | "drift" | "cockpit" | "omok" | "sports" | "rescue" | "memory";
+export type GameStyle = "hang" | "fly" | "rain" | "spell" | "trial" | "race" | "drift" | "driftcockpit" | "cockpit" | "omok" | "clay" | "sprint" | "rescue" | "memory" | "tetris";
+export type ThumbKey = "archery" | "rain" | "race" | "drift" | "cockpit" | "omok" | "sports" | "rescue" | "memory" | "tetris";
 export type Orientation = "landscape" | "portrait" | "any";
 
 export type GameMode = { style: GameStyle; label: string; desc: string };
@@ -100,6 +100,16 @@ export const GAME_GROUPS: GameGroup[] = [
     modes: [{ style: "memory", label: "위치 기억", desc: "스테이지가 올라갈수록 카드가 늘어난다" }],
   },
   {
+    id: "tetris",
+    name: "WORD TETRIS",
+    subtitle: "단어 테트리스",
+    tagline: "줄을 지워 단어 카드를 모으고, 스테이지 끝 퀴즈로 별을 모으세요",
+    thumb: "tetris",
+    controls: "← → 이동 · ↑ 회전 · ↓ 빠르게 · Space 떨구기 / 폰은 하단 버튼",
+    platforms: ["PC", "모바일 (세로)"],
+    modes: [{ style: "tetris", label: "스테이지 모드", desc: "N줄을 지우면 모인 단어로 퀴즈. 목숨 있음, 단어 때문에 죽지 않아요" }],
+  },
+  {
     id: "rescue",
     name: "RESCUE RAIDERS",
     subtitle: "레스큐 레이더스",
@@ -136,7 +146,7 @@ export function groupOfStyle(style: GameStyle): GameGroup {
 
 export function orientationOf(style: GameStyle): Orientation {
   if (style === "hang" || style === "fly" || style === "drift" || style === "driftcockpit" || style === "clay" || style === "sprint" || style === "rescue" || style === "memory") return "landscape";
-  if (style === "trial" || style === "race" || style === "cockpit" || style === "omok") return "portrait";
+  if (style === "trial" || style === "race" || style === "cockpit" || style === "omok" || style === "tetris") return "portrait";
   return "any";
 }
 

@@ -62,14 +62,10 @@ export default function WorkoutGamesPage() {
   const playable = assigned.filter((a) => !a.done);
 
   if (perk.state === "loading") return <main className="max-w-6xl mx-auto p-6 text-slate-500 text-sm">게임 시간을 확인하는 중...</main>;
-  if (perk.state === "locked" || perk.state === "login") {
-    return (
-      <main className="max-w-6xl mx-auto p-4 md:p-6">
-        <AssignedGames list={playable} />
-        <PerkLock perk={perk} />
-      </main>
-    );
-  }
+  const locked = perk.state === "locked" || perk.state === "login";
+  // 배정받은 게임이 있거나 시간이 잠겼으면 나머지 게임은 흐리게(눌러도 체험판 또는 일반 플레이)
+  const assignedStyles = new Set(playable.map((a) => a.style));
+  const dimOthers = locked || (assignedStyles.size > 0 && !perk.unlimited);
 
   return (
     <main className="max-w-6xl mx-auto p-4 md:p-6">
@@ -85,17 +81,27 @@ export default function WorkoutGamesPage() {
         <p className="text-slate-500 mt-1">게임을 고르고, 안에서 모드를 선택하세요. 문제 방식(영영 · 한영 · 영한 · 스펠링)은 게임 안에서 바꿀 수 있어요.</p>
       </header>
 
+      {locked && (
+        <div className="mb-6">
+          <PerkLock perk={perk} />
+          <p className="mt-2 text-sm text-slate-500">아래 게임은 샘플 단어 10개로 한 판 <b>체험</b>해 볼 수 있어요.</p>
+        </div>
+      )}
       <AssignedGames list={assigned.slice(0, 8)} />
 
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {GAME_GROUPS.map((g) => (
-          <article key={g.id} className="group rounded-2xl bg-white border border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition overflow-hidden flex flex-col">
-            <Link href={playHref(g.modes[0].style)} className="block relative aspect-video bg-slate-900" aria-label={`${g.name} 시작`}>
+        {GAME_GROUPS.map((g) => {
+          const isAssigned = g.modes.some((m) => assignedStyles.has(m.style));
+          const dim = dimOthers && !isAssigned;
+          const href = (st: (typeof g.modes)[number]["style"]) => (locked ? `${playHref(st)}&demo=1` : playHref(st));
+          return (
+          <article key={g.id} className={`group rounded-2xl bg-white border border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition overflow-hidden flex flex-col transition ${dim ? "opacity-50 grayscale hover:opacity-100 hover:grayscale-0" : ""} ${isAssigned && dimOthers ? "ring-2 ring-emerald-400" : ""}`}>
+            <Link href={href(g.modes[0].style)} className="block relative aspect-video bg-slate-900" aria-label={`${g.name} 시작`}>
               <GameThumb kind={g.thumb} />
               <span className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/55 to-transparent pointer-events-none" />
               <span className="absolute left-3 bottom-2 text-white font-extrabold tracking-wide text-lg drop-shadow">{g.name}</span>
               <span className="absolute right-3 bottom-3 rounded-full bg-amber-400 text-slate-900 text-xs font-bold px-3 py-1 opacity-0 group-hover:opacity-100 transition">
-                ▶ 플레이
+                {locked ? "▶ 체험" : "▶ 플레이"}
               </span>
             </Link>
 
@@ -109,7 +115,7 @@ export default function WorkoutGamesPage() {
                 {g.modes.map((m) => (
                   <Link
                     key={m.style}
-                    href={playHref(m.style)}
+                    href={href(m.style)}
                     title={m.desc}
                     className="rounded-full border border-slate-300 bg-slate-50 hover:bg-amber-100 hover:border-amber-300 text-slate-800 text-sm font-semibold px-3 py-1.5 transition"
                   >
@@ -129,7 +135,8 @@ export default function WorkoutGamesPage() {
               </div>
             </div>
           </article>
-        ))}
+          );
+        })}
       </div>
     </main>
   );
