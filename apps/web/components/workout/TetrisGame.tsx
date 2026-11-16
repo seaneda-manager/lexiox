@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ArcheryQuestion } from "@/components/workout/ArcheryPhaser";
 import { CLOZE_SENTENCES, type ClozeItem } from "@/lib/workout/clozeSentences";
+import { PHRASAL_VERBS, type Phrasal } from "@/lib/workout/phrasalVerbs";
 
 /**
  * WORD TETRIS (1층)
@@ -18,7 +19,7 @@ type Props = {
   level?: TetrisLevel;
   stages?: number;
   /** 2층 기능 켜고 끄기(기본 둘 다 켬). special: 슬로우 블록·pause권, cloze: 빈칸 문장 이벤트 */
-  features?: { special?: boolean; cloze?: boolean };
+  features?: { special?: boolean; cloze?: boolean; phrasal?: boolean };
   onFinish?: (r: { score: number; correct: number; total: number; stages: number; stars: number }) => void;
 };
 
@@ -31,7 +32,10 @@ const LEVEL_CFG: Record<TetrisLevel, { lives: number; lines: number; drop: numbe
   normal: { lives: 3, lines: 8, drop: 800 },
   hard: { lives: 2, lines: 10, drop: 600 },
 };
-const COLORS = ["", "#22d3ee", "#facc15", "#a78bfa", "#4ade80", "#f87171", "#60a5fa", "#fb923c", "#fbbf24", "#38bdf8"];
+const COLORS = ["", "#22d3ee", "#facc15", "#a78bfa", "#4ade80", "#f87171", "#60a5fa", "#fb923c", "#fbbf24", "#38bdf8", "#f472b6", "#2dd4bf"];
+const VERBC = 10; // 이어동사 앞 조각(동사) 칸
+const PARTC = 11; // 이어동사 뒤 조각(전치사·부사) 칸
+const PAIR_GAP = 10; // 이어동사 쌍 사이 최소 조각 수
 const ANSWER = 8; // 정답 블록 칸
 const SLOW = 9; // 슬로우 블록 칸
 const EVENT_PIECES = 8; // 문장 이벤트가 열려 있는 조각 수
@@ -49,8 +53,10 @@ const SHAPES: Record<string, { c: number; cells: [number, number][] }> = {
 };
 const NAMES = Object.keys(SHAPES);
 
-type Piece = { name: string; cells: [number, number][]; x: number; y: number; kind?: "answer" | "decoy"; word?: string; slow?: boolean };
+type Piece = { name: string; cells: [number, number][]; x: number; y: number; kind?: "answer" | "decoy" | "verb" | "part"; word?: string; slow?: boolean };
 type Ev = { item: ClozeItem; left: number; spawned: number };
+type Lab = { w: string; k: "answer" | "decoy" | "verb" | "part" };
+const emptyLab = () => Array.from({ length: H }, () => Array(W).fill(null)) as (Lab | null)[][];
 type Phase = "start" | "play" | "quiz" | "stageEnd" | "over" | "clear";
 type Card = { q: ArcheryQuestion; missed: boolean };
 
@@ -72,6 +78,7 @@ function shuffle<T>(a: T[]): T[] {
 export default function TetrisGame({ questions, level = "normal", stages = 3, features, onFinish }: Props) {
   const useSpecial = features?.special !== false;
   const useCloze = features?.cloze !== false;
+  const usePhrasal = features?.phrasal !== false;
   const cfg = LEVEL_CFG[level];
   const finishRef = useRef(onFinish);
   finishRef.current = onFinish;
@@ -91,6 +98,7 @@ export default function TetrisGame({ questions, level = "normal", stages = 3, fe
     redo: [] as ArcheryQuestion[], // 틀려서 다시 나올 문제
     cards: [] as Card[],
     stageLines: 0,
+    lab: emptyLab(),
     ev: null as Ev | null,
     sinceEvent: 99,
     sinceSlow: 0,
@@ -98,6 +106,9 @@ export default function TetrisGame({ questions, level = "normal", stages = 3, fe
     pauseMs: 0,
     midDone: false,
     clozeSeen: [] as number[],
+    pair: null as { item: Phrasal; stage: "A" | "B" } | null,
+    sincePair: 0,
+    pairSeen: [] as number[],
   });
 
   const [phase, setPhase] = useState<Phase>("start");
@@ -116,6 +127,7 @@ export default function TetrisGame({ questions, level = "normal", stages = 3, fe
   const [quiz, setQuiz] = useState<{ items: { q: ArcheryQuestion; choices: string[] }[]; i: number; right: number; picked: string | null } | null>(null);
   const [stageStars, setStageStars] = useState(0);
   const [evView, setEvView] = useState<{ text: string; pos: string } | null>(null);
+  const [pairView, setPairView] = useState<{ text: string } | null>(null);
   const [tickets, setTickets] = useState(0);
   const ticketsRef = useRef(0);
   const [msg, setMsg] = useState("");
@@ -132,9 +144,48 @@ export default function TetrisGame({ questions, level = "normal", stages = 3, fe
     setPhase(p);
   }, []);
 
+  function settlePair() {
+    const s = g.current;
+    for (const row of s.grid) for (let x = 0; x < W; x++) {
+      if (row[x] === VERBC) row[x] = 5;
+      else if (row[x] === PARTC) row[x] = 4;
+    }
+    for (const row of s.lab) for (let x = 0; x < W; x++) if (row[x]?.k === "verb" || row[x]?.k === "part") row[x] = null;
+    s.pair = null;
+    s.sincePair = 0;
+    setPairView(null);
+  }
+  function resolvePair() {
+    const s = g.current;
+    const item = s.pair?.item;
+    if (!item) return;
+    let touch = false;
+    for (let y = 0; y < H && !touch; y++) {
+      for (let x = 0; x < W && !touch; x++) {
+        if (s.grid[y][x] !== PARTC) continue;
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx >= 0 && nx < W && ny >= 0 && ny < H && s.grid[ny][nx] === VERBC) touch = true;
+        }
+      }
+    }
+    if (touch) {
+      totals.current.score += 400 * (stageRef.current + 1);
+      setScore(totals.current.score);
+      const wrong = shuffle(PHRASAL_VERBS.filter((v) => v.ko !== item.ko).map((v) => v.ko)).slice(0, 3);
+      const q: ArcheryQuestion = { id: `pv-${item.verb}-${item.particle}`, prompt: `${item.verb} ${item.particle}`, answer: item.ko, choices: [item.ko, ...wrong] };
+      s.cards.unshift({ q, missed: false }); // 스테이지 끝 퀴즈에 꼭 나온다
+      setCardCount(s.cards.length);
+      flash(`이어동사 성공! ${item.verb} ${item.particle} = ${item.ko}`);
+    } else {
+      flash(`${item.verb} ${item.particle} = ${item.ko} (붙이지 못했어요, 벌칙 없음)`);
+    }
+    settlePair();
+  }
   function startEvent(reason: string) {
     const s = g.current;
-    if (!useCloze || s.ev || s.sinceEvent < EVENT_GAP) return;
+    if (!useCloze || s.ev || s.pair || s.sinceEvent < EVENT_GAP) return;
     let idx = Math.floor(Math.random() * CLOZE_SENTENCES.length);
     for (let t = 0; t < 8 && s.clozeSeen.includes(idx); t++) idx = Math.floor(Math.random() * CLOZE_SENTENCES.length);
     s.clozeSeen.push(idx);
@@ -151,6 +202,7 @@ export default function TetrisGame({ questions, level = "normal", stages = 3, fe
     s.sinceEvent = 0;
     setEvView(null);
     for (const row of s.grid) for (let x = 0; x < W; x++) if (row[x] === ANSWER) row[x] = 3;
+    for (const row of s.lab) for (let x = 0; x < W; x++) if (row[x]?.k === "answer" || row[x]?.k === "decoy") row[x] = null;
     if (!success) flash("문장 이벤트가 끝났어요 (벌칙 없음)");
   }
   function reward() {
@@ -196,7 +248,25 @@ export default function TetrisGame({ questions, level = "normal", stages = 3, fe
     const p: Piece = { name, cells: def.cells.map(([x, y]) => [x, y] as [number, number]), x: 3, y: name === "I" ? -1 : 0 };
     s.sinceEvent++;
     s.sinceSlow++;
-    if (s.ev) {
+    s.sincePair++;
+    if (s.pair?.stage === "A") {
+      // 이어동사 뒤 조각(전치사·부사)
+      p.kind = "part";
+      p.word = s.pair.item.particle;
+      s.pair.stage = "B";
+    } else if (!s.pair && !s.ev && usePhrasal && s.sincePair >= PAIR_GAP && s.sinceEvent >= 4 && Math.random() < 0.4) {
+      // 이어동사 앞 조각(동사). 곧이어 나오는 뒤 조각과 붙여 놓으면 보너스.
+      let idx = Math.floor(Math.random() * PHRASAL_VERBS.length);
+      for (let t = 0; t < 8 && s.pairSeen.includes(idx); t++) idx = Math.floor(Math.random() * PHRASAL_VERBS.length);
+      s.pairSeen.push(idx);
+      if (s.pairSeen.length > 20) s.pairSeen.shift();
+      const item = PHRASAL_VERBS[idx];
+      p.kind = "verb";
+      p.word = item.verb;
+      s.pair = { item, stage: "A" };
+      s.sincePair = 0;
+      setPairView({ text: `${item.verb} + ${item.particle}` });
+    } else if (s.ev) {
       // 문장 이벤트: 오답 조각 - 정답 조각 - 오답 조각 순으로 라벨이 붙는다. 정해진 조각 수가 지나면 이벤트는 끝난다.
       if (s.ev.left <= 0) endEvent(false);
       else {
@@ -244,7 +314,10 @@ export default function TetrisGame({ questions, level = "normal", stages = 3, fe
   const startStage = useCallback(
     (resetGrid: boolean) => {
       const s = g.current;
-      if (resetGrid) s.grid = Array.from({ length: H }, () => Array(W).fill(0));
+      if (resetGrid) {
+        s.grid = Array.from({ length: H }, () => Array(W).fill(0));
+        s.lab = emptyLab();
+      }
       s.cards = [];
       s.stageLines = 0;
       s.midDone = false;
@@ -267,6 +340,9 @@ export default function TetrisGame({ questions, level = "normal", stages = 3, fe
     s.next = nextName();
     totals.current = { score: 0, correct: 0, total: 0, stars: 0 };
     s.ev = null;
+    s.pair = null;
+    s.sincePair = 0;
+    setPairView(null);
     s.sinceEvent = 99;
     s.sinceSlow = 0;
     s.slowMs = 0;
@@ -304,10 +380,13 @@ export default function TetrisGame({ questions, level = "normal", stages = 3, fe
     const p = s.piece;
     if (s.phase !== "play" || !p) return;
     const rc = rotate(p.cells, p.name);
-    for (const k of [0, -1, 1, -2, 2]) {
-      if (fits(s.grid, p, k, 0, rc)) {
+    // 벽킥(좌우) + 바닥킥(위로)을 순서대로 시도
+    const kicks: [number, number][] = [[0, 0], [-1, 0], [1, 0], [-2, 0], [2, 0], [0, -1], [-1, -1], [1, -1], [0, -2], [-1, -2], [1, -2]];
+    for (const [kx, ky] of kicks) {
+      if (fits(s.grid, p, kx, ky, rc)) {
         p.cells = rc;
-        p.x += k;
+        p.x += kx;
+        p.y += ky;
         return;
       }
     }
@@ -322,16 +401,27 @@ export default function TetrisGame({ questions, level = "normal", stages = 3, fe
       const x = p.x + cx;
       const y = p.y + cy;
       if (y < 0) topOut = true;
-      else s.grid[y][x] = p.kind === "answer" ? ANSWER : p.slow && cx === p.cells[0][0] && cy === p.cells[0][1] ? SLOW : SHAPES[p.name].c;
+      else s.grid[y][x] = p.kind === "answer" ? ANSWER : p.kind === "verb" ? VERBC : p.kind === "part" ? PARTC : p.slow && cx === p.cells[0][0] && cy === p.cells[0][1] ? SLOW : SHAPES[p.name].c;
     }
+    if (p.word && p.kind) {
+      // 단어 이름표를 격자에도 남긴다(조각의 맨 위·왼쪽 칸). 줄이 지워져 내려가면 같이 내려간다.
+      const vis = p.cells.filter(([, cy]) => p.y + cy >= 0).sort((a, b) => a[1] - b[1] || a[0] - b[0])[0];
+      if (vis) s.lab[p.y + vis[1]][p.x + vis[0]] = { w: p.word, k: p.kind };
+    }
+    if (p.kind === "part") resolvePair();
     // 줄 지우기
     const fullRows = s.grid.filter((r) => r.every(Boolean));
     const full = fullRows.length;
     const hitAnswer = fullRows.some((r) => r.includes(ANSWER));
     const hitSlow = fullRows.some((r) => r.includes(SLOW));
     if (full > 0) {
-      s.grid = s.grid.filter((r) => !r.every(Boolean));
-      while (s.grid.length < H) s.grid.unshift(Array(W).fill(0));
+      const keepRow = s.grid.map((r) => !r.every(Boolean));
+      s.grid = s.grid.filter((_, i) => keepRow[i]);
+      s.lab = s.lab.filter((_, i) => keepRow[i]);
+      while (s.grid.length < H) {
+        s.grid.unshift(Array(W).fill(0));
+        s.lab.unshift(Array(W).fill(null));
+      }
       const gain = ([0, 100, 300, 500, 800][full] ?? 800) * (stageRef.current + 1);
       totals.current.score += gain;
       setScore(totals.current.score);
@@ -385,7 +475,10 @@ export default function TetrisGame({ questions, level = "normal", stages = 3, fe
       finish(false);
       return;
     }
-    for (let y = 0; y < H / 2; y++) s.grid[y] = Array(W).fill(0); // 위쪽 절반을 비우고 이어서
+    for (let y = 0; y < H / 2; y++) {
+      s.grid[y] = Array(W).fill(0); // 위쪽 절반을 비우고 이어서
+      s.lab[y] = Array(W).fill(null);
+    }
     spawn();
   }
 
@@ -407,6 +500,7 @@ export default function TetrisGame({ questions, level = "normal", stages = 3, fe
   function beginQuiz() {
     const s = g.current;
     if (s.ev) endEvent(true);
+    if (s.pair) settlePair();
     s.slowMs = 0;
     s.pauseMs = 0;
     setFx({ slow: false, pause: false });
@@ -499,15 +593,16 @@ export default function TetrisGame({ questions, level = "normal", stages = 3, fe
         if (e.key === "Enter" || e.key === " ") startStage(false);
         return;
       }
-      if (e.key === "ArrowLeft" || e.key === "a") move(-1);
-      else if (e.key === "ArrowRight" || e.key === "d") move(1);
-      else if (e.key === "ArrowUp" || e.key === "w" || e.key === "x") rotatePiece();
-      else if (e.key === "ArrowDown" || e.key === "s") s.soft = true;
+      const c = e.code;
+      if (e.key === "ArrowLeft" || c === "KeyA") move(-1);
+      else if (e.key === "ArrowRight" || c === "KeyD") move(1);
+      else if (e.key === "ArrowUp" || c === "KeyW" || c === "KeyX" || c === "KeyZ") rotatePiece();
+      else if (e.key === "ArrowDown" || c === "KeyS") s.soft = true;
       else if (e.key === " ") hardDrop();
-      else if (e.key === "p" || e.key === "P") triggerPause();
+      else if (c === "KeyP") triggerPause();
     };
     const ku = (e: KeyboardEvent) => {
-      if (e.key === "ArrowDown" || e.key === "s") g.current.soft = false;
+      if (e.key === "ArrowDown" || e.code === "KeyS") g.current.soft = false;
     };
     window.addEventListener("keydown", kd);
     window.addEventListener("keyup", ku);
@@ -548,6 +643,26 @@ export default function TetrisGame({ questions, level = "normal", stages = 3, fe
       ctx.stroke();
     }
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (s.grid[y][x]) drawCell(ctx, x, y, COLORS[s.grid[y][x]]);
+    // 안착한 단어 블록의 이름표(어두운 박스 + 색 테두리로 블록 색 위에서도 읽힌다)
+    ctx.font = "bold 11px system-ui, sans-serif";
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const lb = s.lab[y][x];
+        if (!lb || !s.grid[y][x]) continue;
+        let txt = lb.w;
+        while (txt.length > 2 && ctx.measureText(txt).width > 54) txt = txt.slice(0, -2) + "…";
+        const bw = Math.min(62, ctx.measureText(txt).width + 8);
+        const bx = Math.min(W * CELL - bw - 1, Math.max(1, x * CELL + CELL / 2 - bw / 2));
+        const by = y * CELL + CELL / 2 - 8;
+        ctx.fillStyle = "rgba(15,23,42,0.88)";
+        ctx.fillRect(bx, by, bw, 16);
+        ctx.strokeStyle = lb.k === "answer" ? "#fbbf24" : lb.k === "verb" ? "#f472b6" : lb.k === "part" ? "#2dd4bf" : "#94a3b8";
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(bx + 0.5, by + 0.5, bw - 1, 15);
+        ctx.fillStyle = "#f8fafc";
+        ctx.fillText(txt, bx + 4, by + 12);
+      }
+    }
     const p = s.piece;
     if (p && s.phase === "play") {
       let gy = 0;
@@ -556,7 +671,7 @@ export default function TetrisGame({ questions, level = "normal", stages = 3, fe
       for (const [cx, cy] of p.cells) {
         if (p.y + cy < 0) continue;
         const isSlow = p.slow && cx === p.cells[0][0] && cy === p.cells[0][1];
-        drawCell(ctx, p.x + cx, p.y + cy, p.kind === "answer" ? COLORS[ANSWER] : isSlow ? COLORS[SLOW] : COLORS[SHAPES[p.name].c]);
+        drawCell(ctx, p.x + cx, p.y + cy, p.kind === "answer" ? COLORS[ANSWER] : p.kind === "verb" ? COLORS[VERBC] : p.kind === "part" ? COLORS[PARTC] : isSlow ? COLORS[SLOW] : COLORS[SHAPES[p.name].c]);
       }
       if (p.word) {
         const minX = Math.min(...p.cells.map((c) => c[0])) + p.x;
@@ -565,9 +680,9 @@ export default function TetrisGame({ questions, level = "normal", stages = 3, fe
         const w = ctx.measureText(p.word).width + 14;
         const bx = Math.min(W * CELL - w - 2, Math.max(2, minX * CELL));
         const by = Math.max(2, minY * CELL - 24);
-        ctx.fillStyle = p.kind === "answer" ? "#fbbf24" : "#475569";
+        ctx.fillStyle = p.kind === "answer" ? "#fbbf24" : p.kind === "verb" ? "#f472b6" : p.kind === "part" ? "#2dd4bf" : "#475569";
         ctx.fillRect(bx, by, w, 20);
-        ctx.fillStyle = p.kind === "answer" ? "#0f172a" : "#e2e8f0";
+        ctx.fillStyle = p.kind === "answer" || p.kind === "verb" || p.kind === "part" ? "#0f172a" : "#e2e8f0";
         ctx.fillText(p.word, bx + 7, by + 15);
       }
     }
@@ -592,12 +707,18 @@ export default function TetrisGame({ questions, level = "normal", stages = 3, fe
 
   return (
     <div className="w-full mx-auto select-none touch-none" style={{ maxWidth: 480 }}>
-      {(evView || msg) && (
-        <div className={`mb-2 rounded-xl px-3 py-2 text-white ${evView ? "bg-indigo-900" : "bg-slate-800"}`}>
+      {(evView || pairView || msg) && (
+        <div className={`mb-2 rounded-xl px-3 py-2 text-white ${evView ? "bg-indigo-900" : pairView ? "bg-fuchsia-950" : "bg-slate-800"}`}>
           {evView && (
             <>
               <p className="text-[11px] text-amber-300 font-bold">문장 이벤트 · {evView.pos} · 금색 블록을 넣고 줄을 지우세요</p>
               <p className="mt-0.5 text-base font-bold leading-snug">{evView.text}</p>
+            </>
+          )}
+          {!evView && pairView && (
+            <>
+              <p className="text-[11px] text-pink-300 font-bold">이어동사 · 분홍 + 청록 조각을 서로 붙여 놓으면 보너스!</p>
+              <p className="mt-0.5 text-base font-bold leading-snug">{pairView.text}</p>
             </>
           )}
           {msg && <p className="text-xs text-emerald-300 mt-0.5">{msg}</p>}
