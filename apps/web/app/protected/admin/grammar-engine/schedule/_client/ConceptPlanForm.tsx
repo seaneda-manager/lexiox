@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { saveConceptPlanAction } from '../actions';
+import { saveConceptPlanAction, saveConceptPlansForStudentsAction } from '../actions';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -26,13 +26,18 @@ export default function ConceptPlanForm({
   initial,
   onDone,
 }: {
-  students: { id: string; name: string }[];
+  students: { id: string; name: string; grade?: string }[];
   books: BookOption[];
   today: string;
   initial?: ConceptPlanInitial;
   onDone?: () => void;
 }) {
-  const [studentId, setStudentId] = useState(initial?.studentId ?? '');
+  const [studentIds, setStudentIds] = useState<string[]>([]);
+  const [gradeFilter, setGradeFilter] = useState('');
+  const [nameFilter, setNameFilter] = useState('');
+  const grades = [...new Set(students.map((s) => s.grade).filter((g): g is string => !!g))].sort();
+  const shown = students.filter((s) => (!gradeFilter || s.grade === gradeFilter) && (!nameFilter || s.name.includes(nameFilter)));
+  const toggleStudent = (id: string) => setStudentIds((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
   const [bookId, setBookId] = useState(initial?.bookId ?? '');
   const [unitId, setUnitId] = useState(initial?.currentUnitId ?? '');
   const [level, setLevel] = useState(initial?.level ?? 1);
@@ -50,11 +55,20 @@ export default function ConceptPlanForm({
     setSaving(true);
     setError('');
     setMessage('');
-    const res = await saveConceptPlanAction({ studentId, bookId: bookId || null, currentUnitId: unitId || null, level, startDate, weekdays, perSession });
+    const base = { bookId: bookId || null, currentUnitId: unitId || null, level, startDate, weekdays, perSession };
+    if (initial) {
+      const res = await saveConceptPlanAction({ studentId: initial.studentId, ...base });
+      setSaving(false);
+      if ('error' in res) return setError(res.error);
+      setMessage(`저장했습니다 — 개념 ${res.created}개를 일정에 배치했습니다.`);
+      onDone?.();
+      return;
+    }
+    const res = await saveConceptPlansForStudentsAction({ studentIds, ...base });
     setSaving(false);
     if ('error' in res) return setError(res.error);
-    setMessage(`저장했습니다 — 개념 ${res.created}개를 일정에 배치했습니다.`);
-    if (!initial) setStudentId('');
+    setMessage(`저장했습니다 — ${res.students}명에게 같은 일정을 배치했습니다(개념 ${res.created}개).`);
+    setStudentIds([]);
     onDone?.();
   }
 
@@ -63,17 +77,36 @@ export default function ConceptPlanForm({
       {!initial && <h2 className="text-xs font-bold uppercase tracking-wide text-neutral-400">학생 스케줄 만들기 / 바꾸기</h2>}
 
       {!initial && (
-        <label className="block space-y-1.5 text-xs font-semibold text-neutral-600">
-          학생
-          <select value={studentId} onChange={(e) => setStudentId(e.target.value)} className={input}>
-            <option value="">선택하세요</option>
-            {students.map((s) => (
-              <option key={s.id} value={s.id}>
+        <div className="space-y-2 text-xs font-semibold text-neutral-600">
+          <div className="flex flex-wrap items-center gap-2">
+            <span>학생 (여러 명 선택 = 같은 일정으로 한 번에 배정)</span>
+            <select value={gradeFilter} onChange={(e) => setGradeFilter(e.target.value)} className="rounded-lg border border-neutral-200 px-2 py-1 text-xs">
+              <option value="">전체 학년</option>
+              {grades.map((g) => (
+                <option key={g} value={g}>
+                  {g}
+                </option>
+              ))}
+            </select>
+            <input value={nameFilter} onChange={(e) => setNameFilter(e.target.value)} placeholder="이름 검색" className="rounded-lg border border-neutral-200 px-2 py-1 text-xs" />
+            <button type="button" onClick={() => setStudentIds((p) => [...new Set([...p, ...shown.map((s) => s.id)])])} className="rounded-lg border border-neutral-200 px-2 py-1 text-xs hover:bg-neutral-50">
+              보이는 학생 전체 선택
+            </button>
+            <button type="button" onClick={() => setStudentIds([])} className="rounded-lg border border-neutral-200 px-2 py-1 text-xs hover:bg-neutral-50">
+              선택 해제
+            </button>
+          </div>
+          <div className="grid max-h-48 grid-cols-2 gap-1 overflow-y-auto rounded-xl border border-neutral-200 p-2 sm:grid-cols-3">
+            {shown.map((s) => (
+              <label key={s.id} className="flex items-center gap-1.5 font-normal">
+                <input type="checkbox" checked={studentIds.includes(s.id)} onChange={() => toggleStudent(s.id)} />
                 {s.name}
-              </option>
+                {s.grade ? <span className="text-neutral-400">({s.grade})</span> : null}
+              </label>
             ))}
-          </select>
-        </label>
+          </div>
+          <p className="font-normal text-neutral-500">{studentIds.length}명 선택됨. 이미 스케줄이 있는 학생은 이 설정으로 바뀌고 오늘부터 다시 잡힙니다.</p>
+        </div>
       )}
 
       <div className="grid grid-cols-1 gap-3 rounded-xl border border-indigo-100 bg-indigo-50/40 p-3 sm:grid-cols-2">
@@ -155,10 +188,10 @@ export default function ConceptPlanForm({
 
       <button
         type="submit"
-        disabled={saving || (!initial && !studentId)}
+        disabled={saving || (!initial && studentIds.length === 0)}
         className="w-full rounded-xl bg-emerald-600 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
       >
-        {saving ? '저장 중…' : initial ? '바꾸고 일정 다시 잡기' : '스케줄 만들기'}
+        {saving ? '저장 중…' : initial ? '바꾸고 일정 다시 잡기' : studentIds.length > 1 ? `${studentIds.length}명에게 스케줄 만들기` : '스케줄 만들기'}
       </button>
     </form>
   );

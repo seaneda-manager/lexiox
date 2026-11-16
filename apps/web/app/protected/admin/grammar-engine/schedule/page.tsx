@@ -36,7 +36,7 @@ export default async function ConceptSchedulePage() {
       db.from('grammar_lessons').select('concept_id, level').eq('status', 'final'),
       missingTable ? Promise.resolve({ data: [] }) : db.from('student_grammar_concept_assignments').select('plan_id, student_id, concept_id, scheduled_date, seq'),
       missingTable ? Promise.resolve({ data: [] }) : db.from('student_grammar_concept_done').select('student_id, concept_id, level'),
-      db.from('profiles').select('id, full_name, name, email').eq('role', 'student').order('full_name', { ascending: true }),
+      db.from('profiles').select('id, full_name, name, email, grade').eq('role', 'student').order('full_name', { ascending: true }),
     ]);
   const engineMissing = !!bookErr && /grammar_books|does not exist|schema cache/i.test(bookErr.message);
 
@@ -54,6 +54,7 @@ export default async function ConceptSchedulePage() {
   const nameOf = new Map<string, string>(
     ((students ?? []) as { id: string; full_name: string | null; name: string | null; email: string | null }[]).map((s) => [s.id, s.full_name || s.name || s.email || '이름 미설정']),
   );
+  const gradeOf = new Map<string, string>(((students ?? []) as { id: string; grade: string | null }[]).map((s) => [s.id, s.grade ?? '']));
   const doneKey = new Set(((doneData ?? []) as { student_id: string; concept_id: string; level: number }[]).map((d) => `${d.student_id}:${d.concept_id}:${d.level}`));
   const assignments = (assignData ?? []) as AssignRec[];
 
@@ -151,7 +152,7 @@ export default async function ConceptSchedulePage() {
       </section>
 
       {!missingTable && !engineMissing && (
-        <ConceptPlanForm students={[...nameOf.entries()].map(([id, name]) => ({ id, name }))} books={books} today={today} />
+        <ConceptPlanForm students={[...nameOf.entries()].map(([id, name]) => ({ id, name, grade: gradeOf.get(id) ?? '' }))} books={books} today={today} />
       )}
     </main>
   );

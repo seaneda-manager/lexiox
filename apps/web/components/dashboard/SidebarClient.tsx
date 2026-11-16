@@ -352,6 +352,7 @@ export default function SidebarClient({ role, permissions, program = null, hasHi
         { section: '학습', href: '/student/grammar', label: '문법', icon: BookText },
         { section: '학습', href: '/updated-listening/study', label: 'Listening', skill: 'listening' as SkillColor },
         { section: '학습', href: '/langgym', label: 'LXGym', icon: Gamepad2 },
+        { section: '학습', href: '/workout/games', label: '단어 게임', icon: Gamepad2 },
 
         { section: '어휘', href: '/vocab/hub-new', label: '단어 학습', icon: Library },
         { section: '어휘', href: '/vocab/test', label: '단어 시험', icon: FileCheck },
@@ -395,6 +396,7 @@ export default function SidebarClient({ role, permissions, program = null, hasHi
         { section: '연습·게임', href: '/speaking-2026/drills',    label: 'Speaking 훈련', icon: Dumbbell },
         { section: '연습·게임', href: '/speaking-2026/shadowing', label: '쉐도잉 게임',   icon: Repeat },
         { section: '연습·게임', href: '/langgym',                 label: 'LXGym',         icon: Gamepad2 },
+        { section: '연습·게임', href: '/workout/games',           label: '단어 게임',     icon: Gamepad2, also: ['/workout/play'] },
 
         { section: '내 기록', href: '/student',            label: '학습 현황', icon: LayoutDashboard },
         { section: '내 기록', href: '/student/progress',   label: '진도 현황', icon: TrendingUp },
@@ -442,6 +444,7 @@ export default function SidebarClient({ role, permissions, program = null, hasHi
       { section: 'Updated TOEFL' as NavSection, href: '/speaking-2026/drills',   label: 'Speaking 훈련', icon: Dumbbell },
       { section: 'Updated TOEFL' as NavSection, href: '/speaking-2026/shadowing', label: '쉐도잉 게임', icon: Repeat },
       { section: 'Updated TOEFL' as NavSection, href: '/langgym',                label: 'LXGym', icon: Gamepad2 },
+      { section: 'Updated TOEFL' as NavSection, href: '/workout/games',          label: '단어 게임', icon: Gamepad2 },
 
       ...(hasHiNaesin ? [
         { section: 'Hi-내신' as NavSection, href: '/hi-naesin',        label: 'Hi-내신 드릴', icon: Target },

@@ -74,6 +74,25 @@ export async function saveConceptPlanAction(input: {
   return done(await rescheduleConceptPlan(planId));
 }
 
+// 여러 학생(같은 반·학년)에게 같은 설정으로 한 번에 배정한다. 학생마다 saveConceptPlanAction 과 같은 규칙을 적용.
+export async function saveConceptPlansForStudentsAction(
+  input: Omit<Parameters<typeof saveConceptPlanAction>[0], 'studentId'> & { studentIds: string[] },
+): Promise<{ ok: true; students: number; created: number } | { error: string }> {
+  const ids = [...new Set(input.studentIds)].filter(Boolean);
+  if (ids.length === 0) return { error: '학생을 한 명 이상 선택하세요.' };
+  const { studentIds: _ignored, ...rest } = input;
+  let created = 0;
+  const failed: string[] = [];
+  for (const studentId of ids) {
+    const r = await saveConceptPlanAction({ ...rest, studentId });
+    if ('error' in r) failed.push(`${studentId.slice(0, 8)}: ${r.error}`);
+    else created += r.created;
+  }
+  if (failed.length === ids.length) return { error: failed[0] };
+  if (failed.length > 0) return { error: `${ids.length - failed.length}명 완료, ${failed.length}명 실패 — ${failed[0]}` };
+  return { ok: true, students: ids.length, created };
+}
+
 export async function toggleConceptPauseAction(planId: string, paused: boolean): Promise<Result> {
   const who = await requireStaff();
   if ('error' in who) return who;

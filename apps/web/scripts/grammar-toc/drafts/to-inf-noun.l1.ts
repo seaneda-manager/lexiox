@@ -5,6 +5,7 @@ export default mk({
   summaryKo: 'to + 동사원형은 "~하는 것"이라는 명사 역할을 합니다. 주어·보어·목적어로 쓰입니다.',
   rules: [
     ['As a subject: To read is fun. (It is fun to read.)', '주어: "~하는 것은"이라는 뜻입니다. 보통 가주어 It을 앞에 쓰고 to부정사를 뒤로 보냅니다. (It is fun to read books.)'],
+    ['Meaning subject: It is hard for me to ... / It is kind of you to ...', '의미상 주어: 가주어 문장에서 to 하는 사람은 for + A(일반 형용사) 또는 of + A(kind·nice 같은 성격 형용사)로 to 앞에 씁니다.'],
     ['As a complement: My dream is to be a doctor.', '보어: be동사 뒤에서 주어를 설명합니다. (My dream is to be a doctor.)'],
     ['As an object after want, hope, plan, decide, need.', '목적어: want, hope, plan, decide, need 뒤에서 "~하기를"의 뜻으로 씁니다. (I want to eat pizza.)'],
     ['Question word + to: how to swim, what to do.', '의문사 + to부정사는 "~하는 법, 무엇을 ~할지"입니다. (I know how to swim.)'],
@@ -15,6 +16,10 @@ export default mk({
       ['It is fun to read books.', '책을 읽는 것은 재미있다.', 'It ~ to + 원형', '가주어 It을 씁니다.'],
       ['It is important to sleep well.', '잘 자는 것은 중요하다.', 'It ~ to + 원형', '진주어는 to sleep입니다.'],
       ['To learn English is useful.', '영어를 배우는 것은 유용하다.', 'To + 원형 주어', '주어 자리에도 올 수 있습니다.']]],
+    ['가주어 It + 의미상 주어', 'It ~ for / of A to + 원형.', [
+      ['It is hard for me to wake up early.', '내가 일찍 일어나는 것은 어렵다.', 'It is + 형용사 + for + A + to + 원형', '행동하는 사람은 for + A로 to 앞에 씁니다.'],
+      ['It is kind of you to help me.', '나를 도와주다니 너는 친절하구나.', 'It is + 사람 성격 형용사 + of + A + to + 원형', 'kind, nice, smart 같은 사람의 성격을 말하면 of를 씁니다.'],
+      ['It takes two hours to get there.', '거기에 가는 데 두 시간이 걸린다.', 'It takes + 시간 + to + 원형', '"~하는 데 시간이 걸린다"는 It takes ~ to 입니다.']]],
     ['보어', 'be동사 뒤.', [
       ['My dream is to be a doctor.', '내 꿈은 의사가 되는 것이다.', 'be + to + 원형', '주어를 설명합니다.'],
       ['His plan is to travel alone.', '그의 계획은 혼자 여행하는 것이다.', 'be + to + 원형', '주어를 설명합니다.'],
@@ -39,6 +44,8 @@ export default mk({
     ['intermediate', 'She hopes ___ Japan.', 'to visit', ['visiting', 'visit', 'to visit'], '그녀는 일본을 방문하기를 희망한다.', 'hope 뒤에는 to + 동사원형입니다.', 'hope 뒤'],
     ['intermediate', 'He decided ___ home.', 'to go', ['to go', 'going', 'go'], '그는 집에 가기로 결정했다.', 'decide 뒤에는 to + 동사원형입니다.', 'decide 뒤'],
     ['intermediate', 'I know how ___ swim.', 'to', ['to', 'for', 'of'], '나는 수영하는 법을 안다.', 'how to + 동사원형입니다.', '법'],
+    ['intermediate', 'It is hard ___ me to wake up early.', 'for', ['for', 'of', 'to'], '내가 일찍 일어나는 것은 어렵다.', '일반 형용사(hard) 뒤에는 for + A를 씁니다.', '의미상 주어'],
+    ['advanced', 'It is kind ___ you to help me.', 'of', ['for', 'of', 'to'], '나를 도와주다니 너는 친절하구나.', '사람의 성격을 나타내는 형용사(kind) 뒤에는 of를 씁니다.', '성격 형용사'],
     ['advanced', 'Tell me what ___ do.', 'to', ['for', 'to', 'by'], '내가 무엇을 해야 할지 말해 줘.', 'what to + 동사원형입니다.', '무엇을'],
     ['advanced', '___ is important to sleep well.', 'It', ['This', 'It', 'That'], '잘 자는 것은 중요하다.', '가주어는 It을 씁니다.', '가주어'],
   ],
@@ -54,6 +61,9 @@ export default mk({
     pc('Which sentence about Japan is correct?', '일본에 대한 올바른 문장을 고르세요.', 'intermediate', [['She hopes to visit Japan.', '그녀는 일본을 방문하기를 희망한다.'], ['She hopes visit Japan.', '그녀는 일본을 방문하기를 희망한다.'], ['She hopes visiting Japan.', '그녀는 일본을 방문하기를 희망한다.'], ['She hope to visit Japan.', '그녀는 일본을 방문하기를 희망한다.']], 0, 'hope 뒤에는 to + 동사원형입니다.'),
     pc('Which sentence about going home is correct?', '집에 가는 것에 대한 올바른 문장을 고르세요.', 'intermediate', [['He decided going home.', '그는 집에 가기로 결정했다.'], ['He decided to go home.', '그는 집에 가기로 결정했다.'], ['He decided go home.', '그는 집에 가기로 결정했다.'], ['He decided to going home.', '그는 집에 가기로 결정했다.']], 1, 'decide 뒤에는 to + 동사원형입니다.'),
     pc('Choose the sentence in which to is NOT part of a to-infinitive.', 'to가 to부정사가 아닌 문장을 고르세요.', 'intermediate', [['I want to eat pizza.', '나는 피자를 먹고 싶다.'], ['My dream is to be a doctor.', '내 꿈은 의사가 되는 것이다.'], ['I go to school by bus.', '나는 버스로 학교에 간다.'], ['I know how to swim.', '나는 수영하는 법을 안다.']], 2, '세 번째의 to는 방향을 나타내는 전치사입니다.', 'pick_different'),
+    pc('Which sentence about waking up early is correct?', '일찍 일어나는 것에 대한 올바른 문장을 고르세요.', 'intermediate', [['It is hard of me to wake up early.', '내가 일찍 일어나는 것은 어렵다.'], ['It is hard for me to wake up early.', '내가 일찍 일어나는 것은 어렵다.'], ['It is hard me to wake up early.', '내가 일찍 일어나는 것은 어렵다.'], ['That is hard for me to wake up early.', '내가 일찍 일어나는 것은 어렵다.']], 1, 'hard 같은 일반 형용사 뒤에는 for + A + to + 원형입니다.'),
+    pc('Which sentence about helping is correct?', '도와주는 것에 대한 올바른 문장을 고르세요.', 'advanced', [['It is kind for you to help me.', '나를 도와주다니 너는 친절하구나.'], ['It is kind of you to help me.', '나를 도와주다니 너는 친절하구나.'], ['It is kind of you helping me.', '나를 도와주다니 너는 친절하구나.'], ['This is kind of you to help me.', '나를 도와주다니 너는 친절하구나.']], 1, '사람의 성격을 나타내는 형용사(kind) 뒤에는 of + A를 씁니다.'),
+    pc('Which sentence about time is correct?', '걸리는 시간에 대한 올바른 문장을 고르세요.', 'intermediate', [['It takes two hours get there.', '거기에 가는 데 두 시간이 걸린다.'], ['It takes two hours to get there.', '거기에 가는 데 두 시간이 걸린다.'], ['It takes two hours for get there.', '거기에 가는 데 두 시간이 걸린다.'], ['This takes two hours to get there.', '거기에 가는 데 두 시간이 걸린다.']], 1, 'It takes + 시간 + to + 동사원형입니다.'),
     pc('Choose the sentence that is wrong.', '틀린 문장을 고르세요.', 'intermediate', [['It is important to sleep well.', '잘 자는 것은 중요하다.'], ['Tell me what to do.', '내가 무엇을 해야 할지 말해 줘.'], ['He decided going home.', '그는 집에 가기로 결정했다.'], ['I know how to swim.', '나는 수영하는 법을 안다.']], 2, 'decide 뒤에는 to go여야 합니다.', 'pick_different'),
     cw('How many sentences are wrong?\n① I want to eat pizza.\n② My dream is be a doctor.\n③ It is fun to read books.', 'basic', 1, '②만 틀렸고 to be여야 하므로 틀린 문장은 1개입니다.'),
     cw('How many sentences are wrong?\n① I want eat pizza.\n② She hopes visiting Japan.\n③ I know how to swim.\n④ He decided to go home.', 'advanced', 2, '①은 to eat, ②는 to visit이어야 하므로 틀린 문장은 2개입니다.'),
