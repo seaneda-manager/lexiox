@@ -56,7 +56,7 @@ export async function saveConceptPlanAction(input: {
     is_enabled: true,
     updated_at: new Date().toISOString(),
   };
-  const { data: existing } = await db.from('student_grammar_concept_plans').select('id').eq('student_id', input.studentId).maybeSingle();
+  const { data: existing } = await db.from('student_grammar_concept_plans').select('id').eq('student_id', input.studentId).eq('kind', 'regular').maybeSingle();
 
   let planId = existing?.id as string | undefined;
   if (planId) {
@@ -65,7 +65,7 @@ export async function saveConceptPlanAction(input: {
   } else {
     const { data: created, error } = await db
       .from('student_grammar_concept_plans')
-      .insert({ ...fields, student_id: input.studentId, created_by: who.userId })
+      .insert({ ...fields, student_id: input.studentId, kind: 'regular', created_by: who.userId })
       .select('id')
       .single();
     if (error || !created) return { error: error?.message ?? '플랜을 만들지 못했습니다.' };

@@ -34,27 +34,31 @@ export default async function StudentGrammarListPage() {
 
   // 선생님이 잡아 준 내 일정 (오늘 · 밀린 것 · 다가오는 것). 테이블이 아직 없으면 조용히 비워 둔다.
   const today = new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Seoul" });
-  const { data: myPlan } = await supabase.from("student_grammar_concept_plans").select("id, level").eq("student_id", user.id).maybeSingle();
+  // 정규 + 내신 플랜이 둘 다 있을 수 있다. 시험기간 hold 로 멈춘 플랜(is_paused)은 일정에서 뺀다.
+  const { data: myPlans } = await supabase.from("student_grammar_concept_plans").select("id, level, kind, is_paused, is_enabled").eq("student_id", user.id);
   type Sched = { scheduled_date: string; seq: number; concept: { id: string; key: string; title_ko: string } | null };
-  let schedule: { date: string; key: string; title: string; ready: boolean; overdue: boolean }[] = [];
-  if (myPlan) {
+  let schedule: { date: string; key: string; title: string; ready: boolean; overdue: boolean; level: number; kind: string }[] = [];
+  const activePlans = (myPlans ?? []).filter((p) => p.is_enabled !== false && !p.is_paused);
+  for (const plan of activePlans) {
     const [{ data: assigns }, { data: doneRows }] = await Promise.all([
       supabase
         .from("student_grammar_concept_assignments")
         .select("scheduled_date, seq, concept:grammar_concepts(id, key, title_ko)")
-        .eq("plan_id", myPlan.id)
+        .eq("plan_id", plan.id)
         .order("scheduled_date")
         .order("seq"),
-      supabase.from("student_grammar_concept_done").select("concept_id").eq("student_id", user.id).eq("level", myPlan.level),
+      supabase.from("student_grammar_concept_done").select("concept_id").eq("student_id", user.id).eq("level", plan.level),
     ]);
     const doneIds = new Set((doneRows ?? []).map((d) => d.concept_id as string));
-    const readyKeys = new Set(rows.filter((r) => r.level === myPlan.level).map((r) => r.concept!.key));
-    schedule = ((assigns ?? []) as unknown as Sched[])
-      .filter((a) => a.concept && !doneIds.has(a.concept.id))
-      .slice(0, 10)
-      .map((a) => ({ date: a.scheduled_date, key: a.concept!.key, title: a.concept!.title_ko, ready: readyKeys.has(a.concept!.key), overdue: a.scheduled_date < today }));
+    const readyKeys = new Set(rows.filter((r) => r.level === plan.level).map((r) => r.concept!.key));
+    schedule.push(
+      ...((assigns ?? []) as unknown as Sched[])
+        .filter((a) => a.concept && !doneIds.has(a.concept.id))
+        .map((a) => ({ date: a.scheduled_date, key: a.concept!.key, title: a.concept!.title_ko, ready: readyKeys.has(a.concept!.key), overdue: a.scheduled_date < today, level: plan.level as number, kind: plan.kind as string })),
+    );
   }
-  const level = myPlan?.level;
+  // 내신(시험 범위)을 먼저, 그다음 날짜순
+  schedule = schedule.sort((x, y) => (x.kind === y.kind ? (x.date < y.date ? -1 : x.date > y.date ? 1 : 0) : x.kind === "naesin" ? -1 : 1)).slice(0, 12);
 
   return (
     <main className="mx-auto max-w-3xl space-y-4 px-4 py-6 sm:px-6">
@@ -67,11 +71,14 @@ export default async function StudentGrammarListPage() {
             {schedule.map((s, i) => (
               <li key={i} className="flex items-center justify-between gap-2 px-3 py-2">
                 <span className="w-12 shrink-0 text-xs text-neutral-500">{s.date === today ? "오늘" : s.date.slice(5).replace("-", "/")}</span>
-                <span className="flex-1 truncate text-neutral-900">{s.title}</span>
+                <span className="flex-1 truncate text-neutral-900">
+                  {s.kind === "naesin" && <span className="mr-1.5 rounded bg-amber-50 px-1.5 text-xs text-amber-700">내신</span>}
+                  {s.title}
+                </span>
                 {s.overdue && <span className="rounded bg-rose-50 px-1.5 text-xs text-rose-700">밀림</span>}
                 {s.ready ? (
-                  <Link href={`/student/grammar/${s.key}/${level}`} className="rounded-lg border px-2.5 py-1 text-xs font-medium text-violet-700 hover:bg-violet-50">
-                    L{level} 시작
+                  <Link href={`/student/grammar/${s.key}/${s.level}`} className="rounded-lg border px-2.5 py-1 text-xs font-medium text-violet-700 hover:bg-violet-50">
+                    L{s.level} 시작
                   </Link>
                 ) : (
                   <span className="text-xs text-neutral-400">준비 중</span>

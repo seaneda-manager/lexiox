@@ -116,6 +116,7 @@ function allItems(role: StaffRole): StaffNavItem[] {
     { section: S.people, href: "/admin/guardians", label: "학부모 연락처", icon: Users, perm: "guardians.view" },
     { section: S.people, href: "/admin/schools", label: "학교 관리", icon: School, perm: "students.manage" },
     { section: S.people, href: "/admin/exam-mode", label: "시험모드 현황", icon: Calendar, perm: "students.view" },
+    { section: S.people, href: "/admin/exam-scope", label: "내신 시험 범위", icon: BookOpen, perm: "assign.manage" },
     { section: S.people, href: "/teacher/homework-calendar", label: "배정 캘린더", icon: Calendar, perm: "assign.manage" },
     { section: S.people, href: "/teacher/lesson-log", label: "수업 로그", icon: ClipboardCheck, perm: "lesson_log.write" },
     { section: S.people, href: "/teacher/study-check", label: "학습 완료 체크", icon: CheckSquare, perm: "study_check.write" },

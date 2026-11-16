@@ -24,7 +24,7 @@ export default async function ConceptSchedulePage() {
   const db = getServiceSupabase();
   const today = todayKst();
 
-  const { data: planData, error: planErr } = await db.from('student_grammar_concept_plans').select('*').order('created_at', { ascending: true });
+  const { data: planData, error: planErr } = await db.from('student_grammar_concept_plans').select('*').eq('kind', 'regular').order('created_at', { ascending: true });
   const missingTable = !!planErr && /student_grammar_concept_plans|does not exist|schema cache/i.test(planErr.message);
   const plans = (planData ?? []) as PlanRec[];
 

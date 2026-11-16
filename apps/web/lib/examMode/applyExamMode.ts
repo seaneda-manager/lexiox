@@ -5,6 +5,7 @@
 
 import { getServiceRoleClient } from "@/lib/supabase/server";
 import { sendBulkEmails } from "@/lib/utils/emailService";
+import { rescheduleConceptPlan } from "@/lib/grammar/syncConceptPlan";
 
 function todayISO(): string {
   return new Date().toISOString().slice(0, 10);
@@ -20,13 +21,33 @@ function pauseTag(periodId: string): string {
   return `exam_mode:${periodId}`;
 }
 
-async function getStudentIdsForSchool(supabase: ReturnType<typeof getServiceRoleClient>, schoolId: string): Promise<string[]> {
+type Db = ReturnType<typeof getServiceRoleClient>;
+type SchoolStudent = { academyId: string; authId: string | null };
+
+/**
+ * 학교 학생. 플랜 테이블마다 학생 ID 기준이 달라서 둘 다 들고 간다:
+ *   단어 플랜 = academy_students.id, 숙제·문법 플랜 = auth user id (academy_students.auth_user_id)
+ */
+async function getStudentsForSchool(supabase: Db, schoolId: string): Promise<SchoolStudent[]> {
   const { data } = await supabase
     .from("academy_students")
-    .select("id")
+    .select("id, auth_user_id")
     .eq("school_id", schoolId)
     .eq("is_active", true);
-  return (data ?? []).map((r: any) => r.id as string);
+  return (data ?? []).map((r: any) => ({ academyId: r.id as string, authId: (r.auth_user_id as string | null) ?? null }));
+}
+
+type Domain = "vocab" | "homework" | "grammar_regular";
+
+/** 영역별 예외: 행이 있고 hold=false 인 영역만 시험기간에도 계속한다. 기본은 전부 보류. */
+async function loadDomainHolds(supabase: Db, periodId: string): Promise<Record<Domain, boolean>> {
+  const holds: Record<Domain, boolean> = { vocab: true, homework: true, grammar_regular: true };
+  const { data } = await supabase.from("exam_period_domain_rules").select("domain, hold").eq("exam_period_id", periodId);
+  for (const r of data ?? []) {
+    const d = (r as any).domain as Domain;
+    if (d in holds) holds[d] = (r as any).hold !== false;
+  }
+  return holds;
 }
 
 /**
@@ -118,23 +139,37 @@ export async function executeScheduledHolds(): Promise<{ held: number; errors: s
     const period = r.school_exam_periods;
     if (!period || period.prep_start_date > today) continue;
 
-    const studentIds = await getStudentIdsForSchool(supabase, period.school_id);
+    const students = await getStudentsForSchool(supabase, period.school_id);
+    const academyIds = students.map((x) => x.academyId);
+    const authIds = students.map((x) => x.authId).filter((x): x is string => !!x);
     const tag = pauseTag(r.school_exam_period_id);
+    const holds = await loadDomainHolds(supabase, r.school_exam_period_id);
 
-    if (studentIds.length > 0) {
+    if (holds.vocab && academyIds.length > 0) {
       const vErr = await supabase
         .from("student_vocab_plans")
         .update({ is_paused: true, paused_reason: tag })
-        .in("student_id", studentIds)
+        .in("student_id", academyIds)
         .eq("is_paused", false);
       if (vErr.error) errors.push(`vocab pause failed for period ${r.school_exam_period_id}: ${vErr.error.message}`);
-
+    }
+    if (holds.homework && authIds.length > 0) {
       const hErr = await supabase
         .from("student_homework_plans")
         .update({ is_paused: true, paused_reason: tag })
-        .in("student_id", studentIds)
+        .in("student_id", authIds)
         .eq("is_paused", false);
       if (hErr.error) errors.push(`homework pause failed for period ${r.school_exam_period_id}: ${hErr.error.message}`);
+    }
+    // 정규 문법만 멈춘다. 내신 플랜(kind='naesin')은 시험 범위라 멈추면 안 된다.
+    if (holds.grammar_regular && authIds.length > 0) {
+      const gErr = await supabase
+        .from("student_grammar_concept_plans")
+        .update({ is_paused: true, paused_reason: tag })
+        .in("student_id", authIds)
+        .eq("kind", "regular")
+        .eq("is_paused", false);
+      if (gErr.error) errors.push(`grammar pause failed for period ${r.school_exam_period_id}: ${gErr.error.message}`);
     }
 
     const upd = await supabase
@@ -211,19 +246,24 @@ export async function revertExamModeHold(
     const tag = pauseTag(schoolExamPeriodId);
 
     if (wasHeld && schoolId) {
-      const studentIds = await getStudentIdsForSchool(supabase, schoolId);
-      if (studentIds.length > 0) {
-        await supabase
-          .from("student_vocab_plans")
-          .update({ is_paused: false, paused_reason: null })
-          .in("student_id", studentIds)
-          .eq("paused_reason", tag);
+      const students = await getStudentsForSchool(supabase, schoolId);
+      const academyIds = students.map((x) => x.academyId);
+      const authIds = students.map((x) => x.authId).filter((x): x is string => !!x);
+      if (academyIds.length > 0) {
+        await supabase.from("student_vocab_plans").update({ is_paused: false, paused_reason: null }).in("student_id", academyIds).eq("paused_reason", tag);
+      }
+      if (authIds.length > 0) {
+        await supabase.from("student_homework_plans").update({ is_paused: false, paused_reason: null }).in("student_id", authIds).eq("paused_reason", tag);
 
-        await supabase
-          .from("student_homework_plans")
-          .update({ is_paused: false, paused_reason: null })
-          .in("student_id", studentIds)
+        // 정규 문법: 재개하면서 안 끝낸 개념을 오늘부터 다시 깐다 → 멈춘 기간만큼 뒤로 밀려서 이어간다
+        const { data: gPlans } = await supabase
+          .from("student_grammar_concept_plans")
+          .select("id")
+          .in("student_id", authIds)
+          .eq("kind", "regular")
           .eq("paused_reason", tag);
+        await supabase.from("student_grammar_concept_plans").update({ is_paused: false, paused_reason: null }).in("student_id", authIds).eq("kind", "regular").eq("paused_reason", tag);
+        for (const g of gPlans ?? []) await rescheduleConceptPlan((g as any).id as string);
       }
     }
 

@@ -1,12 +1,13 @@
 import { mk, pc, cw } from './_h';
 export default mk({
   conceptKey: 'present-perfect', topic: '현재완료 - 1부', titleKo: 'have / has + p.p.',
-  summaryEn: 'The present perfect is have/has + past participle. It links the past to now: experience, completion, and continuation.',
-  summaryKo: '현재완료는 have/has + 과거분사로, 과거에 시작한 일이 지금과 이어질 때 씁니다. 경험·완료·계속의 뜻이 있습니다.',
+  summaryEn: 'The present perfect is have/has + past participle. It links the past to now: experience, completion, continuation, and result.',
+  summaryKo: '현재완료는 have/has + 과거분사로, 과거에 시작한 일이 지금과 이어질 때 씁니다. 경험·완료·계속·결과의 뜻이 있습니다.',
   rules: [
     ['Form: have/has + past participle (p.p.).', '형태는 have/has + 과거분사(p.p.)입니다. 주어가 he, she, it이면 has를 씁니다.'],
     ['Experience: have been, have seen, have never ...', '경험: "~한 적이 있다"는 뜻입니다. ever, never, once 같은 말과 자주 씁니다.'],
     ['Completion and continuation: just, already, yet, for, since.', '완료는 just·already·yet, 계속은 for(기간)·since(시작 시점)와 함께 씁니다.'],
+    ['Result: have lost, have gone, have broken.', '결과: 과거에 한 일의 결과가 지금도 남아 있을 때 씁니다. (He has lost his key. = 열쇠를 잃어버려서 지금 없다)'],
     ['Do not use the present perfect with yesterday, last year, or ago.', 'yesterday, last year, ago처럼 과거 한 시점을 나타내는 말과는 쓰지 않고 과거시제를 씁니다.'],
   ],
   examples: [['I have seen that movie.', '나는 그 영화를 본 적이 있다.'], ['She has lived here for five years.', '그녀는 여기에서 5년째 살고 있다.'], ['I have just finished my homework.', '나는 방금 숙제를 끝냈다.']],
@@ -23,6 +24,10 @@ export default mk({
       ['She has lived here for five years.', '그녀는 여기에서 5년째 살고 있다.', 'for + 기간', '기간 앞에는 for입니다.'],
       ['I have known him since 2020.', '나는 2020년부터 그를 알고 있다.', 'since + 시작 시점', '시작 시점 앞에는 since입니다.'],
       ['They have been friends for ten years.', '그들은 10년째 친구다.', 'for + 기간', 'be의 p.p.는 been입니다.']]],
+    ['결과', '~해서 지금 ~하다.', [
+      ['He has lost his key.', '그는 열쇠를 잃어버렸다. (그래서 지금 없다)', 'have + p.p. (결과)', '잃어버린 결과가 지금도 이어집니다.'],
+      ['She has gone to Paris.', '그녀는 파리에 가 버렸다. (지금 여기 없다)', 'has gone to', 'gone은 가고 없다는 결과입니다.'],
+      ['I have broken my phone.', '나는 내 휴대폰을 망가뜨렸다. (그래서 지금 쓸 수 없다)', 'have + p.p. (결과)', '망가진 상태가 지금도 이어집니다.']]],
     ['과거시제와 구분', '과거 한 시점이면 과거시제.', [
       ['I saw him yesterday.', '나는 어제 그를 봤다.', 'yesterday', '과거 시점이면 과거시제입니다.'],
       ['She moved here two years ago.', '그녀는 2년 전에 여기로 이사 왔다.', 'ago', 'ago가 있으면 과거시제입니다.'],
@@ -30,7 +35,7 @@ export default mk({
   ],
   wrong: [['She have lived here for five years.', '3인칭 단수 → She has lived here for five years. — 그녀는 여기에서 5년째 살고 있다.', ''], ['I have seen him yesterday.', 'yesterday는 과거시제 → I saw him yesterday. — 나는 어제 그를 봤다.', ''], ['He has never ate sushi.', 'p.p. 필요 → He has never eaten sushi. — 그는 스시를 먹어 본 적이 없다.', '']],
   wrongNote: 'has/have 선택, 과거 시점 표현, 과거분사 형태를 확인합니다.',
-  cram: '■ 핵심 요약\n과거에 시작해 지금과 이어지는 일은 have/has + p.p.로 씁니다.\n\n■ 규칙\n1. 형태: have/has + 과거분사. he/she/it은 has.\n2. 경험: ~한 적이 있다 (ever, never).\n3. 완료·계속: just, already, yet / for(기간), since(시작 시점).\n4. yesterday, last year, ago와는 쓰지 않고 과거시제를 씁니다.\n\n■ 예문 뜻\n나는 그 영화를 본 적이 있다.\n그녀는 여기에서 5년째 살고 있다.\n나는 방금 숙제를 끝냈다.',
+  cram: '■ 핵심 요약\n과거에 시작해 지금과 이어지는 일은 have/has + p.p.로 씁니다.\n\n■ 규칙\n1. 형태: have/has + 과거분사. he/she/it은 has.\n2. 경험: ~한 적이 있다 (ever, never).\n3. 완료·계속·결과: just, already, yet / for(기간), since(시작 시점).\n4. 결과: 과거에 한 일의 결과가 지금도 남아 있을 때 씁니다. (has lost, has gone)\n5. yesterday, last year, ago와는 쓰지 않고 과거시제를 씁니다.\n\n■ 예문 뜻\n나는 그 영화를 본 적이 있다.\n그녀는 여기에서 5년째 살고 있다.\n나는 방금 숙제를 끝냈다.',
   blanks: [['현재완료의 형태는 have/has + ___입니다.', '과거분사', '네 글자'], ['she 뒤에는 ___를 씁니다.', 'has', 'h로 시작'], ['기간 앞에는 ___를 씁니다.', 'for', '세 글자'], ['시작 시점 앞에는 ___를 씁니다.', 'since', 's로 시작']],
   fill: [
     ['basic', 'I ___ seen that movie.', 'have', ['has', 'have', 'am'], '나는 그 영화를 본 적이 있다.', 'I 뒤에는 have입니다.', 'I'],
@@ -39,6 +44,8 @@ export default mk({
     ['intermediate', 'She has lived here ___ five years.', 'for', ['for', 'since', 'ago'], '그녀는 여기에서 5년째 살고 있다.', '기간 앞에는 for입니다.', '기간'],
     ['intermediate', 'I have known him ___ 2020.', 'since', ['for', 'since', 'in'], '나는 2020년부터 그를 알고 있다.', '시작 시점 앞에는 since입니다.', '시작 시점'],
     ['intermediate', 'I have not eaten lunch ___.', 'yet', ['just', 'already', 'yet'], '나는 아직 점심을 먹지 않았다.', '부정문에서 "아직"은 yet입니다.', '아직'],
+    ['intermediate', 'He has ___ his key.', 'lost', ['lose', 'lost', 'losing'], '그는 열쇠를 잃어버렸다.', 'lose의 p.p.는 lost입니다. 잃어버려서 지금 없다는 결과입니다.', '결과'],
+    ['advanced', 'She has ___ to Paris, so she is not here.', 'gone', ['been', 'went', 'gone'], '그녀는 파리에 가 버려서 여기에 없다.', '가고 지금 없다는 결과는 has gone입니다.', '결과'],
     ['advanced', 'I ___ him yesterday.', 'saw', ['saw', 'have seen', 'seen'], '나는 어제 그를 봤다.', 'yesterday가 있으므로 과거시제 saw입니다.', 'yesterday'],
     ['advanced', 'They have ___ friends for ten years.', 'been', ['be', 'been', 'being'], '그들은 10년째 친구다.', 'be의 p.p.는 been입니다.', 'be의 p.p.'],
   ],
@@ -51,6 +58,8 @@ export default mk({
     pc('Which sentence about a movie is correct?', '영화에 대한 올바른 문장을 고르세요.', 'basic', [['I has seen that movie.', '나는 그 영화를 본 적이 있다.'], ['I have seen that movie.', '나는 그 영화를 본 적이 있다.'], ['I have saw that movie.', '나는 그 영화를 본 적이 있다.'], ['I am seen that movie.', '나는 그 영화를 본 적이 있다.']], 1, 'I 뒤에는 have + p.p.(seen)입니다.'),
     pc('Which sentence about leaving is correct?', '떠난 일에 대한 올바른 문장을 고르세요.', 'basic', [['She have already left.', '그녀는 이미 떠났다.'], ['She has already leave.', '그녀는 이미 떠났다.'], ['She has already left.', '그녀는 이미 떠났다.'], ['She already has leaved.', '그녀는 이미 떠났다.']], 2, 'she 뒤에는 has + p.p.(left)입니다.'),
     pc('Which sentence about sushi is correct?', '스시에 대한 올바른 문장을 고르세요.', 'basic', [['He has never ate sushi.', '그는 스시를 먹어 본 적이 없다.'], ['He have never eaten sushi.', '그는 스시를 먹어 본 적이 없다.'], ['He never has eat sushi.', '그는 스시를 먹어 본 적이 없다.'], ['He has never eaten sushi.', '그는 스시를 먹어 본 적이 없다.']], 3, 'has + never + p.p.(eaten)입니다.'),
+    pc('Which sentence about a key is correct?', '열쇠에 대한 올바른 문장을 고르세요.', 'intermediate', [['He has lose his key.', '그는 열쇠를 잃어버렸다.'], ['He have lost his key.', '그는 열쇠를 잃어버렸다.'], ['He has lost his key.', '그는 열쇠를 잃어버렸다.'], ['He lost has his key.', '그는 열쇠를 잃어버렸다.']], 2, 'has + p.p.(lost)입니다. 잃어버려서 지금 없다는 결과입니다.'),
+    pc('Which sentence about Paris is correct?', '"그녀는 파리에 가 버렸다(지금 여기 없다)"를 나타내는 문장을 고르세요.', 'advanced', [['She has been to Paris.', '그녀는 파리에 가 본 적이 있다.'], ['She has gone to Paris.', '그녀는 파리에 가 버렸다.'], ['She has go to Paris.', '그녀는 파리에 가 버렸다.'], ['She have gone to Paris.', '그녀는 파리에 가 버렸다.']], 1, 'been to는 가 본 경험, gone to는 가고 지금 없다는 결과입니다.'),
     pc('Which sentence about living here is correct?', '사는 기간에 대한 올바른 문장을 고르세요.', 'intermediate', [['She has lived here for five years.', '그녀는 여기에서 5년째 살고 있다.'], ['She has lived here since five years.', '그녀는 여기에서 5년째 살고 있다.'], ['She lives here have five years.', '그녀는 여기에서 5년째 살고 있다.'], ['She has live here for five years.', '그녀는 여기에서 5년째 살고 있다.']], 0, '기간 앞에는 for를 씁니다.'),
     pc('Which sentence about knowing him is correct?', '그를 알아 온 것에 대한 올바른 문장을 고르세요.', 'intermediate', [['I have known him for 2020.', '나는 2020년부터 그를 알고 있다.'], ['I have known him since 2020.', '나는 2020년부터 그를 알고 있다.'], ['I know have him since 2020.', '나는 2020년부터 그를 알고 있다.'], ['I has known him since 2020.', '나는 2020년부터 그를 알고 있다.']], 1, '시작 시점 앞에는 since를 씁니다.'),
     pc('Choose the sentence that is NOT in the present perfect.', '현재완료가 아닌 문장을 고르세요.', 'intermediate', [['I have just finished my homework.', '나는 방금 숙제를 끝냈다.'], ['She has already left.', '그녀는 이미 떠났다.'], ['She moved here two years ago.', '그녀는 2년 전에 여기로 이사 왔다.'], ['They have been friends for ten years.', '그들은 10년째 친구다.']], 2, '세 번째는 ago가 있는 과거시제입니다.', 'pick_different'),
