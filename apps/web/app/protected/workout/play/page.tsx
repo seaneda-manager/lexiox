@@ -96,7 +96,7 @@ function Player({ style, assignmentId, demo }: { style: GameStyle; assignmentId:
   // 스펠링(빈칸) 문제는 활쏘기(매달린/날아가는 과녁)에서만 쓴다
   const spellingOk = style === "hang" || style === "fly";
   // 오목은 영어 단어의 철자를 모으므로 정답이 영어 단어인 문제(영영·한영)만 쓴다
-  const noKoAnswer = style === "omok" || style === "rescue";
+  const noKoAnswer = style === "omok" || style === "rescue" || style === "rescuepick";
   const effMode: ArcheryMode = (!spellingOk && mode === "spelling") || (noKoAnswer && mode === "en-ko") ? "en-en" : mode;
   const usesMode = style !== "spell";
 
@@ -106,7 +106,7 @@ function Player({ style, assignmentId, demo }: { style: GameStyle; assignmentId:
     if (style === "spell") {
       return shuffled.slice(0, demo ? 10 : 15).map((v, i) => ({ id: `sp-${i}`, prompt: v.ko, answer: v.word, choices: [] }));
     }
-    const count = demo ? 10 : style === "rain" || style === "omok" || style === "sprint" || style === "rescue" || style === "tetris" ? 30 : style === "drift" || style === "driftcockpit" ? 12 : 10;
+    const count = demo ? 10 : style === "rain" || style === "omok" || style === "sprint" || style === "rescue" || style === "rescuepick" || style === "tetris" ? 30 : style === "drift" || style === "driftcockpit" ? 12 : 10;
     return buildArcheryQuestions(shuffled.slice(0, count), effMode, extraPool);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [effMode, style, round, vocab]);
@@ -168,9 +168,9 @@ function Player({ style, assignmentId, demo }: { style: GameStyle; assignmentId:
         </div>
       )}
 
-      {(style === "omok" || style === "sprint" || style === "rescue" || style === "memory" || style === "tetris") && (
+      {(style === "omok" || style === "sprint" || style === "rescue" || style === "rescuepick" || style === "memory" || style === "tetris") && (
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-slate-400 text-sm w-12">{style === "sprint" ? "상대" : style === "rescue" || style === "memory" || style === "tetris" ? "난이도" : "AI"}</span>
+          <span className="text-slate-400 text-sm w-12">{style === "sprint" ? "상대" : style === "rescue" || style === "rescuepick" || style === "memory" || style === "tetris" ? "난이도" : "AI"}</span>
           {(["easy", "normal", "hard"] as OmokLevel[]).map((lv) => (
             <button key={lv} className={chip(omokLevel === lv)} onClick={() => setOmokLevel(lv)}>
               {lv === "easy" ? "쉬움" : lv === "normal" ? "보통" : "어려움"}
@@ -179,7 +179,7 @@ function Player({ style, assignmentId, demo }: { style: GameStyle; assignmentId:
           <span className="text-slate-400 text-xs">
             {style === "sprint"
               ? "상대 선수의 속도 (쉬움 · 보통 · 어려움)"
-              : style === "rescue"
+              : style === "rescue" || style === "rescuepick"
                 ? "스테이지가 올라갈수록 어려워져요. 쉬움은 한 단계 낮게, 어려움은 한 단계 높게 시작해요"
                 : style === "tetris"
                   ? "쉬움: 목숨 5·6줄·느리게 / 보통: 목숨 3·8줄 / 어려움: 목숨 2·10줄·빠르게"
@@ -251,8 +251,8 @@ function Player({ style, assignmentId, demo }: { style: GameStyle; assignmentId:
           <TetrisGame onFinish={onFinish} key={key} questions={questions} level={omokLevel} stages={3} />
         ) : style === "memory" ? (
           <MemoryGame onFinish={onFinish} key={key} vocab={vocab} mode={effMode} level={omokLevel} stages={6} />
-        ) : style === "rescue" ? (
-          <RescueGame onFinish={onFinish} key={key} questions={questions} rounds={3} level={omokLevel} />
+        ) : style === "rescue" || style === "rescuepick" ? (
+          <RescueGame onFinish={onFinish} key={key} questions={questions} rounds={3} level={omokLevel} variant={style === "rescuepick" ? "pick" : "spell"} />
         ) : style === "clay" ? (
           <ClayGame onFinish={onFinish} key={key} questions={questions} />
         ) : style === "sprint" ? (

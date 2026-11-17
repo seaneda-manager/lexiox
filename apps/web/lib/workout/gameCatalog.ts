@@ -1,5 +1,5 @@
 /** Workout 게임 카탈로그: 같은 엔진·세계관의 모드들을 하나의 게임(그룹)으로 묶는다. */
-export type GameStyle = "hang" | "fly" | "rain" | "spell" | "trial" | "race" | "drift" | "driftcockpit" | "cockpit" | "omok" | "clay" | "sprint" | "rescue" | "memory" | "tetris";
+export type GameStyle = "hang" | "fly" | "rain" | "spell" | "trial" | "race" | "drift" | "driftcockpit" | "cockpit" | "omok" | "clay" | "sprint" | "rescue" | "rescuepick" | "memory" | "tetris";
 export type ThumbKey = "archery" | "rain" | "race" | "drift" | "cockpit" | "omok" | "sports" | "rescue" | "memory" | "tetris";
 export type Orientation = "landscape" | "portrait" | "any";
 
@@ -117,7 +117,10 @@ export const GAME_GROUPS: GameGroup[] = [
     thumb: "rescue",
     controls: "방향키/WASD 이동 · 아래로 내려 착륙 · Space 기관총 · Shift/X 로켓 / 폰은 조이패드 + 버튼",
     platforms: ["PC", "모바일 (가로)"],
-    modes: [{ style: "rescue", label: "구출 작전", desc: "글자를 순서대로 태워 기지로 귀환. 대공 미사일·대공포 회피/격추" }],
+    modes: [
+      { style: "rescue", label: "구출 작전", desc: "글자를 순서대로 태워 기지로 귀환. 대공 미사일·대공포 회피/격추" },
+      { style: "rescuepick", label: "단어 구조", desc: "뜻에 맞는 단어 태그를 단 인원 한 명을 골라 구출. 잘못 태우면 ♥-1" },
+    ],
   },
   {
     id: "sports",
@@ -145,7 +148,7 @@ export function groupOfStyle(style: GameStyle): GameGroup {
 }
 
 export function orientationOf(style: GameStyle): Orientation {
-  if (style === "hang" || style === "fly" || style === "drift" || style === "driftcockpit" || style === "clay" || style === "sprint" || style === "rescue" || style === "memory") return "landscape";
+  if (style === "hang" || style === "fly" || style === "drift" || style === "driftcockpit" || style === "clay" || style === "sprint" || style === "rescue" || style === "rescuepick" || style === "memory") return "landscape";
   if (style === "trial" || style === "race" || style === "cockpit" || style === "omok" || style === "tetris") return "portrait";
   return "any";
 }

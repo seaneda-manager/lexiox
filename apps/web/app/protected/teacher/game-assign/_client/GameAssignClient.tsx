@@ -69,8 +69,8 @@ export default function GameAssignClient() {
 
   const spellingOk = style === "hang" || style === "fly";
   const usesMode = style !== "spell";
-  const noKo = style === "omok" || style === "rescue";
-  const usesLevel = style === "omok" || style === "sprint" || style === "rescue" || style === "memory";
+  const noKo = style === "omok" || style === "rescue" || style === "rescuepick";
+  const usesLevel = style === "omok" || style === "sprint" || style === "rescue" || style === "rescuepick" || style === "memory";
   const modeOptions = Object.keys(MODE_LABEL).filter((m) => !(m === "spelling" && !spellingOk) && !(m === "en-ko" && noKo));
   const effMode = modeOptions.includes(mode) ? mode : "en-en";
 

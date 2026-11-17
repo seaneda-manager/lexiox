@@ -14,6 +14,7 @@ type Props = {
   questions: ArcheryQuestion[]; // answer가 영어 단어(3~9글자)인 문제
   rounds?: number;
   level?: "easy" | "normal" | "hard"; // 시작 난이도(스테이지별로 계속 올라간다)
+  variant?: "spell" | "pick"; // spell: 글자를 순서대로 태움 / pick: 뜻에 맞는 단어를 단 인원 한 명을 골라 태움
   onFinish?: (r: { score: number; words: number; rounds: number }) => void;
 };
 
@@ -58,7 +59,8 @@ const STAGES: StageParams[] = [
   { sams: 3, aas: 4, missileSpeed: 255, missileTurn: 2.1, samEvery: 5000, aaEvery: 3600, aaLead: 1, jetSpeed: [110, 145], jetShot: 3000, jetHp: 4, decoys: 6, jets: 3, waveGap: 5500, threatGap: 1800, maxMissiles: 2, maxFlak: 2 },
 ];
 
-export default function RescueGame({ questions, rounds = 3, level = "normal", onFinish }: Props) {
+export default function RescueGame({ questions, rounds = 3, level = "normal", variant = "spell", onFinish }: Props) {
+  const pick = variant === "pick";
   const hostRef = useRef<HTMLDivElement>(null);
   const finishRef = useRef(onFinish);
   finishRef.current = onFinish;
@@ -71,7 +73,7 @@ export default function RescueGame({ questions, rounds = 3, level = "normal", on
       const Phaser = (await import("phaser")).default;
       if (cancelled || !hostRef.current) return;
 
-      type Man = { c: Phaser.GameObjects.Container; letter: string; x: number; state: "wait" | "run" | "gone"; shake: number };
+      type Man = { c: Phaser.GameObjects.Container; letter: string; x: number; state: "wait" | "run" | "gone"; shake: number; wrong: boolean };
       type Site = { img: Phaser.GameObjects.Image; x: number; hp: number; max: number; next: number; kind: "sam" | "aa"; bar: Phaser.GameObjects.Rectangle; launchAt: number; warn: Phaser.GameObjects.Arc | null };
       type Proj = { img: Phaser.GameObjects.Image; vx: number; vy: number; life: number };
       type Flak = { dot: Phaser.GameObjects.Arc; tx: number; ty: number; t: number; dur: number };
@@ -85,6 +87,7 @@ export default function RescueGame({ questions, rounds = 3, level = "normal", on
         word = "";
         clue = "";
         got = 0; // 기지에 내려놓은 글자 수
+        wrongs = 0; // (pick) 이번 뜻에서 잘못 태운 횟수
         onboard: string[] = [];
         pool: ArcheryQuestion[] = [];
         used = new Set<string>();
@@ -142,7 +145,7 @@ export default function RescueGame({ questions, rounds = 3, level = "normal", on
           this.score = 0;
           this.wordsDone = 0;
           this.round = 0;
-          this.armor = 3;
+          this.armor = pick ? 4 : 3; // pick 모드는 잘못 태우면 하트가 줄어서 한 칸 더 준다
           this.rockets = 3;
           const ok = questions.filter((q) => /^[A-Za-z]{3,9}$/.test(q.answer));
           this.pool = Phaser.Utils.Array.Shuffle(ok.length ? ok : [...questions]);
@@ -475,11 +478,14 @@ export default function RescueGame({ questions, rounds = 3, level = "normal", on
           this.setHud(false);
           const dim = this.add.rectangle(W / 2, H / 2, W, H, 0x050a1c, 0.62).setScrollFactor(0).setDepth(90);
           const title = this.add.text(W / 2, 110, "WORD RESCUE", { fontFamily: FONT, fontSize: "58px", color: "#bef264", fontStyle: "bold", stroke: "#0b1230", strokeThickness: 8 }).setOrigin(0.5).setScrollFactor(0).setDepth(91);
+          const intro = pick
+            ? "위에 나온 뜻에 맞는 단어를 단 인원을 찾아 구출하세요!\n지상의 인원들은 저마다 다른 단어 태그를 달고 있어요\n착륙해서 맞는 인원을 태우고 기지에 데려오면 성공!\n잘못 태우면 그 인원은 내려놓고 ♥ -1, 점수 -30\n두 번 틀리면 첫 글자 힌트가 나와요\n\n대공"
+            : "위에 나온 뜻의 단어를 만드세요! 단어는 보이지 않고 글자 수만 나와요\n지상의 인원들은 철자 태그를 달고 있어요\n착륙해서 글자를 태우고 기지에 내려놓으면\n순서가 맞는 글자만 단어에 채워져요 (틀리면 -30)\n\n대공";
           const sub = this.add
             .text(
               W / 2,
               270,
-              "위에 나온 뜻의 단어를 만드세요! 단어는 보이지 않고 글자 수만 나와요\n지상의 인원들은 철자 태그를 달고 있어요\n착륙해서 글자를 태우고 기지에 내려놓으면\n순서가 맞는 글자만 단어에 채워져요 (틀리면 -30)\n\n대공 미사일(유도)·대공포·적기의 사격을 피하거나 격추하세요\n위협은 스테이지가 올라갈수록 늘어나요\n\n← → ↑ ↓ / WASD 이동 · 아래로 내려 착륙\nSpace 기관총 · Shift/X 로켓 (폰: 조이패드 + 버튼)",
+              intro + " 미사일(유도)·대공포·적기의 사격을 피하거나 격추하세요\n위협은 스테이지가 올라갈수록 늘어나요\n\n← → ↑ ↓ / WASD 이동 · 아래로 내려 착륙\nSpace 기관총 · Shift/X 로켓 (폰: 조이패드 + 버튼)",
               { fontFamily: FONT, fontSize: "19px", color: "#fff", align: "center", lineSpacing: 7 },
             )
             .setOrigin(0.5)
@@ -522,9 +528,16 @@ export default function RescueGame({ questions, rounds = 3, level = "normal", on
           // 인원 배치: 단어 글자 + 미끼 글자 3개, 위협 근처를 피해서 흩어 둔다
           this.buildSites();
           const P = this.params();
-          const letters = this.word.split("");
+          this.wrongs = 0;
+          // pick: 정답 단어 1개 + 다른 단어 미끼. spell: 단어의 글자 + 미끼 글자
+          const letters = pick ? [this.word] : this.word.split("");
           const abc = "abcdefghijklmnopqrstuvwxyz".split("");
-          for (let i = 0; i < P.decoys; i++) letters.push(abc[Math.floor(Math.random() * abc.length)]);
+          if (pick) {
+            const others = Phaser.Utils.Array.Shuffle(Array.from(new Set(this.pool.map((p) => p.answer.toLowerCase()))).filter((w) => w !== this.word));
+            letters.push(...others.slice(0, Phaser.Math.Clamp(P.decoys + 2, 3, 6)));
+          } else {
+            for (let i = 0; i < P.decoys; i++) letters.push(abc[Math.floor(Math.random() * abc.length)]);
+          }
           Phaser.Utils.Array.Shuffle(letters);
           const span = (WORLD_W - 1000) / letters.length;
           letters.forEach((l, i) => this.addMan(l, this.freeX(650 + i * span)));
@@ -552,11 +565,20 @@ export default function RescueGame({ questions, rounds = 3, level = "normal", on
 
         addMan(letter: string, x: number) {
           const body = this.add.image(0, 0, "man");
-          const tag = this.add.image(0, -34, "tag");
-          const txt = this.add.text(0, -34, letter.toUpperCase(), { fontFamily: FONT, fontSize: "17px", color: "#fff", fontStyle: "bold" }).setOrigin(0.5);
-          const c = this.add.container(x, GROUND_Y - 17, [body, tag, txt]).setDepth(7);
+          let parts: Phaser.GameObjects.GameObject[];
+          if (pick) {
+            // 단어 태그: 글자 수에 맞춰 늘어나는 알약 모양
+            const txt = this.add.text(0, -44, letter, { fontFamily: FONT, fontSize: "16px", color: "#fff", fontStyle: "bold" }).setOrigin(0.5);
+            const bg = this.add.rectangle(0, -44, txt.width + 16, 24, 0x1e3a8a).setStrokeStyle(2, 0xffd166, 1);
+            parts = [body, bg, txt];
+          } else {
+            const tag = this.add.image(0, -34, "tag");
+            const txt = this.add.text(0, -34, letter.toUpperCase(), { fontFamily: FONT, fontSize: "17px", color: "#fff", fontStyle: "bold" }).setOrigin(0.5);
+            parts = [body, tag, txt];
+          }
+          const c = this.add.container(x, GROUND_Y - 17, parts).setDepth(7);
           this.tweens.add({ targets: body, y: -2, duration: 400 + Math.random() * 200, yoyo: true, repeat: -1 });
-          this.men.push({ c, letter, x, state: "wait", shake: 0 });
+          this.men.push({ c, letter, x, state: "wait", shake: 0, wrong: false });
         }
 
         refreshHud() {
@@ -570,7 +592,7 @@ export default function RescueGame({ questions, rounds = 3, level = "normal", on
           // 단어는 공개하지 않는다: 기지에 맞게 내려놓은 글자만 채워지고 나머지는 빈 칸(글자 수만 보인다)
           const slots = this.word
             .split("")
-            .map((c, i) => (i < this.got ? c.toUpperCase() : "_"))
+            .map((c, i) => (i < this.got || (pick && this.wrongs >= 2 && i === 0) ? c.toUpperCase() : "_"))
             .join(" ");
           this.slotTxt.setText(slots);
           this.slotTxt.setScale(1);
@@ -666,7 +688,7 @@ export default function RescueGame({ questions, rounds = 3, level = "normal", on
           const running = this.men.some((o) => o.state === "run");
           if (this.landed && !running && this.onboard.length < SEATS) {
             const cand = this.men
-              .filter((m) => m.state === "wait" && Math.abs(m.x - hx) < 60) // 바로 옆에 내려앉은 인원만 탄다(실수로 엉뚱한 글자가 타지 않게)
+              .filter((m) => m.state === "wait" && !m.wrong && Math.abs(m.x - hx) < 60) // 바로 옆에 내려앉은 인원만 탄다(실수로 엉뚱한 글자가 타지 않게)
               .sort((a, b) => Math.abs(a.x - hx) - Math.abs(b.x - hx))[0];
             if (cand) cand.state = "run";
           }
@@ -682,7 +704,15 @@ export default function RescueGame({ questions, rounds = 3, level = "normal", on
               m.x += dir * 100 * dt;
               m.c.x = m.x;
               if (!this.landed) m.state = "wait";
-              if (Math.abs(m.x - hx) < 18) {
+              if (Math.abs(m.x - hx) < 18 && pick && m.letter !== this.word) {
+                // 잘못 태움: 그 인원은 원래 자리로 내려놓고 회색 ✕ 표시, 하트 -1
+                m.state = "wait";
+                m.wrong = true;
+                m.x = m.c.x = Phaser.Math.Clamp(m.x - Math.sign(hx - m.x) * 40, 60, WORLD_W - 60);
+                m.c.setAlpha(0.45);
+                m.c.add(this.add.text(0, -8, "✕", { fontFamily: FONT, fontSize: "26px", color: "#f87171", fontStyle: "bold", stroke: "#0b1230", strokeThickness: 4 }).setOrigin(0.5));
+                this.wrongPick(m.letter, hx);
+              } else if (Math.abs(m.x - hx) < 18) {
                 m.state = "gone";
                 m.c.destroy();
                 this.onboard.push(m.letter);
@@ -695,7 +725,15 @@ export default function RescueGame({ questions, rounds = 3, level = "normal", on
           if (this.landed && Math.abs(hx - (BASE_X + 20)) < 120 && this.onboard.length > 0 && time > this.unloadAt) {
             this.unloadAt = time + 420;
             const l = this.onboard.shift()!;
-            if (l === this.word[this.got]) {
+            if (pick) {
+              if (l === this.word) {
+                this.got = this.word.length;
+                this.score += 100 + Math.max(0, 2 - this.wrongs) * 50; // 덜 틀릴수록 보너스
+                this.floatText(BASE_X + 40, GROUND_Y - 90, `${l.toUpperCase()} +100`, "#ffd166", 26);
+                this.refreshHud();
+                this.roundComplete();
+              }
+            } else if (l === this.word[this.got]) {
               // 순서가 맞는 글자만 단어에 채워진다
               this.got++;
               this.score += 100;
@@ -710,6 +748,18 @@ export default function RescueGame({ questions, rounds = 3, level = "normal", on
               this.refreshHud();
             }
           }
+        }
+
+        /** (pick) 잘못 태운 인원: 하트 -1, 점수 -30, 두 번 틀리면 첫 글자 힌트 */
+        wrongPick(letter: string, x: number) {
+          this.wrongs++;
+          this.armor--;
+          this.score = Math.max(0, this.score - 30);
+          this.floatText(x, this.heli.y - 50, `✕ ${letter} 아니에요  ♥-1`, "#ff6b6b", 22);
+          this.cameras.main.shake(160, 0.006);
+          if (this.wrongs === 2) this.floatText(x, this.heli.y - 84, "힌트: 첫 글자가 나왔어요", "#fde68a", 18);
+          this.refreshHud();
+          if (this.armor <= 0) this.showResult(false);
         }
 
         roundComplete() {
@@ -999,7 +1049,7 @@ export default function RescueGame({ questions, rounds = 3, level = "normal", on
             const d = Math.round(Math.abs(BASE_X + 20 - this.heli.x) / 10);
             this.hud.base.setText(`${BASE_X + 20 < this.heli.x ? "◀" : "▶"} 기지로 복귀  ${d}m`);
           } else if (this.onboard.length === 0 && this.got === 0 && this.landed === false) {
-            this.hud.base.setText("뜻에 맞는 단어의 글자를 순서대로 태워 기지에 내려놓으세요");
+            this.hud.base.setText(pick ? "뜻에 맞는 단어를 단 인원을 골라 태워 기지로 데려오세요" : "뜻에 맞는 단어의 글자를 순서대로 태워 기지에 내려놓으세요");
           } else {
             this.hud.base.setText("");
           }
@@ -1018,7 +1068,7 @@ export default function RescueGame({ questions, rounds = 3, level = "normal", on
             dim,
             T(130, win ? "MISSION COMPLETE" : "HELICOPTER DOWN", 48, win ? "#bef264" : "#fb7185"),
             T(240, `${this.score}`, 80, "#ffffff"),
-            T(320, `완성한 단어 ${this.wordsDone} / ${rounds}`, 26, "#fff", { strokeThickness: 0 }),
+            T(320, `${pick ? "구조한" : "완성한"} 단어 ${this.wordsDone} / ${rounds}`, 26, "#fff", { strokeThickness: 0 }),
             T(420, "↻  PRESS SPACE / TAP", 24, "#0b1230", { backgroundColor: "#bef264", padding: { x: 20, y: 10 }, strokeThickness: 0 }),
           ]).setScrollFactor(0).setDepth(100);
           finishRef.current?.({ score: this.score, words: this.wordsDone, rounds });
