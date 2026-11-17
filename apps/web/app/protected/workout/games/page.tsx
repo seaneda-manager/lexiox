@@ -89,8 +89,7 @@ export default function WorkoutGamesPage() {
       )}
       <AssignedGames list={assigned.slice(0, 8)} />
 
-      {/* 화면 너비가 아니라 "내용 영역" 너비에 맞춰 칸 수를 정한다 — 사이드바가 있으면 lg:3열이 카드를 200px로 찌그러뜨렸다 */}
-      <div className="grid gap-5 [grid-template-columns:repeat(auto-fill,minmax(340px,1fr))]">
+      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
         {GAME_GROUPS.map((g) => {
           const isAssigned = g.modes.some((m) => assignedStyles.has(m.style));
           const dim = dimOthers && !isAssigned;
