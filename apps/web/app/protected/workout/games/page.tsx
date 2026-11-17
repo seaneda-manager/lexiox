@@ -61,14 +61,14 @@ export default function WorkoutGamesPage() {
   }, []);
   const playable = assigned.filter((a) => !a.done);
 
-  if (perk.state === "loading") return <main className="max-w-6xl mx-auto p-6 text-slate-500 text-sm">게임 시간을 확인하는 중...</main>;
+  if (perk.state === "loading") return <main className="w-full p-6 text-slate-500 text-sm">게임 시간을 확인하는 중...</main>;
   const locked = perk.state === "locked" || perk.state === "login";
   // 배정받은 게임이 있거나 시간이 잠겼으면 나머지 게임은 흐리게(눌러도 체험판 또는 일반 플레이)
   const assignedStyles = new Set(playable.map((a) => a.style));
   const dimOthers = locked || (assignedStyles.size > 0 && !perk.unlimited);
 
   return (
-    <main className="max-w-6xl mx-auto p-4 md:p-6">
+    <main className="w-full p-4 md:p-6">
       <header className="mb-6">
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900">단어 게임</h1>
@@ -90,7 +90,7 @@ export default function WorkoutGamesPage() {
       <AssignedGames list={assigned.slice(0, 8)} />
 
       {/* 화면 너비가 아니라 "내용 영역" 너비에 맞춰 칸 수를 정한다 — 사이드바가 있으면 lg:3열이 카드를 200px로 찌그러뜨렸다 */}
-      <div className="grid gap-5 [grid-template-columns:repeat(auto-fill,minmax(260px,1fr))]">
+      <div className="grid gap-5 [grid-template-columns:repeat(auto-fill,minmax(340px,1fr))]">
         {GAME_GROUPS.map((g) => {
           const isAssigned = g.modes.some((m) => assignedStyles.has(m.style));
           const dim = dimOthers && !isAssigned;
