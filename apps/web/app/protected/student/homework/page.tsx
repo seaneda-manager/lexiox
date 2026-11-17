@@ -1,8 +1,19 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getServerSupabase } from '@/lib/supabase/server';
+import {
+  getStudentAssignmentCalendar,
+  resolveStudentIds,
+} from '@/lib/assignments/studentAssignmentCalendar';
+import UnifiedHomeworkList from './_components/UnifiedHomeworkList';
 
 export const dynamic = 'force-dynamic';
+
+/** 한국 날짜(YYYY-MM-DD) — 서버 시간대와 무관하게 */
+function kstDate(offsetDays = 0): string {
+  const d = new Date(Date.now() + offsetDays * 86_400_000);
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(d);
+}
 
 const SUBJECT_LABEL: Record<string, string> = {
   vocab:   '어휘/단어',
@@ -39,14 +50,33 @@ export default async function StudentHomeworkPage() {
     (submissions ?? []).map((s: any) => [s.homework_id as string, s]),
   );
 
+  // 집에서 해야 하는 모든 배정(단어·문법·시험·숙제 등)을 한곳에 모은다. 최근 3주 ~ 앞으로 2주.
+  const ids = await resolveStudentIds(user.id);
+  const today = kstDate();
+  const unified = await getStudentAssignmentCalendar({
+    authUserId: ids.authId ?? user.id,
+    academyStudentId: ids.academyId,
+    fromIso: kstDate(-21),
+    toIso: kstDate(14),
+  }).catch(() => []);
+
   return (
     <main className="mx-auto max-w-2xl space-y-6 pb-12">
       <header>
-        <h1 className="text-xl font-bold text-neutral-900">숙제</h1>
+        <h1 className="text-xl font-bold text-neutral-900">내 숙제</h1>
         <p className="text-xs text-neutral-400 mt-0.5">
-          사진을 찍어 제출하면 AI가 자동으로 채점합니다.
+          선생님이 배정한 숙제를 여기서 한 번에 확인하세요. 누르면 바로 시작할 수 있어요.
         </p>
       </header>
+
+      <UnifiedHomeworkList items={unified} today={today} />
+
+      <div className="border-t border-neutral-200 pt-6">
+        <h2 className="text-base font-bold text-neutral-900">사진 제출 숙제</h2>
+        <p className="text-xs text-neutral-400 mt-0.5">
+          사진을 찍어 제출하면 자동으로 채점합니다.
+        </p>
+      </div>
 
       <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-5 space-y-3">
         <h2 className="text-xs font-bold uppercase tracking-wide text-neutral-400">진행 방법</h2>
@@ -61,7 +91,7 @@ export default async function StudentHomeworkPage() {
           </li>
           <li className="flex gap-2">
             <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-neutral-900 text-[11px] font-bold text-white">3</span>
-            <span>AI가 10~20초 안에 문항별로 채점하고 점수를 보여줍니다.</span>
+            <span>10~20초 안에 문항별로 채점하고 점수를 보여줍니다.</span>
           </li>
           <li className="flex gap-2">
             <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-neutral-900 text-[11px] font-bold text-white">4</span>
