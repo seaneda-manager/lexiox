@@ -434,7 +434,7 @@ function Memory() {
 
 function Rescue() {
   return (
-    <svg viewBox="0 0 320 180" className="w-full h-full" role="img" aria-label="RESCUE RAIDERS">
+    <svg viewBox="0 0 320 180" className="w-full h-full" role="img" aria-label="WORD RESCUE">
       <defs>
         <linearGradient id="trr-sky" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#1d4ed8" />
@@ -478,16 +478,30 @@ function Rescue() {
       </g>
       {/* 헬기 */}
       <g transform="translate(150 58)">
-        <rect x="-34" y="-22" width="68" height="3" fill="#111827" />
-        <rect x="-3" y="-20" width="6" height="8" fill="#1c1917" />
-        <ellipse cx="0" cy="0" rx="26" ry="12" fill="#4d7c0f" />
-        <ellipse cx="12" cy="-2" rx="11" ry="7" fill="#7dd3fc" />
-        <rect x="-44" y="-4" width="22" height="5" fill="#3f6212" />
-        <rect x="-48" y="-12" width="5" height="14" fill="#3f6212" />
-        <line x1="-16" y1="14" x2="24" y2="14" stroke="#1c1917" strokeWidth={2.5} />
-        <line x1="-8" y1="10" x2="-9" y2="14" stroke="#1c1917" strokeWidth={2} />
-        <line x1="14" y1="10" x2="15" y2="14" stroke="#1c1917" strokeWidth={2} />
-        <rect x="28" y="2" width="9" height="3" fill="#fde047" />
+        {/* 꼬리: 빔 + 수직날개 + 수평날개 */}
+        <polygon points="-12,-4 -12,5 -46,-1 -46,-5" fill="#4d7c0f" />
+        <polygon points="-46,-5 -50,-17 -40,-17 -33,-5" fill="#365314" />
+        <polygon points="-44,-1 -37,-1 -42,4 -48,4" fill="#4d7c0f" />
+        <line x1="-50" y1="-16" x2="-50" y2="-4" stroke="#94a3b8" strokeWidth={1.6} />
+        {/* 동체 */}
+        <ellipse cx="0" cy="3" rx="26" ry="12" fill="#365314" />
+        <ellipse cx="0" cy="0" rx="26" ry="12" fill="#65a30d" />
+        {/* 엔진 덮개 + 로터 */}
+        <rect x="-12" y="-14" width="22" height="6" rx="3" fill="#3f6212" />
+        <rect x="-2" y="-20" width="4" height="7" fill="#1c1917" />
+        <rect x="-34" y="-22" width="68" height="2.5" rx="1" fill="#111827" />
+        {/* 구조 표시 */}
+        <circle cx="-4" cy="2" r="5" fill="#fff" />
+        <rect x="-5.2" y="-1" width="2.4" height="6" fill="#dc2626" />
+        <rect x="-7" y="1" width="6" height="2.4" fill="#dc2626" />
+        {/* 조종석 유리 */}
+        <ellipse cx="16" cy="-1" rx="12" ry="8" fill="#7dd3fc" />
+        <ellipse cx="19" cy="-5" rx="5" ry="2" fill="#fff" opacity={0.65} />
+        <rect x="-10" y="8" width="30" height="2" fill="#fde047" />
+        {/* 스키드 */}
+        <polyline points="-18,16 26,16 31,11" fill="none" stroke="#1c1917" strokeWidth={2.5} strokeLinecap="round" />
+        <line x1="-8" y1="10" x2="-9" y2="16" stroke="#1c1917" strokeWidth={2} />
+        <line x1="14" y1="10" x2="15" y2="16" stroke="#1c1917" strokeWidth={2} />
       </g>
       {/* 슬롯 */}
       <rect x="86" y="8" width="148" height="26" rx="8" fill="#0b1230" opacity={0.8} stroke="#ffd166" strokeWidth={1.4} />

@@ -111,7 +111,7 @@ export const GAME_GROUPS: GameGroup[] = [
   },
   {
     id: "rescue",
-    name: "RESCUE RAIDERS",
+    name: "WORD RESCUE",
     subtitle: "레스큐 레이더스",
     tagline: "헬기로 철자 인원을 구출해 단어를 완성하세요",
     thumb: "rescue",

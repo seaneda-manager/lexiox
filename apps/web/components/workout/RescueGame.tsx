@@ -5,7 +5,7 @@ import type { ArcheryQuestion } from "./ArcheryPhaser";
 import { createJoystick, type Joystick } from "@/lib/workout/virtualJoystick";
 
 /**
- * Rescue Raiders (횡스크롤 헬기 구출)
+ * Word Rescue (횡스크롤 헬기 구출)
  *  - 위에 뜻이 나오고, 지상의 인원들은 철자 태그를 달고 있다. 목표 단어의 글자를 "순서대로" 태워야 한다.
  *  - 착륙해서 다음 글자의 인원 근처에 내리면 그 인원이 달려와 탑승(좌석 4). 기지에 착륙하면 글자를 내려 단어를 채운다.
  *  - 위협: 지대공 미사일(SAM, 유도탄), 대공포(AA, 예측 사격). 기관총·로켓으로 격추 가능.
@@ -21,8 +21,10 @@ const W = 960;
 const H = 540;
 const WORLD_W = 3400;
 const GROUND_Y = 470;
-const HELI_SCALE = 0.55; // 헬기 크기(원본 84x52 텍스처 기준)
-const JET_SCALE = 0.55; // 적기 크기(원본 76x30)
+const HELI_SCALE = 0.7; // 헬기 크기(원본 84x52 설계 좌표 기준)
+const HELI_TEX = 3; // 헬기 텍스처를 몇 배 해상도로 그리는가(화면 크기는 HELI_SCALE 그대로, 선명도만 올림)
+const JET_SCALE = 0.75; // 적기 크기(원본 76x30 설계 좌표 기준)
+const JET_TEX = 3; // 적기 텍스처 해상도 배율(화면 크기는 그대로, 선명도만 올림)
 const SKID = 14; // 헬기 중심에서 스키드 바닥까지
 const BASE_X = 150;
 const SEATS = 4;
@@ -178,15 +180,44 @@ export default function RescueGame({ questions, rounds = 3, level = "normal", on
           g.fillStyle(0xffffff, 1).fillCircle(8, 8, 8);
           g.generateTexture("spark", 16, 16);
           g.clear();
-          // 헬기 (오른쪽이 앞)
-          g.fillStyle(0x3f6212, 1).fillEllipse(44, 26, 62, 30);
-          g.fillStyle(0x4d7c0f, 1).fillEllipse(46, 22, 54, 20);
-          g.fillStyle(0x7dd3fc, 0.95).fillEllipse(62, 22, 26, 18);
-          g.fillStyle(0xffffff, 0.5).fillEllipse(66, 18, 10, 6);
-          g.fillStyle(0x3f6212, 1).fillRect(4, 22, 26, 7).fillRect(0, 10, 8, 20);
-          g.fillStyle(0x1c1917, 1).fillRect(34, 2, 6, 10);
-          g.lineStyle(3, 0x1c1917, 1).lineBetween(22, 46, 74, 46).lineBetween(32, 38, 30, 46).lineBetween(58, 38, 60, 46);
-          g.generateTexture("heli", 84, 52);
+          // 헬기 (오른쪽이 앞). 84x52 좌표로 설계하고 HELI_TEX 배로 키워 그려서 확대돼도 선명하게 한다.
+          // 윗면 중심(회전날개 허브)은 x=42,y=7 — buildHeli 의 로터 위치와 맞춰 둔 값.
+          {
+            const k = HELI_TEX;
+            const pts = (a: number[][]) => a.map(([x, y]) => new Phaser.Geom.Point(x * k, y * k));
+            // 꼬리 로터(뒤쪽 작은 날개)
+            g.lineStyle(2 * k, 0x94a3b8, 0.9).lineBetween(5 * k, 6 * k, 5 * k, 20 * k);
+            // 꼬리 수직날개
+            g.fillStyle(0x365314, 1).fillPoints(pts([[6, 19], [3, 8], [10, 8], [15, 19]]), true);
+            // 꼬리 수평날개
+            g.fillStyle(0x4d7c0f, 1).fillPoints(pts([[8, 21], [3, 22], [3, 24], [14, 24]]), true);
+            // 꼬리 빔(뒤로 갈수록 가늘게)
+            g.fillStyle(0x4d7c0f, 1).fillPoints(pts([[34, 18], [34, 28], [6, 22], [6, 18]]), true);
+            // 동체 아랫부분(그림자)
+            g.fillStyle(0x365314, 1).fillEllipse(52 * k, 29 * k, 52 * k, 24 * k);
+            // 동체 윗부분
+            g.fillStyle(0x65a30d, 1).fillEllipse(52 * k, 25 * k, 52 * k, 24 * k);
+            // 엔진 덮개 + 로터 마스트
+            g.fillStyle(0x3f6212, 1).fillRoundedRect(34 * k, 9 * k, 22 * k, 8 * k, 3 * k);
+            g.fillStyle(0x1c1917, 1).fillRect(40 * k, 6 * k, 4 * k, 5 * k);
+            g.fillStyle(0x334155, 1).fillCircle(42 * k, 7 * k, 2.6 * k);
+            // 구급(구조) 표시: 흰 원 + 빨간 십자
+            g.fillStyle(0xffffff, 1).fillCircle(46 * k, 27 * k, 5 * k);
+            g.fillStyle(0xdc2626, 1).fillRect(44.5 * k, 23.5 * k, 3 * k, 7 * k).fillRect(42.5 * k, 25.5 * k, 7 * k, 3 * k);
+            // 조종석 유리(앞쪽 둥근 캐노피) + 반사광
+            g.fillStyle(0x7dd3fc, 0.95).fillEllipse(65 * k, 23 * k, 24 * k, 18 * k);
+            g.fillStyle(0x0ea5e9, 0.45).fillEllipse(66 * k, 26 * k, 20 * k, 10 * k);
+            g.fillStyle(0xffffff, 0.65).fillEllipse(68 * k, 18.5 * k, 10 * k, 4 * k);
+            g.lineStyle(1.4 * k, 0x1e3a8a, 0.8).lineBetween(61 * k, 14 * k, 59 * k, 30 * k); // 유리 중간 프레임
+            // 앞쪽 노란 라인
+            g.fillStyle(0xfde047, 1).fillRect(34 * k, 30 * k, 30 * k, 2 * k);
+            // 꼬리 끝 경고등
+            g.fillStyle(0xef4444, 1).fillCircle(4.5 * k, 8 * k, 1.6 * k);
+            // 스키드(착륙용 썰매) — 앞이 위로 휘어짐
+            g.lineStyle(3 * k, 0x1c1917, 1).lineBetween(26 * k, 46 * k, 74 * k, 46 * k).lineBetween(74 * k, 46 * k, 79 * k, 41 * k);
+            g.lineStyle(2.2 * k, 0x1c1917, 1).lineBetween(36 * k, 36 * k, 34 * k, 46 * k).lineBetween(60 * k, 36 * k, 62 * k, 46 * k);
+          }
+          g.generateTexture("heli", 84 * HELI_TEX, 52 * HELI_TEX);
           g.clear();
           // 사람
           g.fillStyle(0xf1c9a0, 1).fillCircle(9, 7, 6);
@@ -225,12 +256,38 @@ export default function RescueGame({ questions, rounds = 3, level = "normal", on
           g.fillStyle(0xffffff, 1).fillRect(0, 2, 6, 4);
           g.generateTexture("rocket", 22, 8);
           g.clear();
-          // 적 전투기 (오른쪽이 앞)
-          g.fillStyle(0x7f1d1d, 1).fillTriangle(0, 6, 22, 14, 0, 22);
-          g.fillStyle(0xb91c1c, 1).fillEllipse(40, 14, 62, 14);
-          g.fillStyle(0xef4444, 1).fillTriangle(20, 14, 52, 0, 56, 14).fillTriangle(20, 14, 52, 28, 56, 14);
-          g.fillStyle(0xfde68a, 1).fillEllipse(54, 12, 14, 7);
-          g.generateTexture("jet", 76, 30);
+          // 적 전투기 (오른쪽이 앞). 76x30 설계 좌표를 JET_TEX 배로 키워 그린다.
+          {
+            const k = JET_TEX;
+            const pts = (a: number[][]) => a.map(([x, y]) => new Phaser.Geom.Point(x * k, y * k));
+            // 엔진 불꽃
+            g.fillStyle(0xfb923c, 0.95).fillEllipse(2.5 * k, 16 * k, 9 * k, 5 * k);
+            g.fillStyle(0xfef08a, 1).fillEllipse(4.5 * k, 16 * k, 5 * k, 2.6 * k);
+            // 꼬리 수직날개(빨강)
+            g.fillStyle(0xb91c1c, 1).fillPoints(pts([[8, 12], [2, 0.5], [13, 0.5], [22, 12]]), true);
+            // 뒤쪽 수평날개
+            g.fillStyle(0x475569, 1).fillPoints(pts([[6, 18], [17, 18], [9, 25], [2, 25]]), true);
+            // 주날개(뒤로 젖힌 날개)
+            g.fillStyle(0x475569, 1).fillPoints(pts([[26, 19], [46, 19], [33, 29.5], [17, 29.5]]), true);
+            g.fillStyle(0xb91c1c, 1).fillPoints(pts([[17, 29.5], [33, 29.5], [31, 27.5], [19, 27.5]]), true); // 날개 끝 빨강
+            // 동체: 길고 뾰족하게
+            g.fillStyle(0x64748b, 1).fillPoints(pts([[75, 16], [60, 11.5], [30, 10.5], [8, 11.5], [2, 13.5], [2, 19], [8, 21], [30, 21.5], [60, 20.5]]), true);
+            // 배 쪽 어두운 면
+            g.fillStyle(0x475569, 1).fillPoints(pts([[70, 17], [60, 20.5], [30, 21.5], [8, 21], [2, 19], [2, 17.5], [30, 17.5]]), true);
+            // 기수(레이돔)
+            g.fillStyle(0x1f2937, 1).fillPoints(pts([[75, 16], [66, 12.8], [66, 19.4]]), true);
+            // 공기 흡입구
+            g.fillStyle(0x0f172a, 1).fillRoundedRect(42 * k, 15 * k, 9 * k, 4.5 * k, 1.5 * k);
+            // 조종석 캐노피
+            g.fillStyle(0xfcd34d, 1).fillEllipse(53 * k, 11.2 * k, 15 * k, 7.5 * k);
+            g.fillStyle(0xffffff, 0.55).fillEllipse(55 * k, 9.6 * k, 6 * k, 2.4 * k);
+            // 적 표식(빨간 원)
+            g.fillStyle(0xdc2626, 1).fillCircle(30 * k, 15.5 * k, 2.6 * k);
+            g.fillStyle(0xffffff, 1).fillCircle(30 * k, 15.5 * k, 1.1 * k);
+            // 미사일 걸이
+            g.fillStyle(0xe5e7eb, 1).fillRoundedRect(22 * k, 27.5 * k, 10 * k, 2 * k, k);
+          }
+          g.generateTexture("jet", 76 * JET_TEX, 30 * JET_TEX);
           g.clear();
           g.fillStyle(0xfb7185, 1).fillCircle(6, 6, 6);
           g.fillStyle(0xffffff, 0.9).fillCircle(6, 6, 3);
@@ -241,12 +298,46 @@ export default function RescueGame({ questions, rounds = 3, level = "normal", on
           g.fillStyle(0x16a34a, 1).fillEllipse(8, 18, 26, 8).fillEllipse(30, 18, 26, 8).fillEllipse(18, 10, 24, 8);
           g.generateTexture("palm", 38, 60);
           g.clear();
-          // 기지 패드 + 깃발
-          g.fillStyle(0x374151, 1).fillRect(0, 10, 170, 12);
-          g.fillStyle(0xfacc15, 1).fillRect(10, 14, 150, 4);
-          g.fillStyle(0xe5e7eb, 1).fillRect(160, -50, 4, 62);
-          g.fillStyle(0x2563eb, 1).fillTriangle(164, -50, 164, -30, 192, -40);
-          g.generateTexture("pad", 196, 64);
+          // 기지 패드 + 깃발 (아래쪽 12px 가 활주로 — 이미지는 바닥 기준으로 놓는다)
+          g.fillStyle(0x374151, 1).fillRect(0, 58, 196, 12);
+          g.fillStyle(0xfacc15, 1).fillRect(10, 62, 24, 3).fillRect(46, 62, 24, 3).fillRect(82, 62, 24, 3).fillRect(118, 62, 24, 3);
+          g.fillStyle(0xf8fafc, 1).fillCircle(178, 64, 9);
+          g.fillStyle(0x374151, 1).fillRect(173, 59, 3, 10).fillRect(180, 59, 3, 10).fillRect(173, 63, 10, 3); // H 표시
+          g.generateTexture("pad", 196, 70);
+          g.clear();
+          // 격납고(둥근 지붕)
+          g.fillStyle(0x94a3b8, 1).fillEllipse(60, 30, 116, 56).fillRect(2, 30, 116, 28);
+          g.fillStyle(0xcbd5e1, 1).fillEllipse(60, 27, 100, 40);
+          g.fillStyle(0x94a3b8, 1).fillRect(2, 30, 116, 28);
+          g.fillStyle(0xdc2626, 1).fillRect(2, 48, 116, 4);
+          g.fillStyle(0x1e293b, 1).fillRect(32, 32, 56, 26);
+          g.fillStyle(0x334155, 1).fillRect(32, 36, 56, 2).fillRect(32, 42, 56, 2).fillRect(32, 48, 56, 2);
+          g.fillStyle(0xfde047, 1).fillRect(32, 30, 56, 2);
+          g.generateTexture("hangar", 120, 58);
+          g.clear();
+          // 관제탑
+          g.fillStyle(0x64748b, 1).fillRect(13, 42, 14, 56);
+          g.fillStyle(0xdc2626, 1).fillRect(13, 56, 14, 7).fillRect(13, 74, 14, 7);
+          g.fillStyle(0xf8fafc, 1).fillRect(13, 63, 14, 11).fillRect(13, 81, 14, 11);
+          g.fillStyle(0x1f2937, 1).fillRect(0, 16, 40, 8);
+          g.fillStyle(0x38bdf8, 1).fillPoints([new Phaser.Geom.Point(3, 24), new Phaser.Geom.Point(37, 24), new Phaser.Geom.Point(33, 42), new Phaser.Geom.Point(7, 42)], true);
+          g.fillStyle(0xe0f2fe, 0.7).fillRect(9, 28, 6, 10);
+          g.fillStyle(0x94a3b8, 1).fillRect(19, 4, 2, 13);
+          g.fillStyle(0xef4444, 1).fillCircle(20, 4, 3);
+          g.generateTexture("tower", 40, 100);
+          g.clear();
+          // 구급 텐트(흰 천막 + 빨간 십자)
+          g.fillStyle(0xf8fafc, 1).fillTriangle(0, 38, 36, 2, 72, 38);
+          g.fillStyle(0xe2e8f0, 1).fillRect(0, 38, 72, 4);
+          g.fillStyle(0xdc2626, 1).fillRect(32, 14, 8, 20).fillRect(26, 20, 20, 8);
+          g.fillStyle(0x475569, 1).fillRect(30, 34, 12, 8);
+          g.generateTexture("tent", 72, 42);
+          g.clear();
+          // 연료통 + 상자
+          g.fillStyle(0x65a30d, 1).fillRoundedRect(0, 8, 18, 26, 4).fillRoundedRect(20, 8, 18, 26, 4);
+          g.fillStyle(0x3f6212, 1).fillRect(0, 14, 18, 3).fillRect(20, 14, 18, 3).fillRect(0, 26, 18, 3).fillRect(20, 26, 18, 3);
+          g.fillStyle(0xa16207, 1).fillRect(42, 14, 22, 20).fillStyle(0xfde68a, 1).fillRect(42, 22, 22, 3);
+          g.generateTexture("depot", 66, 36);
           g.destroy();
 
           // 산 (512x256 POT, 가로 반복)
@@ -298,8 +389,14 @@ export default function RescueGame({ questions, rounds = 3, level = "normal", on
           this.mtn = this.add.tileSprite(0, GROUND_Y - 250, W, 256, "rr-mtn").setOrigin(0).setScrollFactor(0).setDepth(1).setAlpha(0.9);
           this.grd = this.add.tileSprite(0, GROUND_Y, W, H - GROUND_Y, "rr-ground").setOrigin(0).setScrollFactor(0).setDepth(2);
           for (let i = 0; i < 40; i++) this.add.image(300 + i * 80 + Phaser.Math.Between(-20, 20), GROUND_Y - 26, "palm").setDepth(3).setAlpha(0.9).setScale(Phaser.Math.FloatBetween(0.8, 1.2));
-          this.add.image(BASE_X, GROUND_Y - 10, "pad").setDepth(4);
-          this.add.text(BASE_X + 20, GROUND_Y + 6, "BASE", { fontFamily: FONT, fontSize: "16px", color: "#fff", fontStyle: "bold" }).setDepth(4);
+          // 기지 건물: 활주로 뒤로 격납고·관제탑·구급 텐트·보급품을 세운다(헬기보다 뒤, 패드보다 뒤)
+          const bottom = GROUND_Y + 4;
+          this.add.image(BASE_X - 66, bottom, "hangar").setOrigin(0.5, 1).setDepth(3.4);
+          this.add.image(BASE_X + 96, bottom, "tower").setOrigin(0.5, 1).setDepth(3.4);
+          this.add.image(BASE_X + 196, bottom, "tent").setOrigin(0.5, 1).setDepth(3.4);
+          this.add.image(BASE_X + 262, bottom, "depot").setOrigin(0.5, 1).setDepth(3.4);
+          this.add.image(BASE_X, GROUND_Y + 8, "pad").setOrigin(0.5, 1).setDepth(4);
+          this.add.text(BASE_X + 20, GROUND_Y + 12, "BASE", { fontFamily: FONT, fontSize: "16px", color: "#fff", fontStyle: "bold" }).setDepth(4);
         }
 
         /** 스테이지 난이도 파라미터 (쉬움은 한 단계 낮게, 어려움은 한 단계 높게) */
@@ -331,8 +428,9 @@ export default function RescueGame({ questions, rounds = 3, level = "normal", on
         }
 
         buildHeli() {
-          const body = this.add.image(0, 0, "heli").setScale(HELI_SCALE);
-          this.rotor = this.add.rectangle(0, -26 * HELI_SCALE, 90 * HELI_SCALE, 3, 0x111827).setOrigin(0.5);
+          const body = this.add.image(0, 0, "heli").setScale(HELI_SCALE / HELI_TEX);
+          // 로터 허브가 텍스처의 (42, 7) — 텍스처 중심(42, 26)에서 위로 19
+          this.rotor = this.add.rectangle(0, -19 * HELI_SCALE, 90 * HELI_SCALE, 3, 0x111827).setOrigin(0.5);
           this.heli = this.add.container(BASE_X + 20, GROUND_Y - SKID, [body, this.rotor]).setDepth(10);
           this.vx = this.vy = 0;
           this.landed = true;
@@ -376,7 +474,7 @@ export default function RescueGame({ questions, rounds = 3, level = "normal", on
           this.state = "start";
           this.setHud(false);
           const dim = this.add.rectangle(W / 2, H / 2, W, H, 0x050a1c, 0.62).setScrollFactor(0).setDepth(90);
-          const title = this.add.text(W / 2, 110, "RESCUE RAIDERS", { fontFamily: FONT, fontSize: "58px", color: "#bef264", fontStyle: "bold", stroke: "#0b1230", strokeThickness: 8 }).setOrigin(0.5).setScrollFactor(0).setDepth(91);
+          const title = this.add.text(W / 2, 110, "WORD RESCUE", { fontFamily: FONT, fontSize: "58px", color: "#bef264", fontStyle: "bold", stroke: "#0b1230", strokeThickness: 8 }).setOrigin(0.5).setScrollFactor(0).setDepth(91);
           const sub = this.add
             .text(
               W / 2,
@@ -725,7 +823,7 @@ export default function RescueGame({ questions, rounds = 3, level = "normal", on
           if (this.jets.length === 0 && time >= this.waveAt) {
             const ys = Phaser.Utils.Array.Shuffle([170, 225, 280, 335]);
             for (let i = 0; i < P.jets; i++) {
-              const body = this.add.image(0, 0, "jet").setFlipX(true).setScale(JET_SCALE);
+              const body = this.add.image(0, 0, "jet").setFlipX(true).setScale(JET_SCALE / JET_TEX);
               const x = cam.scrollX + W + 140 + i * 300; // 간격을 넓게 두어 한꺼번에 몰려오지 않는다
               const c = this.add.container(x, ys[i], [body]).setDepth(9);
               this.jets.push({ c, body, vx: Phaser.Math.Between(P.jetSpeed[0], P.jetSpeed[1]), hp: P.jetHp, y0: ys[i], phase: Math.random() * 6, nextShot: time + 1500 + Math.random() * P.jetShot * 0.5 });
