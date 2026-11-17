@@ -17,14 +17,16 @@ type Props = {
   questions: ArcheryQuestion[]; // answer가 영어 단어인 문제(영영/한영)
   level?: OmokLevel;
   maxMoves?: number; // 각자 둘 수 있는 돌 수
+  variant?: "letter" | "word"; // letter: 3목·4목마다 철자 1글자 / word: 3목·4목마다 뜻에 맞는 단어 전체 고르기
   onFinish?: (r: { result: "win" | "lose" | "draw"; you: number; ai: number; words: number }) => void;
 };
 
 const W = 540;
 const H = 900;
-const N = 11;
-const GAP = 44;
-const GX = 50;
+const N = 19; // 국제 규격 바둑판(19×19)
+const GAP = 24;
+const SC = GAP / 44; // 돌·표시 크기 배율(원본 텍스처는 칸 간격 44 기준)
+const GX = (540 - GAP * (N - 1)) / 2;
 const GY = 270;
 const QTIME = 10;
 const LETTER_PTS = 100;
@@ -38,7 +40,8 @@ type Kind = keyof typeof KIND_LABEL;
 type Who = 1 | 2; // 1=사람, 2=AI
 type Word = { answer: string; prompt: string; got: number };
 
-export default function OmokGame({ questions, level = "normal", maxMoves = 20, onFinish }: Props) {
+export default function OmokGame({ questions, level = "normal", maxMoves = 20, variant = "letter", onFinish }: Props) {
+  const wordMode = variant === "word";
   const hostRef = useRef<HTMLDivElement>(null);
   const finishRef = useRef(onFinish);
   finishRef.current = onFinish;
@@ -109,8 +112,8 @@ export default function OmokGame({ questions, level = "normal", maxMoves = 20, o
           const bg = this.add.graphics().setDepth(0);
           bg.fillStyle(0x1e293b, 1).fillRoundedRect(8, 8, W - 16, H - 16, 28);
           this.add.image(W / 2, GY + (GAP * (N - 1)) / 2, "omok-board").setDepth(1);
-          this.hover = this.add.circle(0, 0, 17, 0xffd166, 0.35).setStrokeStyle(2, 0xffd166, 0.9).setDepth(3).setVisible(false);
-          this.last = this.add.rectangle(0, 0, 10, 10, 0xef4444).setDepth(5).setVisible(false).setRotation(Math.PI / 4);
+          this.hover = this.add.circle(0, 0, 17 * SC, 0xffd166, 0.35).setStrokeStyle(2, 0xffd166, 0.9).setDepth(3).setVisible(false);
+          this.last = this.add.rectangle(0, 0, 10 * SC, 10 * SC, 0xef4444).setDepth(5).setVisible(false).setRotation(Math.PI / 4);
           this.buildHud();
 
           this.input.on("pointerdown", (p: Phaser.Input.Pointer) => this.onDown(p));
@@ -159,15 +162,18 @@ export default function OmokGame({ questions, level = "normal", maxMoves = 20, o
           c.strokeStyle = "#5b3a14"; c.lineWidth = 4;
           c.beginPath(); c.roundRect?.(2, 2, size - 4, size - 4, 18); c.stroke();
           const o = 35;
-          c.strokeStyle = "#3a2410"; c.lineWidth = 1.6;
+          c.strokeStyle = "#3a2410"; c.lineWidth = 1.2;
           for (let k = 0; k < N; k++) {
             c.beginPath(); c.moveTo(o, o + k * GAP); c.lineTo(o + GAP * (N - 1), o + k * GAP); c.stroke();
             c.beginPath(); c.moveTo(o + k * GAP, o); c.lineTo(o + k * GAP, o + GAP * (N - 1)); c.stroke();
           }
           c.fillStyle = "#3a2410";
-          [[2, 2], [2, 8], [8, 2], [8, 8], [5, 5]].forEach(([a, d]) => {
-            c.beginPath(); c.arc(o + a * GAP, o + d * GAP, 4.5, 0, Math.PI * 2); c.fill();
-          });
+          // 화점 9개(3·9·15번째 줄)
+          [3, 9, 15].forEach((a) =>
+            [3, 9, 15].forEach((d) => {
+              c.beginPath(); c.arc(o + a * GAP, o + d * GAP, 3.2, 0, Math.PI * 2); c.fill();
+            }),
+          );
           b.refresh();
 
           const g = this.make.graphics({ x: 0, y: 0 }, false);
@@ -244,8 +250,8 @@ export default function OmokGame({ questions, level = "normal", maxMoves = 20, o
           u.aiClue.setText(this.words[2].prompt);
           u.youLeft.setText(`남은 수 ${maxMoves - this.moves[1]} · 완성 ${this.wordsDone[1]}단어`);
           u.aiLeft.setText(`남은 수 ${maxMoves - this.moves[2]} · 완성 ${this.wordsDone[2]}단어`);
-          u.turn.setText(this.state === "ai" ? "AI 차례..." : this.state === "ask" ? "다음 철자를 고르세요!" : this.state === "busy" ? "" : this.state === "player" ? "내 차례" : "");
-          u.tip.setText(`열린 3목 · 막힌 4목 · 열린 4목을 만들면 철자 1개 (+100) · 단어 완성 +300\n5목을 만들면 즉시 승리! ${maxMoves}수까지 5목이 없으면 점수가 높은 쪽 승리`);
+          u.turn.setText(this.state === "ai" ? "AI 차례..." : this.state === "ask" ? (wordMode ? "뜻에 맞는 단어를 고르세요!" : "다음 철자를 고르세요!") : this.state === "busy" ? "" : this.state === "player" ? "내 차례" : "");
+          u.tip.setText(`${wordMode ? `열린 3목 · 막힌 4목 · 열린 4목을 만들면 뜻에 맞는 단어 고르기 (맞히면 +${WORD_BONUS})` : "열린 3목 · 막힌 4목 · 열린 4목을 만들면 철자 1개 (+100) · 단어 완성 +300"}\n5목을 만들면 즉시 승리! ${maxMoves}수까지 5목이 없으면 점수가 높은 쪽 승리`);
         }
 
         // ---------- 시작/입력 ----------
@@ -258,7 +264,7 @@ export default function OmokGame({ questions, level = "normal", maxMoves = 20, o
             .text(
               W / 2,
               410,
-              `단어 오목 · AI ${LEVEL_LABEL[level]}\n\n정식 오목처럼 차례대로 돌을 놓아요\n열린 3목, 막힌 4목, 열린 4목을 만들면\n내 목표 단어의 철자를 1글자 얻어요\n(다음 글자를 4지선다로 맞히기)\n\n철자 +100 · 단어 완성 +300\n5목을 먼저 만들면 즉시 승리!\n각자 ${maxMoves}수까지 5목이 없으면\n점수가 높은 쪽이 승리`,
+              `단어 오목 · AI ${LEVEL_LABEL[level]}\n\n정식 오목처럼 차례대로 돌을 놓아요\n열린 3목, 막힌 4목, 열린 4목을 만들면\n${wordMode ? `뜻을 보고 맞는 단어 전체를 고르는 문제가 나와요\n(4지선다, 맞히면 +${WORD_BONUS})` : "내 목표 단어의 철자를 1글자 얻어요\n(다음 글자를 4지선다로 맞히기)\n\n철자 +100 · 단어 완성 +300"}\n\n5목을 먼저 만들면 즉시 승리!\n각자 ${maxMoves}수까지 5목이 없으면\n점수가 높은 쪽이 승리`,
               { fontFamily: FONT, fontSize: "19px", color: "#fff", align: "center", lineSpacing: 8 },
             )
             .setOrigin(0.5);
@@ -283,7 +289,7 @@ export default function OmokGame({ questions, level = "normal", maxMoves = 20, o
           const x = Math.round((p.x - GX) / GAP);
           const y = Math.round((p.y - GY) / GAP);
           if (!inb(x, y)) return null;
-          if (Math.hypot(p.x - px(x), p.y - py(y)) > GAP * 0.55) return null;
+          if (Math.hypot(p.x - px(x), p.y - py(y)) > GAP * 0.75) return null; // 칸이 작아 터치가 빗나가지 않게 여유를 둔다
           return { x, y };
         }
 
@@ -309,9 +315,9 @@ export default function OmokGame({ questions, level = "normal", maxMoves = 20, o
         place(x: number, y: number, who: Who) {
           this.board[y][x] = who;
           this.moves[who]++;
-          const img = this.add.image(px(x), py(y), who === 1 ? "stone-b" : "stone-w").setDepth(4).setScale(0.3);
+          const img = this.add.image(px(x), py(y), who === 1 ? "stone-b" : "stone-w").setDepth(4).setScale(0.3 * SC);
           this.stones.set(`${x},${y}`, img);
-          this.tweens.add({ targets: img, scale: 1, duration: 260, ease: "Back.out" });
+          this.tweens.add({ targets: img, scale: SC, duration: 260, ease: "Back.out" });
           this.last.setPosition(px(x), py(y)).setVisible(true).setFillStyle(who === 1 ? 0xfacc15 : 0xef4444);
           this.burst(px(x), py(y), who === 1 ? [0xffd166, 0xffffff] : [0x93c5fd, 0xffffff], 10);
         }
@@ -379,7 +385,7 @@ export default function OmokGame({ questions, level = "normal", maxMoves = 20, o
             if (!ev) return done();
             this.floatText(px(x), py(y) - 36, `${KIND_LABEL[ev.kind]}!`, who === 1 ? "#ffd166" : "#bfdbfe", 24);
             this.cameras.main.flash(120, 255, 244, 170);
-            this.time.delayedCall(650, () => this.grantLetter(who, next));
+            this.time.delayedCall(650, () => (wordMode ? this.grantWord(who, next) : this.grantLetter(who, next)));
           };
           next();
         }
@@ -415,6 +421,59 @@ export default function OmokGame({ questions, level = "normal", maxMoves = 20, o
           } else {
             this.time.delayedCall(700, () => after(Math.random() < AI_ACC[level]));
           }
+        }
+
+        /** (word 모드) 3목·4목을 만들면 뜻에 맞는 단어 전체를 4지선다로 맞힌다. 맞으면 +WORD_BONUS, 틀려도 다음엔 새 단어. */
+        grantWord(who: Who, next: () => void) {
+          const w = this.words[who];
+          const after = (ok: boolean) => {
+            if (ok) {
+              this.points[who] += WORD_BONUS;
+              this.wordsDone[who]++;
+              this.floatText(W / 2, 300, `WORD! ${w.answer.toUpperCase()} +${WORD_BONUS}`, "#4ade80", 28);
+              this.cameras.main.flash(180, 180, 255, 190);
+            } else {
+              this.floatText(W / 2, 300, who === 1 ? `WRONG  (${w.answer.toUpperCase()})` : "AI MISSED", "#ff6b6b", 26);
+            }
+            this.words[who] = this.pickWord(); // 맞든 틀리든 다음엔 새 단어 (같은 문제를 소거법으로 풀지 못하게)
+            this.refreshHud();
+            this.time.delayedCall(ok ? 1000 : 700, next);
+          };
+          if (who === 1) this.askWord(w, after);
+          else this.time.delayedCall(700, () => after(Math.random() < AI_ACC[level]));
+        }
+
+        askWord(w: Word, done: (ok: boolean) => void) {
+          this.state = "ask";
+          this.refreshHud();
+          this.askDone = done;
+          this.askCorrect = w.answer;
+          this.timeLeft = QTIME + 4; // 단어 전체를 고르므로 철자 문제보다 시간을 조금 더 준다
+          const others = Phaser.Utils.Array.Shuffle(Array.from(new Set(this.pool.map((p) => p.answer.toLowerCase()))).filter((a) => a !== w.answer)).slice(0, 3);
+          const choices = Phaser.Utils.Array.Shuffle([w.answer, ...others]);
+
+          const dim = this.add.rectangle(W / 2, H / 2, W, H, 0x020617, 0.62).setInteractive();
+          const panel = this.add.rectangle(W / 2, 470, 480, 400, 0x0b1230, 0.97).setStrokeStyle(2, 0xffd166, 0.9);
+          const title = this.add.text(W / 2, 296, "뜻에 맞는 단어는?", { fontFamily: FONT, fontSize: "14px", color: "#ffd166", fontStyle: "bold" }).setOrigin(0.5);
+          const clue = this.add.text(W / 2, 350, w.prompt, { fontFamily: FONT, fontSize: "20px", color: "#ffffff", align: "center", wordWrap: { width: 430 }, lineSpacing: 6 }).setOrigin(0.5);
+          const barBg = this.add.rectangle(W / 2, 400, 420, 8, 0x334155);
+          this.timerBar = this.add.rectangle(W / 2 - 210, 400, 420, 8, 0x4ade80).setOrigin(0, 0.5);
+          const items: Phaser.GameObjects.GameObject[] = [dim, panel, title, clue, barBg, this.timerBar];
+
+          this.letterBtns = [];
+          choices.forEach((word, i) => {
+            const y = 445 + i * 56;
+            const r = this.add.rectangle(W / 2, y, 420, 46, 0x1e293b).setStrokeStyle(2, 0x475569).setInteractive({ useHandCursor: true });
+            const t = this.add.text(W / 2, y, word, { fontFamily: FONT, fontSize: "24px", color: "#f8fafc", fontStyle: "bold" }).setOrigin(0.5);
+            if (t.width > 340) t.setScale(340 / t.width);
+            const n = this.add.text(W / 2 - 196, y, String(i + 1), { fontFamily: FONT, fontSize: "13px", color: "#94a3b8" }).setOrigin(0.5);
+            r.on("pointerover", () => this.state === "ask" && r.setFillStyle(0x334155));
+            r.on("pointerout", () => this.state === "ask" && r.setFillStyle(0x1e293b));
+            r.on("pointerdown", () => this.pickLetter(i));
+            this.letterBtns.push({ r, letter: word });
+            items.push(r, t, n);
+          });
+          this.modal = this.add.container(0, 0, items).setDepth(80);
         }
 
         // ---------- 철자 문제(4지선다) ----------

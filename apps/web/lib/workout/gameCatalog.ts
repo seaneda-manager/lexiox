@@ -1,5 +1,5 @@
 /** Workout 게임 카탈로그: 같은 엔진·세계관의 모드들을 하나의 게임(그룹)으로 묶는다. */
-export type GameStyle = "hang" | "fly" | "rain" | "spell" | "trial" | "race" | "drift" | "driftcockpit" | "cockpit" | "omok" | "clay" | "sprint" | "rescue" | "rescuepick" | "memory" | "tetris";
+export type GameStyle = "hang" | "fly" | "rain" | "spell" | "trial" | "race" | "drift" | "driftcockpit" | "cockpit" | "omok" | "omokword" | "clay" | "sprint" | "rescue" | "rescuepick" | "memory" | "tetris";
 export type ThumbKey = "archery" | "rain" | "race" | "drift" | "cockpit" | "omok" | "sports" | "rescue" | "memory" | "tetris";
 export type Orientation = "landscape" | "portrait" | "any";
 
@@ -47,7 +47,7 @@ export const GAME_GROUPS: GameGroup[] = [
     id: "race",
     name: "WORD RACE",
     subtitle: "단어 레이스",
-    tagline: "정답 단어가 있는 차선으로 달리세요",
+    tagline: "뜻에 맞는 단어는 통과하고, 아닌 단어는 피해 달리세요",
     thumb: "race",
     controls: "← → 차선 이동 · ↑ 가속 / 폰은 ◀ ▶ GAS 버튼",
     platforms: ["PC", "모바일 (세로)"],
@@ -87,7 +87,10 @@ export const GAME_GROUPS: GameGroup[] = [
     thumb: "omok",
     controls: "칸을 눌러 돌 놓기 · 철자 문제는 1~4 키 또는 터치",
     platforms: ["PC", "모바일 (세로)"],
-    modes: [{ style: "omok", label: "AI 대전", desc: "열린 3목·막힌 4목·열린 4목마다 철자 획득, 5목은 즉시 승리, 20수까지 없으면 점수로 승부" }],
+    modes: [
+      { style: "omok", label: "AI 대전", desc: "열린 3목·막힌 4목·열린 4목마다 철자 획득, 5목은 즉시 승리, 20수까지 없으면 점수로 승부" },
+      { style: "omokword", label: "단어 맞히기", desc: "3목·4목을 만들 때마다 뜻에 맞는 단어 전체를 4지선다로 맞히기 (+300). 19×19 바둑판" },
+    ],
   },
   {
     id: "memory",
@@ -149,7 +152,7 @@ export function groupOfStyle(style: GameStyle): GameGroup {
 
 export function orientationOf(style: GameStyle): Orientation {
   if (style === "hang" || style === "fly" || style === "drift" || style === "driftcockpit" || style === "clay" || style === "sprint" || style === "rescue" || style === "rescuepick" || style === "memory") return "landscape";
-  if (style === "trial" || style === "race" || style === "cockpit" || style === "omok" || style === "tetris") return "portrait";
+  if (style === "trial" || style === "race" || style === "cockpit" || style === "omok" || style === "omokword" || style === "tetris") return "portrait";
   return "any";
 }
 

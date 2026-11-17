@@ -8,7 +8,7 @@ import { createJoystick, type Joystick } from "@/lib/workout/virtualJoystick";
  * 단어 드리프트 (위에서 내려다보는 2D 서킷)
  *  - 속도가 높을 때 크게 꺾거나 DRIFT(핸드브레이크)를 누르면 차가 미끄러진다.
  *  - 미끄러진 각도 × 속도로 드리프트 점수가 쌓이고, 끊기지 않으면 배율이 오른다.
- *  - 코스에 놓인 단어 게이트 3개 중 정답이 있는 쪽으로 통과하면 보너스.
+ *  - 코스의 게이트마다 단어판 1개: 뜻에 맞는 정답이면 부딪혀 통과, 오답 단어면 피해서 통과하면 보너스.
  */
 type Props = {
   questions: ArcheryQuestion[];
@@ -23,7 +23,9 @@ const W = 960;
 const H = 540;
 const WORLD_W = 2600;
 const WORLD_H = 1800;
-const TRACK_W = 250;
+const TRACK_W = 310; // 게이트에 단어가 1개뿐이라 길을 덜 막으므로 도로를 넓혀 속도를 내기 쉽게 한다
+const PLATE_HIT = 50; // 단어판 중심에서 이 거리 안으로 지나가면 "부딪힘"
+const PLATE_OFFS = [-100, 0, 100]; // 단어판이 놓일 수 있는 가로 위치(도로 중심 기준)
 const MAX_V = 820;
 const REVERSE_MAX = 260; // 후진 최고 속도(px/s)
 const FONT = "system-ui, -apple-system, 'Segoe UI', sans-serif";
@@ -90,8 +92,11 @@ export default function DriftGame({ questions, laps = 2, gatesPerLap = 6, assist
         texts: Phaser.GameObjects.Text[];
         nx: number;
         ny: number;
-        correctSlot: number;
+        off: number; // 단어판의 가로 위치
+        isAnswer: boolean; // 이 단어판이 정답인가 (정답이면 먹고, 오답이면 피한다)
         res: number; // 0 미통과 / 1 정답 / 2 오답
+        hint: boolean; // 드리프트 보상: 이 단어판이 정답인지 빛으로 알려준다
+        glow: Phaser.GameObjects.Arc;
       };
 
       class DriftScene extends Phaser.Scene {
@@ -118,14 +123,15 @@ export default function DriftGame({ questions, laps = 2, gatesPerLap = 6, assist
         correct = 0;
         gates: Gate[] = [];
         gateNo = 0; // 전체 게이트 순번
+        focus = 0; // 드리프트로 모은 힌트 충전(다음 게이트 정답 여부를 빛으로 알려준다, 최대 3)
         chain = { active: false, t: 0, pts: 0, none: 0 };
-        qOrder: { q: ArcheryQuestion; choices: string[] }[] = [];
+        qOrder: { q: ArcheryQuestion; word: string; isAnswer: boolean; off: number }[] = [];
         car!: Phaser.GameObjects.Image;
         camTarget!: Phaser.GameObjects.Rectangle;
         skid!: Phaser.GameObjects.RenderTexture;
         smoke!: Phaser.GameObjects.Particles.ParticleEmitter;
         dust!: Phaser.GameObjects.Particles.ParticleEmitter;
-        hud!: Record<"score" | "chain" | "prompt" | "gate" | "info" | "center", Phaser.GameObjects.Text>;
+        hud!: Record<"score" | "chain" | "prompt" | "gate" | "info" | "center" | "focus", Phaser.GameObjects.Text>;
         panel!: Phaser.GameObjects.Rectangle;
         mini!: Phaser.GameObjects.Image;
         miniDot!: Phaser.GameObjects.Rectangle;
@@ -158,6 +164,7 @@ export default function DriftGame({ questions, laps = 2, gatesPerLap = 6, assist
           this.correct = 0;
           this.t = 0;
           this.gateNo = 0;
+          this.focus = 0;
           this.vx = this.vy = 0;
           this.steer = 0;
           this.sliding = false;
@@ -166,12 +173,20 @@ export default function DriftGame({ questions, laps = 2, gatesPerLap = 6, assist
           this.buildTrackTexture();
           this.skid = this.add.renderTexture(0, 0, WORLD_W, WORLD_H).setOrigin(0).setDepth(1);
 
-          // 문제 순서(게이트마다 정답 포함 3지선다)
+          // 문제 순서: 게이트마다 단어판 1개. 정답이면 먹고(맞은 단어), 오답 단어면 피해 간다.
+          // 정답/오답이 번갈아 나오도록 하되 같은 쪽이 3번 연속은 나오지 않게 섞는다.
           const total = laps * gatesPerLap;
+          let streak = 0;
+          let lastAns = true;
           for (let i = 0; i < total; i++) {
             const q = questions[i % questions.length];
-            const others = Phaser.Utils.Array.Shuffle(q.choices.filter((c) => c !== q.answer)).slice(0, 2);
-            this.qOrder.push({ q, choices: Phaser.Utils.Array.Shuffle([q.answer, ...others]) });
+            const wrongs = q.choices.filter((c) => c !== q.answer);
+            let isAnswer = Math.random() < 0.45 || wrongs.length === 0;
+            if (streak >= 2 && isAnswer === lastAns && (!isAnswer || wrongs.length > 0)) isAnswer = !isAnswer;
+            streak = isAnswer === lastAns ? streak + 1 : 1;
+            lastAns = isAnswer;
+            const word = isAnswer ? q.answer : wrongs[Math.floor(Math.random() * wrongs.length)];
+            this.qOrder.push({ q, word, isAnswer, off: PLATE_OFFS[Math.floor(Math.random() * PLATE_OFFS.length)] });
           }
           this.buildGates();
 
@@ -373,13 +388,12 @@ export default function DriftGame({ questions, laps = 2, gatesPerLap = 6, assist
             rect.setRotation(Math.atan2(tg.y, tg.x) + Math.PI / 2);
             const plates: Phaser.GameObjects.Image[] = [];
             const texts: Phaser.GameObjects.Text[] = [];
-            [-86, 0, 86].forEach((off) => {
-              const px = p.x + nx * off;
-              const py = p.y + ny * off;
-              plates.push(this.add.image(px, py, "dplate").setDepth(6));
-              texts.push(this.add.text(px, py, "", { fontFamily: FONT, fontSize: "16px", color: "#10172e", fontStyle: "bold" }).setOrigin(0.5).setDepth(7));
-            });
-            this.gates.push({ idx: gi, rect, plates, texts, nx, ny, correctSlot: 0, res: 0 });
+            // 단어판은 1개. 가로 위치는 assignLap에서 매 랩마다 새로 정한다.
+            plates.push(this.add.image(p.x, p.y, "dplate").setDepth(6));
+            texts.push(this.add.text(p.x, p.y, "", { fontFamily: FONT, fontSize: "16px", color: "#10172e", fontStyle: "bold" }).setOrigin(0.5).setDepth(7));
+            const glow = this.add.circle(p.x, p.y, 62, 0x4ade80, 0.35).setStrokeStyle(4, 0xffffff, 0.8).setDepth(5).setVisible(false);
+            this.tweens.add({ targets: glow, scale: 1.25, alpha: 0.15, duration: 420, yoyo: true, repeat: -1 });
+            this.gates.push({ idx: gi, rect, plates, texts, nx, ny, off: 0, isAnswer: true, res: 0, hint: false, glow });
           });
           this.assignLap(0);
         }
@@ -388,12 +402,19 @@ export default function DriftGame({ questions, laps = 2, gatesPerLap = 6, assist
           this.gates.forEach((g, k) => {
             const item = this.qOrder[lap * gatesPerLap + k];
             if (!item) return;
-            g.correctSlot = item.choices.indexOf(item.q.answer);
+            g.off = item.off;
+            g.isAnswer = item.isAnswer;
             g.res = 0;
-            g.texts.forEach((tx, i) => {
-              tx.setText(item.choices[i] ?? "").setScale(1);
-              if (tx.width > 88) tx.setScale(88 / tx.width);
-            });
+            g.hint = false;
+            g.glow.setVisible(false);
+            const p = track[g.idx];
+            const px = p.x + g.nx * g.off;
+            const py = p.y + g.ny * g.off;
+            g.plates[0].setPosition(px, py).clearTint();
+            g.glow.setPosition(px, py);
+            const tx = g.texts[0];
+            tx.setPosition(px, py).setText(item.word).setScale(1);
+            if (tx.width > 88) tx.setScale(88 / tx.width);
             g.rect.setFillStyle(0xffffff, 0.45);
           });
         }
@@ -407,6 +428,7 @@ export default function DriftGame({ questions, laps = 2, gatesPerLap = 6, assist
             gate: t(W / 2, 62, 12, "#ffd166", { strokeThickness: 3 }).setOrigin(0.5, 0),
             score: t(16, 10, 30, "#ffffff"),
             chain: t(16, 48, 20, "#ffb703"),
+            focus: t(16, 76, 18, "#7dd3fc", { strokeThickness: 3 }),
             info: t(W - 12, 152, 17, "#e2e8f0", { align: "right" }).setOrigin(1, 0),
             center: t(W / 2, 250, 90, "#ffffff").setOrigin(0.5).setDepth(70),
           };
@@ -448,7 +470,7 @@ export default function DriftGame({ questions, laps = 2, gatesPerLap = 6, assist
             .text(
               W / 2,
               270,
-              `${laps}바퀴 · 코너에서 크게 꺾거나 DRIFT를 눌러 미끄러지세요${assist ? "  [어시스트 ON]" : ""}\n미끄러질수록, 길게 이어갈수록 점수 ×배율!\n정답 게이트: 그냥 통과 300 · 드리프트로 통과 600~900\n(미끄러진 각도가 클수록 높음)\n\n◀ ▶ 핸들(폰은 조이패드) · GAS 가속 · BACK 브레이크/후진 · DRIFT 핸드브레이크\n키보드: ← → / ↑ / ↓(브레이크·멈추면 후진) / Space · R 트랙 복귀`,
+              `${laps}바퀴 · 코너에서 크게 꺾거나 DRIFT를 눌러 미끄러지세요${assist ? "  [어시스트 ON]" : ""}\n미끄러질수록, 길게 이어갈수록 점수 ×배율!\n길 위의 단어판이 뜻에 맞으면 통과(먹기), 아니면 피해 가세요\n게이트: 그냥 통과 300 · 드리프트로 통과 600~900\n(미끄러진 각도가 클수록 높음)\n드리프트로 통과하면 FOCUS ⚡ 충전 — 다음 단어판이 정답이면 초록, 오답이면 빨강으로 빛나요\n\n◀ ▶ 핸들(폰은 조이패드) · GAS 가속 · BACK 브레이크/후진 · DRIFT 핸드브레이크\n키보드: ← → / ↑ / ↓(브레이크·멈추면 후진) / Space · R 트랙 복귀`,
               { fontFamily: FONT, fontSize: "19px", color: "#fff", align: "center", lineSpacing: 8 },
             )
             .setOrigin(0.5)
@@ -720,11 +742,12 @@ export default function DriftGame({ questions, laps = 2, gatesPerLap = 6, assist
           const g = this.gates[k];
           const p = track[g.idx];
           const s = (this.x - p.x) * g.nx + (this.y - p.y) * g.ny;
-          const slot = s < -43 ? 0 : s > 43 ? 2 : 1;
-          const ok = slot === g.correctSlot;
+          const hit = Math.abs(s - g.off) < PLATE_HIT;
+          const ok = g.isAnswer ? hit : !hit; // 정답이면 먹어야 하고, 오답 단어면 피해야 한다
           g.res = ok ? 1 : 2;
+          g.glow.setVisible(false);
           g.rect.setFillStyle(ok ? 0x4ade80 : 0xef4444, 0.7);
-          g.plates[g.correctSlot].setTint(0xaaf0b8);
+          g.plates[0].setTint(ok ? 0xaaf0b8 : 0xff9a9a);
           if (ok) {
             this.correct++;
             // 점수 차등: 그냥 통과 300 < 드리프트 통과 600~900 (미끄러진 각도가 클수록 가산)
@@ -740,16 +763,29 @@ export default function DriftGame({ questions, laps = 2, gatesPerLap = 6, assist
             this.floatText(this.x, this.y - 80, `${label} +${bonus}`, drifting ? "#ffd166" : "#4ade80", drifting ? 30 : 26);
             this.burst(this.x, this.y, [0x4ade80, 0xffffff, 0xffd166]);
             this.cameras.main.flash(120, 200, 255, 200);
+            if (drifting) {
+              // 드리프트 보상: 힌트 충전(PERFECT는 2)
+              const gain = a > 0.6 ? 2 : 1;
+              this.focus = Math.min(3, this.focus + gain);
+              this.floatText(this.x, this.y - 112, `FOCUS +${gain}`, "#7dd3fc", 22);
+            }
           } else {
             this.score = Math.max(0, this.score - 100);
             this.vx *= 0.6;
             this.vy *= 0.6;
-            this.floatText(this.x, this.y - 80, "WRONG -100", "#ff6b6b", 28);
+            this.floatText(this.x, this.y - 80, g.isAnswer ? "MISSED THE ANSWER -100" : "WRONG WORD -100", "#ff6b6b", 26);
             this.cameras.main.shake(200, 0.01);
             this.loseChain("CHAIN LOST");
           }
           this.gateNo++;
           if (this.gateNo % gatesPerLap === 0 && this.gateNo < this.qOrder.length) this.assignLap(this.gateNo / gatesPerLap);
+          // 충전이 있으면 다음 게이트 단어판이 정답 여부를 빛으로 알려준다(게이트당 1충전 소모)
+          if (this.gateNo < this.qOrder.length && this.focus > 0) {
+            const ng = this.gates[this.gateNo % gatesPerLap];
+            this.focus--;
+            ng.hint = true;
+            ng.glow.setFillStyle(ng.isAnswer ? 0x4ade80 : 0xef4444, 0.35).setVisible(true);
+          }
           this.updatePrompt();
           void no;
         }
@@ -794,6 +830,7 @@ export default function DriftGame({ questions, laps = 2, gatesPerLap = 6, assist
           this.hud.chain.setText(ch.active ? `DRIFT ${Math.round(ch.pts * this.mult())}  ×${this.mult().toFixed(1)}` : "");
           const lap = Math.min(laps, Math.max(1, Math.floor((this.prog - PROG0) / N) + 1));
           const sp = Math.round((Math.hypot(this.vx, this.vy) / MAX_V) * 220);
+          this.hud.focus.setText(this.focus > 0 ? `FOCUS ${"⚡".repeat(this.focus)}` : "");
           this.hud.info.setText(`LAP ${lap}/${laps}\n${this.t.toFixed(1)}s\n${this.vfNow < -20 ? "R " : ""}${sp} km/h`);
           this.miniDot.setPosition(W - 210 + (this.x / WORLD_W) * 200, 8 + (this.y / WORLD_H) * (200 * WORLD_H / WORLD_W));
         }
@@ -810,6 +847,7 @@ export default function DriftGame({ questions, laps = 2, gatesPerLap = 6, assist
             g.rect.setVisible(false);
             g.plates.forEach((p) => p.setVisible(false));
             g.texts.forEach((t) => t.setVisible(false));
+            g.glow.setVisible(false).setActive(false);
           });
 
           // 앞유리 화면 (절반 해상도 캔버스를 2배로 확대 → 가볍다)
@@ -999,15 +1037,20 @@ export default function DriftGame({ questions, laps = 2, gatesPerLap = 6, assist
             ctx.moveTo(L.x, L.y);
             ctx.lineTo(R.x, R.y);
             ctx.stroke();
-            [-86, 0, 86].forEach((o, si) => {
+            [g.off].forEach((o, si) => {
               const q = proj(p.x + nx * o, p.y + ny * o);
               if (q.f < 20) return;
               const sc = FOC / q.f;
               const w = 90 * sc;
               const h = 30 * sc;
               const yTop = q.y - (44 + 30) * sc;
-              const good = g.res === 1 && si === g.correctSlot;
-              ctx.fillStyle = good ? "#bbf7d0" : "#fff3c4";
+              if (g.hint && g.res === 0) {
+                // 드리프트 보상 힌트: 정답이면 초록, 오답이면 빨강 후광
+                const pad = 10 * sc;
+                ctx.fillStyle = g.isAnswer ? "rgba(74,222,128,0.65)" : "rgba(239,68,68,0.65)";
+                ctx.fillRect(q.x - w / 2 - pad, yTop - pad, w + pad * 2, h + pad * 2);
+              }
+              ctx.fillStyle = g.res === 1 ? "#bbf7d0" : g.res === 2 ? "#fecaca" : "#fff3c4";
               ctx.fillRect(q.x - w / 2, yTop, w, h);
               ctx.strokeStyle = "#3a2410";
               ctx.lineWidth = Math.max(1, 2 * sc);

@@ -96,7 +96,7 @@ function Player({ style, assignmentId, demo }: { style: GameStyle; assignmentId:
   // 스펠링(빈칸) 문제는 활쏘기(매달린/날아가는 과녁)에서만 쓴다
   const spellingOk = style === "hang" || style === "fly";
   // 오목은 영어 단어의 철자를 모으므로 정답이 영어 단어인 문제(영영·한영)만 쓴다
-  const noKoAnswer = style === "omok" || style === "rescue" || style === "rescuepick";
+  const noKoAnswer = style === "omok" || style === "omokword" || style === "rescue" || style === "rescuepick";
   const effMode: ArcheryMode = (!spellingOk && mode === "spelling") || (noKoAnswer && mode === "en-ko") ? "en-en" : mode;
   const usesMode = style !== "spell";
 
@@ -106,7 +106,7 @@ function Player({ style, assignmentId, demo }: { style: GameStyle; assignmentId:
     if (style === "spell") {
       return shuffled.slice(0, demo ? 10 : 15).map((v, i) => ({ id: `sp-${i}`, prompt: v.ko, answer: v.word, choices: [] }));
     }
-    const count = demo ? 10 : style === "rain" || style === "omok" || style === "sprint" || style === "rescue" || style === "rescuepick" || style === "tetris" ? 30 : style === "drift" || style === "driftcockpit" ? 12 : 10;
+    const count = demo ? 10 : style === "rain" || style === "omok" || style === "omokword" || style === "sprint" || style === "rescue" || style === "rescuepick" || style === "tetris" ? 30 : style === "drift" || style === "driftcockpit" ? 12 : 10;
     return buildArcheryQuestions(shuffled.slice(0, count), effMode, extraPool);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [effMode, style, round, vocab]);
@@ -168,7 +168,7 @@ function Player({ style, assignmentId, demo }: { style: GameStyle; assignmentId:
         </div>
       )}
 
-      {(style === "omok" || style === "sprint" || style === "rescue" || style === "rescuepick" || style === "memory" || style === "tetris") && (
+      {(style === "omok" || style === "omokword" || style === "sprint" || style === "rescue" || style === "rescuepick" || style === "memory" || style === "tetris") && (
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-slate-400 text-sm w-12">{style === "sprint" ? "상대" : style === "rescue" || style === "rescuepick" || style === "memory" || style === "tetris" ? "난이도" : "AI"}</span>
           {(["easy", "normal", "hard"] as OmokLevel[]).map((lv) => (
@@ -257,8 +257,8 @@ function Player({ style, assignmentId, demo }: { style: GameStyle; assignmentId:
           <ClayGame onFinish={onFinish} key={key} questions={questions} />
         ) : style === "sprint" ? (
           <SprintGame onFinish={onFinish} key={key} questions={questions} level={omokLevel} />
-        ) : style === "omok" ? (
-          <OmokGame onFinish={onFinish} key={key} questions={questions} level={omokLevel} />
+        ) : style === "omok" || style === "omokword" ? (
+          <OmokGame onFinish={onFinish} key={key} questions={questions} level={omokLevel} variant={style === "omokword" ? "word" : "letter"} />
         ) : style === "cockpit" ? (
           <CockpitGame onFinish={onFinish} key={key} questions={questions} />
         ) : style === "drift" || style === "driftcockpit" ? (
