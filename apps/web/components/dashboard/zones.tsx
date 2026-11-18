@@ -12,11 +12,13 @@ import type { ReactNode } from "react";
 import { CheckCircle2, ChevronRight } from "lucide-react";
 import { STATUS, tint, type Severity } from "./board";
 
-export type ZoneTone = "class" | "homework";
+export type ZoneTone = "class" | "homework" | "ops" | "system";
 
 const ZONE: Record<ZoneTone, { accent: string; soft: string; label: string }> = {
   class: { accent: "#3b5bdb", soft: "#eef2ff", label: "수업" },
   homework: { accent: "#0f9d7a", soft: "#ecfdf5", label: "숙제" },
+  ops: { accent: "#475569", soft: "#f1f5f9", label: "가맹점 운영" },
+  system: { accent: "#7c3aed", soft: "#f5f3ff", label: "콘텐츠·시스템" },
 };
 
 export function ZoneSection({
@@ -68,6 +70,7 @@ export function ClickTile({
   severity,
   href,
   cta,
+  zeroText = "다 처리했어요",
 }: {
   label: string;
   /** null = 집계 실패 */
@@ -77,6 +80,8 @@ export function ClickTile({
   severity: Severity;
   href: string;
   cta: string;
+  /** 0일 때 보여 줄 문구 (기본: "다 처리했어요") */
+  zeroText?: string;
 }) {
   const failed = count == null;
   const zero = count === 0;
@@ -107,7 +112,7 @@ export function ClickTile({
       {zero ? (
         <div className="mt-1.5 flex items-center gap-1 text-xs font-semibold" style={{ color: STATUS.good.color }}>
           <CheckCircle2 className="h-3.5 w-3.5" aria-hidden />
-          다 처리했어요
+          {zeroText}
         </div>
       ) : failed ? (
         <div className="mt-1.5 text-xs text-neutral-500">불러오지 못했어요</div>

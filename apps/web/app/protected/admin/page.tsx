@@ -1,4 +1,8 @@
 import Link from 'next/link';
+import { Suspense } from 'react';
+import SuperGate, { SuperGateFallback } from '@/components/dashboard/SuperGate';
+
+export const dynamic = 'force-dynamic';
 
 type CardProps = {
   title: string;
@@ -72,6 +76,12 @@ export default function AdminPage() {
           </Link>
         </div>
       </div>
+
+      {/* 오늘의 계기판: 선생님 홈 · 원장 홈 · 본사 관제실 요약 (제목을 누르면 해당 화면으로) */}
+      <GroupLabel label="오늘의 계기판" />
+      <Suspense fallback={<SuperGateFallback />}>
+        <SuperGate />
+      </Suspense>
 
       {/* TOEFL */}
       <GroupLabel label="Updated-TOEFL" />
