@@ -760,61 +760,37 @@ export default function VocabSessionPage() {
         // ⚠️ 파라미터 있을 때만 저장된 상태 복구 (중단/재개)
         // 파라미터 없으면 → 새로 시작 (어느 Day를 해야 할지 모르므로)
         const setIdParam = shortcut.setId ? shortcut.setId : null;
-        let shouldResumeFromSaved = false;
+        // 중단된 세션 복구 후보 (단어 로드 후 검증하고 적용한다 — 로드 전에 stage 만 바꾸면 allWords 가 비어 "단어 0개"가 됨)
+        let resumeCandidate: { prescreenResult?: any; assignmentId?: string | null; fromLocal: boolean } | null = null;
 
         if (setIdParam) {
           // 서버(기기/캐시 삭제에도 유지)를 먼저 확인하고, 없으면 localStorage로 폴백한다.
-          let progress: { stage: string; prescreenResult?: any; spellingResult?: any } | null = null;
           try {
             const serverProgress = await getVocabSessionProgressAction(setIdParam);
-            if (serverProgress?.currentStage) {
-              progress = {
-                stage: serverProgress.currentStage,
-                prescreenResult: serverProgress.prescreenResult,
-                spellingResult: serverProgress.spellingResult,
-              };
+            if (serverProgress?.currentStage === 'SPELLING' && serverProgress.prescreenResult) {
+              resumeCandidate = { prescreenResult: serverProgress.prescreenResult, fromLocal: false };
             }
           } catch (e) {
             console.warn('Failed to load server session progress:', e);
           }
 
-          if (!progress && typeof window !== 'undefined') {
-            const saved = localStorage.getItem(`vocab_progress_${setIdParam}`);
-            if (saved) {
-              try {
-                progress = JSON.parse(saved);
-              } catch (e) {
-                console.warn('Failed to parse local session progress:', e);
-              }
-            }
-          }
-
-          if (progress) {
+          if (!resumeCandidate && typeof window !== 'undefined') {
             try {
-              console.log('🔄 Resuming session from:', progress.stage);
-
-              // ✅ 완료 상태(DONE, SUMMARY)면 저장된 진행 상황 삭제 → 새로 시작 (단어 로드)
-              if (progress.stage === 'DONE' || progress.stage === 'SUMMARY') {
-                console.log('✅ Day already completed. Starting fresh.');
-                localStorage.removeItem(`vocab_progress_${setIdParam}`);
-                shouldResumeFromSaved = false; // 새로 로드
-              }
-              // Resume from saved stage (완료하지 않은 것만)
-              else if (progress.stage === 'SPELLING') {
-                setPrescreenResult(progress.prescreenResult);
-                setSpellingResult(makeEmptySpellingResult());
-                setStage('SPELLING');
-                shouldResumeFromSaved = true; // 저장된 상태 사용
-                if (cancelled) return;
-                // 단어는 이미 allWords에 있으므로 로드할 필요 없음
-                return;
+              const saved = localStorage.getItem(`vocab_progress_${setIdParam}`);
+              if (saved) {
+                const p = JSON.parse(saved);
+                if (p?.stage === 'SPELLING' && p?.prescreenResult) {
+                  resumeCandidate = { prescreenResult: p.prescreenResult, assignmentId: p.assignmentId ?? null, fromLocal: true };
+                } else {
+                  // DONE/SUMMARY 등 완료·중간 상태는 이어하지 않고 새로 시작
+                  localStorage.removeItem(`vocab_progress_${setIdParam}`);
+                }
               }
             } catch (e) {
-              console.warn('Failed to resume session:', e);
+              console.warn('Failed to parse local session progress:', e);
             }
           }
         } else {
-          // 파라미터 없으면 → 새로 시작
           console.log('ℹ️ No setId parameter. Starting fresh.');
         }
 
@@ -1003,7 +979,32 @@ export default function VocabSessionPage() {
           setSpellingResult((prev) => prev ?? makeEmptySpellingResult());
           setStage("DRILL_INTRO");
         } else {
-          setStage("PRESCREEN");
+          // 중단된 세션 이어하기: 저장된 prescreen 결과가 "이번에 로드한 단어"와 맞을 때만 적용.
+          // (재배정 등으로 어긋난 오래된 기록은 버리고 처음부터 시작)
+          const loadedIds = new Set(limited.words.map((w: any) => w.id));
+          const pr = resumeCandidate?.prescreenResult;
+          const known: string[] = Array.isArray(pr?.knownWordIds) ? pr.knownWordIds : [];
+          const unknown: string[] = Array.isArray(pr?.unknownWordIds) ? pr.unknownWordIds : [];
+          const sameAssignment =
+            !resumeCandidate?.fromLocal ||
+            (!!resumeCandidate.assignmentId && resumeCandidate.assignmentId === ((res as any).assignmentId ?? null));
+          const valid =
+            !!resumeCandidate &&
+            sameAssignment &&
+            known.length > 0 &&
+            [...known, ...unknown].every((wid) => loadedIds.has(wid));
+          if (valid) {
+            setPrescreenResult(pr);
+            setSpellingResult(makeEmptySpellingResult());
+            setStage("SPELLING");
+          } else {
+            if (resumeCandidate && forcedSetId) {
+              try {
+                localStorage.removeItem(`vocab_progress_${forcedSetId}`);
+              } catch {}
+            }
+            setStage("PRESCREEN");
+          }
         }
       } catch (e: any) {
         if (cancelled) return;
@@ -1812,6 +1813,7 @@ export default function VocabSessionPage() {
                 localStorage.setItem(`vocab_progress_${sessionSetId}`, JSON.stringify({
                   stage: knownCount === 0 ? "SUMMARY" : "SPELLING",
                   prescreenResult: r,
+                  assignmentId: debugInfo?.assignmentId ?? null,
                 }));
               }
 
