@@ -276,6 +276,53 @@ export default function VocabHubNewPage() {
           </div>
         )}
 
+        {/* 한눈에 보기 위젯: 요약 + 바로 들어가기 */}
+        <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+          <button
+            onClick={() => setActiveTab("today")}
+            className="rounded-xl border border-blue-200 bg-white p-4 text-left shadow-sm hover:bg-blue-50"
+          >
+            <p className="text-xs font-semibold text-blue-700">📖 오늘 학습</p>
+            <p className="mt-1 text-lg font-bold text-gray-900">
+              {todayData?.blocked
+                ? "오늘 완료"
+                : todayData?.nextChapter
+                  ? `Day ${todayData.nextChapter.dayNumber}`
+                  : "-"}
+            </p>
+            <p className="text-xs text-gray-500">오늘 {todayData?.todayCount ?? 0}/2 완료</p>
+          </button>
+          <button
+            onClick={() => setActiveTab("review")}
+            className="rounded-xl border border-emerald-200 bg-white p-4 text-left shadow-sm hover:bg-emerald-50"
+          >
+            <p className="text-xs font-semibold text-emerald-700">🔁 복습</p>
+            <p className="mt-1 text-lg font-bold text-gray-900">{reviewData?.chapters?.length ?? 0}개</p>
+            <p className="text-xs text-gray-500">복습할 Day</p>
+          </button>
+          <div className="rounded-xl border border-amber-200 bg-white p-4 shadow-sm">
+            <p className="text-xs font-semibold text-amber-700">📝 단어 시험</p>
+            <p className="mt-1 text-lg font-bold text-gray-900">
+              {!testEligibility
+                ? "-"
+                : testEligibility.testTaken
+                  ? `완료${testEligibility.score != null ? ` ${testEligibility.score}점` : ""}`
+                  : testEligibility.dayComplete
+                    ? "응시 가능"
+                    : "학습 후 가능"}
+            </p>
+            <p className="text-xs text-gray-500">학원에서 응시</p>
+          </div>
+          <button
+            onClick={() => router.push("/vocab/dashboard")}
+            className="rounded-xl border border-violet-200 bg-white p-4 text-left shadow-sm hover:bg-violet-50"
+          >
+            <p className="text-xs font-semibold text-violet-700">📊 내 통계</p>
+            <p className="mt-1 text-lg font-bold text-gray-900">보러 가기</p>
+            <p className="text-xs text-gray-500">진도·약한 단어·활동</p>
+          </button>
+        </div>
+
         {/* 탭 */}
         <div className="flex gap-2 mb-6 border-b">
           <button

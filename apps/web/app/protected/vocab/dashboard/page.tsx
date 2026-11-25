@@ -55,6 +55,7 @@ export default function VocabDashboard() {
   const [stageStats, setStageStats] = useState<StageStats[]>([]);
   const [weeklyData, setWeeklyData] = useState<WeeklyData[]>([]);
   const [hourlyPattern, setHourlyPattern] = useState<HourlyPattern[]>([]);
+  const [studentId, setStudentId] = useState<string>("");
   const [goals, setGoals] = useState<StudentGoal[]>([]);
   const [showGoalForm, setShowGoalForm] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<string>("");
@@ -66,179 +67,88 @@ export default function VocabDashboard() {
   useEffect(() => {
     (async () => {
       try {
-        const { data: user } = await supabase.auth.getUser();
-        if (!user?.id) {
+        const res = await fetch("/api/vocab/stats", { cache: "no-store" });
+        const data = await res.json();
+        if (!data?.ok || !data.studentId) {
           setLoading(false);
           return;
         }
+        setStudentId(data.studentId);
 
-        // 학생 ID 조회
-        const { data: studentData } = await supabase
-          .from("academy_students")
-          .select("id")
-          .eq("user_id", user.id)
-          .single();
+        const allAttempts: Array<{ set_id: string; wrong_word_ids: string[]; stage: string; attempted_at: string }> =
+          data.attempts ?? [];
+        const wordText: Record<string, string> = data.words ?? {};
 
-        if (!studentData?.id) {
-          setLoading(false);
-          return;
-        }
+        const stats: CourseStats[] = (data.courses ?? []).map((c: any) => ({
+          courseId: c.courseId,
+          courseName: c.courseName,
+          totalDays: c.totalDays,
+          completedDays: c.completedDays,
+          totalAttempts: c.totalAttempts,
+          totalWeakWords: new Set<string>(c.weakWordIds ?? []),
+        }));
 
-        const studentId = studentData.id;
-
-        // 1. 할당된 모든 코스 조회
-        const { data: courseData } = await supabase
-          .from("vocab_courses")
-          .select("id, title, track_id, course_sets");
-
-        if (!courseData) {
-          setLoading(false);
-          return;
-        }
-
-        // 전체 학습 시도 조회 (분석용)
-        const { data: allAttempts } = await supabase
-          .from("vocab_learning_attempts")
-          .select("set_id, wrong_word_ids, stage, attempted_at")
-          .eq("student_id", studentId);
-
-        // 2. 각 코스별 통계 계산
-        const stats: CourseStats[] = [];
+        // 약한 단어 (자주 틀린 순)
         const allWeakWordMap = new Map<string, WeakWord>();
-        const stageMap = new Map<string, { total: number; wrong: number }>();
-
-        for (const course of courseData) {
-          const courseSets = Array.isArray(course.course_sets) ? course.course_sets : [];
-          const completedSets = new Set<string>();
-          let attemptCount = 0;
-          const courseWeakWords = new Set<string>();
-
-          // 학습 시도 조회
-          const { data: attempts } = await supabase
-            .from("vocab_learning_attempts")
-            .select("set_id, wrong_word_ids, stage")
-            .eq("student_id", studentId)
-            .in("set_id", courseSets.length > 0 ? courseSets : ["00000000-0000-0000-0000-000000000000"]);
-
-          if (attempts) {
-            for (const attempt of attempts) {
-              completedSets.add(attempt.set_id);
-              attemptCount++;
-
-              // 약한 단어 수집
-              const wrongIds = Array.isArray(attempt.wrong_word_ids) ? attempt.wrong_word_ids : [];
-              wrongIds.forEach((wid) => {
-                courseWeakWords.add(wid);
-                const existing = allWeakWordMap.get(wid) || {
-                  wordId: wid,
-                  text: "",
-                  failureCount: 0,
-                  stages: [],
-                };
-                existing.failureCount++;
-                if (!existing.stages.includes(attempt.stage)) {
-                  existing.stages.push(attempt.stage);
-                }
-                allWeakWordMap.set(wid, existing);
-              });
-            }
+        for (const attempt of allAttempts) {
+          const wrongIds = Array.isArray(attempt.wrong_word_ids) ? attempt.wrong_word_ids : [];
+          for (const wid of wrongIds) {
+            const existing = allWeakWordMap.get(wid) || { wordId: wid, text: "", failureCount: 0, stages: [] };
+            existing.failureCount++;
+            if (!existing.stages.includes(attempt.stage)) existing.stages.push(attempt.stage);
+            allWeakWordMap.set(wid, existing);
           }
-
-          stats.push({
-            courseId: course.id,
-            courseName: course.title || "Unknown Course",
-            totalDays: courseSets.length,
-            completedDays: completedSets.size,
-            totalAttempts: attemptCount,
-            totalWeakWords: courseWeakWords,
-          });
         }
+        const weakWordsArray = Array.from(allWeakWordMap.values())
+          .sort((a, b) => b.failureCount - a.failureCount)
+          .slice(0, 20);
+        weakWordsArray.forEach((w) => {
+          w.text = wordText[w.wordId] || "[Unknown]";
+        });
 
-        // 3. 스테이지별 통계
+        // 스테이지별 통계
         const stages: StageStats[] = [];
-        if (allAttempts) {
-          for (const stage of ["know", "spelling", "speed"] as const) {
-            const stageAttempts = allAttempts.filter((a) => a.stage === stage);
-            const totalAttempts = stageAttempts.length;
-            const totalWrong = stageAttempts.reduce((sum, a) => {
-              const wrongIds = Array.isArray(a.wrong_word_ids) ? a.wrong_word_ids : [];
-              return sum + wrongIds.length;
-            }, 0);
-
-            if (totalAttempts > 0) {
-              stages.push({
-                stage,
-                totalAttempts,
-                totalWrong,
-                successRate: Math.round(((totalAttempts - (totalWrong / totalAttempts)) / totalAttempts) * 100),
-              });
-            }
+        for (const stage of ["know", "spelling", "speed"] as const) {
+          const stageAttempts = allAttempts.filter((a) => a.stage === stage);
+          const totalAttempts = stageAttempts.length;
+          const totalWrong = stageAttempts.reduce(
+            (sum, a) => sum + (Array.isArray(a.wrong_word_ids) ? a.wrong_word_ids.length : 0),
+            0,
+          );
+          if (totalAttempts > 0) {
+            stages.push({
+              stage,
+              totalAttempts,
+              totalWrong,
+              successRate: Math.round(((totalAttempts - totalWrong / totalAttempts) / totalAttempts) * 100),
+            });
           }
         }
 
-        // 4. 주별 데이터 (최근 7일)
+        // 주별(최근 7일) / 시간대별
         const weeklyMap = new Map<string, number>();
         const today = new Date();
         for (let i = 6; i >= 0; i--) {
           const d = new Date(today);
           d.setDate(d.getDate() - i);
-          const dateStr = d.toISOString().split("T")[0];
-          weeklyMap.set(dateStr, 0);
+          weeklyMap.set(d.toISOString().split("T")[0], 0);
         }
-
-        if (allAttempts) {
-          for (const attempt of allAttempts) {
-            const dateStr = new Date(attempt.attempted_at).toISOString().split("T")[0];
-            if (weeklyMap.has(dateStr)) {
-              weeklyMap.set(dateStr, (weeklyMap.get(dateStr) || 0) + 1);
-            }
-          }
-        }
-
-        const weekly = Array.from(weeklyMap.entries())
-          .map(([date, attempts]) => ({ date, attempts }));
-
-        // 5. 시간대별 패턴
         const hourlyMap = new Map<number, number>();
         for (let h = 0; h < 24; h++) hourlyMap.set(h, 0);
-
-        if (allAttempts) {
-          for (const attempt of allAttempts) {
-            const hour = new Date(attempt.attempted_at).getHours();
-            hourlyMap.set(hour, (hourlyMap.get(hour) || 0) + 1);
-          }
-        }
-
-        const hourly = Array.from(hourlyMap.entries())
-          .map(([hour, attempts]) => ({ hour, attempts }));
-
-        // 6. 단어 정보 채우기
-        const weakWordsArray = Array.from(allWeakWordMap.values())
-          .sort((a, b) => b.failureCount - a.failureCount)
-          .slice(0, 20);
-
-        const wordIds = weakWordsArray.map((w) => w.wordId);
-        if (wordIds.length > 0) {
-          const { data: words } = await supabase
-            .from("words")
-            .select("id, text")
-            .in("id", wordIds);
-
-          if (words) {
-            const wordMap = new Map(words.map((w) => [w.id, w.text]));
-            weakWordsArray.forEach((w) => {
-              w.text = wordMap.get(w.wordId) || "[Unknown]";
-            });
-          }
+        for (const attempt of allAttempts) {
+          const at = new Date(attempt.attempted_at);
+          const dateStr = at.toISOString().split("T")[0];
+          if (weeklyMap.has(dateStr)) weeklyMap.set(dateStr, (weeklyMap.get(dateStr) || 0) + 1);
+          hourlyMap.set(at.getHours(), (hourlyMap.get(at.getHours()) || 0) + 1);
         }
 
         setCourseStats(stats);
         setWeakWords(weakWordsArray);
         setStageStats(stages);
-        setWeeklyData(weekly);
-        setHourlyPattern(hourly);
+        setWeeklyData(Array.from(weeklyMap.entries()).map(([date, attempts]) => ({ date, attempts })));
+        setHourlyPattern(Array.from(hourlyMap.entries()).map(([hour, attempts]) => ({ hour, attempts })));
         setTotalStats({
-          attempts: stats.reduce((sum, s) => sum + s.totalAttempts, 0),
+          attempts: allAttempts.length,
           weakWords: allWeakWordMap.size,
         });
       } catch (e) {
@@ -247,28 +157,20 @@ export default function VocabDashboard() {
         setLoading(false);
       }
     })();
-  }, [supabase]);
+  }, []);
+
 
   // 목표 조회
   useEffect(() => {
     if (!loading && courseStats.length > 0) {
       (async () => {
         try {
-          const { data: user } = await supabase.auth.getUser();
-          if (!user?.id) return;
+          if (!studentId) return;
 
-          const { data: studentData } = await supabase
-            .from("academy_students")
-            .select("id")
-            .eq("user_id", user.id)
-            .single();
-
-          if (!studentData?.id) return;
-
-          const { data: goalsData } = await supabase
+          const { data: goalsData } = await (supabase as any)
             .from("vocab_student_goals")
             .select("*")
-            .eq("student_id", studentData.id)
+            .eq("student_id", studentId)
             .eq("status", "active");
 
           if (goalsData) {
@@ -291,26 +193,17 @@ export default function VocabDashboard() {
         }
       })();
     }
-  }, [loading, courseStats, supabase]);
+  }, [loading, courseStats, supabase, studentId]);
 
   // 목표 저장
   const saveGoal = async () => {
     if (!selectedCourse || !targetDay || !deadline) return;
 
     try {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user?.id) return;
+      if (!studentId) return;
 
-      const { data: studentData } = await supabase
-        .from("academy_students")
-        .select("id")
-        .eq("user_id", user.id)
-        .single();
-
-      if (!studentData?.id) return;
-
-      await supabase.from("vocab_student_goals").insert({
-        student_id: studentData.id,
+      await (supabase as any).from("vocab_student_goals").insert({
+        student_id: studentId,
         course_id: selectedCourse,
         target_day: targetDay,
         deadline,
@@ -323,10 +216,10 @@ export default function VocabDashboard() {
       setDeadline(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]);
 
       // 목표 다시 로드
-      const { data: goalsData } = await supabase
+      const { data: goalsData } = await (supabase as any)
         .from("vocab_student_goals")
         .select("*")
-        .eq("student_id", studentData.id)
+        .eq("student_id", studentId)
         .eq("status", "active");
 
       if (goalsData) {
