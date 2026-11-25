@@ -22,13 +22,6 @@ type ReviewData = {
   chapters: Chapter[];
 };
 
-type Sentence = {
-  id: string;
-  sentence: string;
-  translation: string;
-  difficulty: "easy" | "medium" | "hard";
-};
-
 type WritingTask = {
   id: string;
   korean: string;
@@ -37,27 +30,6 @@ type WritingTask = {
   hints: string[];
   missingWord: string;
 };
-
-const SAMPLE_SENTENCES: Sentence[] = [
-  {
-    id: "1",
-    sentence: "The vast expanse of the universe continues to extend our understanding of its complexity.",
-    translation: "우주의 광대한 범위는 우리의 이해를 계속 확장시킨다.",
-    difficulty: "hard",
-  },
-  {
-    id: "2",
-    sentence: "Despite the adversity faced by the pioneers, their resilience ultimately facilitated progress.",
-    translation: "선구자들이 직면한 역경에도 불구하고, 그들의 회복력은 궁극적으로 진보를 촉진했다.",
-    difficulty: "hard",
-  },
-  {
-    id: "3",
-    sentence: "The inherent contradiction in his argument undermined the credibility of his entire thesis.",
-    translation: "그의 논증에 내재된 모순은 그의 전체 논문의 신뢰성을 훼손했다.",
-    difficulty: "medium",
-  },
-];
 
 export default function VocabHubNewPage() {
   const router = useRouter();
@@ -91,11 +63,6 @@ export default function VocabHubNewPage() {
     score: number | null;
     day: number | null;
   } | null>(null);
-
-  // 오늘의 문장 상태
-  const [sentenceIdx, setSentenceIdx] = useState(0);
-  const [userInput, setUserInput] = useState("");
-  const [revealed, setRevealed] = useState(false);
 
   // 오늘의 작문 상태
   const [writingIdx, setWritingIdx] = useState(0);
@@ -222,34 +189,7 @@ export default function VocabHubNewPage() {
 
         if (!chapData.ok || !chapData.words?.length) {
           console.warn("No words found for chapter");
-          // 테스트 데이터
-          const testTasks: WritingTask[] = [
-            {
-              id: "w1",
-              korean: "과학자는 발표하기 전에 데이터를 신중하게 분석했다.",
-              english: "The scientist examined the data carefully before publishing.",
-              grammar: "3형식",
-              hints: ["carefully", "scientist", "data", "publishing"],
-              missingWord: "examined",
-            },
-            {
-              id: "w2",
-              korean: "어제 회의에서 언급된 문제들이 즉시 해결되었다.",
-              english: "The problems mentioned in yesterday's meeting were resolved immediately.",
-              grammar: "수동태 + 형용사절",
-              hints: ["problems", "yesterday's", "resolved", "immediately"],
-              missingWord: "mentioned",
-            },
-            {
-              id: "w3",
-              korean: "학생들이 열심히 공부하면, 그들의 성적은 향상된다.",
-              english: "When students study diligently, their grades improve significantly.",
-              grammar: "조건절",
-              hints: ["students", "diligently", "grades", "improve"],
-              missingWord: "study",
-            },
-          ];
-          setWritingTasks(testTasks);
+          setWritingTasks([]);
           return;
         }
 
@@ -279,34 +219,12 @@ export default function VocabHubNewPage() {
         if (allTasks.length > 0) {
           setWritingTasks(allTasks);
         } else {
-          console.warn("No tasks generated, using test data");
-          // 테스트 데이터로 폴백
-          const testTasks: WritingTask[] = [
-            {
-              id: "w1",
-              korean: "과학자는 발표하기 전에 데이터를 신중하게 분석했다.",
-              english: "The scientist examined the data carefully before publishing.",
-              grammar: "3형식",
-              hints: ["carefully", "scientist", "data", "publishing"],
-              missingWord: "examined",
-            },
-          ];
-          setWritingTasks(testTasks);
+          console.warn("No tasks generated");
+          setWritingTasks([]);
         }
       } catch (e: any) {
         console.error("Failed to generate writing tasks:", e);
-        // 테스트 데이터로 폴백
-        const testTasks: WritingTask[] = [
-          {
-            id: "w1",
-            korean: "과학자는 발표하기 전에 데이터를 신중하게 분석했다.",
-            english: "The scientist examined the data carefully before publishing.",
-            grammar: "3형식",
-            hints: ["carefully", "scientist", "data", "publishing"],
-            missingWord: "examined",
-          },
-        ];
-        setWritingTasks(testTasks);
+        setWritingTasks([]);
       } finally {
         setWritingLoading(false);
       }
@@ -479,90 +397,11 @@ export default function VocabHubNewPage() {
                   </div>
                 </div>
 
-                {/* 오늘의 문장 섹션 */}
-                <div className="border-t pt-6 mt-6">
-                  <div className="rounded-2xl border-2 border-rose-200 bg-gradient-to-br from-rose-50 to-rose-100 p-6 mb-6">
-                    <h2 className="text-2xl font-bold text-slate-900">✍️ 오늘의 문장</h2>
-                    <p className="mt-1 text-slate-600">학습한 단어를 포함한 어려운 문장을 해석해보세요</p>
-                    <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1 text-sm font-semibold text-rose-700">
-                      🎁 문장을 모두 완료하면 <span className="font-bold">+15 포인트</span>
-                    </div>
-                    <p className="mt-2 text-xs text-slate-500">
-                      포인트는 레벨업에 쓰이고, 학원별 보상(상점·교재·간식 등) 교환에도 사용돼요.
-                    </p>
-                  </div>
-
-                  <div className="bg-white rounded-lg shadow p-6">
-                    <div className="mb-6 flex items-center justify-between">
-                      <span className="text-sm font-semibold text-slate-600">
-                        문장 {sentenceIdx + 1} / {SAMPLE_SENTENCES.length}
-                      </span>
-                      <span className="inline-block px-3 py-1 rounded-full text-sm font-bold bg-rose-100 text-rose-700">
-                        {SAMPLE_SENTENCES[sentenceIdx].difficulty}
-                      </span>
-                    </div>
-
-                    {/* 문장 표시 */}
-                    <div className="mb-6 space-y-4">
-                      <div className="text-xl font-bold text-slate-900 leading-relaxed">
-                        {SAMPLE_SENTENCES[sentenceIdx].sentence}
-                      </div>
-                    </div>
-
-                    {/* 해석 입력 */}
-                    <div className="mb-4">
-                      <textarea
-                        value={userInput}
-                        onChange={(e) => setUserInput(e.target.value)}
-                        placeholder="문장의 해석을 입력하세요..."
-                        disabled={revealed}
-                        className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm font-medium text-slate-900 placeholder-slate-500 focus:border-rose-500 focus:outline-none disabled:bg-slate-50"
-                        rows={3}
-                      />
-                    </div>
-
-                    {/* 정답 확인 */}
-                    {revealed && (
-                      <div className="mb-6 rounded-lg bg-emerald-50 border border-emerald-200 p-4">
-                        <div className="text-sm font-semibold text-emerald-700 mb-2">📝 정답 해석</div>
-                        <div className="text-slate-900 leading-relaxed">{SAMPLE_SENTENCES[sentenceIdx].translation}</div>
-                      </div>
-                    )}
-
-                    {/* 버튼 */}
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => setRevealed(!revealed)}
-                        className="flex-1 rounded-lg bg-rose-600 hover:bg-rose-700 px-4 py-3 text-white font-semibold transition"
-                      >
-                        {revealed ? "숨기기" : "정답 보기"}
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSentenceIdx(sentenceIdx + 1);
-                          setUserInput("");
-                          setRevealed(false);
-                        }}
-                        disabled={sentenceIdx >= SAMPLE_SENTENCES.length - 1}
-                        className="flex-1 rounded-lg bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 px-4 py-3 text-white font-semibold transition"
-                      >
-                        {sentenceIdx < SAMPLE_SENTENCES.length - 1 ? "다음 문장 ▶" : "완료 ✅"}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
                 {/* 오늘의 작문 섹션 */}
                 <div className="border-t pt-6 mt-6">
                   <div className="rounded-2xl border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-amber-100 p-6 mb-6">
                     <h2 className="text-2xl font-bold text-slate-900">📝 오늘의 작문</h2>
                     <p className="mt-1 text-slate-600">한글 해석과 단어 힌트를 보고 영문 문장을 완성하세요</p>
-                    <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1 text-sm font-semibold text-amber-700">
-                      🎁 작문을 모두 완료하면 <span className="font-bold">+20 포인트</span>
-                    </div>
-                    <p className="mt-2 text-xs text-slate-500">
-                      포인트는 레벨업에 쓰이고, 학원별 보상(상점·교재·간식 등) 교환에도 사용돼요.
-                    </p>
                   </div>
 
                   <div className="bg-white rounded-lg shadow p-6">
@@ -728,35 +567,21 @@ export default function VocabHubNewPage() {
                 </div>
               </button>
 
-              {/* Speed Challenge */}
+              {/* 단어 게임 모음 */}
               <button
-                onClick={() => router.push("/vocab/speed-challenge")}
+                onClick={() => router.push("/workout/games")}
                 className="group relative overflow-hidden rounded-lg bg-gradient-to-br from-orange-50 to-orange-100 border-2 border-orange-200 hover:border-orange-400 p-6 text-left transition-all hover:shadow-lg"
               >
-                <div className="absolute top-2 right-2 text-4xl">⚡</div>
-                <h3 className="text-xl font-bold text-orange-900 mb-2">스피드 챌린지</h3>
+                <div className="absolute top-2 right-2 text-4xl">🎮</div>
+                <h3 className="text-xl font-bold text-orange-900 mb-2">단어 게임 모음</h3>
                 <p className="text-sm text-orange-700 mb-4">
-                  제한 시간 안에 단어의 뜻을 맞추세요. 빠를수록 더 많은 포인트를 얻어요!
+                  활쏘기, 테트리스 등 다양한 단어 게임으로 학습한 단어를 연습하세요.
                 </p>
                 <div className="inline-block bg-orange-600 group-hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-semibold text-sm transition">
-                  게임 시작 →
+                  게임 보러 가기 →
                 </div>
               </button>
 
-              {/* Asteroid Game */}
-              <button
-                onClick={() => router.push("/vocab/asteroid-game")}
-                className="group relative overflow-hidden rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 hover:border-blue-400 p-6 text-left transition-all hover:shadow-lg"
-              >
-                <div className="absolute top-2 right-2 text-4xl">🚀</div>
-                <h3 className="text-xl font-bold text-blue-900 mb-2">Asteroid Game</h3>
-                <p className="text-sm text-blue-700 mb-4">
-                  떨어지는 운석을 피하고 단어를 맞춰보세요. 신나는 액션 게임!
-                </p>
-                <div className="inline-block bg-blue-600 group-hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold text-sm transition">
-                  게임 시작 →
-                </div>
-              </button>
 
               {/* 보너스 게임 (Comming Soon) */}
               <div className="relative overflow-hidden rounded-lg bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-dashed border-gray-300 p-6 text-left opacity-60">

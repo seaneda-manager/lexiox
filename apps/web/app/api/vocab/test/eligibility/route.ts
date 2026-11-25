@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
+import { getTestConfig } from "@/lib/vocab/test/testConfig";
 
 /**
  * GET /api/vocab/test/eligibility?track_id=<trackId>&day=<dayNumber>
@@ -75,13 +76,17 @@ export async function GET(req: NextRequest) {
       day = typeof latest?.day_index === "number" ? latest.day_index : null;
     }
 
-    // skip_learning_check (global)
-    const { data: config } = await admin
-      .from("vocab_test_configs")
-      .select("skip_learning_check")
-      .eq("scope", "global")
+    // skip_learning_check — 학생별/반별/전역 설정을 함께 본다 (test/start 와 같은 규칙)
+    // (academy_class_students.student_id 는 auth uid 를 참조함)
+    const { data: membership } = await admin
+      .from("academy_class_students")
+      .select("class_id")
+      .eq("student_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
       .maybeSingle();
-    const skipLearningCheck = config?.skip_learning_check ?? false;
+    const testConfig = await getTestConfig(admin, user.id, membership?.class_id ?? null);
+    const skipLearningCheck = testConfig.skip_learning_check;
 
     // 해당 Day assignment 완료 여부
     let dayComplete = skipLearningCheck;

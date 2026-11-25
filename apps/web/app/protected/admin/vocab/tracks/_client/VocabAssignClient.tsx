@@ -14,7 +14,6 @@ import {
   markAssignmentCompletedAction,
   getStudentVocabAssignmentsAction,
   deleteStudentTrackAssignmentAction,
-  updateStudentLearningOptionAction,
   pauseAssignmentAction,
   resumeAssignmentAction,
   assignMultipleDaysAction,
@@ -298,17 +297,6 @@ Total Study Time: ${Math.round(p.totalStudyTime / 60)}분
     }
   }
 
-  async function handleUpdateLearningOption(studentId: string, trackId: string, newOption: number) {
-    const res = await updateStudentLearningOptionAction({ studentId, trackId, learningOption: newOption });
-    if (res.ok) {
-      setMsg("✅ 학습 옵션 변경 완료");
-      const aRes = await getStudentVocabAssignmentsAction();
-      if (aRes.ok) setAssignments(aRes.assignments);
-    } else {
-      setMsg(`❌ ${res.error}`);
-    }
-  }
-
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       {notices.length > 0 && (
@@ -489,60 +477,6 @@ Total Study Time: ${Math.round(p.totalStudyTime / 60)}분
                       </button>
                     </div>
                   </div>
-
-                  {/* Learning Option Selection */}
-                  <div>
-                    <label className="block text-sm font-bold mb-3">학습 옵션</label>
-                    <div className="space-y-2">
-                      <button
-                        onClick={() => setLearningOption(1)}
-                        className={`w-full p-3 rounded border-2 text-left transition ${
-                          learningOption === 1
-                            ? "border-blue-600 bg-blue-50"
-                            : "border-gray-200 bg-white hover:border-gray-300"
-                        }`}
-                      >
-                        <div className="font-bold text-sm">Option 1: 전통적 학습</div>
-                        <div className="text-xs text-gray-600">원내: PreScreen + Stage 1 / 숙제: Stage 2</div>
-                      </button>
-
-                      <button
-                        onClick={() => setLearningOption(2)}
-                        className={`w-full p-3 rounded border-2 text-left transition ${
-                          learningOption === 2
-                            ? "border-blue-600 bg-blue-50"
-                            : "border-gray-200 bg-white hover:border-gray-300"
-                        }`}
-                      >
-                        <div className="font-bold text-sm">Option 2: 고급 학습</div>
-                        <div className="text-xs text-gray-600">집: Learning Stage / 원내: Speed / 숙제: 복습 깜지</div>
-                      </button>
-
-                      <button
-                        onClick={() => setLearningOption(3)}
-                        className={`w-full p-3 rounded border-2 text-left transition ${
-                          learningOption === 3
-                            ? "border-blue-600 bg-blue-50"
-                            : "border-gray-200 bg-white hover:border-gray-300"
-                        }`}
-                      >
-                        <div className="font-bold text-sm">Option 3: 간략 학습</div>
-                        <div className="text-xs text-gray-600">집: 철자+발음+뜻 / Speed / 숙제: Stage 2</div>
-                      </button>
-
-                      <button
-                        onClick={() => setLearningOption(4)}
-                        className={`w-full p-3 rounded border-2 text-left transition ${
-                          learningOption === 4
-                            ? "border-blue-600 bg-blue-50"
-                            : "border-gray-200 bg-white hover:border-gray-300"
-                        }`}
-                      >
-                        <div className="font-bold text-sm">Option 4: 책 학습</div>
-                        <div className="text-xs text-gray-600">책으로 미리 학습 / Speed / 숙제: Stage 2</div>
-                      </button>
-                    </div>
-                  </div>
                 </>
               ) : (
                 <p className="text-sm text-gray-500">트랙을 먼저 선택해주세요</p>
@@ -594,7 +528,6 @@ Total Study Time: ${Math.round(p.totalStudyTime / 60)}분
                 <tr className="border-b">
                   <th className="text-left py-2 px-4">학생명</th>
                   <th className="text-left py-2 px-4">트랙명</th>
-                  <th className="text-left py-2 px-4">옵션</th>
                   <th className="text-left py-2 px-4">진행도</th>
                   <th className="text-left py-2 px-4">동작</th>
                 </tr>
@@ -609,20 +542,6 @@ Total Study Time: ${Math.round(p.totalStudyTime / 60)}분
                   <tr key={`${assign.student_id}_${assign.track_id}`} className="border-b hover:bg-gray-50">
                     <td className="py-2 px-4 font-bold">{assign.student_name}</td>
                     <td className="py-2 px-4">{assign.track_title}</td>
-                    <td className="py-2 px-4">
-                      <select
-                        value={assign.learning_option}
-                        onChange={(e) =>
-                          handleUpdateLearningOption(assign.student_id, assign.track_id, Number(e.target.value))
-                        }
-                        className="border rounded px-2 py-1 text-xs"
-                      >
-                        <option value={1}>Option 1</option>
-                        <option value={2}>Option 2</option>
-                        <option value={3}>Option 3</option>
-                        <option value={4}>Option 4</option>
-                      </select>
-                    </td>
                     <td className="py-2 px-4 text-xs">
                       <div className="flex flex-col gap-2">
                         <div className="font-bold text-blue-700 bg-blue-50 px-2 py-1 rounded">

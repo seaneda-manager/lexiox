@@ -206,14 +206,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 3. Admin 설정에서 학습 확인 스킵 여부 확인
-    const { data: config } = await admin
-      .from("vocab_test_configs")
-      .select("skip_learning_check")
-      .eq("scope", "global")
-      .single();
+    // 3. 학습 확인 스킵 여부 — 학생별/반별/전역 설정을 함께 본다 ("시험만" 학생·반 지원)
+    // Class ID 조회 (academy_class_students.student_id는 auth uid를 참조함)
+    const { data: membership } = await admin
+      .from("academy_class_students")
+      .select("class_id")
+      .eq("student_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-    const skipLearningCheck = config?.skip_learning_check ?? false;
+    const configResult = await getTestConfig(admin, user.id, membership?.class_id ?? null);
+    const skipLearningCheck = configResult.skip_learning_check;
 
     // 학습 완료 상태 확인 (skip_learning_check가 false일 때만)
     // 권위 신호: 해당 Day assignment.completed_at (깜지까지 끝내면 completeVocabDayAction이 기록).
@@ -271,17 +275,7 @@ export async function POST(req: NextRequest) {
       wordIds = wrongCheckResult.wordIds!;
     }
 
-    // 5. 포함 범위 결정
-    // Class ID 조회 (academy_class_students.student_id는 auth uid를 참조함) — 반별 설정에도 쓴다
-    const { data: membership } = await admin
-      .from("academy_class_students")
-      .select("class_id")
-      .eq("student_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    const configResult = await getTestConfig(admin, user.id, membership?.class_id ?? null);
+    // 5. 포함 범위 결정 (위 3번에서 읽은 학생/반/전역 설정을 그대로 쓴다)
     const coverage_ratio = configResult.coverage_ratio;
     const arrangement = configResult.arrangement;
     const maxWords = configResult.max_words;
